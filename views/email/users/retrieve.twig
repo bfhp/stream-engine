@@ -1,0 +1,11 @@
+{% extends "layout.twig" %}
+
+{% block content %}
+    <h1>{{ trans('mail.user.greeting') }}</h1>
+    <p>{{ trans('mail.user.password_recovery') }}</p>
+    <p>
+        <a href="{{ retrieveLink }}" class="btn">
+            {{ trans('mail.user.create_password') }}
+        </a>
+    </p>
+{% endblock %}

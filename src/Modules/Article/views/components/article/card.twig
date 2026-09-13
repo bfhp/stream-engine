@@ -1,0 +1,17 @@
+<div class="col-md-4 mb-3 mb-md-0">
+    <div class="card">
+        <div class="card-body">
+            <h5 class="mb-1">{{ item.title }}</h5>
+
+            <p class="mb-2 text-muted">
+                {{ item.description }}
+            </p>
+
+            <a href="{{ item.canonicalUrl }}"
+               class="btn btn-primary"
+               aria-label="{{ trans('view.article.read_aria', {title: item.title}) }}">
+                {{ trans('view.article.card.01') }}
+            </a>
+        </div>
+    </div>
+</div>

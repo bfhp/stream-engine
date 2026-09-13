@@ -1,0 +1,54 @@
+/* CARDS */
+div.card > img.card-img-top {
+    object-fit: cover;
+    max-height: 450px;
+}
+
+@media (max-width: 992px) {
+    div.card > img.card-img-top {
+        max-height: 250px !important;
+    }
+}
+
+/* COVERS */
+img.cover-450 {
+    object-fit: cover;
+    max-height: 450px;
+    width: 100%;
+}
+
+@media (max-width: 992px) {
+    img.cover-450 {
+        max-height: 250px !important;
+    }
+}
+
+/* IMAGE UTILITIES */
+img.mw-300 {
+    max-width: 300px;
+}
+
+.forum-signature img {
+    max-height: 60px;
+    max-width: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    vertical-align: text-bottom;
+}
+
+.section-eyebrow {
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #8ea3c0;
+    font-weight: 600;
+}
+
+.se-empty {
+    border: 1px dashed rgba(255, 255, 255, 0.14);
+    border-radius: 14px;
+    padding: 2.5rem 1rem;
+    text-align: center;
+    color: #8ea3c0;
+}

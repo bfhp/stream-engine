@@ -1,0 +1,65 @@
+<div class="modal fade" id="authFormModal" tabindex="-1" aria-hidden="true">
+
+    {% block auth_modal_dialog %}
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+
+                {% block auth_header %}
+                    <div class="modal-header">
+                        <h5 class="modal-title">{% block auth_title %}{{ trans('view.auth.title') }}{% endblock %}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                {% endblock %}
+
+                {% block auth_body %}
+                    <div class="modal-body">
+
+                        {% block auth_form %}
+                            <form id="authForm" method="post">
+
+                                {% block auth_fields %}
+
+                                    {% block auth_field_email %}
+                                        <div class="mb-3">
+                                            <label for="authEmail" class="form-label">Email</label>
+                                            <input autocomplete="yes" type="email" class="form-control" id="authEmail" name="email" required>
+                                        </div>
+                                    {% endblock %}
+
+                                    {% block auth_field_password %}
+                                        <div class="mb-3">
+                                            <label for="authPassword" class="form-label">{{ trans('view.auth.password') }}</label>
+                                            <input autocomplete="yes" type="password" class="form-control" id="authPassword" name="password" required>
+                                        </div>
+                                    {% endblock %}
+
+                                {% endblock %}
+
+                                {% block auth_forgot %}
+                                    <div class="mb-3 text-end">
+                                        <a href="/forgot-password/" class="small">{{ trans('view.auth.forgot_password') }}</a>
+                                    </div>
+                                {% endblock %}
+
+                                {% block auth_submit %}
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        {{ trans('view.auth.sign_in') }}
+                                    </button>
+                                {% endblock %}
+
+                            </form>
+                        {% endblock %}
+
+                        {% block auth_footer %}
+                            <div class="text-center mt-3">
+                                {{ trans('view.auth.no_account') }}
+                                <a href="/register/">{{ trans('view.auth.register') }}</a>
+                            </div>
+                        {% endblock %}
+                    </div>
+                {% endblock %}
+
+            </div>
+        </div>
+    {% endblock %}
+</div>

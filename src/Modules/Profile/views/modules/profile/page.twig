@@ -1,0 +1,30 @@
+{% extends "layouts/single.twig" %}
+
+{% block content %}
+
+    <h1>{{ trans('profile.title') }}</h1>
+    {% include 'components/ui/tabs.twig' with { tabs: tabs } %}
+
+    <div class="tab-content">
+
+        {% for tab in tabs %}
+            {% include tab.template with {
+                tab: tab,
+                active: loop.first
+            } %}
+        {% endfor %}
+    </div>
+
+    {% if registered %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                CMS.toast({
+                    message: {{ trans('view.profile.email_verified_welcome')|json_encode|raw }},
+                    type: "success",
+                    html: true
+                });
+            });
+        </script>
+    {% endif %}
+
+{% endblock %}

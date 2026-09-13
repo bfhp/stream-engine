@@ -1,0 +1,280 @@
+{% extends "layouts/simple.twig" %}
+
+{% block main_class %}my-4{% endblock %}
+
+{% block content %}
+    <div class="container" style="max-width: 1080px;">
+
+        <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-3">
+            <div style="min-width: 0">
+                {% if parentForum %}
+                    <a href="{{ parentForum.canonicalUrl }}" class="section-eyebrow d-inline-block mb-2 text-decoration-none">{{ trans('view.forums.topic.list.01') }} {{ parentForum.title }}</a>
+                {% endif %}
+                <h1 class="fw-bold mb-1" style="font-size: 2rem;">{{ title }}</h1>
+                {% if description %}
+                    <p class="mb-0 text-body-secondary" style="font-size: .9rem; text-wrap: pretty; max-width: 62ch">{{ description }}</p>
+                {% endif %}
+            </div>
+            <div class="d-flex flex-column align-items-stretch align-items-sm-end gap-2">
+                {% if not subForums %}
+                    <a href="{{ user.isGuest ? '#authFormModal' : feed.canonicalUrl ~ 'new/' }}" {% if user.isGuest %}data-bs-toggle="modal" data-bs-target="#authFormModal"{% endif %} class="btn btn-primary d-inline-flex align-items-center justify-content-center gap-2">
+                        <i class="bi bi-pencil-square"></i>
+                        <span>{{ trans('forums.topic_new') }}</span>
+                    </a>
+                {% endif %}
+                <div class="d-flex flex-wrap gap-2 justify-content-sm-end">
+                    {# Marks every topic in this section as read for the
+                       current user - including its own subforums, if any
+                       (see ForumsController::handleMarkAllReadRequest()'s
+                       own docblock for why). The site-wide scope is
+                       forums.list.twig's own button. #}
+                    {% if user.isGuest %}
+                        <button type="button" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2"
+                                disabled title="{{ trans('view.forums.list.01') }}">
+                            <i class="bi bi-check2-all"></i>
+                            <span>{{ trans('view.forums.list.02') }}</span>
+                        </button>
+                    {% else %}
+                        <button type="button" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2"
+                                data-forum-mark-all-read data-forum-id="{{ feed.id }}">
+                            <i class="bi bi-check2-all"></i>
+                            <span>{{ trans('view.forums.list.02') }}</span>
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mt-1 mb-3 px-1">
+            <div class="d-flex align-items-center gap-3 text-body-secondary" style="font-size: .8rem">
+                <span class="d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-chat-square-text-fill text-primary"></i> {{ trans('view.forums.list.03') }}
+                </span>
+                <span class="d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-chat-square-text text-body-secondary"></i> {{ trans('view.forums.list.04') }}
+                </span>
+            </div>
+        </div>
+
+        {% if subForums %}
+            <div class="card mb-3 bg-body-tertiary border-secondary-subtle mt-4">
+                <div class="card-header d-flex align-items-center gap-2 bg-body-secondary border-secondary-subtle">
+                    <button class="btn btn-sm btn-link p-0 text-body-secondary text-decoration-none lh-1" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#subforums-group" aria-expanded="true" title="{{ trans('view.forums.list.05') }}">
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div class="flex-grow-1" style="min-width: 0">
+                        <h2 class="h6 mb-0 fw-semibold">{{ trans('view.forums.topic.list.02') }}</h2>
+                    </div>
+                </div>
+                <div class="collapse show" id="subforums-group">
+                    <ul class="list-group list-group-flush">
+                        {% for subForum in subForums %}
+                            {% set stats = subForumStats[subForum.id] %}
+                            {% set lastPost = subForumLastPost[subForum.id] %}
+                            {% set unreadCount = subForumUnreadCounts[subForum.id] ?? 0 %}
+                            <li class="list-group-item bg-transparent border-secondary-subtle px-3 py-3">
+                                <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-2 gap-sm-0">
+                                    <div class="d-flex align-items-start gap-3 flex-grow-1" style="min-width: 0">
+                                        {% if unreadCount > 0 %}
+                                            <i class="bi bi-chat-square-text-fill text-primary" style="font-size: 1.35rem; line-height: 1.4" title="{{ trans('view.common.unread_topics', {count: unreadCount}) }}"></i>
+                                        {% else %}
+                                            <i class="bi bi-chat-square-text text-body-secondary" style="font-size: 1.35rem; line-height: 1.4" title="{{ trans('view.forums.list.06') }}"></i>
+                                        {% endif %}
+                                        <div style="min-width: 0">
+                                            <a href="{{ subForum.canonicalUrl }}" class="text-decoration-none" style="font-size: 1rem">{{ subForum.title }}</a>
+                                            {% if unreadCount > 0 %}
+                                                <span class="badge text-bg-primary rounded-pill ms-1" style="font-size: .68rem">{{ unreadCount }}</span>
+                                            {% endif %}
+                                            {% if subForum.description %}
+                                                <p class="mb-0 text-body-secondary" style="font-size: .82rem; text-wrap: pretty">{{ subForum.description }}</p>
+                                            {% endif %}
+                                            <div class="d-sm-none text-body-secondary" style="font-size: .78rem">
+                                                {{ stats.topics|default(0) }} {{ trans('view.forums.list.07') }} {{ stats.posts|default(0) }} {{ trans('view.forums.list.08') }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="d-none d-sm-flex flex-shrink-0 gap-4 text-center text-body-secondary" style="font-size: .85rem">
+                                        <div style="width: 4.5rem">
+                                            <div class="fw-semibold text-body" style="font-variant-numeric: tabular-nums">{{ stats.topics|default(0) }}</div>
+                                            <div style="font-size: .72rem">{{ trans('view.forums.list.09') }}</div>
+                                        </div>
+                                        <div style="width: 5.5rem">
+                                            <div class="fw-semibold text-body" style="font-variant-numeric: tabular-nums">{{ stats.posts|default(0) }}</div>
+                                            <div style="font-size: .72rem">{{ trans('view.forums.list.08') }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="d-none d-lg-flex align-items-center gap-2 flex-shrink-0 ps-3" style="width: 15rem; min-width: 0">
+                                        {% if lastPost %}
+                                            <img src="{{ lastPost.authorAvatarUrl }}" alt="{{ lastPost.authorName }}"
+                                                 class="rounded-circle object-fit-cover flex-shrink-0" width="32" height="32">
+                                            <div style="min-width: 0">
+                                                <a href="{{ lastPost.topicUrl }}" class="d-block text-decoration-none text-truncate"
+                                                   style="font-size: .85rem" title="{{ lastPost.topicTitle }}">{{ lastPost.topicTitle }}</a>
+                                                <div class="text-body-secondary text-truncate" style="font-size: .76rem"
+                                                     title="{{ lastPost.whenTitle }}">{{ lastPost.authorName }}, {{ lastPost.when }}</div>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-body-secondary" style="font-size: .82rem">{{ trans('view.forums.list.10') }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if not subForums %}
+            <div class="card mb-3 bg-body-tertiary border-secondary-subtle">
+                <div class="card-header d-flex align-items-center gap-2 bg-body-secondary border-secondary-subtle">
+                    <button class="btn btn-sm btn-link p-0 text-body-secondary text-decoration-none lh-1" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#topics-list" aria-expanded="true" title="{{ trans('view.forums.list.05') }}">
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div class="flex-grow-1" style="min-width: 0">
+                        <h2 class="h6 mb-0 fw-semibold">{{ trans('view.forums.topic.list.03') }}</h2>
+                        <div class="text-body-secondary" style="font-size: .78rem">
+                            {{ forumTotals.topics }} {{ forumTotals.topics == 1 ? trans('view.forums.topic.form.35') : trans('view.forums.list.09') }}, {{ forumTotals.posts }} {{ trans('view.forums.list.08') }}
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse show" id="topics-list">
+                    {% if topics %}
+                        <ul class="list-group list-group-flush">
+                            {% for row in topics %}
+                                {% set topic = row.feed %}
+                                <li class="list-group-item bg-transparent border-secondary-subtle px-3 py-3">
+                                    <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-2 gap-sm-0">
+                                        <div class="d-flex align-items-start gap-3 flex-grow-1" style="min-width: 0">
+                                            {% if row.unread %}
+                                                <i class="bi bi-chat-square-text-fill text-primary" style="font-size: 1.35rem; line-height: 1.4" title="{{ trans('view.forums.topic.list.04') }}"></i>
+                                            {% else %}
+                                                <i class="bi bi-chat-square-text text-body-secondary" style="font-size: 1.35rem; line-height: 1.4" title="{{ trans('view.forums.list.06') }}"></i>
+                                            {% endif %}
+                                            <div style="min-width: 0">
+                                                <a href="{{ topic.canonicalUrl }}" class="text-decoration-none" style="font-size: 1rem">{{ topic.title }}</a>
+                                                <div class="text-body-secondary" style="font-size: .78rem">
+                                                    <i class="bi bi-person me-1"></i>{{ topic.authorDisplayName }}, {{ topic.createdAtLabel }}
+                                                </div>
+                                                <div class="d-sm-none text-body-secondary" style="font-size: .78rem">
+                                                    {{ row.replies }} {{ trans('view.forums.topic.list.05') }}
+                                                </div>
+                                                <div class="d-lg-none text-body-secondary text-truncate" style="font-size: .78rem">
+                                                    <i class="bi bi-clock-history me-1"></i>{{ row.lastAuthorName }}, {{ row.lastWhen }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="d-none d-sm-flex flex-shrink-0 gap-4 text-center text-body-secondary" style="font-size: .85rem">
+                                            <div style="width: 4.5rem">
+                                                <div class="fw-semibold text-body" style="font-variant-numeric: tabular-nums">{{ row.replies }}</div>
+                                                <div style="font-size: .72rem">{{ trans('view.forums.topic.list.05') }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="d-none d-lg-flex align-items-center gap-2 flex-shrink-0 ps-3" style="width: 15rem; min-width: 0">
+                                            <img src="{{ row.lastAuthorAvatarUrl }}" alt="{{ row.lastAuthorName }}"
+                                                 class="rounded-circle object-fit-cover flex-shrink-0" width="32" height="32">
+                                            <div style="min-width: 0">
+                                                <span class="d-block text-truncate" style="font-size: .85rem" title="{{ row.lastWhenTitle }}">{{ row.lastAuthorName }}</span>
+                                                <div class="text-body-secondary text-truncate" style="font-size: .76rem" title="{{ row.lastWhenTitle }}">{{ row.lastWhen }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <div class="card-body">
+                            <p class="mb-0 text-body-secondary" style="font-size: .85rem">{{ trans('view.forums.topic.list.06') }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+
+        {% if pagination.total > 1 %}
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+                <div class="d-inline-flex align-items-center gap-2 text-body-secondary small">
+                    <i class="bi bi-chat-square-text"></i>
+                    {{ trans('view.forums.topic.list.07') }}
+                    <span class="fw-semibold font-monospace text-body-emphasis">{{ pagination.current }}</span>
+                    {{ trans('view.forums.topic.list.08') }} <span class="font-monospace">{{ pagination.total }}</span>
+                </div>
+                <nav aria-label="{{ trans('view.forums.topic.list.09') }}">
+                    <ul class="pagination mb-0">
+                        <li class="page-item {{ pagination.current <= 1 ? 'disabled' : '' }}">
+                            {% if pagination.current > 1 %}
+                                <a class="page-link" href="{{ pagination.baseUrl }}{{ pagination.current > 2 ? '?page=' ~ (pagination.current - 1) : '' }}"><i class="bi bi-chevron-left"></i></a>
+                            {% else %}
+                                <span class="page-link"><i class="bi bi-chevron-left"></i></span>
+                            {% endif %}
+                        </li>
+                        {% for p in 1..pagination.total %}
+                            <li class="page-item {{ p == pagination.current ? 'active' : '' }}">
+                                <a class="page-link" href="{{ pagination.baseUrl }}{{ p > 1 ? '?page=' ~ p : '' }}">{{ p }}</a>
+                            </li>
+                        {% endfor %}
+                        <li class="page-item {{ pagination.current >= pagination.total ? 'disabled' : '' }}">
+                            {% if pagination.current < pagination.total %}
+                                <a class="page-link" href="{{ pagination.baseUrl }}?page={{ pagination.current + 1 }}"><i class="bi bi-chevron-right"></i></a>
+                            {% else %}
+                                <span class="page-link"><i class="bi bi-chevron-right"></i></span>
+                            {% endif %}
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+
+        {% if (not subForums) or forumsListUrl %}
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+                <div>
+                    {% if not subForums %}
+                        <a href="{{ user.isGuest ? '#authFormModal' : feed.canonicalUrl ~ 'new/' }}" {% if user.isGuest %}data-bs-toggle="modal" data-bs-target="#authFormModal"{% endif %} class="btn btn-primary d-inline-flex align-items-center gap-2">
+                            <i class="bi bi-pencil-square"></i>
+                            <span>{{ trans('forums.topic_new') }}</span>
+                        </a>
+                    {% endif %}
+                </div>
+                {% if forumsListUrl %}
+                    <a href="{{ forumsListUrl }}" class="link-quiet">{{ trans('view.forums.topic.list.10') }}</a>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        <div class="card bg-body-tertiary border-secondary-subtle mt-3">
+            <div class="card-header bg-body-secondary border-secondary-subtle">
+                <h2 class="h6 mb-0 fw-semibold">{{ trans('view.forums.topic.list.11') }}</h2>
+            </div>
+            <div class="card-body">
+                <div class="row g-3 mb-3">
+                    <div class="col-6 col-lg-3">
+                        <div class="fs-5 fw-semibold" style="font-variant-numeric: tabular-nums">{{ forumTotals.topics }}</div>
+                        <div class="text-body-secondary" style="font-size: .78rem">{{ trans('view.forums.list.09') }}</div>
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <div class="fs-5 fw-semibold" style="font-variant-numeric: tabular-nums">{{ forumTotals.posts }}</div>
+                        <div class="text-body-secondary" style="font-size: .78rem">{{ trans('view.forums.list.08') }}</div>
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <div class="fs-5 fw-semibold" style="font-variant-numeric: tabular-nums">{{ forumTotals.participants }}</div>
+                        <div class="text-body-secondary" style="font-size: .78rem">{{ trans('view.forums.topic.list.12') }}</div>
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <div class="fs-5 fw-semibold" style="font-variant-numeric: tabular-nums">{{ forumTotals.postsToday }}</div>
+                        <div class="text-body-secondary" style="font-size: .78rem">{{ trans('view.forums.list.15') }}</div>
+                    </div>
+                </div>
+                {# Stub - same as forums.list.twig's own stats card: needs
+                   the site's session-based online tracking, not just a
+                   count. See docs/TODO.md "Forums: who's online on the
+                   forum stats card". #}
+                <p class="mb-0 text-body-secondary" style="font-size: .82rem">
+                    {{ trans('view.forums.topic.list.13') }}
+                </p>
+            </div>
+        </div>
+
+    </div>
+{% endblock %}

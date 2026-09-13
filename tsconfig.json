@@ -1,0 +1,55 @@
+{
+    "//": [
+        "Type-checking only - `composer`-style: `npm run typecheck`. Nothing is",
+        "built from here. Vite (esbuild/rolldown) does the transpiling and",
+        "throws types away without looking at them, so this config is the only",
+        "thing that ever checks them.",
+        "",
+        "It previously set moduleResolution 'bundler' with no compatible",
+        "'module', which is an error in itself (TS5095) - tsc refused to start,",
+        "so nothing here had ever actually been checked. With that fixed the",
+        "tree came out clean, which is why this is worth keeping green.",
+        "",
+        "Not `strict` yet, but not nothing either. Measured flag by flag, these",
+        "four cost 0 errors (or two one-line fixes) and are on; the rest is real",
+        "work and stays off for now:",
+        "",
+        "  noImplicitThis, strictFunctionTypes, noImplicitReturns  0 errors",
+        "  noUnusedLocals                                          2, both fixed",
+        "  strictNullChecks                                       21",
+        "  noImplicitAny                                          30",
+        "  strict (all of it)                                     37",
+        "",
+        "Remaining strictness work is tracked in docs/TODO.md."
+    ],
+    "compilerOptions": {
+        "target": "ES2020",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "baseUrl": ".",
+        "paths": {
+            "@stream-engine/*": [
+                "assets-src/*"
+            ]
+        },
+        "lib": [
+            "ES2020",
+            "DOM",
+            "DOM.Iterable"
+        ],
+        "jsx": "react-jsx",
+        "noEmit": true,
+        "resolveJsonModule": true,
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "skipLibCheck": true,
+        "noImplicitThis": true,
+        "strictFunctionTypes": true,
+        "noImplicitReturns": true,
+        "noUnusedLocals": true
+    },
+    "include": [
+        "assets-src",
+        "tests/js"
+    ]
+}

@@ -1,0 +1,33 @@
+<article class="reply border-top pt-3 mt-3" data-id="{{ reply.id }}">
+    {% block reply_header %}
+        <div class="comment-meta d-flex align-items-center gap-2 mb-2">
+            {% block reply_avatar %}
+                <img
+                    src="{{ reply.authorAvatarUrl }}"
+                    alt="{{ reply.authorDisplayName }}"
+                    class="comment-avatar rounded-2"
+                    width="32"
+                    height="32"
+                >
+            {% endblock %}
+            {% block reply_meta %}
+                <div class="comment-meta-text min-w-0">
+                    <div class="comment-author fw-semibold lh-sm">{{ reply.authorDisplayName }}</div>
+                    {% if reply.createdAtLabel %}
+                        <time class="comment-date small text-secondary"
+                              datetime="{{ reply.createdAt ? reply.createdAt|date('c') : '' }}"
+                              {% if reply.createdAtTitle %}title="{{ reply.createdAtTitle }}"{% endif %}>
+                            {{ reply.createdAtLabel }}
+                        </time>
+                    {% endif %}
+                </div>
+            {% endblock %}
+        </div>
+    {% endblock %}
+
+    {% block reply_content %}
+        <div class="reply-content">
+            {{ reply.content|raw }}
+        </div>
+    {% endblock %}
+</article>

@@ -1,0 +1,42 @@
+{% extends "layouts/single.twig" %}
+
+{% block content %}
+
+    {% block feedback_hero %}
+        {% include 'components/common/hero-split.twig' with {
+            title: trans('view.feedback.page.01'),
+            image: '/uploads/1/a42a276d3ac8f893dd40b3f91bfb4571.webp'
+        } %}
+    {% endblock %}
+
+    <div class="row mt-3 mt-lg-5">
+
+        {% block feedback_hint %}
+        <div class="col-lg-6 order-lg-last feedback-hint">
+            {{ hintText|raw }}
+        </div>
+        {% endblock %}
+
+        <div class="col-lg-6">
+
+            {% block feedback_title %}
+            <h2 id="feedbackFormHeader" class="mb-lg-5">{{ trans('view.feedback.page.02') }}</h2>
+            {% endblock %}
+
+            {% block feedback_success %}
+                {% if success %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ trans('view.feedback.page.03') }}
+                </div>
+                {% endif %}
+            {% endblock %}
+
+            {% block feedback_form %}
+                {% include 'components/feedback/form.twig' with {
+                    time: time,
+                    hash: hash
+                } %}
+            {% endblock %}
+        </div>
+    </div>
+{% endblock %}

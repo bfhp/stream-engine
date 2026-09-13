@@ -1,0 +1,15 @@
+{% extends 'components/ui/tab-pane.twig' %}
+
+{% block tab_content %}
+    <form method="post" action="/profile/security">
+        <div class="mb-3">
+            <label class="form-label">{{ trans('view.profile.tabs.security.01') }}</label>
+            <input type="email" name="email" class="form-control" value="{{ user.email }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">{{ trans('view.profile.tabs.security.02') }}</label>
+            <input type="password" name="password" class="form-control">
+        </div>
+        <button class="btn btn-danger">{{ trans('view.profile.tabs.security.03') }}</button>
+    </form>
+{% endblock %}

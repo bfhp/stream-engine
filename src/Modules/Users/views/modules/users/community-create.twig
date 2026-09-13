@@ -1,0 +1,113 @@
+{% extends "layouts/with-sidebar.twig" %}
+
+{% block main_class %}my-4{% endblock %}
+
+{% block content %}
+    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+        <h1 class="h3 mb-0">{{ trans('view.users.community.create.01') }}</h1>
+    </div>
+
+    <form
+        id="communityCreateForm"
+        data-community-create-form
+        data-api-url="{{ apiUrl }}"
+        data-uploads-api-url="{{ uploadsApiUrl }}"
+    >
+        <div class="card mb-3">
+            <div class="card-body">
+                <label class="form-label small text-uppercase text-body-secondary fw-semibold" for="communityName">{{ trans('view.users.community.manage.settings.01') }}</label>
+                <input
+                    type="text"
+                    class="form-control form-control-lg mb-3"
+                    id="communityName"
+                    name="name"
+                    placeholder="{{ trans('view.users.community.create.02') }}"
+                    maxlength="200"
+                >
+
+                <label class="form-label small text-uppercase text-body-secondary fw-semibold" for="communityDescription">{{ trans('view.users.community.manage.settings.02') }}</label>
+                <textarea
+                    class="form-control"
+                    id="communityDescription"
+                    name="description"
+                    rows="5"
+                    maxlength="2000"
+                    placeholder="{{ trans('view.users.community.create.03') }}"
+                ></textarea>
+
+                <div class="d-flex justify-content-end mt-2">
+                    <span class="small text-body-secondary" id="communityCreateFormError" data-community-create-error></span>
+                </div>
+            </div>
+        </div>
+    </form>
+{% endblock %}
+
+{% block sidebar_widgets %}
+    <div class="blog-post-sidebar-sticky" data-community-create-form-owner>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <h2 class="h6 card-title mb-3"><i class="bi bi-person-check me-1"></i>{{ trans('view.users.community.manage.settings.03') }}</h2>
+
+                <div class="form-check mb-2">
+                    <input
+                        class="form-check-input"
+                        type="radio"
+                        name="membershipType"
+                        id="membershipTypeOpen"
+                        value="{{ membershipTypeOpen }}"
+                        checked
+                    >
+                    <label class="form-check-label" for="membershipTypeOpen">
+                        {{ trans('view.users.community.manage.settings.04') }}
+                        <div class="small text-body-secondary">{{ trans('view.users.community.manage.settings.05') }}</div>
+                    </label>
+                </div>
+
+                <div class="form-check mb-3">
+                    <input
+                        class="form-check-input"
+                        type="radio"
+                        name="membershipType"
+                        id="membershipTypeApproval"
+                        value="{{ membershipTypeApproval }}"
+                    >
+                    <label class="form-check-label" for="membershipTypeApproval">
+                        {{ trans('view.users.community.manage.settings.06') }}
+                        <div class="small text-body-secondary">{{ trans('view.users.community.manage.settings.07') }}</div>
+                    </label>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary" type="button" id="btnCreateCommunity" form="communityCreateForm">
+                        <i class="bi bi-people me-1"></i>{{ trans('view.users.community.create.04') }}
+                    </button>
+                    {% if cancelUrl %}
+                        <a href="{{ cancelUrl }}" class="btn btn-link text-body-secondary">
+                            <i class="bi bi-x-lg me-1"></i>{{ trans('view.comments.cancel') }}
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <h2 class="h6 card-title mb-2"><i class="bi bi-card-image me-1"></i>{{ trans('view.users.community.manage.settings.08') }}</h2>
+                <input type="hidden" id="coverImageUrl" data-cover-url value="">
+                <div id="coverSlot" data-cover-slot>
+                    <div class="blog-post-cover-drop" data-cover-drop>
+                        <i class="bi bi-card-image fs-4"></i>
+                        <div>
+                            <div>{{ trans('view.users.community.manage.settings.10') }}</div>
+                            <div class="small text-body-secondary">{{ trans('view.users.community.manage.settings.11') }}</div>
+                        </div>
+                    </div>
+                    <input type="file" class="d-none" accept="image/*" data-cover-file>
+                </div>
+            </div>
+        </div>
+
+    </div>
+{% endblock %}

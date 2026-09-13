@@ -1,0 +1,9 @@
+<div id="searchResults"
+     data-search="{{ query|e }}">
+
+    {% block search_loader %}
+        <div class="spinner-border ms-auto" aria-hidden="true"></div>
+        <strong role="status">{{ trans('view.search.results.01') }}</strong>
+    {% endblock %}
+
+</div>

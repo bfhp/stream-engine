@@ -1,0 +1,124 @@
+{% extends "layouts/with-sidebar.twig" %}
+
+{% block content %}
+
+    {% block blog_feed_header %}
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+            <h2 class="mb-0">{{ trans('view.users.show.01') }}</h2>
+            {% if isOwnProfile and newPostUrl %}
+                <a href="{{ newPostUrl }}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus-lg me-1"></i>{{ trans('blog.new_post') }}
+                </a>
+            {% endif %}
+        </div>
+    {% endblock %}
+
+    {% block blog_feed %}
+        {# data-posts-api-url is read by users.ts's initBlogFeedLoadMore() -
+           a click on .load-more-blog-posts inside this container fetches
+           the next batch from it and appends cards to #blog-feed-posts,
+           rather than reloading the page. #}
+        <div id="blog-feed" data-posts-api-url="{{ postsApiUrl }}">
+            {% if hasPosts %}
+                <div class="d-flex flex-column gap-3" id="blog-feed-posts">
+                    {% for post in posts %}
+                        {% block blog_feed_item %}
+                            {% include 'components/users/post-card.twig' with {post: post} only %}
+                        {% endblock %}
+                    {% endfor %}
+                </div>
+
+                {% if nextOffset is not null %}
+                    <div class="text-center mt-3" data-blog-feed-load-more-wrapper>
+                        <button
+                            type="button"
+                            class="btn btn-outline-secondary load-more-blog-posts"
+                            data-offset="{{ nextOffset }}"
+                        >
+                            {{ trans('view.users.community.sidebar.13') }}
+                        </button>
+                    </div>
+                {% endif %}
+            {% endif %}
+
+            {% if isEmpty %}
+                <div class="card">
+                    <div class="card-body text-center text-body-secondary py-5">
+                        <i class="bi bi-journal-text fs-1 d-block mb-2"></i>
+                        {% if isOwnProfile %}
+                            <p class="mb-1 text-body">{{ trans('view.users.show.02') }}</p>
+                            <p class="mb-0 small">{{ trans('view.users.show.03') }}</p>
+                            {% if newPostUrl %}
+                                <a href="{{ newPostUrl }}" class="btn btn-primary mt-4"><i class="bi bi-plus-lg me-1"></i>{{ trans('view.users.community.show.03') }}</a>
+                            {% endif %}
+                        {% else %}
+                            <p class="mb-1 text-body">{{ trans('view.users.show.04') }}</p>
+                            <p class="mb-0 small">{{ trans('view.users.first_post_hint', {name: profileUser.getDisplayName()}) }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    {% endblock %}
+
+{% endblock %}
+
+{% block sidebar_widgets %}
+
+    {% include 'components/users/profile-sidebar.twig' %}
+
+    {% include 'components/users/audio-player.twig' with {audioPlaylist: audioPlaylist} only %}
+
+    {% block profile_stats %}
+        {% set statsRows = [
+            {label: trans('view.users.show.07'), value: postCount},
+            {label: trans('view.users.community.sidebar.11'), value: commentCount},
+        ] %}
+        {% if registeredAtLabel %}
+            {% set statsRows = statsRows|merge([{label: trans('view.forums.topic.view.23'), value: registeredAtLabel}]) %}
+        {% endif %}
+        {% include 'components/common/stats-card.twig' with {rows: statsRows} only %}
+    {% endblock %}
+
+    {% block profile_friends %}
+        {# data-friends-api-url is read by users.ts's initFriendsLoadMore() -
+           same "Show more" AJAX-append pattern as #blog-feed /
+           initBlogFeedLoadMore(): a click on .load-more-friends inside this
+           container fetches the next batch and appends rows to
+           #friends-list-items, rather than reloading the page. Only mutual
+           friendships show up here - see FriendService's own docblock for
+           why a one-directional subscriber isn't a "friend" yet. #}
+        <div class="card mb-3" id="friends-list" data-friends-api-url="{{ friendsApiUrl }}">
+            <div class="card-body">
+                <h2 class="h6 card-title mb-3">
+                    {{ trans('view.users.show.08') }}
+                    {% if friendsTotal %}<span class="text-body-secondary">({{ friendsTotal }})</span>{% endif %}
+                </h2>
+                {% if hasFriends %}
+                    <div class="d-flex flex-column gap-2" id="friends-list-items">
+                        {% for friend in friends %}
+                            {% block friends_list_item %}
+                                <a href="{{ friend.url ?: '#' }}" class="d-flex align-items-center gap-2 text-body text-decoration-none">
+                                        <img src="{{ friend.avatarUrl }}" alt="" class="rounded-circle bg-body-secondary object-fit-cover flex-shrink-0" width="36" height="36">
+                                    <span class="small">{{ friend.displayName }}</span>
+                                </a>
+                            {% endblock %}
+                        {% endfor %}
+                    </div>
+                    {% if friendsNextOffset is not null %}
+                        <div class="text-center mt-2" data-friends-load-more-wrapper>
+                            <button type="button" class="btn btn-outline-secondary btn-sm load-more-friends" data-offset="{{ friendsNextOffset }}">
+                                {{ trans('view.users.community.sidebar.13') }}
+                            </button>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <p class="card-text text-body-secondary small mb-0">
+                        {% if isOwnProfile %}{{ trans('view.users.show.09') }}{% else %}{{ trans('view.users.show.10') }}{% endif %}
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    {% endblock %}
+
+{% endblock %}

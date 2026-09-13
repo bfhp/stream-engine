@@ -1,0 +1,28 @@
+<form id="forgotPasswordForm"
+      method="post"
+      action="/api/v1/retrieve">
+
+    {% set fieldId = 'retrieveEmail' %}
+
+    <div class="mb-4">
+        <label for="{{ fieldId }}" class="form-label">
+            {{ trans('view.users.register.form.02') }}
+        </label>
+
+        <input
+                class="form-control"
+                type="email"
+                id="{{ fieldId }}"
+                name="email"
+                required
+                placeholder="name@example.com"
+                autocomplete="email"
+        >
+    </div>
+
+    {% block retrieve_submit %}
+        <button type="submit" class="btn btn-primary">
+            {{ trans('view.users.retrieve.form.01') }}
+        </button>
+    {% endblock %}
+</form>

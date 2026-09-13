@@ -1,0 +1,25 @@
+{% if siblings.prev or siblings.next %}
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+
+                {% if siblings.prev %}
+                    <a class="btn btn-primary"
+                       href="{{ siblings.prev.canonicalUrl }}">
+                        <i class="bi bi-arrow-left"></i>
+                        {{ siblings.prev.title }}
+                    </a>
+                {% endif %}
+
+                {% if siblings.next %}
+                    <a class="btn btn-primary float-end"
+                       href="{{ siblings.next.canonicalUrl }}">
+                        {{ siblings.next.title }}
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+{% endif %}

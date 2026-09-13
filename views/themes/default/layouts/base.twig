@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="{{ locale }}" data-bs-theme="dark">
+{% block layout_head %}
+<head>
+    <meta charset="utf-8">
+
+    {% block head_meta %}
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="{% block description %}{{ description|default('') }}{% endblock %}" />
+    {% endblock %}
+
+    <title>{% block meta_title %}{{ title|default('') }}{% endblock %}</title>
+
+    {% block head_icons %}
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+        <link rel="icon" href="/favicon.ico" sizes="any">
+        <link rel="apple-touch-icon" href="/favicon.svg">
+    {% endblock %}
+
+    {% block head_theme %}
+        <meta name="theme-color" content="#0F172A">
+    {% endblock %}
+
+    {% block head_css %}
+        <link rel="stylesheet" href="/assets/css/site.css">
+        <link rel="stylesheet" href="/assets/css/custom-content.css">
+    {% endblock %}
+
+    {% if canonical %}
+        <link rel="canonical" href="{{ canonical }}">
+    {% endif %}
+
+    {% block head_og %}
+        <meta property="og:title" content="{{ title|default('') }}" />
+        <meta property="og:description" content="{{ description|default('') }}" />
+        {% if canonical %}
+        <meta property="og:url" content="{{ canonical }}" />
+        {% endif %}
+        <meta property="og:site_name" content="{{ site_name }}" />
+        {% if image %}
+            <meta property="og:image" content="https://{{ hostname }}{{ image|default('') }}" />
+        {% endif %}
+    {% endblock %}
+
+    {% block head_js %}
+        <script src="/assets/js/site.js" type="module" defer></script>
+    {% endblock %}
+
+    {% block head_ext %}
+        {% for item in head_ext %}
+            {{ item|raw }}
+        {% endfor %}
+    {% endblock %}
+</head>
+{% endblock %}
+
+<body data-auth="{% if user.isGuest %}0{% else %}1{% endif %}">
+
+{% block layout_header %}
+    {% include 'partials/header.twig' %}
+{% endblock %}
+
+{% block layout_after_header %}
+    {% include 'components/widgets/block.twig' with { placement: 'after_header' } %}
+{% endblock %}
+
+{% block layout_main %}
+{% endblock %}
+
+{% block layout_footer %}
+    {% include 'partials/footer.twig' %}
+{% endblock %}
+
+{% block layout_auth %}
+    {% include 'partials/auth-modal.twig' %}
+{% endblock %}
+
+{% block layout_overlays %}
+    {% block ui_toast %}
+        {% include 'components/ui/toast.twig' %}
+    {% endblock %}
+
+    {% block ui_modal_confirm %}
+        {% include 'components/ui/modal_confirm.twig' %}
+    {% endblock %}
+{% endblock %}
+{% block body_end %}{% endblock %}
+</body>
+</html>

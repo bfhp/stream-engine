@@ -1,0 +1,29 @@
+# Dependency directories
+/vendor/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Unittest artifacts
+.phpunit.result.cache
+.phpunit.cache/
+/coverage/
+
+# Composer
+composer.lock
+
+#PhpStorm
+.idea/
+
+# Dynamic files directories
+/storage/*
+!/storage/uploads/
+!/storage/uploads/.gitignore
+
+# Node modules
+/node_modules/
+
+# macOS
+.DS_Store

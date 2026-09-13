@@ -1,0 +1,206 @@
+{% extends "layouts/simple.twig" %}
+
+{% block main_class %}my-4{% endblock %}
+
+{% block content %}
+    <div class="container" style="max-width: 1080px;">
+        <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
+            <h1 class="fw-bold mb-0" style="font-size: 2rem;">{{ title }}</h1>
+
+            <div class="d-flex flex-wrap gap-2">
+                {# Marks every topic across every forum as read for the
+                   current user - the site-wide of the two "mark as read"
+                   scopes ForumsController::handleMarkAllReadRequest()
+                   handles (no forumId - see its own docblock; the per-
+                   section scope is forums.topic-list.twig's own button). #}
+                {% if user.isGuest %}
+                    <button type="button" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2"
+                            disabled title="{{ trans('view.forums.list.01') }}">
+                        <i class="bi bi-check2-all"></i>
+                        <span>{{ trans('view.forums.list.02') }}</span>
+                    </button>
+                {% else %}
+                    <button type="button" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2"
+                            data-forum-mark-all-read>
+                        <i class="bi bi-check2-all"></i>
+                        <span>{{ trans('view.forums.list.02') }}</span>
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-3 mb-3 px-1 text-body-secondary" style="font-size: .8rem">
+            <span class="d-inline-flex align-items-center gap-2">
+                <i class="bi bi-chat-square-text-fill text-primary"></i> {{ trans('view.forums.list.03') }}
+            </span>
+            <span class="d-inline-flex align-items-center gap-2">
+                <i class="bi bi-chat-square-text text-body-secondary"></i> {{ trans('view.forums.list.04') }}
+            </span>
+        </div>
+
+        {% if forums %}
+            {% for forum in forums %}
+                <div class="card mb-3 bg-body-tertiary border-secondary-subtle">
+                    <div class="card-header d-flex align-items-center gap-2 bg-body-secondary border-secondary-subtle">
+                        <button class="btn btn-sm btn-link p-0 text-body-secondary text-decoration-none lh-1"
+                                type="button" data-bs-toggle="collapse"
+                                data-bs-target="#forum-group-{{ forum.id }}" aria-expanded="true"
+                                title="{{ trans('view.forums.list.05') }}">
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                        <div class="flex-grow-1" style="min-width: 0">
+                            <h2 class="h6 mb-0 fw-semibold d-flex align-items-center gap-2">
+                                <a href="{{ forum.canonicalUrl }}" class="text-decoration-none">{{ forum.title }}</a>
+                                {% if (forumGroupUnreadCounts[forum.id] ?? 0) > 0 %}
+                                    <span class="badge text-bg-primary rounded-pill" style="font-size: .68rem"
+                                          title="{{ trans('view.common.unread_topics', {count: forumGroupUnreadCounts[forum.id]}) }}">{{ forumGroupUnreadCounts[forum.id] }}</span>
+                                {% endif %}
+                            </h2>
+                            {% if forum.description %}
+                                <div class="text-body-secondary" style="font-size: .78rem">{{ forum.description }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="collapse show" id="forum-group-{{ forum.id }}">
+                        {% if forum.children %}
+                            <ul class="list-group list-group-flush">
+                                {% for subForum in forum.children %}
+                                    {% set stats = forumStats[subForum.id] %}
+                                    {% set lastPost = forumLastPost[subForum.id] %}
+                                    {% set unreadCount = forumUnreadCounts[subForum.id] ?? 0 %}
+                                    <li class="list-group-item bg-transparent border-secondary-subtle px-3 py-3">
+                                        <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-2 gap-sm-0">
+                                            <div class="d-flex align-items-start gap-3 flex-grow-1" style="min-width: 0">
+                                                {% if unreadCount > 0 %}
+                                                    <i class="bi bi-chat-square-text-fill text-primary"
+                                                       style="font-size: 1.35rem; line-height: 1.4" title="{{ trans('view.common.unread_topics', {count: unreadCount}) }}"></i>
+                                                {% else %}
+                                                    <i class="bi bi-chat-square-text text-body-secondary"
+                                                       style="font-size: 1.35rem; line-height: 1.4" title="{{ trans('view.forums.list.06') }}"></i>
+                                                {% endif %}
+                                                <div style="min-width: 0">
+                                                    <a href="{{ subForum.canonicalUrl }}" class="text-decoration-none"
+                                                       style="font-size: 1rem">{{ subForum.title }}</a>
+                                                    {% if unreadCount > 0 %}
+                                                        <span class="badge text-bg-primary rounded-pill ms-1" style="font-size: .68rem">{{ unreadCount }}</span>
+                                                    {% endif %}
+                                                    {% if subForum.description %}
+                                                        <p class="mb-0 text-body-secondary"
+                                                           style="font-size: .82rem; text-wrap: pretty">{{ subForum.description }}</p>
+                                                    {% endif %}
+                                                    <div class="d-sm-none text-body-secondary" style="font-size: .78rem">
+                                                        {{ stats.topics|default(0) }} {{ trans('view.forums.list.07') }} {{ stats.posts|default(0) }} {{ trans('view.forums.list.08') }}
+                                                    </div>
+                                                    {% if lastPost %}
+                                                        <div class="d-lg-none text-body-secondary text-truncate" style="font-size: .78rem">
+                                                            <i class="bi bi-clock-history me-1"></i><a
+                                                                href="{{ lastPost.topicUrl }}"
+                                                                class="text-decoration-none">{{ lastPost.topicTitle }}</a>
+                                                            &mdash; {{ lastPost.authorName }}, {{ lastPost.when }}
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="d-none d-sm-flex flex-shrink-0 gap-4 text-center text-body-secondary"
+                                                 style="font-size: .85rem">
+                                                <div style="width: 4.5rem">
+                                                    <div class="fw-semibold text-body" style="font-variant-numeric: tabular-nums">{{ stats.topics|default(0) }}</div>
+                                                    <div style="font-size: .72rem">{{ trans('view.forums.list.09') }}</div>
+                                                </div>
+                                                <div style="width: 5.5rem">
+                                                    <div class="fw-semibold text-body" style="font-variant-numeric: tabular-nums">{{ stats.posts|default(0) }}</div>
+                                                    <div style="font-size: .72rem">{{ trans('view.forums.list.08') }}</div>
+                                                </div>
+                                            </div>
+                                            {% if lastPost %}
+                                                <div class="d-none d-lg-flex align-items-center gap-2 flex-shrink-0 ps-3"
+                                                     style="width: 15rem; min-width: 0">
+                                                    <img src="{{ lastPost.authorAvatarUrl }}" alt="{{ lastPost.authorName }}"
+                                                         class="rounded-circle object-fit-cover flex-shrink-0" width="32" height="32">
+                                                    <div style="min-width: 0">
+                                                        <a href="{{ lastPost.topicUrl }}" class="d-block text-decoration-none text-truncate"
+                                                           style="font-size: .85rem" title="{{ lastPost.topicTitle }}">{{ lastPost.topicTitle }}</a>
+                                                        <div class="text-body-secondary text-truncate" style="font-size: .76rem"
+                                                             title="{{ lastPost.whenTitle }}">{{ lastPost.authorName }}, {{ lastPost.when }}</div>
+                                                    </div>
+                                                </div>
+                                            {% else %}
+                                                <div class="d-none d-lg-flex align-items-center text-body-secondary flex-shrink-0 ps-3"
+                                                     style="width: 15rem; font-size: .82rem">{{ trans('view.forums.list.10') }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <div class="card-body">
+                                <p class="mb-0 text-body-secondary" style="font-size: .85rem">{{ trans('view.forums.list.11') }}</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="se-empty mt-4">{{ trans('view.forums.list.12') }}</div>
+        {% endif %}
+
+        <div class="card bg-body-tertiary border-secondary-subtle mt-3">
+            <div class="card-header bg-body-secondary border-secondary-subtle">
+                <h2 class="h6 mb-0 fw-semibold">{{ trans('view.forums.list.13') }}</h2>
+            </div>
+            <div class="card-body">
+                <div class="row g-3 mb-3">
+                    <div class="col-6 col-lg-3">
+                        <div class="fs-5 fw-semibold" style="font-variant-numeric: tabular-nums">{{ forumTotals.topics }}</div>
+                        <div class="text-body-secondary" style="font-size: .78rem">{{ trans('view.forums.list.09') }}</div>
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <div class="fs-5 fw-semibold" style="font-variant-numeric: tabular-nums">{{ forumTotals.posts }}</div>
+                        <div class="text-body-secondary" style="font-size: .78rem">{{ trans('view.forums.list.08') }}</div>
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <div class="fs-5 fw-semibold" style="font-variant-numeric: tabular-nums">{{ forumTotals.members }}</div>
+                        <div class="text-body-secondary" style="font-size: .78rem">{{ trans('view.forums.list.14') }}</div>
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <div class="fs-5 fw-semibold" style="font-variant-numeric: tabular-nums">{{ forumTotals.postsToday }}</div>
+                        <div class="text-body-secondary" style="font-size: .78rem">{{ trans('view.forums.list.15') }}</div>
+                    </div>
+                </div>
+                {# "On the site", not "on the forum", on purpose: presence is
+                   site-wide (UserService's presence methods, derived from
+                   session activity), so activity elsewhere counts here too -
+                   see ForumsController::buildOnlineNow(). Three separate
+                   figures on purpose: guests are a count and nothing else
+                   (an anonymous visitor has no name to show), and crawlers
+                   are named on their own rather than counted as guests or
+                   as members. #}
+                <div class="border-top border-secondary-subtle pt-3" style="font-size: .82rem">
+                    <div class="text-body-secondary mb-1">
+                        <i class="bi bi-broadcast me-1"></i>{{ trans('view.forums.list.16') }}
+                        <span class="fw-semibold text-body" style="font-variant-numeric: tabular-nums">{{ onlineNow.total }}</span>
+                        {{ onlineNow.totalLabel }},
+                        <span class="fw-semibold text-body" style="font-variant-numeric: tabular-nums">{{ onlineNow.guests }}</span>
+                        {{ onlineNow.guestLabel }}
+                        {%- if onlineNow.bots is not empty %}
+                            {{ trans('view.forums.list.17') }} {{ onlineNow.bots|join(', ') }}
+                        {%- endif %}
+                    </div>
+                    {% if onlineNow.members is not empty %}
+                        <div class="text-body-secondary">
+                            {% for member in onlineNow.members %}
+                                {%- if member.url -%}
+                                    <a href="{{ member.url }}" class="text-decoration-none">{{ member.displayName }}</a>
+                                {%- else -%}
+                                    <span>{{ member.displayName }}</span>
+                                {%- endif -%}
+                                {{- not loop.last ? ', ' : '' -}}
+                            {% endfor %}
+                            {%- if onlineNow.hidden > 0 %} {{ trans('view.forums.list.18') }} {{ onlineNow.hidden }}{% endif -%}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

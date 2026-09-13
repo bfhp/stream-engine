@@ -1,0 +1,33 @@
+{% extends "layouts/base.twig" %}
+
+{% block layout_main %}
+
+<main class="{% block main_class %}my-4{% endblock %}">
+    {% block layout_wrapper %}
+    <div class="layout-wrapper">
+        <div class="container">
+            {% block layout_row %}
+                <div class="row">
+
+                    <div class="col-lg-8">
+                        {% include 'components/widgets/block.twig' with { placement: 'before_content' } %}
+                        {% block content %}{% endblock %}
+                        {% include 'components/widgets/block.twig' with { placement: 'after_content' } %}
+                    </div>
+
+                    <aside class="col-lg-4 mt-4 mt-lg-0">
+                        {% block sidebar_inner %}
+                            <div class="sidebar-sticky">
+                                {% include 'components/widgets/block.twig' with { placement: 'sidebar_top' } %}
+                                {% block sidebar_widgets %}{% endblock %}
+                                {% include 'components/widgets/block.twig' with { placement: 'sidebar_bottom' } %}
+                            </div>
+                        {% endblock %}
+                    </aside>
+                </div>
+            {% endblock %}
+        </div>
+    </div>
+    {% endblock %}
+</main>
+{% endblock %}

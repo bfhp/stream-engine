@@ -1,0 +1,102 @@
+{% extends "layouts/with-sidebar.twig" %}
+
+{# A single community's own page (action=community.show, {slug} under
+   community.main) - built on the same layout/idiom as modules/users/
+   show.twig (the public profile page), just for a community feed instead
+   of a personal one. See UsersController::showCommunityShowPage(). #}
+
+{% block content %}
+
+    {% block community_show_feed_header %}
+        {# Same layout/copy as show.twig's own blog_feed_header - "New
+           post" replaces the sidebar's old "Write to community" stub
+           (moved here since this is where a user's own blog page puts its
+           equivalent button, next to the feed it adds to, not in the
+           sidebar). Guests open the login modal. newPostUrl is only set for a real member/
+           moderator/owner (CommunityService::canPost()) - see
+           UsersController::showCommunityShowPage(). #}
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+            <h2 class="mb-0">{{ trans('view.users.community.show.01') }}</h2>
+            {% if user.isGuest or newPostUrl %}
+                <a href="{{ user.isGuest ? '#authFormModal' : newPostUrl }}" {% if user.isGuest %}data-bs-toggle="modal" data-bs-target="#authFormModal"{% endif %} class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus-lg me-1"></i>{{ trans('blog.new_post') }}
+                </a>
+            {% endif %}
+        </div>
+    {% endblock %}
+
+    {% block community_show_feed %}
+        {# data-posts-api-url is read by users.ts's
+           initCommunityShowFeedLoadMore() - same AJAX-append pattern as
+           community.main, but the endpoint is scoped to this community. #}
+        <div id="community-show-feed" data-posts-api-url="{{ postsApiUrl }}">
+            {% if hasPosts %}
+                <div class="d-flex flex-column gap-3" id="community-show-feed-posts">
+                    {% for post in posts %}
+                        {% include 'components/users/post-card.twig' with {post: post, showAuthor: true} only %}
+                    {% endfor %}
+                </div>
+
+                {% if nextOffset is not null %}
+                    <div class="text-center mt-3" data-community-show-feed-load-more-wrapper>
+                        <button
+                            type="button"
+                            class="btn btn-outline-secondary load-more-community-show-posts"
+                            data-offset="{{ nextOffset }}"
+                        >
+                            {{ trans('view.users.community.sidebar.13') }}
+                        </button>
+                    </div>
+                {% endif %}
+            {% endif %}
+
+            {% if isEmpty %}
+                <div class="card">
+                    <div class="card-body text-center text-body-secondary py-5">
+                        <i class="bi bi-journal-text fs-1 d-block mb-2"></i>
+                        <p class="mb-0 text-body">{{ trans('view.users.community.show.02') }}</p>
+                        {% if user.isGuest or newPostUrl %}
+                            <a href="{{ user.isGuest ? '#authFormModal' : newPostUrl }}" {% if user.isGuest %}data-bs-toggle="modal" data-bs-target="#authFormModal"{% endif %} class="btn btn-primary mt-4"><i class="bi bi-plus-lg me-1"></i>{{ trans('view.users.community.show.03') }}</a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    {% endblock %}
+
+{% endblock %}
+
+{% block sidebar_widgets %}
+    {# Extracted to components/users/community-sidebar.twig so
+       community.post-show (a single post's own page) can render the exact
+       same community sidebar this page does, instead of the post
+       author's profile-sidebar.twig - see UsersController::
+       showCommunityPostPage(). `only` + explicit mapping keeps this
+       include's variable names decoupled from whatever this page's own
+       future context variables might be named. #}
+    {% include 'components/users/community-sidebar.twig' with {
+        isGuest: user.isGuest,
+        community: community,
+        imageUrl: communityImageUrl,
+        owner: owner,
+        ownerUrl: ownerUrl,
+        relationshipStatus: relationshipStatus,
+        membershipActionUrl: membershipActionUrl,
+        manageUrl: manageUrl,
+        members: members,
+        hasMembers: hasMembers,
+        membersTotal: membersTotal,
+        membersApiUrl: membersApiUrl,
+        membersNextOffset: membersNextOffset,
+        ratingCount: ratingCount,
+        ratingAverage: ratingAverage,
+        ratingFullStars: ratingFullStars,
+        ratingHasHalfStar: ratingHasHalfStar,
+        ratingHint: ratingHint,
+        postCount: postCount,
+        commentCount: commentCount,
+        createdAtLabel: createdAtLabel,
+    } only %}
+
+    {% include 'components/users/audio-player.twig' with {audioPlaylist: audioPlaylist} only %}
+{% endblock %}

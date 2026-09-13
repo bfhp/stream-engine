@@ -1,0 +1,74 @@
+{
+    "name": "bfhp/stream-engine",
+    "description": "Yet another CMS",
+    "type": "project",
+    "license": "LGPL-3.0-only",
+    "autoload": {
+        "psr-4": {
+            "StreamEngine\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "require": {
+        "php": "^8.3",
+        "vlucas/phpdotenv": "^5.6",
+        "twig/twig": "^3.23",
+        "ext-pdo": "*",
+        "phpmailer/phpmailer": "^7.0",
+        "tijsverkoyen/css-to-inline-styles": "v2.3.0",
+        "ezyang/htmlpurifier": "^4.19",
+        "ext-gd": "*",
+        "ext-fileinfo": "*",
+        "ext-curl": "*",
+        "ext-dom": "*",
+        "ext-intl": "*",
+        "ext-libxml": "*",
+        "ext-simplexml": "*",
+        "ext-memcached": "*",
+        "jaybizzle/crawler-detect": "^1.4"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^12.5",
+        "laravel/pint": "^1.27"
+    },
+    "scripts": {
+        "lint": "pint --test",
+        "lint:fix": "pint",
+        "audit:csrf": "@php vendor/bin/phpunit tests/Security/CsrfCoverageTest.php",
+        "test": "phpunit",
+        "test:coverage": "docker compose exec -e XDEBUG_MODE=coverage -T php vendor/bin/phpunit --coverage-text",
+        "test:coverage-html": "docker compose exec -e XDEBUG_MODE=coverage -T php vendor/bin/phpunit --coverage-html coverage",
+        "migrate": "@php bin/migrate.php migrate",
+        "migrate:status": "@php bin/migrate.php status",
+        "migrate:make": "@php bin/migrate.php make",
+        "migrate:baseline": "@php bin/migrate.php baseline",
+        "cms:install": "@php bin/install.php",
+        "cms:install-token": "@php bin/install-token.php",
+        "install-schema:build": "@php bin/build-install-schema.php",
+        "check-system-deps": [
+            "StreamEngine\\ComposerScripts::checkSystemDeps"
+        ],
+        "post-install-cmd": [
+            "@check-system-deps"
+        ],
+        "post-update-cmd": [
+            "@check-system-deps"
+        ]
+    },
+    "scripts-descriptions": {
+        "test": "Run the PHPUnit suite on the host PHP.",
+        "test:coverage": "Coverage summary in the terminal. Runs in the php container: the coverage driver only exists there, and its xdebug.mode is `debug`, so XDEBUG_MODE=coverage has to override it per run.",
+        "test:coverage-html": "Browsable coverage report in coverage/. Same container, same reason.",
+        "audit:csrf": "Check every mutating API route reaches a Security::verifyCsrf() call."
+    },
+    "config": {
+        "optimize-autoloader": true
+    },
+    "bin": [
+        "bin/cron.php"
+    ]
+}

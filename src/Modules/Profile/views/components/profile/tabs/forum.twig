@@ -1,0 +1,19 @@
+{% extends 'components/ui/tab-pane.twig' %}
+
+{% block tab_content %}
+    <form method="post" action="/api/v1/my/forum" data-profile-form>
+        <div class="mb-3">
+            <label class="form-label">{{ trans('view.profile.tabs.forum.01') }}</label>
+            <textarea class="form-control" name="signature" rows="5">{{ user.signature }}</textarea>
+            <div class="form-text">
+                {{ trans('view.profile.tabs.forum.02') }}
+                <code>&lt;b&gt;</code>, <code>&lt;i&gt;</code>, <code>&lt;a&gt;</code> {{ trans('view.forums.topic.form.36') }}
+                <code>&lt;img&gt;</code> {{ trans('view.profile.tabs.forum.03') }}
+            </div>
+        </div>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            <button class="btn btn-primary" type="submit">{{ trans('view.forums.topic.form.41') }}</button>
+            <span class="text-body-secondary small" data-profile-status></span>
+        </div>
+    </form>
+{% endblock %}

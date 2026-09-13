@@ -1,0 +1,19 @@
+{% extends "layouts/simple.twig" %}
+
+{% block content %}
+    <div class="container">
+        <h1 class="display-3">{{ trans('profile.email_unsubscribe') }}</h1>
+
+        {% if unsubscribed %}
+            <p>{{ trans('view.profile.email.unsubscribe.01') }}</p>
+        {% elseif valid %}
+            <p>{{ trans('view.profile.email.unsubscribe.02') }}</p>
+            <form method="post">
+                <input type="hidden" name="List-Unsubscribe" value="One-Click">
+                <button type="submit">{{ trans('view.profile.unsubscribe') }}</button>
+            </form>
+        {% else %}
+            <p>{{ trans('view.profile.email.unsubscribe.03') }}</p>
+        {% endif %}
+    </div>
+{% endblock %}

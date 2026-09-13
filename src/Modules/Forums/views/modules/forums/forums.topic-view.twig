@@ -1,0 +1,521 @@
+{% extends "layouts/simple.twig" %}
+
+{% block main_class %}my-4{% endblock %}
+
+{% block content %}
+    <div class="container" style="max-width: 1080px;">
+
+        <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-3">
+            <div style="min-width: 0">
+                {% if parentForum %}
+                    <a href="{{ parentForum.canonicalUrl }}" class="section-eyebrow d-inline-block mb-2 text-decoration-none">{{ trans('view.forums.topic.list.01') }} {{ parentForum.title }}</a>
+                {% endif %}
+                <h1 class="fw-bold mb-2" style="font-size: 2rem; text-wrap: pretty">{{ feed.title }}</h1>
+                <div class="d-flex flex-wrap align-items-center gap-3 text-body-secondary" style="font-size: .82rem">
+                    <span class="d-inline-flex align-items-center gap-1"><i class="bi bi-person"></i>{{ feed.authorDisplayName }}</span>
+                    {% if feed.createdAtTitle %}
+                        <span class="d-inline-flex align-items-center gap-1" title="{{ feed.createdAtTitle }}"><i class="bi bi-calendar3"></i>{{ feed.createdAtLabel }}</span>
+                    {% endif %}
+                    <span class="d-inline-flex align-items-center gap-1"><i class="bi bi-chat-square-text"></i><span style="font-variant-numeric: tabular-nums">{{ topicTotals.posts }}</span> {{ trans('view.forums.topic.form.37') }}{{ topicTotals.posts == 1 ? trans('view.forums.topic.form.38') : (topicTotals.posts in [2,3,4] ? trans('view.forums.topic.form.39') : trans('view.forums.topic.form.40')) }}</span>
+                    <span class="d-inline-flex align-items-center gap-1"><i class="bi bi-people"></i><span style="font-variant-numeric: tabular-nums">{{ topicTotals.participants }}</span> {{ trans('view.forums.topic.view.01') }}{{ topicTotals.participants == 1 ? '' : (topicTotals.participants in [2,3,4] ? trans('view.forums.topic.view.02') : trans('view.forums.topic.view.03')) }}</span>
+                    <span class="d-inline-flex align-items-center gap-1"><i class="bi bi-eye"></i><span style="font-variant-numeric: tabular-nums">{{ topicTotals.views }}</span> {{ trans('view.forums.topic.view.04') }}{{ topicTotals.views == 1 ? '' : (topicTotals.views in [2,3,4] ? trans('view.forums.topic.view.02') : trans('view.forums.topic.view.03')) }}</span>
+                    {% if poll %}
+                        <a href="#topic-poll" class="d-inline-flex align-items-center gap-1 text-decoration-none link-quiet" style="font-size: .82rem"><i class="bi bi-bar-chart-line"></i>{{ trans('view.forums.topic.form.10') }}</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mt-1 mb-3 px-1">
+            {% if participants %}
+                <div class="d-flex align-items-center gap-2 text-body-secondary" style="font-size: .8rem">
+                    <span class="me-1">{{ trans('view.forums.topic.view.05') }}</span>
+                    <span class="d-flex align-items-center" style="gap: .25rem">
+                        {% for participant in participants %}
+                            <img src="{{ participant.avatarUrl }}" alt="{{ participant.displayName }}" title="{{ participant.displayName }}"
+                                 class="rounded-circle object-fit-cover" width="26" height="26">
+                        {% endfor %}
+                        {% if participantsOverflow > 0 %}
+                            <span class="d-inline-flex align-items-center justify-content-center rounded-circle"
+                                  style="width: 26px; height: 26px; font-size: .68rem; font-weight: 600; background-color: #1b2740; color: #8ea3c0">+{{ participantsOverflow }}</span>
+                        {% endif %}
+                    </span>
+                </div>
+            {% else %}
+                <div></div>
+            {% endif %}
+            <div class="d-none d-lg-flex flex-wrap align-items-center gap-2">
+                {# Whole-topic editor (forums.topic-edit: title + rich-text
+                   opening post + poll + attachments), as opposed to the
+                   per-post "Edit" further down, which is the generic
+                   plain-text comment editor and can only change content.
+                   Visibility comes from ForumsController::canEditTopic() -
+                   literally the same assertTopicEditable() the edit page and
+                   its PATCH endpoint enforce, so this button can't appear on
+                   a topic those would refuse. #}
+                {% if canEditTopic and topicEditUrl %}
+                    <a href="{{ topicEditUrl }}" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2">
+                        <i class="bi bi-pencil-square"></i><span>{{ trans('view.forums.topic.view.06') }}</span>
+                    </a>
+                {% endif %}
+                {# Generic feed favoriting widget (the shared implementation) repurposed as "follow this topic" - bell icon/
+                   "Follow" wording instead of heart/"favorites" via the
+                   data-favorite-*-on/off overrides CMS.updateFavoriteButton()
+                   reads, already called globally in main.ts, so there's
+                   nothing forum-specific to wire up here. Replying to a
+                   followed topic notifies every follower - see
+                   ForumsController::notifyTopicFollowers(). #}
+                <div class="d-inline-flex"
+                     data-favorite-feed
+                     data-feed-id="{{ feed.id }}"
+                     data-favorited="{{ isFollowing ? '1' : '0' }}"
+                     data-favorite-icon-on="bi-bell-fill"
+                     data-favorite-icon-off="bi-bell"
+                     data-favorite-label-on="{{ trans('view.forums.topic.view.07') }}"
+                     data-favorite-label-off="{{ trans('view.forums.topic.view.08') }}"
+                     data-favorite-aria-on="{{ trans('view.forums.topic.view.09') }}"
+                     data-favorite-aria-off="{{ trans('view.forums.topic.form.45') }}">
+                    {% if user.isGuest %}
+                        <button type="button" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2"
+                                data-bs-toggle="modal" data-bs-target="#authFormModal">
+                            <i class="bi bi-bell"></i><span>{{ trans('view.forums.topic.view.08') }}</span>
+                        </button>
+                    {% else %}
+                        <button type="button" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2"
+                                data-favorite-toggle aria-pressed="{{ isFollowing ? 'true' : 'false' }}">
+                            <i class="bi {{ isFollowing ? 'bi-bell-fill' : 'bi-bell' }}"></i>
+                            <span data-favorite-label>{{ isFollowing ? trans('view.forums.topic.view.07') : trans('view.forums.topic.view.08') }}</span>
+                        </button>
+                    {% endif %}
+                </div>
+                <button type="button" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2"
+                        data-forum-mark-topic-read data-topic-id="{{ feed.id }}">
+                    <i class="bi bi-check2-all"></i><span>{{ trans('view.forums.topic.view.10') }}</span>
+                </button>
+            </div>
+        </div>
+
+        {% if poll %}
+            {# Generic feed-attached poll (Service\PollService) - the topic
+               is just its feed (poll.id/options come from
+               ForumsController::buildPollViewModel()). Vote-form and
+               results are both always rendered (one d-none per the
+               *initial* showVoteForm/showResults state) so forums.ts's
+               initPoll() can toggle between them client-side (revealing the
+               already-server-rendered, correctly pre-checked vote-form for
+               "Change vote" without a round trip) exactly like the
+               comment edit/view and quick-reply edit/preview toggles above
+               already do. #}
+            <div class="card mb-3 bg-body-tertiary border-secondary-subtle" id="topic-poll" data-poll-feed-id="{{ feed.id }}">
+                <div class="card-header d-flex flex-wrap align-items-center gap-2 bg-body-secondary border-secondary-subtle">
+                    <div class="flex-grow-1 d-flex flex-wrap align-items-center gap-2" style="min-width: 0">
+                        <i class="bi bi-bar-chart-line text-body-secondary"></i>
+                        <h2 class="h6 mb-0 fw-semibold">{{ trans('view.forums.topic.view.11') }}</h2>
+                        {% if poll.isClosed %}
+                            <span class="badge text-bg-secondary" style="font-size: .66rem">{{ trans('view.forums.topic.view.12') }}</span>
+                        {% else %}
+                            <span class="badge text-bg-success" style="font-size: .66rem">{{ trans('view.forums.topic.view.13') }}</span>
+                        {% endif %}
+                    </div>
+                    {% if poll.deadlineText %}
+                        <div class="text-body-secondary d-inline-flex align-items-center gap-1" style="font-size: .78rem">
+                            <i class="bi bi-clock"></i><span>{{ poll.deadlineText }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <div class="fw-semibold mb-1" style="font-size: 1.02rem; text-wrap: pretty">{{ poll.question }}</div>
+                    <div class="text-body-secondary mb-3" style="font-size: .8rem">{{ poll.hint }}</div>
+
+                    <div class="d-flex flex-column{{ poll.showVoteForm ? '' : ' d-none' }}" style="gap: .5rem"
+                         data-poll-vote-form
+                         data-poll-max-choices="{{ poll.maxChoices }}"
+                         data-poll-multiple="{{ poll.isMultiple ? '1' : '0' }}"
+                         data-poll-current-votes="{{ poll.currentVotesAttr }}">
+                        {% for opt in poll.options %}
+                            <label class="poll-option d-flex align-items-center gap-2 w-100{{ opt.checked ? ' is-selected' : '' }}"
+                                   data-poll-option data-option-id="{{ opt.id }}">
+                                <input class="visually-hidden" type="{{ poll.isMultiple ? 'checkbox' : 'radio' }}"
+                                       name="poll-option-{{ poll.id }}" value="{{ opt.id }}"
+                                       {{ opt.checked ? 'checked' : '' }} data-poll-option-input>
+                                <i class="bi {{ poll.isMultiple
+                                    ? (opt.checked ? 'bi-check-square-fill text-primary' : 'bi-square text-body-secondary')
+                                    : (opt.checked ? 'bi-record-circle text-primary' : 'bi-circle text-body-secondary') }}"
+                                   style="font-size: 1.1rem; line-height: 1" data-poll-option-icon></i>
+                                <span style="font-size: .95rem; line-height: 1.45">{{ opt.text }}</span>
+                            </label>
+                        {% endfor %}
+                        <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
+                            <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-2"
+                                    data-poll-submit {{ poll.submitDisabled ? 'disabled' : '' }}>
+                                <i class="bi bi-check2"></i><span>{{ trans('view.forums.topic.view.14') }}</span>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary d-none" data-poll-cancel-change>{{ trans('view.comments.cancel') }}</button>
+                            <span class="text-body-secondary ms-sm-2" style="font-size: .78rem" data-poll-selection-hint>{{ poll.selectionHint }}</span>
+                        </div>
+                    </div>
+
+                    <div class="{{ poll.showResults ? '' : 'd-none' }}" data-poll-results>
+                        {% for opt in poll.options %}
+                            <div class="mb-3">
+                                <div class="d-flex align-items-baseline justify-content-between gap-3 mb-1">
+                                    <span class="d-inline-flex align-items-baseline gap-2" style="font-size: .95rem; line-height: 1.45">
+                                        <i class="bi {{ opt.checked ? 'bi-check-circle-fill text-primary' : 'bi-dot text-body-secondary' }}"
+                                           style="font-size: .95rem" data-poll-option-result-icon data-option-id="{{ opt.id }}"></i><span>{{ opt.text }}</span>
+                                    </span>
+                                    <span class="text-body-secondary flex-shrink-0 font-monospace" style="font-size: .78rem; font-variant-numeric: tabular-nums"
+                                          data-poll-option-stat data-option-id="{{ opt.id }}">{{ opt.statText }}</span>
+                                </div>
+                                <div style="height: 8px; border-radius: 4px; background-color: rgba(255,255,255,.06); overflow: hidden">
+                                    <div style="height: 100%; border-radius: 4px; width: {{ opt.pct }}%; transition: width 160ms ease; background-color: {{ opt.checked ? 'var(--bs-primary)' : (opt.isLeading ? 'rgba(255,255,255,.42)' : 'rgba(255,255,255,.22)') }}"
+                                         data-poll-option-bar data-option-id="{{ opt.id }}"></div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    {% if poll.showHiddenNote %}
+                        <div class="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-2 text-body-secondary"
+                             style="background-color: rgba(255,255,255,.03); border: 1px solid var(--bs-border-color); font-size: .85rem"
+                             data-poll-hidden-note>
+                            <i class="bi bi-eye-slash"></i><span>{{ poll.hiddenNoteText }}</span>
+                        </div>
+                    {% endif %}
+
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mt-3 pt-3 border-top border-secondary-subtle">
+                        <div class="d-flex flex-wrap align-items-center gap-3 text-body-secondary" style="font-size: .8rem">
+                            <span class="d-inline-flex align-items-center gap-1{{ poll.showResults ? '' : ' d-none' }}" data-poll-total-votes>
+                                <i class="bi bi-check2-square"></i><span class="font-monospace" style="font-variant-numeric: tabular-nums">{{ poll.totalVotesText }}</span>
+                            </span>
+                            <span class="d-inline-flex align-items-center gap-1{{ poll.showResults ? '' : ' d-none' }}" data-poll-voters>
+                                <i class="bi bi-people"></i><span class="font-monospace" style="font-variant-numeric: tabular-nums">{{ poll.votersText }}</span>
+                            </span>
+                            <span class="d-inline-flex align-items-center gap-1 text-success{{ poll.hasVoted ? '' : ' d-none' }}" data-poll-voted-note>
+                                <i class="bi bi-check-circle"></i><span>{{ trans('view.forums.topic.view.15') }}</span>
+                            </span>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-link px-0 d-inline-flex align-items-center gap-1{{ poll.canChangeVote ? '' : ' d-none' }}"
+                                data-poll-change-vote>
+                            <i class="bi bi-arrow-repeat"></i>{{ trans('view.forums.topic.view.16') }}
+                        </button>
+                    </div>
+
+                    {% if poll.pollGuestPrompt %}
+                        <div class="alert alert-secondary d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-0 mt-3"
+                             style="border-color: var(--bs-border-color-translucent); font-size: .9rem">
+                            <span>{{ trans('view.forums.topic.view.17') }}</span>
+                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#authFormModal">{{ trans('view.auth.sign_in') }}</button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="card mb-3 bg-body-tertiary border-secondary-subtle">
+            <div class="card-header d-flex align-items-center gap-2 bg-body-secondary border-secondary-subtle">
+                <div class="flex-grow-1" style="min-width: 0">
+                    <h2 class="h6 mb-0 fw-semibold">{{ trans('view.forums.topic.view.18') }}</h2>
+                    <div class="text-body-secondary" style="font-size: .78rem">
+                        {{ topicTotals.posts }} {{ trans('view.forums.topic.form.37') }}{{ topicTotals.posts == 1 ? trans('view.forums.topic.form.38') : (topicTotals.posts in [2,3,4] ? trans('view.forums.topic.form.39') : trans('view.forums.topic.form.40')) }}{{ trans('view.forums.topic.view.19') }} {{ pagination.current }} {{ trans('view.forums.topic.list.08') }} {{ pagination.total }}
+                    </div>
+                </div>
+            </div>
+            <div id="topic-posts">
+                <ul class="list-group list-group-flush">
+                    {% for post in posts %}
+                        {% set postFeed = post.feed %}
+                        <li class="list-group-item bg-transparent border-secondary-subtle px-3 py-3" id="post-{{ post.number }}">
+                            <div class="d-flex flex-column flex-md-row gap-3">
+                                <div class="flex-shrink-0 d-flex flex-row flex-md-column align-items-center align-items-md-start gap-3 gap-md-2" style="width: 100%; max-width: 11.5rem">
+                                    <img src="{{ post.authorAvatarUrl }}" alt="{{ postFeed.authorDisplayName }}" class="rounded-circle object-fit-cover flex-shrink-0" width="56" height="56">
+                                    <div style="min-width: 0">
+                                        <span class="d-block fw-semibold text-truncate" style="font-size: .95rem">{{ postFeed.authorDisplayName }}</span>
+                                        {% if post.isTopicAuthor %}
+                                            <span class="badge text-bg-primary mt-1" style="font-size: .66rem">{{ trans('view.forums.topic.view.20') }}</span>
+                                        {% endif %}
+                                        {% if post.isCurrentUser %}
+                                            <span class="badge text-bg-secondary mt-1" style="font-size: .66rem">{{ trans('view.forums.topic.view.21') }}</span>
+                                        {% endif %}
+
+                                        {# Post count / member-since is the least essential bit of
+                                           author info, so it's the one dropped on narrow screens
+                                           rather than letting this block outgrow the avatar next to
+                                           it - see the rating widget's comment below for why mobile
+                                           height is tight here. Shown again once this column stacks
+                                           under the avatar at md+. #}
+                                        <div class="text-body-secondary mt-1 d-none d-md-block" style="font-size: .72rem; line-height: 1.5">
+                                            <div>{{ trans('view.forums.topic.view.22') }} <span class="text-body" style="font-variant-numeric: tabular-nums">{{ post.authorPostCount }}</span></div>
+                                            {% if post.authorMemberSince %}
+                                                <div>{{ trans('view.forums.topic.view.23') }} {{ post.authorMemberSince }}</div>
+                                            {% endif %}
+                                        </div>
+
+                                        {# Generic feed rating widget (the shared implementation) - data-rate-feed/data-feed-id/data-user-rating
+                                           are picked up by CMS.initRating(), already called globally in
+                                           main.ts, so there's nothing forum-specific to wire up here.
+                                           Lives with the author info rather than down in post-actions -
+                                           on mobile this whole column is a flex-row next to a 56px
+                                           avatar (align-items-center), so the summary count text is
+                                           hidden here (d-none d-md-inline) to keep the row from
+                                           stretching tall; it reappears once this becomes a proper
+                                           sidebar column at md+ where height isn't shared with the
+                                           avatar. #}
+                                        <div class="d-flex align-items-center gap-2 mt-1"
+                                             data-rate-feed
+                                             data-feed-id="{{ postFeed.id }}"
+                                             data-user-rating="{{ post.userRating ?? '' }}">
+                                            <div class="rating-stars d-inline-flex" style="font-size: .85rem" aria-label="{{ trans('view.forums.topic.view.24') }}">
+                                                {% for i in 1..5 %}
+                                                    {% if user.isGuest %}
+                                                        <button type="button"
+                                                                class="rating-star btn btn-link p-0 border-0"
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#authFormModal"
+                                                                aria-label="{{ trans('view.common.rate_aria', {rating: i}) }}">
+                                                            <i class="bi bi-star"></i>
+                                                        </button>
+                                                    {% else %}
+                                                        <button type="button"
+                                                                class="rating-star btn btn-link p-0 border-0"
+                                                                data-value="{{ i }}"
+                                                                aria-label="{{ trans('view.common.rate_aria', {rating: i}) }}">
+                                                            <i class="bi {{ post.userRating and i <= post.userRating ? 'bi-star-fill' : 'bi-star' }}"></i>
+                                                        </button>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                            <span class="rating-summary text-body-secondary d-none d-md-inline" data-rating-summary style="font-size: .76rem">
+                                                {% if postFeed.ratingCount > 0 %}
+                                                    {{ postFeed.ratingAverage|number_format(1) }} {{ trans('view.forums.topic.view.25') }} {{ postFeed.ratingCount }}
+                                                {% else %}
+                                                    {{ trans('view.forums.topic.view.26') }}
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1" style="min-width: 0">
+                                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                                        <div class="d-flex align-items-center gap-2 text-body-secondary" style="font-size: .78rem">
+                                            {% if post.isOpeningPost %}
+                                                <span class="badge text-bg-secondary" style="font-size: .66rem">{{ trans('view.forums.topic.view.27') }}</span>
+                                            {% endif %}
+                                            {% if postFeed.createdAtTitle %}
+                                                <time title="{{ postFeed.createdAtTitle }}">{{ postFeed.createdAtLabel }}</time>
+                                            {% endif %}
+                                        </div>
+                                        <a href="#post-{{ post.number }}" class="text-decoration-none text-body-secondary font-monospace" style="font-size: .78rem" title="{{ trans('view.forums.topic.view.28') }}">#{{ post.number }}</a>
+                                    </div>
+                                    <div class="content" data-comment-content-wrapper="{{ postFeed.id }}" style="font-size: .95rem; line-height: 1.7; overflow-wrap: anywhere">
+                                        {{ postFeed.content|raw }}
+                                    </div>
+                                    {% if post.attachments %}
+                                        <div class="d-flex flex-column gap-2 mt-3" style="max-width: 28rem">
+                                            {% for attachment in post.attachments %}
+                                                <a href="{{ attachment.url }}" target="_blank" rel="noopener"
+                                                   class="d-flex align-items-center gap-2 p-2 text-decoration-none"
+                                                   style="border: 1px solid var(--bs-border-color); border-radius: .5rem">
+                                                    <i class="bi {{ attachment.icon }} fs-5 text-body-secondary"></i>
+                                                    <div style="min-width: 0">
+                                                        <div class="text-truncate" style="font-size: .85rem">{{ attachment.name }}</div>
+                                                        <div class="text-body-secondary" style="font-size: .76rem">{{ attachment.sizeLabel }}</div>
+                                                    </div>
+                                                </a>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    {# Author's signature, repeated under every post as forums do.
+                                       |raw is safe: users.signature only ever holds purified HTML
+                                       (UserService::sanitizeSignature guards both write paths).
+                                       .forum-signature is what clamps images - see
+                                       custom-content.css. #}
+                                    {% if post.authorSignature %}
+                                        <div class="forum-signature text-body-secondary mt-3 pt-2"
+                                             style="font-size: .82rem; line-height: 1.6; overflow-wrap: anywhere; border-top: 1px solid var(--bs-border-color)">
+                                            {{ post.authorSignature|raw }}
+                                        </div>
+                                    {% endif %}
+                                    {% if post.wasEdited %}
+                                        <div class="text-body-secondary mt-2 d-inline-flex align-items-center gap-1" style="font-size: .76rem" title="{{ trans('view.forums.edited_at', {date: post.editedAtTitle}) }}">
+                                            <i class="bi bi-pencil"></i>{{ trans('view.forums.topic.view.29') }}
+                                        </div>
+                                    {% endif %}
+                                    {% if post.canEdit %}
+                                        <div class="mt-3 d-none" data-comment-edit-wrapper="{{ postFeed.id }}">
+                                            <label class="visually-hidden" for="comment-edit-{{ postFeed.id }}">{{ trans('view.forums.topic.view.30') }}</label>
+                                            <textarea id="comment-edit-{{ postFeed.id }}" class="form-control" rows="4" maxlength="5000" data-comment-edit-textarea>{{ post.editableContent }}</textarea>
+                                            <div class="invalid-feedback d-none mt-1" data-comment-edit-error></div>
+                                            <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
+                                                <button type="button" class="btn btn-sm btn-primary" data-comment-edit-save data-comment-id="{{ postFeed.id }}" data-parent-id="{{ feed.id }}">{{ trans('view.forums.topic.form.41') }}</button>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" data-comment-edit-cancel data-comment-id="{{ postFeed.id }}">{{ trans('view.comments.cancel') }}</button>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    <div class="d-flex flex-wrap align-items-center justify-content-end gap-3 mt-3">
+                                        {# Rating widget lives with the author info now - see the
+                                           left-hand column above. #}
+                                        <div class="post-actions d-flex align-items-center gap-2">
+                                            {% if user.isGuest %}
+                                                <a href="#authFormModal" data-bs-toggle="modal" data-bs-target="#authFormModal" class="btn btn-sm btn-link px-0 d-inline-flex align-items-center gap-1"><i class="bi bi-reply"></i>{{ trans('view.comments.reply') }}</a>
+                                            {% else %}
+                                                <a href="#reply" class="btn btn-sm btn-link px-0 d-inline-flex align-items-center gap-1"><i class="bi bi-reply"></i>{{ trans('view.comments.reply') }}</a>
+                                            {% endif %}
+                                            {% if not user.isGuest %}
+                                                <button type="button" class="btn btn-sm btn-link px-0 d-inline-flex align-items-center gap-1"
+                                                        data-quote-toggle
+                                                        data-quote-author="{{ postFeed.authorDisplayName }}"
+                                                        data-quote-content="{{ post.quoteText }}">
+                                                    <i class="bi bi-quote"></i>{{ trans('view.forums.topic.view.31') }}
+                                                </button>
+                                            {% else %}
+                                                <button type="button" class="btn btn-sm btn-link px-0 d-inline-flex align-items-center gap-1"
+                                                        data-bs-toggle="modal" data-bs-target="#authFormModal">
+                                                    <i class="bi bi-quote"></i>{{ trans('view.forums.topic.view.31') }}
+                                                </button>
+                                            {% endif %}
+                                            {% if post.canEdit or post.canDelete %}
+                                                <span class="post-actions-sep text-body-secondary">&middot;</span>
+                                            {% endif %}
+                                            {% if post.canEdit %}
+                                                <button type="button" class="btn btn-sm btn-link px-0 d-inline-flex align-items-center gap-1"
+                                                        data-comment-edit-toggle data-comment-id="{{ postFeed.id }}"
+                                                        title="{{ trans('view.forums.topic.view.32') }}">
+                                                    <i class="bi bi-pencil"></i>{{ trans('view.forums.topic.view.33') }}
+                                                </button>
+                                            {% endif %}
+                                            {% if post.canDelete %}
+                                                <button type="button" class="btn btn-sm btn-link px-0 link-danger d-inline-flex align-items-center gap-1"
+                                                        data-comment-delete data-comment-id="{{ postFeed.id }}" data-parent-id="{{ feed.id }}">
+                                                    <i class="bi bi-trash"></i>{{ trans('view.forums.topic.view.34') }}
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        {% if pagination.total > 1 %}
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+                <div class="d-inline-flex align-items-center gap-2 text-body-secondary small">
+                    <i class="bi bi-chat-square-text"></i>
+                    {{ trans('view.forums.topic.list.07') }}
+                    <span class="fw-semibold font-monospace text-body-emphasis">{{ pagination.current }}</span>
+                    {{ trans('view.forums.topic.list.08') }} <span class="font-monospace">{{ pagination.total }}</span>
+                </div>
+                <nav aria-label="{{ trans('view.forums.topic.view.35') }}">
+                    <ul class="pagination mb-0">
+                        <li class="page-item {{ pagination.current <= 1 ? 'disabled' : '' }}">
+                            {% if pagination.current > 1 %}
+                                <a class="page-link" href="{{ pagination.baseUrl }}{{ pagination.current > 2 ? '?page=' ~ (pagination.current - 1) : '' }}"><i class="bi bi-chevron-left"></i></a>
+                            {% else %}
+                                <span class="page-link"><i class="bi bi-chevron-left"></i></span>
+                            {% endif %}
+                        </li>
+                        {% for p in 1..pagination.total %}
+                            <li class="page-item {{ p == pagination.current ? 'active' : '' }}">
+                                <a class="page-link" href="{{ pagination.baseUrl }}{{ p > 1 ? '?page=' ~ p : '' }}">{{ p }}</a>
+                            </li>
+                        {% endfor %}
+                        <li class="page-item {{ pagination.current >= pagination.total ? 'disabled' : '' }}">
+                            {% if pagination.current < pagination.total %}
+                                <a class="page-link" href="{{ pagination.baseUrl }}?page={{ pagination.current + 1 }}"><i class="bi bi-chevron-right"></i></a>
+                            {% else %}
+                                <span class="page-link"><i class="bi bi-chevron-right"></i></span>
+                            {% endif %}
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+
+        {% if user.isGuest %}
+            <div class="alert alert-secondary d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3" id="reply" style="border-color: var(--bs-border-color-translucent)">
+                <span>{{ trans('view.forums.topic.view.36') }}</span>
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#authFormModal">{{ trans('view.auth.sign_in') }}</button>
+            </div>
+        {% else %}
+            <div class="card mb-3 bg-body-tertiary border-secondary-subtle" id="reply">
+                <div class="card-header bg-body-secondary border-secondary-subtle">
+                    <h2 class="h6 mb-0 fw-semibold">{{ trans('view.forums.topic.view.37') }}</h2>
+                </div>
+                <div class="card-body">
+                    <form id="forum-quick-reply-form"
+                          data-forum-quick-reply
+                          data-parent-id="{{ feed.id }}"
+                          data-total-posts="{{ topicTotals.posts }}"
+                          data-per-page="{{ pagination.perPage|default(20) }}"
+                          data-topic-url="{{ feed.canonicalUrl }}">
+                        <label class="visually-hidden" for="forum-quick-reply-content">{{ trans('view.forums.topic.view.38') }}</label>
+                        {# Toggled by data-forum-quick-reply-preview-toggle
+                           (forums.ts's initQuickReplyForm()) instead of the
+                           textarea below - rendered client-side via
+                           renderCommentPreviewHtml(), the same
+                           escape+nl2br+leading-quote-block treatment
+                           FeedService::normalizeCommentContent() applies on
+                           submit, just without its HTMLPurifier pass - close
+                           enough for "does this look right", not
+                           byte-identical, same trade-off forums.topic-new's
+                           own Preview already documents. #}
+                        <div class="content d-none mb-3" data-forum-quick-reply-preview
+                             style="font-size: .95rem; line-height: 1.7; overflow-wrap: anywhere"></div>
+                        <textarea id="forum-quick-reply-content"
+                                  name="content"
+                                  class="form-control"
+                                  rows="5"
+                                  maxlength="5000"
+                                  placeholder="{{ trans('view.forums.topic.view.39') }}"
+                                  required></textarea>
+                        <div class="invalid-feedback d-none mt-1" data-forum-quick-reply-error></div>
+                        <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
+                            <button type="submit" class="btn btn-primary d-inline-flex align-items-center gap-2"><i class="bi bi-send"></i><span>{{ trans('view.forums.topic.view.40') }}</span></button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm ms-auto d-inline-flex align-items-center gap-2"
+                                    data-forum-quick-reply-preview-toggle><i class="bi bi-eye"></i><span>{{ trans('view.forums.topic.form.43') }}</span></button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+            <div>
+                {% if parentForum %}
+                    <a href="{{ user.isGuest ? '#authFormModal' : parentForum.canonicalUrl ~ 'new/' }}" {% if user.isGuest %}data-bs-toggle="modal" data-bs-target="#authFormModal"{% endif %} class="btn btn-primary d-inline-flex align-items-center gap-2">
+                        <i class="bi bi-pencil-square"></i>
+                        <span>{{ trans('forums.topic_new') }}</span>
+                    </a>
+                {% endif %}
+            </div>
+            {% if parentForum %}
+                <a href="{{ parentForum.canonicalUrl }}" class="link-quiet">{{ trans('view.forums.topic.view.41') }}{{ parentForum.title }}»</a>
+            {% endif %}
+        </div>
+
+        <div class="card bg-body-tertiary border-secondary-subtle mt-3">
+            <div class="card-header bg-body-secondary border-secondary-subtle">
+                <h2 class="h6 mb-0 fw-semibold">{{ trans('view.forums.topic.view.42') }}</h2>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-6 col-lg-3">
+                        <div class="fs-5 fw-semibold" style="font-variant-numeric: tabular-nums">{{ topicTotals.posts }}</div>
+                        <div class="text-body-secondary" style="font-size: .78rem">{{ trans('view.forums.list.08') }}</div>
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <div class="fs-5 fw-semibold" style="font-variant-numeric: tabular-nums">{{ topicTotals.participants }}</div>
+                        <div class="text-body-secondary" style="font-size: .78rem">{{ trans('view.forums.list.14') }}</div>
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <div class="fs-5 fw-semibold" style="font-variant-numeric: tabular-nums">{{ topicTotals.views }}</div>
+                        <div class="text-body-secondary" style="font-size: .78rem">{{ trans('view.forums.topic.view.43') }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+{% endblock %}

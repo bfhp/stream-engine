@@ -1,0 +1,166 @@
+{# Shared author profile card, used by both the profile page
+   (modules/users/show.twig) and the blog post page
+   (modules/users/blog-post.show.twig). Expects profileUser/
+   profileUserAvatarUrl/isOwnProfile/isOnline in the including template's
+   context - included without `only` so it inherits them directly rather
+   than needing them re-passed. profileUserAvatarUrl is already resolved
+   (UserService::resolveAvatarUrl()) by whichever controller method set
+   profileUser, never a raw/possibly-empty field read off it directly.
+   profile_rating renders real numbers when authorRatingCount/
+   authorRatingAverage/authorRatingFullStars/authorRatingHasHalfStar/
+   authorRatingHint are also present (user.show's own view data) and falls
+   back to the "not calculated yet" stub otherwise (blog-post.show.twig
+   doesn't compute an aggregate author rating). #}
+{% if profileUser %}
+
+    {% block profile_card %}
+        <div class="card mb-3">
+            <div class="card-body text-center">
+                <img
+                    src="{{ profileUserAvatarUrl }}"
+                    alt="{{ profileUser.getDisplayName() }}"
+                    class="rounded-circle border bg-body-secondary object-fit-cover mb-3"
+                    width="120"
+                    height="120"
+                >
+
+                <h2 class="h4 mb-0">{{ profileUser.getDisplayName() }}</h2>
+                {% if profileUser.username %}
+                    <p class="text-body-secondary small mb-2">@{{ profileUser.username }}</p>
+                {% endif %}
+
+                {% if canViewProfilePresence is not defined or canViewProfilePresence %}
+                    <p class="mb-3">
+                        {% if isOnline %}
+                            <span class="badge bg-success">{{ trans('view.profile.online') }}</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ trans('view.profile.offline') }}</span>
+                        {% endif %}
+                    </p>
+                {% endif %}
+
+                {% if isOwnProfile %}
+                    <a class="btn btn-outline-secondary d-block" href="/profile/">
+                        <i class="bi bi-pencil"></i> {{ trans('view.profile.edit') }}
+                    </a>
+                {% else %}
+                    {# relationshipStatus/friendActionUrl are only in context
+                       on user.show (UsersController::buildFriendsViewData())
+                       - blog-post.show.twig, which also includes this
+                       partial, doesn't compute them yet (same gap
+                       authorRatingCount already has above), so the button
+                       stays a disabled stub there. users.ts's
+                       initFriendButton() wires up .friend-action-btn's
+                       click handler and rewrites this button in place from
+                       the JSON {status} the API responds with - see
+                       UsersController::handleUserFriendRequest(). There's
+                       no separate "subscribe to blog" feature - a friend
+                       request doubles as a blog subscription (see the hint
+                       text below), so this is the only action button here
+                       besides the direct-message action.
+
+                       That one needs no relationshipStatus and so works on
+                       both pages: app.ts's initDirectMessage() turns
+                       data-message-user into a found-or-created direct
+                       conversation and sends the visitor to it. A guest
+                       gets the same button wired to the login modal
+                       instead - same reasoning as the comment form's own
+                       guest branch, showing what's on offer beats hiding
+                       it. #}
+                    <div class="d-grid gap-2">
+                        {% if user.isGuest %}
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#authFormModal">
+                                <i class="bi bi-person-plus"></i> {{ trans('view.profile.add_friend') }}
+                            </button>
+                        {% elseif relationshipStatus == 'friends' %}
+                            <button type="button" class="btn btn-outline-secondary friend-action-btn" data-friend-url="{{ friendActionUrl }}" data-action="remove">
+                                <i class="bi bi-person-check"></i> {{ trans('view.profile.remove_friend') }}
+                            </button>
+                        {% elseif relationshipStatus == 'subscribed' %}
+                            <button type="button" class="btn btn-outline-secondary friend-action-btn" data-friend-url="{{ friendActionUrl }}" data-action="remove">
+                                <i class="bi bi-person-dash"></i> {{ trans('view.profile.unsubscribe') }}
+                            </button>
+                        {% elseif relationshipStatus is defined and relationshipStatus is not null %}
+                            <button type="button" class="btn btn-primary friend-action-btn" data-friend-url="{{ friendActionUrl }}" data-action="add">
+                                <i class="bi bi-person-plus"></i> {{ trans('view.profile.add_friend') }}
+                            </button>
+                        {% else %}
+                            <button type="button" class="btn btn-primary" disabled title="{{ trans('view.profile.coming_soon') }}">
+                                <i class="bi bi-person-plus"></i> {{ trans('view.profile.add_friend') }}
+                            </button>
+                        {% endif %}
+                        {% if user.isGuest %}
+                            <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#authFormModal">
+                                <i class="bi bi-envelope"></i> {{ trans('view.profile.message') }}
+                            </button>
+                        {% else %}
+                            <button type="button" class="btn btn-outline-secondary" data-message-user="{{ profileUser.id }}">
+                                <i class="bi bi-envelope"></i> {{ trans('view.profile.message') }}
+                            </button>
+                        {% endif %}
+                    </div>
+                    {% if relationshipStatus == 'incoming' %}
+                        <p class="text-body-secondary small mt-2 mb-0"><i class="bi bi-info-circle"></i> {{ trans('view.profile.incoming_friend_request', {name: profileUser.getDisplayName()}) }}</p>
+                    {% elseif relationshipStatus != 'friends' %}
+                        <p class="text-body-secondary small mt-2 mb-0">{{ trans('view.profile.friend_request_subscription_hint') }}</p>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    {% endblock %}
+
+    {% block profile_info %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <h2 class="h6 card-title">{{ trans('view.profile.about') }}</h2>
+
+                {% if profileUser.bio %}
+                    <p class="card-text">{{ profileUser.bio }}</p>
+                {% endif %}
+
+                <ul class="list-unstyled text-body-secondary small mb-0">
+                    {% if (canViewProfileGender is not defined or canViewProfileGender) and profileUser.gender == 'male' %}
+                        <li><i class="bi bi-person"></i> {{ trans('view.profile.gender_male') }}</li>
+                    {% elseif (canViewProfileGender is not defined or canViewProfileGender) and profileUser.gender == 'female' %}
+                        <li><i class="bi bi-person"></i> {{ trans('view.profile.gender_female') }}</li>
+                    {% elseif (canViewProfileGender is not defined or canViewProfileGender) and profileUser.gender == 'other' %}
+                        <li><i class="bi bi-person"></i> {{ trans('view.profile.gender_other') }}</li>
+                    {% endif %}
+
+                    {% if (canViewProfileBirthDate is not defined or canViewProfileBirthDate) and profileUser.birthDate %}
+                        <li><i class="bi bi-cake2"></i> {{ trans('view.profile.birth_date', {date: profileBirthDateLabel}) }}</li>
+                    {% endif %}
+
+                    {% if (canViewProfileHomepage is not defined or canViewProfileHomepage) and profileUser.homepage %}
+                        <li>
+                            <i class="bi bi-link-45deg"></i>
+                            <a href="{{ profileUser.homepage }}" target="_blank" rel="noopener noreferrer nofollow">{{ profileUser.homepage }}</a>
+                        </li>
+                    {% endif %}
+
+                    {% set hasVisibleProfileInfo =
+                        profileUser.bio
+                        or ((canViewProfileGender is not defined or canViewProfileGender) and profileUser.gender)
+                        or ((canViewProfileBirthDate is not defined or canViewProfileBirthDate) and profileUser.birthDate)
+                        or ((canViewProfileHomepage is not defined or canViewProfileHomepage) and profileUser.homepage)
+                    %}
+                    {% if not hasVisibleProfileInfo %}
+                        <li>{{ trans('view.profile.empty') }}</li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    {% endblock %}
+
+    {% block profile_rating %}
+        {% include 'components/common/rating-card.twig' with {
+            count: authorRatingCount ?? 0,
+            average: authorRatingAverage ?? null,
+            fullStars: authorRatingFullStars ?? 0,
+            hasHalfStar: authorRatingHasHalfStar ?? false,
+            hint: authorRatingHint ?? null,
+            emptyText: trans('view.profile.rating_empty'),
+        } only %}
+    {% endblock %}
+
+{% endif %}

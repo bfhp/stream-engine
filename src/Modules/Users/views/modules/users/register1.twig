@@ -1,0 +1,23 @@
+{% extends "layouts/with-sidebar.twig" %}
+
+{% block content %}
+
+    {% block register_header %}
+    <h1>{{ trans('user.registration') }} <small class="text-muted">{{ trans('view.users.register1.01') }}</small></h1>
+    <hr>
+    {% endblock %}
+
+    {% block register_intro %}
+    <p class="lead">{{ trans('view.users.register1.02') }}</p>
+    <p class="lead">{{ trans('view.users.register1.03') }}</p>
+    {% endblock %}
+
+    {% block register_form %}
+        {% include 'components/users/register-form.twig' %}
+    {% endblock %}
+
+{% endblock %}
+
+{% block sidebar %}
+    {% include 'components/users/register-sidebar.twig' %}
+{% endblock %}

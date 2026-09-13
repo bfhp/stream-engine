@@ -1,0 +1,19 @@
+{% extends "layouts/simple.twig" %}
+
+{% block content %}
+
+    {% block article_content %}
+        {{ feed.content|raw }}
+    {% endblock %}
+
+    {% block article_sections %}
+        {% if sections %}
+            {% include 'components/article/sections.twig' with { items: sections } %}
+        {% endif %}
+    {% endblock %}
+
+    {% block article_share %}
+        {% include 'partials/share-buttons.twig' %}
+    {% endblock %}
+
+{% endblock %}

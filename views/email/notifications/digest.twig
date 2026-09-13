@@ -1,0 +1,15 @@
+{% extends "layout.twig" %}
+
+{% block content %}
+    <h1>{{ trans('mail.notifications.daily') }}</h1>
+    <ul>
+        {% for notification in notifications %}
+            <li>
+                {{ notification.text }}
+                {% if notification.url %}
+                    — <a href="{{ notification.url }}">{{ trans('mail.notifications.open') }}</a>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+{% endblock %}

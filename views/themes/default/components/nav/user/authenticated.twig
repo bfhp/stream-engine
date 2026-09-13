@@ -1,0 +1,47 @@
+<div class="d-flex ms-auto order-2 order-lg-4">
+
+    {% block user_messages %}
+    <a class="btn btn-outline-secondary me-2" href="/messages/" role="button" title="{{ trans('view.nav.messages') }}">
+        <i class="bi bi-envelope"></i>
+        <span class="d-md-none">{{ trans('view.nav.messages') }}</span>
+        <!--
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+            99+
+            <span class="visually-hidden">unread messages</span>
+        </span>-->
+    </a>
+    {% endblock %}
+
+    {% block user_dropdown %}
+    <div class="btn-group">
+
+        <a class="btn p-0"
+           id="menu-user"
+           href="/profile/"
+           role="button">
+            <img alt="{{ user.nick }}"
+                 src="{{ user.avatarUrl }}"
+                 class="rounded-circle" />
+            <span class="d-lg-none d-md-none">{{ trans('view.nav.profile') }}</span>
+        </a>
+
+        <button type="button"
+                id="menu-user-toggle"
+                class="btn dropdown-toggle dropdown-toggle-split"
+                data-bs-toggle="dropdown"
+                aria-expanded="false">
+            <span class="visually-hidden">Toggle Dropdown</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="menu-user-toggle">
+            {% block navbar_user_menu %}
+                {% for item in userMenu %}
+                    {% include 'components/nav/menu-item.twig' with {
+                        item: item,
+                        level: 1
+                    } %}
+                {% endfor %}
+            {% endblock %}
+        </ul>
+    </div>
+    {% endblock %}
+</div>

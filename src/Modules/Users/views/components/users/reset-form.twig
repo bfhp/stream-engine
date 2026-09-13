@@ -1,0 +1,54 @@
+<form id="resetPasswordForm"
+      method="post"
+      action="/api/v1/retrieve">
+
+    <input type="hidden" name="token" value="{{ token }}">
+
+    {% set passwordId = 'resetPassword' %}
+    {% set password2Id = 'resetPassword2' %}
+
+    {% block reset_password %}
+        <div class="mb-4">
+            <label for="{{ passwordId }}" class="form-label">
+                {{ trans('view.profile.tabs.security.02') }}
+            </label>
+
+            <input
+                    class="form-control"
+                    type="password"
+                    id="{{ passwordId }}"
+                    name="password"
+                    required
+                    autocomplete="new-password"
+                    minlength="10"
+                    placeholder="{{ trans('view.users.reset.form.01') }}"
+            >
+        </div>
+    {% endblock %}
+
+    {% block reset_password_confirm %}
+        <div class="mb-4">
+            <label for="{{ password2Id }}" class="form-label">
+                {{ trans('view.users.reset.form.02') }}
+            </label>
+
+            <input
+                    class="form-control"
+                    type="password"
+                    id="{{ password2Id }}"
+                    name="password2"
+                    required
+                    autocomplete="new-password"
+                    minlength="10"
+                    placeholder="{{ trans('view.users.reset.form.02') }}"
+            >
+        </div>
+    {% endblock %}
+
+    {% block reset_submit %}
+        <button type="submit" class="btn btn-primary">
+            {{ trans('view.users.reset.form.03') }}
+        </button>
+    {% endblock %}
+
+</form>

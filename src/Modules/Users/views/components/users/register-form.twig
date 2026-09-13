@@ -1,0 +1,54 @@
+<form id="registerForm" method="post" action="/api/v1/users">
+    {% block register_hidden %}
+    <div class="mb-3 visually-hidden">
+        <label for="registerInputLogin" class="form-label">{{ trans('view.users.register.form.01') }}</label>
+        <input name="login" type="text" class="form-control" id="registerInputLogin">
+    </div>
+    {% endblock %}
+
+    {% block register_email %}
+    <div class="mb-3">
+        <label for="registerInputEmail" class="form-label">{{ trans('view.users.register.form.02') }}</label>
+        <input
+                type="email"
+                class="form-control"
+                id="registerInputEmail"
+                name="email"
+                required
+                autocomplete="email"
+                placeholder="name@example.com"
+                aria-describedby="emailHelp">
+        <div id="emailHelp" class="form-text">{{ trans('view.users.register.form.03') }}</div>
+    </div>
+    {% endblock %}
+
+    {% block register_password %}
+    <div class="mb-3">
+        <label for="registerInputPassword" class="form-label">{{ trans('view.auth.password') }}</label>
+        <input
+                type="password"
+                class="form-control"
+                id="registerInputPassword"
+                name="password"
+                required
+                minlength="10"
+                autocomplete="new-password"
+                aria-describedby="passwordHelp">
+        <div id="passwordHelp" class="form-text">{{ trans('view.users.register.form.04') }}</div>
+    </div>
+    {% endblock %}
+
+    {% block register_captcha %}
+    <!-- TODO -->
+    <div class="mb-3 d-none">
+        <label class="form-label">{{ trans('view.users.register.form.05') }}</label>
+        <div class="col-sm-10">
+            <div class="g-recaptcha" data-sitekey="{{ hCaptchaPublic }}"></div>
+        </div>
+    </div>
+    {% endblock %}
+
+    {% block register_submit %}
+    <button type="submit" class="btn btn-primary">{{ trans('view.auth.register') }}</button>
+    {% endblock %}
+</form>

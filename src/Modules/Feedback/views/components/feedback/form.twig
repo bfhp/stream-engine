@@ -1,0 +1,30 @@
+<form id="feedbackForm" method="post" action="/api/v1/feedback">
+    <input type="hidden" name="form_time" value="{{ time }}">
+    <input type="hidden" name="form_hash" value="{{ hash }}">
+
+    <div class="mb-3">
+        <label for="feedbackInputName" class="form-label">{{ trans('view.feedback.form.01') }}</label>
+        <input type="text" class="form-control" name="full_name" required maxlength="100" id="feedbackInputName">
+    </div>
+
+    <div class="mb-3">
+        <label for="feedbackInputEmail" class="form-label">Email</label>
+        <input type="email" class="form-control" name="email" required maxlength="200" id="feedbackInputEmail">
+    </div>
+
+    <div class="visually-hidden">
+        <label>
+            Website
+            <input type="text" name="website">
+        </label>
+    </div>
+
+    <div class="mb-3">
+        <label for="feedbackInputMessage" class="form-label">{{ trans('view.ui.message') }}</label>
+        <textarea minlength="30" class="form-control" name="message" rows="6" required maxlength="2000" id="feedbackInputMessage"></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary">
+        {{ trans('view.feedback.form.02') }}
+    </button>
+</form>

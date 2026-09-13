@@ -1,0 +1,29 @@
+{% extends "layouts/simple.twig" %}
+
+{% block content %}
+
+    {% block article_content %}
+        {{ feed.content|raw }}
+    {% endblock %}
+
+    {% block article_navigation %}
+        {% include 'components/article/navigation.twig' with { siblings: siblings } %}
+    {% endblock %}
+
+    {% block article_related %}
+        {% include 'components/article/related.twig' with { items: subFeeds } %}
+    {% endblock %}
+
+    {% block article_share %}
+        {% include 'partials/share-buttons.twig' %}
+    {% endblock %}
+
+    {% block article_comments %}
+        {% if comments %}
+            <div class="container">
+                {% include 'partials/comments.twig' %}
+            </div>
+        {% endif %}
+    {% endblock %}
+
+{% endblock %}

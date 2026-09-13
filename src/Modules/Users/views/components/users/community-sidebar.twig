@@ -1,0 +1,222 @@
+{# A community's sidebar - the identity card (with the manage stub
+   action at the bottom of that same card - see community_sidebar_header's
+   own comment for why it stays there while join/leave and "write a
+   post" don't), then the membership (join/leave) card, then a read-only
+   aggregate rating across the community's own posts, basic stats, and
+   the members list - in that order, matching profile-sidebar.twig +
+   show.twig's own rating -> stats -> friends order for a personal
+   profile. The membership card sits right after the header, in the same
+   relative position profile-sidebar.twig's own profile_info ("About the
+   user") card occupies right after profile_card - relationshipStatus
+   there is a genuinely separate concern from the identity card, same as
+   here. Originally inline in community-show.twig's own
+   sidebar_widgets block; extracted here so community.post-show
+   (UsersController::showCommunityPostPage(), template blog-post.show.twig)
+   can show the same community sidebar a post's parent community page
+   does, instead of the post author's profile-sidebar.twig - a post inside
+   a community is more "part of the community" than "part of the author's
+   personal blog", same reasoning community.show already reflects.
+
+   Included with `only` from every caller (see both callers' own comments)
+   so its bare `relationshipStatus` here can never pick up an unrelated
+   ambient value of the same name from the includer's own scope (e.g.
+   blog-post.show.twig already has its own `relationshipStatus` for the
+   friend-request button - a different domain than this partial's
+   community-scoped one).
+
+   Expected variables: community (Feed), imageUrl (string - community's
+   own imageUrl or CommunityService::DEFAULT_IMAGE_URL, already resolved
+   by the controller via CommunityService::resolveImageUrl() - see that
+   method's own docblock for why this isn't a method on Feed itself),
+   owner (User|null), ownerUrl
+   (string|null), relationshipStatus (string: owner/moderator/member/
+   pending/none - CommunityService::getRelationshipStatus()),
+   membershipActionUrl (string), members
+   (list), hasMembers (bool), membersTotal (int), membersApiUrl
+   (string), membersNextOffset (int|null), ratingCount (int),
+   ratingAverage (float|null), ratingFullStars (int), ratingHasHalfStar
+   (bool), ratingHint (string|null) - the aggregate across this
+   community's own posts (UsersController::buildCommunityRatingViewData()),
+   NOT a vote on the community feed itself - postCount (int, posts
+   parented under this community), commentCount (int, comments left on
+   those posts) and createdAtLabel (string|null -
+   UsersController::buildCommunityStatsViewData()). #}
+
+{% block community_sidebar_header %}
+    {# Community identity card - avatar/title/creator/description, plus
+       the manage stub action at the bottom of this same card rather than
+       as a separate card below it - same layout profile-sidebar.twig's
+       profile_card already uses for "Edit profile". The
+       join/leave membership action does NOT live here - see
+       community_membership below for why - and "write a post" moved to
+       community-show.twig's own feed header ("New post", next to the
+       feed it adds to) instead of a sidebar stub, mirroring where
+       show.twig puts the equivalent button for a personal blog. Used to
+       live at the top of community-show.twig's own content column; moved
+       to the top of this shared sidebar so community.post-show (a single
+       post's page) shows the same "which community is this" context a
+       post's own community.show page does. #}
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <img
+                    src="{{ imageUrl }}"
+                    alt="{{ community.title }}"
+                    class="rounded-circle border bg-body-secondary object-fit-cover flex-shrink-0"
+                    width="80"
+                    height="80"
+                >
+                <div class="flex-grow-1">
+                    <h2 class="h5 mb-1">{{ community.title }}</h2>
+                    {% if owner %}
+                        <p class="text-body-secondary small mb-0">
+                            {{ trans('view.users.community.sidebar.01') }}
+                            {% if ownerUrl %}
+                                <a href="{{ ownerUrl }}" class="text-body">{{ owner.getDisplayName() }}</a>
+                            {% else %}
+                                {{ owner.getDisplayName() }}
+                            {% endif %}
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if community.description %}
+                <p class="card-text mt-3 mb-0">{{ community.description }}</p>
+            {% endif %}
+
+            {% block community_manage_stub %}
+                {# "Manage" - links to action=community.manage (see
+                   UsersController::showCommunityManagePage()). Owner-only
+                   (manageUrl is only ever set for the community's own
+                   owner - see showCommunityShowPage()) - a moderator no
+                   longer sees this button at all, now that it actually
+                   goes somewhere real rather than being a shared disabled
+                   stub (per this feature's own spec, "Owner access
+                   only"). #}
+                {% if manageUrl %}
+                    <div class="d-grid gap-2 mt-3">
+                        <a href="{{ manageUrl }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-gear me-1"></i>{{ trans('view.users.community.sidebar.02') }}
+                        </a>
+                    </div>
+                {% endif %}
+            {% endblock %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block community_membership %}
+    {# The join/leave action, as its own card right after the header -
+       same relative position profile-sidebar.twig's profile_info ("About
+       the user") occupies right after profile_card. Unlike
+       community_manage_stub (which really is just a secondary action
+       bolted onto the identity card), a viewer's own membership status
+       is a distinct, standalone fact about them and this community,
+       worth its own card rather than being buried at the bottom of the
+       identity one.
+
+       data-membership-url/data-status are picked up by users.ts's
+       initCommunityMembershipButton() - a click rewrites this button in
+       place from the JSON {status} the API responds with, same pattern
+       as profile-sidebar.twig's .friend-action-btn/initFriendButton(). #}
+    <div class="card mb-3">
+        <div class="card-body">
+            {% if isGuest %}
+                <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#authFormModal">
+                    <i class="bi bi-person-plus"></i> {{ trans('view.users.community.sidebar.03') }}
+                </button>
+            {% elseif relationshipStatus == 'owner' %}
+                <p class="card-text text-body-secondary small mb-0">
+                    <i class="bi bi-patch-check"></i> {{ trans('view.users.community.sidebar.04') }}
+                </p>
+            {% elseif relationshipStatus == 'pending' %}
+                <button type="button" class="btn btn-outline-secondary community-membership-btn w-100" data-membership-url="{{ membershipActionUrl }}" data-action="remove" data-status="pending">
+                    <i class="bi bi-hourglass-split"></i> {{ trans('view.users.community.sidebar.05') }}
+                </button>
+                <p class="text-body-secondary small mt-2 mb-0">{{ trans('view.users.community.sidebar.06') }}</p>
+            {% elseif relationshipStatus == 'member' or relationshipStatus == 'moderator' %}
+                <button type="button" class="btn btn-outline-secondary community-membership-btn w-100" data-membership-url="{{ membershipActionUrl }}" data-action="remove" data-status="{{ relationshipStatus }}">
+                    <i class="bi bi-box-arrow-right"></i> {{ trans('view.users.community.sidebar.07') }}
+                </button>
+            {% elseif relationshipStatus == 'none' %}
+                <button type="button" class="btn btn-primary community-membership-btn w-100" data-membership-url="{{ membershipActionUrl }}" data-action="add" data-status="none">
+                    <i class="bi bi-person-plus"></i> {{ trans('view.users.community.sidebar.03') }}
+                </button>
+            {% else %}
+                <button type="button" class="btn btn-primary w-100" disabled title="{{ trans('view.users.community.sidebar.08') }}">
+                    <i class="bi bi-person-plus"></i> {{ trans('view.users.community.sidebar.03') }}
+                </button>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block community_rating %}
+    {# NOT a vote on the community feed itself - a community (like a
+       personal blog) is never something a viewer rates directly, only
+       individual posts are rateable (see UsersController::
+       buildCommunityRatingViewData()). #}
+    {% include 'components/common/rating-card.twig' with {
+        count: ratingCount ?? 0,
+        average: ratingAverage ?? null,
+        fullStars: ratingFullStars ?? 0,
+        hasHalfStar: ratingHasHalfStar ?? false,
+        hint: ratingHint ?? null,
+        emptyText: trans('view.users.community.sidebar.09'),
+    } only %}
+{% endblock %}
+
+{% block community_stats %}
+    {# Same row set as show.twig's profile_stats (posts/comments/date)
+       - "Members" was dropped from here since the members list right
+       below already shows that count in its own heading; a comment count
+       across the community's own posts is the more useful "how active is
+       this place" number, matching the profile page's own stats card. #}
+    {% set statsRows = [
+        {label: trans('view.users.community.sidebar.10'), value: postCount ?? 0},
+        {label: trans('view.users.community.sidebar.11'), value: commentCount ?? 0},
+    ] %}
+    {% if createdAtLabel %}
+        {% set statsRows = statsRows|merge([{label: trans('view.users.community.sidebar.12'), value: createdAtLabel}]) %}
+    {% endif %}
+    {% include 'components/common/stats-card.twig' with {rows: statsRows} only %}
+{% endblock %}
+
+{% block community_members %}
+    {# data-members-api-url is read by users.ts's
+       initCommunityMembersLoadMore() - same "Show more" AJAX-append
+       pattern as #friends-list/initFriendsLoadMore() on the profile
+       page. Only real members show up here (pending subscribers don't -
+       see MembershipRepository::findMembers()'s own docblock). #}
+    <div class="card mb-3" id="community-members" data-members-api-url="{{ membersApiUrl }}">
+        <div class="card-body">
+            <h2 class="h6 card-title mb-3">
+                {{ trans('community.manage_members') }}
+                {% if membersTotal %}<span class="text-body-secondary">({{ membersTotal }})</span>{% endif %}
+            </h2>
+            {% if hasMembers %}
+                <div class="d-flex flex-column gap-2" id="community-members-items">
+                    {% for member in members %}
+                        {% block community_members_item %}
+                            <a href="{{ member.url ?: '#' }}" class="d-flex align-items-center gap-2 text-body text-decoration-none">
+                                <img src="{{ member.avatarUrl }}" alt="" class="rounded-circle bg-body-secondary object-fit-cover flex-shrink-0" width="36" height="36">
+                                <span class="small">{{ member.displayName }}</span>
+                                {% if member.roleLabel %}<span class="badge text-bg-secondary ms-auto">{{ member.roleLabel }}</span>{% endif %}
+                            </a>
+                        {% endblock %}
+                    {% endfor %}
+                </div>
+                {% if membersNextOffset is not null %}
+                    <div class="text-center mt-2" data-community-members-load-more-wrapper>
+                        <button type="button" class="btn btn-outline-secondary btn-sm load-more-community-members" data-offset="{{ membersNextOffset }}">
+                            {{ trans('view.users.community.sidebar.13') }}
+                        </button>
+                    </div>
+                {% endif %}
+            {% else %}
+                <p class="card-text text-body-secondary small mb-0">{{ trans('view.users.community.manage.members.05') }}</p>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

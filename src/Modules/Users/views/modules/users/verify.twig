@@ -1,0 +1,26 @@
+{% extends "layouts/with-sidebar.twig" %}
+
+{% block content %}
+
+    {% block register_header %}
+    <h1>{{ trans('user.registration') }} <small class="text-muted">{{ trans('view.users.register2.01') }}</small></h1>
+    <hr>
+    {% endblock %}
+
+    {% block verify_error %}
+    <div class="alert alert-danger">
+        <p class="lead mb-2">{{ trans('view.users.verify.01') }}</p>
+        <p class="mb-0">{{ trans('view.users.verify.02') }}</p>
+    </div>
+    {% endblock %}
+
+    {% block verify_details %}
+    <p>{{ trans('view.users.verify.03') }}</p>
+    {% endblock %}
+
+    {% block verify_actions %}
+    <p>{{ trans('view.users.verify.04') }} <a href="/register/">{{ trans('view.users.verify.05') }}</a> {{ trans('view.users.verify.06') }}</p>
+    <p>{{ trans('view.users.verify.07') }} <a href="/contacts/">{{ trans('view.users.verify.08') }}</a>.</p>
+    {% endblock %}
+
+{% endblock %}

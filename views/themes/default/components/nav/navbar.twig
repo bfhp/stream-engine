@@ -1,0 +1,27 @@
+{% block navbar_burger %}
+    {# BURGER #}
+    <button class="navbar-toggler order-3 order-lg-2"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#mainNavbar"
+            aria-controls="mainNavbar"
+            aria-expanded="false"
+            aria-label="{{ trans('view.nav.open_menu') }}">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+{% endblock %}
+
+{# Menu #}
+<div class="collapse navbar-collapse order-4 order-lg-4" id="mainNavbar">
+    {% block navbar_menu %}
+        {% include 'components/nav/menu.twig' with {
+            items: topMenu,
+            menuClass: 'navbar-nav me-auto',
+            itemClass: 'nav-link'
+        } %}
+    {% endblock %}
+
+    {% block navbar_search %}
+        {% include 'components/nav/search-form.twig' %}
+    {% endblock %}
+</div>

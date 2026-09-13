@@ -1,0 +1,11 @@
+{% extends "layouts/base.twig" %}
+
+{% block layout_main %}
+    <main class="{% block main_class %}my-5{% endblock %}">
+        <div class="container">
+            {% include 'components/widgets/block.twig' with { placement: 'before_content' } %}
+            {% block content %}{% endblock %}
+            {% include 'components/widgets/block.twig' with { placement: 'after_content' } %}
+        </div>
+    </main>
+{% endblock %}

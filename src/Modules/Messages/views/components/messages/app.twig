@@ -1,0 +1,220 @@
+<div class="messenger-page"
+     data-messages-app
+     data-current-user-id="{{ user.id }}">
+
+    <!-- ============ MAIN ============ -->
+    <div class="msgr-main">
+
+        <!-- ---------- SIDEBAR ---------- -->
+        <aside class="msgr-sidebar">
+            <div class="msgr-sidebar-header">
+                <div class="msgr-search">
+                    <i class="bi bi-search"></i>
+                    <input type="text"
+                           class="msgr-search-input"
+                           data-messages-search
+                           placeholder="{{ trans('view.messages.app.01') }}"
+                           autocomplete="off" />
+                </div>
+                <button type="button"
+                        class="msgr-icon-btn msgr-icon-btn-accent"
+                        data-messages-new-open
+                        title="{{ trans('view.messages.app.02') }}">
+                    <i class="bi bi-pencil-square"></i>
+                </button>
+            </div>
+
+            <div class="msgr-conversations" data-messages-conversations>
+                <div class="msgr-conv-placeholder">{{ trans('view.messages.app.03') }}</div>
+            </div>
+        </aside>
+
+        <!-- ---------- CONTENT ---------- -->
+        <section class="msgr-content">
+
+            <!-- ===== CHAT ===== -->
+            <div class="msgr-chat" data-messages-chat-panel hidden>
+                <header class="msgr-chat-header">
+                    <button type="button" class="msgr-icon-btn msgr-chat-back" data-messages-back title="{{ trans('view.messages.app.04') }}">
+                        <i class="bi bi-arrow-left"></i>
+                    </button>
+                    <div class="msgr-chat-header-avatar" data-chat-avatar></div>
+                    <div class="msgr-chat-header-info" data-chat-info-toggle>
+                        <div class="msgr-chat-header-title" data-chat-title></div>
+                        <div class="msgr-chat-header-subtitle" data-chat-subtitle></div>
+                    </div>
+                    <button type="button"
+                            class="msgr-icon-btn"
+                            data-chat-promote
+                            title="{{ trans('view.messages.app.05') }}"
+                            hidden>
+                        <i class="bi bi-person-plus"></i>
+                    </button>
+                    <button type="button"
+                            class="msgr-icon-btn"
+                            data-chat-info-btn
+                            title="{{ trans('view.messages.app.06') }}"
+                            hidden>
+                        <i class="bi bi-info-circle"></i>
+                    </button>
+                </header>
+
+                <div class="msgr-messages" data-messages-list></div>
+
+                <div class="msgr-typing" data-messages-typing hidden></div>
+
+                <footer class="msgr-composer">
+                    <div class="msgr-edit-preview" data-edit-preview hidden>
+                        <i class="bi bi-pencil-fill"></i>
+                        <div class="msgr-edit-preview-body">
+                            <div class="msgr-edit-preview-label">{{ trans('view.messages.app.07') }}</div>
+                        </div>
+                        <button type="button" class="msgr-edit-preview-cancel" data-edit-cancel title="{{ trans('view.messages.app.08') }}">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                    <div class="msgr-reply-preview" data-reply-preview hidden>
+                        <i class="bi bi-reply-fill"></i>
+                        <div class="msgr-reply-preview-body">
+                            <div class="msgr-reply-preview-name" data-reply-preview-name></div>
+                            <div class="msgr-reply-preview-text" data-reply-preview-text></div>
+                        </div>
+                        <button type="button" class="msgr-reply-preview-cancel" data-reply-cancel title="{{ trans('view.messages.app.09') }}">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                    <div class="msgr-attach-preview" data-attach-preview hidden>
+                        <div class="msgr-attach-preview-thumb" data-attach-preview-thumb></div>
+                        <div class="msgr-attach-preview-body">
+                            <div class="msgr-attach-preview-name" data-attach-preview-name></div>
+                            <div class="msgr-attach-preview-size" data-attach-preview-size></div>
+                        </div>
+                        <button type="button" class="msgr-attach-preview-cancel" data-attach-cancel title="{{ trans('view.messages.app.10') }}">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                    <div class="msgr-composer-inner">
+                        <input type="file"
+                               data-attach-input
+                               hidden
+                               accept="image/jpeg,image/png,image/webp,image/gif,audio/mpeg,audio/ogg">
+                        <button type="button" class="msgr-icon-btn" title="{{ trans('view.messages.app.11') }}" data-messages-attach>
+                            <i class="bi bi-paperclip"></i>
+                        </button>
+                        <textarea class="msgr-input"
+                                  rows="1"
+                                  data-message-input
+                                  placeholder="{{ trans('view.messages.app.12') }}"></textarea>
+                        <button type="button"
+                                class="msgr-send-btn"
+                                data-messages-send
+                                title="{{ trans('view.comments.submit') }}"
+                                disabled>
+                            <i class="bi bi-send-fill"></i>
+                        </button>
+                    </div>
+                </footer>
+            </div>
+
+            <!-- ===== EMPTY STATE ===== -->
+            <div class="msgr-empty" data-messages-empty>
+                <span class="msgr-empty-icon"><i class="bi bi-chat-dots-fill"></i></span>
+                <div class="msgr-empty-title">{{ trans('view.messages.app.13') }}</div>
+                <div class="msgr-empty-text">{{ trans('view.messages.app.14') }}</div>
+                <button type="button" class="msgr-btn msgr-btn-accent" data-messages-empty-new>
+                    <i class="bi bi-pencil-square"></i> {{ trans('view.messages.app.02') }}
+                </button>
+            </div>
+
+            <!-- ===== NEW CONVERSATION ===== -->
+            <div class="msgr-newconv" data-messages-new-panel hidden>
+                <header class="msgr-newconv-header">
+                    <button type="button" class="msgr-icon-btn" data-messages-new-close>
+                        <i class="bi bi-arrow-left"></i>
+                    </button>
+                    <span>{{ trans('view.messages.app.02') }}</span>
+                </header>
+
+                <div class="msgr-newconv-tabs">
+                    <button type="button" class="msgr-tab is-active" data-new-tab="direct">{{ trans('view.messages.app.15') }}</button>
+                    <button type="button" class="msgr-tab" data-new-tab="group">{{ trans('message.group_chat') }}</button>
+                </div>
+
+                <div class="msgr-newconv-group" data-new-group-fields hidden>
+                    <input type="text"
+                           class="msgr-text-input"
+                           data-new-group-title
+                           placeholder="{{ trans('view.messages.app.16') }}" />
+                    <div class="msgr-chips" data-new-group-chips hidden></div>
+                </div>
+
+                <div class="msgr-newconv-search">
+                    <i class="bi bi-search"></i>
+                    <input type="text"
+                           class="msgr-search-input"
+                           data-new-contacts-search
+                           placeholder="{{ trans('view.messages.app.17') }}"
+                           autocomplete="off" />
+                </div>
+
+                <div class="msgr-newconv-label">{{ trans('view.messages.app.18') }}</div>
+                <div class="msgr-newconv-list" data-new-contacts-list></div>
+
+                <footer class="msgr-newconv-footer" data-new-group-footer hidden>
+                    <button type="button" class="msgr-btn msgr-btn-accent" data-new-group-create disabled>
+                        {{ trans('view.messages.app.19') }}
+                    </button>
+                </footer>
+            </div>
+
+            <!-- ===== GROUP INFO DRAWER ===== -->
+            <div class="msgr-drawer-backdrop" data-group-backdrop hidden></div>
+            <aside class="msgr-drawer" data-group-drawer hidden>
+                <header class="msgr-drawer-header">
+                    <span>{{ trans('view.messages.app.06') }}</span>
+                    <button type="button" class="msgr-icon-btn" data-group-close>
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </header>
+
+                <div class="msgr-drawer-body">
+                    <div class="msgr-drawer-group-avatar">
+                        <span class="msgr-avatar msgr-avatar-lg msgr-avatar-group"><i class="bi bi-people-fill"></i></span>
+                        <div class="msgr-drawer-group-title" data-group-title></div>
+                        <div class="msgr-drawer-group-count" data-group-count></div>
+                    </div>
+
+                    <div class="msgr-drawer-section">
+                        <div class="msgr-drawer-section-header">
+                            <span>{{ trans('community.manage_members') }}</span>
+                            <button type="button" class="msgr-chip-btn" data-group-add-toggle>
+                                <i class="bi bi-plus-lg"></i> {{ trans('view.messages.app.20') }}
+                            </button>
+                        </div>
+
+                        <div class="msgr-drawer-add" data-group-add-panel hidden>
+                            <div class="msgr-newconv-search">
+                                <i class="bi bi-search"></i>
+                                <input type="text"
+                                       class="msgr-search-input"
+                                       data-group-add-search
+                                       placeholder="{{ trans('view.messages.app.17') }}"
+                                       autocomplete="off" />
+                            </div>
+                            <div class="msgr-newconv-list msgr-newconv-list-compact" data-group-add-list></div>
+                        </div>
+
+                        <div data-group-members></div>
+                    </div>
+                </div>
+
+                <footer class="msgr-drawer-footer">
+                    <button type="button" class="msgr-btn msgr-btn-outline-danger" data-group-leave>
+                        <i class="bi bi-box-arrow-right"></i> {{ trans('view.messages.app.21') }}
+                    </button>
+                </footer>
+            </aside>
+
+        </section>
+    </div>
+</div>

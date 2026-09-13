@@ -1,0 +1,41 @@
+{% extends "layouts/single.twig" %}
+
+{# action=community.manage: the community owner's own settings +
+   member-moderation page - no sidebar (see layouts/single.twig), two tabs
+   (components/ui/tabs.twig), same shape as modules/profile/page.twig.
+   See UsersController::showCommunityManagePage(). #}
+
+{% block main_class %}my-4{% endblock %}
+
+{% block content %}
+
+    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2">
+            <img
+                src="{{ communityImageUrl }}"
+                alt=""
+                class="rounded-circle bg-body-secondary object-fit-cover"
+                width="40"
+                height="40"
+            >
+            <h1 class="h4 mb-0">{{ trans('view.users.community.manage.01') }}{{ community.title }}»</h1>
+        </div>
+        {% if cancelUrl %}
+            <a href="{{ cancelUrl }}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i>{{ trans('view.users.community.manage.02') }}
+            </a>
+        {% endif %}
+    </div>
+
+    {% include 'components/ui/tabs.twig' with { tabs: tabs } %}
+
+    <div class="tab-content">
+        {% for tab in tabs %}
+            {% include tab.template with {
+                tab: tab,
+                active: loop.first
+            } %}
+        {% endfor %}
+    </div>
+
+{% endblock %}

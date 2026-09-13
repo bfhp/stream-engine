@@ -1,0 +1,18 @@
+{
+    "format": 1,
+    "release": "0.1.0",
+    "schema": "schema.sql",
+    "schema_checksum": "0769b61ff57e687fd63295803b6a54577b24c8be217b7daac8fd5816634c3e0b",
+    "migrations": [
+        {
+            "version": "20260912000000_initial",
+            "file": "20260912000000_initial.sql",
+            "checksum": "cd1dc988135d6adc9ce6d007b528dd18f0115eb06f747eb57ce43b8154162873"
+        },
+        {
+            "version": "20260912000200_expand_module_discriminators",
+            "file": "20260912000200_expand_module_discriminators.sql",
+            "checksum": "b96c666218b10a6f1a31eb5a03841fb21253005befa9e6bf48dcb92451d7b8fb"
+        }
+    ]
+}

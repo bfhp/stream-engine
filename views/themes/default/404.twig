@@ -1,0 +1,29 @@
+{% extends "layouts/simple.twig" %}
+
+{% block main_class %}pt-5 pb-5 not-found-page{% endblock %}
+
+{% block content %}
+    {% block not_found_container %}
+        <div class="container text-center">
+
+            {% block not_found_title %}
+                <h1 class="display-3">{{ trans('view.not_found.title') }}</h1>
+            {% endblock %}
+
+            <hr>
+
+            {% block not_found_text %}
+                <p class="lead">
+                    {{ trans('view.not_found.text') }}
+                </p>
+            {% endblock %}
+
+            {% block not_found_actions %}
+                <a href="/" class="btn btn-dark">
+                    {{ trans('view.not_found.home') }}
+                </a>
+            {% endblock %}
+
+        </div>
+    {% endblock %}
+{% endblock %}

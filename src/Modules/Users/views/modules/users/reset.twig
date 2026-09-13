@@ -1,0 +1,19 @@
+{% extends "layouts/with-sidebar.twig" %}
+
+{% block content %}
+
+    {% block reset_header %}
+        <h1 class="display-3">{{ trans('view.profile.tabs.security.02') }}</h1>
+    {% endblock %}
+
+    {% block reset_intro %}
+        <p class="lead">
+            {{ trans('view.users.reset.01') }}
+        </p>
+    {% endblock %}
+
+    {% block reset_form %}
+        {% include 'components/users/reset-form.twig' with { token: token } %}
+    {% endblock %}
+
+{% endblock %}

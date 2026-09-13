@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit bootstrap="vendor/autoload.php"
+         colors="true"
+         cacheDirectory=".phpunit.cache">
+    <testsuites>
+        <testsuite name="StreamEngine">
+            <directory>tests</directory>
+        </testsuite>
+    </testsuites>
+
+    <!--
+        What counts as this project's own code.
+
+        Two things depend on it. Coverage reports measure exactly this set, so
+        the untested files show up as 0% rather than not at all - which is the
+        whole point of adding it: the backlog in docs/TODO.md was the only
+        record of where the gaps were.
+
+        It also tells PHPUnit which deprecations and notices are ours, so a
+        warning from a vendor package stops being reported as something to fix
+        here.
+
+        Two exclusions, both because measuring them would say nothing:
+
+        `src/Lang` holds translation arrays with no executable statements, so
+        counting them would put a permanent ~100% block in the report.
+
+        One-off CLI tooling is excluded from runtime coverage.
+    -->
+    <source>
+        <include>
+            <directory suffix=".php">src</directory>
+        </include>
+        <exclude>
+            <directory suffix=".php">src/Lang</directory>
+        </exclude>
+    </source>
+
+    <!--
+        No <report> children on purpose: a report element here would generate
+        coverage on *every* run, which needs Xdebug or PCOV loaded and makes
+        the suite several times slower. The reports are opt-in instead, via
+        `composer test:coverage` (a summary in the terminal) or
+        `composer test:coverage-html` (a browsable report in coverage/).
+
+        includeUncoveredFiles stays at its default of true - a file no test
+        touches has to appear in the report at 0%, or the number flatters
+        itself by ignoring exactly the code this is meant to surface.
+    -->
+    <coverage/>
+</phpunit>

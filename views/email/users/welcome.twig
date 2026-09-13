@@ -1,0 +1,11 @@
+{% extends "layout.twig" %}
+
+{% block content %}
+    <h1>{{ trans('mail.user.greeting') }}</h1>
+    <p>{{ trans('mail.user.registration_thanks') }}</p>
+    <p>
+        <a href="{{ activationLink }}" class="btn">
+            {{ trans('mail.user.activate_account') }}
+        </a>
+    </p>
+{% endblock %}

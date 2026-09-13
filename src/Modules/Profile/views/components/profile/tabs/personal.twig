@@ -1,0 +1,56 @@
+{% extends 'components/ui/tab-pane.twig' %}
+
+{% block tab_content %}
+    <form method="post" action="/api/v1/my" data-profile-personal-form>
+        <input type="hidden" name="avatar_url" value="{{ user.avatarUrl }}" data-profile-avatar-url>
+
+        <div class="mb-4">
+            <label class="form-label d-block">{{ trans('view.profile.tabs.personal.01') }}</label>
+            <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-3">
+                <img
+                    src="{{ user.avatarUrl }}"
+                    alt="{{ user.getDisplayName() }}"
+                    class="rounded-circle border bg-body-secondary object-fit-cover"
+                    width="96"
+                    height="96"
+                    data-profile-avatar-preview
+                >
+                <div class="flex-grow-1">
+                    <input type="file" class="form-control" accept="image/*" data-profile-avatar-file>
+                    <div class="form-text">{{ trans('view.profile.tabs.personal.02') }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">{{ trans('view.feedback.form.01') }}</label>
+            <input type="text" name="nick" class="form-control" value="{{ user.nick }}">
+            <div class="form-text">{{ trans('view.profile.tabs.personal.03') }}</div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">{{ trans('view.profile.tabs.personal.04') }}</label>
+            <input type="url" name="homepage" class="form-control" value="{{ user.homepage }}" placeholder="https://example.com">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">{{ trans('view.profile.tabs.personal.05') }}</label>
+            <select name="gender" class="form-select">
+                <option value="" {% if user.gender == '' %}selected{% endif %}>{{ trans('view.profile.tabs.personal.06') }}</option>
+                <option value="male" {% if user.gender == 'male' %}selected{% endif %}>{{ trans('view.profile.tabs.personal.07') }}</option>
+                <option value="female" {% if user.gender == 'female' %}selected{% endif %}>{{ trans('view.profile.tabs.personal.08') }}</option>
+                <option value="other" {% if user.gender == 'other' %}selected{% endif %}>{{ trans('view.profile.tabs.personal.09') }}</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">{{ trans('view.profile.tabs.personal.10') }}</label>
+            <input type="date" name="birth_date" class="form-control" value="{{ user.birthDate }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">{{ trans('view.profile.tabs.personal.11') }}</label>
+            <textarea name="bio" class="form-control" rows="4">{{ user.bio }}</textarea>
+        </div>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            <button class="btn btn-primary" type="submit">{{ trans('view.forums.topic.form.41') }}</button>
+            <span class="text-body-secondary small" data-profile-personal-status></span>
+        </div>
+    </form>
+{% endblock %}

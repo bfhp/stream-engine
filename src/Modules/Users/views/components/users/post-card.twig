@@ -1,0 +1,88 @@
+{#
+    Shared blog-post feed card - used by both the profile page's own blog
+    feed (modules/users/show.twig) and the community page's site-wide feed
+    (modules/users/community.twig). UsersController::buildPostCards() and
+    buildCommunityPostCards() both build the exact same base card fields
+    (title/url/imageUrl/dateLabel/readTimeLabel/excerpt/tags/commentCount/
+    ratingAverage/ratingCount) precisely so this one partial can render
+    either without special-casing - the profile feed's cards just lack the
+    author* fields, which only matter when showAuthor is set anyway.
+
+    Expects:
+      - post: the card array (see above)
+      - showAuthor: bool, default false - the community feed's cards carry
+        a per-post author byline (avatar/name/link) since, unlike the
+        profile's single-owner feed, every post here can belong to a
+        different author.
+#}
+{% set showAuthor = showAuthor|default(false) %}
+
+<article class="card">
+    <div class="row g-0">
+        <div class="col-sm-4">
+            {% if post.imageUrl %}
+                <img src="{{ post.imageUrl }}" alt="" class="w-100 h-100 object-fit-cover" style="min-height: 150px;">
+            {% else %}
+                <div class="d-flex align-items-center justify-content-center h-100 bg-body-secondary text-body-tertiary" style="min-height: 150px;">
+                    <i class="bi bi-image fs-2"></i>
+                </div>
+            {% endif %}
+        </div>
+        <div class="col-sm-8">
+            <div class="card-body">
+                {% if showAuthor %}
+                    <div class="d-flex align-items-center flex-wrap gap-2 text-body-secondary small mb-2">
+                        <img src="{{ post.authorAvatarUrl }}" alt="" class="rounded-circle bg-body-secondary object-fit-cover flex-shrink-0" width="24" height="24">
+                        {% if post.authorUrl %}
+                            <a href="{{ post.authorUrl }}" class="fw-semibold text-body text-decoration-none">{{ post.authorName }}</a>
+                        {% else %}
+                            <span class="fw-semibold">{{ post.authorName }}</span>
+                        {% endif %}
+                        {% if post.dateLabel %}<span>&middot;</span><span>{{ post.dateLabel }}</span>{% endif %}
+                        {% if post.readTimeLabel %}<span>&middot;</span><span>{{ post.readTimeLabel }}</span>{% endif %}
+                    </div>
+                {% elseif post.dateLabel or post.readTimeLabel %}
+                    <div class="d-flex align-items-center gap-2 text-body-secondary small mb-2">
+                        {% if post.dateLabel %}
+                            <i class="bi bi-calendar3"></i><span>{{ post.dateLabel }}</span>
+                        {% endif %}
+                        {% if post.dateLabel and post.readTimeLabel %}<span>&middot;</span>{% endif %}
+                        {% if post.readTimeLabel %}<span>{{ post.readTimeLabel }}</span>{% endif %}
+                    </div>
+                {% endif %}
+
+                <h3 class="h5 card-title mb-2">
+                    <a href="{{ post.url ?: '#' }}" class="text-body text-decoration-none stretched-link">{{ post.title }}</a>
+                </h3>
+
+                {% if post.excerpt %}
+                    <p class="card-text text-body-secondary small mb-3">{{ post.excerpt }}</p>
+                {% endif %}
+
+                {% if post.tags %}
+                    <div class="d-flex flex-wrap gap-1 mb-3">
+                        {% for tag in post.tags %}
+                            <span class="badge rounded-pill text-bg-secondary">#{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="d-flex flex-wrap align-items-center gap-3 text-body-secondary small">
+                    <span><i class="bi bi-chat-left-text me-1"></i>{{ post.commentCount }}</span>
+                    <span>
+                        {% if post.ratingCount > 0 %}
+                            <i class="bi bi-star-fill me-1" style="color:#f5a623;"></i>{{ post.ratingAverage|number_format(1) }}
+                        {% else %}
+                            <i class="bi bi-star me-1"></i>{{ trans('view.users.post.card.01') }}
+                        {% endif %}
+                    </span>
+                    {% if post.audioTrackId %}
+                        <button type="button" class="btn btn-sm btn-outline-primary position-relative z-1" data-audio-play-track-id="{{ post.audioTrackId }}">
+                            <i class="bi bi-play-fill me-1"></i>{{ trans('view.users.post.card.02') }}
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</article>

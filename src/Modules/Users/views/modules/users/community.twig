@@ -1,0 +1,198 @@
+{% extends "layouts/with-sidebar.twig" %}
+
+{% block content %}
+
+    {% block community_feed_header %}
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+            <h1 class="h2 mb-0">{{ trans('community.page_title') }}</h1>
+            {% if isGuest or newPostUrl %}
+                <a href="{{ isGuest ? '#authFormModal' : newPostUrl }}" {% if isGuest %}data-bs-toggle="modal" data-bs-target="#authFormModal"{% endif %} class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus-lg me-1"></i>{{ trans('view.users.community.01') }}
+                </a>
+            {% endif %}
+        </div>
+    {% endblock %}
+
+    {% if activeTag %}
+        <div class="alert alert-secondary d-flex flex-wrap align-items-center justify-content-between gap-2" role="alert">
+            <span>{{ trans('view.users.community.02') }} <strong>#{{ activeTag }}</strong></span>
+            <a href="{{ communityUrl }}" class="btn btn-sm btn-outline-secondary">{{ trans('view.users.community.03') }}</a>
+        </div>
+    {% endif %}
+
+    {% block community_feed %}
+        {# data-posts-api-url is read by users.ts's
+           initCommunityFeedLoadMore() - same "Show more" AJAX-append
+           pattern as the profile page's #blog-feed /
+           initBlogFeedLoadMore(): a click on .load-more-community-posts
+           inside this container fetches the next batch from it and appends
+           cards to #community-feed-posts, rather than reloading the page. #}
+        <div id="community-feed" data-posts-api-url="{{ postsApiUrl }}">
+            {% if hasPosts %}
+                <div class="d-flex flex-column gap-3" id="community-feed-posts">
+                    {% for post in posts %}
+                        {% block community_feed_item %}
+                            {% include 'components/users/post-card.twig' with {post: post, showAuthor: true} only %}
+                        {% endblock %}
+                    {% endfor %}
+                </div>
+
+                {% if nextOffset is not null %}
+                    <div class="text-center mt-3" data-community-feed-load-more-wrapper>
+                        <button
+                            type="button"
+                            class="btn btn-outline-secondary load-more-community-posts"
+                            data-offset="{{ nextOffset }}"
+                        >
+                            {{ trans('view.users.community.sidebar.13') }}
+                        </button>
+                    </div>
+                {% endif %}
+            {% endif %}
+
+            {% if isEmpty %}
+                <div class="card">
+                    <div class="card-body text-center text-body-secondary py-5">
+                        <i class="bi bi-journal-text fs-1 d-block mb-2"></i>
+                        {% if activeTag %}
+                            <p class="mb-0 text-body">{{ trans('view.users.community.04') }}</p>
+                        {% else %}
+                            <p class="mb-0 text-body">{{ trans('view.users.community.show.02') }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    {% endblock %}
+
+{% endblock %}
+
+{% block sidebar_widgets %}
+
+    {% block community_actions %}
+        {# "Write" already lives in the content header
+           (community_feed_header block) - not repeated here. #}
+        <div class="d-grid gap-2 mb-3">
+            {% if isGuest %}
+                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#authFormModal">
+                    <i class="bi bi-people me-1"></i>{{ trans('view.users.community.create.04') }}
+                </button>
+            {% elseif createCommunityUrl %}
+                <a href="{{ createCommunityUrl }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-people me-1"></i>{{ trans('view.users.community.create.04') }}
+                </a>
+            {% else %}
+                {# Falls back to a disabled stub if community.create
+                   isn't registered in `pages` (e.g. its migration hasn't
+                   run yet) rather than linking to a 404. #}
+                <button type="button" class="btn btn-outline-secondary" disabled>
+                    <i class="bi bi-people me-1"></i>{{ trans('view.users.community.create.04') }}
+                </button>
+            {% endif %}
+        </div>
+    {% endblock %}
+
+    {% block community_mine %}
+        {% if not isGuest %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h2 class="h6 card-title mb-3">{{ trans('view.users.community.05') }}</h2>
+                    {% if myCommunities %}
+                        <div class="d-flex flex-column gap-2">
+                            {% for community in myCommunities %}
+                                {% block community_mine_item %}
+                                    <a href="{{ community.url ?: '#' }}" class="d-flex align-items-center gap-2 text-body text-decoration-none">
+                                        <img src="{{ community.imageUrl }}" alt="" class="rounded-circle bg-body-secondary object-fit-cover flex-shrink-0" width="36" height="36">
+                                        <span class="small text-truncate" style="min-width: 0;">{{ community.title }}</span>
+                                        <span class="badge {{ community.statusClass }} ms-auto">{{ community.statusLabel }}</span>
+                                    </a>
+                                {% endblock %}
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="card-text text-body-secondary small mb-0">{{ trans('view.users.community.06') }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    {% endblock %}
+
+    {% block community_popular %}
+        {# popularCommunities: UsersController::buildPopularCommunitiesWidget()
+           - ranked by real member count (FeedService::getMostMembersByType()),
+           each card's memberCount always set (possibly 0). #}
+        <div class="card mb-3">
+            <div class="card-body">
+                <h2 class="h6 card-title mb-3">{{ trans('view.users.community.07') }}</h2>
+                {% if popularCommunities %}
+                    <div class="d-flex flex-column gap-2">
+                        {% for community in popularCommunities %}
+                            {% block community_popular_item %}
+                                <a href="{{ community.url ?: '#' }}" class="d-flex align-items-center gap-2 text-body text-decoration-none">
+                                    <img src="{{ community.imageUrl }}" alt="" class="rounded-circle bg-body-secondary object-fit-cover flex-shrink-0" width="36" height="36">
+                                    <span class="small text-truncate" style="min-width: 0;">{{ community.title }}</span>
+                                    {% if community.memberCount is not null %}
+                                        <span class="badge text-bg-secondary ms-auto">{{ community.memberCount }}</span>
+                                    {% endif %}
+                                </a>
+                            {% endblock %}
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="card-text text-body-secondary small mb-0">{{ trans('view.users.community.08') }}</p>
+                {% endif %}
+            </div>
+        </div>
+    {% endblock %}
+
+    {% block community_new %}
+        {# newCommunities: UsersController::buildNewCommunitiesWidget() -
+           the most recently created communities (FeedService::getFeedsByType(),
+           already ordered by created_at DESC). #}
+        <div class="card mb-3">
+            <div class="card-body">
+                <h2 class="h6 card-title mb-3">{{ trans('view.users.community.09') }}</h2>
+                {% if newCommunities %}
+                    <div class="d-flex flex-column gap-2">
+                        {% for community in newCommunities %}
+                            {% block community_new_item %}
+                                <a href="{{ community.url ?: '#' }}" class="d-flex align-items-center gap-2 text-body text-decoration-none">
+                                    <img src="{{ community.imageUrl }}" alt="" class="rounded-circle bg-body-secondary object-fit-cover flex-shrink-0" width="36" height="36">
+                                    <span class="small text-truncate" style="min-width: 0;">{{ community.title }}</span>
+                                    {% if community.createdAtLabel %}
+                                        <span class="text-body-secondary small ms-auto">{{ community.createdAtLabel }}</span>
+                                    {% endif %}
+                                </a>
+                            {% endblock %}
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="card-text text-body-secondary small mb-0">{{ trans('view.users.community.10') }}</p>
+                {% endif %}
+            </div>
+        </div>
+    {% endblock %}
+
+    {% block community_tag_cloud %}
+        {# tagCloud: UsersController::buildCommunityTagCloud() - each tag's
+           own fontSize (rem) is already scaled server-side by how often it's
+           used (see that method's own docblock), no count number shown. #}
+        {% if tagCloud %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h2 class="h6 card-title mb-3">{{ trans('view.users.community.11') }}</h2>
+                    <div class="d-flex flex-wrap align-items-baseline gap-2">
+                        {% for tag in tagCloud %}
+                            <a
+                                href="{{ tag.url }}"
+                                class="text-decoration-none lh-1 {% if activeTag == tag.slug %}text-primary fw-semibold{% else %}text-body-secondary{% endif %}"
+                                style="font-size: {{ tag.fontSize }}rem;"
+                            >#{{ tag.name }}</a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    {% endblock %}
+
+{% endblock %}

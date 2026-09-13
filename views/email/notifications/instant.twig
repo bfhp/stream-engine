@@ -1,0 +1,8 @@
+{% extends "layout.twig" %}
+
+{% block content %}
+    <p>{{ notification.text }}</p>
+    {% if notification.url %}
+        <p><a class="btn" href="{{ notification.url }}">{{ trans('mail.notifications.open_capitalized') }}</a></p>
+    {% endif %}
+{% endblock %}

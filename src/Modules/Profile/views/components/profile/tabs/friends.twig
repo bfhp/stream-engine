@@ -1,0 +1,75 @@
+{% extends 'components/ui/tab-pane.twig' %}
+
+{#
+   The friends tab is rendered entirely client-side by initProfileFriends()
+   in assets-src/pages/profile.ts, from GET /api/v1/my/friends (this module's
+   own endpoint, see ProfileController::handleFriendsRequest()) - this
+   template only lays out the shell it fills in. Rendered client-side rather
+   than server-side because the list is also filtered, re-sorted and mutated
+   in place there, and rendering the same row twice in two languages is how
+   the two drift apart.
+
+   One list, not one per state: friends and both kinds of pending request
+   (someone asked you; you asked and are still waiting) sit together, each
+   row carrying its own status badge and its own actions. The API orders them
+   actionable-first, so incoming requests surface at the top without needing
+   a section of their own.
+
+   Accept/remove buttons post to the *Users* module's
+   /api/v1/users/{username}/friend, the same endpoint the public profile
+   sidebar uses - see FriendListService's docblock for why that half stays
+   there while listing and rejecting live here. If that module is ever gone
+   those two buttons stop working; the list itself and "Reject" don't
+   depend on it.
+#}
+{% block tab_content %}
+
+    <div id="profile-friends" data-connections-url="/api/v1/my/friends">
+
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+            <h2 class="h6 mb-0">
+                {{ trans('view.profile.tabs.friends.01') }}
+                <span class="text-body-secondary fw-normal" data-friends-count hidden></span>
+            </h2>
+
+            {# Filters the already-loaded list in place - see the tab's own
+               "whole list in hand" note in FriendListService::getConnections(). #}
+            <div class="ms-auto" style="max-width: 16rem;">
+                <label class="visually-hidden" for="profile-friends-search">{{ trans('view.profile.tabs.friends.02') }}</label>
+                <input type="search"
+                       class="form-control form-control-sm"
+                       id="profile-friends-search"
+                       data-friends-search
+                       placeholder="{{ trans('view.profile.tabs.friends.02') }}"
+                       autocomplete="off"
+                       hidden>
+            </div>
+        </div>
+
+        <p class="text-body-secondary small" data-friends-loading>
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            {{ trans('view.profile.tabs.friends.03') }}
+        </p>
+
+        <p class="text-danger small mb-0" data-friends-error hidden></p>
+
+        <p class="text-body-secondary small mb-0" data-friends-empty hidden>
+            {{ trans('view.profile.tabs.friends.04') }}
+        </p>
+
+        <p class="text-body-secondary small mb-0" data-friends-no-matches hidden>
+            {{ trans('view.profile.tabs.friends.05') }}
+        </p>
+
+        {# Card grid, filled by renderCard() - each item is a .col, so the
+           breakpoints live here and the renderer stays layout-agnostic. Same
+           three-up-on-wide grid the public users list uses, one step narrower
+           (md instead of sm for the second column) because these cards carry
+           action buttons and need the room. #}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3" data-friends-list></div>
+
+        <p class="text-body-secondary small mt-3 mb-0" data-friends-truncated hidden></p>
+
+    </div>
+
+{% endblock %}

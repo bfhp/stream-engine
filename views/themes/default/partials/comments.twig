@@ -1,0 +1,62 @@
+<section id="comments" class="comments-section mt-4" data-parent-id="{{ feed.id }}">
+    {% block comments_header %}
+        <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
+            <h2 class="h5 mb-0">{{ trans('view.comments.title') }}</h2>
+            {% if comments.meta.total is defined %}
+                <span class="badge text-bg-secondary">{{ comments.meta.total }}</span>
+            {% endif %}
+        </div>
+    {% endblock %}
+
+    {% if user.isGuest %}
+        {% block comments_auth_hint %}
+            <div class="comments-auth-hint alert alert-secondary d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-4">
+                <span>{{ trans('view.comments.sign_in_hint') }}</span>
+                <button type="button"
+                        class="btn btn-sm btn-primary"
+                        data-bs-toggle="modal"
+                        data-bs-target="#authFormModal">
+                    {{ trans('view.auth.sign_in') }}
+                </button>
+            </div>
+        {% endblock %}
+    {% else %}
+        {% block comments_form %}
+            <div class="comment-compose card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    {% include 'components/comments/form.twig' with {
+                        parentId: feed.id,
+                        mode: 'root',
+                        placeholder: trans('view.comments.publication_placeholder'),
+                        submitLabel: trans('view.comments.submit_comment')
+                    } %}
+                </div>
+            </div>
+        {% endblock %}
+    {% endif %}
+
+    {% block comments_list %}
+    <div id="comments-list" class="comments-list d-grid gap-3">
+
+        {% for comment in comments.items %}
+            {% block comments_list_item %}
+                {% include 'components/comments/comment.twig' with { comment: comment } %}
+            {% endblock %}
+        {% endfor %}
+
+    </div>
+    {% endblock %}
+
+    {% block comments_load_more %}
+        {% if comments.meta.next_cursor %}
+            <button id="load-more-comments"
+                    class="load-more-comments btn btn-outline-primary w-100 mt-3"
+                    data-parent-id="{{ feed.id }}"
+                    data-next-cursor="{{ comments.meta.next_cursor ?? '' }}"
+            >
+                {{ trans('view.comments.load_more', {count: comments.meta.next_count}) }}
+            </button>
+        {% endif %}
+    {% endblock %}
+
+</section>

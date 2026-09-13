@@ -1,0 +1,12 @@
+{% set menuClass = menuClass|default(null) %}
+{% set itemClass = itemClass|default(null) %}
+
+<ul class="{{ menuClass }}">
+    {% for item in items %}
+        {% include 'components/nav/menu-item.twig' with {
+            item: item,
+            level: 0,
+            itemClass: itemClass
+        } %}
+    {% endfor %}
+</ul>

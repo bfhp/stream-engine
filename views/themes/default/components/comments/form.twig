@@ -1,0 +1,37 @@
+<form class="{{ formClass|default('comment-form') }}"
+      data-comment-form
+      data-parent-id="{{ parentId }}"
+      data-comment-mode="{{ mode|default('root') }}">
+    {% block comment_form_body %}
+        <div class="mb-2">
+            <label class="visually-hidden" for="comment-content-{{ mode|default('root') }}-{{ parentId }}">{{ trans('view.comments.comment') }}</label>
+            <textarea
+                id="comment-content-{{ mode|default('root') }}-{{ parentId }}"
+                class="form-control"
+                name="content"
+                rows="{{ rows|default(3) }}"
+                placeholder="{{ placeholder|default(trans('view.comments.placeholder')) }}"
+                maxlength="5000"
+                required
+            ></textarea>
+        </div>
+    {% endblock %}
+
+    {% block comment_form_error %}
+        <div class="comment-form-error invalid-feedback d-none" data-comment-form-error></div>
+    {% endblock %}
+
+    {% block comment_form_actions %}
+        <div class="comment-form-actions d-flex flex-wrap align-items-center gap-2">
+            <button type="submit" class="btn btn-sm btn-primary">
+                {{ submitLabel|default(trans('view.comments.submit')) }}
+            </button>
+
+            {% if mode == 'reply' %}
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-comment-cancel>
+                    {{ trans('view.comments.cancel') }}
+                </button>
+            {% endif %}
+        </div>
+    {% endblock %}
+</form>

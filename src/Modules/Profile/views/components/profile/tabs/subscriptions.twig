@@ -1,0 +1,70 @@
+{% extends 'components/ui/tab-pane.twig' %}
+
+{#
+   Communities the user belongs to, rendered client-side by
+   initProfileSubscriptions() in assets-src/pages/profile.ts from
+   GET /api/v1/my/subscriptions (this module's own endpoint, see
+   ProfileController::handleSubscriptionsRequest()). Same shell, same hooks and
+   the same renderer as the "Friends" tab next door - only the card body and the
+   per-status actions differ.
+
+   Communities only, despite the tab's name. Subscribing to a person's blog is
+   the friends feature's one-directional half, and it already shows up on the
+   "Friends" tab as "Request sent"; listing it here too would give one
+   action two homes.
+
+   One list with badges, not a section per role: owner, moderator, member and
+   pending join request sit together, ordered by standing. Owners get
+   "Manage" where everyone else gets "Unsubscribe" - CommunityService::leave()
+   refuses to let the owner out (there's no ownership transfer and no
+   ownerless-community state), so the button would only ever produce an error.
+
+   "Unsubscribe" DELETEs to the *Users* module's
+   /api/v1/communities/{id}/membership - the same endpoint the community page's
+   own button uses. If that module is ever gone the list still renders; only
+   that button stops working.
+#}
+{% block tab_content %}
+
+    <div id="profile-subscriptions" data-subscriptions-url="/api/v1/my/subscriptions">
+
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+            <h2 class="h6 mb-0">
+                {{ trans('view.profile.tabs.subscriptions.01') }}
+                <span class="text-body-secondary fw-normal" data-subscriptions-count hidden></span>
+            </h2>
+
+            <div class="ms-auto" style="max-width: 16rem;">
+                <label class="visually-hidden" for="profile-subscriptions-search">{{ trans('view.profile.tabs.subscriptions.02') }}</label>
+                <input type="search"
+                       class="form-control form-control-sm"
+                       id="profile-subscriptions-search"
+                       data-subscriptions-search
+                       placeholder="{{ trans('view.profile.tabs.subscriptions.02') }}"
+                       autocomplete="off"
+                       hidden>
+            </div>
+        </div>
+
+        <p class="text-body-secondary small" data-subscriptions-loading>
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            {{ trans('view.profile.tabs.friends.03') }}
+        </p>
+
+        <p class="text-danger small mb-0" data-subscriptions-error hidden></p>
+
+        <p class="text-body-secondary small mb-0" data-subscriptions-empty hidden>
+            {{ trans('view.profile.tabs.subscriptions.03') }}
+        </p>
+
+        <p class="text-body-secondary small mb-0" data-subscriptions-no-matches hidden>
+            {{ trans('view.profile.tabs.friends.05') }}
+        </p>
+
+        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3" data-subscriptions-list></div>
+
+        <p class="text-body-secondary small mt-3 mb-0" data-subscriptions-truncated hidden></p>
+
+    </div>
+
+{% endblock %}

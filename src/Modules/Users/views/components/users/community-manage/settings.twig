@@ -1,0 +1,114 @@
+{% extends 'components/ui/tab-pane.twig' %}
+
+{# community.manage's "Settings" tab - name/description/membership type/
+   picture, all saved through a single PATCH (CommunityService::
+   updateSettings(), via UsersController::handleCommunityManageSettingsRequest()).
+   Same cover-image drop-zone widget/markup as community-create.twig
+   (site.css's .blog-post-cover-* classes), just pre-filled with
+   the community's existing picture instead of starting empty - see
+   initCommunityManageSettingsForm() in users.ts. #}
+
+{% block tab_content %}
+    <form
+        id="communityManageSettingsForm"
+        data-community-manage-settings-form
+        data-api-url="{{ settingsApiUrl }}"
+        data-uploads-api-url="{{ uploadsApiUrl }}"
+        data-membership-type-open="{{ membershipTypeOpen }}"
+        data-membership-type-approval="{{ membershipTypeApproval }}"
+        data-current-membership-type="{{ membershipType }}"
+    >
+        <div class="card mb-3">
+            <div class="card-body">
+                <label class="form-label small text-uppercase text-body-secondary fw-semibold" for="communityManageName">{{ trans('view.users.community.manage.settings.01') }}</label>
+                <input
+                    type="text"
+                    class="form-control form-control-lg mb-3"
+                    id="communityManageName"
+                    name="name"
+                    value="{{ community.title }}"
+                    maxlength="200"
+                >
+
+                <label class="form-label small text-uppercase text-body-secondary fw-semibold" for="communityManageDescription">{{ trans('view.users.community.manage.settings.02') }}</label>
+                <textarea
+                    class="form-control"
+                    id="communityManageDescription"
+                    name="description"
+                    rows="5"
+                    maxlength="2000"
+                >{{ community.description }}</textarea>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <h2 class="h6 card-title mb-3"><i class="bi bi-person-check me-1"></i>{{ trans('view.users.community.manage.settings.03') }}</h2>
+
+                <div class="form-check mb-2">
+                    <input
+                        class="form-check-input"
+                        type="radio"
+                        name="membershipType"
+                        id="communityManageMembershipTypeOpen"
+                        value="{{ membershipTypeOpen }}"
+                        {% if membershipType == membershipTypeOpen %}checked{% endif %}
+                    >
+                    <label class="form-check-label" for="communityManageMembershipTypeOpen">
+                        {{ trans('view.users.community.manage.settings.04') }}
+                        <div class="small text-body-secondary">{{ trans('view.users.community.manage.settings.05') }}</div>
+                    </label>
+                </div>
+
+                <div class="form-check">
+                    <input
+                        class="form-check-input"
+                        type="radio"
+                        name="membershipType"
+                        id="communityManageMembershipTypeApproval"
+                        value="{{ membershipTypeApproval }}"
+                        {% if membershipType == membershipTypeApproval %}checked{% endif %}
+                    >
+                    <label class="form-check-label" for="communityManageMembershipTypeApproval">
+                        {{ trans('view.users.community.manage.settings.06') }}
+                        <div class="small text-body-secondary">{{ trans('view.users.community.manage.settings.07') }}</div>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <h2 class="h6 card-title mb-2"><i class="bi bi-card-image me-1"></i>{{ trans('view.users.community.manage.settings.08') }}</h2>
+                <input type="hidden" id="communityManageCoverImageUrl" data-cover-url value="{{ community.imageUrl }}">
+                <div id="communityManageCoverSlot" data-cover-slot>
+                    {% if community.imageUrl %}
+                        <div class="blog-post-cover-file">
+                            <div class="blog-post-cover-thumb" style="background-image:url('{{ community.imageUrl }}')"></div>
+                            <div class="blog-post-cover-fileinfo">
+                                <div class="blog-post-cover-filename">{{ trans('view.users.community.manage.settings.09') }}</div>
+                            </div>
+                            <button type="button" class="blog-post-cover-remove" aria-label="{{ trans('view.forums.topic.view.34') }}"><i class="bi bi-x-lg"></i></button>
+                        </div>
+                    {% else %}
+                        <div class="blog-post-cover-drop" data-cover-drop>
+                            <i class="bi bi-card-image fs-4"></i>
+                            <div>
+                                <div>{{ trans('view.users.community.manage.settings.10') }}</div>
+                                <div class="small text-body-secondary">{{ trans('view.users.community.manage.settings.11') }}</div>
+                            </div>
+                        </div>
+                        <input type="file" class="d-none" accept="image/*" data-cover-file>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <button class="btn btn-primary" type="button" id="btnSaveCommunitySettings">
+                <i class="bi bi-check-lg me-1"></i>{{ trans('view.forums.topic.form.41') }}
+            </button>
+            <span class="text-body-secondary small" data-community-manage-settings-status></span>
+        </div>
+    </form>
+{% endblock %}

@@ -1,0 +1,5 @@
+{% if user.isGuest %}
+    {% include 'components/nav/user/guest.twig' %}
+{% else %}
+    {% include 'components/nav/user/authenticated.twig' %}
+{% endif %}

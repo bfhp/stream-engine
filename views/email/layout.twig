@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="{{ locale }}">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ subject }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; background:#f4f4f4; }
+        .container { width:600px; margin:0 auto; background:#ffffff; padding:20px; }
+        .btn {
+            display:inline-block;
+            padding:10px 18px;
+            background:#2d6cdf;
+            color:#ffffff;
+            text-decoration:none;
+            border-radius:4px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    {% block content %}{% endblock %}
+    {% if unsubscribeUrl %}
+        <p style="margin-top: 32px; color: #666; font-size: 12px;">
+            {{ trans('mail.unsubscribe.prompt') }}
+            <a href="{{ unsubscribeUrl }}">{{ trans('mail.unsubscribe.action') }}</a>.
+        </p>
+    {% endif %}
+</div>
+</body>
+</html>

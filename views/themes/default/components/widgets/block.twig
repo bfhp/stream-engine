@@ -1,0 +1,6 @@
+{% set widget_html = widgets[placement]|default('') %}
+{% if widget_html %}
+    <div class="widget-block widget-block-{{ placement|replace({'_': '-'}) }}">
+        {{ widget_html|raw }}
+    </div>
+{% endif %}

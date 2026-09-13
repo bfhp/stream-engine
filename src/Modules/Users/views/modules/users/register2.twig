@@ -1,0 +1,21 @@
+{% extends "layouts/with-sidebar.twig" %}
+
+{% block content %}
+
+    {% block register_header %}
+    <h1>{{ trans('user.registration') }} <small class="text-muted">{{ trans('view.users.register2.01') }}</small></h1>
+    <hr>
+    {% endblock %}
+
+    {% block register_success %}
+        <p class="lead">{{ trans('view.users.register2.02') }}</p>
+        <p>{{ trans('view.users.register2.03') }}</p>
+    {% endblock %}
+
+    {% block register_actions %}
+        <a href="/" class="btn btn-primary">
+            {{ trans('view.not_found.home') }}
+        </a>
+    {% endblock %}
+
+{% endblock %}

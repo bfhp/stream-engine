@@ -1,0 +1,19 @@
+{% extends "layouts/with-sidebar.twig" %}
+
+{% block content %}
+
+    {% block retrieve_header %}
+        <h1 class="display-3">{{ trans('user.mail.password_reset_subject') }}</h1>
+    {% endblock %}
+
+    {% block retrieve_intro %}
+        <p class="lead">
+            {{ trans('view.users.retrieve.01') }}
+        </p>
+    {% endblock %}
+
+    {% block retrieve_form %}
+        {% include 'components/users/retrieve-form.twig' %}
+    {% endblock %}
+
+{% endblock %}

@@ -1,0 +1,86 @@
+<article class="comment card border-0 shadow-sm" data-id="{{ comment.id }}">
+    <div class="card-body">
+
+        {% block comment_header %}
+            <div class="comment-meta d-flex align-items-center gap-3 mb-3">
+                {% block comment_avatar %}
+                    <img
+                        src="{{ comment.authorAvatarUrl }}"
+                        alt="{{ comment.authorDisplayName }}"
+                        class="comment-avatar rounded-2"
+                        width="44"
+                        height="44"
+                    >
+                {% endblock %}
+                {% block comment_meta %}
+                    <div class="comment-meta-text min-w-0">
+                        <div class="comment-author fw-semibold lh-sm">{{ comment.authorDisplayName }}</div>
+                        {% if comment.createdAtLabel %}
+                            <time class="comment-date small text-secondary"
+                                  datetime="{{ comment.createdAt ? comment.createdAt|date('c') : '' }}"
+                                  {% if comment.createdAtTitle %}title="{{ comment.createdAtTitle }}"{% endif %}>
+                                {{ comment.createdAtLabel }}
+                            </time>
+                        {% endif %}
+                    </div>
+                {% endblock %}
+            </div>
+        {% endblock %}
+
+        {% block comment_content %}
+            <div class="comment-content content">
+                {{ comment.content|raw }}
+            </div>
+        {% endblock %}
+
+        {% block comment_actions %}
+            <div class="comment-actions d-flex align-items-center gap-2 mt-2">
+                {% if user.isGuest %}
+                    <button type="button"
+                            class="btn btn-sm btn-link px-0"
+                            data-bs-toggle="modal"
+                            data-bs-target="#authFormModal">
+                        {{ trans('view.comments.reply') }}
+                    </button>
+                {% else %}
+                    <button type="button" class="btn btn-sm btn-link px-0" data-reply-toggle>
+                        {{ trans('view.comments.reply') }}
+                    </button>
+                {% endif %}
+            </div>
+        {% endblock %}
+
+        {% block comment_reply_form %}
+            {% if not user.isGuest %}
+                <div class="comment-reply-form-wrapper d-none mt-3">
+                    {% include 'components/comments/form.twig' with {
+                        parentId: comment.id,
+                        mode: 'reply',
+                        formClass: 'comment-form comment-form-reply',
+                        placeholder: trans('view.comments.reply_placeholder'),
+                        submitLabel: trans('view.comments.reply'),
+                        rows: 2
+                    } %}
+                </div>
+            {% endif %}
+        {% endblock %}
+
+        {% block comment_replies %}
+            <div class="replies mt-3">{% if comment.children %}
+                {% for reply in comment.children.items %}
+                    {% include 'components/comments/reply.twig' with { reply: reply } %}
+                {% endfor %}
+
+                {% block comment_replies_load_more %}
+                    {% if comment.children.meta.next_cursor %}
+                        <button class="load-replies btn btn-sm btn-outline-secondary mt-2"
+                                data-parent-id="{{ comment.id }}"
+                                data-next-cursor="{{ comment.children.meta.next_cursor ?? '' }}">
+                            {{ trans('view.comments.load_more', {count: comment.children.meta.next_count}) }}
+                        </button>
+                    {% endif %}
+                {% endblock %}
+            {% endif %}</div>
+        {% endblock %}
+    </div>
+</article>
