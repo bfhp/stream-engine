@@ -1,0 +1,2 @@
+/*! Third-party licenses: /assets/THIRD_PARTY_LICENSES.md */
+function e(e,r){return t(e)?e:n(e)?t(e.error)?e.error:n(e.error)&&t(e.error.message)?e.error.message:t(e.message)?e.message:r:r}function t(e){return typeof e==`string`&&e.trim()!==``}function n(e){return typeof e==`object`&&!!e}export{e as t};

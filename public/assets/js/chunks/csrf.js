@@ -1,0 +1,2 @@
+/*! Third-party licenses: /assets/THIRD_PARTY_LICENSES.md */
+function e(){return document.cookie.split(`; `).find(e=>e.startsWith(`csrfToken=`))?.slice(10)??``}function t(){return{"X-CSRF-Token":e()}}export{e as n,t};

@@ -1,0 +1,2 @@
+/*! Third-party licenses: /assets/THIRD_PARTY_LICENSES.md */
+import{t as e}from"./csrf.js";function t(){return e()}async function n(e,n){let r=new FormData;r.append(`file`,n);let i=await fetch(e,{method:`POST`,body:r,credentials:`include`,headers:t()}),a=await i.json();if(!i.ok)throw a;return a}export{t as n,n as t};

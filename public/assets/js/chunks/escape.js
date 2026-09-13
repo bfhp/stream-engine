@@ -1,0 +1,2 @@
+/*! Third-party licenses: /assets/THIRD_PARTY_LICENSES.md */
+function e(e){let t=document.createElement(`div`);return t.textContent=String(e??``),t.innerHTML.replace(/"/g,`&quot;`).replace(/'/g,`&#39;`)}export{e as t};

@@ -1,0 +1,2 @@
+/*! Third-party licenses: /assets/THIRD_PARTY_LICENSES.md */
+var e={article:`Статья`,"article-section":`Раздел статьи`,blog:`Блог`,"blog-post":`Запись`,comment:`Комментарий`,community:`Сообщество`,forum:`Форум`,"forum-post":`Тема форума`},t=Object.keys(e);export{e as n,t};
