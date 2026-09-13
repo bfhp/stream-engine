@@ -1,313 +1,329 @@
 # TODO
 
-Актуальный бэклог проекта. Последняя сверка с кодом и тестами: **12 сентября
-2026**.
+The project's current backlog. Last reviewed against the code and tests on
+**September 12, 2026**.
 
-В этом файле хранится только незавершённая работа и принятые решения, которые
-ещё надо реализовать. История уже сделанного сюда не добавляется: для неё есть
-Git. При закрытии задачи её следует удалить из этого файла вместе с относящимися
-к ней `TODO` в коде.
+This file contains only unfinished work and decisions that have been made but
+not yet implemented. Completed work is not recorded here; Git provides that
+history. When a task is completed, it should be removed from this file together
+with any related `TODO` comments in the code.
 
-Приоритеты:
+Priorities:
 
-- **P0** — чистая установка не работает, пользователь получает ложный успех,
-  возможна потеря или выдача неверных данных;
-- **P1** — важная надёжность, безопасность, эксплуатация или крупный пробел в
-  тестах;
-- **P2** — продуктовые улучшения, рефакторинг и локальные долги.
+- **P0** — a clean installation does not work, the user receives a false
+  success response, or data may be lost or returned incorrectly;
+- **P1** — important reliability, security, or operational work, or a major
+  gap in test coverage;
+- **P2** — product improvements, refactoring, and localized technical debt.
 
-## Текущее состояние проверок
+## Current check status
 
-На момент сверки зелёные:
+The following checks were green at the time of the review:
 
-- `composer test` — 2428 тестов, 10115 утверждений, 5 пропущено;
-- `npm test` — 27 файлов, 496 тестов;
+- `composer test` — 2,428 tests, 10,115 assertions, 5 skipped;
+- `npm test` — 27 files, 496 tests;
 - `npm run typecheck`;
 - `npm run build`;
 - `composer audit:csrf`.
 
-`composer lint` пока не зелёный: Pint находит форматирование в 16 изменённых
-PHP-файлах, в основном неиспользуемые импорты в `modules/WpImport/`.
+`composer lint` is not green yet: Pint finds formatting issues in 16 modified
+PHP files, mostly unused imports in `modules/WpImport/`.
 
-Актуального отчёта покрытия нет: `composer test:coverage` требует запущенного
-Docker daemon. Старые проценты покрытия намеренно удалены — после добавления
-тестов они вводили в заблуждение.
+There is no current coverage report: `composer test:coverage` requires a
+running Docker daemon. Old coverage percentages were deliberately removed
+because they became misleading after more tests were added.
 
 ## P0
 
-### Уникальность и область действия slug фидов
+### Feed slug uniqueness and scope
 
-`FeedService::getFeedBySlug()` получает массив и вызывающие часто берут
-`array_pop()`. При коллизии результат не определён; это затрагивает статьи,
-форумы и сообщества.
+`FeedService::getFeedBySlug()` returns an array, and callers often use
+`array_pop()`. When slugs collide, the result is undefined; this affects
+articles, forums, and communities.
 
-- Решить, уникален slug глобально, внутри типа или внутри родителя.
-- Найти и разрешить существующие коллизии до добавления ограничения БД.
-- Добавить unique index, явные методы репозитория для выбранной области и
-  тест миграции.
-- Убрать выбор «случайного» результата через `array_pop()`.
+- Decide whether a slug is unique globally, within its type, or within its
+  parent.
+- Find and resolve existing collisions before adding a database constraint.
+- Add a unique index, explicit repository methods for the chosen scope, and a
+  migration test.
+- Remove selection of an arbitrary result via `array_pop()`.
 
 ## P1
 
-### Cron: выбрать модель запуска
+### Cron: choose an execution model
 
-В production `CronTrigger::shouldTrigger()` сохраняет старое условие
-`roll !== 1`, то есть форкает `bin/cron.php` на 49 запросах из 50. Лок не даёт
-задачам выполниться дважды, но не устраняет стоимость запуска процессов.
+In production, `CronTrigger::shouldTrigger()` preserves the old `roll !== 1`
+condition, so it forks `bin/cron.php` on 49 out of 50 requests. The lock
+prevents jobs from running twice, but does not eliminate the cost of starting
+processes.
 
-- Предпочтительно настроить `CRON_MODE=os` и системный cron в production.
-- Иначе осознанно изменить вероятность на один запрос из 50 и определить
-  приемлемую задержку задач на тихом сайте.
-- Добавить deployment/runbook; не менять условие без решения по эксплуатации.
+- Prefer configuring `CRON_MODE=os` and a system cron job in production.
+- Otherwise, deliberately change the probability to one request out of 50 and
+  define an acceptable job delay for a low-traffic site.
+- Add a deployment runbook; do not change the condition without an operational
+  decision.
 
-### API feeds/comments: границы и типы входа
+### API feeds/comments: input bounds and types
 
-- Ограничить верхнюю границу `limit` для списка фидов; сейчас значение уходит
-  прямо в SQL, тогда как комментарии ограничены 50.
-- Решить, должен ли `search` всегда принудительно ставить `limit = 20`, или
-  уважать ограниченный параметр клиента.
-- До приведения к строке отклонять массив/объект в `content` при PATCH
-  комментария, чтобы запрос не создавал `Array to string conversion`.
-- Для неподдерживаемых методов в каждой ветке гарантировать 405, а не пустой
-  200.
+- Cap the upper bound of `limit` for the feed list; the value currently goes
+  directly into SQL, while comments are capped at 50.
+- Decide whether `search` should always force `limit = 20` or respect a bounded
+  client-supplied value.
+- Reject arrays/objects in `content` before casting to a string when PATCHing a
+  comment, so the request does not produce an `Array to string conversion`.
+- Guarantee a 405 response for unsupported methods in every branch, rather
+  than an empty 200 response.
 
-### Авторизация и роли
+### Authorization and roles
 
-- Просмотреть все регистрации `Page::api()`: mutating-маршруты не должны
-  полагаться только на проверку внутри обработчика при `accessRule: AccessService::ACCESS_PUBLIC`.
-- Решить правило групповых диалогов: сейчас любой участник может удалить
-  любого другого участника.
-- В `MessageService::edit()` проверять владельца до окна редактирования, чтобы
-  запрос к чужому старому сообщению не подтверждал его существование.
+- Review every `Page::api()` registration: mutating routes must not rely only
+  on a check inside the handler when using
+  `accessRule: AccessService::ACCESS_PUBLIC`.
+- Decide the rule for group conversations: currently, any participant can
+  remove any other participant.
+- In `MessageService::edit()`, verify ownership before checking the editing
+  window, so a request targeting another user's old message does not confirm
+  that the message exists.
 
-### Маршруты и канонические URL без строковых литералов
+### Routes and canonical URLs without string literals
 
-`Config::siteUrl()` и `UrlGenerator::action()` уже есть, но часть публичных
-ссылок всё ещё собирается через `$_SERVER['SERVER_NAME']`, а frontend содержит
-литералы вроде `/register/?success=1` и
+`Config::siteUrl()` and `UrlGenerator::action()` already exist, but some public
+links are still assembled with `$_SERVER['SERVER_NAME']`, while the frontend
+contains literals such as `/register/?success=1` and
 `/contacts/?success=1#feedbackFormHeader`.
 
-- Расширить URL generator поддержкой query и fragment без ручной конкатенации;
-  сохранить корректное кодирование и порядок `?query#fragment`.
-- Для регистрации, обратной связи и других frontend-переходов отдавать URL,
-  разрешённый по page action, через конфигурацию страницы/DOM, а не повторять
-  структуру маршрута в TypeScript.
-- В письмах, уведомлениях, friendship/community-ссылках использовать
-  `Config::siteUrl()` вместо `$_SERVER['SERVER_NAME']`; отсутствие canonical URL
-  должно давать явный контролируемый результат.
-- Инвентаризировать внутренние ссылки в PHP, Twig и TypeScript. Публичные
-  page URL генерировать по action/feed; стабильные API endpoint'ы не смешивать
-  с маршрутизацией страниц и при необходимости вынести в один client helper.
-- Добавить тесты query/fragment и смены pattern страницы: сгенерированные
-  ссылки должны меняться без правки frontend-кода.
-- Тем же проходом убрать прямые чтения `$_ENV` из `StreamEngine`,
-  `FeedbackController` и
-  конфигурации Twig.
+- Extend the URL generator to support query parameters and fragments without
+  manual concatenation; preserve correct encoding and `?query#fragment` order.
+- For registration, feedback, and other frontend navigation, expose a URL
+  resolved from the page action through page configuration/the DOM instead of
+  repeating the route structure in TypeScript.
+- In emails, notifications, and friendship/community links, use
+  `Config::siteUrl()` instead of `$_SERVER['SERVER_NAME']`; a missing canonical
+  URL must produce an explicit, controlled result.
+- Inventory internal links in PHP, Twig, and TypeScript. Generate public page
+  URLs from actions/feeds; do not mix stable API endpoints with page routing,
+  and move them to a single client helper if necessary.
+- Add tests for query parameters/fragments and page pattern changes: generated
+  links must change without frontend code edits.
+- In the same pass, remove direct `$_ENV` reads from `StreamEngine`,
+  `FeedbackController`, and the Twig configuration.
 
-### Тестируемые границы вместо echo/header/exit и shell-вызовов
+### Testable boundaries instead of echo/header/exit and shell calls
 
-- Разделить `StreamEngine::handleRequest()`: отдельно проверка метода и RBAC,
-  отдельно dispatch, отдельно формирование ответа.
-- Ввести объект `Response`, чтобы тестировать status/headers/body без `exit`;
-  он также нужен успешному подтверждению email и redirect-ответам.
-- Спрятать cookie/CSRF за `CookieJar`/`CsrfTokenStore`, оставив статический
-  фасад только для совместимости.
-- По возможности аналогично изолировать проверку/запуск `pandoc` и PHP cron.
+- Split `StreamEngine::handleRequest()` into method and RBAC validation,
+  dispatch, and response construction.
+- Introduce a `Response` object so status/headers/body can be tested without
+  `exit`; successful email confirmation and redirect responses need it too.
+- Hide cookies/CSRF behind `CookieJar`/`CsrfTokenStore`, keeping a static facade
+  only for compatibility.
+- Where practical, similarly isolate validation/execution of `pandoc` and the
+  PHP cron process.
 
-### Покрытие тестами
+### Test coverage
 
-Сначала получить свежий `composer test:coverage`; не использовать числа из
-старого отчёта как критерий приоритета.
+First obtain a fresh `composer test:coverage` report; do not use numbers from
+the old report as a prioritization criterion.
 
-Бэкенд:
+Backend:
 
-- расширить уже существующий тест установки на пустую БД post-install smoke:
-  обычная регистрация, системное уведомление и создание библиотечной страницы;
-- ветви `StreamEngine`, которые станут достижимы после выделения `Response`;
-- оставшиеся ветви `ProfileController`, `MessagesController`,
-  `APIController` и `FeedRepository` — выбирать по свежему отчёту;
-- интеграционный ACL-тест на реальной БД: не-админ видит только собственные,
-  публичные и доступные по membership записи;
-- `S3ObjectStorage` проверять отдельным интеграционным набором с тестовым
-  бакетом, а не имитировать SDK unit-тестами.
+- extend the existing empty-database installation test into a post-install
+  smoke test covering regular registration, a system notification, and library
+  page creation;
+- cover the `StreamEngine` branches that become reachable after extracting
+  `Response`;
+- cover the remaining branches in `ProfileController`, `MessagesController`,
+  `APIController`, and `FeedRepository`, chosen according to the fresh report;
+- add an integration ACL test against a real database: a non-admin sees only
+  records they own, public records, and records accessible through membership;
+- test `S3ObjectStorage` in a separate integration suite with a test bucket
+  instead of mocking the SDK in unit tests.
 
-Фронтенд:
+Frontend:
 
-- DOM-контракты комментариев: cursor pagination, порядок ответов, защита от
-  двойной отправки, ошибки и экранирование;
-- избранное, рейтинг, «продолжить чтение» и `openDirectMessage()`;
-- dirty-state профиля и вкладка друзей;
-- конечные автоматы кнопок дружбы и membership в `users.ts`;
-- вложения/submit guards форума и редактор тегов blog post;
+- comment DOM contracts: cursor pagination, reply ordering, duplicate-submit
+  protection, errors, and escaping;
+- favorites, ratings, “continue reading,” and `openDirectMessage()`;
+- profile dirty state and the friends tab;
+- friendship and membership button state machines in `users.ts`;
+- forum attachment/submit guards and the blog post tag editor.
 
-Для `initMessages()` сначала нужен рефакторинг: вынести чистые вычисления,
-собрать DOM-ссылки через `resolveRefs(root)` и возвращать `{ stop() }`, который
-снимает интервалы и listeners. После этого тестировать гонки polling,
-дедупликацию сообщений, read receipts, attachment request ID и навигацию по
-hash.
+`initMessages()` must be refactored first: extract pure computations, collect
+DOM references through `resolveRefs(root)`, and return `{ stop() }` to clear
+intervals and listeners. Then test polling races, message deduplication, read
+receipts, attachment request IDs, and hash navigation.
 
-WordPress import остаётся вне обычного покрытия: это одноразовый ручной
-инструмент из `bin/wp-import.php`. Его тестировать только при возобновлении
-работы над импортом или найденной регрессии.
+WordPress import remains outside normal coverage: it is a one-off manual tool
+in `bin/wp-import.php`. Test it only when import work resumes or a regression is
+found.
 
-### Автоматические проверки и CI
+### Automated checks and CI
 
-- CSRF-аудит включён в PHPUnit (`tests/Security/CsrfCoverageTest.php`), запускается
-  вместе с `composer test` и отдельно через `composer audit:csrf`.
-- Научить CSRF-аудит различать ветки обработчика по HTTP-методу; сейчас один
-  `verifyCsrf()` в любой ветке может дать ложный `ok` всему обработчику.
-- Запускать в CI PHPUnit, Vitest, TypeScript, Pint, Vite build и CSRF audit.
-- Не игнорировать `composer.lock` у приложения: зависимости PHP должны быть
-  воспроизводимы так же, как npm-зависимости через `package-lock.json`.
-- Добавить `.env.example` и описать обязательные настройки в `README.md`.
+- The CSRF audit is included in PHPUnit (`tests/Security/CsrfCoverageTest.php`),
+  runs with `composer test`, and can be run separately with
+  `composer audit:csrf`.
+- Teach the CSRF audit to distinguish handler branches by HTTP method; currently
+  a single `verifyCsrf()` in any branch can incorrectly mark the entire handler
+  as `ok`.
+- Run PHPUnit, Vitest, TypeScript, Pint, the Vite build, and the CSRF audit in
+  CI.
+- Do not ignore an application's `composer.lock`: PHP dependencies must be as
+  reproducible as npm dependencies installed through `package-lock.json`.
+- Add `.env.example` and document required settings in `README.md`.
 
 ## P2
 
-### Админка: включение модулей и компонентов
+### Admin: enabling modules and components
 
-Сейчас `ModuleRegistry` считает активными все контроллеры из Composer classmap,
-а у виджетов нет отдельного состояния enabled: пустой HTML фактически служит
-неявным выключателем.
+`ModuleRegistry` currently treats every controller in the Composer classmap as
+active, while widgets have no separate enabled state: empty HTML effectively
+acts as an implicit off switch.
 
-- Закрепить термины в UI: модуль — функциональное расширение, компонент/виджет —
-  элемент размещения темы.
-- Хранить состояние модулей и не регистрировать actions, API, cron, views и
-  admin pages выключенного модуля. Системные модули установки и админки сделать
-  неотключаемыми.
-- Перед выключением показывать зависимости и использования в pages, feeds и
-  menu; не оставлять активные маршруты, у которых исчез обработчик.
-- Для виджетов добавить явный enabled switch вместо соглашения «пустой HTML».
-- Покрыть bootstrap, очистку кеша, повторное включение и конфликт
-  action/feed type интеграционными тестами.
+- Establish consistent UI terminology: a module is a functional extension; a
+  component/widget is a theme placement element.
+- Store module state and do not register actions, APIs, cron jobs, views, or
+  admin pages for a disabled module. Make the installation and admin system
+  modules impossible to disable.
+- Before disabling a module, show its dependencies and uses in pages, feeds,
+  and menus; do not leave active routes whose handler has disappeared.
+- Add an explicit enabled switch for widgets instead of the “empty HTML”
+  convention.
+- Cover bootstrap, cache clearing, re-enabling, and action/feed-type conflicts
+  with integration tests.
 
-### Админка: выбор и настройки темы
+### Admin: theme selection and settings
 
-Сейчас активная тема задаётся только путём `THEME_DIR`, а базовая тема содержит
-жёсткий `data-bs-theme="dark"`.
+The active theme is currently specified only through the `THEME_DIR` path, and
+the base theme contains a hard-coded `data-bs-theme="dark"`.
 
-- Ввести каталог тем с manifest/id/name и выбирать тему в настройках, не
-  принимая произвольный путь из admin API. Сохранить fallback на
-  `views/themes/default/` по контракту `docs/THEME_CONTRACT.md`.
-- Описать схему настроек темы и defaults; хранить значения с namespace темы,
-  валидировать их на сервере и сохранять отдельно при переключении тем.
-- Вынести color mode и другие параметры базовой темы из Twig-literal в эти
-  настройки; предусмотреть безопасный preview и возврат к default при
-  отсутствующей/сломавшейся теме.
-- Определить доставку theme assets и инвалидацию кеша, затем покрыть выбор,
-  fallback и сохранение настроек тестами.
+- Introduce a theme catalog with manifest/id/name and select themes in settings
+  without accepting an arbitrary path from the admin API. Preserve the fallback
+  to `views/themes/default/` defined by `docs/THEME_CONTRACT.md`.
+- Define a theme settings schema and defaults; store values in a theme
+  namespace, validate them on the server, and preserve them separately when
+  switching themes.
+- Move color mode and other base-theme parameters out of Twig literals and into
+  these settings; provide a safe preview and a return to the default when a
+  theme is missing or broken.
+- Define theme asset delivery and cache invalidation, then test selection,
+  fallback behavior, and settings persistence.
 
-### Админка: page action как справочник
+### Admin: page action catalog
 
-`PageEdit` сейчас принимает action свободным `TextInput`, хотя контроллеры уже
-публикуют `pageActions()`; `ModuleRegistry` сохраняет связь action → module, но
-теряет display label.
+`PageEdit` currently accepts an action through a free-form `TextInput`, even
+though controllers already expose `pageActions()`; `ModuleRegistry` stores the
+action → module relationship but discards the display label.
 
-- Добавить read-only admin API каталога `{action, label, module}` и вернуть
-  labels из `ModuleRegistry`.
-- Заменить поле на searchable select с группировкой по модулю. При редактировании
-  сохранить неизвестный legacy action видимым и не стирать его молча.
-- Валидировать выбранный action на сервере с осознанным режимом для
-  отключённого/удалённого модуля; проверить дубликаты и сохранение старых pages.
+- Add a read-only admin catalog API returning `{action, label, module}` and
+  preserve labels in `ModuleRegistry`.
+- Replace the field with a searchable select grouped by module. When editing,
+  keep an unknown legacy action visible and do not silently erase it.
+- Validate the selected action on the server with an explicit mode for a
+  disabled/removed module; test duplicates and preservation of existing pages.
 
-### Админка: редактор меню
+### Admin: menu editor
 
-Сейчас `MenuRepository` только читает всё меню, а отдельного admin CRUD нет.
+`MenuRepository` currently only reads the entire menu, and there is no separate
+admin CRUD interface.
 
-- Добавить дерево с созданием, редактированием, удалением и упорядочиванием
-  пунктов и групп.
-- Поддержать существующие типы `internal`, `external`, `dynamic`, `action` и
-  `divider`, а также page/url/action, parent, group, label, access rule и новое
-  состояние enabled.
-- На сервере проверять циклы, отсутствующие parent/page/action и атомарно
-  сохранять порядок; перед удалением родителя требовать явного решения для
-  дочерних пунктов.
-- Добавить preview для текущего пользователя и тесты дерева, ACL и reorder.
+- Add a tree editor for creating, editing, deleting, and ordering items and
+  groups.
+- Support the existing `internal`, `external`, `dynamic`, `action`, and
+  `divider` types, as well as page/url/action, parent, group, label, access rule,
+  and a new enabled state.
+- On the server, validate cycles and missing parent/page/action references and
+  save ordering atomically; before deleting a parent, require an explicit
+  decision about its child items.
+- Add a preview for the current user and tests for the tree, ACL, and reordering.
 
-### Настройки страниц вместо hardcode
+### Page settings instead of hard-coding
 
-- Уточнить назначение `listFeedType` в `ArticleController` и закрепить
-  контракт тестом.
-- Упростить определение breadcrumb/feed в Article без повторного
-  поиска по неоднозначному slug.
+- Clarify the purpose of `listFeedType` in `ArticleController` and codify the
+  contract in a test.
+- Simplify breadcrumb/feed resolution in Article without another lookup by an
+  ambiguous slug.
 
-### Регистрация
+### Registration
 
-- Подключить реальную CAPTCHA либо удалить скрытую незавершённую разметку из
-  формы регистрации.
+- Integrate a real CAPTCHA or remove the hidden, unfinished markup from the
+  registration form.
 
-### User mentions в комментариях, форумах и сообщениях
+### User mentions in comments, forums, and messages
 
-- Определить единый синтаксис `@username`, правила экранирования и границы
-  username; разбирать mention на сервере, а не доверять HTML клиента.
-- Добавить autocomplete с учётом контекста и видимости: участники обсуждения,
-  форума или группового диалога, без утечки закрытых профилей.
-- Рендерить mention безопасной ссылкой на профиль и создавать уведомление с
-  канонической ссылкой на конкретный комментарий/post/message.
-- Не уведомлять автора о себе, дедуплицировать повторные mentions и определить
-  поведение при редактировании текста, удалении пользователя и смене username.
-- Проверять право адресата видеть объект до доставки уведомления; покрыть
-  parser, XSS, ACL, edits и notification dedup тестами.
+- Define a single `@username` syntax, escaping rules, and username boundaries;
+  parse mentions on the server rather than trusting client HTML.
+- Add context- and visibility-aware autocomplete for participants in the
+  discussion, forum, or group conversation without leaking private profiles.
+- Render a mention as a safe profile link and create a notification with a
+  canonical link to the specific comment/post/message.
+- Do not notify authors when they mention themselves, deduplicate repeated
+  mentions, and define behavior for text edits, user deletion, and username
+  changes.
+- Verify that the recipient may view the object before delivering a
+  notification; cover the parser, XSS, ACL, edits, and notification
+  deduplication with tests.
 
 ### Blog: friends-only posts via container_id/container_type
 
-FriendService уже хранит отношения в `memberships` личного blog feed.
-Если продукту нужна видимость «только друзья», добавить её как явную политику
-доступа фида и проверить обе стороны взаимного membership. До продуктового
-решения не добавлять новый тип visibility только ради существования связи.
+`FriendService` already stores relationships in the personal blog feed's
+`memberships`. If the product needs “friends only” visibility, add it as an
+explicit feed access policy and check both sides of the mutual membership. Do
+not add a new visibility type merely because the relationship exists before a
+product decision is made.
 
 ### Forums: topic-view interactive features
 
-MVP просмотра темы и ответов работает. Отложены:
+The topic and reply view MVP works. Deferred work:
 
-- rich-text quick reply и preview;
-- цитирование в форму ответа;
-- редактирование/удаление собственного ответа через явный UI;
-- рейтинг отдельных сообщений;
-- реальные participant/post counters вместо заглушек;
-- сборка мусора для orphaned uploads.
+- rich-text quick reply and preview;
+- quoting into the reply form;
+- editing/deleting one's own reply through explicit UI;
+- ratings for individual posts;
+- real participant/post counters instead of placeholders;
+- garbage collection for orphaned uploads.
 
-Удаление всей темы должно оставаться отдельным owner/moderator действием и не
-быть достижимо через endpoint удаления одного ответа.
+Deleting an entire topic must remain a separate owner/moderator action and must
+not be reachable through the endpoint for deleting a single reply.
 
-### Forums: who's online внутри раздела
+### Forums: who's online within a forum
 
-На `forums.list` уже показываются активные участники, гости и боты на основе
-`user_sessions`. В `forums.topic-list.twig` всё ещё остаётся текстовая заглушка:
-переиспользовать тот же контракт и лимит имён для карточки конкретного форума,
-не дублируя расчёт presence в Twig.
+`forums.list` already displays active members, guests, and bots based on
+`user_sessions`. `forums.topic-list.twig` still contains a text placeholder:
+reuse the same contract and name limit for an individual forum's card without
+duplicating presence calculations in Twig.
 
 ### View counter
 
-`FeedService::recordView()` сейчас намеренно считает каждый render, включая
-повторные просмотры и ботов. Если нужна метрика уникальных просмотров,
-определить окно дедупликации и хранение для гостя/пользователя; не смешивать её
-с существующим read/unread watermark.
+`FeedService::recordView()` intentionally counts every render, including repeat
+views and bots. If unique-view metrics are needed, define a deduplication window
+and storage for guests/users; do not mix this with the existing read/unread
+watermark.
 
-### Строгость TypeScript
+### TypeScript strictness
 
-Текущий `tsc` зелёный, но проект не в strict mode.
+The current `tsc` check is green, but the project is not in strict mode.
 
-Сначала расширить фактическое покрытие `npm run typecheck`: сейчас из проверки
-исключены тесты `tests/Site/js/`, а также
-`vite-build-data.ts`, `vite.config.ts` и `vitest.config.ts`. Включить их в
-основной `tsconfig.json` либо проверять отдельным конфигом и сохранить общий
-скрипт зелёным.
+First, expand the actual coverage of `npm run typecheck`: tests in
+`tests/Site/js/`, as well as `vite-build-data.ts`, `vite.config.ts`, and
+`vitest.config.ts`, are currently excluded. Include them in the main
+`tsconfig.json` or check them with a separate configuration while keeping the
+shared script green.
 
-1. Включать `strictNullChecks` по файлам, начиная с DOM-heavy модулей.
-2. Затем закрыть `noImplicitAny`; локальные декларации нужны для
-   `@bfhp/astro-natal-chart` и используемого подпути Bootstrap.
-3. Не маскировать переход массовыми `@ts-expect-error` без отдельного
-   объяснения.
+1. Enable `strictNullChecks` incrementally, starting with DOM-heavy modules.
+2. Then address `noImplicitAny`; local declarations are needed for
+   `@bfhp/astro-natal-chart` and the Bootstrap subpath in use.
+3. Do not conceal the migration with large numbers of `@ts-expect-error`
+   comments without individual explanations.
 
 ### Cursor pagination
 
-Offset pagination в ACL-фильтрованных списках может широко сканировать таблицу.
-Для горячих списков перейти на стабильный cursor по индексированному
-`(sort_column, id)`. Конкретные запросы выбирать по измерениям и правилам из
-`docs/PERFORMANCE_CONTRACT.md`, а не переписывать все пагинаторы заранее.
+Offset pagination in ACL-filtered lists can scan large parts of a table. Move
+hot lists to stable cursor pagination over indexed `(sort_column, id)`. Choose
+specific queries based on measurements and the rules in
+`docs/PERFORMANCE_CONTRACT.md` rather than rewriting every paginator in advance.
 
-## Правило ведения файла
+## File maintenance rule
 
-Новая задача должна описывать наблюдаемую проблему, желаемый результат и, где
-важно, проверку готовности. Диагностические заметки и отчёты о уже выполненной
-работе оставлять в commit/PR, а не превращать TODO обратно в changelog.
+A new task must describe the observable problem, the desired outcome, and,
+where important, how completion will be verified. Keep diagnostic notes and
+reports about completed work in commits/PRs instead of turning TODO back into a
+changelog.
