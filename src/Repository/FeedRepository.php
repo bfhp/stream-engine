@@ -96,6 +96,31 @@ final class FeedRepository implements FeedRepositoryInterface
     }
 
     /**
+     * Gets a single Feed from a feed type's global slug namespace.
+     * Checks ACL.
+     *
+     * This is only deterministic for feed types whose slugs are guaranteed
+     * to be unique across every parent (for example the flattened `forum`
+     * route). Parent-scoped feed types must use findByParentAndSlug().
+     *
+     * Uses index: feeds_slug_index(slug)
+     */
+    public function findByTypeAndSlug(string $type, string $slug, User $user): ?Feed
+    {
+        $sql = $this->baseSelect();
+
+        $condition = "f.type = ?\nAND f.slug = ?\n";
+        $params = [$type, $slug];
+
+        $condition = $this->applyAcl($condition, $params, $user);
+
+        $sql .= $this->where($condition);
+        $sql .= "\nLIMIT 1";
+
+        return $this->fetchOne($sql, $params);
+    }
+
+    /**
      * Uses index: feeds_parent_id_slug_type_index (parent_id, slug, type)
      * Fallback: feeds_slug_index (slug) may be used when parent selectivity is poor.
      */

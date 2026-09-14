@@ -204,6 +204,34 @@ final class FeedServiceTest extends TestCase
                 responseType: 'raw',
                 accessRule: AccessService::ACCESS_PUBLIC
             ),
+            new Page(
+                id: 9,
+                parentId: 1,
+                pattern: 'forums',
+                pageName: 'Forums',
+                settings: null,
+                feedType: null,
+                listFeedType: null,
+                feedId: null,
+                commentsEnabled: false,
+                requestMethods: ['GET'],
+                responseType: 'raw',
+                accessRule: AccessService::ACCESS_PUBLIC
+            ),
+            new Page(
+                id: 10,
+                parentId: 9,
+                pattern: '{slug}',
+                pageName: 'Forum',
+                settings: null,
+                feedType: 'forum',
+                listFeedType: null,
+                feedId: null,
+                commentsEnabled: false,
+                requestMethods: ['GET'],
+                responseType: 'raw',
+                accessRule: AccessService::ACCESS_PUBLIC
+            ),
         ];
 
         return new UrlGenerator(
@@ -511,6 +539,69 @@ final class FeedServiceTest extends TestCase
 
         $this->assertSame(60, $result->id);
         $this->assertSame('/books/feed-58/2/', $result->canonicalUrl);
+        $this->assertNotNull($result->createdAtLabel);
+    }
+
+    public function testGetFeedByTypeAndSlugAddsDecorations(): void
+    {
+        $createdAt = time() - 4000;
+        $user = new User(id: 7, email: 'user@example.com', role: AccessService::ROLE_USER);
+
+        $db = $this->createMock(PdoDatabase::class);
+        $repository = new FeedRepository($db);
+
+        $db
+            ->expects($this->once())
+            ->method('fetchOne')
+            ->with(
+                $this->callback(static fn (string $sql): bool => str_contains($sql, 'f.type = ?')
+                    && str_contains($sql, 'f.slug = ?')
+                    && ! str_contains($sql, 'f.parent_id = ?')),
+                ['forum', 'practice', 7, 7]
+            )
+            ->willReturn([
+                'id' => 60,
+                'parent_id' => 58,
+                'owner_id' => 1,
+                'type' => 'forum',
+                'slug' => 'practice',
+                'title' => 'Practice',
+                'content' => '',
+                'description' => null,
+                'image_url' => null,
+                'container_id' => null,
+                'container_type' => null,
+                'visibility' => 'public',
+                'position' => 2,
+                'created_at' => $createdAt,
+                'nick' => 'Author 1',
+                'avatar_url' => '/uploads/avatar-1.webp',
+            ]);
+
+        $forum = new Feed(
+            id: 60,
+            parentId: 58,
+            ownerId: 1,
+            type: 'forum',
+            slug: 'practice',
+            title: 'Practice',
+            description: null,
+            imageUrl: null,
+            content: '',
+            containerId: null,
+            visibility: 'public',
+            position: 2,
+            createdAt: $createdAt,
+            relevance: null,
+            canonicalUrl: null,
+        );
+        $parent = $this->makeFeed(id: 58, type: 'forum');
+        $service = $this->makeService($repository, $this->makeUrlGenerator([58 => $parent, 60 => $forum]));
+
+        $result = $service->getFeedByTypeAndSlug('forum', 'practice', $user);
+
+        $this->assertSame(60, $result->id);
+        $this->assertSame('/forums/practice/', $result->canonicalUrl);
         $this->assertNotNull($result->createdAtLabel);
     }
 

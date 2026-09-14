@@ -144,6 +144,10 @@ final class FeedRepositoryTest extends TestCase
         return [
             'findById' => [fn (FeedRepository $r, User $u) => $r->findById(90, $u), [90]],
             'findBySlug' => [fn (FeedRepository $r, User $u) => $r->findBySlug('x', $u), ['x']],
+            'findByTypeAndSlug' => [
+                fn (FeedRepository $r, User $u) => $r->findByTypeAndSlug('forum', 'x', $u),
+                ['forum', 'x'],
+            ],
             'findByParent' => [fn (FeedRepository $r, User $u) => $r->findByParent(58, $u), [58]],
             'findByParentAndSlug' => [
                 fn (FeedRepository $r, User $u) => $r->findByParentAndSlug(58, 'x', $u),

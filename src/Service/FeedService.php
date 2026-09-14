@@ -202,6 +202,25 @@ class FeedService
         return $feeds;
     }
 
+    public function getFeedByTypeAndSlug(string $type, string $slug, User $user): ?Feed
+    {
+        $feed = $this->repository->findByTypeAndSlug(
+            type: $type,
+            slug: $slug,
+            user: $user
+        );
+
+        if ($feed === null) {
+            return null;
+        }
+
+        $feed->canonicalUrl = $this->urlGenerator->feed($feed);
+        $this->decorateFeed($feed);
+        $this->decorateFeedsWithMetadata([$feed]);
+
+        return $feed;
+    }
+
     public function getFeedByParentAndSlug(?int $parentId, string $slug, User $user, ?string $type = null): ?Feed
     {
         $feed = $this->repository->findByParentAndSlug(
