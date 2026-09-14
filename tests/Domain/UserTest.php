@@ -89,6 +89,38 @@ final class UserTest extends TestCase
         );
     }
 
+    public function testWithAvatarUrlReturnsACopyAndPreservesTheUser(): void
+    {
+        $user = new User(
+            id: 42,
+            email: 'user@example.com',
+            role: AccessService::ROLE_MODERATOR,
+            nick: 'Аноним',
+            username: 'anonymous',
+            avatarUrl: '',
+            bio: 'Bio',
+            homepage: 'https://example.com',
+            gender: 'other',
+            birthDate: '2000-01-02',
+            signature: 'Signature',
+            showGenderPublicly: true,
+            showBirthDatePublicly: true,
+            showHomepagePublicly: true,
+            hidePresence: true,
+            showHiddenProfileToFriends: true,
+            createdAt: 1_700_000_000,
+            timezone: 'Europe/Nicosia',
+        );
+
+        $copy = $user->withAvatarUrl('/assets/img/default-avatar.svg');
+        $expected = get_object_vars($user);
+        $expected['avatarUrl'] = '/assets/img/default-avatar.svg';
+
+        $this->assertNotSame($user, $copy);
+        $this->assertSame('', $user->avatarUrl);
+        $this->assertSame($expected, get_object_vars($copy));
+    }
+
     /* ===============================
        The system account
     =============================== */

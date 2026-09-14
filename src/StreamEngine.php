@@ -312,6 +312,9 @@ class StreamEngine
         $allMenuItems = $menuRepository->findAll();
 
         $currentUser = $this->authService->currentUser();
+        $currentUser = $currentUser->withAvatarUrl(
+            UserService::resolveAvatarUrl($currentUser->avatarUrl)
+        );
 
         if ($currentUser->isGuest()) {
             $this->userService->recordGuestPresence();

@@ -1,5 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-    <rect width="64" height="64" fill="#DDE3EC"/>
-    <circle cx="32" cy="25" r="11" fill="#9AA7BD"/>
-    <ellipse cx="32" cy="60" rx="21" ry="17" fill="#9AA7BD"/>
+    <defs>
+        <linearGradient id="avatar-background" x1="8" y1="4" x2="58" y2="62" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#2563EB"/>
+            <stop offset="1" stop-color="#7C3AED"/>
+        </linearGradient>
+        <linearGradient id="avatar-shirt" x1="18" y1="45" x2="48" y2="64" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#67E8F9"/>
+            <stop offset="1" stop-color="#38BDF8"/>
+        </linearGradient>
+    </defs>
+    <rect width="64" height="64" fill="url(#avatar-background)"/>
+    <circle cx="52" cy="12" r="18" fill="#FFFFFF" opacity=".08"/>
+    <circle cx="9" cy="53" r="15" fill="#22D3EE" opacity=".16"/>
+    <circle cx="32" cy="25" r="14" fill="#FFFFFF" opacity=".16"/>
+    <path d="M11 64c1.5-14 9.2-22 21-22s19.5 8 21 22H11Z" fill="url(#avatar-shirt)"/>
+    <circle cx="32" cy="25" r="11" fill="#F8FAFC"/>
+    <circle cx="28" cy="24" r="1.4" fill="#4338CA"/>
+    <circle cx="36" cy="24" r="1.4" fill="#4338CA"/>
+    <path d="M27.5 29c1.3 1.5 2.8 2.2 4.5 2.2s3.2-.7 4.5-2.2" fill="none" stroke="#4338CA" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M25 47.5 32 53l7-5.5" fill="none" stroke="#E0F2FE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

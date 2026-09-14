@@ -59,6 +59,30 @@ final class User
         return !$this->isGuest() && $this->role === AccessService::ROLE_ADMIN;
     }
 
+    public function withAvatarUrl(string $avatarUrl): self
+    {
+        return new self(
+            id: $this->id,
+            email: $this->email,
+            role: $this->role,
+            nick: $this->nick,
+            username: $this->username,
+            avatarUrl: $avatarUrl,
+            bio: $this->bio,
+            homepage: $this->homepage,
+            gender: $this->gender,
+            birthDate: $this->birthDate,
+            signature: $this->signature,
+            showGenderPublicly: $this->showGenderPublicly,
+            showBirthDatePublicly: $this->showBirthDatePublicly,
+            showHomepagePublicly: $this->showHomepagePublicly,
+            hidePresence: $this->hidePresence,
+            showHiddenProfileToFriends: $this->showHiddenProfileToFriends,
+            createdAt: $this->createdAt,
+            timezone: $this->timezone,
+        );
+    }
+
     public function getDisplayName(): string
     {
         $nick = trim($this->nick);

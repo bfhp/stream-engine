@@ -11,6 +11,10 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 - New `footer_legal` widget placement for legal information in the site footer.
 
+### Changed
+
+- Redesigned the default user avatar and applied it to users without a custom avatar in the site header.
+
 ## [0.1.0] - 2026-09-14
 
 ### Added
