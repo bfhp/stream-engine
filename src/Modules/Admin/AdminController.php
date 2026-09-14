@@ -16,6 +16,7 @@ use StreamEngine\Core\Security;
 use StreamEngine\Core\TranslationManager;
 use StreamEngine\Domain\Page;
 use StreamEngine\Repository\PageRepository;
+use StreamEngine\Repository\MenuRepository;
 use StreamEngine\Repository\SettingsRepository;
 use StreamEngine\Service\AccessService;
 use StreamEngine\View\ViewModel;
@@ -40,7 +41,16 @@ class AdminController extends AbstractController
         'noindex',
     ];
 
+    private const array MENU_TYPES = [
+        'internal',
+        'external',
+        'action',
+        'divider',
+        'dynamic',
+    ];
+
     private readonly PageRepository $pageRepository;
+    private readonly MenuRepository $menuRepository;
     private readonly SettingsRepository $settingsRepository;
 
     public function __construct(
@@ -51,6 +61,7 @@ class AdminController extends AbstractController
     ) {
         parent::__construct($db, $context);
         $this->pageRepository = new PageRepository($db);
+        $this->menuRepository = new MenuRepository($db);
         $this->settingsRepository = new SettingsRepository($db);
     }
 
@@ -89,6 +100,12 @@ class AdminController extends AbstractController
             case 'admin.page':
                 $this->handlePageRequest((int) ($args['id'] ?? 0));
                 break;
+            case 'admin.menus':
+                $this->handleMenusRequest();
+                break;
+            case 'admin.menu':
+                $this->handleMenuRequest((int) ($args['id'] ?? 0));
+                break;
             case 'admin.settings':
                 $this->handleSettingsRequest();
                 break;
@@ -109,6 +126,30 @@ class AdminController extends AbstractController
                 parentId: $apiPageId,
                 pattern: 'admin',
                 requestMethods: ['GET'],
+                accessRule: AccessService::ACCESS_ADMIN,
+            )
+        );
+
+        $menusPageId = $pageTree->getMaxPageId();
+        $pageTree->add(
+            Page::api(
+                id: $menusPageId,
+                parentId: $adminApiPageId,
+                pattern: 'menus',
+                requestMethods: ['GET', 'POST'],
+                action: 'admin.menus',
+                accessRule: AccessService::ACCESS_ADMIN,
+            )
+        );
+
+        $menuPageId = $pageTree->getMaxPageId();
+        $pageTree->add(
+            Page::api(
+                id: $menuPageId,
+                parentId: $menusPageId,
+                pattern: '{id:\d+}',
+                requestMethods: ['GET', 'PATCH', 'DELETE'],
+                action: 'admin.menu',
                 accessRule: AccessService::ACCESS_ADMIN,
             )
         );
@@ -209,6 +250,73 @@ class AdminController extends AbstractController
         }
 
         echo Formatter::json($page);
+    }
+
+    /** @throws ValidationException */
+    private function handleMenusRequest(): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
+
+            $data = $this->validatedMenuData($this->jsonBody());
+
+            echo Formatter::json($this->menuRepository->createFromAdminData($data));
+
+            return;
+        }
+
+        echo Formatter::json(['data' => $this->menuRepository->findAllForAdmin()]);
+    }
+
+    /**
+     * @throws NotFoundException
+     * @throws ValidationException
+     */
+    private function handleMenuRequest(int $id): void
+    {
+        if ($id <= 0) {
+            throw new NotFoundException('Menu item not found');
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
+            Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
+
+            if ($this->menuRepository->findForAdminById($id) === null) {
+                throw new NotFoundException('Menu item not found');
+            }
+
+            echo Formatter::json($this->menuRepository->updateFromAdminData(
+                $id,
+                $this->validatedMenuData($this->jsonBody(), $id)
+            ));
+
+            return;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+            Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
+
+            if ($this->menuRepository->findForAdminById($id) === null) {
+                throw new NotFoundException('Menu item not found');
+            }
+
+            if ($this->menuRepository->hasChildren($id)) {
+                throw new ValidationException('Move or delete child menu items first');
+            }
+
+            $this->menuRepository->delete($id);
+            echo Formatter::json(['deleted' => true]);
+
+            return;
+        }
+
+        $item = $this->menuRepository->findForAdminById($id);
+
+        if ($item === null) {
+            throw new NotFoundException('Menu item not found');
+        }
+
+        echo Formatter::json($item);
     }
 
     /**
@@ -315,6 +423,132 @@ class AdminController extends AbstractController
         ];
     }
 
+    /**
+     * @param array<string, mixed> $input
+     * @return array<string, mixed>
+     * @throws ValidationException
+     */
+    private function validatedMenuData(array $input, ?int $currentId = null): array
+    {
+        $menuGroup = trim((string) ($input['menuGroup'] ?? ''));
+        $type = trim((string) ($input['type'] ?? ''));
+        $label = $this->optionalString($input['label'] ?? null);
+        $url = $this->optionalString($input['url'] ?? null);
+        $action = $this->optionalString($input['action'] ?? null);
+        $parentId = $this->optionalPositiveInt($input['parentId'] ?? null, 'Invalid parent');
+        $pageId = $this->optionalPositiveInt($input['pageId'] ?? null, 'Invalid page');
+
+        if ($menuGroup === '' || strlen($menuGroup) > 100) {
+            throw new ValidationException('Menu group is required and must not exceed 100 characters');
+        }
+
+        if (! in_array($type, self::MENU_TYPES, true)) {
+            throw new ValidationException('Invalid menu item type');
+        }
+
+        $accessRule = $input['accessRule'] ?? null;
+        if (! is_string($accessRule) || ! in_array($accessRule, AccessService::ACCESS_RULES, true)) {
+            throw new ValidationException('Invalid access rule');
+        }
+
+        $sortOrder = $input['sortOrder'] ?? null;
+        if (! is_int($sortOrder) || $sortOrder < 0) {
+            throw new ValidationException('Sort order must be a non-negative integer');
+        }
+
+        if ($label !== null && strlen($label) > 150) {
+            throw new ValidationException('Label must not exceed 150 characters');
+        }
+
+        if ($url !== null && strlen($url) > 255) {
+            throw new ValidationException('URL must not exceed 255 characters');
+        }
+
+        if ($action !== null && strlen($action) > 100) {
+            throw new ValidationException('Action must not exceed 100 characters');
+        }
+
+        if (in_array($type, ['internal', 'dynamic'], true) && $pageId === null) {
+            throw new ValidationException('Page is required for internal and dynamic menu items');
+        }
+
+        if ($type === 'external' && $url === null) {
+            throw new ValidationException('URL is required for external menu items');
+        }
+
+        if ($type === 'action' && $action === null) {
+            throw new ValidationException('Action is required for action menu items');
+        }
+
+        if ($type !== 'divider' && $label === null) {
+            throw new ValidationException('Label is required');
+        }
+
+        if ($currentId !== null && $parentId === $currentId) {
+            throw new ValidationException('A menu item cannot be its own parent');
+        }
+
+        $items = $this->menuRepository->findAllForAdmin();
+        $byId = [];
+        foreach ($items as $item) {
+            $byId[$item['id']] = $item;
+
+            if (
+                $item['id'] !== $currentId
+                && $item['menuGroup'] === $menuGroup
+                && $item['parentId'] === $parentId
+                && $item['sortOrder'] === $sortOrder
+            ) {
+                throw new ValidationException('Another item at this level already uses the same sort order');
+            }
+        }
+
+        if ($parentId !== null) {
+            $parent = $byId[$parentId] ?? null;
+            if ($parent === null) {
+                throw new ValidationException('Parent menu item not found');
+            }
+            if ($parent['menuGroup'] !== $menuGroup) {
+                throw new ValidationException('Parent must belong to the same menu group');
+            }
+
+            $ancestorId = $parentId;
+            $visited = [];
+            while ($ancestorId !== null && ! isset($visited[$ancestorId])) {
+                if ($ancestorId === $currentId) {
+                    throw new ValidationException('A menu item cannot be moved below its descendant');
+                }
+                $visited[$ancestorId] = true;
+                $ancestorId = $byId[$ancestorId]['parentId'] ?? null;
+            }
+        }
+
+        if (in_array($type, ['external', 'action', 'divider'], true)) {
+            $pageId = null;
+        }
+        if ($type !== 'external') {
+            $url = null;
+        }
+        if ($type !== 'action') {
+            $action = null;
+        }
+        if ($type === 'divider') {
+            $label = null;
+        }
+
+        return [
+            'parentId' => $parentId,
+            'menuGroup' => $menuGroup,
+            'type' => $type,
+            'pageId' => $pageId,
+            'url' => $url,
+            'action' => $action,
+            'label' => $label,
+            'accessRule' => $accessRule,
+            'sortOrder' => $sortOrder,
+        ];
+    }
+
     private function optionalString(mixed $value): ?string
     {
         $value = trim((string) ($value ?? ''));
@@ -329,6 +563,20 @@ class AdminController extends AbstractController
         }
 
         return (int) $value;
+    }
+
+    /** @throws ValidationException */
+    private function optionalPositiveInt(mixed $value, string $message): ?int
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (! is_int($value) || $value <= 0) {
+            throw new ValidationException($message);
+        }
+
+        return $value;
     }
 
     /**

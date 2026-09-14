@@ -10,6 +10,7 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 ### Added
 
 - New `footer_legal` widget placement for legal information in the site footer.
+- Admin menu management with nested items, menu groups, link types, access rules, ordering, and protected CRUD API endpoints.
 
 ### Changed
 

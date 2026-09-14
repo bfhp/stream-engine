@@ -47,6 +47,7 @@ final class AdminControllerTest extends TestCase
         array $rows = [],
         ?array $row = null,
         int $lastInsertId = 77,
+        ?array $fetchOneRows = null,
     ): AdminController {
         $db = $this->createStub(PdoDatabase::class);
 
@@ -64,7 +65,16 @@ final class AdminControllerTest extends TestCase
                 return $rows;
             }
         );
-        $db->method('fetchOne')->willReturn($row);
+        if ($fetchOneRows !== null) {
+            $fetchOneIndex = 0;
+            $db->method('fetchOne')->willReturnCallback(
+                function () use ($fetchOneRows, &$fetchOneIndex): ?array {
+                    return $fetchOneRows[$fetchOneIndex++] ?? null;
+                }
+            );
+        } else {
+            $db->method('fetchOne')->willReturn($row);
+        }
         $db->method('lastInsertId')->willReturn($lastInsertId);
         $db->method('execute')->willReturnCallback(
             function (string $sql, array $params = []): int {
@@ -279,6 +289,149 @@ final class AdminControllerTest extends TestCase
         }
     }
 
+    /* ===============================
+       Menu editor API
+    =============================== */
+
+    public function testMenusListReturnsEditableRows(): void
+    {
+        $module = $this->makeModule(rows: [[
+            'id' => 8,
+            'parent' => null,
+            'menu_group' => 'main',
+            'type' => 'external',
+            'page_id' => null,
+            'url' => 'https://example.com',
+            'action' => null,
+            'label' => 'Example',
+            'access_rule' => 'public',
+            'sort_order' => 20,
+        ]]);
+
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $response = $this->callAndDecode($module, $this->makeApiPage('admin.menus', ['GET', 'POST']));
+
+        $this->assertSame(8, $response['data'][0]['id']);
+        $this->assertSame('main', $response['data'][0]['menuGroup']);
+        $this->assertSame('https://example.com', $response['data'][0]['url']);
+        $this->assertSame(20, $response['data'][0]['sortOrder']);
+    }
+
+    public function testAValidMenuItemIsCreatedWithNormalizedFields(): void
+    {
+        $module = $this->makeModule(lastInsertId: 81);
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode([
+            'menuGroup' => 'bottom',
+            'type' => 'external',
+            'url' => 'https://example.com/help',
+            'pageId' => 42,
+            'action' => 'ignored',
+            'label' => 'Help',
+            'accessRule' => 'public',
+            'sortOrder' => 30,
+        ]));
+
+        $response = $this->callAndDecode($module, $this->makeApiPage('admin.menus', ['GET', 'POST']));
+
+        $this->assertSame(81, $response['id']);
+        $this->assertNull($response['pageId']);
+        $this->assertNull($response['action']);
+        $this->assertSame('https://example.com/help', $this->writes[0][1][4]);
+    }
+
+    public function testMenuItemCannotBeMovedBelowItsDescendant(): void
+    {
+        $current = [
+            'id' => 1,
+            'parent' => null,
+            'menu_group' => 'main',
+            'type' => 'internal',
+            'page_id' => 4,
+            'url' => null,
+            'action' => null,
+            'label' => 'Root',
+            'access_rule' => 'public',
+            'sort_order' => 10,
+        ];
+        $descendant = $current + [];
+        $descendant['id'] = 2;
+        $descendant['parent'] = 1;
+        $descendant['label'] = 'Child';
+        $descendant['sort_order'] = 20;
+        $module = $this->makeModule(rows: [$current, $descendant], row: $current);
+
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode([
+            'parentId' => 2,
+            'menuGroup' => 'main',
+            'type' => 'internal',
+            'pageId' => 4,
+            'label' => 'Root',
+            'accessRule' => 'public',
+            'sortOrder' => 10,
+        ]));
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('descendant');
+        $module->callApi($this->makeApiPage('admin.menu', ['GET', 'PATCH', 'DELETE']), ['id' => 1]);
+    }
+
+    public function testMenuItemWithChildrenCannotBeDeleted(): void
+    {
+        $row = [
+            'id' => 8,
+            'parent' => null,
+            'menu_group' => 'main',
+            'type' => 'divider',
+            'page_id' => null,
+            'url' => null,
+            'action' => null,
+            'label' => null,
+            'access_rule' => 'public',
+            'sort_order' => 10,
+        ];
+        $module = $this->makeModule(fetchOneRows: [$row, ['id' => 9]]);
+
+        $_SERVER['REQUEST_METHOD'] = 'DELETE';
+        $this->withValidCsrf();
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('child menu items');
+        $module->callApi($this->makeApiPage('admin.menu', ['GET', 'PATCH', 'DELETE']), ['id' => 8]);
+    }
+
+    public function testLeafMenuItemCanBeDeleted(): void
+    {
+        $row = [
+            'id' => 8,
+            'parent' => null,
+            'menu_group' => 'main',
+            'type' => 'divider',
+            'page_id' => null,
+            'url' => null,
+            'action' => null,
+            'label' => null,
+            'access_rule' => 'public',
+            'sort_order' => 10,
+        ];
+        $module = $this->makeModule(fetchOneRows: [$row, null]);
+
+        $_SERVER['REQUEST_METHOD'] = 'DELETE';
+        $this->withValidCsrf();
+        $response = $this->callAndDecode(
+            $module,
+            $this->makeApiPage('admin.menu', ['GET', 'PATCH', 'DELETE']),
+            ['id' => 8]
+        );
+
+        $this->assertTrue($response['deleted']);
+        $this->assertStringContainsString('DELETE FROM menu', $this->writes[0][0]);
+        $this->assertSame([8], $this->writes[0][1]);
+    }
+
     public function testSettingsListReturnsKeyValueRowsForTheAdminEditor(): void
     {
         $module = $this->makeModule(settings: [
@@ -403,6 +556,8 @@ final class AdminControllerTest extends TestCase
         foreach ([
             'admin.pages' => ['GET', 'POST'],
             'admin.page' => ['GET', 'PATCH'],
+            'admin.menus' => ['GET', 'POST'],
+            'admin.menu' => ['GET', 'PATCH', 'DELETE'],
             'admin.settings' => ['GET', 'POST'],
             'admin.setting' => ['GET', 'PATCH'],
         ] as $action => $methods) {
@@ -439,12 +594,17 @@ final class AdminControllerTest extends TestCase
 
         $list = (new Router($tree))->resolve('/api/v1/admin/pages');
         $item = (new Router($tree))->resolve('/api/v1/admin/pages/42');
+        $menus = (new Router($tree))->resolve('/api/v1/admin/menus');
+        $menu = (new Router($tree))->resolve('/api/v1/admin/menus/8');
         $settings = (new Router($tree))->resolve('/api/v1/admin/settings');
         $setting = (new Router($tree))->resolve('/api/v1/admin/settings/site_name');
 
         $this->assertSame('admin.pages', $list['page']->action ?? null);
         $this->assertSame('admin.page', $item['page']->action ?? null);
         $this->assertSame(['id' => '42'], $item['params']);
+        $this->assertSame('admin.menus', $menus['page']->action ?? null);
+        $this->assertSame('admin.menu', $menu['page']->action ?? null);
+        $this->assertSame(['id' => '8'], $menu['params']);
         $this->assertSame('admin.settings', $settings['page']->action ?? null);
         $this->assertSame('admin.setting', $setting['page']->action ?? null);
         $this->assertSame(['key' => 'site_name'], $setting['params']);

@@ -31,6 +31,7 @@ export default function AdminLayout({ moduleAdminPages }: AdminLayoutProps) {
                 <NavLink component={Link} to="/" label="Dashboard" />
                 <NavLink component={Link} to="/feeds" label="Feeds" />
                 <NavLink component={Link} to="/pages" label="Pages" />
+                <NavLink component={Link} to="/menus" label="Menus" />
                 <NavLink component={Link} to="/settings" label="Settings" />
                 <NavLink component={Link} to="/widgets" label="Widgets" />
                 {moduleAdminPages.map(({ path, label }) => (
