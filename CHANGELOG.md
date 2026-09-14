@@ -15,6 +15,7 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 ### Changed
 
 - Redesigned the default user avatar and applied it to users without a custom avatar in the site header.
+- Made article, forum, community, and blog-post routes resolve feeds within their declared type and parent scope instead of selecting an ambiguous global slug match.
 
 ## [0.1.0] - 2026-09-14
 

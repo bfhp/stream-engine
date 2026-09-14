@@ -184,14 +184,17 @@ class FeedService
         return $feed;
     }
 
+    /**
+     * Return an arbitrary visible match from the global slug namespace.
+     *
+     * This legacy array-shaped lookup is intentionally unscoped and must not
+     * be used to resolve route identity. Route consumers must select either
+     * getFeedByTypeAndSlug() or getFeedByParentAndSlug().
+     *
+     * @return list<Feed>
+     */
     public function getFeedBySlug(string $slug, User $user): array
     {
-        /*
-         * TODO
-         * Currently a slug uniqueness is not checked anywhere.
-         * The function will return +/- random Feed with the defined $slug.
-         * Very risky.
-         */
         $feeds = $this->repository->findBySlug(
             slug: $slug,
             user: $user

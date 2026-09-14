@@ -33,22 +33,20 @@ There is no current coverage report: `composer test:coverage` requires a
 running Docker daemon. Old coverage percentages were deliberately removed
 because they became misleading after more tests were added.
 
-## P0
-
-### Feed slug uniqueness and scope
-
-`FeedService::getFeedBySlug()` returns an array, and callers often use
-`array_pop()`. When slugs collide, the result is undefined; this affects
-articles, forums, and communities.
-
-- Decide whether a slug is unique globally, within its type, or within its
-  parent.
-- Find and resolve existing collisions before adding a database constraint.
-- Add a unique index, explicit repository methods for the chosen scope, and a
-  migration test.
-- Remove selection of an arbitrary result via `array_pop()`.
-
 ## P1
+
+### Enforce feed slug scopes in the database
+
+Route lookups now use the feed hierarchy explicitly: flat namespaces resolve
+by type and slug, while nested resources resolve by parent, type, and slug.
+Creation services enforce the same scopes in application code, but the
+database still has only non-unique lookup indexes.
+
+- Find and resolve existing collisions within each declared scope.
+- Add database constraints for globally type-scoped and parent-scoped feed
+  slugs, including the `parent_id IS NULL` case.
+- Add migration tests proving that duplicates are rejected in the relevant
+  scope and allowed in unrelated types or parents.
 
 ### Cron: choose an execution model
 
@@ -277,8 +275,6 @@ admin CRUD interface.
 
 - Clarify the purpose of `listFeedType` in `ArticleController` and codify the
   contract in a test.
-- Simplify breadcrumb/feed resolution in Article without another lookup by an
-  ambiguous slug.
 
 ### Registration
 
