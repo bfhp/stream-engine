@@ -1,10 +1,12 @@
 <div class="d-flex ms-auto order-2 order-lg-4">
 
     {% block user_messages %}
-    <a class="btn btn-outline-secondary me-2" href="/messages/" role="button" title="{{ trans('view.nav.messages') }}">
-        <i class="bi bi-envelope"></i>
-        <span class="d-md-none">{{ trans('view.nav.messages') }}</span>
-    </a>
+        {% if messagesUrl %}
+            <a class="btn btn-outline-secondary me-2" href="{{ messagesUrl }}" role="button" title="{{ trans('view.nav.messages') }}">
+                <i class="bi bi-envelope"></i>
+                <span class="d-md-none">{{ trans('view.nav.messages') }}</span>
+            </a>
+        {% endif %}
     {% endblock %}
 
     {% block user_dropdown %}
