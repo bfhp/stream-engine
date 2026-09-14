@@ -172,6 +172,44 @@ found.
 
 ## P2
 
+### Admin: dashboard
+
+`Dashboard.tsx` is currently only a placeholder and does not provide an
+operational overview of the site.
+
+- Define and display useful summary metrics, recent activity, system health,
+  and shortcuts to common administration tasks.
+- Make every dashboard card permission-aware and provide explicit loading,
+  empty, and error states.
+- Cover the dashboard API, access rules, and rendering of each state with
+  tests.
+
+### Admin: user management
+
+`Users.tsx` is currently only a placeholder; administrators cannot manage
+users through the admin interface.
+
+- Add a paginated, searchable user list with relevant status and role filters.
+- Define and implement the permitted account operations, including profile and
+  role changes, activation/deactivation, and safe handling of privileged or
+  self-targeted accounts.
+- Enforce every operation on the server independently of the UI and cover
+  authorization, validation, audit-sensitive actions, and list states with
+  tests.
+
+### Admin: interface localization
+
+The admin interface is only partially translated: several pages and navigation
+elements still contain English string literals, and formatting currently
+follows the browser locale rather than the locale selected in CMS settings.
+
+- Route all user-facing admin text, including module-provided navigation and
+  validation/error messages, through the translation system.
+- Make the selected CMS locale control admin labels and locale-sensitive date,
+  time, and number formatting, with a documented fallback for missing keys.
+- Ensure changing the locale updates the interface predictably and add tests
+  that exercise every supported locale without relying on the browser locale.
+
 ### Admin: enabling modules and components
 
 `ModuleRegistry` currently treats every controller in the Composer classmap as
