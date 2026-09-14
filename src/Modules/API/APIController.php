@@ -71,6 +71,11 @@ class APIController extends AbstractController
     public function callApi(Page $page, array $args = []): void
     {
         header('Content-Type: application/json');
+
+        if (! $page->allowsMethod($_SERVER['REQUEST_METHOD'] ?? '')) {
+            throw new ValidationException('Method not allowed', 405);
+        }
+
         match ($page->action) {
             'api.index' => $this->handleApiRequest(),
             'api.v1.index' => $this->handleApiV1Request($page->id),
@@ -158,18 +163,16 @@ class APIController extends AbstractController
         } elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $query = $this->context->query;
 
-            $limit = $query->int('limit', 100);
             $offset = $query->int('offset');
             $type = $query->trimmed('type');
             $title = $query->trimmed('title');
 
             $search = $query->trimmed('search');
             $sort = $query->trimmed('sort');
+            $limit = max(1, min($query->int('limit', $search ? 20 : 100), 100));
 
             if ($search) {
                 $cursor = $query->string('cursor') ?: null;
-
-                $limit = 20;
 
                 $result = $this->feedService->search(
                     $search,
@@ -293,10 +296,15 @@ class APIController extends AbstractController
         if ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
             $input = json_decode(file_get_contents('php://input'), true);
             $input = is_array($input) ? $input : [];
+            $content = $input['content'] ?? '';
+
+            if (! is_scalar($content) && $content !== null) {
+                throw new ValidationException('Comment content must be a scalar value');
+            }
 
             $comment = $this->feedService->editComment(
                 commentId: $commentId,
-                content: trim((string) ($input['content'] ?? '')),
+                content: trim((string) $content),
                 user: $this->context->user
             );
 

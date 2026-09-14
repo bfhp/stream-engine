@@ -45,10 +45,9 @@ use Tests\Support\PhpInputStreamMock;
  *   keys actually present in the JSON object; `FeedService::updateFeed()`
  *   merges those over the stored feed before calling the whole-row repository
  *   update. Explicit null remains distinct from an omitted key.
- * - **The list endpoint's `limit` has no ceiling** while the comment thread's
- *   is capped at 50. Same controller, two conventions.
- * - **`search` overrides the caller's `limit`** to 20 unconditionally, so
- *   `?search=x&limit=100` silently answers 20.
+ * - List and search limits have distinct defaults but share the same bounds.
+ * - Structured comment content is rejected before PHP can cast it to `Array`.
+ * - Every action rejects methods outside the page contract with a 405.
  */
 final class APIControllerFeedsTest extends TestCase
 {
@@ -421,27 +420,16 @@ final class APIControllerFeedsTest extends TestCase
         self::assertSame([], $received);
     }
 
-    /**
-     * Neither GET nor PATCH, and there is no `else` - so the handler answers an
-     * empty 200. Unreachable through the router (the page declares two methods
-     * and `StreamEngine::handleRequest()` 405s the rest), and pinned for the
-     * same reason as `auth.session`'s identical gap: the silence only becomes
-     * visible if someone adds a method to the page and forgets the branch.
-     */
-    public function testAnUnsupportedMethodOnAFeedAnswersNothing(): void
+    public function testAnUnsupportedMethodOnAFeedIs405(): void
     {
         $this->withToken('PUT');
 
-        ob_start();
-
         try {
             $this->makeModule(isAdmin: true)->callApi($this->feedItemPage(), ['slug' => 58]);
-        } finally {
-            $body = ob_get_clean();
+            self::fail('expected a 405');
+        } catch (ValidationException $e) {
+            self::assertSame(405, $e->getHttpCode());
         }
-
-        self::assertSame('', $body);
-        self::assertSame(200, http_response_code());
     }
 
     /* ===============================
@@ -475,18 +463,12 @@ final class APIControllerFeedsTest extends TestCase
         $this->capture($this->makeModule($feedService), $this->feedsPage());
     }
 
-    /**
-     * Recorded, not endorsed. `handleCommentsRequest` clamps its own limit to
-     * 50 twenty lines further down this same file; this one passes whatever
-     * arrives straight through to a SQL LIMIT, so `?limit=100000` is a request
-     * for a hundred thousand decorated rows.
-     */
-    public function testTheListLimitHasNoCeiling(): void
+    public function testTheListLimitIsCappedAtOneHundred(): void
     {
         $feedService = $this->feedServiceMock(['listFeeds']);
         $feedService->expects($this->once())
             ->method('listFeeds')
-            ->with($this->anything(), 100000, 0, null, null, null, null, null, null, null)
+            ->with($this->anything(), 100, 0, null, null, null, null, null, null, null)
             ->willReturn(['data' => [], 'meta' => []]);
 
         $_GET = ['limit' => '100000'];
@@ -501,11 +483,12 @@ final class APIControllerFeedsTest extends TestCase
     public static function unusablePagingProvider(): array
     {
         return [
-            // QueryParams::int() falls back only when the value is not a
-            // number, so a deliberate 0 survives and an empty string does not.
+            // Invalid values use the endpoint default; numeric values are
+            // clamped to the supported range.
             'a non-numeric limit' => [['limit' => 'many'], 100, 0],
             'an empty limit' => [['limit' => ''], 100, 0],
-            'a deliberate zero limit' => [['limit' => '0'], 0, 0],
+            'a deliberate zero limit' => [['limit' => '0'], 1, 0],
+            'a negative limit' => [['limit' => '-10'], 1, 0],
             'a negative offset' => [['offset' => '-10'], 100, -10],
         ];
     }
@@ -593,18 +576,29 @@ final class APIControllerFeedsTest extends TestCase
         $this->capture($this->makeModule($feedService), $this->feedsPage());
     }
 
-    public function testTheSearchLimitIsFixedAtTwentyWhateverWasAsked(): void
+    public function testTheSearchRespectsABoundedRequestedLimit(): void
     {
-        // Overwritten unconditionally, one line after being read. Worth
-        // pinning because it is a silent override: `?search=x&limit=100`
-        // answers 20 rows and says nothing about why.
         $feedService = $this->feedServiceMock(['search']);
         $feedService->expects($this->once())
             ->method('search')
-            ->with('мастер', 20, null, $this->anything())
+            ->with('мастер', 75, null, $this->anything())
             ->willReturn(['data' => [], 'meta' => []]);
 
-        $_GET = ['search' => 'мастер', 'limit' => '100'];
+        $_GET = ['search' => 'мастер', 'limit' => '75'];
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+
+        $this->capture($this->makeModule($feedService), $this->feedsPage());
+    }
+
+    public function testTheSearchLimitIsCappedAtOneHundred(): void
+    {
+        $feedService = $this->feedServiceMock(['search']);
+        $feedService->expects($this->once())
+            ->method('search')
+            ->with('мастер', 100, null, $this->anything())
+            ->willReturn(['data' => [], 'meta' => []]);
+
+        $_GET = ['search' => 'мастер', 'limit' => '100000'];
         $_SERVER['REQUEST_METHOD'] = 'GET';
 
         $this->capture($this->makeModule($feedService), $this->feedsPage());
@@ -856,49 +850,28 @@ final class APIControllerFeedsTest extends TestCase
         $this->capture($this->makeModule($feedService), $this->commentItemPage(), ['commentId' => 90]);
     }
 
-    /**
-     * The one non-scalar left over. `?? ''` only defends against absence, so a
-     * `content` holding an **array** reaches `(string)` and PHP emits an
-     * "Array to string conversion" warning before handing the service the
-     * literal text `Array` - which it then refuses as too short or unchanged,
-     * so no comment is harmed. Worth recording rather than leaving to be
-     * rediscovered from a production log: the request is refused correctly and
-     * still writes a warning, on an endpoint any logged-in user can reach.
-     *
-     * The local error handler is what keeps that warning out of the suite's
-     * own output; without it PHPUnit reports it against this test.
-     */
-    public function testAnArrayContentWarnsOnTheWayToBeingRefused(): void
+    #[DataProvider('structuredContentProvider')]
+    public function testStructuredContentIsRejectedWithoutCallingTheService(string $body): void
     {
         $feedService = $this->feedServiceMock(['editComment']);
-        $feedService->expects($this->once())
-            ->method('editComment')
-            ->with(90, 'Array', $this->anything())
-            ->willThrowException(new ValidationException('Comment is empty'));
+        $feedService->expects($this->never())->method('editComment');
 
         $this->withToken('PATCH');
-        PhpInputStreamMock::register('{"content": ["a"]}');
+        PhpInputStreamMock::register($body);
 
-        $warnings = [];
-        set_error_handler(static function (int $severity, string $message) use (&$warnings): bool {
-            $warnings[] = $message;
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('Comment content must be a scalar value');
 
-            return true;
-        });
+        $this->makeModule($feedService)->callApi($this->commentItemPage(), ['commentId' => 90]);
+    }
 
-        $refused = false;
-
-        try {
-            $this->makeModule($feedService)->callApi($this->commentItemPage(), ['commentId' => 90]);
-        } catch (ValidationException) {
-            $refused = true;
-        } finally {
-            restore_error_handler();
-        }
-
-        self::assertTrue($refused, 'an array content must be refused, not accepted');
-        self::assertNotEmpty($warnings, 'the cast is expected to warn - if it stopped, the cast was fixed');
-        self::assertStringContainsString('Array to string conversion', $warnings[0]);
+    /** @return array<string, array{string}> */
+    public static function structuredContentProvider(): array
+    {
+        return [
+            'array' => ['{"content": ["a"]}'],
+            'object' => ['{"content": {"text": "a"}}'],
+        ];
     }
 
     /* ===============================

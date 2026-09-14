@@ -32,17 +32,6 @@ because they became misleading after more tests were added.
 
 ## P1
 
-### API feeds/comments: input bounds and types
-
-- Cap the upper bound of `limit` for the feed list; the value currently goes
-  directly into SQL, while comments are capped at 50.
-- Decide whether `search` should always force `limit = 20` or respect a bounded
-  client-supplied value.
-- Reject arrays/objects in `content` before casting to a string when PATCHing a
-  comment, so the request does not produce an `Array to string conversion`.
-- Guarantee a 405 response for unsupported methods in every branch, rather
-  than an empty 200 response.
-
 ### Authorization and roles
 
 - Review every `Page::api()` registration: mutating routes must not rely only

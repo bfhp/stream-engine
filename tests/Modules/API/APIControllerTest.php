@@ -186,6 +186,7 @@ final class APIControllerTest extends TestCase
         );
 
         $module = $this->makeModule(new PageTree([$page]));
+        $_SERVER['REQUEST_METHOD'] = 'GET';
 
         ob_start();
         $module->callApi($page);
@@ -807,26 +808,19 @@ final class APIControllerTest extends TestCase
         $this->assertSame(['authenticated' => true], json_decode($body, true));
     }
 
-    /**
-     * A gap rather than a feature: the method chain has no `else`, so anything
-     * that isn't GET/POST/DELETE falls out with an empty 200. Unreachable
-     * through routing today - the page declares those three and
-     * StreamEngine::handleRequest() 405s the rest - which is exactly why it is
-     * worth pinning: the silence only becomes visible if someone adds a method
-     * to the page and forgets the branch.
-     */
-    public function testCallApiAuthAnswersNothingForAnUnsupportedMethod(): void
+    public function testCallApiAuthRejectsAnUnsupportedMethod(): void
     {
         $page = $this->makeAuthPage();
         $module = $this->makeModule(new PageTree([$page]));
 
         $_SERVER['REQUEST_METHOD'] = 'PATCH';
 
-        ob_start();
-        $module->callApi($page, []);
-        $body = ob_get_clean();
-
-        $this->assertSame('', $body);
+        try {
+            $module->callApi($page, []);
+            $this->fail('expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame(405, $e->getHttpCode());
+        }
     }
 
     /* ===============================
