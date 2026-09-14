@@ -440,10 +440,9 @@ class BlogPostService
 
     /**
      * Slugifies $title and appends a numeric suffix until the result is free
-     * under $blogId - feeds.slug has no DB-level uniqueness constraint (see
-     * the TODO on FeedService::getFeedBySlug()), so this is enforced here,
-     * scoped to a single blog the same way a book's or article's slug is
-     * scoped to its own parent elsewhere in this codebase. RESERVED_BLOG_POST_
+     * under $blogId. The application-level check chooses a friendly suffix;
+     * the database constraint closes the concurrent-create race for this
+     * parent/type scope. RESERVED_BLOG_POST_
      * SLUGS is folded into the same loop, so e.g. a post titled "Post" (or
      * one whose title has no latin/digit characters at all, which falls back
      * to the literal 'post' below) gets suffixed exactly like a genuine

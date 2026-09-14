@@ -2,7 +2,7 @@
     "format": 1,
     "release": "0.1.0",
     "schema": "schema.sql",
-    "schema_checksum": "0769b61ff57e687fd63295803b6a54577b24c8be217b7daac8fd5816634c3e0b",
+    "schema_checksum": "8aa7073c7f8860136292a284958b06acfcd5080f063c5a7e549fd5ca6f8719ec",
     "migrations": [
         {
             "version": "20260912000000_initial",
@@ -13,6 +13,11 @@
             "version": "20260912000200_expand_module_discriminators",
             "file": "20260912000200_expand_module_discriminators.sql",
             "checksum": "b96c666218b10a6f1a31eb5a03841fb21253005befa9e6bf48dcb92451d7b8fb"
+        },
+        {
+            "version": "20260915000000_enforce_feed_slug_scopes",
+            "file": "20260915000000_enforce_feed_slug_scopes.sql",
+            "checksum": "a8e2c05518f8cb71912bd36e5e1c50aa1537e17fff44674e72b3a00e1227fbb9"
         }
     ]
 }

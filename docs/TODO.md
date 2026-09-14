@@ -35,19 +35,6 @@ because they became misleading after more tests were added.
 
 ## P1
 
-### Enforce feed slug scopes in the database
-
-Route lookups now use the feed hierarchy explicitly: flat namespaces resolve
-by type and slug, while nested resources resolve by parent, type, and slug.
-Creation services enforce the same scopes in application code, but the
-database still has only non-unique lookup indexes.
-
-- Find and resolve existing collisions within each declared scope.
-- Add database constraints for globally type-scoped and parent-scoped feed
-  slugs, including the `parent_id IS NULL` case.
-- Add migration tests proving that duplicates are rejected in the relevant
-  scope and allowed in unrelated types or parents.
-
 ### Cron: choose an execution model
 
 In production, `CronTrigger::shouldTrigger()` preserves the old `roll !== 1`

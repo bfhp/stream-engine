@@ -34,6 +34,7 @@ final class InstallationSchemaTest extends TestCase
             self::assertContains('pages', $tables);
             self::assertContains('settings', $tables);
             self::assertNotContains('user_social_accounts', $tables);
+            self::assertContains('feeds_parent_type_slug_unique', $this->indexes($databasePdo, 'feeds'));
 
             $stateFile = sys_get_temp_dir().'/stream_engine_install_baseline_'.bin2hex(random_bytes(8)).'.json';
             try {
@@ -66,6 +67,54 @@ final class InstallationSchemaTest extends TestCase
                 ['subscriber', 'member', 'moderator', 'owner'],
                 $databasePdo->query('SELECT name FROM membership_roles ORDER BY role_level')->fetchAll(PDO::FETCH_COLUMN),
             );
+        });
+    }
+
+    public function testFeedSlugScopeMigrationResolvesCollisionsAndEnforcesScopes(): void
+    {
+        $root = dirname(__DIR__, 2);
+        $this->withEmptyDatabase(function (PDO $pdo) use ($root): void {
+            $this->executeScript($pdo, $root.'/migrations/20260912000000_initial.sql');
+            $pdo->exec(
+                "INSERT INTO users (email, nick, username, password_hash, created_at, is_active)
+                 VALUES ('slug-owner@example.com', 'Slug owner', 'slug-owner', 'hash', 1, 1)"
+            );
+            $ownerId = (int) $pdo->lastInsertId();
+
+            $parentA = $this->insertFeed($pdo, $ownerId, 'container', 'parent-a');
+            $parentB = $this->insertFeed($pdo, $ownerId, 'container', 'parent-b');
+
+            $this->insertFeed($pdo, $ownerId, 'article', 'shared-article', $parentA);
+            $renamedArticleId = $this->insertFeed($pdo, $ownerId, 'article', 'shared-article', $parentA);
+            $this->insertFeed($pdo, $ownerId, 'community', 'shared-community');
+            $renamedCommunityId = $this->insertFeed($pdo, $ownerId, 'community', 'shared-community');
+
+            $this->executeScript($pdo, $root.'/migrations/20260915000000_enforce_feed_slug_scopes.sql');
+
+            self::assertSame(
+                'shared-article--feed-'.$renamedArticleId,
+                $pdo->query('SELECT slug FROM feeds WHERE id = '.$renamedArticleId)->fetchColumn(),
+            );
+            self::assertSame(
+                'shared-community--feed-'.$renamedCommunityId,
+                $pdo->query('SELECT slug FROM feeds WHERE id = '.$renamedCommunityId)->fetchColumn(),
+            );
+
+            $this->assertFeedInsertRejected(
+                fn (): int => $this->insertFeed($pdo, $ownerId, 'article', 'shared-article', $parentA),
+            );
+            $this->assertFeedInsertRejected(
+                fn (): int => $this->insertFeed($pdo, $ownerId, 'community', 'shared-community'),
+            );
+
+            self::assertGreaterThan(0, $this->insertFeed($pdo, $ownerId, 'article', 'shared-article', $parentB));
+            self::assertGreaterThan(0, $this->insertFeed($pdo, $ownerId, 'article-section', 'shared-article', $parentA));
+            self::assertGreaterThan(0, $this->insertFeed($pdo, $ownerId, 'community', 'shared-community', $parentA));
+            self::assertGreaterThan(0, $this->insertFeed($pdo, $ownerId, 'article', null, $parentA));
+            self::assertGreaterThan(0, $this->insertFeed($pdo, $ownerId, 'article', null, $parentA));
+
+            self::assertGreaterThan(0, $this->insertFeed($pdo, $ownerId, 'forum', 'shared-forum', $parentA));
+            self::assertGreaterThan(0, $this->insertFeed($pdo, $ownerId, 'forum', 'shared-forum', $parentB));
         });
     }
 
@@ -319,5 +368,45 @@ final class InstallationSchemaTest extends TestCase
         return $pdo->query(
             "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_NAME"
         )->fetchAll(PDO::FETCH_COLUMN);
+    }
+
+    /** @return list<string> */
+    private function indexes(PDO $pdo, string $table): array
+    {
+        $statement = $pdo->prepare(
+            'SELECT DISTINCT INDEX_NAME
+             FROM information_schema.STATISTICS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?'
+        );
+        $statement->execute([$table]);
+
+        return $statement->fetchAll(PDO::FETCH_COLUMN);
+    }
+
+    private function insertFeed(
+        PDO $pdo,
+        int $ownerId,
+        string $type,
+        ?string $slug,
+        ?int $parentId = null,
+    ): int {
+        $statement = $pdo->prepare(
+            'INSERT INTO feeds (parent_id, type, owner_id, slug, title, content, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, 1, 1)'
+        );
+        $statement->execute([$parentId, $type, $ownerId, $slug, $type, '']);
+
+        return (int) $pdo->lastInsertId();
+    }
+
+    /** @param callable(): int $insert */
+    private function assertFeedInsertRejected(callable $insert): void
+    {
+        try {
+            $insert();
+            self::fail('The database should reject a duplicate feed slug in the declared scope.');
+        } catch (\PDOException $exception) {
+            self::assertSame('23000', $exception->getCode());
+        }
     }
 }

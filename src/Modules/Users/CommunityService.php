@@ -591,10 +591,9 @@ class CommunityService
 
     /**
      * Slugifies $name and appends a numeric suffix until the result is free
-     * among every top-level community feed - feeds.slug has no DB-level
-     * uniqueness constraint (see FeedService::getFeedBySlug()'s own TODO),
-     * so this is enforced here the same way BlogPostService::
-     * uniqueBlogPostSlug() scopes a post's slug to its own blog; a
+     * among every top-level community feed. The application-level check
+     * chooses a friendly suffix; the database constraint closes the
+     * concurrent-create race. A
      * community has no such parent to scope under (parent_id is always
      * null, same top-level nesting as a personal blog), so this checks
      * global uniqueness among parent_id IS NULL AND type = 'community'
