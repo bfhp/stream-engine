@@ -105,8 +105,7 @@ class ForumsController extends AbstractController
      * 'topics' sibling and showTopicNewPage()'s docblock) as a static
      * child of forums.topic-list's {slug} page, exactly the same shape as
      * a topic's own forums.topic-view page (also a dynamic child of that
-     * same {slug} page - see uniqueTopicSlug()'s own docblock for why a
-     * topic's slug has no per-forum scoping at all). Router::resolve()
+     * same {slug} page). Router::resolve()
      * matches static routes before dynamic ones (see
      * Modules\Users\BlogPostService::RESERVED_BLOG_POST_SLUGS's identical
      * reasoning), so a topic whose slug happened to be "new" would
@@ -167,6 +166,7 @@ class ForumsController extends AbstractController
         // and forums.topic-view reads them back through it too (see
         // buildAttachmentRows()).
         private readonly UploadService      $uploadService,
+        private readonly PageTree           $pageTree,
     ) {
         parent::__construct($db, $context);
 
@@ -210,8 +210,7 @@ class ForumsController extends AbstractController
         if ($page->action === 'forums.topic-view' && key_exists('slug', $page->params)) {
             // Same idiom as the forums.topic-list branch above, one level
             // deeper: swap the generic crumb for the topic's own title.
-            $feeds = $this->feedService->getFeedBySlug($page->params['slug'], $this->context->user);
-            $topicFeed = array_pop($feeds);
+            $topicFeed = $this->resolveTopicForPage($page, $page->params['slug']);
 
             if (!$topicFeed) {
                 throw new ForbiddenException('Topic not found');
@@ -751,18 +750,16 @@ class ForumsController extends AbstractController
      * own, inherited from that ancestor page's placeholder exactly the way
      * showTopicNewPage() inherits its forum's.
      *
-     * Deliberately doesn't resolve a parent page's pinned feedId the way
-     * UsersController::resolvePostForEdit() does - Forums pages are pattern-
-     * driven, none of them pins a feed_id, so the slug lookup is the only
-     * path and reading the parent row would just be dead code here.
+     * Forums pages are pattern-driven rather than pinned by feed_id, so the
+     * matched forums.topic-list ancestor supplies the forum slug and the
+     * matched forums.topic-view ancestor supplies this topic slug.
      *
      * @throws ForbiddenException
      * @throws NotFoundException
      */
     public function showTopicEditPage(Page $page, string $slug): ?ViewModel
     {
-        $feeds = $this->feedService->getFeedBySlug($slug, $this->context->user);
-        $topic = array_pop($feeds);
+        $topic = $this->resolveTopicForPage($page, $slug);
 
         if (! $topic || $topic->type !== 'forum-post') {
             throw new NotFoundException($this->tm->trans('feed.not_found'));
@@ -1075,8 +1072,7 @@ class ForumsController extends AbstractController
      */
     public function showTopicViewPage(Page $page, string $slug): ?ViewModel
     {
-        $feeds = $this->feedService->getFeedBySlug($slug, $this->context->user);
-        $topicFeed = array_pop($feeds);
+        $topicFeed = $this->resolveTopicForPage($page, $slug);
 
         if (!$topicFeed || $topicFeed->type !== 'forum-post') {
             throw new ForbiddenException('Topic not found');
@@ -1959,7 +1955,7 @@ class ForumsController extends AbstractController
 
         ['title' => $title, 'content' => $content] = $this->validateTopicInput($input);
 
-        $slug = $this->uniqueTopicSlug($title, $user);
+        $slug = $this->uniqueTopicSlug($forumFeed->id, $title, $user);
 
         // See resolveTopicAttachments()'s own docblock: each id is an
         // already-uploaded file (via the shared /api/v1/uploads endpoint,
@@ -2331,19 +2327,9 @@ class ForumsController extends AbstractController
 
     /**
      * Slugifies $title and appends a numeric suffix until the result is
-     * free - checked against the *whole* feeds table
-     * (FeedRepository::findBySlug()), not just this forum's own other
-     * topics. Unlike Modules\Users\BlogPostService::uniqueBlogPostSlug()
-     * (scoped to one blog's own posts) or CommunityService::
-     * uniqueCommunitySlug() (communities have no parent at all), a forum
-     * topic's slug genuinely has no safe per-parent scope to check instead:
-     * forums.topic-view resolves purely by FeedService::getFeedBySlug(),
-     * which ignores parent_id entirely and (per its own "not checked
-     * anywhere... very risky" TODO) just returns whichever single feed its
-     * one-row-limited query happens to find - so two topics in *different*
-     * forums sharing a slug would leave one of them permanently
-     * unreachable at its own URL, not merely one sharing a forum.
-     * Topic slugs therefore need a global uniqueness check.
+     * free among the selected forum's own topics. Topic URLs include the
+     * forum slug, and resolveTopicForPage() resolves that forum first, so the
+     * same topic slug is valid in two different forums.
      *
      * RESERVED_FORUM_TOPIC_SLUGS is folded into the same loop for the same
      * reason BlogPostService::RESERVED_BLOG_POST_SLUGS is (see that
@@ -2353,7 +2339,7 @@ class ForumsController extends AbstractController
      * topic-view page, and Router::resolve() matches static routes before
      * dynamic ones.
      */
-    private function uniqueTopicSlug(string $title, User $user): string
+    private function uniqueTopicSlug(int $forumId, string $title, User $user): string
     {
         $maxLength = FeedService::MAX_SLUG_LENGTH;
         $base = Formatter::slugify($title, '-');
@@ -2369,7 +2355,7 @@ class ForumsController extends AbstractController
 
         while (
             in_array($candidate, self::RESERVED_FORUM_TOPIC_SLUGS, true)
-            || $this->feedRepository->findBySlug($candidate, $user) !== []
+            || $this->feedRepository->findByParentAndSlug($forumId, $candidate, $user, 'forum-post') !== null
         ) {
             $suffix++;
             $suffixPart = '-'.$suffix;
@@ -2377,6 +2363,48 @@ class ForumsController extends AbstractController
         }
 
         return $candidate;
+    }
+
+    /**
+     * Resolves a topic through the forum segment matched by its ancestor
+     * forums.topic-list page. Router stores each dynamic segment in that
+     * page's own params, so repeated {slug} placeholders do not lose the
+     * forum slug here.
+     */
+    private function resolveTopicForPage(Page $page, string $topicSlug): ?Feed
+    {
+        $current = $page;
+
+        while ($current->parentId !== null) {
+            $current = $this->pageTree->get($current->parentId);
+
+            if ($current === null) {
+                return null;
+            }
+
+            if ($current->action !== 'forums.topic-list') {
+                continue;
+            }
+
+            $forumSlug = trim((string) ($current->params['slug'] ?? ''));
+            if ($forumSlug === '') {
+                return null;
+            }
+
+            $forum = $this->feedService->getFeedByTypeAndSlug('forum', $forumSlug, $this->context->user);
+            if ($forum === null) {
+                return null;
+            }
+
+            return $this->feedService->getFeedByParentAndSlug(
+                $forum->id,
+                $topicSlug,
+                $this->context->user,
+                'forum-post'
+            );
+        }
+
+        return null;
     }
 
     /**

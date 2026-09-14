@@ -112,7 +112,7 @@ final class ForumsControllerTest extends TestCase
 
     private const string SQL_FEED_BY_ID = 'f.id = ?';
 
-    private const string SQL_FEED_BY_SLUG = 'f.slug = ?';
+    private const string SQL_FEED_BY_PARENT_AND_SLUG = 'f.parent_id = ? AND f.slug = ?';
 
     private const string SQL_USERS_BY_ID = 'SELECT id, nick, avatar_url, created_at, signature, hide_presence FROM users WHERE id IN';
 
@@ -599,7 +599,7 @@ final class ForumsControllerTest extends TestCase
         $topic = $this->makeTopic();
 
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$topic]);
+        $this->stubTopicResolution($feedService, $topic);
         $feedService->method('canEditFeed')->willReturn(true);
         $feedService->method('isWithinEditWindow')->willReturn(true);
         $this->setProperty($module, 'feedService', $feedService);
@@ -631,7 +631,7 @@ final class ForumsControllerTest extends TestCase
         $module = $this->makeModule($this->makeDbReturningForumRow());
 
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$this->makeTopic()]);
+        $this->stubTopicResolution($feedService, $this->makeTopic());
         $feedService->method('canEditFeed')->willReturn(false);
         $feedService->method('isWithinEditWindow')->willReturn(true);
         $this->setProperty($module, 'feedService', $feedService);
@@ -652,7 +652,7 @@ final class ForumsControllerTest extends TestCase
         $module = $this->makeModule($this->makeDbReturningForumRow());
 
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$this->makeTopic()]);
+        $this->stubTopicResolution($feedService, $this->makeTopic());
         $feedService->method('canEditFeed')->willReturn(true);
         $feedService->method('isWithinEditWindow')->willReturn(false);
         $this->setProperty($module, 'feedService', $feedService);
@@ -688,7 +688,7 @@ final class ForumsControllerTest extends TestCase
         );
 
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$section]);
+        $this->stubTopicResolution($feedService, $section);
         $this->setProperty($module, 'feedService', $feedService);
 
         $this->expectException(NotFoundException::class);
@@ -708,7 +708,7 @@ final class ForumsControllerTest extends TestCase
         $module = $this->makeModule($this->makeDbReturningForumRow());
 
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$this->makeTopic()]);
+        $this->stubTopicResolution($feedService, $this->makeTopic());
         $feedService->method('canEditFeed')->willReturn(true);
         $feedService->method('isWithinEditWindow')->willReturn(true);
         $this->setProperty($module, 'feedService', $feedService);
@@ -735,7 +735,7 @@ final class ForumsControllerTest extends TestCase
         $module = $this->makeModule($this->makeDbReturningForumRow());
 
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$this->makeTopic()]);
+        $this->stubTopicResolution($feedService, $this->makeTopic());
         $feedService->method('canEditFeed')->willReturn(true);
         $feedService->method('isWithinEditWindow')->willReturn(true);
         $this->setProperty($module, 'feedService', $feedService);
@@ -1546,7 +1546,7 @@ final class ForumsControllerTest extends TestCase
         $module = $this->makeModule($this->makeRoutingDb());
 
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$this->makeForumFeed()]);
+        $this->stubTopicResolution($feedService, $this->makeForumFeed());
         $this->setProperty($module, 'feedService', $feedService);
 
         $this->expectException(ForbiddenException::class);
@@ -1599,7 +1599,7 @@ final class ForumsControllerTest extends TestCase
         ));
 
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$this->makeTopic()]);
+        $this->stubTopicResolution($feedService, $this->makeTopic());
         $feedService->method('isWithinEditWindow')->willReturn(true);
         $feedService->method('canEditFeed')->willReturn(true);
         $feedService->method('getUserRatingValues')->willReturn([910 => 4]);
@@ -1688,7 +1688,7 @@ final class ForumsControllerTest extends TestCase
         ));
 
         $feedService = $this->createMock(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$this->makeTopic(views: 17)]);
+        $this->stubTopicResolution($feedService, $this->makeTopic(views: 17));
         $feedService->expects($this->once())->method('recordView')->with(self::TOPIC_ID);
         $feedService->expects($this->once())->method('markFeedAsRead')->with(self::TOPIC_ID, $this->anything());
         $this->setProperty($module, 'feedService', $feedService);
@@ -1725,7 +1725,7 @@ final class ForumsControllerTest extends TestCase
         ));
 
         $feedService = $this->createMock(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$this->makeTopic()]);
+        $this->stubTopicResolution($feedService, $this->makeTopic());
         $feedService->expects($this->once())->method('recordView');
         $feedService->expects($this->never())->method('markFeedAsRead');
         $this->setProperty($module, 'feedService', $feedService);
@@ -1761,7 +1761,7 @@ final class ForumsControllerTest extends TestCase
         $module = $this->makeModule($this->makeTopicViewDb());
 
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$this->makeTopic(content: $stored)]);
+        $this->stubTopicResolution($feedService, $this->makeTopic(content: $stored));
         $feedService->method('isWithinEditWindow')->willReturn(true);
         $this->setProperty($module, 'feedService', $feedService);
 
@@ -1953,8 +1953,15 @@ final class ForumsControllerTest extends TestCase
     {
         $module = $this->makeModule($this->makeRoutingDb());
 
-        $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$this->makeTopic(title: 'Свеча гаснет')]);
+        $feedService = $this->createMock(FeedService::class);
+        $feedService->expects($this->once())
+            ->method('getFeedByTypeAndSlug')
+            ->with('forum', 'magiya', $this->anything())
+            ->willReturn($this->makeForumFeed());
+        $feedService->expects($this->once())
+            ->method('getFeedByParentAndSlug')
+            ->with(self::FORUM_ID, 'svecha-gasnet', $this->anything(), 'forum-post')
+            ->willReturn($this->makeTopic(title: 'Свеча гаснет'));
         $this->setProperty($module, 'feedService', $feedService);
 
         $page = $this->makeTopicViewPage();
@@ -2064,18 +2071,14 @@ final class ForumsControllerTest extends TestCase
         ]);
     }
 
-    /**
-     * Slug uniqueness is checked against the whole feeds table, not just this
-     * forum's own topics: getFeedBySlug() ignores parent_id entirely, so two
-     * same-slug topics in different forums would leave one unreachable.
-     */
+    /** Topic slugs are unique within their own forum, not across all forums. */
     public function testTopicCreateAppendsASuffixWhenTheSlugIsAlreadyTaken(): void
     {
-        $module = $this->makeModule($this->makeRoutingDb([
+        $module = $this->makeModule($this->makeRoutingDb([], [
             // Only the first candidate is taken; 'test-2' comes back free.
-            self::SQL_FEED_BY_SLUG => fn (array $params): array => $params[0] === 'test'
-                ? [$this->feedRow(500, 'forum-post', parentId: 99)]
-                : [],
+            self::SQL_FEED_BY_PARENT_AND_SLUG => fn (array $params): ?array => $params[1] === 'test'
+                ? $this->feedRow(500, 'forum-post', parentId: self::FORUM_ID)
+                : null,
         ]));
 
         $feedService = $this->createMock(FeedService::class);
@@ -2882,7 +2885,7 @@ final class ForumsControllerTest extends TestCase
             $feed = $kind === 'topic' ? $this->makeTopic() : $this->makeForumFeed();
             $feedService = $this->createStub(FeedService::class);
             if ($kind === 'topic') {
-                $feedService->method('getFeedBySlug')->willReturn([$feed]);
+                $this->stubTopicResolution($feedService, $feed);
             } else {
                 $feedService->method('getFeedByTypeAndSlug')->willReturn($feed);
             }
@@ -2912,6 +2915,12 @@ final class ForumsControllerTest extends TestCase
             }
             yield $kind.' array' => [$kind, ['2'], null];
         }
+    }
+
+    private function stubTopicResolution(FeedService $feedService, Feed $topic): void
+    {
+        $feedService->method('getFeedByTypeAndSlug')->willReturn($this->makeForumFeed());
+        $feedService->method('getFeedByParentAndSlug')->willReturn($topic);
     }
 
     /**
@@ -2996,21 +3005,43 @@ final class ForumsControllerTest extends TestCase
         // for its own feedService). Tests that never reach a code path using
         // one simply leave it uninitialized.
 
-        // Real UrlGenerator (final) over the same forums page shape
-        // UrlGeneratorTest uses: section {slug} then topic {slug}, so
-        // feed($topic) resolves to '/forums/magiya/svecha-gasnet/'.
+        // Real matched PageTree over the same forums page shape
+        // UrlGeneratorTest uses: section {slug} then topic {slug}. Keeping
+        // each segment in its own Page::params mirrors Router::resolve() and
+        // lets ForumsController resolve a topic through its forum parent.
+        $topicListPage = $this->makePage(
+            id: 3,
+            parentId: 2,
+            pattern: '{slug}',
+            action: 'forums.topic-list',
+            feedType: 'forum'
+        );
+        $topicListPage->params = ['slug' => 'magiya'];
+
+        $topicViewPage = $this->makePage(
+            id: 4,
+            parentId: 3,
+            pattern: '{slug}',
+            action: 'forums.topic-view',
+            feedType: 'forum-post'
+        );
+        $topicViewPage->params = ['slug' => 'svecha-gasnet'];
+
+        $pageTree = new PageTree([
+            $this->makePage(id: 1, parentId: null, pattern: '', action: null),
+            $this->makePage(id: 2, parentId: 1, pattern: 'forums', action: 'forums.list'),
+            $topicListPage,
+            $topicViewPage,
+            // Not a Forums page at all - Modules\Users owns it - but
+            // buildOnlineNow() links member names through it, so the
+            // "member without a username gets no link" branch is only
+            // meaningfully testable with the page present.
+            $this->makePage(id: 6, parentId: 1, pattern: 'users/{username}', action: 'user.show'),
+        ]);
+        $this->setProperty($module, 'pageTree', $pageTree);
+
         $this->setProperty($module, 'urlGenerator', new UrlGenerator(
-            new PageTree([
-                $this->makePage(id: 1, parentId: null, pattern: '', action: null),
-                $this->makePage(id: 2, parentId: 1, pattern: 'forums', action: 'forums.list'),
-                $this->makePage(id: 3, parentId: 2, pattern: '{slug}', action: 'forums.topic-list', feedType: 'forum'),
-                $this->makePage(id: 4, parentId: 3, pattern: '{slug}', action: 'forums.topic-view', feedType: 'forum-post'),
-                // Not a Forums page at all - Modules\Users owns it - but
-                // buildOnlineNow() links member names through it, so the
-                // "member without a username gets no link" branch is only
-                // meaningfully testable with the page present.
-                $this->makePage(id: 6, parentId: 1, pattern: 'users/{username}', action: 'user.show'),
-            ]),
+            $pageTree,
             new FakeFeedRepository([
                 self::FORUM_ID => $this->makeForumFeed(),
                 71 => $this->makeForum(id: 71, slug: 'tarot', parentId: self::FORUM_ID),
@@ -3159,7 +3190,7 @@ final class ForumsControllerTest extends TestCase
         }
 
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$this->makeTopic()]);
+        $this->stubTopicResolution($feedService, $this->makeTopic());
         $this->setProperty($module, 'feedService', $feedService);
 
         $pollService = $this->createStub(PollService::class);
