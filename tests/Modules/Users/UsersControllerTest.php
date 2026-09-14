@@ -2327,7 +2327,7 @@ final class UsersControllerTest extends TestCase
         $community = Feed::fromRow($this->makeCommunityRow(500, 7, 'my-community', 'My Community'));
 
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$community]);
+        $feedService->method('getFeedByParentAndSlug')->willReturn($community);
         // The sidebar's "Рейтинг" card is now an aggregate across this
         // community's own posts (not a vote on the community feed itself)
         // - see UsersController::buildCommunityRatingViewData(). 14/3 ~=
@@ -2780,7 +2780,7 @@ final class UsersControllerTest extends TestCase
         $community = Feed::fromRow($this->makeCommunityRow(500, 7, 'my-community', 'My Community'));
 
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$community]);
+        $feedService->method('getFeedByParentAndSlug')->willReturn($community);
         $this->setFeedService($module, $feedService);
 
         $communityService = $this->createStub(CommunityService::class);
@@ -2811,7 +2811,7 @@ final class UsersControllerTest extends TestCase
         $community = Feed::fromRow($this->makeCommunityRow(500, 7, 'my-community', 'My Community'));
 
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$community]);
+        $feedService->method('getFeedByParentAndSlug')->willReturn($community);
         $this->setFeedService($module, $feedService);
 
         $this->expectException(ForbiddenException::class);

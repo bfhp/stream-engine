@@ -44,10 +44,9 @@ use Tests\Support\FakeFeedRepository;
  * `resolveCommunityFeed()` is the interesting one, and it is shared by every
  * community *page*. It carries the same guard the JSON endpoints do -
  * `type !== 'community'` - which matters here for a different reason: these
- * pages are reached by slug, and `getFeedBySlug()` returns whatever has that
- * slug regardless of type. Without the check, `/communities/<a book's slug>/`
- * would render a "new post in community «Тайные знания»" form pointed at a
- * book's id.
+ * pages are reached by a top-level, typed slug lookup. The type guard remains
+ * defensive: a malformed repository/service result must not turn another
+ * feed type into a community form target.
  *
  * The rest is view assembly, where the two things worth pinning are the ones
  * with consequences outside the page: `apiUrl` (get it wrong and the form
@@ -174,7 +173,7 @@ final class UsersControllerCommunityPagesTest extends TestCase
     private function feedService(?Feed $bySlug = null, ?Feed $byId = null): FeedService
     {
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn($bySlug === null ? [] : [$bySlug]);
+        $feedService->method('getFeedByParentAndSlug')->willReturn($bySlug);
         $feedService->method('getFeedById')->willReturn($byId);
         $feedService->method('countCommentsForFeeds')->willReturn([]);
 
@@ -196,7 +195,12 @@ final class UsersControllerCommunityPagesTest extends TestCase
     public function testACommunityIsFoundByItsSlug(): void
     {
         $community = $this->feed();
-        $module = $this->makeModule(['feedService' => $this->feedService(bySlug: $community)]);
+        $feedService = $this->createMock(FeedService::class);
+        $feedService->expects($this->once())
+            ->method('getFeedByParentAndSlug')
+            ->with(null, 'devs', $this->anything(), 'community')
+            ->willReturn($community);
+        $module = $this->makeModule(['feedService' => $feedService]);
 
         $resolved = $this->call(
             $module,
@@ -266,10 +270,8 @@ final class UsersControllerCommunityPagesTest extends TestCase
     }
 
     /**
-     * The guard that makes the slug route safe. `getFeedBySlug()` matches on
-     * the slug alone, and slugs are unique across *all* feeds - so a book
-     * called `devs` would otherwise be served as a community, complete with a
-     * post form pointed at its id.
+     * Defensive guard for a malformed result from the typed lookup: another
+     * feed type must never become a community form target.
      */
     #[DataProvider('wrongTypeProvider')]
     public function testSomethingThatIsNotACommunityIsNotFoundEitherWay(string $type): void

@@ -238,8 +238,12 @@ class UsersController extends AbstractController
         // pageName ("Community page") isn't fit to show in the trail,
         // the crumb should read as the community's own title.
         if ($page->action === 'community.show' && key_exists('slug', $page->params)) {
-            $feeds = $this->feedService->getFeedBySlug($page->params['slug'], $this->context->user);
-            $community = array_pop($feeds);
+            $community = $this->feedService->getFeedByParentAndSlug(
+                null,
+                $page->params['slug'],
+                $this->context->user,
+                'community'
+            );
 
             if ($community && $community->type === 'community') {
                 return new Breadcrumb($community->title, $community->slug);
@@ -1618,11 +1622,8 @@ class UsersController extends AbstractController
     /**
      * action=community.show: a single community's own page - mounted at
      * pages.action 'community.show' ({slug} under community.main, feed_type
-     * 'community'). Slug lookup mirrors showBlogPostPage()/
-     * showArticlePage(): prefer a literal feedId pinned on the page row,
-     * else resolve by slug (same known slug-uniqueness trade-off every
-     * other {slug} page here already accepts - see FeedService::
-     * getFeedBySlug()'s own TODO).
+     * 'community'). A literal feedId pinned on the page row wins; otherwise
+     * the slug is resolved explicitly in the top-level community namespace.
      *
      * @throws NotFoundException
      * @throws ForbiddenException
@@ -1725,8 +1726,7 @@ class UsersController extends AbstractController
                 throw new NotFoundException($this->tm->trans('community.not_found'));
             }
 
-            $feeds = $this->feedService->getFeedBySlug($slug, $viewer);
-            $community = array_pop($feeds);
+            $community = $this->feedService->getFeedByParentAndSlug(null, $slug, $viewer, 'community');
         }
 
         if (! $community || $community->type !== 'community') {
