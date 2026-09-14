@@ -280,6 +280,40 @@ final class UsersControllerTest extends TestCase
         );
     }
 
+    private function makePersonalBlogRootPage(): Page
+    {
+        $page = new Page(
+            id: 58,
+            parentId: null,
+            pattern: '{username}',
+            pageName: 'Страница пользователя',
+            settings: null,
+            feedType: 'blog',
+            listFeedType: 'blog-post',
+            feedId: null,
+            commentsEnabled: false,
+            requestMethods: ['GET'],
+            responseType: 'html',
+            accessRule: AccessService::ACCESS_PUBLIC,
+            action: 'user.show',
+        );
+        $page->params = ['username' => 'nicky42'];
+
+        return $page;
+    }
+
+    private function setPersonalPostRoute(UsersController $module, Page ...$pages): void
+    {
+        $this->setPageTree($module, new PageTree([$this->makePersonalBlogRootPage(), ...$pages]));
+    }
+
+    private function setCommunityPostRoute(UsersController $module, Page ...$pages): void
+    {
+        $communityPage = $this->makeCommunityShowPage();
+        $communityPage->params = ['slug' => 'devs'];
+        $this->setPageTree($module, new PageTree([$communityPage, ...$pages]));
+    }
+
     private function makeBlogPostEditPage(): Page
     {
         return new Page(
@@ -893,20 +927,76 @@ final class UsersControllerTest extends TestCase
         );
     }
 
+    private function makePersonalBlogFeed(): Feed
+    {
+        return new Feed(
+            id: 900,
+            parentId: null,
+            ownerId: 7,
+            type: 'blog',
+            slug: 'nicky42',
+            title: 'Nicky',
+            description: null,
+            imageUrl: null,
+            content: '',
+            containerId: null,
+            visibility: 'public',
+            position: 0,
+            createdAt: time(),
+            relevance: null,
+            canonicalUrl: '/users/nicky42/',
+        );
+    }
+
+    private function stubPersonalPostResolution(FeedService $feedService, ?Feed $post): void
+    {
+        $feedService->method('getFeedByTypeAndSlug')->willReturn($this->makePersonalBlogFeed());
+        $feedService->method('getFeedByParentAndSlug')->willReturn($post);
+    }
+
+    private function stubCommunityPostResolution(FeedService $feedService, ?Feed $post): void
+    {
+        $community = new Feed(
+            id: 42,
+            parentId: null,
+            ownerId: 1,
+            type: 'community',
+            slug: 'devs',
+            title: 'Devs',
+            description: null,
+            imageUrl: null,
+            content: null,
+            containerId: null,
+            visibility: 'public',
+            position: 0,
+            createdAt: time(),
+            relevance: null,
+            canonicalUrl: '/communities/devs/',
+        );
+
+        $feedService->method('getFeedByParentAndSlug')->willReturnCallback(
+            static fn (?int $parentId): ?Feed => $parentId === null ? $community : $post
+        );
+    }
+
     public function testShowBlogPostPageRendersFoundPost(): void
     {
         $page = $this->makeBlogPostShowPage();
         $db = $this->createStub(PdoDatabase::class);
         $module = $this->makeUsersModule($db);
+        $this->setPersonalPostRoute($module, $page);
 
         $post = $this->makeBlogPostFeed();
 
         $feedService = $this->createMock(FeedService::class);
-        $feedService
-            ->expects($this->once())
-            ->method('getFeedBySlug')
-            ->with('my-post-title', $this->anything())
-            ->willReturn([$post]);
+        $feedService->expects($this->once())
+            ->method('getFeedByTypeAndSlug')
+            ->with('blog', 'nicky42', $this->anything())
+            ->willReturn($this->makePersonalBlogFeed());
+        $feedService->expects($this->once())
+            ->method('getFeedByParentAndSlug')
+            ->with(900, 'my-post-title', $this->anything(), 'blog-post')
+            ->willReturn($post);
         $feedService->expects($this->never())->method('getComments');
         $feedService
             ->expects($this->once())
@@ -952,11 +1042,12 @@ final class UsersControllerTest extends TestCase
 
         $module = $this->makeUsersModule($db);
         $this->setContext($module, new User(id: 7, email: 'user@example.com', role: AccessService::ROLE_USER, username: 'nicky42'));
+        $this->setPersonalPostRoute($module, $page);
 
         $post = $this->makeBlogPostFeed();
 
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$post]);
+        $this->stubPersonalPostResolution($feedService, $post);
         $feedService->method('getFeedsByOwnerAndTypePage')->willReturn(['items' => [], 'total' => 0]);
         // Real AccessService::canEditFeed() would grant this to the post's
         // author (see AccessServiceTest) - stubbed true here since
@@ -993,6 +1084,7 @@ final class UsersControllerTest extends TestCase
 
         $module = $this->makeUsersModule($db);
         $this->setContext($module, new User(id: 99, email: 'other@example.com', role: AccessService::ROLE_USER, username: 'someone-else'));
+        $this->setPersonalPostRoute($module, $page);
         // Author resolves non-null here too - same reasoning as the
         // "own post" variant above.
         $this->setUrlGenerator($module, $page);
@@ -1007,7 +1099,7 @@ final class UsersControllerTest extends TestCase
         $post = $this->makeBlogPostFeed();
 
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$post]);
+        $this->stubPersonalPostResolution($feedService, $post);
         $feedService->method('getFeedsByOwnerAndTypePage')->willReturn(['items' => [], 'total' => 0]);
         // A plain other-viewer with no moderator/owner standing - real
         // AccessService::canEditFeed() would deny this too.
@@ -1095,6 +1187,7 @@ final class UsersControllerTest extends TestCase
         // still be true.
         $this->setContext($module, new User(id: 42, email: 'mod@example.com', role: AccessService::ROLE_USER, username: 'moduser'));
         $this->setUrlGeneratorPages($module, [$page, $communityShowPage]);
+        $communityShowPage->params = ['slug' => 'devs'];
         $this->setPageTree($module, new PageTree([$page, $communityShowPage]));
         $this->setFriendService($module, $this->makeEmptyFriendServiceStub());
 
@@ -1128,7 +1221,7 @@ final class UsersControllerTest extends TestCase
         );
 
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$post]);
+        $this->stubCommunityPostResolution($feedService, $post);
         $feedService->method('getFeedById')->willReturn($community);
         $feedService->method('canEditFeed')->willReturn(true);
         // The sidebar's "Рейтинг" card is an aggregate across this
@@ -1186,12 +1279,13 @@ final class UsersControllerTest extends TestCase
         $module = $this->makeUsersModule($db);
         $this->setContext($module, new User(id: 43, email: 'viewer@example.com', role: AccessService::ROLE_USER, username: 'viewer'));
         $this->setUrlGenerator($module, $page);
+        $this->setCommunityPostRoute($module, $page);
         $this->setFriendService($module, $this->makeEmptyFriendServiceStub());
 
         $post = $this->makeCommunityPostFeed();
 
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$post]);
+        $this->stubCommunityPostResolution($feedService, $post);
         // Community lookup for the redirect URL fails/is inaccessible here
         // - showCommunityPostPage() should degrade to '/' rather than
         // fail the whole page render.
@@ -1228,11 +1322,12 @@ final class UsersControllerTest extends TestCase
         $post = $this->makeBlogPostFeed();
 
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$post]);
+        $this->stubPersonalPostResolution($feedService, $post);
         $this->setFeedService($module, $feedService);
 
         $page = $this->makeBlogPostShowPage();
         $page->params = ['slug' => 'my-post-title'];
+        $this->setPersonalPostRoute($module, $page);
 
         $breadcrumb = $module->getBreadcrumb($page);
 
@@ -1245,11 +1340,12 @@ final class UsersControllerTest extends TestCase
         $page = $this->makeBlogPostShowPage(commentsEnabled: true);
         $db = $this->createStub(PdoDatabase::class);
         $module = $this->makeUsersModule($db);
+        $this->setPersonalPostRoute($module, $page);
 
         $post = $this->makeBlogPostFeed();
 
         $feedService = $this->createMock(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$post]);
+        $this->stubPersonalPostResolution($feedService, $post);
         $feedService
             ->expects($this->once())
             ->method('getComments')
@@ -1270,6 +1366,8 @@ final class UsersControllerTest extends TestCase
 
         $feedService = $this->createMock(FeedService::class);
         $feedService->expects($this->never())->method('getFeedBySlug');
+        $feedService->expects($this->never())->method('getFeedByTypeAndSlug');
+        $feedService->expects($this->never())->method('getFeedByParentAndSlug');
         $this->setFeedService($module, $feedService);
 
         $this->expectException(NotFoundException::class);
@@ -1282,9 +1380,10 @@ final class UsersControllerTest extends TestCase
         $page = $this->makeBlogPostShowPage();
         $db = $this->createStub(PdoDatabase::class);
         $module = $this->makeUsersModule($db);
+        $this->setPersonalPostRoute($module, $page);
 
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([]);
+        $this->stubPersonalPostResolution($feedService, null);
         $this->setFeedService($module, $feedService);
 
         $this->expectException(NotFoundException::class);
@@ -1297,13 +1396,14 @@ final class UsersControllerTest extends TestCase
         $page = $this->makeBlogPostShowPage();
         $db = $this->createStub(PdoDatabase::class);
         $module = $this->makeUsersModule($db);
+        $this->setPersonalPostRoute($module, $page);
 
         // Slugs aren't unique across feed types - guard against matching e.g.
         // an article that happens to share this slug.
         $article = $this->makeBlogPostFeed(type: 'article');
 
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$article]);
+        $this->stubPersonalPostResolution($feedService, $article);
         $this->setFeedService($module, $feedService);
 
         $this->expectException(NotFoundException::class);
@@ -1324,13 +1424,13 @@ final class UsersControllerTest extends TestCase
         $db = $this->createStub(PdoDatabase::class);
         $module = $this->makeUsersModule($db);
         $this->setContext($module, new User(id: 7, email: 'user@example.com', role: AccessService::ROLE_USER, username: 'nicky42'));
-        $this->setPageTree($module, new PageTree([$editPage, $showPage]));
+        $this->setPersonalPostRoute($module, $editPage, $showPage);
         $this->setUploadService($module, $this->makeUploadServiceStub());
 
         $post = $this->makeBlogPostFeed();
 
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$post]);
+        $this->stubPersonalPostResolution($feedService, $post);
         $this->setFeedService($module, $feedService);
 
         $blogPostService = $this->createStub(BlogPostService::class);
@@ -1359,12 +1459,12 @@ final class UsersControllerTest extends TestCase
         $db = $this->createStub(PdoDatabase::class);
         $module = $this->makeUsersModule($db);
         $this->setContext($module, new User(id: 99, email: 'other@example.com', role: AccessService::ROLE_USER, username: 'someone-else'));
-        $this->setPageTree($module, new PageTree([$editPage, $showPage]));
+        $this->setPersonalPostRoute($module, $editPage, $showPage);
 
         $post = $this->makeBlogPostFeed();
 
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$post]);
+        $this->stubPersonalPostResolution($feedService, $post);
         $this->setFeedService($module, $feedService);
 
         $this->expectException(ForbiddenException::class);
@@ -1409,13 +1509,13 @@ final class UsersControllerTest extends TestCase
         $db = $this->createStub(PdoDatabase::class);
         $module = $this->makeUsersModule($db);
         $this->setContext($module, new User(id: 42, email: 'mod@example.com', role: AccessService::ROLE_USER, username: 'moderator'));
-        $this->setPageTree($module, new PageTree([$editPage, $showPage]));
+        $this->setCommunityPostRoute($module, $editPage, $showPage);
         $this->setUploadService($module, $this->makeUploadServiceStub());
 
         $post = $this->makeCommunityPostFeed();
 
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$post]);
+        $this->stubCommunityPostResolution($feedService, $post);
         $feedService->method('canEditFeed')->willReturn(true);
         $this->setFeedService($module, $feedService);
 
@@ -1444,12 +1544,12 @@ final class UsersControllerTest extends TestCase
         $db = $this->createStub(PdoDatabase::class);
         $module = $this->makeUsersModule($db);
         $this->setContext($module, new User(id: 99, email: 'other@example.com', role: AccessService::ROLE_USER, username: 'someone-else'));
-        $this->setPageTree($module, new PageTree([$editPage, $showPage]));
+        $this->setCommunityPostRoute($module, $editPage, $showPage);
 
         $post = $this->makeCommunityPostFeed();
 
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$post]);
+        $this->stubCommunityPostResolution($feedService, $post);
         $feedService->method('canEditFeed')->willReturn(false);
         $this->setFeedService($module, $feedService);
 
@@ -1458,13 +1558,7 @@ final class UsersControllerTest extends TestCase
         $module->show($editPage, ['slug' => 'my-post-title']);
     }
 
-    /**
-     * A personal post reachable at this URL by slug coincidence
-     * (getFeedBySlug() doesn't filter by parent) - same containerType
-     * guard as showCommunityPostPage()'s own, checked before the
-     * permission gate so a stray match 404s rather than leaking a
-     * forbidden/allowed signal about a post that doesn't even belong here.
-     */
+    /** A malformed scoped result is still rejected by the container guard. */
     public function testShowCommunityPostEditPageThrowsNotFoundForNonCommunityPost(): void
     {
         $editPage = $this->makeCommunityPostEditPage();
@@ -1472,12 +1566,12 @@ final class UsersControllerTest extends TestCase
         $db = $this->createStub(PdoDatabase::class);
         $module = $this->makeUsersModule($db);
         $this->setContext($module, new User(id: 7, email: 'user@example.com', role: AccessService::ROLE_USER, username: 'nicky42'));
-        $this->setPageTree($module, new PageTree([$editPage, $showPage]));
+        $this->setCommunityPostRoute($module, $editPage, $showPage);
 
         $post = $this->makeBlogPostFeed();
 
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$post]);
+        $this->stubCommunityPostResolution($feedService, $post);
         $this->setFeedService($module, $feedService);
 
         $this->expectException(NotFoundException::class);
@@ -2378,7 +2472,7 @@ final class UsersControllerTest extends TestCase
         $blogPostRow['type'] = 'blog-post';
 
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([Feed::fromRow($blogPostRow)]);
+        $feedService->method('getFeedByParentAndSlug')->willReturn(Feed::fromRow($blogPostRow));
         $this->setFeedService($module, $feedService);
 
         $this->expectException(NotFoundException::class);

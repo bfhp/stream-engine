@@ -256,8 +256,7 @@ class UsersController extends AbstractController
         // title, and its slug segment needs to be real so
         // BreadcrumbsService::finalize() builds a working path.
         if ($page->action === 'user.post-show' && key_exists('slug', $page->params)) {
-            $feeds = $this->feedService->getFeedBySlug($page->params['slug'], $this->context->user);
-            $post = array_pop($feeds);
+            $post = $this->resolveBlogPostByRoute($page, $page->params['slug'], $this->context->user);
 
             if ($post && $post->type === 'blog-post') {
                 return new Breadcrumb($post->title, $post->slug);
@@ -272,8 +271,7 @@ class UsersController extends AbstractController
         // community.show's own {slug} segment (the community's slug,
         // matched one level up) uses the exact same placeholder name.
         if ($page->action === 'community.post-show' && key_exists('slug', $page->params)) {
-            $feeds = $this->feedService->getFeedBySlug($page->params['slug'], $this->context->user);
-            $post = array_pop($feeds);
+            $post = $this->resolveBlogPostByRoute($page, $page->params['slug'], $this->context->user);
 
             if ($post && $post->type === 'blog-post') {
                 return new Breadcrumb($post->title, $post->slug);
@@ -2593,8 +2591,7 @@ class UsersController extends AbstractController
             if ($slug === '') {
                 throw new NotFoundException($this->tm->trans('feed.not_found'));
             }
-            $feeds = $this->feedService->getFeedBySlug($slug, $user);
-            $post = array_pop($feeds);
+            $post = $this->resolveBlogPostByRoute($page, $slug, $user);
         }
 
         if (! $post || $post->type !== 'blog-post') {
@@ -2751,8 +2748,7 @@ class UsersController extends AbstractController
         if ($page->feedId) {
             $post = $this->feedService->getFeedById($page->feedId, $this->context->user);
         } else {
-            $feeds = $this->feedService->getFeedBySlug($slug, $this->context->user);
-            $post = array_pop($feeds);
+            $post = $this->resolveBlogPostByRoute($page, $slug, $this->context->user);
         }
 
         if (! $post || $post->type !== 'blog-post') {
@@ -2763,18 +2759,66 @@ class UsersController extends AbstractController
     }
 
     /**
+     * Resolves a blog post through the route's matched container page.
+     * Personal posts use the globally unique personal-blog slug (the user's
+     * username); community posts use the top-level community namespace.
+     * The post itself is always selected inside that resolved parent.
+     */
+    private function resolveBlogPostByRoute(Page $page, string $postSlug, User $user): ?Feed
+    {
+        $current = $page;
+
+        while ($current->parentId !== null) {
+            $current = $this->pageTree->get($current->parentId);
+
+            if ($current === null) {
+                return null;
+            }
+
+            $parent = null;
+
+            if ($current->action === 'user.show') {
+                $username = trim((string) ($current->params['username'] ?? ''));
+                if ($username === '') {
+                    return null;
+                }
+
+                $parent = $this->feedService->getFeedByTypeAndSlug('blog', $username, $user);
+            } elseif ($current->action === 'community.show') {
+                $communitySlug = trim((string) ($current->params['slug'] ?? ''));
+                if ($communitySlug === '') {
+                    return null;
+                }
+
+                $parent = $this->feedService->getFeedByParentAndSlug(
+                    null,
+                    $communitySlug,
+                    $user,
+                    'community'
+                );
+            }
+
+            if ($parent === null) {
+                continue;
+            }
+
+            return $this->feedService->getFeedByParentAndSlug(
+                $parent->id,
+                $postSlug,
+                $user,
+                'blog-post'
+            );
+        }
+
+        return null;
+    }
+
+    /**
      * Reads a single published blog post - mounted at pages.action
      * 'user.post-show' ({slug} under the blog root page, feed_type
-     * 'blog-post'). Slug lookup mirrors ArticleController::showArticlePage():
-     * feeds.slug isn't guaranteed globally unique (BlogPostService only
-     * de-dupes it within one user's own blog via uniqueBlogPostSlug()), so
-     * this is the same known trade-off articles already accept, not a new
-     * one - see FeedService::getFeedBySlug()'s TODO. A community post
-     * (containerId set) is still reachable here too - getFeedBySlug()
-     * doesn't filter by parent - but $post->canonicalUrl (set by
-     * resolveBlogPostForShow() via UrlGenerator::feed()) then correctly
-     * points at its real community.post-show URL instead of this one, same
-     * as everywhere else that resolves a blog-post Feed.
+     * 'blog-post'). The route resolves its personal-blog parent from the
+     * matched username first, so a same-slug post in another personal blog
+     * or in a community cannot be selected here.
      *
      * @throws NotFoundException
      * @throws ForbiddenException
@@ -2815,7 +2859,8 @@ class UsersController extends AbstractController
         $userRating = $this->feedService->getUserRatingValue($post->id, $viewer);
 
         // $post->canonicalUrl is already correct here - resolveBlogPostForShow()
-        // resolves via getFeedById()/getFeedBySlug(), both of which set it
+        // resolves via getFeedById() or the typed/scoped feed getters, all of
+        // which set it
         // through UrlGenerator::feed(), whose generic chain walker fills a
         // personal post's {username} segment from the blog container's own
         // slug (see BlogPostService::getOrCreateUserBlogFeed()'s own note)
@@ -2939,16 +2984,12 @@ class UsersController extends AbstractController
      * Reads a single published post at its community URL - mounted at
      * pages.action 'community.post-show' ({slug} under community.show,
      * feed_type 'blog-post'). Post resolution is identical to
-     * showBlogPostPage() (resolveBlogPostForShow()) - the two pages can
-     * resolve the exact same Feed (getFeedBySlug() doesn't filter by
-     * parent) - only the guard differs: this page only renders for a post
-     * genuinely parented inside a community (containerType === 'community',
+     * showBlogPostPage() (resolveBlogPostForShow()), but the matched community
+     * is resolved first and becomes the post lookup's parent. The defensive
+     * guard still requires containerType === 'community',
      * hydrated straight off the feed row - see Feed::$containerType's own
-     * docblock - so this needs no extra query). $post->canonicalUrl is
-     * already the right URL either way (see showBlogPostPage()'s own note
-     * on why), so a personal post visited at a stray /comm/.../ guess
-     * (unlikely, but getFeedBySlug() doesn't filter by parent) simply 404s
-     * here rather than rendering under the wrong URL.
+     * docblock, in case a repository/service implementation returns a
+     * malformed result.
      *
      * @throws NotFoundException
      * @throws ForbiddenException
