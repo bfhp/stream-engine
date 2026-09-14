@@ -201,6 +201,7 @@ final readonly class Installer
             $this->seedSettings($pdo, $config);
             $welcomeFeedId = $this->seedWelcomeArticle($pdo);
             $this->seedRootPage($pdo, $welcomeFeedId);
+            $this->seedUserMenu($pdo, $config->locale);
             $pdo->commit();
         } catch (Throwable $e) {
             if ($pdo->inTransaction()) {
@@ -356,6 +357,47 @@ final readonly class Installer
              ) VALUES (1, NULL, '', 'article.show', ?, '{}', 'article', ?, 'monthly', UNIX_TIMESTAMP(), 'public')"
         );
         $statement->execute([self::WELCOME_TITLE, $welcomeFeedId]);
+    }
+
+    private function seedUserMenu(PDO $pdo, string $locale): void
+    {
+        $messages = require rtrim($this->languagesDirectory, '/').'/'.$locale.'.php';
+        if (! is_array($messages)) {
+            throw new RuntimeException(sprintf('Locale "%s" does not contain a valid language catalog.', $locale));
+        }
+
+        $administrationLabel = $messages['view.nav.administration'] ?? null;
+        $logoutLabel = $messages['view.nav.logout'] ?? null;
+        if (! is_string($administrationLabel) || ! is_string($logoutLabel)) {
+            throw new RuntimeException(sprintf('Locale "%s" does not define the user menu labels.', $locale));
+        }
+
+        $find = $pdo->prepare(
+            'SELECT id FROM menu
+             WHERE parent IS NULL AND menu_group = ? AND type = ?
+               AND page_id IS NULL AND url <=> ? AND action <=> ?
+               AND label <=> ? AND access_rule = ?
+             LIMIT 1'
+        );
+        $insert = $pdo->prepare(
+            'INSERT INTO menu (
+                parent, menu_group, type, page_id, url,
+                action, label, access_rule, sort_order
+             ) VALUES (NULL, ?, ?, NULL, ?, ?, ?, ?, ?)'
+        );
+
+        foreach ([
+            ['user', 'internal', '/admin/', null, $administrationLabel, AccessService::ACCESS_ADMIN, 100],
+            ['user', 'divider', null, null, null, AccessService::ACCESS_ADMIN, 110],
+            ['user', 'action', null, 'logout', $logoutLabel, AccessService::ACCESS_AUTHENTICATED, 120],
+        ] as $item) {
+            $find->execute(array_slice($item, 0, 6));
+            if ($find->fetchColumn() !== false) {
+                continue;
+            }
+
+            $insert->execute($item);
+        }
     }
 
     private function verify(InstallationConfig $config): void

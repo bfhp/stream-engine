@@ -187,6 +187,8 @@ return [
     'view.nav.search' => 'Поиск',
     'view.nav.messages' => 'Сообщения',
     'view.nav.profile' => 'Профиль',
+    'view.nav.administration' => 'Администрирование',
+    'view.nav.logout' => 'Выйти',
 
     'view.article.read_aria' => 'Читать статью {title}',
     'view.forums.edited_at' => 'Отредактировано {date}',

@@ -137,6 +137,18 @@ final class InstallationSchemaTest extends TestCase
                         'SELECT content FROM feeds WHERE id = (SELECT feed_id FROM pages WHERE id = 1)'
                     )->fetchColumn(),
                 );
+                $messages = require $root.'/src/Lang/ru.php';
+                self::assertSame(
+                    [
+                        ['user', 'internal', '/admin/', null, $messages['view.nav.administration'], 'admin', 100],
+                        ['user', 'divider', null, null, null, 'admin', 110],
+                        ['user', 'action', null, 'logout', $messages['view.nav.logout'], 'authenticated', 120],
+                    ],
+                    $pdo->query(
+                        'SELECT menu_group, type, url, action, label, access_rule, sort_order
+                         FROM menu ORDER BY sort_order'
+                    )->fetchAll(PDO::FETCH_NUM),
+                );
                 self::assertSame(4, (int) $pdo->query('SELECT COUNT(*) FROM membership_roles')->fetchColumn());
             } finally {
                 foreach ([$stateFile, $stateFile.'.lock', $migrationFile, $migrationFile.'.lock'] as $file) {
