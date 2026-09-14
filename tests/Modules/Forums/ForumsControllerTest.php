@@ -1362,9 +1362,13 @@ final class ForumsControllerTest extends TestCase
     {
         $module = $this->makeModule($this->makeRoutingDb());
 
-        $feedService = $this->createStub(FeedService::class);
-        // A topic, not a section - resolving by slug alone can land on either.
-        $feedService->method('getFeedBySlug')->willReturn([$this->makeTopic()]);
+        $feedService = $this->createMock(FeedService::class);
+        // Defensive guard: the typed repository contract should return only
+        // forums, but the controller still refuses a malformed result.
+        $feedService->expects($this->once())
+            ->method('getFeedByTypeAndSlug')
+            ->with('forum', 'svecha-gasnet', $this->anything())
+            ->willReturn($this->makeTopic());
         $this->setProperty($module, 'feedService', $feedService);
 
         $this->expectException(ForbiddenException::class);
@@ -1396,9 +1400,9 @@ final class ForumsControllerTest extends TestCase
         ));
 
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([
-            $this->makeForum(id: 71, slug: 'tarot', parentId: self::FORUM_ID),
-        ]);
+        $feedService->method('getFeedByTypeAndSlug')->willReturn(
+            $this->makeForum(id: 71, slug: 'tarot', parentId: self::FORUM_ID)
+        );
         $feedService->method('getFeedsByParentAndType')->willReturn([
             $this->makeForum(id: 80, slug: 'tarot-raspisaniya', parentId: 71),
             $this->makeForum(id: 81, slug: 'tarot-shkola', parentId: 71),
@@ -1469,8 +1473,11 @@ final class ForumsControllerTest extends TestCase
             ]
         ));
 
-        $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$this->makeForumFeed()]);
+        $feedService = $this->createMock(FeedService::class);
+        $feedService->expects($this->once())
+            ->method('getFeedByTypeAndSlug')
+            ->with('forum', 'magiya', $this->anything())
+            ->willReturn($this->makeForumFeed());
         $feedService->method('getFeedsByParentAndType')->willReturn([]);
         $feedService->method('getFeedReadAtMap')->willReturn([
             // Read after the bump; 901 has no watermark at all.
@@ -1515,7 +1522,7 @@ final class ForumsControllerTest extends TestCase
         $module = $this->makeModule($this->makeRoutingDb([], [self::SQL_TOPICS_TOTAL => ['total' => 0]]));
 
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$this->makeForumFeed()]);
+        $feedService->method('getFeedByTypeAndSlug')->willReturn($this->makeForumFeed());
         $feedService->method('getFeedsByParentAndType')->willReturn([]);
         $feedService->method('getFeedReadAtMap')->willReturn([]);
         $this->setProperty($module, 'feedService', $feedService);
@@ -1903,7 +1910,7 @@ final class ForumsControllerTest extends TestCase
         $module = $this->makeModule($this->makeRoutingDb());
 
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$this->makeForumFeed()]);
+        $feedService->method('getFeedByTypeAndSlug')->willReturn($this->makeForumFeed());
         $this->setProperty($module, 'feedService', $feedService);
 
         $view = $module->show($this->makeTopicNewPage(), ['slug' => 'magiya']);
@@ -1926,7 +1933,7 @@ final class ForumsControllerTest extends TestCase
         $module = $this->makeModule($this->makeRoutingDb());
 
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$this->makeTopic()]);
+        $feedService->method('getFeedByTypeAndSlug')->willReturn($this->makeTopic());
         $this->setProperty($module, 'feedService', $feedService);
 
         $this->expectException(ForbiddenException::class);
@@ -1964,7 +1971,7 @@ final class ForumsControllerTest extends TestCase
         $module = $this->makeModule($this->makeRoutingDb());
 
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([]);
+        $feedService->method('getFeedByTypeAndSlug')->willReturn(null);
         $this->setProperty($module, 'feedService', $feedService);
 
         $page = $this->makeTopicListPage();
@@ -1985,6 +1992,7 @@ final class ForumsControllerTest extends TestCase
 
         $feedService = $this->createMock(FeedService::class);
         $feedService->expects($this->never())->method('getFeedBySlug');
+        $feedService->expects($this->never())->method('getFeedByTypeAndSlug');
         $this->setProperty($module, 'feedService', $feedService);
 
         $crumb = $module->getBreadcrumb($this->makeForumsListPage());
@@ -2873,7 +2881,11 @@ final class ForumsControllerTest extends TestCase
             $module = $this->makeModule($db);
             $feed = $kind === 'topic' ? $this->makeTopic() : $this->makeForumFeed();
             $feedService = $this->createStub(FeedService::class);
-            $feedService->method('getFeedBySlug')->willReturn([$feed]);
+            if ($kind === 'topic') {
+                $feedService->method('getFeedBySlug')->willReturn([$feed]);
+            } else {
+                $feedService->method('getFeedByTypeAndSlug')->willReturn($feed);
+            }
             $feedService->method('getFeedsByParentAndType')->willReturn($kind === 'base' ? [$this->makeForum(id: 80, slug: 'child', parentId: self::FORUM_ID)] : []);
             $this->setProperty($module, 'feedService', $feedService);
             $this->setProperty($module, 'pollService', $this->createStub(PollService::class));

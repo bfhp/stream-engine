@@ -194,8 +194,11 @@ class ForumsController extends AbstractController
             // subforum's crumb won't show its ancestor forum) - forums.list
             // is a single flat listing today, same simplification Article
             // makes for its own list pages.
-            $feeds = $this->feedService->getFeedBySlug($page->params['slug'], $this->context->user);
-            $forumFeed = array_pop($feeds);
+            $forumFeed = $this->feedService->getFeedByTypeAndSlug(
+                'forum',
+                $page->params['slug'],
+                $this->context->user
+            );
 
             if (!$forumFeed) {
                 throw new ForbiddenException('Forum not found');
@@ -570,8 +573,7 @@ class ForumsController extends AbstractController
      */
     public function showTopicListPage(Page $page, string $slug): ?ViewModel
     {
-        $feeds = $this->feedService->getFeedBySlug($slug, $this->context->user);
-        $forumFeed = array_pop($feeds);
+        $forumFeed = $this->feedService->getFeedByTypeAndSlug('forum', $slug, $this->context->user);
 
         if (!$forumFeed || $forumFeed->type !== 'forum') {
             throw new ForbiddenException('Forum not found');
@@ -712,8 +714,7 @@ class ForumsController extends AbstractController
      */
     public function showTopicNewPage(Page $page, string $slug): ?ViewModel
     {
-        $feeds = $this->feedService->getFeedBySlug($slug, $this->context->user);
-        $forumFeed = array_pop($feeds);
+        $forumFeed = $this->feedService->getFeedByTypeAndSlug('forum', $slug, $this->context->user);
 
         if (!$forumFeed || $forumFeed->type !== 'forum') {
             throw new ForbiddenException('Forum not found');
