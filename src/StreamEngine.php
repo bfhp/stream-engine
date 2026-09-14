@@ -355,6 +355,7 @@ class StreamEngine
 
             $pageContent['user'] = $currentUser;
             $pageContent['site_name'] = $this->settings->getString('site_name');
+            $pageContent['searchUrl'] = $this->urlGenerator->action('search.results');
             $pageContent['hostname'] = $_SERVER['HTTP_HOST'];
             $pageContent['locale'] = $this->settings->getString('locale');
             $pageContent['url'] = sprintf('https://%s%s', $_SERVER['HTTP_HOST'], $_SERVER['REQUEST_URI']);

@@ -1,6 +1,8 @@
-<form class="d-flex me-2 mt-3 mt-lg-0" role="search" method="get" action="/search/">
-    <div class="input-group">
-        <input class="form-control" required name="q" minlength="3" type="search" placeholder="{{ trans('view.nav.search') }}" aria-label="Search"/>
-        <button class="btn btn-outline-secondary input-group-text" type="submit"><i class="bi bi-search"></i></button>
-    </div>
-</form>
+{% if searchUrl %}
+    <form class="d-flex me-2 mt-3 mt-lg-0" role="search" method="get" action="{{ searchUrl }}">
+        <div class="input-group">
+            <input class="form-control" required name="q" minlength="3" type="search" placeholder="{{ trans('view.nav.search') }}" aria-label="Search"/>
+            <button class="btn btn-outline-secondary input-group-text" type="submit"><i class="bi bi-search"></i></button>
+        </div>
+    </form>
+{% endif %}
