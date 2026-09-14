@@ -357,6 +357,7 @@ class StreamEngine
             $pageContent['site_name'] = $this->settings->getString('site_name');
             $pageContent['searchUrl'] = $this->urlGenerator->action('search.results');
             $pageContent['messagesUrl'] = $this->urlGenerator->action('messages.inbox');
+            $pageContent['profileUrl'] = $this->urlGenerator->action('profile.show');
             $pageContent['hostname'] = $_SERVER['HTTP_HOST'];
             $pageContent['locale'] = $this->settings->getString('locale');
             $pageContent['url'] = sprintf('https://%s%s', $_SERVER['HTTP_HOST'], $_SERVER['REQUEST_URI']);

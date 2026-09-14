@@ -22,7 +22,7 @@ final class AuthenticatedNavTest extends TestCase
 
     public function testMessagesButtonUsesResolvedInboxUrl(): void
     {
-        $html = $this->render('/mail/');
+        $html = $this->render(messagesUrl: '/mail/');
 
         $this->assertStringContainsString('href="/mail/"', $html);
         $this->assertStringContainsString('bi-envelope', $html);
@@ -30,16 +30,35 @@ final class AuthenticatedNavTest extends TestCase
 
     public function testMessagesButtonIsNotRenderedWithoutInboxPage(): void
     {
-        $html = $this->render(null);
+        $html = $this->render(messagesUrl: null);
 
         $this->assertStringNotContainsString('bi-envelope', $html);
         $this->assertStringNotContainsString('view.nav.messages', $html);
     }
 
-    private function render(?string $messagesUrl): string
+    public function testProfileButtonUsesResolvedProfileUrl(): void
+    {
+        $html = $this->render(profileUrl: '/account/');
+
+        $this->assertStringContainsString('id="menu-user"', $html);
+        $this->assertStringContainsString('href="/account/"', $html);
+        $this->assertStringContainsString('src="/avatar.svg"', $html);
+    }
+
+    public function testProfileButtonIsNotRenderedWithoutProfilePage(): void
+    {
+        $html = $this->render(profileUrl: null);
+
+        $this->assertStringNotContainsString('id="menu-user"', $html);
+        $this->assertStringNotContainsString('src="/avatar.svg"', $html);
+        $this->assertStringContainsString('id="menu-user-toggle"', $html);
+    }
+
+    private function render(?string $messagesUrl = '/messages/', ?string $profileUrl = '/profile/'): string
     {
         return $this->twig->render('components/nav/user/authenticated.twig', [
             'messagesUrl' => $messagesUrl,
+            'profileUrl' => $profileUrl,
             'user' => new User(id: 42, email: '', nick: 'User', avatarUrl: '/avatar.svg'),
             'userMenu' => [],
         ]);

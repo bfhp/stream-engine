@@ -12,15 +12,17 @@
     {% block user_dropdown %}
     <div class="btn-group">
 
-        <a class="btn p-0"
-           id="menu-user"
-           href="/profile/"
-           role="button">
-            <img alt="{{ user.nick }}"
-                 src="{{ user.avatarUrl }}"
-                 class="rounded-circle" />
-            <span class="d-lg-none d-md-none">{{ trans('view.nav.profile') }}</span>
-        </a>
+        {% if profileUrl %}
+            <a class="btn p-0"
+               id="menu-user"
+               href="{{ profileUrl }}"
+               role="button">
+                <img alt="{{ user.nick }}"
+                     src="{{ user.avatarUrl }}"
+                     class="rounded-circle" />
+                <span class="d-lg-none d-md-none">{{ trans('view.nav.profile') }}</span>
+            </a>
+        {% endif %}
 
         <button type="button"
                 id="menu-user-toggle"
