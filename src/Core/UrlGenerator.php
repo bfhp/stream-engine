@@ -23,7 +23,8 @@ final class UrlGenerator
         private readonly PageTree $pageTree,
         private readonly FeedRepositoryInterface $feedRepository,
         private readonly CacheInterface $cache
-    ) {}
+    ) {
+    }
 
     public function pageNumber(QueryParams $query): int
     {

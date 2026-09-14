@@ -30,7 +30,7 @@ final class UserRepositoryTest extends TestCase
             ->method('fetchOne')
             ->with($this->logicalAnd(
                 $this->stringContains('FROM users u'),
-                    $this->stringContains('WHERE u.id = ?')
+                $this->stringContains('WHERE u.id = ?')
             ), [42])
             ->willReturn([
                 'id' => 42,

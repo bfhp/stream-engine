@@ -9,7 +9,6 @@ use RuntimeException;
 use StreamEngine\Controllers\ActionProbeController;
 use StreamEngine\Controllers\FactoryProbeController;
 use StreamEngine\Controllers\PlainClass;
-use StreamEngine\Core\ModuleRegistry;
 use StreamEngine\Modules\Forums\ForumsController;
 
 require_once __DIR__.'/../Support/ControllerFactoryFixtures.php';
