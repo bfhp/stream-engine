@@ -23,9 +23,7 @@ final class UrlGenerator
         private readonly PageTree $pageTree,
         private readonly FeedRepositoryInterface $feedRepository,
         private readonly CacheInterface $cache
-    ) {
-
-    }
+    ) {}
 
     public function pageNumber(QueryParams $query): int
     {
@@ -110,7 +108,7 @@ final class UrlGenerator
 
             $cached = $this->cache->get($cacheKey);
 
-            if ($cached !== null) {
+            if (is_string($cached)) {
                 $result[$feed->id] = $cached;
             } else {
                 $missing[] = $feed->id;
@@ -127,6 +125,7 @@ final class UrlGenerator
                     $url = $this->buildFeedUrl($id, $feedMap);
                 } catch (RuntimeException $e) {
                     error_log($e->getMessage(), E_USER_WARNING);
+
                     continue;
                 }
 
@@ -193,9 +192,9 @@ final class UrlGenerator
      * topic, type 'forum-post') still gets its own page level exactly as
      * before.
      *
-     * @param Feed[] $feedChain Root-to-leaf.
+     * @param  Feed[]  $feedChain  Root-to-leaf.
      * @return Feed[] Root-to-leaf, with every non-final feed of a same-type
-     *     run removed.
+     *                run removed.
      */
     private function collapseConsecutiveSameType(array $feedChain): array
     {
@@ -219,7 +218,7 @@ final class UrlGenerator
     /**
      * Builds the page chain that should render the feed chain.
      *
-     * @param Feed[] $feedChain Root-to-leaf feed chain.
+     * @param  Feed[]  $feedChain  Root-to-leaf feed chain.
      * @return Page[] Root-to-leaf page chain.
      */
     private function buildPageChainForFeed(array $feedChain): array
@@ -248,7 +247,7 @@ final class UrlGenerator
     /**
      * Builds a page chain by matching the root feed type to the first dynamic page.
      *
-     * @param Feed[] $feedChain Root-to-leaf feed chain.
+     * @param  Feed[]  $feedChain  Root-to-leaf feed chain.
      * @return Page[] Root-to-leaf page chain.
      */
     private function buildPageChainFromRootFeedType(array $feedChain): array
@@ -270,8 +269,8 @@ final class UrlGenerator
     /**
      * Appends child pages that correspond to the given descendant feed types.
      *
-     * @param Page[] $pageChain
-     * @param Feed[] $feeds
+     * @param  Page[]  $pageChain
+     * @param  Feed[]  $feeds
      * @return Page[]
      */
     private function appendFeedTypePages(array $pageChain, array $feeds): array
@@ -301,7 +300,7 @@ final class UrlGenerator
     /**
      * Finds the deepest feed in the chain that is mounted directly to a page.
      *
-     * @param Feed[] $feedChain Root-to-leaf feed chain.
+     * @param  Feed[]  $feedChain  Root-to-leaf feed chain.
      */
     private function findDeepestPageBoundFeedIndex(array $feedChain): ?int
     {
@@ -334,7 +333,6 @@ final class UrlGenerator
         return $staticPages;
     }
 
-
     private function buildUrlFromPageChain(array $pageChain, array $feedChain): string
     {
         $segments = [];
@@ -351,7 +349,7 @@ final class UrlGenerator
 
                 [$feed, $feedCursor] = $this->findNextFeedByType($feedChain, $page->feedType, $feedCursor);
 
-                if (!$feed) {
+                if (! $feed) {
                     throw new RuntimeException("Feed for type '$page->feedType' not found");
                 }
 
@@ -395,7 +393,7 @@ final class UrlGenerator
      * Finds the next feed of the requested type from the current feed cursor.
      * Returns the feed and the next cursor position after the matched feed.
      *
-     * @param Feed[] $feedChain
+     * @param  Feed[]  $feedChain
      * @return array{Feed|null, int}
      */
     private function findNextFeedByType(array $feedChain, string $type, int $startAt): array
@@ -453,7 +451,7 @@ final class UrlGenerator
     }
 
     /**
-     * @param array<string,string|int> $params
+     * @param  array<string,string|int>  $params
      */
     private function applyPageParams(string $pattern, array $params): string
     {

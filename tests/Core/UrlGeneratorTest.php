@@ -424,6 +424,25 @@ final class UrlGeneratorTest extends TestCase
         $this->assertEquals('/publication/master-i-margarita/1/', $urls[4]);
     }
 
+    public function testInvalidCachedFeedUrlIsRebuilt(): void
+    {
+        $feed = self::makeFeed(
+            id: 3,
+            type: 'publication',
+            slug: 'master-i-margarita',
+        );
+        $cache = new ArrayCache();
+        $cache->set('feed_url_3', false);
+        $generator = new UrlGenerator(
+            $this->getPageTree(),
+            new FakeFeedRepository([3 => $feed]),
+            $cache,
+        );
+
+        $this->assertSame('/publication/master-i-margarita/', $generator->feed($feed));
+        $this->assertSame('/publication/master-i-margarita/', $cache->get('feed_url_3'));
+    }
+
     public function testFeedTermUrl(): void
     {
         $pages = [

@@ -18,12 +18,15 @@ services:
     working_dir: /var/www
     depends_on:
       - db
+      - memcached
       - minio
     environment:
       LANG: "C.UTF-8"
       LC_ALL: "C.UTF-8"
       PHP_IDE_CONFIG: "serverName=localhost"
       SITE_URL: "http://localhost:5000"
+      MEMCACHED_HOST: "memcached"
+      MEMCACHED_PORT: "11211"
       OBJECT_STORAGE_ENDPOINT: "http://minio:9000"
       OBJECT_STORAGE_BUCKET: "stream-engine"
       OBJECT_STORAGE_REGION: "us-east-1"
@@ -52,9 +55,10 @@ services:
     working_dir: /app
 
   node:
-    image: node:20
+    build: ./php
     volumes:
       - ./:/app
+      - node_modules:/app/node_modules
     working_dir: /app
 
   memcached:
@@ -77,3 +81,4 @@ services:
 volumes:
   db_data:
   minio_data:
+  node_modules:

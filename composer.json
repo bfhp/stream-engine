@@ -48,16 +48,7 @@
         "migrate:baseline": "@php bin/migrate.php baseline",
         "cms:install": "@php bin/install.php",
         "cms:install-token": "@php bin/install-token.php",
-        "install-schema:build": "@php bin/build-install-schema.php",
-        "check-system-deps": [
-            "StreamEngine\\ComposerScripts::checkSystemDeps"
-        ],
-        "post-install-cmd": [
-            "@check-system-deps"
-        ],
-        "post-update-cmd": [
-            "@check-system-deps"
-        ]
+        "install-schema:build": "@php bin/build-install-schema.php"
     },
     "scripts-descriptions": {
         "test": "Run the PHPUnit suite on the host PHP.",

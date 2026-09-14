@@ -105,7 +105,7 @@ class Cache implements CacheInterface
         if ($this->client) {
             $value = $this->client->get($this->buildKey($key));
 
-            if ($this->client->getResultCode() === Memcached::RES_NOTFOUND) {
+            if ($this->client->getResultCode() !== Memcached::RES_SUCCESS) {
                 return null;
             }
 
@@ -123,7 +123,7 @@ class Cache implements CacheInterface
         if ($this->client) {
             $this->client->get($this->buildKey($key));
 
-            return $this->client->getResultCode() !== Memcached::RES_NOTFOUND;
+            return $this->client->getResultCode() === Memcached::RES_SUCCESS;
         }
 
         return array_key_exists($this->buildKey($key), $this->fallback);

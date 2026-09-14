@@ -1,3 +1,5 @@
+FROM node:20 AS node
+
 FROM php:8.3-fpm
 
 ENV LANG=C.UTF-8 \
@@ -8,6 +10,7 @@ RUN apt-get update && apt-get install -y \
     git \
     curl \
     unzip \
+    libzip-dev \
     libpng-dev \
     libjpeg-dev \
     libwebp-dev \
@@ -51,5 +54,12 @@ COPY uploads.ini /usr/local/etc/php/conf.d/uploads.ini
 
 # ---- composer ----
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# ---- node ----
+COPY --from=node /usr/local/bin/node /usr/local/bin/node
+COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
+
+RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+    && ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
 
 WORKDIR /var/www
