@@ -149,7 +149,7 @@ final readonly class Config
     }
     public function cronMode(): string
     {
-        return $this->env['CRON_MODE'] ?? 'no-cron';
+        return $this->env['CRON_MODE'] ?? 'web';
     }
 
     // ===== SMTP =====

@@ -12,11 +12,10 @@ namespace StreamEngine\Core\Cron;
  * and is the reason this could not be tested where it lived - it was a static
  * on `StreamEngine`, whose constructor opens a database connection.
  *
- * The site has no system crontab in the default deployment: `CRON_MODE` is
- * `no-cron` unless someone sets it. So scheduled tasks such as session cleanup
- * are driven by visitors - each qualifying
- * request forks `bin/cron.php`, which takes a lock, runs whatever is due, and
- * exits. `CRON_MODE=os` turns all of this off in favour of a real crontab.
+ * `CRON_MODE=os` is the production model: an external scheduler invokes
+ * `bin/cron.php` every minute, and web requests never start it. `web` is a
+ * development and compatibility fallback in which qualifying requests fork
+ * the runner. It provides no wall-clock delivery guarantee on a quiet site.
  */
 final class CronTrigger
 {
@@ -50,14 +49,7 @@ final class CronTrigger
             return true;
         }
 
-        // NOTE: this preserves what StreamEngine::handleRequest() has always
-        // done, which is very probably not what was meant. The condition there
-        // is `mt_rand(1, 50) !== 1` under a comment reading "Throttling for
-        // prod" - so it triggers on 49 requests out of 50 and *skips* one,
-        // rather than triggering on one. See docs/TODO.md: flipping it is a
-        // production behaviour change (cron would be checked 50x less often),
-        // so it is pinned here rather than quietly corrected.
-        return $roll !== 1;
+        return $roll === 1;
     }
 
     public static function roll(): int

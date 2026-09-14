@@ -163,6 +163,7 @@ modules to evolve independently.
 Key documentation:
 
 - [Installation architecture](docs/INSTALLATION.md)
+- [Cron deployment runbook](docs/CRON.md)
 - [Building and loading modules](docs/MODULES.md)
 - [Module dependency contract](docs/MODULE_CONTRACT.md)
 - [Theme ownership and override contract](docs/THEME_CONTRACT.md)

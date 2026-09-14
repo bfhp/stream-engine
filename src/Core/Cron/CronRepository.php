@@ -56,9 +56,9 @@ final readonly class CronRepository
      * It never used to report anything: the old implementation upserted
      * locked_at and then `return true`, so CronRunner's `if (!lock()) continue;`
      * was dead and two runners would happily execute the same task at the same
-     * time. That matters because cron is triggered from web requests unless
-     * CRON_MODE=os (see StreamEngine::handleRequest()), so overlapping requests
-     * are the normal case, and the tasks behind it delete rows
+     * time. That still matters in the request-driven compatibility mode,
+     * where overlapping requests can start competing runners, and the tasks
+     * behind it delete rows
      * (`users:cleanup`) or perform other non-idempotent work.
      *
      * Uses index: PRIMARY(task)

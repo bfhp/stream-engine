@@ -472,9 +472,8 @@ class StreamEngine
 
         Security::checkAndCreateCsrfToken();
 
-        // See Core\Cron\CronTrigger for the decision - including the note
-        // that the production "throttle" triggers on 49 requests out of 50
-        // rather than on one, which is preserved rather than corrected here.
+        // In production CRON_MODE=os keeps scheduling out of the request path.
+        // The web mode is a development/compatibility fallback only.
         if (CronTrigger::shouldTrigger($this->config->cronMode(), $_ENV['APP_ENV'], CronTrigger::roll())) {
             self::triggerCronProcess();
         }

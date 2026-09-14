@@ -128,7 +128,7 @@ final readonly class InstallationEnvironment
             'CRON_KEY' => self::existingSecret($current, 'CRON_KEY'),
             'CRON_MODE' => is_string($current['CRON_MODE'] ?? null) && $current['CRON_MODE'] !== ''
                 ? $current['CRON_MODE']
-                : 'no-cron',
+                : ($this->appEnvironment === 'prod' ? 'os' : 'web'),
         ];
     }
 

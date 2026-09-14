@@ -26,27 +26,11 @@ The following checks were green at the time of the review:
 - `npm run build`;
 - `composer audit:csrf`.
 
-`composer lint` is not green yet: Pint finds formatting issues in 16 modified
-PHP files, mostly unused imports in `modules/WpImport/`.
-
 There is no current coverage report: `composer test:coverage` requires a
 running Docker daemon. Old coverage percentages were deliberately removed
 because they became misleading after more tests were added.
 
 ## P1
-
-### Cron: choose an execution model
-
-In production, `CronTrigger::shouldTrigger()` preserves the old `roll !== 1`
-condition, so it forks `bin/cron.php` on 49 out of 50 requests. The lock
-prevents jobs from running twice, but does not eliminate the cost of starting
-processes.
-
-- Prefer configuring `CRON_MODE=os` and a system cron job in production.
-- Otherwise, deliberately change the probability to one request out of 50 and
-  define an acceptable job delay for a low-traffic site.
-- Add a deployment runbook; do not change the condition without an operational
-  decision.
 
 ### API feeds/comments: input bounds and types
 

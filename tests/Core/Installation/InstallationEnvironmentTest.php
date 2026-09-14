@@ -34,7 +34,7 @@ final class InstallationEnvironmentTest extends TestCase
         self::assertSame('p@ss $word', $values['DB_PASSWORD']);
         self::assertMatchesRegularExpression('/^[a-f0-9]{64}$/', $values['APP_SECRET']);
         self::assertMatchesRegularExpression('/^[a-f0-9]{64}$/', $values['CRON_KEY']);
-        self::assertSame('no-cron', $values['CRON_MODE']);
+        self::assertSame('os', $values['CRON_MODE']);
     }
 
     public function testExistingSecretsAndCronModeArePreserved(): void
@@ -50,6 +50,13 @@ final class InstallationEnvironmentTest extends TestCase
         self::assertSame('existing-app-secret', $values['APP_SECRET']);
         self::assertSame('existing-cron-key', $values['CRON_KEY']);
         self::assertSame('os', $values['CRON_MODE']);
+    }
+
+    public function testDevelopmentDefaultsToWebCron(): void
+    {
+        $config = new InstallationEnvironment('dev', 'http://localhost:5000', 'db', 3306, 'app', 'user', '');
+
+        self::assertSame('web', $config->values([])['CRON_MODE']);
     }
 
     #[DataProvider('invalidValues')]

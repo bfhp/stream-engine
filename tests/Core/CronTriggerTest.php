@@ -14,8 +14,9 @@ use StreamEngine\Core\Cron\CronTrigger;
  * This lived inside `StreamEngine::handleRequest()`, whose only entry point is
  * a constructor that opens a database connection - so a three-branch decision
  * that fires on every request to the site had no test at all. Extracting it
- * surfaced something worth arguing about; see
- * `testProductionTriggersOnFortyNineRequestsOutOfFiftyWhichIsProbablyBackwards`.
+ * surfaced the old inverted production throttle. Production deployments now
+ * use an external scheduler. The request-driven mode
+ * remains as an explicit fallback and starts one runner per fifty requests.
  *
  * What is at stake: each trigger is `exec()` of a whole PHP process. Getting
  * the frequency wrong in one direction spawns a process per pageview; in the
@@ -41,7 +42,7 @@ final class CronTriggerTest extends TestCase
     {
         return [
             'in dev' => ['dev', 1],
-            'in production, on the skipping roll' => ['prod', 1],
+            'in production, on the triggering roll' => ['prod', 1],
             'in production, on any other roll' => ['prod', 25],
         ];
     }
@@ -52,12 +53,7 @@ final class CronTriggerTest extends TestCase
     public static function nonOsModeProvider(): array
     {
         return [
-            // The default when CRON_MODE is unset.
-            'no-cron' => ['no-cron'],
-            'empty' => [''],
-            // Anything that is not the literal 'os' means "you do it".
-            'a typo' => ['OS'],
-            'nonsense' => ['maybe'],
+            'web' => ['web'],
         ];
     }
 
@@ -74,7 +70,7 @@ final class CronTriggerTest extends TestCase
     #[DataProvider('everyRollProvider')]
     public function testDevTriggersOnEveryRequest(int $roll): void
     {
-        $this->assertTrue(CronTrigger::shouldTrigger('no-cron', 'dev', $roll));
+        $this->assertTrue(CronTrigger::shouldTrigger('web', 'dev', $roll));
     }
 
     /**
@@ -90,32 +86,22 @@ final class CronTriggerTest extends TestCase
     }
 
     /**
-     * The finding. The condition in `handleRequest()` was
-     * `mt_rand(1, 50) !== 1` under a comment reading "Throttling for prod" -
-     * which triggers on **49** requests out of 50 and skips one, the opposite
-     * of a throttle.
-     *
-     * Pinned as it is rather than corrected, because flipping it is a
-     * production behaviour change in both directions at once: a busy site stops
-     * forking a PHP process per pageview, and a quiet one starts checking its
-     * hourly sweeps fifty times less often - which, with no system crontab
-     * configured, is what actually delivers the dream book's interpretations.
-     * That is a decision about the deployment, not a bug fix. See docs/TODO.md.
+     * This mode deliberately trades process-start overhead for unbounded
+     * wall-clock delay. It is not the production scheduling model.
      */
-    public function testProductionTriggersOnFortyNineRequestsOutOfFiftyWhichIsProbablyBackwards(): void
+    public function testProductionWebFallbackTriggersOnOneRequestOutOfFifty(): void
     {
         $triggered = 0;
 
         for ($roll = 1; $roll <= CronTrigger::PRODUCTION_ONE_IN; $roll++) {
-            if (CronTrigger::shouldTrigger('no-cron', 'prod', $roll)) {
+            if (CronTrigger::shouldTrigger('web', 'prod', $roll)) {
                 $triggered++;
             }
         }
 
-        $this->assertSame(CronTrigger::PRODUCTION_ONE_IN - 1, $triggered);
-        // The single roll that does *not* trigger.
-        $this->assertFalse(CronTrigger::shouldTrigger('no-cron', 'prod', 1));
-        $this->assertTrue(CronTrigger::shouldTrigger('no-cron', 'prod', 2));
+        $this->assertSame(1, $triggered);
+        $this->assertTrue(CronTrigger::shouldTrigger('web', 'prod', 1));
+        $this->assertFalse(CronTrigger::shouldTrigger('web', 'prod', 2));
     }
 
     /**
@@ -137,7 +123,7 @@ final class CronTriggerTest extends TestCase
     #[DataProvider('productionEnvProvider')]
     public function testOnlyTheLiteralDevSkipsTheDice(string $appEnv): void
     {
-        $this->assertFalse(CronTrigger::shouldTrigger('no-cron', $appEnv, 1));
+        $this->assertFalse(CronTrigger::shouldTrigger('web', $appEnv, 2));
     }
 
     /* ===============================

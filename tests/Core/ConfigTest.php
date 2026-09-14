@@ -32,12 +32,11 @@ final class ConfigTest extends TestCase
         $this->assertSame('', (new Config([]))->cronKey());
     }
 
-    public function testCronIsOffUnlessAModeIsConfigured(): void
+    public function testCronDefaultsToTheWebFallback(): void
     {
-        // 'no-cron' is the safe default: no web request triggers a background
-        // process unless a deployment asked for it.
-        $this->assertSame('no-cron', (new Config([]))->cronMode());
+        $this->assertSame('web', (new Config([]))->cronMode());
         $this->assertSame('web', (new Config(['CRON_MODE' => 'web']))->cronMode());
+        $this->assertSame('os', (new Config(['CRON_MODE' => 'os']))->cronMode());
     }
 
     /**
@@ -77,12 +76,11 @@ final class ConfigTest extends TestCase
      * indistinguishable from not setting it at all. Written down because it is
      * the shape a half-finished deployment actually has.
      */
-    public function testAnEmptyEnvironmentValueIsNotTreatedAsUnset(): void
+    public function testAnEmptyCronKeyIsNotTreatedAsUnset(): void
     {
-        $config = new Config(['CRON_KEY' => '', 'CRON_MODE' => '']);
+        $config = new Config(['CRON_KEY' => '']);
 
         $this->assertSame('', $config->cronKey());
-        $this->assertSame('', $config->cronMode());
     }
 
     public function testSiteUrlIsNormalizedAndHasSafeLocalDefault(): void

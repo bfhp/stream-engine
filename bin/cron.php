@@ -34,8 +34,6 @@ set_time_limit(0);
 try {
     $engine = new StreamEngine();
     $engine->runCron();
-} catch (Throwable $e) {
-    error_log($e->getMessage());
 } finally {
     flock($fp, LOCK_UN);
     fclose($fp);
