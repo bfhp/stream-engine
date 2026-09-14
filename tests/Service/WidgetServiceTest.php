@@ -39,6 +39,7 @@ final class WidgetServiceTest extends TestCase
             'widgets.after_content' => '<div>after</div>',
             'widgets.sidebar_top' => '<div>side top</div>',
             'widgets.sidebar_bottom' => '<div>side bottom</div>',
+            'widgets.footer_legal' => '<div>legal</div>',
             'widgets.footer_contacts' => '<div>contacts</div>',
             'widgets.unknown' => '<div>ignored</div>',
         ])->placements();
@@ -48,6 +49,7 @@ final class WidgetServiceTest extends TestCase
         $this->assertSame('<div>after</div>', $widgets['after_content']);
         $this->assertSame('<div>side top</div>', $widgets['sidebar_top']);
         $this->assertSame('<div>side bottom</div>', $widgets['sidebar_bottom']);
+        $this->assertSame('<div>legal</div>', $widgets['footer_legal']);
         $this->assertSame('<div>contacts</div>', $widgets['footer_contacts']);
         $this->assertArrayNotHasKey('unknown', $widgets);
     }
@@ -61,6 +63,7 @@ final class WidgetServiceTest extends TestCase
         $this->assertSame('', $widgets['after_content']);
         $this->assertSame('', $widgets['sidebar_top']);
         $this->assertSame('', $widgets['sidebar_bottom']);
+        $this->assertSame('', $widgets['footer_legal']);
         $this->assertSame('', $widgets['footer_contacts']);
     }
 }

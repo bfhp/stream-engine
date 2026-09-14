@@ -15,6 +15,7 @@ final readonly class WidgetService
         'after_content',
         'sidebar_top',
         'sidebar_bottom',
+        'footer_legal',
         'footer_contacts',
     ];
 
@@ -24,7 +25,7 @@ final readonly class WidgetService
     }
 
     /**
-     * @return array{after_header: string, before_content: string, after_content: string, sidebar_top: string, sidebar_bottom: string, footer_contacts: string}
+     * @return array{after_header: string, before_content: string, after_content: string, sidebar_top: string, sidebar_bottom: string, footer_legal: string, footer_contacts: string}
      */
     public function placements(): array
     {
@@ -34,7 +35,7 @@ final readonly class WidgetService
             $placements[$placement] = trim($this->settings->getString('widgets.'.$placement));
         }
 
-        /** @var array{after_header: string, before_content: string, after_content: string, sidebar_top: string, sidebar_bottom: string, footer_contacts: string} $placements */
+        /** @var array{after_header: string, before_content: string, after_content: string, sidebar_top: string, sidebar_bottom: string, footer_legal: string, footer_contacts: string} $placements */
         return $placements;
     }
 }

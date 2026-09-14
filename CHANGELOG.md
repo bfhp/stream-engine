@@ -7,6 +7,10 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- New `footer_legal` widget placement for legal information in the site footer.
+
 ## [0.1.0] - 2026-09-14
 
 ### Added

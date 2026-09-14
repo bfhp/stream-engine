@@ -142,8 +142,6 @@ return [
     'view.auth.sign_in_or_register' => 'или зарегистрироваться',
 
     'view.share.title' => 'Поделиться:',
-    'view.footer.terms_prefix' => 'Использование этого сайта подразумевает, что вы соглашаетесь с',
-    'view.footer.rules' => 'правилами',
     'view.footer.copyright' => 'Авторские права © {year} {site}',
     'view.footer.quick_links' => 'Быстрые ссылки',
 

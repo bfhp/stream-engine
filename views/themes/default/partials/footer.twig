@@ -7,9 +7,7 @@
                 {# --- LEFT --- #}
                 <div class="col-md-6">
                     {% block footer_about %}
-                        <p>
-                            {{ trans('view.footer.terms_prefix') }} <a href="/rules/">{{ trans('view.footer.rules') }}</a>.
-                        </p>
+                        {% include 'components/widgets/block.twig' with { placement: 'footer_legal' } %}
                         <p>
                         {{ trans('view.footer.copyright', {year: "now"|date("Y"), site: site_name}) }}
                         </p>

@@ -20,7 +20,7 @@ type Setting = {
     updatedAt: number;
 };
 
-type Placement = "after_header" | "before_content" | "after_content" | "sidebar_top" | "sidebar_bottom" | "footer_contacts";
+type Placement = "after_header" | "before_content" | "after_content" | "sidebar_top" | "sidebar_bottom" | "footer_legal" | "footer_contacts";
 type WidgetMap = Partial<Record<Placement, Setting>>;
 type WidgetDrafts = Record<Placement, string>;
 
@@ -51,6 +51,11 @@ const WIDGETS: Array<{ placement: Placement; label: string; description: string 
         description: "Last block in pages with a sidebar."
     },
     {
+        placement: "footer_legal",
+        label: "Footer legal",
+        description: "Legal information in the left-hand column of the site footer."
+    },
+    {
         placement: "footer_contacts",
         label: "Footer contacts",
         description: "Right-hand column in the site footer."
@@ -63,6 +68,7 @@ const DEFAULT_DRAFTS: WidgetDrafts = {
     after_content: "",
     sidebar_top: "",
     sidebar_bottom: "",
+    footer_legal: "",
     footer_contacts: ""
 };
 
