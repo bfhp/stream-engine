@@ -7,6 +7,7 @@ namespace Tests\Modules\Article;
 use PHPUnit\Framework\TestCase;
 use StreamEngine\Core\ControllerFactory;
 use StreamEngine\Core\ModuleRegistry;
+use StreamEngine\Core\PageTree;
 use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Core\RequestContext;
 use StreamEngine\Domain\Page;
@@ -24,6 +25,7 @@ final class ModuleTest extends TestCase
             $modules,
             $this->createStub(PdoDatabase::class),
             $this->createStub(FeedService::class),
+            new PageTree([]),
         );
         $context = new RequestContext(new User(1, '', AccessService::ROLE_USER), new \DateTimeZone('UTC'));
 

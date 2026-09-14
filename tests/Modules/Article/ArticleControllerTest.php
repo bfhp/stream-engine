@@ -9,6 +9,7 @@ use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use StreamEngine\Core\Exceptions\ForbiddenException;
 use StreamEngine\Core\Exceptions\NotFoundException;
+use StreamEngine\Core\PageTree;
 use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Core\RequestContext;
 use StreamEngine\Domain\Feed;
@@ -34,12 +35,17 @@ use StreamEngine\Service\FeedService;
  */
 final class ArticleControllerTest extends TestCase
 {
-    private function makeController(FeedService $feedService, string $role = AccessService::ROLE_USER): ArticleController
-    {
+    /** @param list<Page> $pages */
+    private function makeController(
+        FeedService $feedService,
+        string $role = AccessService::ROLE_USER,
+        array $pages = [],
+    ): ArticleController {
         return new ArticleController(
             $this->createStub(PdoDatabase::class),
             new RequestContext(new User(3, 'a@b.c', $role), new DateTimeZone('UTC')),
             $feedService,
+            new PageTree($pages),
         );
     }
 
@@ -49,14 +55,18 @@ final class ArticleControllerTest extends TestCase
         ?int $feedId = null,
         ?string $listFeedType = null,
         ?bool $commentsEnabled = false,
+        int $id = 5,
+        ?int $parentId = null,
+        ?string $feedType = 'article',
+        array $params = [],
     ): Page {
-        return new Page(
-            id: 5,
-            parentId: 1,
+        $page = new Page(
+            id: $id,
+            parentId: $parentId,
             pattern: $pattern,
             pageName: 'Статьи',
             settings: null,
-            feedType: 'article',
+            feedType: $feedType,
             listFeedType: $listFeedType,
             feedId: $feedId,
             commentsEnabled: $commentsEnabled,
@@ -65,15 +75,19 @@ final class ArticleControllerTest extends TestCase
             accessRule: AccessService::ACCESS_PUBLIC,
             action: $action,
         );
+
+        $page->params = $params;
+
+        return $page;
     }
 
-    private function makeFeed(int $id, string $slug, ?int $parentId = null): Feed
+    private function makeFeed(int $id, string $slug, ?int $parentId = null, string $type = 'article'): Feed
     {
         return new Feed(
             id: $id,
             parentId: $parentId,
             ownerId: 1,
-            type: 'article',
+            type: $type,
             slug: $slug,
             title: 'Заголовок '.$id,
             description: 'Описание '.$id,
@@ -113,7 +127,7 @@ final class ArticleControllerTest extends TestCase
     {
         $feedService = $this->createStub(FeedService::class);
         $feedService->method('getFeedById')->willReturn($this->makeFeed(12, 'about'));
-        $feedService->method('getFeedBySlug')->willThrowException(
+        $feedService->method('getFeedByParentAndSlug')->willThrowException(
             new RuntimeException('the slug lookup should not have been used')
         );
 
@@ -127,8 +141,11 @@ final class ArticleControllerTest extends TestCase
 
     public function testASlugPageResolvesFromTheUrlSegment(): void
     {
-        $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$this->makeFeed(12, 'privet')]);
+        $feedService = $this->createMock(FeedService::class);
+        $feedService->expects($this->once())
+            ->method('getFeedByParentAndSlug')
+            ->with(null, 'privet', $this->isInstanceOf(User::class), 'article')
+            ->willReturn($this->makeFeed(12, 'privet'));
 
         $view = $this->makeController($feedService)
             ->show($this->makePage('article.show', pattern: '{slug}'), ['slug' => 'privet']);
@@ -180,7 +197,7 @@ final class ArticleControllerTest extends TestCase
     public function testAnArticleThatDoesNotResolveIsRefused(): void
     {
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([]);
+        $feedService->method('getFeedByParentAndSlug')->willReturn(null);
 
         $controller = $this->makeController($feedService);
 
@@ -301,14 +318,27 @@ final class ArticleControllerTest extends TestCase
 
     public function testAnArticleListRendersItsRootAndChildren(): void
     {
-        $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$this->makeFeed(2, 'section-a')]);
+        $feedService = $this->createMock(FeedService::class);
+        $rootPage = $this->makePage('sections.list', feedId: 1, id: 1);
+        $sectionPage = $this->makePage(
+            'articles.list',
+            pattern: '{slug}',
+            listFeedType: 'article',
+            id: 2,
+            parentId: 1,
+            feedType: 'article-section',
+        );
+        $feedService->method('getFeedById')->willReturn($this->makeFeed(1, 'articles'));
+        $feedService->expects($this->once())
+            ->method('getFeedByParentAndSlug')
+            ->with(1, 'section-a', $this->isInstanceOf(User::class), 'article-section')
+            ->willReturn($this->makeFeed(2, 'section-a', parentId: 1, type: 'article-section'));
         $feedService->method('getFeedsByParentAndType')->willReturn([
             $this->makeFeed(3, 'article-a', parentId: 2),
         ]);
 
-        $view = $this->makeController($feedService)
-            ->show($this->makePage('articles.list', listFeedType: 'article'), ['slug' => 'section-a']);
+        $view = $this->makeController($feedService, pages: [$rootPage])
+            ->show($sectionPage, ['slug' => 'section-a']);
 
         $this->assertSame('modules/article/articles.list.twig', $view->template);
         $this->assertSame(2, $view->data['feed']->id);
@@ -323,13 +353,18 @@ final class ArticleControllerTest extends TestCase
     public function testAListPageWithoutAChildTypeShowsNoChildren(): void
     {
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$this->makeFeed(2, 'section-a')]);
+        $feedService->method('getFeedByParentAndSlug')->willReturn(
+            $this->makeFeed(2, 'section-a', type: 'article-section')
+        );
         $feedService->method('getFeedsByParentAndType')->willThrowException(
             new RuntimeException('children should not be fetched without a list_feed_type')
         );
 
         $view = $this->makeController($feedService)
-            ->show($this->makePage('articles.list'), ['slug' => 'section-a']);
+            ->show(
+                $this->makePage('articles.list', feedType: 'article-section'),
+                ['slug' => 'section-a']
+            );
 
         $this->assertNull($view->data['subFeeds']);
     }
@@ -337,32 +372,63 @@ final class ArticleControllerTest extends TestCase
     public function testAListPageWhoseRootDoesNotResolveIsRefused(): void
     {
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([]);
+        $feedService->method('getFeedByParentAndSlug')->willReturn(null);
 
         $controller = $this->makeController($feedService);
 
         $this->expectException(ForbiddenException::class);
         $this->expectExceptionMessage('Root feed not found');
 
-        $controller->show($this->makePage('articles.list'), ['slug' => 'нет-такой']);
+        $controller->show(
+            $this->makePage('articles.list', feedType: 'article-section'),
+            ['slug' => 'нет-такой']
+        );
     }
 
     /**
-     * getFeedBySlug() returns the whole ancestor chain and the renderer takes
-     * the *last* element - the deepest match, which is the feed the URL names.
-     * Taking the first would render the section for every article under it.
+     * Each dynamic segment is resolved inside the feed selected by the
+     * preceding route segment. This is what makes duplicate article slugs in
+     * different sections unambiguous.
      */
-    public function testTheDeepestFeedInTheChainIsTheOneRendered(): void
+    public function testAnArticleIsResolvedThroughItsSectionAndPinnedRoot(): void
     {
-        $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([
-            $this->makeFeed(1, 'articles'),
-            $this->makeFeed(2, 'section-a', parentId: 1),
-            $this->makeFeed(3, 'article-a', parentId: 2),
-        ]);
+        $feedService = $this->createMock(FeedService::class);
+        $rootPage = $this->makePage('sections.list', pattern: 'articles', feedId: 1, id: 1);
+        $sectionPage = $this->makePage(
+            'articles.list',
+            pattern: '{slug}',
+            id: 2,
+            parentId: 1,
+            feedType: 'article-section',
+            params: ['slug' => 'section-a'],
+        );
+        $articlePage = $this->makePage(
+            'article.show',
+            pattern: '{slug}',
+            id: 3,
+            parentId: 2,
+            feedType: 'article',
+        );
 
-        $view = $this->makeController($feedService)
-            ->show($this->makePage('article.show', pattern: '{slug}'), ['slug' => 'article-a']);
+        $feedService->method('getFeedById')->with(1)
+            ->willReturn($this->makeFeed(1, 'articles'));
+        $feedService->expects($this->exactly(2))
+            ->method('getFeedByParentAndSlug')
+            ->willReturnCallback(fn (?int $parentId, string $slug, User $user, ?string $type): ?Feed => match (
+                [$parentId, $slug, $type]
+            ) {
+                [1, 'section-a', 'article-section'] => $this->makeFeed(
+                    2,
+                    'section-a',
+                    parentId: 1,
+                    type: 'article-section'
+                ),
+                [2, 'article-a', 'article'] => $this->makeFeed(3, 'article-a', parentId: 2),
+                default => null,
+            });
+
+        $view = $this->makeController($feedService, pages: [$rootPage, $sectionPage])
+            ->show($articlePage, ['slug' => 'article-a']);
 
         $this->assertSame(3, $view->data['feed']->id);
     }
@@ -389,7 +455,7 @@ final class ArticleControllerTest extends TestCase
     public function testABreadcrumbForASlugPageNamesTheFeed(): void
     {
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([$this->makeFeed(3, 'article-a')]);
+        $feedService->method('getFeedByParentAndSlug')->willReturn($this->makeFeed(3, 'article-a'));
 
         $page = $this->makePage('article.show', pattern: '{slug}');
         $page->params = ['slug' => 'article-a'];
@@ -410,7 +476,7 @@ final class ArticleControllerTest extends TestCase
     public function testAnUnresolvableBreadcrumbThrows(): void
     {
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willReturn([]);
+        $feedService->method('getFeedByParentAndSlug')->willReturn(null);
 
         $page = $this->makePage('article.show', pattern: '{slug}');
         $page->params = ['slug' => 'нет-такой'];
@@ -427,7 +493,7 @@ final class ArticleControllerTest extends TestCase
         // sections.list isn't one of the two feed-backed actions, so no lookup
         // happens at all.
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedBySlug')->willThrowException(
+        $feedService->method('getFeedByParentAndSlug')->willThrowException(
             new RuntimeException('no feed lookup should happen for sections.list')
         );
 

@@ -9,8 +9,10 @@ use StreamEngine\Core\AbstractController;
 use StreamEngine\Core\Exceptions\ForbiddenException;
 use StreamEngine\Core\Exceptions\NotFoundException;
 use StreamEngine\Core\Exceptions\ValidationException;
+use StreamEngine\Core\PageTree;
 use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Core\RequestContext;
+use StreamEngine\Domain\Feed;
 use StreamEngine\Domain\Page;
 use StreamEngine\Service\FeedService;
 use StreamEngine\View\Breadcrumb;
@@ -39,6 +41,7 @@ class ArticleController extends AbstractController
         PdoDatabase                  $db,
         RequestContext               $context,
         private readonly FeedService $feedService,
+        private readonly PageTree    $pageTree,
     ) {
         parent::__construct($db, $context);
     }
@@ -50,9 +53,7 @@ class ArticleController extends AbstractController
     {
         if ($page->action === 'articles.list' || $page->action === 'article.show') {
             if (key_exists('slug', $page->params)) {
-                //TODO do better detection
-                $feeds = $this->feedService->getFeedBySlug($page->params['slug'], $this->context->user);
-                $pageFeed = array_pop($feeds);
+                $pageFeed = $this->resolveFeedForPage($page, (string) $page->params['slug']);
             } else {
                 return parent::getBreadcrumb($page);
             }
@@ -92,8 +93,7 @@ class ArticleController extends AbstractController
         if ($page->feedId) {
             $articleFeed = $this->feedService->getFeedById($page->feedId, $this->context->user);
         } elseif ($page->pattern === '{slug}') {
-            $feeds = $this->feedService->getFeedBySlug($slug, $this->context->user);
-            $articleFeed = array_pop($feeds);
+            $articleFeed = $this->resolveFeedForPage($page, $slug);
         } else {
             throw new RuntimeException('Feed not defined');
         }
@@ -175,8 +175,7 @@ class ArticleController extends AbstractController
      */
     public function showArticleListPage(Page $page, string $slug): ?ViewModel
     {
-        $feeds = $this->feedService->getFeedBySlug($slug, $this->context->user);
-        $rootFeed = array_pop($feeds);
+        $rootFeed = $this->resolveFeedForPage($page, $slug);
 
         if (!$rootFeed) {
             throw new ForbiddenException('Root feed not found');
@@ -202,5 +201,62 @@ class ArticleController extends AbstractController
                 'subFeeds' => $subFeeds ?? null,
             ]
         );
+    }
+
+    /**
+     * Resolve a dynamic feed page in the same hierarchy as its route.
+     *
+     * A feed_id anchors the hierarchy. Every dynamic descendant is then
+     * resolved by its parent feed, declared feed type and route slug, so the
+     * same slug may safely exist in another section or feed type.
+     */
+    private function resolveFeedForPage(Page $page, ?string $slug = null): ?Feed
+    {
+        if ($page->feedId !== null) {
+            return $this->feedService->getFeedById($page->feedId, $this->context->user);
+        }
+
+        if ($page->feedType === null) {
+            return null;
+        }
+
+        $slug ??= isset($page->params['slug']) ? (string) $page->params['slug'] : null;
+        if ($slug === null || $slug === '') {
+            return null;
+        }
+
+        $parentPage = $this->findNearestFeedPage($page);
+        $parentFeed = $parentPage !== null ? $this->resolveFeedForPage($parentPage) : null;
+
+        if ($parentPage !== null && $parentFeed === null) {
+            return null;
+        }
+
+        return $this->feedService->getFeedByParentAndSlug(
+            $parentFeed?->id,
+            $slug,
+            $this->context->user,
+            $page->feedType,
+        );
+    }
+
+    private function findNearestFeedPage(Page $page): ?Page
+    {
+        $parentId = $page->parentId;
+
+        while ($parentId !== null) {
+            $parentPage = $this->pageTree->get($parentId);
+            if ($parentPage === null) {
+                return null;
+            }
+
+            if ($parentPage->feedId !== null || $parentPage->feedType !== null) {
+                return $parentPage;
+            }
+
+            $parentId = $parentPage->parentId;
+        }
+
+        return null;
     }
 }
