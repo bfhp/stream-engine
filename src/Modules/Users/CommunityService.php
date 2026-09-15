@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace StreamEngine\Modules\Users;
 
+use StreamEngine\Core\Config;
 use StreamEngine\Core\Exceptions\ForbiddenException;
 use StreamEngine\Core\Exceptions\ValidationException;
 use StreamEngine\Core\Formatter;
@@ -97,6 +98,7 @@ class CommunityService
         private readonly PageTree $pageTree,
         private readonly UrlGenerator $urlGenerator,
         private readonly NotificationService $notifications,
+        private readonly Config $config,
     ) {
     }
 
@@ -264,9 +266,7 @@ class CommunityService
             $url = $page !== null && $community->slug !== null
                 ? $this->urlGenerator->page($page, ['slug' => $community->slug])
                 : null;
-            if ($url !== null && str_starts_with($url, '/') && isset($_SERVER['SERVER_NAME'])) {
-                $url = 'https://'.$_SERVER['SERVER_NAME'].$url;
-            }
+            $url = $this->absoluteUrl($url);
             $message = $this->tm->trans('community.join_request_message', [
                 'name' => htmlspecialchars($user->getDisplayName(), ENT_QUOTES),
                 'community' => htmlspecialchars((string) $community->title, ENT_QUOTES),
@@ -386,9 +386,7 @@ class CommunityService
 
         try {
             $url = $this->buildCommunityCanonicalUrl($community);
-            if ($url !== null && str_starts_with($url, '/') && isset($_SERVER['SERVER_NAME'])) {
-                $url = 'https://'.$_SERVER['SERVER_NAME'].$url;
-            }
+            $url = $this->absoluteUrl($url);
             $message = $this->tm->trans('community.join_approved_message', [
                 'community' => htmlspecialchars((string) $community->title, ENT_QUOTES),
             ]);
@@ -452,9 +450,7 @@ class CommunityService
 
         try {
             $url = $this->buildCommunityCanonicalUrl($community);
-            if ($url !== null && str_starts_with($url, '/') && isset($_SERVER['SERVER_NAME'])) {
-                $url = 'https://'.$_SERVER['SERVER_NAME'].$url;
-            }
+            $url = $this->absoluteUrl($url);
             $message = $this->tm->trans('community.membership_changed_message', [
                 'community' => htmlspecialchars((string) $community->title, ENT_QUOTES),
             ]);
@@ -587,6 +583,13 @@ class CommunityService
         }
 
         return $this->urlGenerator->page($page, ['slug' => $community->slug]);
+    }
+
+    private function absoluteUrl(?string $path): ?string
+    {
+        $siteUrl = $this->config->siteUrl();
+
+        return $path !== null && $siteUrl !== null ? $siteUrl.'/'.ltrim($path, '/') : null;
     }
 
     /**

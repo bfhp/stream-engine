@@ -218,6 +218,7 @@ final class UsersControllerTest extends TestCase
             new TranslationManager('ru', 'en'),
             $pageTree,
             new UrlGenerator($pageTree, new FakeFeedRepository([]), new ArrayCache()),
+            new Config(['SITE_URL' => 'https://example.test']),
         );
     }
 
@@ -3197,6 +3198,7 @@ final class UsersControllerTest extends TestCase
             new TranslationManager('ru', 'en'),
             $pageTree,
             new UrlGenerator($pageTree, new FakeFeedRepository([]), new ArrayCache()),
+            new Config(['SITE_URL' => 'https://example.test']),
         );
 
         return [$friendService, $fakeDb];

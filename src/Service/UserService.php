@@ -384,6 +384,8 @@ final class UserService
             throw new ValidationException($this->tm->trans('user.email_already_used'));
         }
 
+        $siteUrl = $this->requireSiteUrl();
+
         $hash = password_hash($password, PASSWORD_DEFAULT);
 
         $newUserId = $this->userRepository->create(
@@ -393,12 +395,7 @@ final class UserService
 
         $verificationToken = $this->createEmailVerification($newUserId);
 
-        // TODO Get canonical url
-        $activationLink = sprintf(
-            'https://%s/register/?token=%s',
-            $_SERVER['SERVER_NAME'],
-            $verificationToken
-        );
+        $activationLink = $siteUrl.'/register/?token='.rawurlencode($verificationToken);
 
         try {
             $this->mailService->send(
@@ -528,6 +525,8 @@ final class UserService
             return; // no response for not to reveal the email
         }
 
+        $siteUrl = $this->requireSiteUrl();
+
         try {
             $token = bin2hex(random_bytes(32));
         } catch (RandomException $e) {
@@ -540,12 +539,7 @@ final class UserService
             [$user['id'], $token, time()]
         );
 
-        // TODO Get canonical url
-        $retrieveLink = sprintf(
-            'https://%s/forgot-password/?token=%s',
-            $_SERVER['SERVER_NAME'],
-            $token
-        );
+        $retrieveLink = $siteUrl.'/forgot-password/?token='.rawurlencode($token);
 
         try {
             $this->mailService->send(
@@ -559,6 +553,12 @@ final class UserService
         } catch (Exception|LoaderError|RuntimeError|SyntaxError $e) {
             throw new RuntimeException("Unable to send mail: " . $e->getMessage());
         }
+    }
+
+    private function requireSiteUrl(): string
+    {
+        return $this->config->siteUrl()
+            ?? throw new RuntimeException('Canonical site URL is not configured');
     }
 
 

@@ -137,9 +137,11 @@ final readonly class Config
         return (string) ($this->env['APP_SECRET'] ?? $this->env['CRON_KEY'] ?? '');
     }
 
-    public function siteUrl(): string
+    public function siteUrl(): ?string
     {
-        return rtrim((string) ($this->env['SITE_URL'] ?? 'https://localhost'), '/');
+        $url = trim((string) ($this->env['SITE_URL'] ?? ''));
+
+        return $url === '' ? null : rtrim($url, '/');
     }
 
     // ===== CRON =====

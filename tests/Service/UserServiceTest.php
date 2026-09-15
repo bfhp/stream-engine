@@ -91,6 +91,7 @@ final class UserServiceTest extends TestCase
         ?MailService $mailService = null,
         ?MessageService $messageService = null,
         ?PdoDatabase $sessionDb = null,
+        ?Config $config = null,
     ): UserService {
         return new UserService(
             new UserRepository($userDb ?? $this->createStub(PdoDatabase::class)),
@@ -107,7 +108,10 @@ final class UserServiceTest extends TestCase
             new UserSessionRepository($sessionDb ?? $this->createStub(PdoDatabase::class)),
             // A real secret, so the visit-cookie signature the presence
             // tests round-trip is actually exercised.
-            new Config(['APP_SECRET' => 'test-secret']),
+            $config ?? new Config([
+                'APP_SECRET' => 'test-secret',
+                'SITE_URL' => 'https://example.com',
+            ]),
         );
     }
 
@@ -306,8 +310,6 @@ final class UserServiceTest extends TestCase
 
     public function testRegisterHashesPasswordPersistsUserAndSendsActivationEmail(): void
     {
-        $_SERVER['SERVER_NAME'] = 'example.com';
-
         $userDb = $this->createMock(PdoDatabase::class);
         $db = $this->createMock(PdoDatabase::class);
         $mailService = $this->createMock(MailService::class);
@@ -371,6 +373,22 @@ final class UserServiceTest extends TestCase
         $userId = $service->register(' USER@Example.com ', $plainPassword);
 
         $this->assertSame(42, $userId);
+    }
+
+    public function testRegisterFailsBeforeCreatingUserWhenCanonicalUrlIsMissing(): void
+    {
+        $userDb = $this->createMock(PdoDatabase::class);
+        $userDb->expects($this->once())->method('fetchOne')->willReturn(null);
+        $userDb->expects($this->never())->method('execute');
+        $service = $this->makeService(
+            userDb: $userDb,
+            config: new Config(['APP_SECRET' => 'test-secret']),
+        );
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Canonical site URL is not configured');
+
+        $service->register('user@example.com', 'very-secure-password');
     }
 
     public function testCreateEmailVerificationStoresHashedToken(): void
@@ -466,8 +484,6 @@ final class UserServiceTest extends TestCase
 
     public function testCreatePasswordResetTokenPersistsTokenAndSendsMail(): void
     {
-        $_SERVER['SERVER_NAME'] = 'example.com';
-
         $userDb = $this->createMock(PdoDatabase::class);
         $db = $this->createMock(PdoDatabase::class);
         $mailService = $this->createMock(MailService::class);
@@ -516,6 +532,30 @@ final class UserServiceTest extends TestCase
         $service->createPasswordResetToken('user@example.com');
 
         $this->assertTrue(true);
+    }
+
+    public function testPasswordResetFailsBeforePersistingTokenWhenCanonicalUrlIsMissing(): void
+    {
+        $userDb = $this->createStub(PdoDatabase::class);
+        $userDb->method('fetchOne')->willReturn([
+            'id' => 7,
+            'email' => 'user@example.com',
+            'password_hash' => 'irrelevant-hash',
+            'role' => 'user',
+            'is_active' => 1,
+        ]);
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects($this->never())->method('execute');
+        $service = $this->makeService(
+            userDb: $userDb,
+            db: $db,
+            config: new Config(['APP_SECRET' => 'test-secret']),
+        );
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Canonical site URL is not configured');
+
+        $service->createPasswordResetToken('user@example.com');
     }
 
     public function testGetPasswordResetTokenReturnsDatabaseRow(): void

@@ -7,6 +7,7 @@ namespace Tests\Modules\Users;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use StreamEngine\Core\Config;
 use StreamEngine\Core\Exceptions\ForbiddenException;
 use StreamEngine\Core\Exceptions\ValidationException;
 use StreamEngine\Core\Formatter;
@@ -194,6 +195,7 @@ final class CommunityServiceTest extends TestCase
             new PageTree([]),
             $urlGenerator,
             $this->notifications(),
+            new Config(['SITE_URL' => 'https://example.test']),
         );
 
         return [$service, $db];
@@ -361,7 +363,7 @@ final class CommunityServiceTest extends TestCase
      * rather than wired to the mocked db the way makeService() wires
      * FeedService for createCommunity()'s own tests.
      */
-    private function makeMinimalService(PdoDatabase $db, ?PageTree $pages = null): CommunityService
+    private function makeMinimalService(PdoDatabase $db, ?PageTree $pages = null, ?Config $config = null): CommunityService
     {
         $pages ??= new PageTree([]);
 
@@ -373,6 +375,7 @@ final class CommunityServiceTest extends TestCase
             $pages,
             new UrlGenerator($pages, new FakeFeedRepository([]), new ArrayCache()),
             $this->notifications(),
+            $config ?? new Config(['SITE_URL' => 'https://example.test']),
         );
     }
 
@@ -568,30 +571,19 @@ final class CommunityServiceTest extends TestCase
             'slug' => 'test',
         ]);
         $community->metadata = ['membership_type' => CommunityService::MEMBERSHIP_TYPE_APPROVAL];
-        $serverName = $_SERVER['SERVER_NAME'] ?? null;
-        $_SERVER['SERVER_NAME'] = 'example.test';
-
-        try {
-            $service = $this->makeMinimalService($db, new PageTree([$page]));
-            if ($approval) {
-                $method = $removal ? 'removeMember' : 'approveSubscriber';
-                $service->$method(
-                    new User(id: 7, email: 'owner@example.com', role: AccessService::ROLE_USER),
-                    $community,
-                    42,
-                );
-            } else {
-                $service->join(
-                    new User(id: 42, email: 'viewer@example.com', role: AccessService::ROLE_USER, nick: '<Actor>'),
-                    $community,
-                );
-            }
-        } finally {
-            if ($serverName === null) {
-                unset($_SERVER['SERVER_NAME']);
-            } else {
-                $_SERVER['SERVER_NAME'] = $serverName;
-            }
+        $service = $this->makeMinimalService($db, new PageTree([$page]));
+        if ($approval) {
+            $method = $removal ? 'removeMember' : 'approveSubscriber';
+            $service->$method(
+                new User(id: 7, email: 'owner@example.com', role: AccessService::ROLE_USER),
+                $community,
+                42,
+            );
+        } else {
+            $service->join(
+                new User(id: 42, email: 'viewer@example.com', role: AccessService::ROLE_USER, nick: '<Actor>'),
+                $community,
+            );
         }
 
         self::assertCount(1, $this->notificationDeliveries);
@@ -603,6 +595,41 @@ final class CommunityServiceTest extends TestCase
         }
         self::assertStringContainsString('&lt;Community&gt;', $delivery[5]);
         self::assertStringContainsString('href="'.$url.'"', $delivery[5]);
+    }
+
+    public function testCommunityNotificationOmitsLinkWhenCanonicalUrlIsMissing(): void
+    {
+        $db = $this->createStub(PdoDatabase::class);
+        $db->method('execute')->willReturn(1);
+        $page = new \StreamEngine\Domain\Page(
+            100,
+            null,
+            'community/{slug}/manage',
+            null,
+            null,
+            null,
+            null,
+            null,
+            false,
+            ['GET'],
+            'html',
+            AccessService::ACCESS_AUTHENTICATED,
+            'community.manage',
+        );
+        $community = Feed::fromRow([
+            ...$this->makeCommunityRow(self::COMMUNITY_ID, 7, 'Community', null),
+            'slug' => 'test',
+        ]);
+        $community->metadata = ['membership_type' => CommunityService::MEMBERSHIP_TYPE_APPROVAL];
+
+        $this->makeMinimalService($db, new PageTree([$page]), new Config([]))->join(
+            new User(id: 42, email: 'viewer@example.com', role: AccessService::ROLE_USER, nick: 'Actor'),
+            $community,
+        );
+
+        $delivery = $this->notificationDeliveries[0];
+        self::assertNull(json_decode($delivery[4], true)['contentUrl']);
+        self::assertStringNotContainsString('href=', $delivery[5]);
     }
 
     public function testJoinDoesNotNotifyWhenConcurrentRequestAlreadyInsertedMembership(): void
@@ -941,6 +968,7 @@ final class CommunityServiceTest extends TestCase
             new PageTree([]),
             new UrlGenerator(new PageTree([]), new FakeFeedRepository([]), new ArrayCache()),
             $this->notifications(),
+            new Config(['SITE_URL' => 'https://example.test']),
         );
     }
 

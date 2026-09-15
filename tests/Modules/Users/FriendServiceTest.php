@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Modules\Users;
 
 use PHPUnit\Framework\TestCase;
+use StreamEngine\Core\Config;
 use StreamEngine\Core\Exceptions\ForbiddenException;
 use StreamEngine\Core\Exceptions\ValidationException;
 use StreamEngine\Core\PageTree;
@@ -91,7 +92,7 @@ final class FriendServiceTest extends TestCase
     /**
      * @return array{0: FriendService, 1: FakePdoDatabase}
      */
-    private function makeService(User $userA, User $userB): array
+    private function makeService(User $userA, User $userB, ?Config $config = null): array
     {
         $db = new FakePdoDatabase();
         $db->addBlogFeed(self::A_BLOG_ID, $userA->id);
@@ -145,6 +146,7 @@ final class FriendServiceTest extends TestCase
             new TranslationManager('ru', 'en'),
             $pageTree,
             $urlGenerator,
+            $config ?? new Config(['SITE_URL' => 'https://example.test']),
         );
 
         return [$service, $db];
@@ -184,7 +186,6 @@ final class FriendServiceTest extends TestCase
      */
     public function testSendRequestAppendsActorsProfileLinkWhenUsernameIsSet(): void
     {
-        $_SERVER['SERVER_NAME'] = 'example.test';
         $a = $this->makeUser(10, nick: 'Alice', username: 'alice10');
         $b = $this->makeUser(20, nick: 'Bob');
         [$service, $db] = $this->makeService($a, $b);
@@ -210,6 +211,20 @@ final class FriendServiceTest extends TestCase
         $a = $this->makeUser(10, nick: 'Alice');
         $b = $this->makeUser(20, nick: 'Bob');
         [$service, $db] = $this->makeService($a, $b);
+
+        $service->sendRequest($a, $b);
+
+        $this->assertSame(
+            $this->trans('friend.new_request', ['name' => 'Alice']),
+            $db->notificationDeliveries[0]['message_text'],
+        );
+    }
+
+    public function testSendRequestOmitsProfileLinkWhenCanonicalUrlIsMissing(): void
+    {
+        $a = $this->makeUser(10, nick: 'Alice', username: 'alice10');
+        $b = $this->makeUser(20, nick: 'Bob');
+        [$service, $db] = $this->makeService($a, $b, new Config([]));
 
         $service->sendRequest($a, $b);
 
@@ -317,6 +332,7 @@ final class FriendServiceTest extends TestCase
             new TranslationManager('ru', 'en'),
             $pageTree,
             $urlGenerator,
+            new Config(['SITE_URL' => 'https://example.test']),
         );
 
         // Must not throw.

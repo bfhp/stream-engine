@@ -3,6 +3,7 @@
 namespace StreamEngine\Service;
 
 use PHPMailer\PHPMailer\Exception;
+use RuntimeException;
 use StreamEngine\Core\Config;
 use StreamEngine\Core\TranslationManager;
 use Twig\Environment;
@@ -112,6 +113,9 @@ class MailService
             return $url;
         }
 
-        return $this->config->siteUrl().'/'.ltrim($url, '/');
+        $siteUrl = $this->config->siteUrl()
+            ?? throw new RuntimeException('Canonical site URL is not configured');
+
+        return $siteUrl.'/'.ltrim($url, '/');
     }
 }

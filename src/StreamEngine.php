@@ -222,6 +222,7 @@ class StreamEngine
             $userRepository,
             $this->mailService,
             $this->tm,
+            $this->config,
         );
 
         $this->userService = new UserService(
@@ -358,7 +359,7 @@ class StreamEngine
             $pageContent['searchUrl'] = $this->urlGenerator->action('search.results');
             $pageContent['messagesUrl'] = $this->urlGenerator->action('messages.inbox');
             $pageContent['profileUrl'] = $this->urlGenerator->action('profile.show');
-            $pageContent['hostname'] = $_SERVER['HTTP_HOST'];
+            $pageContent['siteUrl'] = $this->config->siteUrl();
             $pageContent['locale'] = $this->settings->getString('locale');
             $pageContent['url'] = sprintf('https://%s%s', $_SERVER['HTTP_HOST'], $_SERVER['REQUEST_URI']);
             $pageContent['widgets'] = $this->widgets->placements();
@@ -456,11 +457,6 @@ class StreamEngine
 
         $view->data['breadcrumbs'] = $breadcrumbs->finalize();
         $view->data['runtime'] = sprintf('%.1fms', (microtime(true) - $this->startTime) * 1000);
-
-        // Controllers provide a canonical path; templates receive the absolute URL.
-        if (isset($view->data['canonical'])) {
-            $view->data['canonical'] = $this->config->siteUrl().$view->data['canonical'];
-        }
 
         // Get page HTML content
         $content = $twig->render($view->template, $view->data);

@@ -6,6 +6,7 @@ namespace Tests\Service;
 
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
+use RuntimeException;
 use StreamEngine\Core\Config;
 use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Core\TranslationManager;
@@ -33,5 +34,21 @@ final class MailServiceTest extends TestCase
             'https://other.test/unsubscribe',
             $method->invoke($mail, 'https://other.test/unsubscribe')
         );
+    }
+
+    public function testRelativeUnsubscribeUrlRequiresCanonicalSiteUrl(): void
+    {
+        $mail = new MailService(
+            new Config([]),
+            new SettingsService(new SettingsRepository($this->createStub(PdoDatabase::class))),
+            new TranslationManager('ru', 'ru'),
+            __DIR__.'/../../views/email',
+        );
+        $method = new ReflectionMethod(MailService::class, 'absoluteUnsubscribeUrl');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Canonical site URL is not configured');
+
+        $method->invoke($mail, '/unsubscribe?token=abc');
     }
 }

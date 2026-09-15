@@ -9,6 +9,7 @@ use DateTimeZone;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use RuntimeException;
+use StreamEngine\Core\Config;
 use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Domain\Feed;
 use StreamEngine\Domain\Notification;
@@ -113,12 +114,17 @@ final class NotificationServiceTest extends TestCase
             new NotificationPreferenceRepository($preferences),
             new UserRepository($users),
             $mail,
+            config: new Config(['SITE_URL' => 'https://canonical.example']),
         );
         $service->processQueue();
         $service->processQueue();
 
         self::assertCount(2, $queued);
         self::assertSame([7, 'message.unread_digest', 'email', 'daily'], array_slice($queued[0], 0, 4));
+        self::assertSame(
+            'https://canonical.example/messages/',
+            json_decode($queued[0][4], true)['contentUrl'],
+        );
         self::assertSame($queued[0][6], $queued[1][6]);
         self::assertSame('08:45:00', (new DateTimeImmutable('@'.$queued[0][7]))->setTimezone(new DateTimeZone('Europe/Nicosia'))->format('H:i:s'));
     }

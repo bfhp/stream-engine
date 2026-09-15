@@ -83,10 +83,11 @@ final class ConfigTest extends TestCase
         $this->assertSame('', $config->cronKey());
     }
 
-    public function testSiteUrlIsNormalizedAndHasSafeLocalDefault(): void
+    public function testSiteUrlIsNormalizedAndMissingValueIsExplicit(): void
     {
         self::assertSame('https://example.test', (new Config(['SITE_URL' => 'https://example.test///']))->siteUrl());
-        self::assertSame('https://localhost', (new Config([]))->siteUrl());
+        self::assertNull((new Config([]))->siteUrl());
+        self::assertNull((new Config(['SITE_URL' => '   ']))->siteUrl());
     }
 
     /* ===============================

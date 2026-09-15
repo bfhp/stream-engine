@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace StreamEngine\Modules\Users;
 
+use StreamEngine\Core\Config;
 use StreamEngine\Core\Exceptions\ForbiddenException;
 use StreamEngine\Core\Exceptions\ValidationException;
 use StreamEngine\Core\PageTree;
@@ -47,6 +48,7 @@ final class FriendService
         private readonly TranslationManager $tm,
         private readonly PageTree $pageTree,
         private readonly UrlGenerator $urlGenerator,
+        private readonly Config $config,
     ) {
     }
 
@@ -199,7 +201,9 @@ final class FriendService
 
         $path = $this->urlGenerator->page($showPage, ['username' => $user->username]);
 
-        return 'https://'.$_SERVER['SERVER_NAME'].$path;
+        $siteUrl = $this->config->siteUrl();
+
+        return $siteUrl !== null ? $siteUrl.$path : null;
     }
 
     /**

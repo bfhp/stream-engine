@@ -39,13 +39,10 @@ because they became misleading after more tests were added.
 
 ### Routes and canonical URLs without string literals
 
-`Config::siteUrl()` and `UrlGenerator::action()` already exist, but some public
-links are still assembled with `$_SERVER['SERVER_NAME']`, and the remaining
-internal links have not yet been inventoried by routing responsibility.
+`Config::siteUrl()` and `UrlGenerator::action()` already exist, but the
+remaining internal links have not yet been inventoried by routing
+responsibility.
 
-- In emails, notifications, and friendship/community links, use
-  `Config::siteUrl()` instead of `$_SERVER['SERVER_NAME']`; a missing canonical
-  URL must produce an explicit, controlled result.
 - Inventory internal links in PHP, Twig, and TypeScript. Generate public page
   URLs from actions/feeds; do not mix stable API endpoints with page routing,
   and move them to a single client helper if necessary.

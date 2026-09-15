@@ -5,6 +5,7 @@ namespace StreamEngine\Modules\Users;
 use DateTimeImmutable;
 use Exception;
 use StreamEngine\Core\AbstractController;
+use StreamEngine\Core\Config;
 use StreamEngine\Core\Cron\CronRegistry;
 use StreamEngine\Core\Exceptions\ForbiddenException;
 use StreamEngine\Core\Exceptions\NotFoundException;
@@ -163,6 +164,7 @@ class UsersController extends AbstractController
         private readonly PageTree $pageTree,
         private readonly Formatter $formatter,
         private readonly NotificationService $notificationService,
+        private readonly Config $config,
     ) {
         parent::__construct($db, $context);
 
@@ -192,6 +194,7 @@ class UsersController extends AbstractController
             $this->tm,
             $this->pageTree,
             $this->urlGenerator,
+            $this->config,
         );
 
         $this->communityService = new CommunityService(
@@ -202,6 +205,7 @@ class UsersController extends AbstractController
             $this->pageTree,
             $this->urlGenerator,
             $this->notificationService,
+            $this->config,
         );
     }
 

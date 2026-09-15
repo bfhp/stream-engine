@@ -26,19 +26,19 @@
         <link rel="stylesheet" href="/assets/css/custom-content.css">
     {% endblock %}
 
-    {% if canonical %}
-        <link rel="canonical" href="{{ canonical }}">
+    {% if canonical and siteUrl %}
+        <link rel="canonical" href="{{ siteUrl }}{{ canonical }}">
     {% endif %}
 
     {% block head_og %}
         <meta property="og:title" content="{{ title|default('') }}" />
         <meta property="og:description" content="{{ description|default('') }}" />
-        {% if canonical %}
-        <meta property="og:url" content="{{ canonical }}" />
+        {% if canonical and siteUrl %}
+        <meta property="og:url" content="{{ siteUrl }}{{ canonical }}" />
         {% endif %}
         <meta property="og:site_name" content="{{ site_name }}" />
-        {% if image %}
-            <meta property="og:image" content="https://{{ hostname }}{{ image|default('') }}" />
+        {% if image and siteUrl %}
+            <meta property="og:image" content="{{ siteUrl }}{{ image }}" />
         {% endif %}
     {% endblock %}
 

@@ -44,6 +44,7 @@ final class ModuleTest extends TestCase
         $pageTree = new PageTree([]);
         $urlGenerator = new UrlGenerator($pageTree, new FakeFeedRepository([]), new ArrayCache());
         $tm = new TranslationManager('ru', 'en');
+        $config = new Config(['SITE_URL' => 'https://example.test']);
 
         $authService = new AuthService(
             new UserRepository($db),
@@ -75,7 +76,7 @@ final class ModuleTest extends TestCase
             // Presence (the profile page's online dot) lives on UserService
             // now - a real repository over the same stub $db.
             new UserSessionRepository($db),
-            new Config([])
+            $config
         );
 
         // UploadService/FeedService aren't final, so plain stubs are enough
@@ -104,6 +105,7 @@ final class ModuleTest extends TestCase
                 $mailService,
             ),
             new Formatter($tm, 'ru'),
+            $config,
         ];
 
         $modules = new ModuleRegistry();

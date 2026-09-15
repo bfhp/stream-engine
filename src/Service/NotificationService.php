@@ -7,6 +7,7 @@ namespace StreamEngine\Service;
 use DateInvalidTimeZoneException;
 use DateTimeImmutable;
 use DateTimeZone;
+use StreamEngine\Core\Config;
 use StreamEngine\Core\Exceptions\ValidationException;
 use StreamEngine\Core\TranslationManager;
 use StreamEngine\Domain\Feed;
@@ -32,6 +33,7 @@ final readonly class NotificationService
     private const int DAILY_EMAIL_BATCH_SIZE = 1000;
 
     private TranslationManager $tm;
+    private Config $config;
     private const array CONFIGURABLE_TYPES = [
         'friend.request' => [
             'key' => 'friend_request',
@@ -87,8 +89,10 @@ final readonly class NotificationService
         private UserRepository $users,
         private MailService $mail,
         ?TranslationManager $translationManager = null,
+        ?Config $config = null,
     ) {
         $this->tm = $translationManager ?? new TranslationManager('ru', 'ru');
+        $this->config = $config ?? new Config([]);
     }
 
     public function notify(Notification $notification): void
@@ -176,7 +180,8 @@ final readonly class NotificationService
                     $this->users->findDigestDeliveryTimeById($userId),
                     time(),
                 );
-                $url = isset($_SERVER['SERVER_NAME']) ? 'https://'.$_SERVER['SERVER_NAME'].'/messages/' : null;
+                $siteUrl = $this->config->siteUrl();
+                $url = $siteUrl !== null ? $siteUrl.'/messages/' : null;
                 $this->deliveries->create(
                     new Notification(
                         recipientUserId: $userId,
