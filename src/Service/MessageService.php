@@ -574,19 +574,19 @@ final readonly class MessageService
             throw new NotFoundException('Message not found');
         }
 
+        $conversationId = (int)$message['conversation_id'];
+
+        // Only user's message
+        if ((int)$message['user_id'] !== $userId) {
+            throw new ForbiddenException('Cannot edit other user\'s message');
+        }
+
         // created_at is stored as a unix timestamp (int unsigned), not a
         // date-time string, so it must be compared numerically rather than
         // passed through strtotime() (which can't parse a bare epoch value
         // and would fall back to false/0, making every edit look expired).
         if ((int)$message['created_at'] < time() - 900) {
             throw new ForbiddenException('Edit window expired');
-        }
-
-        $conversationId = (int)$message['conversation_id'];
-
-        // Only user's message
-        if ((int)$message['user_id'] !== $userId) {
-            throw new ForbiddenException('Cannot edit other user\'s message');
         }
 
         // Is it participant?

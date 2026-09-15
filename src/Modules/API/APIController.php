@@ -205,6 +205,7 @@ class APIController extends AbstractController
     private function handleCommentsRequest(int $parentId): void
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->requireAuthenticatedUser();
             Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
 
             $input = json_decode(file_get_contents('php://input'), true);
@@ -291,6 +292,7 @@ class APIController extends AbstractController
      */
     private function handleCommentItemRequest(int $commentId): void
     {
+        $this->requireAuthenticatedUser();
         Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
 
         if ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
@@ -331,6 +333,7 @@ class APIController extends AbstractController
      */
     private function handleRatingRequest(int $feedId): void
     {
+        $this->requireAuthenticatedUser();
         Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
 
         $input = json_decode(file_get_contents('php://input'), true);
@@ -356,6 +359,7 @@ class APIController extends AbstractController
      */
     private function handleFavoriteRequest(int $feedId): void
     {
+        $this->requireAuthenticatedUser();
         Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -393,6 +397,7 @@ class APIController extends AbstractController
      */
     private function handlePollVoteRequest(int $feedId): void
     {
+        $this->requireAuthenticatedUser();
         Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -533,6 +538,7 @@ class APIController extends AbstractController
      */
     private function handleUploadsRequest(): void
     {
+        $this->requireAuthenticatedUser();
         Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
 
         if (! isset($_FILES['file'])) {

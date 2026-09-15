@@ -34,14 +34,8 @@ because they became misleading after more tests were added.
 
 ### Authorization and roles
 
-- Review every `Page::api()` registration: mutating routes must not rely only
-  on a check inside the handler when using
-  `accessRule: AccessService::ACCESS_PUBLIC`.
 - Decide the rule for group conversations: currently, any participant can
   remove any other participant.
-- In `MessageService::edit()`, verify ownership before checking the editing
-  window, so a request targeting another user's old message does not confirm
-  that the message exists.
 
 ### Routes and canonical URLs without string literals
 

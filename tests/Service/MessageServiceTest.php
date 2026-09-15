@@ -232,7 +232,7 @@ final class MessageServiceTest extends TestCase
         $writes = [];
         $service = $this->makeService($this->makeRoutingDb(
             participantIds: [7, 99],
-            messageRows: [1 => $this->messageRow(1, userId: 7)],
+            messageRows: [1 => $this->messageRow(1, userId: 7, ageSeconds: 7200)],
             writes: $writes
         ));
 
@@ -249,7 +249,7 @@ final class MessageServiceTest extends TestCase
         }
     }
 
-    public function testEditRefusesSomeoneElsesMessage(): void
+    public function testEditRefusesSomeoneElsesOldMessageBeforeCheckingTheEditWindow(): void
     {
         $writes = [];
         $service = $this->makeService($this->makeRoutingDb(

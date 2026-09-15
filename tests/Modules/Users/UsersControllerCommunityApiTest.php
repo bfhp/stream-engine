@@ -272,6 +272,74 @@ final class UsersControllerCommunityApiTest extends TestCase
         $module->callApi($this->apiPage('community.do-create'));
     }
 
+    public function testCreatingACommunityRejectsGuestsInTheController(): void
+    {
+        $communityService = $this->createMock(CommunityService::class);
+        $communityService->expects($this->never())->method('createCommunity');
+        $module = $this->makeModule(
+            ['communityService' => $communityService],
+            new User(id: 0, email: '', role: AccessService::ROLE_USER),
+        );
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+
+        $this->expectException(ForbiddenException::class);
+
+        $module->callApi($this->apiPage('community.do-create'));
+    }
+
+    public function testCommunityMembershipRejectsGuestsInTheController(): void
+    {
+        $feedService = $this->createMock(FeedService::class);
+        $feedService->expects($this->never())->method('getFeedById');
+        $module = $this->makeModule(
+            ['feedService' => $feedService],
+            new User(id: 0, email: '', role: AccessService::ROLE_USER),
+        );
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+
+        $this->expectException(ForbiddenException::class);
+
+        $module->callApi($this->apiPage('community.membership'), ['id' => '42']);
+    }
+
+    public function testCommunityManagementRejectsANonOwnerInTheController(): void
+    {
+        $communityService = $this->createMock(CommunityService::class);
+        $communityService->expects($this->never())->method('updateSettings');
+        $module = $this->makeModule(
+            [
+                'feedService' => $this->feedServiceReturning($this->feed()),
+                'communityService' => $communityService,
+            ],
+            new User(id: 8, email: 'member@example.com', role: AccessService::ROLE_USER),
+        );
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $this->withCsrf();
+
+        $this->expectException(ForbiddenException::class);
+
+        $module->callApi($this->apiPage('community.manage-settings'), ['id' => '42']);
+    }
+
+    public function testCommunityMemberManagementRejectsANonOwnerInTheController(): void
+    {
+        $communityService = $this->createMock(CommunityService::class);
+        $communityService->expects($this->never())->method('approveSubscriber');
+        $module = $this->makeModule(
+            [
+                'feedService' => $this->feedServiceReturning($this->feed()),
+                'communityService' => $communityService,
+            ],
+            new User(id: 8, email: 'member@example.com', role: AccessService::ROLE_USER),
+        );
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $this->withCsrf();
+
+        $this->expectException(ForbiddenException::class);
+
+        $module->callApi($this->apiPage('community.manage-member'), ['id' => '42', 'userId' => '9']);
+    }
+
     public function testANewCommunityIsReportedWithItsRedirectTarget(): void
     {
         $community = $this->feed();

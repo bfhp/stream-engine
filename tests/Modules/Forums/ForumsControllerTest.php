@@ -2565,6 +2565,20 @@ final class ForumsControllerTest extends TestCase
         $this->assertSame(910, json_decode($output, true)['id']);
     }
 
+    public function testTopicReplyRejectsGuestsInTheController(): void
+    {
+        $module = $this->makeModule($this->makeRoutingDb());
+        $this->setContext($module, new User(id: 0, email: '', role: AccessService::ROLE_USER));
+
+        $feedService = $this->createMock(FeedService::class);
+        $feedService->expects($this->never())->method('createComment');
+        $this->setProperty($module, 'feedService', $feedService);
+
+        $this->expectException(ForbiddenException::class);
+
+        $this->callReplyApi($module, ['content' => 'Ответ']);
+    }
+
     /**
      * The whole reason a reply has its own endpoint instead of posting to the
      * generic comments action: whoever favorited the topic gets a queued

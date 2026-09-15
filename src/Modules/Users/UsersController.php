@@ -888,10 +888,7 @@ class UsersController extends AbstractController
 
     /**
      * POST /api/v1/communities - the community.create form's submit
-     * button. Guests are rejected inside CommunityService::createCommunity()
-     * itself (the HTML page's own access_rule already keeps them from
-     * reaching the form, but this API route has no such gate of its own -
-     * same defense-in-depth split as handleBlogPostCreateRequest()).
+     * button.
      *
      * @throws ForbiddenException
      * @throws ValidationException
@@ -902,6 +899,7 @@ class UsersController extends AbstractController
             throw new ValidationException('Method not allowed', 405);
         }
 
+        $this->requireAuthenticatedUser();
         Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
 
         $input = json_decode(file_get_contents('php://input'), true);
@@ -1001,6 +999,8 @@ class UsersController extends AbstractController
         }
 
         $user = $this->context->user;
+
+        $this->requireAuthenticatedUser();
 
         $community = $id > 0 ? $this->feedService->getFeedById($id, $user) : null;
 
@@ -1124,11 +1124,6 @@ class UsersController extends AbstractController
     /**
      * PATCH /api/v1/communities/{id}/manage - the community.manage
      * "Settings" tab's save button (CommunityService::updateSettings()).
-     * Guests/non-owners are rejected inside the service itself - this API
-     * route, like every other one in this module, is never gated by the
-     * page's own access_rule (see StreamEngine's request handler and
-     * this class's other community.* handlers for the same note), so the
-     * real ownership check has to live there, not here.
      *
      * When switching membership_type from "approval" to "open" while
      * subscribers are still pending, this responds with
@@ -1155,6 +1150,10 @@ class UsersController extends AbstractController
 
         if (! $community || $community->type !== 'community') {
             throw new NotFoundException($this->tm->trans('community.not_found'));
+        }
+
+        if ($user->isGuest() || $user->id !== $community->ownerId) {
+            throw new ForbiddenException($this->tm->trans('community.manage_forbidden'));
         }
 
         $input = json_decode(file_get_contents('php://input'), true);
@@ -1215,6 +1214,10 @@ class UsersController extends AbstractController
 
         if (! $community || $community->type !== 'community') {
             throw new NotFoundException($this->tm->trans('community.not_found'));
+        }
+
+        if ($user->isGuest() || $user->id !== $community->ownerId) {
+            throw new ForbiddenException($this->tm->trans('community.manage_forbidden'));
         }
 
         if ($userId <= 0) {
@@ -1294,12 +1297,7 @@ class UsersController extends AbstractController
             throw new ValidationException('Method not allowed', 405);
         }
 
-        // The last mutating endpoint in the codebase that was missing this -
-        // found by auditing every Page::api() registration with a mutating
-        // method against its handler, rather than by reading around. Guest
-        // rejection lives in FriendService::sendRequest()/removeFriend(), which
-        // is authorization, not intent: without this a cross-site POST could
-        // add or drop a friend on a logged-in visitor's behalf.
+        $this->requireAuthenticatedUser();
         Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
 
         $username = trim($username);
@@ -3378,10 +3376,7 @@ class UsersController extends AbstractController
 
     /**
      * Creates a new post in the current user's personal blog from the
-     * uuser.post-new editor. Guests are rejected by BlogPostService::
-     * createBlogPost() itself, same as every other write path here - this
-     * handler's own job is just request-shape validation (method, CSRF, the
-     * track upload's ownership) before handing sanitized values off to it.
+     * uuser.post-new editor.
      *
      * @throws ForbiddenException
      * @throws ValidationException
@@ -3392,6 +3387,7 @@ class UsersController extends AbstractController
             throw new ValidationException('Method not allowed', 405);
         }
 
+        $this->requireAuthenticatedUser();
         Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
 
         $input = json_decode(file_get_contents('php://input'), true);
@@ -3509,6 +3505,7 @@ class UsersController extends AbstractController
      */
     private function handleBlogPostUpdateRequest(int $id): void
     {
+        $this->requireAuthenticatedUser();
         Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
 
         if ($id <= 0) {
@@ -3589,6 +3586,7 @@ class UsersController extends AbstractController
             throw new ValidationException('Method not allowed', 405);
         }
 
+        $this->requireAuthenticatedUser();
         Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
 
         if ($id <= 0) {
@@ -3835,14 +3833,8 @@ class UsersController extends AbstractController
         // POST the community.create form's submit (see
         // handleCommunityCreateRequest()) - a sibling of 'community' rather
         // than a child of it, since (unlike 'blog-posts' above) it isn't
-        // scoped to any single community. This declares the default
-        // accessRule of Public, so canAccessPage() - which handleRequest() does
-        // run for API routes, whatever an older version of this comment
-        // claimed - lets guests through, and the guest check lives in the
-        // service layer instead (CommunityService::createCommunity()), same
-        // as 'user.post-new-create'. Worth raising to 1 here as belt and
-        // braces; leaving the service check as the one that matters, since
-        // it's the one the tests cover.
+        // scoped to any single community. Authentication is checked by the
+        // controller.
         $communitiesPageId = $pageTree->getMaxPageId();
         $pageTree->add(
             Page::api(

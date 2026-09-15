@@ -8,6 +8,7 @@ use DateTimeZone;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use StreamEngine\Core\Config;
+use StreamEngine\Core\Exceptions\ForbiddenException;
 use StreamEngine\Core\Exceptions\ValidationException;
 use StreamEngine\Core\FileProcessing\FileStorage;
 use StreamEngine\Core\FileProcessing\ImageProcessor;
@@ -52,7 +53,8 @@ final class APIControllerTest extends TestCase
         ?PageTree $pageTree = null,
         ?FeedService $feedService = null,
         ?PollService $pollService = null,
-        ?Config $config = null
+        ?Config $config = null,
+        ?User $user = null,
     ): APIController {
         $db = $this->createStub(PdoDatabase::class);
         $authService = new AuthService(
@@ -74,7 +76,7 @@ final class APIControllerTest extends TestCase
             // fromGlobals(): the context snapshots $_GET, so a test has to
             // set the query string *before* calling makeModule().
             new RequestContext(
-                new User(id: 1, email: 'user@example.com', role: AccessService::ROLE_USER),
+                $user ?? new User(id: 1, email: 'user@example.com', role: AccessService::ROLE_USER),
                 new DateTimeZone('UTC'),
                 QueryParams::fromGlobals()
             ),
@@ -88,6 +90,39 @@ final class APIControllerTest extends TestCase
             new TranslationManager('ru', 'en'),
             $this->silentNotificationService(),
         );
+    }
+
+    /** @return array<string, array{string, string, array<string, string>}> */
+    public static function authenticatedMutationProvider(): array
+    {
+        return [
+            'create comment' => ['comments.thread', 'POST', ['slug' => '1']],
+            'edit comment' => ['comments.item', 'PATCH', ['commentId' => '1']],
+            'delete comment' => ['comments.item', 'DELETE', ['commentId' => '1']],
+            'rate feed' => ['feed.rating', 'POST', ['slug' => '1']],
+            'add favorite' => ['feed.favorite', 'POST', ['slug' => '1']],
+            'remove favorite' => ['feed.favorite', 'DELETE', ['slug' => '1']],
+            'vote in poll' => ['feed.poll.vote', 'POST', ['slug' => '1']],
+            'upload file' => ['uploads.create', 'POST', []],
+        ];
+    }
+
+    #[DataProvider('authenticatedMutationProvider')]
+    public function testAuthenticatedMutationsRejectGuestsInTheController(
+        string $action,
+        string $method,
+        array $args,
+    ): void {
+        $page = Page::api(1, 0, 'test', [$method], $action);
+        $module = $this->makeModule(
+            new PageTree([$page]),
+            user: new User(id: 0, email: '', role: AccessService::ROLE_USER),
+        );
+        $_SERVER['REQUEST_METHOD'] = $method;
+
+        $this->expectException(ForbiddenException::class);
+
+        $module->callApi($page, $args);
     }
 
     private function silentNotificationService(): NotificationService

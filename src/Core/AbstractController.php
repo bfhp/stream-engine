@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace StreamEngine\Core;
 
 use StreamEngine\Core\Cron\CronRegistry;
+use StreamEngine\Core\Exceptions\ForbiddenException;
 use StreamEngine\Domain\Page;
 use StreamEngine\View\Breadcrumb;
 use StreamEngine\View\ViewModel;
@@ -45,6 +46,13 @@ abstract class AbstractController implements ControllerInterface
 
     public function callApi(Page $page, array $args = []): void
     {
+    }
+
+    protected function requireAuthenticatedUser(): void
+    {
+        if ($this->context->user->isGuest()) {
+            throw new ForbiddenException('Forbidden');
+        }
     }
 
     public static function registerCron(CronRegistry $cron): void

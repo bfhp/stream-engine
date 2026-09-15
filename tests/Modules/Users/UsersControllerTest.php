@@ -3277,12 +3277,27 @@ final class UsersControllerTest extends TestCase
         $db->method('fetchOne')->willReturn(null);
 
         $module = $this->makeUsersModule($db);
+        $this->setContext($module, new User(id: 7, email: 'user@example.com', role: AccessService::ROLE_USER));
 
         try {
             $this->expectException(NotFoundException::class);
             $module->callApi($page, ['username' => 'missing']);
         } finally {
             unset($_SERVER['REQUEST_METHOD'], $_SERVER['HTTP_X_CSRF_TOKEN'], $_COOKIE['csrfToken']);
+        }
+    }
+
+    public function testCallApiFriendActionRejectsGuestsInTheController(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+
+        $module = $this->makeUsersModule($this->createStub(PdoDatabase::class));
+
+        try {
+            $this->expectException(ForbiddenException::class);
+            $module->callApi($this->makeUserFriendPage(), ['username' => 'nicky42']);
+        } finally {
+            unset($_SERVER['REQUEST_METHOD']);
         }
     }
 
@@ -3419,6 +3434,25 @@ final class UsersControllerTest extends TestCase
             accessRule: AccessService::ACCESS_PUBLIC,
             action: 'user.post-new-create',
         );
+    }
+
+    public function testCallApiCreateBlogPostRejectsGuestsInTheController(): void
+    {
+        $db = $this->createStub(PdoDatabase::class);
+        $module = $this->makeUsersModule($db);
+
+        $blogPostService = $this->createMock(BlogPostService::class);
+        $blogPostService->expects($this->never())->method('createBlogPost');
+        $this->setBlogPostService($module, $blogPostService);
+
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+
+        try {
+            $this->expectException(ForbiddenException::class);
+            $module->callApi($this->makeBlogPostCreatePage());
+        } finally {
+            unset($_SERVER['REQUEST_METHOD']);
+        }
     }
 
     public function testCallApiCreatesBlogPostAndReturnsCanonicalUrl(): void
@@ -3574,6 +3608,25 @@ final class UsersControllerTest extends TestCase
             accessRule: AccessService::ACCESS_PUBLIC,
             action: 'user.post-item',
         );
+    }
+
+    public function testCallApiMutateBlogPostRejectsGuestsInTheController(): void
+    {
+        $db = $this->createStub(PdoDatabase::class);
+        $module = $this->makeUsersModule($db);
+
+        $blogPostService = $this->createMock(BlogPostService::class);
+        $blogPostService->expects($this->never())->method('deleteBlogPost');
+        $this->setBlogPostService($module, $blogPostService);
+
+        $_SERVER['REQUEST_METHOD'] = 'DELETE';
+
+        try {
+            $this->expectException(ForbiddenException::class);
+            $module->callApi($this->makeBlogPostItemPage(), ['id' => '902']);
+        } finally {
+            unset($_SERVER['REQUEST_METHOD']);
+        }
     }
 
     public function testCallApiDeletesBlogPost(): void

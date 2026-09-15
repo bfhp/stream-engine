@@ -1845,6 +1845,7 @@ class ForumsController extends AbstractController
      */
     private function handleTopicReplyRequest(int $topicId): void
     {
+        $this->requireAuthenticatedUser();
         Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
 
         $input = json_decode(file_get_contents('php://input'), true);

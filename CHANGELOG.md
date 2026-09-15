@@ -18,6 +18,7 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 - Made article, forum, community, and blog-post routes resolve feeds within their declared type and parent scope instead of selecting an ambiguous global slug match.
 - Made an external once-per-minute scheduler the production cron model, while reducing the request-driven fallback from 49 out of 50 requests to 1 out of 50.
 - Bounded feed list and search page sizes, respected search limits, rejected structured comment content, and made unsupported API methods consistently return 405.
+- Added controller-level authorization to mutating API endpoints and stopped message edits from exposing whether another user's message is outside the editing window.
 
 ## [0.1.0] - 2026-09-14
 
