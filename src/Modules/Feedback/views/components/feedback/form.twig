@@ -1,4 +1,4 @@
-<form id="feedbackForm" method="post" action="/api/v1/feedback">
+<form id="feedbackForm" method="post" action="/api/v1/feedback" data-success-url="{{ successUrl }}">
     <input type="hidden" name="form_time" value="{{ time }}">
     <input type="hidden" name="form_hash" value="{{ hash }}">
 

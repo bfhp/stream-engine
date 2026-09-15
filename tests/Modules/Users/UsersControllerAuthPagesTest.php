@@ -13,10 +13,12 @@ use StreamEngine\Core\Exceptions\ForbiddenException;
 use StreamEngine\Core\Exceptions\NotFoundException;
 use StreamEngine\Core\Exceptions\ValidationException;
 use StreamEngine\Core\Formatter;
+use StreamEngine\Core\PageTree;
 use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Core\QueryParams;
 use StreamEngine\Core\RequestContext;
 use StreamEngine\Core\TranslationManager;
+use StreamEngine\Core\UrlGenerator;
 use StreamEngine\Domain\Page;
 use StreamEngine\Domain\User;
 use StreamEngine\Modules\Users\UsersController;
@@ -30,6 +32,8 @@ use StreamEngine\Service\MessageService;
 use StreamEngine\Service\NotificationService;
 use StreamEngine\Service\UserService;
 use Tests\Support\PhpInputStreamMock;
+use Tests\Support\ArrayCache;
+use Tests\Support\FakeFeedRepository;
 
 /**
  * Registration and password recovery: the four entry points a stranger can
@@ -110,8 +114,34 @@ final class UsersControllerAuthPagesTest extends TestCase
         );
         $reflection->getProperty('tm')->setValue($module, $tm);
         $reflection->getProperty('formatter')->setValue($module, new Formatter($tm, 'ru'));
+        $reflection->getProperty('urlGenerator')->setValue(
+            $module,
+            new UrlGenerator(
+                new PageTree([$this->pageRoot()]),
+                new FakeFeedRepository([]),
+                new ArrayCache(),
+            )
+        );
 
         return $module;
+    }
+
+    private function pageRoot(): Page
+    {
+        return new Page(
+            id: 1,
+            parentId: null,
+            pattern: '',
+            pageName: 'Root',
+            settings: null,
+            feedType: null,
+            listFeedType: null,
+            feedId: null,
+            commentsEnabled: false,
+            requestMethods: ['GET'],
+            responseType: 'html',
+            accessRule: AccessService::ACCESS_PUBLIC,
+        );
     }
 
     private function page(string $action): Page
@@ -149,6 +179,17 @@ final class UsersControllerAuthPagesTest extends TestCase
         $view = $this->makeModule()->show($this->page('user.register'));
 
         $this->assertSame('modules/users/register1.twig', $view->template);
+        $this->assertSame('/register/?success=1', $view->data['successUrl']);
+    }
+
+    public function testRegistrationSuccessUrlFollowsTheConfiguredPagePattern(): void
+    {
+        $page = $this->page('user.register');
+        $page->pattern = 'join-us';
+
+        $view = $this->makeModule()->show($page);
+
+        $this->assertSame('/join-us/?success=1', $view->data['successUrl']);
     }
 
     public function testAfterSubmittingTheVisitorIsToldToCheckTheirMail(): void

@@ -34,7 +34,8 @@
             {% block feedback_form %}
                 {% include 'components/feedback/form.twig' with {
                     time: time,
-                    hash: hash
+                    hash: hash,
+                    successUrl: successUrl
                 } %}
             {% endblock %}
         </div>

@@ -17,29 +17,31 @@ import{t as e}from"./chunks/uploads.js";import{n as t,r as n,t as r}from"./chunk
                 </div>
             </div>
         </div>
-    `}function l(){let e=e=>{switch(e){case`friends`:return`<span class="badge text-bg-success-subtle text-success-emphasis fw-normal">${r(`js.profile.friends_badge`)}</span>`;case`incoming`:return`<span class="badge text-bg-warning-subtle text-warning-emphasis fw-normal">${r(`js.profile.incoming_request_badge`)}</span>`;case`subscribed`:return`<span class="badge text-bg-secondary-subtle text-secondary-emphasis fw-normal">${r(`js.profile.request_sent_badge`)}</span>`;default:return``}},t=e=>{let t=[];if(e.actionUrl&&e.status===`incoming`&&t.push(`
+    `}function l(){let e=document.getElementById(`profile-friends`)?.dataset.messagesUrl??``,t=e=>{switch(e){case`friends`:return`<span class="badge text-bg-success-subtle text-success-emphasis fw-normal">${r(`js.profile.friends_badge`)}</span>`;case`incoming`:return`<span class="badge text-bg-warning-subtle text-warning-emphasis fw-normal">${r(`js.profile.incoming_request_badge`)}</span>`;case`subscribed`:return`<span class="badge text-bg-secondary-subtle text-secondary-emphasis fw-normal">${r(`js.profile.request_sent_badge`)}</span>`;default:return``}},i=t=>{let n=[];if(t.actionUrl&&t.status===`incoming`&&n.push(`
                 <button type="button" class="btn btn-sm btn-primary" data-friend-accept
-                        data-action-url="${a.escapeHtml(e.actionUrl)}">
+                        data-action-url="${a.escapeHtml(t.actionUrl)}">
                     <i class="bi bi-person-check"></i> ${r(`js.profile.accept`)}
                 </button>
-            `),t.push(`
-            <button type="button" class="btn btn-sm btn-outline-secondary" data-message-user="${e.id}">
+            `),n.push(`
+            <button type="button" class="btn btn-sm btn-outline-secondary"
+                    data-message-user="${t.id}"
+                    data-messages-url="${a.escapeHtml(e)}">
                 <i class="bi bi-chat-dots"></i> ${r(`js.profile.write_message`)}
             </button>
-        `),e.status===`incoming`)t.push(`
+        `),t.status===`incoming`)n.push(`
                 <button type="button" class="btn btn-sm btn-outline-danger" data-friend-reject
-                        data-action-url="${a.escapeHtml(e.rejectUrl)}"
-                        data-display-name="${a.escapeHtml(e.displayName)}">
+                        data-action-url="${a.escapeHtml(t.rejectUrl)}"
+                        data-display-name="${a.escapeHtml(t.displayName)}">
                     <i class="bi bi-person-x"></i> ${r(`js.profile.reject`)}
                 </button>
-            `);else if(e.actionUrl){let n=r(e.status===`subscribed`?`js.profile.cancel_request`:`js.users.remove_friend`);t.push(`
+            `);else if(t.actionUrl){let e=r(t.status===`subscribed`?`js.profile.cancel_request`:`js.users.remove_friend`);n.push(`
                 <button type="button" class="btn btn-sm btn-outline-danger" data-friend-remove
-                        data-action-url="${a.escapeHtml(e.actionUrl)}"
-                        data-display-name="${a.escapeHtml(e.displayName)}"
-                        data-status="${a.escapeHtml(e.status)}">
-                    <i class="bi bi-person-dash"></i> ${n}
+                        data-action-url="${a.escapeHtml(t.actionUrl)}"
+                        data-display-name="${a.escapeHtml(t.displayName)}"
+                        data-status="${a.escapeHtml(t.status)}">
+                    <i class="bi bi-person-dash"></i> ${e}
                 </button>
-            `)}return t.join(``)};s({rootId:`profile-friends`,urlKey:`connectionsUrl`,prefix:`friends`,rank:e=>e.status===`incoming`?0:e.status===`friends`?1:2,searchText:e=>e.displayName,truncatedCount:e=>n(`js.common.post_unit`,e),loadErrorMessage:r(`js.profile.friends_list_failed`),renderCard:n=>c({id:n.id,imageUrl:n.avatarUrl,imageClass:`rounded-circle`,title:n.url?`<a href="${a.escapeHtml(n.url)}" class="text-body text-decoration-none">${a.escapeHtml(n.displayName)}</a>`:a.escapeHtml(n.displayName),subtitle:n.username?`<div class="text-body-secondary small text-truncate">@${a.escapeHtml(n.username)}</div>`:``,badge:e(n.status),actions:t(n)}),afterRender:()=>a.initDirectMessage(),bindActions:(e,t)=>{e.addEventListener(`click`,e=>{let n=e.target;if(!(n instanceof HTMLElement))return;let i=n.closest(`[data-friend-accept]`);if(i){t.act(i,`POST`);return}let o=n.closest(`[data-friend-reject]`);if(o){a.confirm({title:r(`js.profile.reject_title`),message:r(`js.profile.reject_confirm`,{name:o.dataset.displayName??``}),onConfirm:()=>void t.act(o,`DELETE`)});return}let s=n.closest(`[data-friend-remove]`);if(s){let e=s.dataset.displayName??``,n=s.dataset.status===`subscribed`;a.confirm({title:r(n?`js.profile.cancel_request`:`js.users.remove_friend`),message:r(n?`js.profile.cancel_friend_request_confirm`:`js.profile.remove_friend_confirm`,{name:e}),onConfirm:()=>void t.act(s,`DELETE`)})}})}})}function u(){let e=e=>{switch(e){case`owner`:return`<span class="badge text-bg-primary-subtle text-primary-emphasis fw-normal">${r(`js.profile.role_owner`)}</span>`;case`moderator`:return`<span class="badge text-bg-info-subtle text-info-emphasis fw-normal">${r(`js.profile.role_moderator`)}</span>`;case`member`:return`<span class="badge text-bg-success-subtle text-success-emphasis fw-normal">${r(`js.profile.role_member`)}</span>`;case`pending`:return`<span class="badge text-bg-secondary-subtle text-secondary-emphasis fw-normal">${r(`js.profile.request_sent_badge`)}</span>`;default:return``}},i=e=>{if(e.status===`owner`)return e.manageUrl?`<a href="${a.escapeHtml(e.manageUrl)}" class="btn btn-sm btn-outline-secondary">
+            `)}return n.join(``)};s({rootId:`profile-friends`,urlKey:`connectionsUrl`,prefix:`friends`,rank:e=>e.status===`incoming`?0:e.status===`friends`?1:2,searchText:e=>e.displayName,truncatedCount:e=>n(`js.common.post_unit`,e),loadErrorMessage:r(`js.profile.friends_list_failed`),renderCard:e=>c({id:e.id,imageUrl:e.avatarUrl,imageClass:`rounded-circle`,title:e.url?`<a href="${a.escapeHtml(e.url)}" class="text-body text-decoration-none">${a.escapeHtml(e.displayName)}</a>`:a.escapeHtml(e.displayName),subtitle:e.username?`<div class="text-body-secondary small text-truncate">@${a.escapeHtml(e.username)}</div>`:``,badge:t(e.status),actions:i(e)}),afterRender:()=>a.initDirectMessage(),bindActions:(e,t)=>{e.addEventListener(`click`,e=>{let n=e.target;if(!(n instanceof HTMLElement))return;let i=n.closest(`[data-friend-accept]`);if(i){t.act(i,`POST`);return}let o=n.closest(`[data-friend-reject]`);if(o){a.confirm({title:r(`js.profile.reject_title`),message:r(`js.profile.reject_confirm`,{name:o.dataset.displayName??``}),onConfirm:()=>void t.act(o,`DELETE`)});return}let s=n.closest(`[data-friend-remove]`);if(s){let e=s.dataset.displayName??``,n=s.dataset.status===`subscribed`;a.confirm({title:r(n?`js.profile.cancel_request`:`js.users.remove_friend`),message:r(n?`js.profile.cancel_friend_request_confirm`:`js.profile.remove_friend_confirm`,{name:e}),onConfirm:()=>void t.act(s,`DELETE`)})}})}})}function u(){let e=e=>{switch(e){case`owner`:return`<span class="badge text-bg-primary-subtle text-primary-emphasis fw-normal">${r(`js.profile.role_owner`)}</span>`;case`moderator`:return`<span class="badge text-bg-info-subtle text-info-emphasis fw-normal">${r(`js.profile.role_moderator`)}</span>`;case`member`:return`<span class="badge text-bg-success-subtle text-success-emphasis fw-normal">${r(`js.profile.role_member`)}</span>`;case`pending`:return`<span class="badge text-bg-secondary-subtle text-secondary-emphasis fw-normal">${r(`js.profile.request_sent_badge`)}</span>`;default:return``}},i=e=>{if(e.status===`owner`)return e.manageUrl?`<a href="${a.escapeHtml(e.manageUrl)}" class="btn btn-sm btn-outline-secondary">
                        <i class="bi bi-gear"></i> ${r(`js.profile.manage`)}
                    </a>`:``;if(!e.leaveUrl)return``;let t=r(e.status===`pending`?`js.profile.cancel_request`:`js.users.unsubscribe`);return`
             <button type="button" class="btn btn-sm btn-outline-danger" data-community-leave

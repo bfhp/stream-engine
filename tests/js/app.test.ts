@@ -401,6 +401,26 @@ describe("isAuthenticated()", () => {
     });
 });
 
+describe("initDirectMessage()", () => {
+    it("opens the conversation on the messages page URL supplied by the DOM", async () => {
+        window.history.replaceState(null, "", "/custom-inbox/?source=profile");
+        document.body.innerHTML = `
+            <button type="button"
+                    data-message-user="42"
+                    data-messages-url="/custom-inbox/?source=profile">Message</button>
+        `;
+        mockFetch(fakeResponse({ json: async () => ({ conversation_id: 73 }) }));
+
+        CMS.initDirectMessage();
+        (document.querySelector("[data-message-user]") as HTMLButtonElement).click();
+        await flush();
+
+        expect(window.location.pathname).toBe("/custom-inbox/");
+        expect(window.location.search).toBe("?source=profile");
+        expect(window.location.hash).toBe(`#c=${CMS.encodeId(73)}`);
+    });
+});
+
 describe("opaque ids on the CMS surface", () => {
     it("round-trips every id it accepts", () => {
         for (const id of [1, 2, 42, 1000, 65535, 65536, 0xffffffff]) {

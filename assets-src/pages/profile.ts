@@ -393,6 +393,8 @@ interface ConnectionCard {
  * with by hand - this is the only renderer.
  */
 function initProfileFriends(): void {
+    const messagesUrl = document.getElementById("profile-friends")?.dataset.messagesUrl ?? "";
+
     // Same vocabulary the sidebar button uses (users.ts's applyStatus), so a
     // status means the same thing to the user wherever they meet it.
     const badge = (status: ConnectionStatus): string => {
@@ -444,7 +446,9 @@ function initProfileFriends(): void {
         }
 
         parts.push(`
-            <button type="button" class="btn btn-sm btn-outline-secondary" data-message-user="${item.id}">
+            <button type="button" class="btn btn-sm btn-outline-secondary"
+                    data-message-user="${item.id}"
+                    data-messages-url="${cms.escapeHtml(messagesUrl)}">
                 <i class="bi bi-chat-dots"></i> ${trans("js.profile.write_message")}
             </button>
         `);

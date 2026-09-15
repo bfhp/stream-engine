@@ -15,6 +15,7 @@ use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Core\RequestContext;
 use StreamEngine\Core\Security;
 use StreamEngine\Core\TranslationManager;
+use StreamEngine\Core\UrlGenerator;
 use StreamEngine\Domain\Notification;
 use StreamEngine\Domain\Page;
 use StreamEngine\Repository\UserRepository;
@@ -39,6 +40,7 @@ class FeedbackController extends AbstractController
         private readonly UserRepository $users,
         private readonly NotificationService $notifications,
         private readonly Config $config,
+        private readonly UrlGenerator $urlGenerator,
     ) {
         parent::__construct($db, $context);
     }
@@ -67,7 +69,12 @@ class FeedbackController extends AbstractController
                 'hash' => hash_hmac('sha256', (string) $now, $this->config->appSecret()),
                 'time' => $now,
                 'hintText' => $hintFeed->content,
-                'success' => $this->context->query->string('success') === '1'
+                'success' => $this->context->query->string('success') === '1',
+                'successUrl' => $this->urlGenerator->page(
+                    $page,
+                    query: ['success' => 1],
+                    fragment: 'feedbackFormHeader'
+                ),
             ]
         );
     }

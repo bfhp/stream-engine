@@ -41,11 +41,11 @@ describe("initMessengerGlobal()", () => {
 
     /** Puts the header link in the document so the badge has somewhere to go. */
     function fixture(): void {
-        document.body.innerHTML = '<a href="/messages/" class="position-relative">Сообщения</a>';
+        document.body.innerHTML = '<a href="/custom-inbox/" data-messages-link class="position-relative">Сообщения</a>';
     }
 
     function badge(): Element | null {
-        return document.querySelector('a[href="/messages/"] .badge');
+        return document.querySelector('[data-messages-link] .badge');
     }
 
     function setHidden(hidden: boolean): void {

@@ -1,4 +1,4 @@
-<form id="registerForm" method="post" action="/api/v1/users">
+<form id="registerForm" method="post" action="/api/v1/users" data-success-url="{{ successUrl }}">
     {% block register_hidden %}
     <div class="mb-3 visually-hidden">
         <label for="registerInputLogin" class="form-label">{{ trans('view.users.register.form.01') }}</label>

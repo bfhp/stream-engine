@@ -40,13 +40,9 @@ because they became misleading after more tests were added.
 ### Routes and canonical URLs without string literals
 
 `Config::siteUrl()` and `UrlGenerator::action()` already exist, but some public
-links are still assembled with `$_SERVER['SERVER_NAME']`, while the frontend
-contains literals such as `/register/?success=1` and
-`/contacts/?success=1#feedbackFormHeader`.
+links are still assembled with `$_SERVER['SERVER_NAME']`, and the remaining
+internal links have not yet been inventoried by routing responsibility.
 
-- For registration, feedback, and other frontend navigation, expose a URL
-  resolved from the page action through page configuration/the DOM instead of
-  repeating the route structure in TypeScript.
 - In emails, notifications, and friendship/community links, use
   `Config::siteUrl()` instead of `$_SERVER['SERVER_NAME']`; a missing canonical
   URL must produce an explicit, controlled result.

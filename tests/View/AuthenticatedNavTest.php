@@ -25,6 +25,7 @@ final class AuthenticatedNavTest extends TestCase
         $html = $this->render(messagesUrl: '/mail/');
 
         $this->assertStringContainsString('href="/mail/"', $html);
+        $this->assertStringContainsString('data-messages-link', $html);
         $this->assertStringContainsString('bi-envelope', $html);
     }
 

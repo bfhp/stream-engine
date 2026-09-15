@@ -63,9 +63,8 @@ const cms = window.CMS;
                 type: "success"
             });
 
-            // TODO dynamic link
             setTimeout(() => {
-                window.location.href = "/register/?success=1";
+                window.location.href = form.dataset.successUrl!;
             }, 800);
 
         } catch (error) {

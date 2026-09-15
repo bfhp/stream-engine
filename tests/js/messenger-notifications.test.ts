@@ -45,8 +45,8 @@ describe("updateUnreadBadge()", () => {
     let link: HTMLAnchorElement;
 
     beforeEach(() => {
-        document.body.innerHTML = '<a href="/messages/" class="nav-link position-relative">Сообщения</a>';
-        link = document.querySelector('a[href="/messages/"]')!;
+        document.body.innerHTML = '<a href="/custom-inbox/" data-messages-link class="nav-link position-relative">Сообщения</a>';
+        link = document.querySelector('[data-messages-link]')!;
     });
 
     const badge = () => link.querySelector(".badge");

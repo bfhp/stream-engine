@@ -71,9 +71,8 @@ const cms = window.CMS;
                 message: trans("js.feedback.sent"),
                 type: "success"
             });
-            // TODO dynamic link
             setTimeout(() => {
-                window.location.href = "/contacts/?success=1#feedbackFormHeader";
+                window.location.href = form.dataset.successUrl!;
             }, 1500);
         } catch (error) {
 

@@ -38,14 +38,14 @@ const api = vi.fn<(url: string, options?: unknown) => Promise<unknown>>();
 const toast = vi.fn();
 
 const FORMS = `
-    <form id="registerForm" action="/api/v1/auth/register">
+    <form id="registerForm" action="/api/v1/auth/register" data-success-url="#registration-complete">
         <input name="login" value="nicky">
         <input name="email" value="nicky@example.com">
         <input name="password" value="0123456789">
         <button type="submit">Зарегистрироваться</button>
     </form>
 
-    <form id="feedbackForm" action="/api/v1/feedback">
+    <form id="feedbackForm" action="/api/v1/feedback" data-success-url="#feedback-complete">
         <input name="full_name" value="Аня">
         <input name="email" value="anya@example.com">
         <textarea name="message"></textarea>
@@ -106,6 +106,7 @@ function assertFields(id: string, names: string[]) {
 }
 
 beforeAll(async () => {
+    document.documentElement.lang = "ru";
     document.body.innerHTML = FORMS;
 
     assertFields("registerForm", ["login", "email", "password"]);
@@ -174,6 +175,7 @@ beforeEach(() => {
 
     api.mockReset();
     toast.mockReset();
+    window.history.replaceState(null, "", "/");
 
     // The forms persist across tests (see the note above), so restore the state
     // each one expects: valid input, and an enabled button - a preceding
@@ -193,6 +195,15 @@ beforeEach(() => {
 });
 
 describe("register.ts", () => {
+    it("redirects to the success URL supplied by the form", async () => {
+        api.mockResolvedValue({});
+
+        await submit("registerForm");
+        await vi.advanceTimersByTimeAsync(800);
+
+        expect(window.location.hash).toBe("#registration-complete");
+    });
+
     it("keeps the button disabled after a successful submit", async () => {
         api.mockResolvedValue({});
 
@@ -236,6 +247,15 @@ describe("register.ts", () => {
 });
 
 describe("feedback.ts", () => {
+    it("redirects to the success URL supplied by the form", async () => {
+        api.mockResolvedValue({});
+
+        await submit("feedbackForm");
+        await vi.advanceTimersByTimeAsync(1500);
+
+        expect(window.location.hash).toBe("#feedback-complete");
+    });
+
     it("keeps the button disabled after a successful submit", async () => {
         api.mockResolvedValue({});
 

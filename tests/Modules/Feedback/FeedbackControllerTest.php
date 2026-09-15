@@ -9,10 +9,13 @@ use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use StreamEngine\Core\Config;
 use StreamEngine\Core\Exceptions\ValidationException;
+use StreamEngine\Core\PageTree;
 use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Core\QueryParams;
 use StreamEngine\Core\RequestContext;
 use StreamEngine\Core\TranslationManager;
+use StreamEngine\Core\UrlGenerator;
+use StreamEngine\Domain\Feed;
 use StreamEngine\Domain\Page;
 use StreamEngine\Domain\User;
 use StreamEngine\Modules\Feedback\FeedbackController;
@@ -25,6 +28,8 @@ use StreamEngine\Service\MailService;
 use StreamEngine\Service\MessageService;
 use StreamEngine\Service\NotificationService;
 use Tests\Support\PhpInputStreamMock;
+use Tests\Support\ArrayCache;
+use Tests\Support\FakeFeedRepository;
 
 final class FeedbackControllerTest extends TestCase
 {
@@ -60,7 +65,7 @@ final class FeedbackControllerTest extends TestCase
         parent::tearDown();
     }
 
-    private function makeModule(): FeedbackController
+    private function makeModule(?FeedService $feedService = null): FeedbackController
     {
         $db = $this->createStub(PdoDatabase::class);
         $db->method('fetchAll')->willReturn(array_map(static fn (int $id): array => ['id' => $id], $this->administratorIds));
@@ -85,11 +90,78 @@ final class FeedbackControllerTest extends TestCase
                 new DateTimeZone('UTC'),
                 QueryParams::fromGlobals()
             ),
-            $this->createStub(FeedService::class),
+            $feedService ?? $this->createStub(FeedService::class),
             new TranslationManager('ru', 'en'),
             $users,
             $notifications,
             new Config(['APP_SECRET' => $this->appSecret]),
+            new UrlGenerator(
+                new PageTree([$this->pageRoot()]),
+                new FakeFeedRepository([]),
+                new ArrayCache(),
+            ),
+        );
+    }
+
+    private function pageRoot(): Page
+    {
+        return new Page(
+            id: 1,
+            parentId: null,
+            pattern: '',
+            pageName: 'Root',
+            settings: null,
+            feedType: null,
+            listFeedType: null,
+            feedId: null,
+            commentsEnabled: false,
+            requestMethods: ['GET'],
+            responseType: 'html',
+            accessRule: AccessService::ACCESS_PUBLIC,
+        );
+    }
+
+    public function testSuccessUrlFollowsTheConfiguredFeedbackPagePattern(): void
+    {
+        $feedService = $this->createStub(FeedService::class);
+        $feedService->method('getFeedById')->willReturn(new Feed(
+            id: 5,
+            parentId: null,
+            ownerId: 1,
+            type: 'article',
+            slug: null,
+            title: 'Contact us',
+            description: null,
+            imageUrl: null,
+            content: 'Hint',
+            containerId: null,
+            visibility: 'public',
+            position: 0,
+            createdAt: null,
+            relevance: null,
+            canonicalUrl: '/write-to-us/',
+        ));
+        $page = new Page(
+            id: 20,
+            parentId: 1,
+            pattern: 'write-to-us',
+            pageName: 'Feedback',
+            settings: null,
+            feedType: null,
+            listFeedType: null,
+            feedId: 5,
+            commentsEnabled: false,
+            requestMethods: ['GET'],
+            responseType: 'html',
+            accessRule: AccessService::ACCESS_PUBLIC,
+            action: 'feedback.show',
+        );
+
+        $view = $this->makeModule($feedService)->show($page);
+
+        $this->assertSame(
+            '/write-to-us/?success=1#feedbackFormHeader',
+            $view->data['successUrl']
         );
     }
 

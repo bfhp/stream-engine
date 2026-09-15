@@ -966,9 +966,15 @@ const CMS = (() => {
             const code = encodeId(conversation.conversation_id);
             if (!code) throw new Error('Conversation id is not encodable');
 
+            const messagesUrl = button.dataset.messagesUrl;
+            if (!messagesUrl) throw new Error('Messages page URL is not configured');
+
+            const targetUrl = new URL(messagesUrl, window.location.origin);
+            targetUrl.hash = `c=${code}`;
+
             // A real navigation, not a hash write - we're leaving this page
             // for the messenger, which reads #c= on load and opens it.
-            window.location.href = `/messages/#c=${code}`;
+            window.location.href = targetUrl.href;
         } catch (error) {
             toastMessage({
                 message: getApiErrorMessage(error, trans('js.messages.open_failed')),

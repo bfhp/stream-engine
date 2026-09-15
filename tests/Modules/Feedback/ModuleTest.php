@@ -9,9 +9,11 @@ use ReflectionClass;
 use StreamEngine\Core\Config;
 use StreamEngine\Core\ControllerFactory;
 use StreamEngine\Core\ModuleRegistry;
+use StreamEngine\Core\PageTree;
 use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Core\RequestContext;
 use StreamEngine\Core\TranslationManager;
+use StreamEngine\Core\UrlGenerator;
 use StreamEngine\Domain\Page;
 use StreamEngine\Domain\User;
 use StreamEngine\Modules\Feedback\FeedbackController;
@@ -23,6 +25,8 @@ use StreamEngine\Service\FeedService;
 use StreamEngine\Service\MailService;
 use StreamEngine\Service\MessageService;
 use StreamEngine\Service\NotificationService;
+use Tests\Support\ArrayCache;
+use Tests\Support\FakeFeedRepository;
 
 final class ModuleTest extends TestCase
 {
@@ -43,6 +47,11 @@ final class ModuleTest extends TestCase
             $this->createStub(FeedService::class),
             new TranslationManager('ru', 'en'),
             new Config(['APP_SECRET' => 'test-secret']),
+            new UrlGenerator(
+                new PageTree([]),
+                new FakeFeedRepository([]),
+                new ArrayCache(),
+            ),
         ];
 
         $modules = new ModuleRegistry();

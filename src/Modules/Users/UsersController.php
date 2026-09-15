@@ -3264,6 +3264,7 @@ class UsersController extends AbstractController
                     '<script type="module" src="/assets/js/register.js" defer></script>',
                 ],
                 'title' => $this->tm->trans('user.registration'),
+                'successUrl' => $this->urlGenerator->page($page, query: ['success' => 1]),
             ]
         );
     }

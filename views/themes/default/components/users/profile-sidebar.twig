@@ -94,7 +94,9 @@
                                 <i class="bi bi-envelope"></i> {{ trans('view.profile.message') }}
                             </button>
                         {% else %}
-                            <button type="button" class="btn btn-outline-secondary" data-message-user="{{ profileUser.id }}">
+                            <button type="button" class="btn btn-outline-secondary"
+                                    data-message-user="{{ profileUser.id }}"
+                                    data-messages-url="{{ messagesUrl }}">
                                 <i class="bi bi-envelope"></i> {{ trans('view.profile.message') }}
                             </button>
                         {% endif %}

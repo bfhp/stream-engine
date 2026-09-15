@@ -30,7 +30,7 @@ export type NotificationConversation = {
 };
 
 /** Where the badge hangs. */
-const MESSAGES_LINK_SELECTOR = 'a[href="/messages/"]';
+const MESSAGES_LINK_SELECTOR = '[data-messages-link]';
 
 /** Above this the badge would stop fitting, and the exact number stops mattering. */
 const BADGE_CAP = 99;
