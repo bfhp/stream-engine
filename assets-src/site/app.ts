@@ -13,6 +13,7 @@ import { hashRoute } from "./hash-route";
 import { encodeId, decodeId } from "./opaque-id";
 import { csrfToken } from "../shared/uploads";
 import { getApiErrorMessage } from "../shared/api-errors";
+import { resolveSameOriginUrl } from "../shared/navigation-url";
 import { escapeHtml } from "../shared/escape";
 import { trans, transChoice, transChoiceWithCount } from "../shared/i18n";
 
@@ -958,6 +959,7 @@ const CMS = (() => {
         button.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ${trans("js.messages.opening")}`;
 
         try {
+            const messagesUrl = resolveSameOriginUrl(button.dataset.messagesUrl);
             const conversation = await api<{ conversation_id: number }>('/api/v1/conversations', {
                 method: 'POST',
                 data: { user_id: userId }
@@ -965,9 +967,6 @@ const CMS = (() => {
 
             const code = encodeId(conversation.conversation_id);
             if (!code) throw new Error('Conversation id is not encodable');
-
-            const messagesUrl = button.dataset.messagesUrl;
-            if (!messagesUrl) throw new Error('Messages page URL is not configured');
 
             const targetUrl = new URL(messagesUrl, window.location.origin);
             targetUrl.hash = `c=${code}`;

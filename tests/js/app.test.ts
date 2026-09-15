@@ -402,6 +402,21 @@ describe("isAuthenticated()", () => {
 });
 
 describe("initDirectMessage()", () => {
+    it("does not create a conversation when the messages page URL is unsafe", async () => {
+        document.body.innerHTML = `
+            <button type="button"
+                    data-message-user="42"
+                    data-messages-url="https://example.invalid/inbox/">Message</button>
+        `;
+        const fetchMock = mockFetch(fakeResponse({ json: async () => ({ conversation_id: 73 }) }));
+
+        CMS.initDirectMessage();
+        (document.querySelector("[data-message-user]") as HTMLButtonElement).click();
+        await flush();
+
+        expect(fetchMock).not.toHaveBeenCalled();
+    });
+
     it("opens the conversation on the messages page URL supplied by the DOM", async () => {
         window.history.replaceState(null, "", "/custom-inbox/?source=profile");
         document.body.innerHTML = `

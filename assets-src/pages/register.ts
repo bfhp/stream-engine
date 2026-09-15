@@ -1,5 +1,6 @@
 import { getApiErrorMessage } from "../shared/api-errors";
 import { trans } from "../shared/i18n";
+import { resolveSameOriginUrl } from "../shared/navigation-url";
 
 const cms = window.CMS;
 
@@ -52,6 +53,7 @@ const cms = window.CMS;
         submitBtn.disabled = true;
 
         try {
+            const successUrl = resolveSameOriginUrl(form.dataset.successUrl);
 
             await cms.api(form.action, {
                 method: 'POST',
@@ -64,7 +66,7 @@ const cms = window.CMS;
             });
 
             setTimeout(() => {
-                window.location.href = form.dataset.successUrl!;
+                window.location.href = successUrl;
             }, 800);
 
         } catch (error) {

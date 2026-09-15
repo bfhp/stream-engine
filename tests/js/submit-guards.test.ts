@@ -185,6 +185,8 @@ beforeEach(() => {
     (form("resetPasswordForm").elements.namedItem("password") as HTMLInputElement).value = "0123456789";
     (form("resetPasswordForm").elements.namedItem("password2") as HTMLInputElement).value = "0123456789";
     (form("forgotPasswordForm").elements.namedItem("email") as HTMLInputElement).value = "anya@example.com";
+    form("registerForm").dataset.successUrl = "#registration-complete";
+    form("feedbackForm").dataset.successUrl = "#feedback-complete";
 
     ["registerForm", "feedbackForm", "resetPasswordForm", "forgotPasswordForm"]
         .forEach(id => {
@@ -195,6 +197,15 @@ beforeEach(() => {
 });
 
 describe("register.ts", () => {
+    it("does not submit when the configured success URL is unsafe", async () => {
+        form("registerForm").dataset.successUrl = "javascript:alert(1)";
+
+        await submit("registerForm");
+
+        expect(api).not.toHaveBeenCalled();
+        expect(button("registerForm").disabled).toBe(false);
+    });
+
     it("redirects to the success URL supplied by the form", async () => {
         api.mockResolvedValue({});
 
@@ -247,6 +258,15 @@ describe("register.ts", () => {
 });
 
 describe("feedback.ts", () => {
+    it("does not submit when the configured success URL is external", async () => {
+        form("feedbackForm").dataset.successUrl = "https://example.invalid/thanks";
+
+        await submit("feedbackForm");
+
+        expect(api).not.toHaveBeenCalled();
+        expect(button("feedbackForm").disabled).toBe(false);
+    });
+
     it("redirects to the success URL supplied by the form", async () => {
         api.mockResolvedValue({});
 

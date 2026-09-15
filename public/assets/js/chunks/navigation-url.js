@@ -1,0 +1,2 @@
+/*! Third-party licenses: /assets/THIRD_PARTY_LICENSES.md */
+function e(e){let t=e?.trim();if(!t||/^[\\/]{2}/.test(t))throw Error(`Navigation URL is not configured safely`);let n;try{n=new URL(t,window.location.href)}catch{throw Error(`Navigation URL is not configured safely`)}if(n.protocol!==`http:`&&n.protocol!==`https:`||n.origin!==window.location.origin||n.username!==``||n.password!==``)throw Error(`Navigation URL is not configured safely`);return n.href}export{e as t};
