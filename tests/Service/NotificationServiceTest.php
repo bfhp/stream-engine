@@ -76,6 +76,8 @@ final class NotificationServiceTest extends TestCase
             new NotificationPreferenceRepository($preferences),
             new UserRepository($this->createStub(PdoDatabase::class)),
             $mail,
+            translationManager: new \StreamEngine\Core\TranslationManager('ru', 'en'),
+            config: new \StreamEngine\Core\Config(['SITE_URL' => 'https://example.test']),
         );
 
         $service->processQueue();
@@ -115,6 +117,7 @@ final class NotificationServiceTest extends TestCase
             new UserRepository($users),
             $mail,
             config: new Config(['SITE_URL' => 'https://canonical.example']),
+            translationManager: new \StreamEngine\Core\TranslationManager('ru', 'en'),
         );
         $service->processQueue();
         $service->processQueue();
@@ -155,6 +158,8 @@ final class NotificationServiceTest extends TestCase
             new NotificationPreferenceRepository($preferenceDb),
             new UserRepository($this->createStub(PdoDatabase::class)),
             $this->mailStub(),
+            translationManager: new \StreamEngine\Core\TranslationManager('ru', 'en'),
+            config: new \StreamEngine\Core\Config(['SITE_URL' => 'https://example.test']),
         );
         $service->notifyFriendsAboutPost(
             $this->feed(50, 10, 7, 'blog-post', 'Новая запись', 'https://example.test/post'),
@@ -181,6 +186,8 @@ final class NotificationServiceTest extends TestCase
             new NotificationPreferenceRepository($this->createStub(PdoDatabase::class)),
             new UserRepository($this->createStub(PdoDatabase::class)),
             $this->mailStub(),
+            translationManager: new \StreamEngine\Core\TranslationManager('ru', 'en'),
+            config: new \StreamEngine\Core\Config(['SITE_URL' => 'https://example.test']),
         );
 
         $service->notifyFriendsAboutPost(
@@ -216,6 +223,8 @@ final class NotificationServiceTest extends TestCase
             new NotificationPreferenceRepository($preferenceDb),
             new UserRepository($this->createStub(PdoDatabase::class)),
             $this->mailStub(),
+            translationManager: new \StreamEngine\Core\TranslationManager('ru', 'en'),
+            config: new \StreamEngine\Core\Config(['SITE_URL' => 'https://example.test']),
         );
         $service->notifyCommunityMembersAboutPost(
             $this->feed(50, 40, 7, 'blog-post', 'Новая запись', 'https://example.test/community/post'),
@@ -245,6 +254,8 @@ final class NotificationServiceTest extends TestCase
             new NotificationPreferenceRepository($this->createStub(PdoDatabase::class)),
             new UserRepository($this->createStub(PdoDatabase::class)),
             $this->mailStub(),
+            translationManager: new \StreamEngine\Core\TranslationManager('ru', 'en'),
+            config: new \StreamEngine\Core\Config(['SITE_URL' => 'https://example.test']),
         );
 
         $service->notifyCommunityMembersAboutPost(
@@ -281,6 +292,8 @@ final class NotificationServiceTest extends TestCase
             new NotificationPreferenceRepository($preferenceDb),
             new UserRepository($this->createStub(PdoDatabase::class)),
             $this->mailStub(),
+            translationManager: new \StreamEngine\Core\TranslationManager('ru', 'en'),
+            config: new \StreamEngine\Core\Config(['SITE_URL' => 'https://example.test']),
         );
 
         $root = $this->feed(50, null, 7, 'blog-post', 'Запись', 'https://example.test/post');
@@ -329,6 +342,8 @@ final class NotificationServiceTest extends TestCase
             new NotificationPreferenceRepository($preferenceDb),
             new UserRepository($this->createStub(PdoDatabase::class)),
             $this->mailStub(),
+            translationManager: new \StreamEngine\Core\TranslationManager('ru', 'en'),
+            config: new \StreamEngine\Core\Config(['SITE_URL' => 'https://example.test']),
         );
 
         $root = $this->feed(50, null, 7, 'blog-post', 'Запись');
@@ -380,6 +395,8 @@ final class NotificationServiceTest extends TestCase
             new NotificationPreferenceRepository($this->createStub(PdoDatabase::class)),
             new UserRepository($this->createStub(PdoDatabase::class)),
             $this->mailStub(),
+            translationManager: new \StreamEngine\Core\TranslationManager('ru', 'en'),
+            config: new \StreamEngine\Core\Config(['SITE_URL' => 'https://example.test']),
         );
         $service->notify(new Notification(
             recipientUserId: 2,
@@ -405,6 +422,8 @@ final class NotificationServiceTest extends TestCase
             new NotificationPreferenceRepository($this->createStub(PdoDatabase::class)),
             new UserRepository($this->createStub(PdoDatabase::class)),
             $this->mailStub(),
+            translationManager: new \StreamEngine\Core\TranslationManager('ru', 'en'),
+            config: new \StreamEngine\Core\Config(['SITE_URL' => 'https://example.test']),
         );
 
         $service->notify(new Notification(
@@ -467,6 +486,8 @@ final class NotificationServiceTest extends TestCase
             new NotificationPreferenceRepository($this->createStub(PdoDatabase::class)),
             new UserRepository($this->createStub(PdoDatabase::class)),
             $this->mailStub(),
+            translationManager: new \StreamEngine\Core\TranslationManager('ru', 'en'),
+            config: new \StreamEngine\Core\Config(['SITE_URL' => 'https://example.test']),
         );
 
         $service->processQueue();
@@ -522,6 +543,8 @@ final class NotificationServiceTest extends TestCase
             new NotificationPreferenceRepository($this->createStub(PdoDatabase::class)),
             new UserRepository($this->createStub(PdoDatabase::class)),
             $this->mailStub(),
+            translationManager: new \StreamEngine\Core\TranslationManager('ru', 'en'),
+            config: new \StreamEngine\Core\Config(['SITE_URL' => 'https://example.test']),
         );
 
         $service->processQueue();
@@ -560,6 +583,8 @@ final class NotificationServiceTest extends TestCase
             new NotificationPreferenceRepository($preferenceDb),
             new UserRepository($this->createStub(PdoDatabase::class)),
             $this->mailStub(),
+            translationManager: new \StreamEngine\Core\TranslationManager('ru', 'en'),
+            config: new \StreamEngine\Core\Config(['SITE_URL' => 'https://example.test']),
         );
 
         $service->notify(new Notification(2, 'forum.reply', 'Новый ответ'));
@@ -600,6 +625,8 @@ final class NotificationServiceTest extends TestCase
             new NotificationPreferenceRepository($preferenceDb),
             new UserRepository($userDb),
             $this->mailStub(),
+            translationManager: new \StreamEngine\Core\TranslationManager('ru', 'en'),
+            config: new \StreamEngine\Core\Config(['SITE_URL' => 'https://example.test']),
         );
 
         $before = time();
@@ -796,6 +823,8 @@ final class NotificationServiceTest extends TestCase
             new NotificationPreferenceRepository($preferenceDb),
             new UserRepository($this->createStub(PdoDatabase::class)),
             $this->mailStub(),
+            translationManager: new \StreamEngine\Core\TranslationManager('ru', 'en'),
+            config: new \StreamEngine\Core\Config(['SITE_URL' => 'https://example.test']),
         );
 
         self::assertTrue($service->unsubscribeFromEmail($token));
@@ -815,6 +844,8 @@ final class NotificationServiceTest extends TestCase
             new NotificationPreferenceRepository($preferenceDb),
             new UserRepository($this->createStub(PdoDatabase::class)),
             $mail,
+            translationManager: new \StreamEngine\Core\TranslationManager('ru', 'en'),
+            config: new \StreamEngine\Core\Config(['SITE_URL' => 'https://example.test']),
         );
     }
 

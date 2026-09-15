@@ -71,6 +71,8 @@ final class CommunityServiceTest extends TestCase
             new \StreamEngine\Repository\NotificationPreferenceRepository($this->createStub(PdoDatabase::class)),
             new \StreamEngine\Repository\UserRepository($this->createStub(PdoDatabase::class)),
             (new \ReflectionClass(\StreamEngine\Service\MailService::class))->newInstanceWithoutConstructor(),
+            translationManager: new \StreamEngine\Core\TranslationManager('ru', 'en'),
+            config: new \StreamEngine\Core\Config(['SITE_URL' => 'https://example.test']),
         );
     }
 

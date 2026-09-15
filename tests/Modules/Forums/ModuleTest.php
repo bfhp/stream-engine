@@ -82,6 +82,8 @@ final class ModuleTest extends TestCase
                 new NotificationPreferenceRepository($db),
                 new UserRepository($db),
                 $mailService,
+                translationManager: new \StreamEngine\Core\TranslationManager('ru', 'en'),
+                config: new \StreamEngine\Core\Config(['SITE_URL' => 'https://example.test']),
             ),
             // UserService owns presence now (the stats card's "Сейчас на
             // сайте" line goes through its onlineMembers()) - a real
@@ -103,6 +105,8 @@ final class ModuleTest extends TestCase
                 new NotificationPreferenceRepository($db),
                 new UserRepository($db),
                 $mailService,
+                translationManager: new \StreamEngine\Core\TranslationManager('ru', 'en'),
+                config: new \StreamEngine\Core\Config(['SITE_URL' => 'https://example.test']),
             ),
             // ForumsController now injects PollService directly too (its own
             // topic-create endpoint attaching a poll - see attachTopicPoll()) -

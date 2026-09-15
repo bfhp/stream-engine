@@ -33,7 +33,9 @@ final readonly class NotificationService
     private const int DAILY_EMAIL_BATCH_SIZE = 1000;
 
     private TranslationManager $tm;
+
     private Config $config;
+
     private const array CONFIGURABLE_TYPES = [
         'friend.request' => [
             'key' => 'friend_request',
@@ -88,11 +90,11 @@ final readonly class NotificationService
         private NotificationPreferenceRepository $preferences,
         private UserRepository $users,
         private MailService $mail,
-        ?TranslationManager $translationManager = null,
-        ?Config $config = null,
+        TranslationManager $translationManager,
+        Config $config,
     ) {
-        $this->tm = $translationManager ?? new TranslationManager('ru', 'ru');
-        $this->config = $config ?? new Config([]);
+        $this->tm = $translationManager;
+        $this->config = $config;
     }
 
     public function notify(Notification $notification): void

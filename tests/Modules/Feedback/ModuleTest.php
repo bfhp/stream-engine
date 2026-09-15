@@ -43,6 +43,8 @@ final class ModuleTest extends TestCase
                 new NotificationPreferenceRepository($db),
                 $users,
                 $this->createStub(MailService::class),
+                translationManager: new \StreamEngine\Core\TranslationManager('ru', 'en'),
+                config: new \StreamEngine\Core\Config(['SITE_URL' => 'https://example.test']),
             ),
             $this->createStub(FeedService::class),
             new TranslationManager('ru', 'en'),

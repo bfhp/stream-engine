@@ -139,6 +139,8 @@ final class APIControllerTest extends TestCase
             new NotificationPreferenceRepository($preferenceDb),
             new UserRepository($this->createStub(PdoDatabase::class)),
             (new \ReflectionClass(MailService::class))->newInstanceWithoutConstructor(),
+            translationManager: new \StreamEngine\Core\TranslationManager('ru', 'en'),
+            config: new \StreamEngine\Core\Config(['SITE_URL' => 'https://example.test']),
         );
     }
 

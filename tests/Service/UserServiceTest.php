@@ -104,6 +104,8 @@ final class UserServiceTest extends TestCase
                 new NotificationPreferenceRepository(new FakePdoDatabase()),
                 new UserRepository(new FakePdoDatabase()),
                 $mailService ?? $this->makeMailServiceStub(),
+                translationManager: new \StreamEngine\Core\TranslationManager('ru', 'en'),
+                config: new \StreamEngine\Core\Config(['SITE_URL' => 'https://example.test']),
             ),
             new UserSessionRepository($sessionDb ?? $this->createStub(PdoDatabase::class)),
             // A real secret, so the visit-cookie signature the presence

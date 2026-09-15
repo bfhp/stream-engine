@@ -105,6 +105,8 @@ final class ControllerFactoryTest extends TestCase
                 new NotificationPreferenceRepository($db),
                 new UserRepository($db),
                 $mailService,
+                translationManager: new \StreamEngine\Core\TranslationManager('ru', 'en'),
+                config: new \StreamEngine\Core\Config(['SITE_URL' => 'https://example.test']),
             ),
             new UserSessionRepository($db),
             new Config([])
@@ -124,6 +126,8 @@ final class ControllerFactoryTest extends TestCase
                 new NotificationPreferenceRepository($db),
                 new UserRepository($db),
                 $mailService,
+                translationManager: new \StreamEngine\Core\TranslationManager('ru', 'en'),
+                config: new \StreamEngine\Core\Config(['SITE_URL' => 'https://example.test']),
             ),
             $accessService,
             $termService,

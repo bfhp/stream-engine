@@ -107,6 +107,8 @@ final class ProfileUnsubscribeTest extends TestCase
             new NotificationPreferenceRepository($preferenceDb),
             new UserRepository($db),
             (new ReflectionClass(MailService::class))->newInstanceWithoutConstructor(),
+            translationManager: new \StreamEngine\Core\TranslationManager('ru', 'en'),
+            config: new \StreamEngine\Core\Config(['SITE_URL' => 'https://example.test']),
         );
 
         return new ProfileController(

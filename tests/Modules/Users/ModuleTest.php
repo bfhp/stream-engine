@@ -72,6 +72,8 @@ final class ModuleTest extends TestCase
                 new NotificationPreferenceRepository($db),
                 new UserRepository($db),
                 $mailService,
+                translationManager: new \StreamEngine\Core\TranslationManager('ru', 'en'),
+                config: new \StreamEngine\Core\Config(['SITE_URL' => 'https://example.test']),
             ),
             // Presence (the profile page's online dot) lives on UserService
             // now - a real repository over the same stub $db.
@@ -103,6 +105,8 @@ final class ModuleTest extends TestCase
                 new NotificationPreferenceRepository($db),
                 new UserRepository($db),
                 $mailService,
+                translationManager: new \StreamEngine\Core\TranslationManager('ru', 'en'),
+                config: new \StreamEngine\Core\Config(['SITE_URL' => 'https://example.test']),
             ),
             new Formatter($tm, 'ru'),
             $config,

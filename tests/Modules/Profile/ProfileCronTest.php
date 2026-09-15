@@ -53,6 +53,8 @@ final class ProfileCronTest extends TestCase
             new NotificationPreferenceRepository($db),
             new UserRepository($db),
             (new ReflectionClass(MailService::class))->newInstanceWithoutConstructor(),
+            translationManager: new \StreamEngine\Core\TranslationManager('ru', 'en'),
+            config: new \StreamEngine\Core\Config(['SITE_URL' => 'https://example.test']),
         );
 
         $reflection = new ReflectionClass(ProfileController::class);

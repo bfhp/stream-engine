@@ -81,6 +81,8 @@ final class FeedbackControllerTest extends TestCase
             new NotificationPreferenceRepository($this->createStub(PdoDatabase::class)),
             $users,
             $this->createStub(MailService::class),
+            translationManager: new \StreamEngine\Core\TranslationManager('ru', 'en'),
+            config: new \StreamEngine\Core\Config(['SITE_URL' => 'https://example.test']),
         );
 
         return new FeedbackController(

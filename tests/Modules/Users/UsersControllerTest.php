@@ -54,6 +54,8 @@ final class UsersControllerTest extends TestCase
             new NotificationPreferenceRepository($db),
             new UserRepository($db),
             (new ReflectionClass(MailService::class))->newInstanceWithoutConstructor(),
+            translationManager: new \StreamEngine\Core\TranslationManager('ru', 'en'),
+            config: new \StreamEngine\Core\Config(['SITE_URL' => 'https://example.test']),
         );
 
         $dbProperty = $reflection->getParentClass()->getProperty('db');
@@ -214,6 +216,8 @@ final class UsersControllerTest extends TestCase
                 new NotificationPreferenceRepository($db),
                 new UserRepository($db),
                 (new ReflectionClass(MailService::class))->newInstanceWithoutConstructor(),
+                translationManager: new \StreamEngine\Core\TranslationManager('ru', 'en'),
+                config: new \StreamEngine\Core\Config(['SITE_URL' => 'https://example.test']),
             ),
             new TranslationManager('ru', 'en'),
             $pageTree,
@@ -3194,6 +3198,8 @@ final class UsersControllerTest extends TestCase
                 new NotificationPreferenceRepository($fakeDb),
                 new UserRepository($fakeDb),
                 (new ReflectionClass(MailService::class))->newInstanceWithoutConstructor(),
+                translationManager: new \StreamEngine\Core\TranslationManager('ru', 'en'),
+                config: new \StreamEngine\Core\Config(['SITE_URL' => 'https://example.test']),
             ),
             new TranslationManager('ru', 'en'),
             $pageTree,
