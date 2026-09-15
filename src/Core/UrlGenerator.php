@@ -36,29 +36,37 @@ final class UrlGenerator
         return $page;
     }
 
-    /** @param array<string, string> $filters Normalized content filters only. */
-    public function listing(?string $baseUrl, int $page = 1, array $filters = []): ?string
-    {
+    /** @param array<string, scalar|array|null> $filters Normalized content filters only. */
+    public function listing(
+        ?string $baseUrl,
+        int $page = 1,
+        array $filters = [],
+        ?string $fragment = null
+    ): ?string {
         if ($baseUrl === null) {
             return null;
         }
         if ($page > 1) {
             $filters['page'] = $page;
         }
-        $query = http_build_query($filters, '', '&', PHP_QUERY_RFC3986);
 
-        return $baseUrl.($query !== '' ? '?'.$query : '');
+        return $this->appendQueryAndFragment($baseUrl, $filters, $fragment);
     }
 
     /**
-     * Single feed mode
+     * Single feed mode.
+     *
+     * @param  array<string, scalar|array|null>  $query
      */
-    public function feed(Feed $feed): ?string
+    public function feed(Feed $feed, array $query = [], ?string $fragment = null): ?string
     {
-        return $this->feeds([$feed])[$feed->id] ?? null;
+        $url = $this->feeds([$feed])[$feed->id] ?? null;
+
+        return $url !== null ? $this->appendQueryAndFragment($url, $query, $fragment) : null;
     }
 
-    public function feedTerm(FeedTerm $term): ?string
+    /** @param array<string, scalar|array|null> $query */
+    public function feedTerm(FeedTerm $term, array $query = [], ?string $fragment = null): ?string
     {
         $page = $this->pageTree->findByTermVocabulary($term->vocabulary);
 
@@ -66,7 +74,7 @@ final class UrlGenerator
             return null;
         }
 
-        return $this->page($page, ['slug' => $term->slug]);
+        return $this->page($page, ['slug' => $term->slug], $query, $fragment);
     }
 
     /**
@@ -79,12 +87,19 @@ final class UrlGenerator
      * was otherwise repeating itself via its own private resolve*Url()
      * helper -
      * callers no longer need their own PageTree dependency just for this.
+     *
+     * @param  array<string, string|int>  $params
+     * @param  array<string, scalar|array|null>  $query
      */
-    public function action(string $action, array $params = []): ?string
-    {
+    public function action(
+        string $action,
+        array $params = [],
+        array $query = [],
+        ?string $fragment = null
+    ): ?string {
         $page = $this->pageTree->findByAction($action);
 
-        return $page !== null ? $this->page($page, $params) : null;
+        return $page !== null ? $this->page($page, $params, $query, $fragment) : null;
     }
 
     /**
@@ -437,9 +452,16 @@ final class UrlGenerator
 
     /**
      * Generate canonical URL for a page.
+     *
+     * @param  array<string, string|int>  $params
+     * @param  array<string, scalar|array|null>  $query
      */
-    public function page(Page $page, array $params = []): string
-    {
+    public function page(
+        Page $page,
+        array $params = [],
+        array $query = [],
+        ?string $fragment = null
+    ): string {
         $segments = [];
 
         foreach ($this->buildPageAncestors($page) as $page) {
@@ -448,7 +470,45 @@ final class UrlGenerator
 
         $path = '/'.trim(implode('/', array_filter($segments)), '/').'/';
 
-        return rtrim($path, '/').'/';
+        return $this->appendQueryAndFragment(rtrim($path, '/').'/', $query, $fragment);
+    }
+
+    /**
+     * @param  array<string, scalar|array|null>  $query
+     */
+    private function appendQueryAndFragment(string $url, array $query, ?string $fragment): string
+    {
+        $queryString = http_build_query($query, '', '&', PHP_QUERY_RFC3986);
+        if ($queryString !== '') {
+            $url .= '?'.$queryString;
+        }
+
+        if ($fragment !== null && $fragment !== '') {
+            $url .= '#'.$this->encodeFragment($fragment);
+        }
+
+        return $url;
+    }
+
+    private function encodeFragment(string $fragment): string
+    {
+        return strtr(rawurlencode($fragment), [
+            '%21' => '!',
+            '%24' => '$',
+            '%26' => '&',
+            '%27' => "'",
+            '%28' => '(',
+            '%29' => ')',
+            '%2A' => '*',
+            '%2B' => '+',
+            '%2C' => ',',
+            '%2F' => '/',
+            '%3A' => ':',
+            '%3B' => ';',
+            '%3D' => '=',
+            '%3F' => '?',
+            '%40' => '@',
+        ]);
     }
 
     /**

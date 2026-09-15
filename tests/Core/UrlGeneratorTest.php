@@ -666,6 +666,50 @@ final class UrlGeneratorTest extends TestCase
         $this->assertSame('/forums/prakticheskaya-magiya/svecha-gasnet/', $generator->feed($feeds[72]));
     }
 
+    public function testActionAddsEncodedQueryBeforeEncodedFragment(): void
+    {
+        $pages = [
+            self::makePage(id: 1, parentId: null, pattern: ''),
+            $this->makeActionPage(
+                id: 2,
+                parentId: 1,
+                pattern: 'members/{username}',
+                action: 'user.show'
+            ),
+        ];
+
+        $generator = new UrlGenerator(
+            new PageTree($pages),
+            new FakeFeedRepository([]),
+            new ArrayCache()
+        );
+
+        $this->assertSame(
+            '/members/%D0%90%D0%BB%D0%B8%D1%81%D0%B0/?return=%2Fmessages%2F%3Ftab%3Dnew&status=ready%20now#profile%20notes/first',
+            $generator->action(
+                'user.show',
+                ['username' => 'Алиса'],
+                ['return' => '/messages/?tab=new', 'status' => 'ready now'],
+                'profile notes/first'
+            )
+        );
+    }
+
+    public function testPageOmitsEmptyQueryAndFragmentDelimiters(): void
+    {
+        $page = self::makePage(id: 1, parentId: null, pattern: 'register');
+
+        $this->assertSame('/register/', $this->urlGenerator->page($page, [], [], ''));
+    }
+
+    public function testListingSupportsFragmentAfterPaginationQuery(): void
+    {
+        $this->assertSame(
+            '/articles/?tag=science%20fiction&page=3#results',
+            $this->urlGenerator->listing('/articles/', 3, ['tag' => 'science fiction'], 'results')
+        );
+    }
+
     private function makeActionPage(
         int $id,
         ?int $parentId,

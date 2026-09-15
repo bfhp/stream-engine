@@ -44,8 +44,6 @@ links are still assembled with `$_SERVER['SERVER_NAME']`, while the frontend
 contains literals such as `/register/?success=1` and
 `/contacts/?success=1#feedbackFormHeader`.
 
-- Extend the URL generator to support query parameters and fragments without
-  manual concatenation; preserve correct encoding and `?query#fragment` order.
 - For registration, feedback, and other frontend navigation, expose a URL
   resolved from the page action through page configuration/the DOM instead of
   repeating the route structure in TypeScript.
