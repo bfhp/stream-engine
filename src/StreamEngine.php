@@ -30,6 +30,7 @@ use StreamEngine\Core\Security;
 use StreamEngine\Core\TranslationManager;
 use StreamEngine\Core\UrlGenerator;
 use StreamEngine\Domain\Page;
+use StreamEngine\Domain\User;
 use StreamEngine\Repository\ConversationRepository;
 use StreamEngine\Repository\FeedFavoriteRepository;
 use StreamEngine\Repository\FeedMetadataRepository;
@@ -280,88 +281,12 @@ class StreamEngine
      */
     public function handleRequest(): void
     {
-        $loader = new FilesystemLoader();
-
-        if ($themeDir = $this->config->themeDir()) {
-            $loader->addPath($themeDir);
-        }
-
-        $loader->addPath(__DIR__ . '/../views/themes/default');
-        $loader->addPath(__DIR__ . '/../views/themes/default', 'default');
-
-        foreach ($this->modules->viewsPaths() as $moduleViewsPath) {
-            $loader->addPath($moduleViewsPath);
-        }
-
-        $twig = new CachedEnvironment($loader, [
-            'cache' => $this->config->twigCacheDir(),
-            'auto_reload' => $this->config->isDevelopment(),
-        ]);
-
-        $twig->addGlobal('locale', $this->tm->getLocale());
-
-        $twig->addFunction(new TwigFunction('trans', [$this->tm, 'trans']));
-        $twig->addFunction(new TwigFunction('action_url', [$this->urlGenerator, 'action']));
-
-        $router = new Router($this->pageTree);
-
+        $twig = $this->createTwigEnvironment();
         $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-
-        $pageData = $router->resolve($path);
-
-        $menuRepository = new MenuRepository($this->db);
-        $menuService = new MenuService($this->urlGenerator, $this->pageTree);
-        $allMenuItems = $menuRepository->findAll();
-
-        $currentUser = $this->authService->currentUser();
-        $currentUser = $currentUser->withAvatarUrl(
-            UserService::resolveAvatarUrl($currentUser->avatarUrl)
-        );
-
-        if ($currentUser->isGuest()) {
-            $this->userService->recordGuestPresence();
-        }
-
-        $timezone = $this->authService->getUserTimezone($currentUser);
-
-        // The query string is snapshotted here, once, rather than read from
-        // $_GET wherever it happens to be needed - see Core\QueryParams.
-        $requestContext = new RequestContext($currentUser, $timezone, QueryParams::fromGlobals());
-
-        $pageContent = [];
-
-        // Get page data for HTML or 404 page
-        if (! is_array($pageData) || $pageData['page']->responseType === 'html') {
-            $pageContent['topMenu'] = $menuService->build(
-                allItems: $allMenuItems,
-                group: 'top',
-                breadcrumbs: $pageData['breadcrumbs'] ?? [],
-                currentUser: $currentUser
-            );
-
-            $pageContent['bottomMenu'] = $menuService->build(
-                allItems: $allMenuItems,
-                group: 'bottom',
-                breadcrumbs: $pageData['breadcrumbs'] ?? [],
-                currentUser: $currentUser
-            );
-
-            if (! $currentUser->isGuest()) {
-                $pageContent['userMenu'] = $menuService->build(
-                    allItems: $allMenuItems,
-                    group: 'user',
-                    breadcrumbs: $pageData['breadcrumbs'] ?? [],
-                    currentUser: $currentUser
-                );
-            }
-
-            $pageContent['user'] = $currentUser;
-            $pageContent['siteName'] = $this->settings->getString('site_name');
-            $pageContent['siteUrl'] = $this->config->siteUrl();
-            $pageContent['locale'] = $this->settings->getString('locale');
-            $pageContent['widgets'] = $this->widgets->placements();
-
-        }
+        $pageData = (new Router($this->pageTree))->resolve($path);
+        $currentUser = $this->currentUser();
+        $requestContext = $this->requestContext($currentUser);
+        $pageContent = $this->pageContent($pageData, $currentUser);
 
         // Handle not found case
         if (! is_array($pageData)) {
@@ -391,45 +316,162 @@ class StreamEngine
         );
 
         if ($pageData['page']->responseType !== 'html') {
-            if (! $pageData['page']->allowsMethod($_SERVER['REQUEST_METHOD'])) {
-                http_response_code(405);
-                exit;
-            }
-            try {
-                $thisPageController->callApi($pageData['page'], $pageData['params']);
-            } catch (Throwable $e) {
-                // See Core\ApiErrorResponse: a ValidationException is the
-                // handler's own answer and passes through; anything else is a
-                // bug, and a bug is a 500 in the log rather than a 403 in the
-                // client's face.
-                $error = ApiErrorResponse::forThrowable(
-                    $e,
-                    $this->config->isDevelopment(),
-                    $this->tm->trans('error.internal'),
-                );
-
-                if ($error->isBug) {
-                    error_log(ApiErrorResponse::logLine($e, $_SERVER['REQUEST_METHOD'], (string) $path));
-                }
-
-                // A handler that echoed part of its payload before throwing has
-                // already sent the headers; the status can no longer be set and
-                // trying warns. The body still goes out - a truncated JSON
-                // document fails the client's parse, which is the honest
-                // outcome and better than silence.
-                if (! headers_sent()) {
-                    http_response_code($error->status);
-                }
-
-                echo Formatter::json($error->body());
-                exit;
-            }
+            $this->dispatchApiRequest(
+                $thisPageController,
+                $pageData['page'],
+                $pageData['params'],
+                (string) $path,
+            );
             return;
         }
 
-        // Call controller
+        $this->dispatchHtmlRequest(
+            $twig,
+            $thisPageController,
+            $pageData,
+            $requestContext,
+            $pageContent,
+        );
+    }
+
+    private function createTwigEnvironment(): CachedEnvironment
+    {
+        $loader = new FilesystemLoader();
+
+        if ($themeDir = $this->config->themeDir()) {
+            $loader->addPath($themeDir);
+        }
+
+        $loader->addPath(__DIR__.'/../views/themes/default');
+        $loader->addPath(__DIR__.'/../views/themes/default', 'default');
+
+        foreach ($this->modules->viewsPaths() as $moduleViewsPath) {
+            $loader->addPath($moduleViewsPath);
+        }
+
+        $twig = new CachedEnvironment($loader, [
+            'cache' => $this->config->twigCacheDir(),
+            'auto_reload' => $this->config->isDevelopment(),
+        ]);
+        $twig->addGlobal('locale', $this->tm->getLocale());
+        $twig->addFunction(new TwigFunction('trans', [$this->tm, 'trans']));
+        $twig->addFunction(new TwigFunction('action_url', [$this->urlGenerator, 'action']));
+
+        return $twig;
+    }
+
+    private function currentUser(): User
+    {
+        $currentUser = $this->authService->currentUser();
+        $currentUser = $currentUser->withAvatarUrl(
+            UserService::resolveAvatarUrl($currentUser->avatarUrl)
+        );
+
+        if ($currentUser->isGuest()) {
+            $this->userService->recordGuestPresence();
+        }
+
+        return $currentUser;
+    }
+
+    private function requestContext(User $currentUser): RequestContext
+    {
+        // The query string is snapshotted here, once, rather than read from
+        // $_GET wherever it happens to be needed - see Core\QueryParams.
+        return new RequestContext(
+            $currentUser,
+            $this->authService->getUserTimezone($currentUser),
+            QueryParams::fromGlobals(),
+        );
+    }
+
+    /**
+     * @param null|array{page: Page, params: array<string, string>, breadcrumbs: list<Page>} $pageData
+     * @return array<string, mixed>
+     */
+    private function pageContent(?array $pageData, User $currentUser): array
+    {
+        $menuService = new MenuService($this->urlGenerator, $this->pageTree);
+        $allMenuItems = (new MenuRepository($this->db))->findAll();
+
+        if ($pageData !== null && $pageData['page']->responseType !== 'html') {
+            return [];
+        }
+
+        $breadcrumbs = $pageData['breadcrumbs'] ?? [];
+        $pageContent = [
+            'topMenu' => $menuService->build($allMenuItems, 'top', $breadcrumbs, $currentUser),
+            'bottomMenu' => $menuService->build($allMenuItems, 'bottom', $breadcrumbs, $currentUser),
+            'user' => $currentUser,
+            'siteName' => $this->settings->getString('site_name'),
+            'siteUrl' => $this->config->siteUrl(),
+            'locale' => $this->settings->getString('locale'),
+            'widgets' => $this->widgets->placements(),
+        ];
+
+        if (! $currentUser->isGuest()) {
+            $pageContent['userMenu'] = $menuService->build($allMenuItems, 'user', $breadcrumbs, $currentUser);
+        }
+
+        return $pageContent;
+    }
+
+    /** @param array<string, string> $params */
+    private function dispatchApiRequest(
+        ControllerInterface $controller,
+        Page $page,
+        array $params,
+        string $path,
+    ): void {
+        if (! $page->allowsMethod($_SERVER['REQUEST_METHOD'])) {
+            http_response_code(405);
+            exit;
+        }
+
         try {
-            $view = $thisPageController->show($pageData['page'], $pageData['params']);
+            $controller->callApi($page, $params);
+        } catch (Throwable $e) {
+            // See Core\ApiErrorResponse: a ValidationException is the
+            // handler's own answer and passes through; anything else is a
+            // bug, and a bug is a 500 in the log rather than a 403 in the
+            // client's face.
+            $error = ApiErrorResponse::forThrowable(
+                $e,
+                $this->config->isDevelopment(),
+                $this->tm->trans('error.internal'),
+            );
+
+            if ($error->isBug) {
+                error_log(ApiErrorResponse::logLine($e, $_SERVER['REQUEST_METHOD'], $path));
+            }
+
+            // A handler that echoed part of its payload before throwing has
+            // already sent the headers; the status can no longer be set and
+            // trying warns. The body still goes out - a truncated JSON
+            // document fails the client's parse, which is the honest
+            // outcome and better than silence.
+            if (! headers_sent()) {
+                http_response_code($error->status);
+            }
+
+            echo Formatter::json($error->body());
+            exit;
+        }
+    }
+
+    /**
+     * @param array{page: Page, params: array<string, string>, breadcrumbs: list<Page>} $pageData
+     * @param array<string, mixed> $pageContent
+     */
+    private function dispatchHtmlRequest(
+        CachedEnvironment $twig,
+        ControllerInterface $controller,
+        array $pageData,
+        RequestContext $requestContext,
+        array $pageContent,
+    ): void {
+        try {
+            $view = $controller->show($pageData['page'], $pageData['params']);
         } catch (Exception $exception) {
             $pageContent['exception'] = $exception->getMessage();
             $pageContent['title'] = $this->tm->trans('error.page_not_found');
