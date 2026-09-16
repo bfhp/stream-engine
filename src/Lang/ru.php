@@ -16,6 +16,12 @@ return [
 
     'error.internal' => 'Внутренняя ошибка сервера.',
     'error.page_not_found' => 'Страница не найдена',
+    'error.bad_request' => 'Ошибка запроса',
+    'error.forbidden' => 'Доступ запрещён',
+    'error.method_not_allowed' => 'Метод не поддерживается',
+    'error.generic' => 'Ошибка',
+    'error.home' => 'Вернуться на главную',
+    'error.try_again' => 'Пожалуйста, повторите попытку позже.',
 
     'message.group_chat' => 'Групповой чат',
     'message.you' => 'Вы',

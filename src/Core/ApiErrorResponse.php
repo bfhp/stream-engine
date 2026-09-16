@@ -98,7 +98,7 @@ final class ApiErrorResponse
     public static function logLine(Throwable $e, string $method, string $path): string
     {
         return sprintf(
-            'API %s %s failed: %s: %s in %s:%d',
+            'Request %s %s failed: %s: %s in %s:%d',
             $method,
             $path,
             $e::class,

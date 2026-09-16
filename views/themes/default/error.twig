@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="{{ locale }}" data-bs-theme="dark">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <title>{{ status }} — {{ title }}</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/assets/css/site.css">
+</head>
+<body>
+<main class="container py-5 text-center">
+    <h1 class="display-3">{{ status }}</h1>
+    <h2>{{ title }}</h2>
+    <p class="lead">{{ message }}</p>
+    <a href="/" class="btn btn-dark">{{ trans('error.home') }}</a>
+</main>
+</body>
+</html>

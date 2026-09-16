@@ -15,6 +15,9 @@ use StreamEngine\Core\Cron\CronRegistry;
 use StreamEngine\Core\Cron\CronRepository;
 use StreamEngine\Core\Cron\CronRunner;
 use StreamEngine\Core\Cron\CronTrigger;
+use StreamEngine\Core\Exceptions\ForbiddenException;
+use StreamEngine\Core\Exceptions\NotFoundException;
+use StreamEngine\Core\Exceptions\ValidationException;
 use StreamEngine\Core\FileProcessing\FileStorage;
 use StreamEngine\Core\FileProcessing\ImageProcessor;
 use StreamEngine\Core\FileProcessing\MimeDetector;
@@ -284,54 +287,75 @@ class StreamEngine
         $twig = $this->createTwigEnvironment();
         $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         $pageData = (new Router($this->pageTree))->resolve($path);
-        $currentUser = $this->currentUser();
-        $requestContext = $this->requestContext($currentUser);
-        $pageContent = $this->pageContent($pageData, $currentUser);
+        $responseType = $pageData['page']->responseType
+            ?? ($this->isApiPath($path) ? 'json' : 'html');
+        $pageContent = [];
 
-        // Handle not found case
-        if (! is_array($pageData)) {
-            $pageContent['title'] = $this->tm->trans('error.page_not_found');
-            $this->render404($twig, $pageContent);
+        try {
+            $currentUser = $this->currentUser();
+            $requestContext = $this->requestContext($currentUser);
+            $pageContent = $this->pageContent($pageData, $currentUser);
 
-            return;
-        }
+            // Handle not found case
+            if (! is_array($pageData)) {
+                if ($responseType === 'json') {
+                    throw new NotFoundException($this->tm->trans('error.page_not_found'));
+                }
 
-        if (! $this->accessService->canAccessPage($currentUser, $pageData['page'])) {
-            if ($pageData['page']->responseType !== 'html') {
-                http_response_code(403);
-                header('Content-Type: application/json');
-                echo Formatter::json(['error' => 'Forbidden']);
+                $pageContent['title'] = $this->tm->trans('error.page_not_found');
+                $this->render404($twig, $pageContent);
 
                 return;
             }
 
-            $this->render404($twig, $pageContent);
+            if (! $this->accessService->canAccessPage($currentUser, $pageData['page'])) {
+                if ($responseType === 'json') {
+                    throw new ForbiddenException('Forbidden');
+                }
 
-            return;
-        }
+                if ($responseType === 'html') {
+                    // Do not disclose the existence of an inaccessible page.
+                    // This preserves the existing public HTML behaviour.
+                    $this->render404($twig, $pageContent);
 
-        $thisPageController = $this->controllerFactory->createForPage(
-            $pageData['page'],
-            $requestContext
-        );
+                    return;
+                }
 
-        if ($pageData['page']->responseType !== 'html') {
-            $this->dispatchApiRequest(
-                $thisPageController,
+                throw new ForbiddenException('Forbidden');
+            }
+
+            $controller = $this->controllerFactory->createForPage(
                 $pageData['page'],
-                $pageData['params'],
+                $requestContext
+            );
+
+            if ($responseType !== 'html') {
+                $this->dispatchApiRequest($controller, $pageData['page'], $pageData['params']);
+
+                return;
+            }
+
+            $this->dispatchHtmlRequest(
+                $twig,
+                $controller,
+                $pageData,
+                $requestContext,
+                $pageContent,
+            );
+        } catch (Throwable $e) {
+            $this->handleRequestException(
+                $e,
+                $responseType,
+                $twig,
+                $pageContent,
                 (string) $path,
             );
-            return;
         }
+    }
 
-        $this->dispatchHtmlRequest(
-            $twig,
-            $thisPageController,
-            $pageData,
-            $requestContext,
-            $pageContent,
-        );
+    private function isApiPath(mixed $path): bool
+    {
+        return is_string($path) && ($path === '/api' || str_starts_with($path, '/api/'));
     }
 
     private function createTwigEnvironment(): CachedEnvironment
@@ -421,42 +445,12 @@ class StreamEngine
         ControllerInterface $controller,
         Page $page,
         array $params,
-        string $path,
     ): void {
         if (! $page->allowsMethod($_SERVER['REQUEST_METHOD'])) {
-            http_response_code(405);
-            exit;
+            throw new ValidationException('Method not allowed', 405, 'method_not_allowed');
         }
 
-        try {
-            $controller->callApi($page, $params);
-        } catch (Throwable $e) {
-            // See Core\ApiErrorResponse: a ValidationException is the
-            // handler's own answer and passes through; anything else is a
-            // bug, and a bug is a 500 in the log rather than a 403 in the
-            // client's face.
-            $error = ApiErrorResponse::forThrowable(
-                $e,
-                $this->config->isDevelopment(),
-                $this->tm->trans('error.internal'),
-            );
-
-            if ($error->isBug) {
-                error_log(ApiErrorResponse::logLine($e, $_SERVER['REQUEST_METHOD'], $path));
-            }
-
-            // A handler that echoed part of its payload before throwing has
-            // already sent the headers; the status can no longer be set and
-            // trying warns. The body still goes out - a truncated JSON
-            // document fails the client's parse, which is the honest
-            // outcome and better than silence.
-            if (! headers_sent()) {
-                http_response_code($error->status);
-            }
-
-            echo Formatter::json($error->body());
-            exit;
-        }
+        $controller->callApi($page, $params);
     }
 
     /**
@@ -470,14 +464,7 @@ class StreamEngine
         RequestContext $requestContext,
         array $pageContent,
     ): void {
-        try {
-            $view = $controller->show($pageData['page'], $pageData['params']);
-        } catch (Exception $exception) {
-            $pageContent['exception'] = $exception->getMessage();
-            $pageContent['title'] = $this->tm->trans('error.page_not_found');
-            $this->render404($twig, $pageContent);
-            return;
-        }
+        $view = $controller->show($pageData['page'], $pageData['params']);
 
         $view->data = array_merge($view->data, $pageContent);
 
@@ -530,6 +517,83 @@ class StreamEngine
         header('Cache-Control: public, max-age=60');
         header('Expires: 0');
         echo $content;
+    }
+
+    /** @param array<string, mixed> $pageContent */
+    private function handleRequestException(
+        Throwable $exception,
+        string $responseType,
+        CachedEnvironment $twig,
+        array $pageContent,
+        string $path,
+    ): void {
+        $error = ApiErrorResponse::forThrowable(
+            $exception,
+            false,
+            $this->tm->trans('error.internal'),
+        );
+
+        if ($error->isBug) {
+            error_log(ApiErrorResponse::logLine(
+                $exception,
+                $_SERVER['REQUEST_METHOD'] ?? 'unknown',
+                $path,
+            ));
+        }
+
+        if ($responseType === 'json') {
+            $this->renderJsonError($error);
+
+            return;
+        }
+
+        $message = $error->isBug
+            ? $this->tm->trans('error.try_again')
+            : $error->message;
+
+        $this->renderHtmlError($twig, $error->status, $message, $pageContent);
+    }
+
+    private function renderJsonError(ApiErrorResponse $error): void
+    {
+        if (! headers_sent()) {
+            http_response_code($error->status);
+            header('Content-Type: application/json');
+        }
+
+        echo Formatter::json($error->body());
+    }
+
+    /** @param array<string, mixed> $pageContent */
+    private function renderHtmlError(
+        CachedEnvironment $twig,
+        int $status,
+        string $message,
+        array $pageContent = [],
+    ): void {
+        if (! headers_sent()) {
+            http_response_code($status);
+            header('Content-Type: text/html; charset=UTF-8');
+        }
+
+        echo $twig->render('error.twig', [
+            ...$pageContent,
+            'status' => $status,
+            'title' => $this->errorTitle($status),
+            'message' => $message,
+        ]);
+    }
+
+    private function errorTitle(int $status): string
+    {
+        return match ($status) {
+            400 => $this->tm->trans('error.bad_request'),
+            403 => $this->tm->trans('error.forbidden'),
+            404 => $this->tm->trans('error.page_not_found'),
+            405 => $this->tm->trans('error.method_not_allowed'),
+            500 => $this->tm->trans('error.internal'),
+            default => $this->tm->trans('error.generic'),
+        };
     }
 
     private function initCronAndApi(): void
