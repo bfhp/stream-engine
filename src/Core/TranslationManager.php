@@ -24,7 +24,7 @@ class TranslationManager
 
     private function load(string $locale): array
     {
-        $file = __DIR__ . "/../lang/$locale.php";
+        $file = __DIR__ . "/../Lang/$locale.php";
 
         if (!file_exists($file)) {
             return [];
