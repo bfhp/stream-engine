@@ -40,11 +40,9 @@ because they became misleading after more tests were added.
 ### Routes and canonical URLs without string literals
 
 Public page, versioned API, and resource URL ownership is documented in
-`docs/ROUTING.md`; the remaining work is to strengthen route-change coverage
-and configuration boundaries.
+`docs/ROUTING.md`; the remaining work is to strengthen configuration
+boundaries.
 
-- Add tests for query parameters/fragments and page pattern changes: generated
-  links must change without frontend code edits.
 - In the same pass, remove direct `$_ENV` reads from `StreamEngine`,
   `FeedbackController`, and the Twig configuration.
 
