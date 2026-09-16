@@ -98,6 +98,43 @@ Database and object-storage data remain in named Docker volumes. Removing those
 volumes with `docker compose down --volumes` permanently deletes the local
 development data.
 
+### Environment configuration
+
+The web and CLI installers create `.env` automatically; a normal interactive
+installation does not require copying a template first. The committed
+[`.env.example`](.env.example) is a reference for deployments that manage the
+environment themselves. It contains placeholders, not usable production
+credentials.
+
+The installer-managed core settings are:
+
+| Variable | Purpose |
+| --- | --- |
+| `APP_ENV` | Runtime mode: `prod`, `dev`, or `test`. Use `prod` for a deployed site. |
+| `APP_SECRET` | Random signing key. The installer generates 32 random bytes as hexadecimal. |
+| `SITE_URL` | Canonical absolute HTTP(S) URL without a trailing slash. |
+| `DB_HOST`, `DB_PORT` | MariaDB host and port. |
+| `DB_NAME` | Application database name. |
+| `DB_USERNAME`, `DB_PASSWORD` | Application database credentials. |
+| `CRON_KEY` | Random key for the protected web cron endpoint and fallback signing key. The installer generates it separately from `APP_SECRET`. |
+| `CRON_MODE` | `os` for a production scheduler or `web` for the request-driven development fallback. |
+
+`MEMCACHED_HOST` and `MEMCACHED_PORT` select the cache service and default to
+`127.0.0.1:11211`; use `CACHE_PREFIX` to isolate multiple installations that
+share it. The example also lists optional filesystem, SMTP, theme, and
+S3-compatible storage settings together with their expected grouping.
+
+Do not commit `.env`. For a manually managed deployment, replace every
+placeholder and generate independent secrets, for example by running the
+following command twice:
+
+```bash
+php -r 'echo bin2hex(random_bytes(32)), PHP_EOL;'
+```
+
+Production installations should use `CRON_MODE=os` and invoke `bin/cron.php`
+once per minute as described in [Cron deployment](docs/CRON.md).
+
 For CLI installation, unattended deployment, installation security, and schema
 snapshot details, see [docs/INSTALLATION.md](docs/INSTALLATION.md).
 
