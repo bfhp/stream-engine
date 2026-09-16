@@ -356,7 +356,7 @@ class StreamEngine
             }
 
             $pageContent['user'] = $currentUser;
-            $pageContent['site_name'] = $this->settings->getString('site_name');
+            $pageContent['siteName'] = $this->settings->getString('site_name');
             $pageContent['siteUrl'] = $this->config->siteUrl();
             $pageContent['locale'] = $this->settings->getString('locale');
             $pageContent['widgets'] = $this->widgets->placements();

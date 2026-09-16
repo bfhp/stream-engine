@@ -9,7 +9,7 @@
                     {% block footer_about %}
                         {% include 'components/widgets/block.twig' with { placement: 'footer_legal' } %}
                         <p>
-                        {{ trans('view.footer.copyright', {year: "now"|date("Y"), site: site_name}) }}
+                        {{ trans('view.footer.copyright', {year: "now"|date("Y"), site: siteName}) }}
                         </p>
                         {% block footer_runtime %}
                             {{ runtime }}
