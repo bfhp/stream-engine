@@ -15,12 +15,15 @@ use RuntimeException;
  * Scans source files without bootstrapping the app. A clean result only means
  * a verifyCsrf call was found, not that CSRF protection works at runtime.
  * Calls are followed up to depth 4; collaborator methods are loosely resolved
- * by name across the tree. Inline switch checks also count as covered.
+ * by name across the tree. HTTP-method branches and match arms are evaluated
+ * separately, so a check in a POST branch does not cover a sibling PUT branch.
+ * Inline switch checks also count as covered.
  * Undispatched actions are reported as PLACEHOLDER, not as missing checks.
  *
  * This deliberately preserves the original source scanner's heuristics:
- * braces in strings/comments and checks in unrelated branches can over-report
- * coverage. Runtime security is covered by the controller and Security tests.
+ * braces in strings/comments and checks in unrelated non-method branches can
+ * over-report coverage. Runtime security is covered by the controller and
+ * Security tests.
  */
 final class CsrfAudit
 {
@@ -65,31 +68,103 @@ final class CsrfAudit
         return $bodies;
     }
 
-    private static function verifies(array $bodies, string $path, string $method, int $depth = 0, array &$seen = []): bool
+    /**
+     * Whether the code at an offset is reachable for the requested HTTP method.
+     *
+     * This recognizes the branch shapes used by the controllers: direct
+     * REQUEST_METHOD comparisons, a local $method alias, and match arms. A
+     * guard such as `if ($method !== 'POST') { throw ...; }` deliberately does
+     * not restrict the code after it; Router has already limited the route to
+     * its declared methods.
+     */
+    private static function appliesToHttpMethod(string $body, int $offset, string $httpMethod): bool
     {
-        if ($depth > self::MAX_DEPTH || isset($seen[$path][$method])) {
+        $lineStart = strrpos(substr($body, 0, $offset), "\n");
+        $linePrefix = substr($body, $lineStart === false ? 0 : $lineStart + 1, $offset - ($lineStart === false ? 0 : $lineStart + 1));
+        if (preg_match_all("/'(POST|PATCH|PUT|DELETE)'\\s*=>/", $linePrefix, $arms) > 0
+            && !in_array($httpMethod, $arms[1], true)) {
             return false;
         }
-        $seen[$path][$method] = true;
+
+        $stack = [];
+        $length = min($offset, strlen($body));
+        for ($i = 0; $i < $length; $i++) {
+            if ($body[$i] === '{') {
+                $prefix = substr($body, max(0, $i - 500), min(500, $i));
+                $condition = null;
+                if (preg_match('/(?:if|elseif)\s*\(([^{}]*)\)\s*$/s', $prefix, $match)) {
+                    $condition = $match[1];
+                }
+                $stack[] = $condition;
+            } elseif ($body[$i] === '}') {
+                array_pop($stack);
+            }
+        }
+
+        foreach ($stack as $condition) {
+            if ($condition === null) {
+                continue;
+            }
+            if (preg_match(
+                "~(?:\\\$_SERVER\\['REQUEST_METHOD'\\](?:\\s*\\?\\?\\s*'[^']+')?|\\\$method)\\s*===\\s*'(POST|PATCH|PUT|DELETE)'~",
+                $condition,
+                $match,
+            ) && $match[1] !== $httpMethod) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static function containsApplicableCsrfCheck(string $body, string $httpMethod): bool
+    {
+        $offset = 0;
+        while (($offset = strpos($body, 'verifyCsrf', $offset)) !== false) {
+            if (self::appliesToHttpMethod($body, $offset, $httpMethod)) {
+                return true;
+            }
+            $offset += strlen('verifyCsrf');
+        }
+
+        return false;
+    }
+
+    private static function verifies(
+        array $bodies,
+        string $path,
+        string $method,
+        string $httpMethod,
+        int $depth = 0,
+        array &$seen = [],
+    ): bool {
+        if ($depth > self::MAX_DEPTH || isset($seen[$path][$method][$httpMethod])) {
+            return false;
+        }
+        $seen[$path][$method][$httpMethod] = true;
         $body = $bodies[$path][$method] ?? null;
 
         if ($body === null) {
             // A collaborator's method: fall back to the name across the tree.
-            foreach ($bodies as $methods) {
-                if (isset($methods[$method]) && str_contains($methods[$method], 'verifyCsrf')) {
+            foreach ($bodies as $candidatePath => $methods) {
+                if (isset($methods[$method])
+                    && self::verifies($bodies, $candidatePath, $method, $httpMethod, $depth + 1, $seen)) {
                     return true;
                 }
             }
 
             return false;
         }
-        if (str_contains($body, 'verifyCsrf')) {
+        if (self::containsApplicableCsrfCheck($body, $httpMethod)) {
             return true;
         }
 
-        preg_match_all(self::CALL, $body, $calls);
-        foreach (array_unique($calls[1]) as $callee) {
-            if (self::verifies($bodies, $path, $callee, $depth + 1, $seen)) {
+        preg_match_all(self::CALL, $body, $calls, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
+        foreach ($calls as $call) {
+            $callee = $call[1][0];
+            $offset = $call[0][1];
+            if (self::appliesToHttpMethod($body, $offset, $httpMethod)
+                && self::verifies($bodies, $path, $callee, $httpMethod, $depth + 1, $seen)) {
                 return true;
             }
         }
@@ -179,17 +254,27 @@ final class CsrfAudit
 
                 $action = $action[1];
                 $targets = $handlers[$action] ?? [];
-                $covered = false;
-                foreach ($inline[$action] ?? [] as $block) {
-                    if (str_contains($block, 'verifyCsrf')) {
-                        $covered = true;
-                        break;
+                $methodCoverage = [];
+                foreach ($mutating as $httpMethod) {
+                    $methodCoverage[$httpMethod] = false;
+                    foreach ($inline[$action] ?? [] as $block) {
+                        if (self::containsApplicableCsrfCheck($block, $httpMethod)) {
+                            $methodCoverage[$httpMethod] = true;
+                            break;
+                        }
                     }
-                }
-                if (!$covered) {
+                    if ($methodCoverage[$httpMethod]) {
+                        continue;
+                    }
                     foreach ($targets as [$path, $method]) {
-                        if (self::verifies($bodies, $path, $method) || self::verifies($bodies, $path, 'callApi')) {
-                            $covered = true;
+                        $seen = [];
+                        if (self::verifies($bodies, $path, $method, $httpMethod, seen: $seen)) {
+                            $methodCoverage[$httpMethod] = true;
+                            break;
+                        }
+                        $seen = [];
+                        if (self::verifies($bodies, $path, 'callApi', $httpMethod, seen: $seen)) {
+                            $methodCoverage[$httpMethod] = true;
                             break;
                         }
                     }
@@ -197,7 +282,8 @@ final class CsrfAudit
                 $rows[$action] = [
                     'methods' => implode(',', $mutating),
                     'handlers' => implode(',', array_unique(array_column($targets, 1))) ?: null,
-                    'covered' => $covered,
+                    'methodCoverage' => $methodCoverage,
+                    'covered' => !in_array(false, $methodCoverage, true),
                 ];
             }
         }

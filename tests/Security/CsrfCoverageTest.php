@@ -17,11 +17,15 @@ final class CsrfCoverageTest extends TestCase
         $uncovered = [];
         foreach ($rows as $action => $row) {
             if (!$row['covered']) {
+                $missingMethods = array_keys(array_filter(
+                    $row['methodCoverage'],
+                    static fn (bool $covered): bool => !$covered,
+                ));
                 $uncovered[] = sprintf(
                     '%s: %s [%s] — %s',
                     CsrfAudit::status($row),
                     $action,
-                    $row['methods'],
+                    implode(',', $missingMethods),
                     $row['handlers'] ?? 'no dispatched handler',
                 );
             }

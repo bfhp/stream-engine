@@ -79,9 +79,6 @@ found.
 - The CSRF audit is included in PHPUnit (`tests/Security/CsrfCoverageTest.php`),
   runs with `composer test`, and can be run separately with
   `composer audit:csrf`.
-- Teach the CSRF audit to distinguish handler branches by HTTP method; currently
-  a single `verifyCsrf()` in any branch can incorrectly mark the entire handler
-  as `ok`.
 - Run PHPUnit, Vitest, TypeScript, Pint, the Vite build, and the CSRF audit in
   CI.
 - Do not ignore an application's `composer.lock`: PHP dependencies must be as
