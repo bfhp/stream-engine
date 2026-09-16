@@ -49,6 +49,16 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: curl, dom, fileinfo, gd, intl, libxml, memcached, pdo, simplexml
+          coverage: none
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:
