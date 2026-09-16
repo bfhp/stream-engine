@@ -11,9 +11,6 @@
 .phpunit.cache/
 /coverage/
 
-# Composer
-composer.lock
-
 #PhpStorm
 .idea/
 
