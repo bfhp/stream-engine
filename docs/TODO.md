@@ -37,17 +37,6 @@ because they became misleading after more tests were added.
 - Decide the rule for group conversations: currently, any participant can
   remove any other participant.
 
-### Testable boundaries instead of echo/header/exit and shell calls
-
-- Split `StreamEngine::handleRequest()` into method and RBAC validation,
-  dispatch, and response construction.
-- Introduce a `Response` object so status/headers/body can be tested without
-  `exit`; successful email confirmation and redirect responses need it too.
-- Hide cookies/CSRF behind `CookieJar`/`CsrfTokenStore`, keeping a static facade
-  only for compatibility.
-- Where practical, similarly isolate validation/execution of `pandoc` and the
-  PHP cron process.
-
 ### Test coverage
 
 First obtain a fresh `composer test:coverage` report; do not use numbers from
