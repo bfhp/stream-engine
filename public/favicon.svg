@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Stream Engine">
+  <rect width="64" height="64" rx="15" fill="#070614"/>
+  <path d="M47 17H25c-6.1 0-11 4.7-11 10.5S18.9 38 25 38h14c6.1 0 11 4.7 11 10.5S45.1 59 39 59H17"
+        fill="none" stroke="#60A5FA" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="48" cy="17" r="4" fill="#E0F2FE"/>
+  <circle cx="16" cy="59" r="4" fill="#C7D2FE"/>
+</svg>
