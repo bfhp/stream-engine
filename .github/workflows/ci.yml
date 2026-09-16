@@ -17,6 +17,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
+    services:
+      mariadb:
+        image: mariadb:12
+        env:
+          MARIADB_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
@@ -36,6 +49,10 @@ jobs:
 
       - name: Run PHPUnit
         run: composer test
+        env:
+          INSTALL_TEST_DB_DSN: mysql:host=127.0.0.1;port=3306
+          INSTALL_TEST_DB_USERNAME: root
+          INSTALL_TEST_DB_PASSWORD: root
 
       - name: Run CSRF audit
         run: composer audit:csrf

@@ -17,7 +17,7 @@
         {
             "version": "20260915000000_enforce_feed_slug_scopes",
             "file": "20260915000000_enforce_feed_slug_scopes.sql",
-            "checksum": "5b02f3d3225e06c504b39d6fca0b47edf9f61b7eb847c4d85a4d529dbce24d4d"
+            "checksum": "880f92ccd707aecfcfa55f011f6b597f822117de1a0d194340b03acdef3688cd"
         }
     ]
 }
