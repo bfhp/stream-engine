@@ -11,6 +11,10 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 - A complete favicon set for modern browsers, legacy clients, and Apple touch icons — at long last.
 
+### Changed
+
+- Made Composer and Packagist the canonical distribution channel, with npm kept only for frontend development tooling.
+
 ## [0.2.0] - 2026-09-17
 
 ### Added

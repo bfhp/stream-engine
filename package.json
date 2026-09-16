@@ -1,60 +1,15 @@
 {
-  "name": "@bfhp/stream-engine",
+  "name": "stream-engine",
   "version": "0.2.0",
+  "private": true,
   "description": "Yet another CMS",
   "type": "module",
-  "files": [
-    ".env.example",
-    "CHANGELOG.md",
-    "LICENSE",
-    "README.md",
-    "assets-src",
-    "bin",
-    "composer.json",
-    "composer.lock",
-    "docker-compose.yml",
-    "docs",
-    "migrations",
-    "nginx",
-    "php",
-    "public",
-    "resources",
-    "src",
-    "storage/.npmkeep",
-    "storage/uploads/.npmkeep",
-    "tsconfig.json",
-    "views",
-    "vite-build-data.ts",
-    "vite.config.ts",
-    "vitest.config.ts"
-  ],
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/bfhp/stream-engine.git"
-  },
-  "keywords": [
-    "cms",
-    "php",
-    "typescript",
-    "content-management",
-    "forum",
-    "community"
-  ],
-  "author": "bfhp",
-  "license": "LGPL-3.0-only",
-  "bugs": {
-    "url": "https://github.com/bfhp/stream-engine/issues"
-  },
-  "homepage": "https://github.com/bfhp/stream-engine#readme",
-  "publishConfig": {
-    "access": "public"
   },
   "devDependencies": {
     "@mantine/core": "^8.3.15",

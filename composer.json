@@ -1,8 +1,19 @@
 {
     "name": "bfhp/stream-engine",
     "description": "Yet another CMS",
+    "keywords": [
+        "cms",
+        "content-management",
+        "community",
+        "forum"
+    ],
+    "homepage": "https://github.com/bfhp/stream-engine",
     "type": "project",
     "license": "LGPL-3.0-only",
+    "support": {
+        "issues": "https://github.com/bfhp/stream-engine/issues",
+        "source": "https://github.com/bfhp/stream-engine"
+    },
     "autoload": {
         "psr-4": {
             "StreamEngine\\": "src/"

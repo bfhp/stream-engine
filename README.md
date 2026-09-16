@@ -57,32 +57,33 @@ Trix, and Vite. PHPUnit and Vitest provide the backend and frontend test suites.
 The included Docker Compose environment runs Nginx, PHP-FPM, MariaDB,
 Memcached, and MinIO.
 
-## npm release archive
+## Installation with Composer
 
-The public [`@bfhp/stream-engine`](https://www.npmjs.com/package/@bfhp/stream-engine)
-package is a release archive for the complete CMS, not an importable JavaScript
-library. To unpack a release into a new project directory:
+Stream Engine is distributed as a complete application through
+[Packagist](https://packagist.org/packages/bfhp/stream-engine). Create a new
+project from the latest compatible release:
 
 ```bash
-npm pack @bfhp/stream-engine@0.2.0
-mkdir stream-engine
-tar -xzf bfhp-stream-engine-0.2.0.tgz --strip-components=1 -C stream-engine
+composer create-project --no-dev bfhp/stream-engine stream-engine "^0.2"
 cd stream-engine
 ```
 
-Then install and start the application using the Docker instructions below.
+Composer installs the PHP dependencies together with the application. Continue
+with either the Docker setup below or configure PHP, MariaDB, Memcached, and a
+web server directly. Release archives contain compiled frontend assets, so
+Node.js and npm are only needed for frontend development or rebuilding them.
+
+For a development installation, omit `--no-dev` so Composer also installs the
+test and formatting tools.
 
 ## Quick start with Docker
 
-You need Docker with the Compose plugin. From the repository root, build the
-PHP image, install the dependencies, compile the frontend, and start the local
-services:
+You need Docker with the Compose plugin. From the project root, build the PHP
+image, ensure the dependencies are installed, and start the local services:
 
 ```bash
 docker compose build php
 docker compose run --rm php composer install
-docker compose run --rm node npm install
-docker compose run --rm node npm run build
 docker compose up -d
 ```
 
