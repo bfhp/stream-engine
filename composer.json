@@ -19,7 +19,7 @@
         "twig/twig": "^3.23",
         "ext-pdo": "*",
         "phpmailer/phpmailer": "^7.0",
-        "tijsverkoyen/css-to-inline-styles": "v2.3.0",
+        "tijsverkoyen/css-to-inline-styles": "^2.4",
         "ezyang/htmlpurifier": "^4.19",
         "ext-gd": "*",
         "ext-fileinfo": "*",
