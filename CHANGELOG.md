@@ -9,6 +9,7 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Explicit URL ownership for generated public pages, fixed versioned API endpoints, and resource paths.
 - Query parameters and URI fragments for generated action, page, feed, term, and listing URLs, with RFC 3986 encoding and consistent `?query#fragment` ordering.
 - Frontend redirects for registration, feedback, and direct messages now use same-origin-validated page URLs resolved by backend routing instead of hard-coded route paths.
 - New `footer_legal` widget placement for legal information in the site footer.

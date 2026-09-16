@@ -39,13 +39,10 @@ because they became misleading after more tests were added.
 
 ### Routes and canonical URLs without string literals
 
-`Config::siteUrl()` and `UrlGenerator::action()` already exist, but the
-remaining internal links have not yet been inventoried by routing
-responsibility.
+Public page, versioned API, and resource URL ownership is documented in
+`docs/ROUTING.md`; the remaining work is to strengthen route-change coverage
+and configuration boundaries.
 
-- Inventory internal links in PHP, Twig, and TypeScript. Generate public page
-  URLs from actions/feeds; do not mix stable API endpoints with page routing,
-  and move them to a single client helper if necessary.
 - Add tests for query parameters/fragments and page pattern changes: generated
   links must change without frontend code edits.
 - In the same pass, remove direct `$_ENV` reads from `StreamEngine`,

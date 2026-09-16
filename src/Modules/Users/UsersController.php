@@ -4,6 +4,7 @@ namespace StreamEngine\Modules\Users;
 
 use DateTimeImmutable;
 use Exception;
+use RuntimeException;
 use StreamEngine\Core\AbstractController;
 use StreamEngine\Core\Config;
 use StreamEngine\Core\Cron\CronRegistry;
@@ -2919,12 +2920,9 @@ class UsersController extends AbstractController
         // AccessService::canEditFeed()'s own note).
         $canDelete = $this->feedService->canEditFeed($post, $viewer);
 
-        // The author byline (blog_post_header block) links to this - same
-        // "/users/{username}/" shape deleteRedirectUrl below already used,
-        // just under its own name so blog_post_header doesn't have to
-        // reach for a delete-specific variable to render a plain profile
-        // link.
-        $authorUrl = $author !== null ? sprintf('/users/%s/', rawurlencode($author->username)) : null;
+        $authorUrl = $author !== null
+            ? $this->urlGenerator->action('user.show', ['username' => $author->username])
+            : null;
 
         $viewData = [
             'title' => $post->title,
@@ -3053,10 +3051,11 @@ class UsersController extends AbstractController
             ? $this->userService->isOnline($author->id)
             : false;
 
-        // Same author-byline link as showBlogPostPage() - unrelated to
-        // deleteRedirectUrl below, which points at the community here, not
-        // the author's profile.
-        $authorUrl = $author !== null ? sprintf('/users/%s/', rawurlencode($author->username)) : null;
+        // Same author-byline link as showBlogPostPage() - unrelated to the
+        // community delete redirect below.
+        $authorUrl = $author !== null
+            ? $this->urlGenerator->action('user.show', ['username' => $author->username])
+            : null;
 
         // Loaded once, reused below for both the delete redirect and the
         // sidebar (owner/membership/members/rating) - a community post's
@@ -3246,7 +3245,9 @@ class UsersController extends AbstractController
                 );
             }
             $this->authService->loginByUserId($userId);
-            header('Location: /profile/?registered=1');
+            $profileUrl = $this->urlGenerator->action('profile.show', query: ['registered' => 1])
+                ?? throw new RuntimeException('Profile page URL is not configured');
+            header('Location: '.$profileUrl);
             exit;
         }
 

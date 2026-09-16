@@ -125,7 +125,10 @@ final class UsersControllerTest extends TestCase
         $property->setValue(
             $module,
             new UrlGenerator(
-                new PageTree([$page]),
+                new PageTree([
+                    $page,
+                    $this->makeUserShowRoutePage(),
+                ]),
                 new FakeFeedRepository([]),
                 new ArrayCache()
             )
@@ -240,10 +243,29 @@ final class UsersControllerTest extends TestCase
         $property->setValue(
             $module,
             new UrlGenerator(
-                new PageTree($pages),
+                new PageTree([...$pages, $this->makeUserShowRoutePage()]),
                 new FakeFeedRepository([]),
                 new ArrayCache()
             )
+        );
+    }
+
+    private function makeUserShowRoutePage(): Page
+    {
+        return new Page(
+            id: 9999,
+            parentId: null,
+            pattern: 'users/{username}',
+            pageName: 'User',
+            settings: null,
+            feedType: null,
+            listFeedType: null,
+            feedId: null,
+            commentsEnabled: false,
+            requestMethods: ['GET'],
+            responseType: 'html',
+            accessRule: AccessService::ACCESS_PUBLIC,
+            action: 'user.show',
         );
     }
 
@@ -1048,6 +1070,7 @@ final class UsersControllerTest extends TestCase
         $module = $this->makeUsersModule($db);
         $this->setContext($module, new User(id: 7, email: 'user@example.com', role: AccessService::ROLE_USER, username: 'nicky42'));
         $this->setPersonalPostRoute($module, $page);
+        $this->setUrlGenerator($module, $page);
 
         $post = $this->makeBlogPostFeed();
 

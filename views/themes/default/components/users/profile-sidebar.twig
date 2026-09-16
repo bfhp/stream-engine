@@ -39,8 +39,8 @@
                     </p>
                 {% endif %}
 
-                {% if isOwnProfile %}
-                    <a class="btn btn-outline-secondary d-block" href="/profile/">
+                {% if isOwnProfile and profileUrl %}
+                    <a class="btn btn-outline-secondary d-block" href="{{ profileUrl }}">
                         <i class="bi bi-pencil"></i> {{ trans('view.profile.edit') }}
                     </a>
                 {% else %}

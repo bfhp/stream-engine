@@ -6,6 +6,7 @@ namespace Tests\Modules\Sitemap;
 
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
+use StreamEngine\Core\Config;
 use StreamEngine\Core\PageTree;
 use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Core\RequestContext;
@@ -87,6 +88,9 @@ final class SitemapControllerTest extends TestCase
     private function makeModule(PageTree $pageTree, FeedService $feedService, ?PdoDatabase $db = null): SitemapController
     {
         $db ??= $this->createStub(PdoDatabase::class);
+        if ($pageTree->findByAction('sitemap.sitemap') === null) {
+            $pageTree->add(self::page(9999, 1, 'sitemap-{slug}.xml', 'raw', action: 'sitemap.sitemap'));
+        }
         $urlGenerator = new UrlGenerator($pageTree, new FakeFeedRepository([]), new ArrayCache());
 
         return new SitemapController(
@@ -96,6 +100,7 @@ final class SitemapControllerTest extends TestCase
             $urlGenerator,
             $feedService,
             new TermService(new FeedTermRepository($db), $urlGenerator),
+            new Config(['SITE_URL' => 'https://example.test']),
         );
     }
 

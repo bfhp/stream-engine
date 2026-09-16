@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Modules\Sitemap;
 
 use PHPUnit\Framework\TestCase;
+use StreamEngine\Core\Config;
 use StreamEngine\Core\ControllerFactory;
 use StreamEngine\Core\ModuleRegistry;
 use StreamEngine\Core\PageTree;
@@ -35,6 +36,7 @@ final class ModuleTest extends TestCase
             $urlGenerator,
             $this->createStub(FeedService::class),
             new TermService(new FeedTermRepository($db), $urlGenerator),
+            new Config(['SITE_URL' => 'https://example.test']),
         ];
 
         $modules = new ModuleRegistry();

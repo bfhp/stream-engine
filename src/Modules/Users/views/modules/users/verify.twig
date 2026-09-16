@@ -19,8 +19,12 @@
     {% endblock %}
 
     {% block verify_actions %}
-    <p>{{ trans('view.users.verify.04') }} <a href="/register/">{{ trans('view.users.verify.05') }}</a> {{ trans('view.users.verify.06') }}</p>
-    <p>{{ trans('view.users.verify.07') }} <a href="/contacts/">{{ trans('view.users.verify.08') }}</a>.</p>
+    {% if registerUrl %}
+    <p>{{ trans('view.users.verify.04') }} <a href="{{ registerUrl }}">{{ trans('view.users.verify.05') }}</a> {{ trans('view.users.verify.06') }}</p>
+    {% endif %}
+    {% if feedbackUrl %}
+    <p>{{ trans('view.users.verify.07') }} <a href="{{ feedbackUrl }}">{{ trans('view.users.verify.08') }}</a>.</p>
+    {% endif %}
     {% endblock %}
 
 {% endblock %}

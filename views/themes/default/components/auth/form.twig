@@ -36,9 +36,11 @@
                                 {% endblock %}
 
                                 {% block auth_forgot %}
+                                    {% if passwordRecoveryUrl %}
                                     <div class="mb-3 text-end">
-                                        <a href="/forgot-password/" class="small">{{ trans('view.auth.forgot_password') }}</a>
+                                        <a href="{{ passwordRecoveryUrl }}" class="small">{{ trans('view.auth.forgot_password') }}</a>
                                     </div>
+                                    {% endif %}
                                 {% endblock %}
 
                                 {% block auth_submit %}
@@ -51,10 +53,12 @@
                         {% endblock %}
 
                         {% block auth_footer %}
+                            {% if registerUrl %}
                             <div class="text-center mt-3">
                                 {{ trans('view.auth.no_account') }}
-                                <a href="/register/">{{ trans('view.auth.register') }}</a>
+                                <a href="{{ registerUrl }}">{{ trans('view.auth.register') }}</a>
                             </div>
+                            {% endif %}
                         {% endblock %}
                     </div>
                 {% endblock %}

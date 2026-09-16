@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace StreamEngine\Modules\Sitemap;
 
+use RuntimeException;
 use StreamEngine\Core\AbstractController;
+use StreamEngine\Core\Config;
 use StreamEngine\Core\Exceptions\NotFoundException;
 use StreamEngine\Core\PageTree;
 use StreamEngine\Core\PdoDatabase;
@@ -29,6 +31,7 @@ class SitemapController extends AbstractController
         private readonly UrlGenerator $urlGenerator,
         private readonly FeedService $feedService,
         private readonly TermService $termService,
+        private readonly Config $config,
     ) {
         parent::__construct($db, $context);
     }
@@ -83,15 +86,15 @@ class SitemapController extends AbstractController
     private function renderSitemapIndex(): string
     {
         $locations = [
-            ['loc' => $this->absoluteUrl('/sitemap-pages.xml')],
+            ['loc' => $this->absoluteSitemapUrl('pages')],
         ];
 
         foreach ($this->feedSitemapFiles() as $file) {
-            $locations[] = ['loc' => $this->absoluteUrl('/'.$file)];
+            $locations[] = ['loc' => $this->absoluteSitemapFileUrl($file)];
         }
 
         foreach ($this->termSitemapFiles() as $file) {
-            $locations[] = ['loc' => $this->absoluteUrl('/'.$file)];
+            $locations[] = ['loc' => $this->absoluteSitemapFileUrl($file)];
         }
 
         $items = array_map(
@@ -388,9 +391,25 @@ class SitemapController extends AbstractController
             return $path;
         }
 
-        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $siteUrl = $this->config->siteUrl()
+            ?? throw new RuntimeException('Canonical site URL is not configured');
 
-        return 'https://'.$host.'/'.ltrim($path, '/');
+        return $siteUrl.'/'.ltrim($path, '/');
+    }
+
+    private function absoluteSitemapUrl(string $slug): string
+    {
+        $path = $this->urlGenerator->action('sitemap.sitemap', ['slug' => $slug])
+            ?? throw new RuntimeException('Sitemap page URL is not configured');
+
+        return $this->absoluteUrl($path);
+    }
+
+    private function absoluteSitemapFileUrl(string $file): string
+    {
+        $slug = substr($file, strlen('sitemap-'), -strlen('.xml'));
+
+        return $this->absoluteSitemapUrl($slug);
     }
 
     private function xmlHeader(): string
@@ -417,7 +436,7 @@ class SitemapController extends AbstractController
 Disallow: /admin/
 Disallow: /api/
 
-Sitemap: https://%s/sitemap-index.xml", $_SERVER['HTTP_HOST']);
+Sitemap: %s", $this->absoluteSitemapUrl('index'));
     }
 
     public static function registerApi(int $apiPageId, PageTree $pageTree): void
