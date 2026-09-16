@@ -16,8 +16,10 @@
 
 # Dynamic files directories
 /storage/*
+!/storage/.npmkeep
 !/storage/uploads/
 !/storage/uploads/.gitignore
+!/storage/uploads/.npmkeep
 
 # Node modules
 /node_modules/

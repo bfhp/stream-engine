@@ -57,6 +57,21 @@ Trix, and Vite. PHPUnit and Vitest provide the backend and frontend test suites.
 The included Docker Compose environment runs Nginx, PHP-FPM, MariaDB,
 Memcached, and MinIO.
 
+## npm release archive
+
+The public [`@bfhp/stream-engine`](https://www.npmjs.com/package/@bfhp/stream-engine)
+package is a release archive for the complete CMS, not an importable JavaScript
+library. To unpack a release into a new project directory:
+
+```bash
+npm pack @bfhp/stream-engine@0.2.0
+mkdir stream-engine
+tar -xzf bfhp-stream-engine-0.2.0.tgz --strip-components=1 -C stream-engine
+cd stream-engine
+```
+
+Then install and start the application using the Docker instructions below.
+
 ## Quick start with Docker
 
 You need Docker with the Compose plugin. From the repository root, build the

@@ -1,12 +1,33 @@
 {
-  "name": "stream-engine",
+  "name": "@bfhp/stream-engine",
   "version": "0.2.0",
-  "description": "",
-  "main": "index.js",
+  "description": "A modular content management system built with PHP and TypeScript.",
   "type": "module",
-  "directories": {
-    "test": "tests"
-  },
+  "files": [
+    ".env.example",
+    "CHANGELOG.md",
+    "LICENSE",
+    "README.md",
+    "assets-src",
+    "bin",
+    "composer.json",
+    "composer.lock",
+    "docker-compose.yml",
+    "docs",
+    "migrations",
+    "nginx",
+    "php",
+    "public",
+    "resources",
+    "src",
+    "storage/.npmkeep",
+    "storage/uploads/.npmkeep",
+    "tsconfig.json",
+    "views",
+    "vite-build-data.ts",
+    "vite.config.ts",
+    "vitest.config.ts"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -18,13 +39,23 @@
     "type": "git",
     "url": "git+https://github.com/bfhp/stream-engine.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "cms",
+    "php",
+    "typescript",
+    "content-management",
+    "forum",
+    "community"
+  ],
+  "author": "bfhp",
+  "license": "LGPL-3.0-only",
   "bugs": {
     "url": "https://github.com/bfhp/stream-engine/issues"
   },
   "homepage": "https://github.com/bfhp/stream-engine#readme",
+  "publishConfig": {
+    "access": "public"
+  },
   "devDependencies": {
     "@mantine/core": "^8.3.15",
     "@mantine/hooks": "^8.3.15",
