@@ -301,6 +301,7 @@ class StreamEngine
         $twig->addGlobal('locale', $this->tm->getLocale());
 
         $twig->addFunction(new TwigFunction('trans', [$this->tm, 'trans']));
+        $twig->addFunction(new TwigFunction('action_url', [$this->urlGenerator, 'action']));
 
         $router = new Router($this->pageTree);
 
@@ -356,12 +357,6 @@ class StreamEngine
 
             $pageContent['user'] = $currentUser;
             $pageContent['site_name'] = $this->settings->getString('site_name');
-            $pageContent['searchUrl'] = $this->urlGenerator->action('search.results');
-            $pageContent['messagesUrl'] = $this->urlGenerator->action('messages.inbox');
-            $pageContent['profileUrl'] = $this->urlGenerator->action('profile.show');
-            $pageContent['registerUrl'] = $this->urlGenerator->action('user.register');
-            $pageContent['passwordRecoveryUrl'] = $this->urlGenerator->action('user.retrieve');
-            $pageContent['feedbackUrl'] = $this->urlGenerator->action('feedback.show');
             $pageContent['siteUrl'] = $this->config->siteUrl();
             $pageContent['locale'] = $this->settings->getString('locale');
             $pageContent['url'] = sprintf('https://%s%s', $_SERVER['HTTP_HOST'], $_SERVER['REQUEST_URI']);

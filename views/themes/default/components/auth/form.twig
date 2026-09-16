@@ -36,6 +36,7 @@
                                 {% endblock %}
 
                                 {% block auth_forgot %}
+                                    {% set passwordRecoveryUrl = action_url('user.retrieve') %}
                                     {% if passwordRecoveryUrl %}
                                     <div class="mb-3 text-end">
                                         <a href="{{ passwordRecoveryUrl }}" class="small">{{ trans('view.auth.forgot_password') }}</a>
@@ -53,6 +54,7 @@
                         {% endblock %}
 
                         {% block auth_footer %}
+                            {% set registerUrl = action_url('user.register') %}
                             {% if registerUrl %}
                             <div class="text-center mt-3">
                                 {{ trans('view.auth.no_account') }}

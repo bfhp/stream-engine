@@ -13,11 +13,17 @@ use Twig\TwigFunction;
 final class AuthenticatedNavTest extends TestCase
 {
     private Environment $twig;
+    /** @var array<string, ?string> */
+    private array $actionUrls = [];
 
     protected function setUp(): void
     {
         $this->twig = new Environment(new FilesystemLoader(__DIR__.'/../../views/themes/default'));
         $this->twig->addFunction(new TwigFunction('trans', static fn (string $key): string => $key));
+        $this->twig->addFunction(new TwigFunction(
+            'action_url',
+            fn (string $action): ?string => $this->actionUrls[$action] ?? null,
+        ));
     }
 
     public function testMessagesButtonUsesResolvedInboxUrl(): void
@@ -57,9 +63,12 @@ final class AuthenticatedNavTest extends TestCase
 
     private function render(?string $messagesUrl = '/messages/', ?string $profileUrl = '/profile/'): string
     {
+        $this->actionUrls = [
+            'messages.inbox' => $messagesUrl,
+            'profile.show' => $profileUrl,
+        ];
+
         return $this->twig->render('components/nav/user/authenticated.twig', [
-            'messagesUrl' => $messagesUrl,
-            'profileUrl' => $profileUrl,
             'user' => new User(id: 42, email: '', nick: 'User', avatarUrl: '/avatar.svg'),
             'userMenu' => [],
         ]);

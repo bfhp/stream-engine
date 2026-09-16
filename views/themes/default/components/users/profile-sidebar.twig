@@ -11,6 +11,8 @@
    authorRatingHint are also present (user.show's own view data) and falls
    back to the "not calculated yet" stub otherwise (blog-post.show.twig
    doesn't compute an aggregate author rating). #}
+{% set profileUrl = action_url('profile.show') %}
+{% set messagesUrl = action_url('messages.inbox') %}
 {% if profileUser %}
 
     {% block profile_card %}
