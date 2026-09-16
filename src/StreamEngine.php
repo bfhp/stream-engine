@@ -359,7 +359,6 @@ class StreamEngine
             $pageContent['site_name'] = $this->settings->getString('site_name');
             $pageContent['siteUrl'] = $this->config->siteUrl();
             $pageContent['locale'] = $this->settings->getString('locale');
-            $pageContent['url'] = sprintf('https://%s%s', $_SERVER['HTTP_HOST'], $_SERVER['REQUEST_URI']);
             $pageContent['widgets'] = $this->widgets->placements();
 
         }
