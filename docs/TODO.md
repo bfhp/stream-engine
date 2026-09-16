@@ -79,8 +79,6 @@ found.
 - The CSRF audit is included in PHPUnit (`tests/Security/CsrfCoverageTest.php`),
   runs with `composer test`, and can be run separately with
   `composer audit:csrf`.
-- Run PHPUnit, Vitest, TypeScript, Pint, the Vite build, and the CSRF audit in
-  CI.
 - Do not ignore an application's `composer.lock`: PHP dependencies must be as
   reproducible as npm dependencies installed through `package-lock.json`.
 - Add `.env.example` and document required settings in `README.md`.

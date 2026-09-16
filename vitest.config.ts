@@ -30,6 +30,10 @@ export default defineConfig({
         // dataset, createElement-based escaping. jsdom, not node.
         environment: "jsdom",
         include: ["tests/**/*.test.ts"],
+        // Each worker loads jsdom and the build-data plugins. Capping the pool
+        // keeps CI stable on runners that report more CPUs than they can
+        // sustain concurrently.
+        maxWorkers: 2,
         // No globals: tests import describe/it/expect explicitly, so the
         // bare tsconfig.json needs no "types" entry to typecheck them.
         globals: false,
