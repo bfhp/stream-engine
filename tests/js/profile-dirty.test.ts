@@ -27,7 +27,7 @@ afterEach(() => {
     api.mockReset();
 });
 
-const DIRTY = "Есть несохранённые изменения.";
+const DIRTY = "There are unsaved changes.";
 
 type Refs = {
     form: HTMLFormElement;
@@ -137,7 +137,7 @@ describe("profile form dirty tracking", () => {
         expect(status.textContent).toBe(DIRTY);
 
         form.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
-        await vi.waitFor(() => expect(status.textContent).toBe("Сохранено."));
+        await vi.waitFor(() => expect(status.textContent).toBe("Saved"));
 
         // The new value is the baseline now - re-checking must not report dirty.
         edit(nick);

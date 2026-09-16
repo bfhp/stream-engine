@@ -93,7 +93,7 @@ describe("autoload", () => {
         await load("ма");
 
         expect(fetchMock).not.toHaveBeenCalled();
-        expect(results().textContent).toContain("Слишком короткий запрос");
+        expect(results().textContent).toContain("Too short a request.");
     });
 
     it("trims before measuring", async () => {
@@ -170,7 +170,7 @@ describe("the results", () => {
 
         await load("сбор");
 
-        expect(results().textContent).toContain("Запись в сообществе");
+        expect(results().textContent).toContain("Community recording");
     });
 
     it("uses comment text as the label when there is no title", async () => {
@@ -208,7 +208,7 @@ describe("the results", () => {
 
         await load("комментарий");
 
-        expect(results().querySelector("a")?.textContent?.trim()).toBe("Материал #42");
+        expect(results().querySelector("a")?.textContent?.trim()).toBe("Material #42");
     });
 
     it("replaces the server's loading spinner", async () => {
@@ -226,7 +226,7 @@ describe("the results", () => {
 
         await load("несуществующее");
 
-        expect(results().textContent).toContain("Ничего не найдено");
+        expect(results().textContent).toContain("Nothing found.");
     });
 
     it("treats a malformed payload as nothing found", async () => {
@@ -234,7 +234,7 @@ describe("the results", () => {
 
         await load("магия");
 
-        expect(results().textContent).toContain("Ничего не найдено");
+        expect(results().textContent).toContain("Nothing found.");
     });
 
     it("escapes a title", async () => {
@@ -288,7 +288,7 @@ describe("failures", () => {
         await load("магия");
 
         expect(toast).toHaveBeenCalledWith(
-            expect.objectContaining({ type: "warning", message: "Слишком много запросов" })
+            expect.objectContaining({ type: "warning", message: "Too many requests." })
         );
     });
 
@@ -298,15 +298,15 @@ describe("failures", () => {
         await load("магия");
 
         expect(toast).toHaveBeenCalledWith(
-            expect.objectContaining({ type: "danger", message: "Ошибка поиска" })
+            expect.objectContaining({ type: "danger", message: "Search error" })
         );
     });
 
     it("offers retry instead of leaving the loading placeholder after failure", async () => {
         fetchMock.mockResolvedValue({ ok: false, status: 500 });
         await load("магия");
-        expect(results().textContent).toContain("Не удалось загрузить результаты");
-        expect(document.querySelector("button")?.textContent).toBe("Повторить загрузку");
+        expect(results().textContent).toContain("Unable to download the results");
+        expect(document.querySelector("button")?.textContent).toBe("Try again");
     });
 
     it("reports a network failure", async () => {
@@ -316,7 +316,7 @@ describe("failures", () => {
         await load("магия");
 
         expect(toast).toHaveBeenCalledWith(
-            expect.objectContaining({ type: "danger", message: "Ошибка сети" })
+            expect.objectContaining({ type: "danger", message: "Network error" })
         );
         expect(logged).toHaveBeenCalled();
     });
@@ -368,7 +368,7 @@ describe("pagination", () => {
         await load("магия");
         const button = document.querySelector("button")!;
         button.click();
-        await vi.waitFor(() => expect(button.textContent).toBe("Повторить загрузку"));
+        await vi.waitFor(() => expect(button.textContent).toBe("Try again"));
         expect(results().querySelectorAll("a")).toHaveLength(1);
         button.click();
         await vi.waitFor(() => expect(results().querySelectorAll("a")).toHaveLength(2));
@@ -402,11 +402,11 @@ describe("loading indicator", () => {
             const status = document.querySelector<HTMLElement>('[role="status"]')!;
             expect(status.hidden).toBe(false);
             expect(status.querySelector('.spinner-border')).not.toBeNull();
-            expect(status.textContent).toContain('Ищем материалы');
+            expect(status.textContent).toContain('Looking for materials');
             const timerIndex = timer.mock.calls.findIndex(call => call[1] === 3000);
             expect(timerIndex).toBeGreaterThanOrEqual(0);
             (timer.mock.calls[timerIndex][0] as () => void)();
-            expect(status.textContent).toContain('Пожалуйста, подождите');
+            expect(status.textContent).toContain('Please wait');
             finish({ ok: true, json: async () => ({ data: [] }) });
             await vi.waitFor(() => expect(status.hidden).toBe(true));
             expect(clearTimer).toHaveBeenCalledWith(timer.mock.results[timerIndex].value);

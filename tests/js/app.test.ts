@@ -371,7 +371,7 @@ describe("initFavorite()", () => {
 
         toggle.click();
 
-        expect(confirmTitle.textContent).toBe("Убрать из избранного");
+        expect(confirmTitle.textContent).toBe("Remove from the elect");
         // Nothing sent until the dialog is answered.
         expect(fetchMock).not.toHaveBeenCalled();
     });

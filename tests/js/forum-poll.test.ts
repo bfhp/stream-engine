@@ -340,16 +340,16 @@ describe("updatePollSelectionUi()", () => {
 
         updatePollSelectionUi(form);
 
-        expect(form.querySelector("[data-poll-selection-hint]")!.textContent).toBe("Выбрано 1 из 2");
+        expect(form.querySelector("[data-poll-selection-hint]")!.textContent).toBe("Selected 1 from 2");
     });
 
     it("writes a plain hint on a single-choice poll", () => {
         updatePollSelectionUi(form);
-        expect(form.querySelector("[data-poll-selection-hint]")!.textContent).toBe("Выберите вариант");
+        expect(form.querySelector("[data-poll-selection-hint]")!.textContent).toBe("Choose an option");
 
         inputs()[0].checked = true;
         updatePollSelectionUi(form);
-        expect(form.querySelector("[data-poll-selection-hint]")!.textContent).toBe("Вариант выбран");
+        expect(form.querySelector("[data-poll-selection-hint]")!.textContent).toBe("Option selected");
     });
 });
 
@@ -367,8 +367,8 @@ describe("renderPollResults()", () => {
             votersCount: 4,
         }));
 
-        expect(stat(1)).toBe("75% · 3 голоса");
-        expect(stat(2)).toBe("25% · 1 голос");
+        expect(stat(1)).toBe("75% · 3 votes");
+        expect(stat(2)).toBe("25% · 1 vote");
         expect(barWidth(1)).toBe("75%");
     });
 
@@ -388,8 +388,8 @@ describe("renderPollResults()", () => {
         }));
 
         // Everyone picked both: 100% each, not 50%.
-        expect(stat(1)).toBe("100% · 3 голоса");
-        expect(stat(2)).toBe("100% · 3 голоса");
+        expect(stat(1)).toBe("100% · 3 votes");
+        expect(stat(2)).toBe("100% · 3 votes");
     });
 
     it("never renders more than 100% when votes exceed voters", () => {
@@ -411,7 +411,7 @@ describe("renderPollResults()", () => {
         // bar's inline width, which the browser drops silently.
         renderPollResults(card, poll({ votersCount: 0 }));
 
-        expect(stat(1)).toBe("0% · 0 голосов");
+        expect(stat(1)).toBe("0% · 0 votes");
         expect(barWidth(1)).toBe("0%");
     });
 
@@ -438,7 +438,7 @@ describe("renderPollResults()", () => {
             votersCount: null,
         }));
 
-        expect(stat(1)).toBe("0% · 0 голосов");
+        expect(stat(1)).toBe("0% · 0 votes");
     });
 
     it("writes the footer totals with the right plural", () => {
@@ -451,9 +451,9 @@ describe("renderPollResults()", () => {
         }));
 
         expect(card.querySelector("[data-poll-total-votes] .font-monospace")!.textContent)
-            .toBe("22 голоса");
+            .toBe("22 votes");
         expect(card.querySelector("[data-poll-voters] .font-monospace")!.textContent)
-            .toBe("22 участника");
+            .toBe("22 participants");
     });
 
     it("leaves the voters line alone when the count is withheld", () => {

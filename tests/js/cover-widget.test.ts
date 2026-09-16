@@ -174,7 +174,7 @@ describe("choosing a file", () => {
 
         await choose();
 
-        expect(onError).toHaveBeenCalledWith("Не удалось загрузить изображение");
+        expect(onError).toHaveBeenCalledWith("I was unable to upload the image.");
     });
 });
 

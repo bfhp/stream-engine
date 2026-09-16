@@ -260,7 +260,7 @@ describe("initMessengerGlobal()", () => {
 
         expect(toast).toHaveBeenCalledTimes(1);
         expect(toast).toHaveBeenCalledWith(
-            expect.objectContaining({ type: "info", message: "Новое сообщение: привет" })
+            expect.objectContaining({ type: "info", message: "New message: привет" })
         );
     });
 

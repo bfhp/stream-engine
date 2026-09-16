@@ -121,9 +121,9 @@ describe("formatConvTime()", () => {
 
     it("shows a short weekday for the last six days", () => {
         // Saturday 14 March 2026.
-        expect(formatConvTime(at(2026, 3, 14), NOW)).toBe("Сб");
+        expect(formatConvTime(at(2026, 3, 14), NOW)).toBe("Sat");
         // Monday 9 March, six days back - still inside the window.
-        expect(formatConvTime(at(2026, 3, 9), NOW)).toBe("Пн");
+        expect(formatConvTime(at(2026, 3, 9), NOW)).toBe("Mon");
     });
 
     it("switches to a date on the seventh day", () => {
@@ -142,15 +142,15 @@ describe("formatConvTime()", () => {
 
 describe("formatDayLabel()", () => {
     it("names today and yesterday", () => {
-        expect(formatDayLabel(at(2026, 3, 15, 9), NOW)).toBe("Сегодня");
-        expect(formatDayLabel(at(2026, 3, 14, 9), NOW)).toBe("Вчера");
+        expect(formatDayLabel(at(2026, 3, 15, 9), NOW)).toBe("Today.");
+        expect(formatDayLabel(at(2026, 3, 14, 9), NOW)).toBe("Yesterday.");
     });
 
     it("spells out the weekday for the rest of the week, capitalized", () => {
         // The constant holds them lower-cased for use mid-sentence; this is a
         // heading, so the first letter is raised here.
-        expect(formatDayLabel(at(2026, 3, 13), NOW)).toBe("Пятница");
-        expect(formatDayLabel(at(2026, 3, 9), NOW)).toBe("Понедельник");
+        expect(formatDayLabel(at(2026, 3, 13), NOW)).toBe("Friday");
+        expect(formatDayLabel(at(2026, 3, 9), NOW)).toBe("Monday");
     });
 
     it("falls back to a full date from a week back", () => {
@@ -371,19 +371,19 @@ describe("computeReadStatus()", () => {
 
 describe("bytesToLabel()", () => {
     it("uses bytes below a kilobyte", () => {
-        expect(bytesToLabel(0)).toBe("0 Б");
-        expect(bytesToLabel(1023)).toBe("1023 Б");
+        expect(bytesToLabel(0)).toBe("0 bytes");
+        expect(bytesToLabel(1023)).toBe("1023 bytes");
     });
 
     it("uses whole kilobytes up to a megabyte", () => {
-        expect(bytesToLabel(1024)).toBe("1 КБ");
-        expect(bytesToLabel(1536)).toBe("2 КБ");
-        expect(bytesToLabel(1024 * 1024 - 1)).toBe("1024 КБ");
+        expect(bytesToLabel(1024)).toBe("1 kilobyte");
+        expect(bytesToLabel(1536)).toBe("2 kilobytes");
+        expect(bytesToLabel(1024 * 1024 - 1)).toBe("1024 kilobytes");
     });
 
     it("uses one decimal from a megabyte up", () => {
-        expect(bytesToLabel(1024 * 1024)).toBe("1.0 МБ");
-        expect(bytesToLabel(1024 * 1024 * 3 + 512 * 1024)).toBe("3.5 МБ");
+        expect(bytesToLabel(1024 * 1024)).toBe("1.0 megabyte");
+        expect(bytesToLabel(1024 * 1024 * 3 + 512 * 1024)).toBe("3.5 megabytes");
     });
 
     /**
@@ -395,6 +395,14 @@ describe("bytesToLabel()", () => {
      */
     it("agrees with the PHP side at every tier boundary", () => {
         expect([0, 512, 1023, 1024, 1536, 1024 * 1024 - 1, 1024 * 1024].map(bytesToLabel))
-            .toEqual(["0 Б", "512 Б", "1023 Б", "1 КБ", "2 КБ", "1024 КБ", "1.0 МБ"]);
+            .toEqual([
+                "0 bytes",
+                "512 bytes",
+                "1023 bytes",
+                "1 kilobyte",
+                "2 kilobytes",
+                "1024 kilobytes",
+                "1.0 megabyte",
+            ]);
     });
 });

@@ -33,7 +33,7 @@ describe("comment quotes", () => {
         const html = renderCommentPreviewHtml(draft);
 
         expect(quote(html)).toBe(1);
-        expect(html).toContain("Иван писал(а):");
+        expect(html).toContain("Иван wrote:");
         expect(html).toContain("первая строка<br>вторая строка");
         expect(html.endsWith("мой ответ")).toBe(true);
         // The quoted lines lose their "> " markers - that is the whole point
@@ -78,10 +78,10 @@ describe("comment quotes", () => {
      * in "писал(а):". Emitting a blockquote for it would swallow the line.
      */
     it("leaves a header with no quoted body as plain text", () => {
-        const html = renderCommentPreviewHtml("> Иван писал(а):\nне цитата");
+        const html = renderCommentPreviewHtml("> Иван wrote:\nне цитата");
 
         expect(quote(html)).toBe(0);
-        expect(html).toContain("&gt; Иван писал(а):");
+        expect(html).toContain("&gt; Иван wrote:");
     });
 
     it("leaves a quote that is not at the start as plain text", () => {
@@ -90,7 +90,7 @@ describe("comment quotes", () => {
         const html = renderCommentPreviewHtml("сначала мой текст\n" + buildQuoteBlock("Иван", "привет"));
 
         expect(quote(html)).toBe(0);
-        expect(html).toContain("&gt; Иван писал(а):");
+        expect(html).toContain("&gt; Иван wrote:");
         expect(html).toContain("&gt; привет");
     });
 
@@ -143,7 +143,7 @@ describe("comment quotes", () => {
         // pasted from elsewhere need not - and a parser that only knew LF
         // would treat the whole quote as one unmatched line.
         for (const eol of ["\n", "\r\n", "\r"]) {
-            const draft = `> Иван писал(а):${eol}> привет${eol}${eol}ответ`;
+            const draft = `> Иван wrote:${eol}> привет${eol}${eol}ответ`;
             const html = renderCommentPreviewHtml(draft);
 
             expect(quote(html), `line ending ${JSON.stringify(eol)}`).toBe(1);
@@ -220,7 +220,7 @@ describe("comment quotes", () => {
     describe("buildQuoteBlock()", () => {
         it("prefixes every line and ends with a blank one", () => {
             expect(buildQuoteBlock("Иван", "первая\nвторая"))
-                .toBe("> Иван писал(а):\n> первая\n> вторая\n\n");
+                .toBe("> Иван wrote:\n> первая\n> вторая\n\n");
         });
 
         it("keeps a blank line inside the quoted text as a bare marker", () => {
@@ -234,7 +234,7 @@ describe("comment quotes", () => {
 
         it("does not escape - that happens at render time", () => {
             // It writes into a textarea, where markup is text already.
-            expect(buildQuoteBlock("<b>", "<i>")).toBe("> <b> писал(а):\n> <i>\n\n");
+            expect(buildQuoteBlock("<b>", "<i>")).toBe("> <b> wrote:\n> <i>\n\n");
         });
     });
 });

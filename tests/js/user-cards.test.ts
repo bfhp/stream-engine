@@ -49,7 +49,7 @@ describe("renderFeedCardRating()", () => {
     it("says there are no ratings rather than showing zero", () => {
         const html = renderFeedCardRating(card({ ratingCount: 0, ratingAverage: 0 }));
 
-        expect(html).toContain("нет оценок");
+        expect(html).toContain("no evaluations");
         expect(html).not.toContain("0.0");
     });
 
@@ -242,7 +242,7 @@ describe("renderFeedPostCard()", () => {
         const html = renderFeedPostCard(card({ audioTrackId: "post-10-track-25" }), false);
 
         expect(html).toContain('data-audio-play-track-id="post-10-track-25"');
-        expect(html).toContain("Слушать");
+        expect(html).toContain("Listen.");
     });
 });
 
@@ -302,14 +302,14 @@ describe("pagination()", () => {
 
         // A span, not a disabled anchor - a disabled `<a>` is still
         // clickable, and page 0 is a 404.
-        expect(html).toMatch(/<span[^>]*disabled[^>]*>Назад<\/span>/);
+        expect(html).toMatch(/<span[^>]*disabled[^>]*>Previous<\/span>/);
         expect(html).toContain('href="/users/?page=2"');
     });
 
     it("disables the next control on the last page", () => {
         const html = pagination({ currentPage: 3, totalPages: 3 }, "/users/", "");
 
-        expect(html).toMatch(/<span[^>]*disabled[^>]*>Вперед<\/span>/);
+        expect(html).toMatch(/<span[^>]*disabled[^>]*>Next<\/span>/);
         expect(html).toContain('href="/users/?page=2"');
     });
 
@@ -323,7 +323,7 @@ describe("pagination()", () => {
 
     it("names the current position", () => {
         expect(pagination({ currentPage: 2, totalPages: 7 }, "/users/", ""))
-            .toContain("Страница 2 из 7");
+            .toContain("Page 2 of 7");
     });
 
     it("carries the filter into both links", () => {

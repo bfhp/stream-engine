@@ -152,7 +152,7 @@ describe("planToasts()", () => {
         planToasts([conversation(1, 1, { id: 100 })], seen);
         const toasts = planToasts([conversation(1, 2, { id: 101, text: "ещё" })], seen);
 
-        expect(toasts).toEqual(["Новое сообщение: ещё"]);
+        expect(toasts).toEqual(["New message: ещё"]);
     });
 
     it("says nothing about your own message coming back around", () => {
@@ -206,7 +206,7 @@ describe("planToasts()", () => {
             seen,
         );
 
-        expect(toasts).toEqual(["Новое сообщение: смотри тут"]);
+        expect(toasts).toEqual(["New message: смотри тут"]);
     });
 
     it("reports one toast per conversation that moved", () => {
@@ -221,7 +221,7 @@ describe("planToasts()", () => {
             seen,
         );
 
-        expect(toasts).toEqual(["Новое сообщение: первое", "Новое сообщение: третье"]);
+        expect(toasts).toEqual(["New message: первое", "New message: третье"]);
     });
 
     it("keeps a per-conversation watermark rather than one global id", () => {
@@ -234,6 +234,6 @@ describe("planToasts()", () => {
             seen,
         );
 
-        expect(toasts).toEqual(["Новое сообщение: тихий чат"]);
+        expect(toasts).toEqual(["New message: тихий чат"]);
     });
 });

@@ -1,4 +1,4 @@
-import { trans } from "./i18n";
+import { transChoice } from "./i18n";
 
 /* ==========================================================================
    File size labels
@@ -22,8 +22,14 @@ import { trans } from "./i18n";
    ========================================================================== */
 
 export function bytesToLabel(bytes: number): string {
-    if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} ${trans("js.common.megabyte")}`;
-    if (bytes >= 1024) return `${Math.round(bytes / 1024)} ${trans("js.common.kilobyte")}`;
+    if (bytes >= 1024 * 1024) {
+        const megabytes = bytes / (1024 * 1024);
+        return `${megabytes.toFixed(1)} ${transChoice("js.common.megabyte", megabytes)}`;
+    }
+    if (bytes >= 1024) {
+        const kilobytes = Math.round(bytes / 1024);
+        return `${kilobytes} ${transChoice("js.common.kilobyte", kilobytes)}`;
+    }
 
-    return `${bytes} ${trans("js.common.byte")}`;
+    return `${bytes} ${transChoice("js.common.byte", bytes)}`;
 }
