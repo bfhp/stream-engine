@@ -1,7 +1,7 @@
 {
   "name": "@bfhp/stream-engine",
   "version": "0.2.0",
-  "description": "A modular content management system built with PHP and TypeScript.",
+  "description": "Yet another CMS",
   "type": "module",
   "files": [
     ".env.example",
