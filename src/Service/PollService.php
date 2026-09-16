@@ -188,7 +188,7 @@ class PollService
 
         $poll = $this->repository->findById($pollId);
         if ($poll === null) {
-            throw new ValidationException($this->tm->trans('poll.not_found'), 404, 'not_found');
+            throw new NotFoundException($this->tm->trans('poll.not_found'));
         }
 
         $feed = $this->feedService->getFeedById($poll->feedId, $user);
@@ -223,7 +223,7 @@ class PollService
 
         $poll = $this->repository->findById($pollId);
         if ($poll === null) {
-            throw new ValidationException($this->tm->trans('poll.not_found'), 404, 'not_found');
+            throw new NotFoundException($this->tm->trans('poll.not_found'));
         }
 
         // Throws NotFoundException/ForbiddenException if the underlying

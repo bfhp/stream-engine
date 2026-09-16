@@ -409,7 +409,7 @@ class FeedService
 
         $parent = $this->repository->findById($parentId, $user);
         if (! $parent) {
-            throw new ValidationException($this->tm->trans('feed.parent_not_found'), 404, 'not_found');
+            throw new NotFoundException($this->tm->trans('feed.parent_not_found'));
         }
 
         $normalizedContent = $this->normalizeCommentContent($content);
@@ -427,7 +427,7 @@ class FeedService
 
         $comment = $this->repository->findById($id, $user);
         if (! $comment) {
-            throw new ValidationException($this->tm->trans('feed.not_found'), 404, 'not_found');
+            throw new NotFoundException($this->tm->trans('feed.not_found'));
         }
 
         $this->decorateFeed($comment);
@@ -463,7 +463,7 @@ class FeedService
 
         $comment = $this->repository->findById($commentId, $user);
         if (! $comment || ! in_array($comment->type, ['comment', 'forum-post'], true)) {
-            throw new ValidationException($this->tm->trans('feed.not_found'), 404, 'not_found');
+            throw new NotFoundException($this->tm->trans('feed.not_found'));
         }
 
         if (! $this->accessService->canEditFeed($user, $comment)) {
@@ -493,7 +493,7 @@ class FeedService
 
         $updated = $this->repository->findById($commentId, $user);
         if (! $updated) {
-            throw new ValidationException($this->tm->trans('feed.not_found'), 404, 'not_found');
+            throw new NotFoundException($this->tm->trans('feed.not_found'));
         }
 
         $this->decorateFeed($updated);
@@ -530,7 +530,7 @@ class FeedService
 
         $comment = $this->repository->findById($commentId, $user);
         if (! $comment) {
-            throw new ValidationException($this->tm->trans('feed.not_found'), 404, 'not_found');
+            throw new NotFoundException($this->tm->trans('feed.not_found'));
         }
 
         if ($comment->type !== 'comment') {
@@ -567,7 +567,7 @@ class FeedService
 
         $feed = $this->repository->findById($feedId, $user);
         if (! $feed) {
-            throw new ValidationException($this->tm->trans('feed.rating_target_not_found'), 404, 'not_found');
+            throw new NotFoundException($this->tm->trans('feed.rating_target_not_found'));
         }
 
         $this->ratingRepository->submit($feedId, $user->id, $value);
@@ -648,7 +648,7 @@ class FeedService
 
         $feed = $this->repository->findById($feedId, $user);
         if (! $feed) {
-            throw new ValidationException($this->tm->trans('feed.favorite_target_not_found'), 404, 'not_found');
+            throw new NotFoundException($this->tm->trans('feed.favorite_target_not_found'));
         }
 
         $this->favoriteRepository->add($feedId, $user->id);

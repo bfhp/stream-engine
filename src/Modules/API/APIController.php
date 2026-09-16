@@ -91,7 +91,7 @@ class APIController extends AbstractController
             'feed.readingProgress' => $this->handleReadingProgressRequest((int) ($args['slug'] ?? 0)),
             'auth.session' => $this->handleApiAuthRequest(),
             'cron.trigger' => $this->handleCronRequest(),
-            default => throw new ValidationException('Unknown API action', 404),
+            default => throw new NotFoundException('Unknown API action'),
         };
     }
 
@@ -406,7 +406,7 @@ class APIController extends AbstractController
 
         $poll = $this->pollService->getPollForFeed($feedId, $this->context->user);
         if ($poll === null) {
-            throw new ValidationException('No poll for this feed', 404, 'not_found');
+            throw new NotFoundException('No poll for this feed');
         }
 
         $input = json_decode(file_get_contents('php://input'), true);

@@ -1674,7 +1674,7 @@ class ForumsController extends AbstractController
             'forums.topic-read' => $this->handleTopicReadRequest((int) ($args['topicId'] ?? 0)),
             'forums.topic-create' => $this->handleTopicCreateRequest(),
             'forums.topic-item' => $this->handleTopicItemRequest((int) ($args['id'] ?? 0)),
-            default => throw new ValidationException('Unknown API action', 404),
+            default => throw new NotFoundException('Unknown API action'),
         };
     }
 
@@ -1891,7 +1891,7 @@ class ForumsController extends AbstractController
         // getFeedById() call on a caller-supplied id.
         $topic = $this->feedService->getFeedById($topicId, $this->context->user);
         if ($topic->type !== 'forum-post') {
-            throw new ValidationException('Topic not found', 404, 'not_found');
+            throw new NotFoundException('Topic not found');
         }
 
         $this->feedService->markFeedAsRead($topic->id, $this->context->user);
