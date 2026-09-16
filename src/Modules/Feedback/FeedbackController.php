@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace StreamEngine\Modules\Feedback;
 
+use RuntimeException;
 use StreamEngine\Core\AbstractController;
 use StreamEngine\Core\Config;
 use StreamEngine\Core\Exceptions\ForbiddenException;
@@ -112,7 +113,7 @@ class FeedbackController extends AbstractController
         $secret = $this->config->appSecret();
 
         if ($secret === '') {
-            throw new ValidationException($this->tm->trans('feedback.not_configured'), 500);
+            throw new RuntimeException('Feedback form is not configured: APP_SECRET is empty.');
         }
 
         // honeypot

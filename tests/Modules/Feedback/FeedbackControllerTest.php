@@ -7,6 +7,7 @@ namespace Tests\Modules\Feedback;
 use DateTimeZone;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
+use RuntimeException;
 use StreamEngine\Core\Config;
 use StreamEngine\Core\Exceptions\ValidationException;
 use StreamEngine\Core\PageTree;
@@ -323,11 +324,10 @@ final class FeedbackControllerTest extends TestCase
     {
         $this->appSecret = '';
 
-        // The message matters here: the test above also expects a
-        // ValidationException, so without pinning which one this would pass on
-        // the ladder's rejection and prove nothing about the secret.
-        $this->expectException(ValidationException::class);
-        $this->expectExceptionMessage('Форма обратной связи не настроена');
+        // This is a server misconfiguration, not invalid client input. It must
+        // take the internal-error path so it is logged and hidden in production.
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('APP_SECRET is empty');
 
         $this->post($this->signedButInvalidPayload());
     }
