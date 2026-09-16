@@ -21,7 +21,7 @@ final class ConfiguredInstallerTest extends TestCase
         mkdir($this->directory);
         file_put_contents($this->directory.'/.env', "UNCHANGED=yes\n");
         (new InstallationStateStore($this->directory.'/storage/installation.json'))
-            ->save(InstallationState::start('0.1.0')->complete());
+            ->save(InstallationState::start('0.2.0')->complete());
     }
 
     protected function tearDown(): void

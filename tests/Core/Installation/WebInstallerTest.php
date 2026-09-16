@@ -140,7 +140,7 @@ final class WebInstallerTest extends TestCase
                 $received = $config;
                 $receivedEnvironment = $environment;
 
-                return InstallationState::start('0.1.0')->complete();
+                return InstallationState::start('0.2.0')->complete();
             },
         );
 
@@ -163,7 +163,7 @@ final class WebInstallerTest extends TestCase
             function () use (&$called): InstallationState {
                 $called = true;
 
-                return InstallationState::start('0.1.0')->complete();
+                return InstallationState::start('0.2.0')->complete();
             },
         );
         $input = $this->validInput();

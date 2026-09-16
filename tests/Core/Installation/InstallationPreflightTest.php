@@ -7,6 +7,7 @@ namespace Tests\Core\Installation;
 use PHPUnit\Framework\TestCase;
 use StreamEngine\Core\Installation\InstallationPreflight;
 use StreamEngine\Core\Installation\PreflightCheck;
+use StreamEngine\Core\Installation\ReleaseVersion;
 
 final class InstallationPreflightTest extends TestCase
 {
@@ -23,7 +24,10 @@ final class InstallationPreflightTest extends TestCase
         self::assertTrue($checks['environment']->passed);
         self::assertTrue($checks['storage']->passed);
         self::assertTrue($checks['release']->passed);
-        self::assertStringContainsString('0.1.0', $checks['release']->message);
+        self::assertStringContainsString(
+            ReleaseVersion::fromPackageJson($root.'/package.json'),
+            $checks['release']->message,
+        );
     }
 
     public function testFileWhereDirectoryIsRequiredFailsBeforeInstallation(): void
