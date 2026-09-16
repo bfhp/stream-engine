@@ -16,6 +16,30 @@ use StreamEngine\Core\Config;
  */
 final class ConfigTest extends TestCase
 {
+    public function testCanBeCreatedFromEnvironment(): void
+    {
+        $previous = $_ENV['APP_ENV'] ?? null;
+        $_ENV['APP_ENV'] = 'dev';
+
+        try {
+            self::assertSame('dev', Config::fromEnvironment()->appEnvironment());
+        } finally {
+            if ($previous === null) {
+                unset($_ENV['APP_ENV']);
+            } else {
+                $_ENV['APP_ENV'] = $previous;
+            }
+        }
+    }
+
+    public function testApplicationEnvironmentDefaultsToProduction(): void
+    {
+        self::assertSame('prod', (new Config([]))->appEnvironment());
+        self::assertFalse((new Config([]))->isDevelopment());
+        self::assertTrue((new Config(['APP_ENV' => 'dev']))->isDevelopment());
+        self::assertFalse((new Config(['APP_ENV' => 'development']))->isDevelopment());
+    }
+
     /* ===============================
        Secrets and cron
     =============================== */

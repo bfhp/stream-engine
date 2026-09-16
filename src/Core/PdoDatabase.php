@@ -21,10 +21,12 @@ class PdoDatabase
     // never be assigned and reading it would throw "must not be accessed
     // before initialization". A class-body default is applied regardless.
     private bool $logQueries = true;
+    private bool $development = false;
 
     public function __construct(Config $config, bool $logQueries = true)
     {
         $this->logQueries = $logQueries;
+        $this->development = $config->isDevelopment();
         $this->connect($config);
     }
 
@@ -130,7 +132,7 @@ class PdoDatabase
             if ($this->logQueries) {
                 $this->logQuery($sql, $params, microtime(true) - $start, $e->getMessage());
             }
-            $message = ($_ENV['APP_ENV'] ?? null) === 'dev' ? 'Query failed: '.$e->getMessage() : 'Query failed';
+            $message = $this->development ? 'Query failed: '.$e->getMessage() : 'Query failed';
             throw new RuntimeException($message, 0, $e);
         }
     }

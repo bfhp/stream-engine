@@ -15,7 +15,7 @@ use StreamEngine\Core\PdoDatabase;
 
 final class PdoDatabaseTest extends TestCase
 {
-    private function makeDatabase(PDO $pdo): PdoDatabase
+    private function makeDatabase(PDO $pdo, bool $development = false): PdoDatabase
     {
         $reflection = new ReflectionClass(PdoDatabase::class);
         /** @var PdoDatabase $db */
@@ -26,6 +26,9 @@ final class PdoDatabaseTest extends TestCase
 
         $queryLogProperty = new ReflectionProperty(PdoDatabase::class, 'queryLog');
         $queryLogProperty->setValue($db, []);
+
+        $developmentProperty = new ReflectionProperty(PdoDatabase::class, 'development');
+        $developmentProperty->setValue($db, $development);
 
         return $db;
     }
@@ -179,103 +182,64 @@ final class PdoDatabaseTest extends TestCase
 
     public function testQueryFailureInDevIncludesOriginalMessageAndLogsError(): void
     {
-        $previousEnv = $_ENV['APP_ENV'] ?? null;
-        $_ENV['APP_ENV'] = 'dev';
+        $stmt = $this->createMock(PDOStatement::class);
+        $stmt->expects($this->once())
+            ->method('execute')
+            ->with(['id' => 99])
+            ->willThrowException(new PDOException('broken SQL'));
+
+        $pdo = $this->createMock(PDO::class);
+        $pdo->expects($this->once())->method('prepare')->with('SELECT * FROM users WHERE id = :id')->willReturn($stmt);
+
+        $db = $this->makeDatabase($pdo, development: true);
 
         try {
-            $stmt = $this->createMock(PDOStatement::class);
-            $stmt->expects($this->once())
-                ->method('execute')
-                ->with(['id' => 99])
-                ->willThrowException(new PDOException('broken SQL'));
-
-            $pdo = $this->createMock(PDO::class);
-            $pdo->expects($this->once())->method('prepare')->with('SELECT * FROM users WHERE id = :id')->willReturn($stmt);
-
-            $db = $this->makeDatabase($pdo);
-
-            try {
-                $db->fetchOne('SELECT * FROM users WHERE id = :id', ['id' => 99]);
-                $this->fail('Expected RuntimeException was not thrown');
-            } catch (RuntimeException $e) {
-                $this->assertSame('Query failed: broken SQL', $e->getMessage());
-                $this->assertInstanceOf(PDOException::class, $e->getPrevious());
-            }
-
-            $this->assertCount(1, $db->getQueryLog());
-            $this->assertSame('broken SQL', $db->getQueryLog()[0]['error']);
-        } finally {
-            if ($previousEnv === null) {
-                unset($_ENV['APP_ENV']);
-            } else {
-                $_ENV['APP_ENV'] = $previousEnv;
-            }
+            $db->fetchOne('SELECT * FROM users WHERE id = :id', ['id' => 99]);
+            $this->fail('Expected RuntimeException was not thrown');
+        } catch (RuntimeException $e) {
+            $this->assertSame('Query failed: broken SQL', $e->getMessage());
+            $this->assertInstanceOf(PDOException::class, $e->getPrevious());
         }
+
+        $this->assertCount(1, $db->getQueryLog());
+        $this->assertSame('broken SQL', $db->getQueryLog()[0]['error']);
     }
 
     public function testQueryFailureOutsideDevHidesOriginalMessage(): void
     {
-        $previousEnv = $_ENV['APP_ENV'] ?? null;
-        $_ENV['APP_ENV'] = 'prod';
+        $stmt = $this->createMock(PDOStatement::class);
+        $stmt->expects($this->once())
+            ->method('execute')
+            ->willThrowException(new PDOException('broken SQL'));
 
-        try {
-            $stmt = $this->createMock(PDOStatement::class);
-            $stmt->expects($this->once())
-                ->method('execute')
-                ->willThrowException(new PDOException('broken SQL'));
+        $pdo = $this->createMock(PDO::class);
+        $pdo->expects($this->once())->method('prepare')->with('DELETE FROM users')->willReturn($stmt);
 
-            $pdo = $this->createMock(PDO::class);
-            $pdo->expects($this->once())->method('prepare')->with('DELETE FROM users')->willReturn($stmt);
+        $db = $this->makeDatabase($pdo);
 
-            $db = $this->makeDatabase($pdo);
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Query failed');
 
-            $this->expectException(RuntimeException::class);
-            $this->expectExceptionMessage('Query failed');
-
-            $db->execute('DELETE FROM users');
-        } finally {
-            if ($previousEnv === null) {
-                unset($_ENV['APP_ENV']);
-            } else {
-                $_ENV['APP_ENV'] = $previousEnv;
-            }
-        }
+        $db->execute('DELETE FROM users');
     }
 
-    public function testQueryFailureWithoutAppEnvSetHidesOriginalMessageAndDoesNotWarn(): void
+    public function testQueryFailureDefaultsToHidingOriginalMessage(): void
     {
-        $previousEnv = $_ENV['APP_ENV'] ?? null;
-        unset($_ENV['APP_ENV']);
+        $stmt = $this->createMock(PDOStatement::class);
+        $stmt->expects($this->once())
+            ->method('execute')
+            ->willThrowException(new PDOException('broken SQL'));
 
-        set_error_handler(static function (int $errno, string $errstr): bool {
-            throw new \ErrorException($errstr, 0, $errno);
-        }, E_WARNING);
+        $pdo = $this->createMock(PDO::class);
+        $pdo->expects($this->once())->method('prepare')->with('DELETE FROM users')->willReturn($stmt);
+
+        $db = $this->makeDatabase($pdo);
 
         try {
-            $stmt = $this->createMock(PDOStatement::class);
-            $stmt->expects($this->once())
-                ->method('execute')
-                ->willThrowException(new PDOException('broken SQL'));
-
-            $pdo = $this->createMock(PDO::class);
-            $pdo->expects($this->once())->method('prepare')->with('DELETE FROM users')->willReturn($stmt);
-
-            $db = $this->makeDatabase($pdo);
-
-            try {
-                $db->execute('DELETE FROM users');
-                $this->fail('Expected RuntimeException was not thrown');
-            } catch (RuntimeException $e) {
-                $this->assertSame('Query failed', $e->getMessage());
-            }
-        } finally {
-            restore_error_handler();
-
-            if ($previousEnv === null) {
-                unset($_ENV['APP_ENV']);
-            } else {
-                $_ENV['APP_ENV'] = $previousEnv;
-            }
+            $db->execute('DELETE FROM users');
+            $this->fail('Expected RuntimeException was not thrown');
+        } catch (RuntimeException $e) {
+            $this->assertSame('Query failed', $e->getMessage());
         }
     }
 }

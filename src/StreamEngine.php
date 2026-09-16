@@ -123,14 +123,14 @@ class StreamEngine
     {
         $this->startTime = microtime(true);
         $this->modules = new ModuleRegistry();
-        $this->config = new Config($_ENV);
+        $this->config = Config::fromEnvironment();
 
         $this->db = new PdoDatabase($this->config);
         $this->cache = new Cache(
             servers: [['host' => $this->config->cacheHost(), 'port' => $this->config->cachePort()]],
             prefix: $this->config->cachePrefix()
         );
-        if ($_ENV['APP_ENV'] === 'dev') {
+        if ($this->config->isDevelopment()) {
             $this->cache->flush();
         }
 
@@ -295,7 +295,7 @@ class StreamEngine
 
         $twig = new CachedEnvironment($loader, [
             'cache' => $this->config->twigCacheDir(),
-            'auto_reload' => $_ENV['APP_ENV'] === 'dev',
+            'auto_reload' => $this->config->isDevelopment(),
         ]);
 
         $twig->addGlobal('locale', $this->tm->getLocale());
@@ -404,7 +404,7 @@ class StreamEngine
                 // client's face.
                 $error = ApiErrorResponse::forThrowable(
                     $e,
-                    $_ENV['APP_ENV'] === 'dev',
+                    $this->config->isDevelopment(),
                     $this->tm->trans('error.internal'),
                 );
 
@@ -467,7 +467,11 @@ class StreamEngine
 
         // In production CRON_MODE=os keeps scheduling out of the request path.
         // The web mode is a development/compatibility fallback only.
-        if (CronTrigger::shouldTrigger($this->config->cronMode(), $_ENV['APP_ENV'], CronTrigger::roll())) {
+        if (CronTrigger::shouldTrigger(
+            $this->config->cronMode(),
+            $this->config->appEnvironment(),
+            CronTrigger::roll(),
+        )) {
             self::triggerCronProcess();
         }
 

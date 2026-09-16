@@ -12,6 +12,21 @@ final readonly class Config
 
     }
 
+    public static function fromEnvironment(): self
+    {
+        return new self($_ENV);
+    }
+
+    public function appEnvironment(): string
+    {
+        return (string) ($this->env['APP_ENV'] ?? 'prod');
+    }
+
+    public function isDevelopment(): bool
+    {
+        return $this->appEnvironment() === 'dev';
+    }
+
     // ===== DB =====
 
     public function dbName(): string

@@ -17,6 +17,7 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- Centralized application-environment reads in `Config`, including development-mode behavior in `StreamEngine` and `PdoDatabase`.
 - Canonical links in account emails and user notifications now use the configured `SITE_URL` instead of request host data, with explicit handling when the canonical URL is missing.
 - Redesigned the default user avatar and applied it to users without a custom avatar in the site header.
 - Made article, forum, community, and blog-post routes resolve feeds within their declared type and parent scope instead of selecting an ambiguous global slug match.

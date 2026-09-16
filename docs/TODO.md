@@ -37,15 +37,6 @@ because they became misleading after more tests were added.
 - Decide the rule for group conversations: currently, any participant can
   remove any other participant.
 
-### Routes and canonical URLs without string literals
-
-Public page, versioned API, and resource URL ownership is documented in
-`docs/ROUTING.md`; the remaining work is to strengthen configuration
-boundaries.
-
-- In the same pass, remove direct `$_ENV` reads from `StreamEngine`,
-  `FeedbackController`, and the Twig configuration.
-
 ### Testable boundaries instead of echo/header/exit and shell calls
 
 - Split `StreamEngine::handleRequest()` into method and RBAC validation,
