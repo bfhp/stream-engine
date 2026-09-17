@@ -7,6 +7,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-09-17
+
 ### Added
 
 - A complete favicon set for modern browsers, legacy clients, and Apple touch icons — at long last.
