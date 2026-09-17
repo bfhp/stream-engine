@@ -23,7 +23,15 @@ final class ModuleRegistry
         $registrations = [];
         foreach (\Composer\Autoload\ClassLoader::getRegisteredLoaders() as $loader) {
             foreach (array_keys($loader->getClassMap()) as $class) {
-                if (is_subclass_of($class, ControllerInterface::class)
+                try {
+                    $isController = is_subclass_of($class, ControllerInterface::class);
+                } catch (\Throwable) {
+                    // Optimized classmaps may contain optional integration classes
+                    // whose development-only parents are not installed in production.
+                    continue;
+                }
+
+                if ($isController
                     && (new \ReflectionClass($class))->isInstantiable()) {
                     $registrations[$class] = $class;
                 }

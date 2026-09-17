@@ -7,6 +7,10 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Prevented production startup failures when optimized Composer classmaps contain optional integration classes whose development-only dependencies are not installed.
+
 ## [0.2.1] - 2026-09-17
 
 ### Added

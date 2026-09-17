@@ -171,6 +171,21 @@ final class ModuleAutoloadTest extends TestCase
         self::assertSame('VendorProbe\\Features\\Packaged\\PackagedController', (new ModuleRegistry())->controllerClassFor('Packaged'));
     }
 
+    public function testUnloadableOptionalVendorClassIsIgnored(): void
+    {
+        $directory = $this->root.'/vendor/example/optional/src';
+        mkdir($directory, 0777, true);
+        $file = $directory.'/IntegrationTestCase.php';
+        file_put_contents($file, '<?php namespace OptionalProbe; '
+            .'abstract class IntegrationTestCase extends \\MissingOptionalDependency\\TestCase {}');
+        $this->autoload->addClassMap(['OptionalProbe\\IntegrationTestCase' => $file]);
+
+        $modules = new ModuleRegistry();
+
+        self::assertNotNull($modules->controllerClassFor('Forums'));
+        self::assertNotContains('OptionalProbe\\IntegrationTestCase', $modules->controllerClasses());
+    }
+
     public function testBuiltInControllersAndResourcesAreDiscovered(): void
     {
         $modules = new ModuleRegistry();
