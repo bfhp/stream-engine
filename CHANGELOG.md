@@ -7,6 +7,15 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- A read-only admin catalog of page actions exported by module controllers through `pageActions()`.
+
+### Changed
+
+- Replaced free-form action, feed type, list feed type, and parent ID fields in the Pages editor with searchable selectors while preserving unknown legacy values.
+- Made the feedback page's hint feed optional; pages without a feed now use the configured page name and render without hint content or feed metadata.
+
 ### Fixed
 
 - Prevented production startup failures when optimized Composer classmaps contain optional integration classes whose development-only dependencies are not installed.
