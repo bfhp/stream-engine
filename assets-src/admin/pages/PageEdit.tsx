@@ -14,6 +14,7 @@ import {
 import { notifications } from "@mantine/notifications";
 import { parsePageSettings, type PageSettings } from "../lib/page-settings";
 import { csrfHeaders } from "../../shared/csrf";
+import { FEED_TYPE_LABELS } from "../../shared/feed-types";
 import { trans } from "../../shared/i18n";
 
 type EditablePage = {
@@ -172,6 +173,19 @@ export default function PageEdit() {
         return data;
     }, [actions, page?.action]);
 
+    const feedTypeOptions = useMemo(() => {
+        const options = Object.entries(FEED_TYPE_LABELS).map(([value, label]) => ({
+            value,
+            label: `${label} (${value})`
+        }));
+        const unknownTypes = [page?.feedType, page?.listFeedType]
+            .filter((value): value is string => Boolean(value) && !(value in FEED_TYPE_LABELS))
+            .filter((value, index, values) => values.indexOf(value) === index)
+            .map(value => ({ value, label: `${value} (unknown type)` }));
+
+        return [...unknownTypes, ...options];
+    }, [page?.feedType, page?.listFeedType]);
+
     function update<K extends keyof EditablePage>(key: K, value: EditablePage[K]) {
         setPage(current => current ? { ...current, [key]: value } : current);
     }
@@ -266,15 +280,23 @@ export default function PageEdit() {
                     value={page.parentId}
                     onChange={value => update("parentId", value === "" ? "" : Number(value))}
                 />
-                <TextInput
+                <Select
                     label="Feed type"
-                    value={page.feedType}
-                    onChange={event => update("feedType", event.currentTarget.value)}
+                    searchable
+                    clearable
+                    data={feedTypeOptions}
+                    value={page.feedType || null}
+                    onChange={value => update("feedType", value || "")}
+                    nothingFoundMessage="No feed types found"
                 />
-                <TextInput
+                <Select
                     label="List feed type"
-                    value={page.listFeedType}
-                    onChange={event => update("listFeedType", event.currentTarget.value)}
+                    searchable
+                    clearable
+                    data={feedTypeOptions}
+                    value={page.listFeedType || null}
+                    onChange={value => update("listFeedType", value || "")}
+                    nothingFoundMessage="No feed types found"
                 />
                 <TextInput
                     label="Term vocabulary"
