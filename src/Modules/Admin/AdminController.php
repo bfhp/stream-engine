@@ -9,6 +9,7 @@ use StreamEngine\Core\Exceptions\ForbiddenException;
 use StreamEngine\Core\Exceptions\NotFoundException;
 use StreamEngine\Core\Exceptions\ValidationException;
 use StreamEngine\Core\Formatter;
+use StreamEngine\Core\ModuleRegistry;
 use StreamEngine\Core\PageTree;
 use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Core\RequestContext;
@@ -58,6 +59,7 @@ class AdminController extends AbstractController
         RequestContext $context,
         private readonly AccessService $accessService,
         private readonly TranslationManager $tm,
+        private readonly ModuleRegistry $modules,
     ) {
         parent::__construct($db, $context);
         $this->pageRepository = new PageRepository($db);
@@ -99,6 +101,9 @@ class AdminController extends AbstractController
                 break;
             case 'admin.page':
                 $this->handlePageRequest((int) ($args['id'] ?? 0));
+                break;
+            case 'admin.page-actions':
+                $this->handlePageActionsRequest();
                 break;
             case 'admin.menus':
                 $this->handleMenusRequest();
@@ -178,6 +183,18 @@ class AdminController extends AbstractController
             )
         );
 
+        $pageActionsPageId = $pageTree->getMaxPageId();
+        $pageTree->add(
+            Page::api(
+                id: $pageActionsPageId,
+                parentId: $adminApiPageId,
+                pattern: 'page-actions',
+                requestMethods: ['GET'],
+                action: 'admin.page-actions',
+                accessRule: AccessService::ACCESS_ADMIN,
+            )
+        );
+
         $settingsPageId = $pageTree->getMaxPageId();
         $pageTree->add(
             Page::api(
@@ -250,6 +267,11 @@ class AdminController extends AbstractController
         }
 
         echo Formatter::json($page);
+    }
+
+    private function handlePageActionsRequest(): void
+    {
+        echo Formatter::json(['data' => $this->modules->pageActions()]);
     }
 
     /** @throws ValidationException */

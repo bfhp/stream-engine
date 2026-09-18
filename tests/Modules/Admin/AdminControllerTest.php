@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use StreamEngine\Core\Exceptions\ForbiddenException;
 use StreamEngine\Core\Exceptions\ValidationException;
+use StreamEngine\Core\ModuleRegistry;
 use StreamEngine\Core\PageTree;
 use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Core\RequestContext;
@@ -95,6 +96,7 @@ final class AdminControllerTest extends TestCase
             ),
             $accessService,
             new TranslationManager('ru', 'en'),
+            new ModuleRegistry(),
         );
     }
 
@@ -175,6 +177,28 @@ final class AdminControllerTest extends TestCase
         $this->assertSame(5, $response['data'][0]['id']);
         $this->assertSame('reports.index', $response['data'][0]['action']);
         $this->assertTrue(json_decode($response['data'][0]['settings'], true)['commentsEnabled']);
+    }
+
+    public function testPageActionsReturnsActionsExportedByModules(): void
+    {
+        $module = $this->makeModule();
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+
+        $response = $this->callAndDecode(
+            $module,
+            $this->makeApiPage('admin.page-actions', ['GET'])
+        );
+
+        $adminAction = array_values(array_filter(
+            $response['data'],
+            static fn (array $item): bool => $item['action'] === 'admin.index'
+        ));
+
+        $this->assertSame([[
+            'action' => 'admin.index',
+            'label' => 'Administrator interface',
+            'module' => 'Admin',
+        ]], $adminAction);
     }
 
     public function testCreatingAPageRequiresCsrfBeforeValidation(): void
@@ -556,6 +580,7 @@ final class AdminControllerTest extends TestCase
         foreach ([
             'admin.pages' => ['GET', 'POST'],
             'admin.page' => ['GET', 'PATCH'],
+            'admin.page-actions' => ['GET'],
             'admin.menus' => ['GET', 'POST'],
             'admin.menu' => ['GET', 'PATCH', 'DELETE'],
             'admin.settings' => ['GET', 'POST'],
@@ -594,6 +619,7 @@ final class AdminControllerTest extends TestCase
 
         $list = (new Router($tree))->resolve('/api/v1/admin/pages');
         $item = (new Router($tree))->resolve('/api/v1/admin/pages/42');
+        $pageActions = (new Router($tree))->resolve('/api/v1/admin/page-actions');
         $menus = (new Router($tree))->resolve('/api/v1/admin/menus');
         $menu = (new Router($tree))->resolve('/api/v1/admin/menus/8');
         $settings = (new Router($tree))->resolve('/api/v1/admin/settings');
@@ -602,6 +628,7 @@ final class AdminControllerTest extends TestCase
         $this->assertSame('admin.pages', $list['page']->action ?? null);
         $this->assertSame('admin.page', $item['page']->action ?? null);
         $this->assertSame(['id' => '42'], $item['params']);
+        $this->assertSame('admin.page-actions', $pageActions['page']->action ?? null);
         $this->assertSame('admin.menus', $menus['page']->action ?? null);
         $this->assertSame('admin.menu', $menu['page']->action ?? null);
         $this->assertSame(['id' => '8'], $menu['params']);

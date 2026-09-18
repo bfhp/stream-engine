@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
     Button,
@@ -30,6 +30,12 @@ type EditablePage = {
     changefreq: string;
     updated: number | "";
     accessRule: string;
+};
+
+type PageAction = {
+    action: string;
+    label: string;
+    module: string;
 };
 
 const CHANGEFREQ_OPTIONS = [
@@ -78,6 +84,8 @@ export default function PageEdit() {
     const navigate = useNavigate();
     const isNew = id === "new";
     const [page, setPage] = useState<EditablePage | null>(null);
+    const [actions, setActions] = useState<PageAction[]>([]);
+    const [actionsLoading, setActionsLoading] = useState(false);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
 
@@ -110,6 +118,59 @@ export default function PageEdit() {
             })
             .finally(() => setLoading(false));
     }, [id, isNew]);
+
+    useEffect(() => {
+        const controller = new AbortController();
+
+        setActionsLoading(true);
+        fetch("/api/v1/admin/page-actions", { signal: controller.signal })
+            .then(async response => {
+                if (!response.ok) {
+                    throw new Error(await response.text() || "Failed to load page actions");
+                }
+
+                return response.json();
+            })
+            .then(data => setActions(Array.isArray(data.data) ? data.data : []))
+            .catch(err => {
+                if (err.name !== "AbortError") {
+                    notifications.show({
+                        color: "red",
+                        title: "Error",
+                        message: err.message || "Failed to load page actions"
+                    });
+                }
+            })
+            .finally(() => {
+                if (!controller.signal.aborted) {
+                    setActionsLoading(false);
+                }
+            });
+
+        return () => controller.abort();
+    }, []);
+
+    const actionOptions = useMemo(() => {
+        const grouped = new Map<string, Array<{ value: string; label: string }>>();
+
+        actions.forEach(item => {
+            const options = grouped.get(item.module) || [];
+            options.push({ value: item.action, label: `${item.label} (${item.action})` });
+            grouped.set(item.module, options);
+        });
+
+        const data = Array.from(grouped, ([group, items]) => ({ group, items }));
+        const currentAction = page?.action;
+
+        if (currentAction && !actions.some(item => item.action === currentAction)) {
+            data.unshift({
+                group: "Unavailable",
+                items: [{ value: currentAction, label: `${currentAction} (unknown action)` }]
+            });
+        }
+
+        return data;
+    }, [actions, page?.action]);
 
     function update<K extends keyof EditablePage>(key: K, value: EditablePage[K]) {
         setPage(current => current ? { ...current, [key]: value } : current);
@@ -183,11 +244,16 @@ export default function PageEdit() {
                     value={page.pattern}
                     onChange={event => update("pattern", event.currentTarget.value)}
                 />
-                <TextInput
+                <Select
                     label="Action"
                     required
+                    searchable
+                    data={actionOptions}
                     value={page.action}
-                    onChange={event => update("action", event.currentTarget.value)}
+                    onChange={value => update("action", value || "")}
+                    disabled={actionsLoading}
+                    nothingFoundMessage="No actions found"
+                    allowDeselect={false}
                 />
                 <TextInput
                     label="Page name"

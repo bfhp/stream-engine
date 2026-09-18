@@ -15,6 +15,9 @@ final class ModuleRegistry
     /** @var array<string, string> action => id */
     private array $actionToId = [];
 
+    /** @var list<array{action: string, label: string, module: string}> */
+    private array $pageActions = [];
+
     /** @var array<string, string> feed type => display label */
     private array $feedTypes = [];
 
@@ -48,8 +51,13 @@ final class ModuleRegistry
 
             $this->controllers[$id] = $controllerClass;
 
-            foreach (array_keys($controllerClass::pageActions()) as $action) {
+            foreach ($controllerClass::pageActions() as $action => $label) {
                 $this->registerAction($action, $id);
+                $this->pageActions[] = [
+                    'action' => $action,
+                    'label' => $label,
+                    'module' => $id,
+                ];
             }
 
             foreach ($controllerClass::feedTypes() as $type => $label) {
@@ -62,6 +70,10 @@ final class ModuleRegistry
         }
 
         ksort($this->feedTypes);
+        usort(
+            $this->pageActions,
+            static fn (array $a, array $b): int => [$a['module'], $a['action']] <=> [$b['module'], $b['action']]
+        );
     }
 
     /**
@@ -101,6 +113,12 @@ final class ModuleRegistry
     public function idForAction(string $action): ?string
     {
         return $this->actionToId[$action] ?? null;
+    }
+
+    /** @return list<array{action: string, label: string, module: string}> */
+    public function pageActions(): array
+    {
+        return $this->pageActions;
     }
 
     public function controllerClassFor(string $id): ?string

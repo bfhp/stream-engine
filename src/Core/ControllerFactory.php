@@ -115,6 +115,7 @@ final readonly class ControllerFactory
                     "Cannot resolve untyped parameter \${$param->getName()} of $className"
                 ),
                 $typeName === RequestContext::class => $context,
+                $typeName === ModuleRegistry::class => $this->modules,
                 isset($this->services[$typeName]) => $this->services[$typeName],
                 default => throw new Exception("Unknown dependency: $typeName"),
             };
