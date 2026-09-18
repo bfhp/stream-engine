@@ -168,6 +168,35 @@ final class FeedbackControllerTest extends TestCase
         );
     }
 
+    public function testFeedbackPageDoesNotRequireAHintFeed(): void
+    {
+        $feedService = $this->createMock(FeedService::class);
+        $feedService->expects($this->never())->method('getFeedById');
+        $page = new Page(
+            id: 20,
+            parentId: 1,
+            pattern: 'feedback',
+            pageName: 'Feedback',
+            settings: null,
+            feedType: null,
+            listFeedType: null,
+            feedId: null,
+            commentsEnabled: false,
+            requestMethods: ['GET'],
+            responseType: 'html',
+            accessRule: AccessService::ACCESS_PUBLIC,
+            action: 'feedback.show',
+        );
+
+        $view = $this->makeModule($feedService)->show($page);
+
+        $this->assertSame('Feedback', $view->data['title']);
+        $this->assertSame('', $view->data['hintText']);
+        $this->assertNull($view->data['description']);
+        $this->assertNull($view->data['image']);
+        $this->assertNull($view->data['canonical']);
+    }
+
     private function makePage(): Page
     {
         return Page::api(

@@ -52,7 +52,9 @@ class FeedbackController extends AbstractController
      */
     public function show(Page $page, array $args = []): ?ViewModel
     {
-        $hintFeed = $this->feedService->getFeedById($page->feedId, $this->context->user);
+        $hintFeed = $page->feedId !== null
+            ? $this->feedService->getFeedById($page->feedId, $this->context->user)
+            : null;
 
         $now = time();
 
@@ -60,16 +62,16 @@ class FeedbackController extends AbstractController
             $page,
             'modules/feedback/page.twig',
             [
-                'title' => $hintFeed->title,
-                'description' => $hintFeed->description,
-                'image' => $hintFeed->imageUrl,
-                'canonical' => $hintFeed->canonicalUrl,
+                'title' => $hintFeed?->title ?? $page->pageName,
+                'description' => $hintFeed?->description,
+                'image' => $hintFeed?->imageUrl,
+                'canonical' => $hintFeed?->canonicalUrl,
                 'head_ext' => [
                     '<script type="module" src="/assets/js/feedback.js" defer></script>',
                 ],
                 'hash' => hash_hmac('sha256', (string) $now, $this->config->appSecret()),
                 'time' => $now,
-                'hintText' => $hintFeed->content,
+                'hintText' => $hintFeed?->content ?? '',
                 'success' => $this->context->query->string('success') === '1',
                 'successUrl' => $this->urlGenerator->page(
                     $page,
