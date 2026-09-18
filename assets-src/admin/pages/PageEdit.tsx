@@ -39,6 +39,13 @@ type PageAction = {
     module: string;
 };
 
+type ParentPage = {
+    id: number;
+    pageName?: string | null;
+    action?: string | null;
+    pattern?: string | null;
+};
+
 const CHANGEFREQ_OPTIONS = [
     { value: "", label: "Default" },
     { value: "always", label: "always" },
@@ -87,6 +94,8 @@ export default function PageEdit() {
     const [page, setPage] = useState<EditablePage | null>(null);
     const [actions, setActions] = useState<PageAction[]>([]);
     const [actionsLoading, setActionsLoading] = useState(false);
+    const [parentPages, setParentPages] = useState<ParentPage[]>([]);
+    const [parentPagesLoading, setParentPagesLoading] = useState(false);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
 
@@ -151,6 +160,37 @@ export default function PageEdit() {
         return () => controller.abort();
     }, []);
 
+    useEffect(() => {
+        const controller = new AbortController();
+
+        setParentPagesLoading(true);
+        fetch("/api/v1/admin/pages", { signal: controller.signal })
+            .then(async response => {
+                if (!response.ok) {
+                    throw new Error(await response.text() || "Failed to load parent pages");
+                }
+
+                return response.json();
+            })
+            .then(data => setParentPages(Array.isArray(data.data) ? data.data : []))
+            .catch(err => {
+                if (err.name !== "AbortError") {
+                    notifications.show({
+                        color: "red",
+                        title: "Error",
+                        message: err.message || "Failed to load parent pages"
+                    });
+                }
+            })
+            .finally(() => {
+                if (!controller.signal.aborted) {
+                    setParentPagesLoading(false);
+                }
+            });
+
+        return () => controller.abort();
+    }, []);
+
     const actionOptions = useMemo(() => {
         const grouped = new Map<string, Array<{ value: string; label: string }>>();
 
@@ -185,6 +225,28 @@ export default function PageEdit() {
 
         return [...unknownTypes, ...options];
     }, [page?.feedType, page?.listFeedType]);
+
+    const parentOptions = useMemo(() => {
+        const options = parentPages
+            .filter(item => item.id !== page?.id)
+            .map(item => {
+                const details = [item.pageName, item.action, item.pattern]
+                    .filter((value, index, values): value is string => Boolean(value) && values.indexOf(value) === index)
+                    .join(" · ");
+
+                return { value: String(item.id), label: `#${item.id} — ${details || "Root"}` };
+            });
+        const currentParent = page?.parentId;
+
+        if (currentParent !== "" && !options.some(item => item.value === String(currentParent))) {
+            options.unshift({
+                value: String(currentParent),
+                label: `#${currentParent} — unknown page`
+            });
+        }
+
+        return options;
+    }, [page?.id, page?.parentId, parentPages]);
 
     function update<K extends keyof EditablePage>(key: K, value: EditablePage[K]) {
         setPage(current => current ? { ...current, [key]: value } : current);
@@ -274,11 +336,15 @@ export default function PageEdit() {
                     value={page.pageName}
                     onChange={event => update("pageName", event.currentTarget.value)}
                 />
-                <NumberInput
+                <Select
                     label="Parent ID"
-                    min={1}
-                    value={page.parentId}
-                    onChange={value => update("parentId", value === "" ? "" : Number(value))}
+                    searchable
+                    clearable
+                    data={parentOptions}
+                    value={page.parentId === "" ? null : String(page.parentId)}
+                    onChange={value => update("parentId", value === null ? "" : Number(value))}
+                    disabled={parentPagesLoading}
+                    nothingFoundMessage="No parent pages found"
                 />
                 <Select
                     label="Feed type"
