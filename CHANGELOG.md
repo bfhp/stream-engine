@@ -14,6 +14,7 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 ### Changed
 
 - Split dual-purpose article, community, and blog-post show page actions into explicit `-id` and `-slug` actions, including migration of existing pages.
+- Made page update timestamps server-managed and removed them from the Pages editor.
 - Replaced free-form action, feed type, list feed type, and parent ID fields in the Pages editor with searchable selectors while preserving unknown legacy values.
 - Extended page actions with backend-enforced configuration contracts for feed IDs, feed types, list feed types, and term vocabularies, including constrained and compound requirements.
 - Made the Pages editor explain and validate each action's supported fields, constrain feed-type choices, preserve legacy configuration, and warn about suspicious feed bindings and route patterns.

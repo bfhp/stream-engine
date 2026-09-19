@@ -442,7 +442,6 @@ class AdminController extends AbstractController
             'termVocabulary' => $this->optionalString($input['termVocabulary'] ?? null),
             'feedId' => $this->optionalPositiveInt($input['feedId'] ?? null, 'Feed ID must be a positive integer'),
             'changefreq' => $changefreq !== '' ? $changefreq : null,
-            'updated' => $this->optionalInt($input['updated'] ?? null) ?? time(),
             'accessRule' => $accessRule,
         ];
 

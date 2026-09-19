@@ -96,7 +96,7 @@ final readonly class PageRepository
                 parent, pattern, action, page_name, settings, feed_type,
                 list_feed_type, term_vocabulary, feed_id,
                 changefreq, updated, access_rule
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UNIX_TIMESTAMP(), ?)',
             $this->adminParams($data)
         );
 
@@ -122,7 +122,7 @@ final readonly class PageRepository
                 term_vocabulary = ?,
                 feed_id = ?,
                 changefreq = ?,
-                updated = ?,
+                updated = UNIX_TIMESTAMP(),
                 access_rule = ?
             WHERE id = ?',
             [...$this->adminParams($data), $id]
@@ -171,7 +171,6 @@ final readonly class PageRepository
             $data['termVocabulary'],
             $data['feedId'],
             $data['changefreq'],
-            $data['updated'],
             $data['accessRule'],
         ];
     }

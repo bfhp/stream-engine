@@ -277,6 +277,7 @@ final class AdminControllerTest extends TestCase
             'action' => 'article.show-id',
             'pageName' => 'About',
             'feedId' => 42,
+            'updated' => 123,
             'accessRule' => 'public',
             'settings' => '{"template":"about","commentsEnabled":true}',
         ]));
@@ -287,6 +288,8 @@ final class AdminControllerTest extends TestCase
         $this->assertSame('article.show-id', $response['action']);
         $this->assertSame('about', $this->writes[0][1][1]);
         $this->assertSame('{"template":"about","commentsEnabled":true}', $this->writes[0][1][4]);
+        $this->assertStringContainsString('UNIX_TIMESTAMP()', $this->writes[0][0]);
+        $this->assertNotContains(123, $this->writes[0][1]);
     }
 
     public function testPageCreateRejectsAnUnknownAction(): void
@@ -459,9 +462,10 @@ final class AdminControllerTest extends TestCase
 
         $this->assertSame(9, $response['id']);
         $this->assertSame('feedback.show', $response['action']);
-        $this->assertSame(987, $this->writes[0][1][10]);
-        $this->assertSame('admin', $this->writes[0][1][11]);
-        $this->assertSame(9, $this->writes[0][1][12]);
+        $this->assertStringContainsString('updated = UNIX_TIMESTAMP()', $this->writes[0][0]);
+        $this->assertNotContains(987, $this->writes[0][1]);
+        $this->assertSame('admin', $this->writes[0][1][10]);
+        $this->assertSame(9, $this->writes[0][1][11]);
     }
 
     public function testInvalidPageSettingsJsonIsRefusedAndNothingIsSaved(): void

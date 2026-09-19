@@ -38,7 +38,6 @@ type EditablePage = {
     termVocabulary: string;
     feedId: number | "";
     changefreq: string;
-    updated: number | "";
     accessRule: string;
 };
 
@@ -73,19 +72,23 @@ function blankPage(): EditablePage {
         termVocabulary: "",
         feedId: "",
         changefreq: "",
-        updated: Math.floor(Date.now() / 1000),
         accessRule: "public"
     };
 }
 
 function normalizePage(data: Partial<Omit<EditablePage, "settings">> & { settings?: string | null }): EditablePage {
     return {
-        ...blankPage(),
-        ...data,
-        settings: parsePageSettings(data.settings),
+        id: data.id,
         parentId: data.parentId ?? "",
+        pattern: data.pattern ?? "",
+        action: data.action ?? "",
+        pageName: data.pageName ?? "",
+        settings: parsePageSettings(data.settings),
+        feedType: data.feedType ?? "",
+        listFeedType: data.listFeedType ?? "",
+        termVocabulary: data.termVocabulary ?? "",
         feedId: data.feedId ?? "",
-        updated: data.updated ?? "",
+        changefreq: data.changefreq ?? "",
         accessRule: data.accessRule ?? "public",
     };
 }
@@ -443,12 +446,6 @@ export default function PageEdit() {
                     value={page.changefreq}
                     onChange={value => update("changefreq", value || "")}
                     allowDeselect={false}
-                />
-                <NumberInput
-                    label="Updated timestamp"
-                    min={0}
-                    value={page.updated}
-                    onChange={value => update("updated", value === "" ? "" : Number(value))}
                 />
                 <Select
                     label={trans("js.admin.access")}
