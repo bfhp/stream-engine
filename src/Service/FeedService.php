@@ -339,6 +339,7 @@ class FeedService
         ?string $containerType = null,
     ): Feed {
 
+        $slug = $this->normalizeOptionalSlug($slug);
         $content = $this->purifier->purify($content);
         $description = $this->purifier->purify($description);
         $imageUrl = $this->validateFeedImage($imageUrl ?? null);
@@ -1015,7 +1016,9 @@ class FeedService
         // omitted key is preserved, while an explicitly supplied null can
         // still clear a nullable column.
         $title = array_key_exists('title', $data) ? $data['title'] : $feed->title;
-        $slug = array_key_exists('slug', $data) ? $data['slug'] : $feed->slug;
+        $slug = array_key_exists('slug', $data)
+            ? $this->normalizeOptionalSlug($data['slug'])
+            : $feed->slug;
         $parentId = array_key_exists('parentId', $data)
             ? (! empty($data['parentId']) ? (int) $data['parentId'] : null)
             : $feed->parentId;
@@ -1079,6 +1082,24 @@ class FeedService
         }
 
         return $this->getFeedById($id, $user);
+    }
+
+    /**
+     * The slug column is nullable: an empty form field means "no slug", not
+     * a literal empty slug. Keeping empty strings out also avoids collisions
+     * in the parent/type/slug unique index when several feeds have no slug.
+     */
+    private function normalizeOptionalSlug(mixed $slug): ?string
+    {
+        if ($slug === null) {
+            return null;
+        }
+
+        if (! is_string($slug)) {
+            throw new ValidationException('Feed slug must be a string or null');
+        }
+
+        return trim($slug) === '' ? null : $slug;
     }
 
     /**

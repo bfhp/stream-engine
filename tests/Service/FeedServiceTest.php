@@ -2083,7 +2083,21 @@ final class FeedServiceTest extends TestCase
         $this->invokeValidateFeedImage($service, $path);
     }
 
-    public function testCreateFeedInsertsSanitizedFeedAndReturnsPersistedResult(): void
+    /** @return array<string, array{string, ?string}> */
+    public static function optionalSlugProvider(): array
+    {
+        return [
+            'a regular slug' => ['new-article', 'new-article'],
+            'an empty slug' => ['', null],
+            'a whitespace-only slug' => ['   ', null],
+        ];
+    }
+
+    #[DataProvider('optionalSlugProvider')]
+    public function testCreateFeedInsertsSanitizedFeedAndReturnsPersistedResult(
+        string $inputSlug,
+        ?string $storedSlug
+    ): void
     {
         $user = new User(id: 7, email: 'user@example.com', role: AccessService::ROLE_USER);
         $createdAt = time() - 50;
@@ -2100,12 +2114,12 @@ final class FeedServiceTest extends TestCase
                     $this->stringContains('INSERT INTO'),
                     $this->stringContains('feeds')
                 ),
-                $this->callback(static function (array $params): bool {
+                $this->callback(static function (array $params) use ($storedSlug): bool {
                     return $params[0] === null
                         && $params[1] === 7
                         && $params[2] === 'New Article'
                         && $params[3] === 'article'
-                        && $params[4] === 'new-article'
+                        && $params[4] === $storedSlug
                         && $params[5] === '<p>Hello</p>'
                         && $params[6] === 'Nice <b>desc</b>'
                         && $params[7] === '/uploads/feed-covers/photo.jpg';
@@ -2122,7 +2136,7 @@ final class FeedServiceTest extends TestCase
                 'parent_id' => null,
                 'owner_id' => 7,
                 'type' => 'article',
-                'slug' => 'new-article',
+                'slug' => $storedSlug,
                 'title' => 'New Article',
                 'content' => '<p>Hello</p>',
                 'description' => 'Nice <b>desc</b>',
@@ -2137,7 +2151,7 @@ final class FeedServiceTest extends TestCase
 
         $feed = $service->createFeed(
             title: 'New Article',
-            slug: 'new-article',
+            slug: $inputSlug,
             type: 'article',
             parentId: null,
             description: 'Nice <b>desc</b><script>bad()</script>',
@@ -2147,6 +2161,7 @@ final class FeedServiceTest extends TestCase
         );
 
         $this->assertSame(300, $feed->id);
+        $this->assertSame($storedSlug, $feed->slug);
         $this->assertSame('New Article', $feed->title);
         $this->assertSame('<p>Hello</p>', $feed->content);
         $this->assertSame('Nice <b>desc</b>', $feed->description);
@@ -2177,7 +2192,11 @@ final class FeedServiceTest extends TestCase
         );
     }
 
-    public function testUpdateFeedUpdatesSanitizedFieldsAndReturnsRefreshedFeed(): void
+    #[DataProvider('optionalSlugProvider')]
+    public function testUpdateFeedUpdatesSanitizedFieldsAndReturnsRefreshedFeed(
+        string $inputSlug,
+        ?string $storedSlug
+    ): void
     {
         $user = new User(id: 7, email: 'user@example.com', role: AccessService::ROLE_USER);
         $existingCreatedAt = time() - 5000;
@@ -2215,7 +2234,7 @@ final class FeedServiceTest extends TestCase
         ];
 
         $updatedRow = array_merge($existingRow, [
-            'slug' => 'updated-slug',
+            'slug' => $storedSlug,
             'title' => 'Updated Title',
             'content' => '<p>Updated</p>',
             'description' => 'Nice <b>desc</b>',
@@ -2232,9 +2251,9 @@ final class FeedServiceTest extends TestCase
             ->method('execute')
             ->with(
                 $this->stringContains('UPDATE feeds'),
-                $this->callback(static function (array $params): bool {
+                $this->callback(static function (array $params) use ($storedSlug): bool {
                     return $params[0] === 'Updated Title'
-                        && $params[1] === 'updated-slug'
+                        && $params[1] === $storedSlug
                         && $params[2] === null
                         && $params[3] === 'article'
                         && $params[4] === 'Nice <b>desc</b>'
@@ -2252,7 +2271,7 @@ final class FeedServiceTest extends TestCase
 
         $result = $service->updateFeed(42, [
             'title' => 'Updated Title',
-            'slug' => 'updated-slug',
+            'slug' => $inputSlug,
             'parentId' => null,
             'type' => 'article',
             'description' => 'Nice <b>desc</b><script>bad()</script>',
@@ -2262,7 +2281,7 @@ final class FeedServiceTest extends TestCase
 
         $this->assertSame(42, $result->id);
         $this->assertSame('Updated Title', $result->title);
-        $this->assertSame('updated-slug', $result->slug);
+        $this->assertSame($storedSlug, $result->slug);
         $this->assertSame('<p>Updated</p>', $result->content);
         $this->assertSame('Nice <b>desc</b>', $result->description);
         $this->assertSame('/uploads/feed-covers/new.jpg', $result->imageUrl);
