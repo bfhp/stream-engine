@@ -201,6 +201,7 @@ final readonly class Installer
             $this->seedSettings($pdo, $config);
             $welcomeFeedId = $this->seedWelcomeArticle($pdo);
             $this->seedRootPage($pdo, $welcomeFeedId);
+            $this->seedProfilePage($pdo, $config->locale);
             $this->seedUserMenu($pdo, $config->locale);
             $pdo->commit();
         } catch (Throwable $e) {
@@ -400,6 +401,42 @@ final readonly class Installer
         }
     }
 
+    private function seedProfilePage(PDO $pdo, string $locale): void
+    {
+        $messages = require rtrim($this->languagesDirectory, '/').'/'.$locale.'.php';
+        $pageName = is_array($messages) ? ($messages['profile.title'] ?? null) : null;
+        if (! is_string($pageName)) {
+            throw new RuntimeException(sprintf('Locale "%s" does not define the profile page name.', $locale));
+        }
+
+        $find = $pdo->query(
+            "SELECT parent, pattern, action, page_name, changefreq, access_rule
+             FROM pages
+             WHERE action = 'profile.show' OR (parent = 1 AND pattern = 'profile')"
+        );
+        $existing = $find->fetchAll(PDO::FETCH_ASSOC);
+        if ($existing !== []) {
+            if (count($existing) === 1
+                && (int) $existing[0]['parent'] === 1
+                && $existing[0]['pattern'] === 'profile'
+                && $existing[0]['action'] === 'profile.show'
+                && $existing[0]['page_name'] === $pageName
+                && $existing[0]['changefreq'] === 'noindex'
+                && $existing[0]['access_rule'] === AccessService::ACCESS_AUTHENTICATED) {
+                return;
+            }
+
+            throw new RuntimeException('The default profile page route is already occupied.');
+        }
+
+        $statement = $pdo->prepare(
+            "INSERT INTO pages (
+                parent, pattern, action, page_name, settings, changefreq, updated, access_rule
+             ) VALUES (1, 'profile', 'profile.show', ?, '{}', 'noindex', UNIX_TIMESTAMP(), ?)"
+        );
+        $statement->execute([$pageName, AccessService::ACCESS_AUTHENTICATED]);
+    }
+
     private function verify(InstallationConfig $config): void
     {
         $tables = $this->schemaObjects();
@@ -424,7 +461,15 @@ final readonly class Installer
                AND p.action = 'article.show' AND p.feed_type = 'article'
                AND f.type = 'article' AND f.owner_id = 1 AND f.visibility = 'public'"
         )->fetchColumn();
-        if ((int) $system !== 1 || (int) $admin->fetchColumn() !== 1 || (int) $rootPage !== 1) {
+        $profilePage = $pdo->query(
+            "SELECT COUNT(*) FROM pages
+             WHERE parent = 1 AND pattern = 'profile' AND action = 'profile.show'
+               AND changefreq = 'noindex' AND access_rule = 'authenticated'"
+        )->fetchColumn();
+        if ((int) $system !== 1
+            || (int) $admin->fetchColumn() !== 1
+            || (int) $rootPage !== 1
+            || (int) $profilePage !== 1) {
             throw new RuntimeException('Required initial data is missing after installation.');
         }
     }

@@ -168,6 +168,13 @@ final class InstallationSchemaTest extends TestCase
                         ->fetch(PDO::FETCH_NUM),
                 );
                 self::assertSame(
+                    [1, 'profile', 'profile.show', 'Ваш профиль', 'noindex', 'authenticated'],
+                    $pdo->query(
+                        "SELECT parent, pattern, action, page_name, changefreq, access_rule
+                         FROM pages WHERE action = 'profile.show'"
+                    )->fetch(PDO::FETCH_NUM),
+                );
+                self::assertSame(
                     [
                         'article',
                         1,

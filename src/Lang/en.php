@@ -192,7 +192,7 @@ return [
     'profile.tab.mailings' => 'Newsletters',
     'profile.tab.forum' => 'Forum',
     'profile.tab.security' => 'Email and password',
-    'profile.title' => 'Your profile.',
+    'profile.title' => 'Your profile',
     'profile.email_unsubscribe' => 'Unsubscribing from email notifications',
     'profile.unauthorized' => 'You are not signed in',
     'profile.name_too_long' => 'Too long a name.',
