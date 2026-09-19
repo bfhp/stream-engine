@@ -13,6 +13,15 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { parsePageSettings, type PageSettings } from "../lib/page-settings";
+import {
+    buildFeedTypeOptions,
+    fieldDescription,
+    isPageActionFieldDisabled,
+    type PageAction,
+    type PageActionFieldName,
+    routeConfigurationWarnings,
+    validatePageActionConfiguration
+} from "../lib/page-action-contract";
 import { csrfHeaders } from "../../shared/csrf";
 import { FEED_TYPE_LABELS } from "../../shared/feed-types";
 import { trans } from "../../shared/i18n";
@@ -31,12 +40,6 @@ type EditablePage = {
     changefreq: string;
     updated: number | "";
     accessRule: string;
-};
-
-type PageAction = {
-    action: string;
-    label: string;
-    module: string;
 };
 
 type ParentPage = {
@@ -213,18 +216,47 @@ export default function PageEdit() {
         return data;
     }, [actions, page?.action]);
 
-    const feedTypeOptions = useMemo(() => {
-        const options = Object.entries(FEED_TYPE_LABELS).map(([value, label]) => ({
-            value,
-            label: `${label} (${value})`
-        }));
-        const unknownTypes = [page?.feedType, page?.listFeedType]
-            .filter((value): value is string => Boolean(value) && !(value in FEED_TYPE_LABELS))
-            .filter((value, index, values) => values.indexOf(value) === index)
-            .map(value => ({ value, label: `${value} (unknown type)` }));
+    const selectedAction = useMemo(
+        () => actions.find(item => item.action === page?.action),
+        [actions, page?.action]
+    );
 
-        return [...unknownTypes, ...options];
-    }, [page?.feedType, page?.listFeedType]);
+    const feedTypeOptions = useMemo(
+        () => buildFeedTypeOptions(FEED_TYPE_LABELS, selectedAction, "feedType", page?.feedType || ""),
+        [page?.feedType, selectedAction]
+    );
+    const listFeedTypeOptions = useMemo(
+        () => buildFeedTypeOptions(FEED_TYPE_LABELS, selectedAction, "listFeedType", page?.listFeedType || ""),
+        [page?.listFeedType, selectedAction]
+    );
+
+    const actionErrors = useMemo(() => {
+        if (!page || !selectedAction) {
+            return {};
+        }
+
+        return validatePageActionConfiguration(selectedAction, {
+            feedId: page.feedId,
+            feedType: page.feedType,
+            listFeedType: page.listFeedType,
+            termVocabulary: page.termVocabulary
+        });
+    }, [page, selectedAction]);
+
+    const routeWarnings = useMemo(
+        () => page ? routeConfigurationWarnings(page) : [],
+        [page]
+    );
+
+    function isRequired(field: PageActionFieldName): boolean {
+        return selectedAction?.fields[field].status === "required";
+    }
+
+    function actionFieldDescription(field: PageActionFieldName): string {
+        return page?.action
+            ? fieldDescription(selectedAction, field)
+            : "Select an action to see whether this field is supported.";
+    }
 
     const parentOptions = useMemo(() => {
         const options = parentPages
@@ -254,6 +286,20 @@ export default function PageEdit() {
 
     function save() {
         if (!page) {
+            return;
+        }
+
+        if (!page.action) {
+            notifications.show({ color: "red", title: "Invalid page", message: "Action is required" });
+            return;
+        }
+
+        if (Object.keys(actionErrors).length > 0) {
+            notifications.show({
+                color: "red",
+                title: "Invalid action configuration",
+                message: "Review the highlighted page action fields before saving."
+            });
             return;
         }
 
@@ -348,32 +394,48 @@ export default function PageEdit() {
                 />
                 <Select
                     label="Feed type"
+                    description={actionFieldDescription("feedType")}
+                    error={actionErrors.feedType}
+                    required={isRequired("feedType")}
                     searchable
                     clearable
                     data={feedTypeOptions}
                     value={page.feedType || null}
                     onChange={value => update("feedType", value || "")}
+                    disabled={isPageActionFieldDisabled(selectedAction, "feedType", page.feedType)}
                     nothingFoundMessage="No feed types found"
                 />
                 <Select
                     label="List feed type"
+                    description={actionFieldDescription("listFeedType")}
+                    error={actionErrors.listFeedType}
+                    required={isRequired("listFeedType")}
                     searchable
                     clearable
-                    data={feedTypeOptions}
+                    data={listFeedTypeOptions}
                     value={page.listFeedType || null}
                     onChange={value => update("listFeedType", value || "")}
+                    disabled={isPageActionFieldDisabled(selectedAction, "listFeedType", page.listFeedType)}
                     nothingFoundMessage="No feed types found"
                 />
                 <TextInput
                     label="Term vocabulary"
+                    description={actionFieldDescription("termVocabulary")}
+                    error={actionErrors.termVocabulary}
+                    required={isRequired("termVocabulary")}
                     value={page.termVocabulary}
                     onChange={event => update("termVocabulary", event.currentTarget.value)}
+                    disabled={isPageActionFieldDisabled(selectedAction, "termVocabulary", page.termVocabulary)}
                 />
                 <NumberInput
                     label="Feed ID"
+                    description={actionFieldDescription("feedId")}
+                    error={actionErrors.feedId}
+                    required={isRequired("feedId")}
                     min={1}
                     value={page.feedId}
                     onChange={value => update("feedId", value === "" ? "" : Number(value))}
+                    disabled={isPageActionFieldDisabled(selectedAction, "feedId", page.feedId)}
                 />
                 <Select
                     label="Changefreq"
@@ -401,6 +463,20 @@ export default function PageEdit() {
                     allowDeselect={false}
                 />
             </SimpleGrid>
+
+            {page.action && (
+                <Text size="sm" c="dimmed">
+                    {selectedAction
+                        ? `${selectedAction.label} · ${selectedAction.module} · ${selectedAction.action}`
+                        : `${page.action} · unavailable legacy action`}
+                </Text>
+            )}
+
+            {routeWarnings.map(warning => (
+                <Text key={warning} size="sm" c="orange">
+                    {warning}
+                </Text>
+            ))}
 
             <Stack gap="sm">
                 <Text fw={500}>{trans("js.admin.page_settings")}</Text>

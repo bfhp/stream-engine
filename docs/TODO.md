@@ -155,22 +155,6 @@ the base theme contains a hard-coded `data-bs-theme="dark"`.
 - Define theme asset delivery and cache invalidation, then test selection,
   fallback behavior, and settings persistence.
 
-### Admin: page action configuration UI
-
-The backend action catalog now exposes and enforces a normalized contract for
-`feedId`, `feedType`, `listFeedType`, and `termVocabulary`. `PageEdit` does not
-yet use that metadata, so the administrator sees the same four controls for
-every action and learns about invalid combinations only after saving.
-
-- Explain the selected action's contract beside the four fields, mark required
-  and `oneOf` inputs, and make unsupported or ineffective values visible as
-  errors instead of silently saving or clearing them.
-- Restrict feed-type selectors to the contract's `values`, surface referenced
-  feed type requirements, and preserve the current values of an unknown legacy
-  action without presenting them as valid for a new action.
-- Add frontend tests for action changes, required/unsupported fields,
-  constrained options, compound requirements, and legacy preservation.
-
 ### Admin: menu editor
 
 `MenuRepository` currently only reads the entire menu, and there is no separate
