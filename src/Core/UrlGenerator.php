@@ -336,17 +336,7 @@ final class UrlGenerator
      */
     private function buildPageAncestors(Page $page): array
     {
-        $staticPages = [];
-        $current = $page;
-
-        while ($current) {
-            array_unshift($staticPages, $current);
-            $current = $current->parentId
-                ? $this->pageTree->get($current->parentId)
-                : null;
-        }
-
-        return $staticPages;
+        return $this->pageTree->ancestors($page);
     }
 
     private function buildUrlFromPageChain(array $pageChain, array $feedChain): string

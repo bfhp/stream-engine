@@ -267,19 +267,12 @@ class ArticleController extends AbstractController
 
     private function findNearestFeedPage(Page $page): ?Page
     {
-        $parentId = $page->parentId;
-
-        while ($parentId !== null) {
-            $parentPage = $this->pageTree->get($parentId);
-            if ($parentPage === null) {
-                return null;
-            }
-
+        $ancestors = $this->pageTree->ancestors($page);
+        array_pop($ancestors);
+        foreach (array_reverse($ancestors) as $parentPage) {
             if ($parentPage->feedId !== null || $parentPage->feedType !== null) {
                 return $parentPage;
             }
-
-            $parentId = $parentPage->parentId;
         }
 
         return null;

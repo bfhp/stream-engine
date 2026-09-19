@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace StreamEngine\Core;
 
+use RuntimeException;
 use StreamEngine\Domain\Page;
 
 /**
@@ -88,21 +89,40 @@ final class PageTree
      */
     public function buildPath(Page $page): string
     {
-        $segments = [];
-        $current = $page;
-
-        while ($current) {
-            $segments[] = $current->pattern;
-            $current = $current->parentId
-                ? $this->get($current->parentId)
-                : null;
-        }
-
-        $segments = array_reverse($segments);
+        $segments = array_map(
+            static fn (Page $ancestor): string => $ancestor->pattern,
+            $this->ancestors($page)
+        );
 
         $path = '/'.trim(implode('/', array_filter($segments)), '/').'/';
 
         return rtrim($path, '/').'/';
+    }
+
+    /**
+     * Returns the root-to-page chain and fails fast for corrupt cyclic data.
+     *
+     * @return list<Page>
+     */
+    public function ancestors(Page $page): array
+    {
+        $ancestors = [];
+        $visited = [];
+        $current = $page;
+
+        while ($current !== null) {
+            if (isset($visited[$current->id])) {
+                throw new RuntimeException('Page hierarchy cycle detected at page '.$current->id);
+            }
+
+            $visited[$current->id] = true;
+            $ancestors[] = $current;
+            $current = $current->parentId !== null
+                ? $this->get($current->parentId)
+                : null;
+        }
+
+        return array_reverse($ancestors);
     }
 
     /**

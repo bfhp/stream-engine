@@ -2819,15 +2819,9 @@ class UsersController extends AbstractController
      */
     private function resolveBlogPostByRoute(Page $page, string $postSlug, User $user): ?Feed
     {
-        $current = $page;
-
-        while ($current->parentId !== null) {
-            $current = $this->pageTree->get($current->parentId);
-
-            if ($current === null) {
-                return null;
-            }
-
+        $ancestors = $this->pageTree->ancestors($page);
+        array_pop($ancestors);
+        foreach (array_reverse($ancestors) as $current) {
             $parent = null;
 
             if ($current->action === 'user.show') {

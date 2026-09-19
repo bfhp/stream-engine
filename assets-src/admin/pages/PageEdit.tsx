@@ -13,6 +13,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { parsePageSettings, type PageSettings } from "../lib/page-settings";
+import { forbiddenPageParentIds } from "../lib/page-hierarchy";
 import {
     buildFeedTypeOptions,
     fieldDescription,
@@ -44,6 +45,7 @@ type EditablePage = {
 
 type ParentPage = {
     id: number;
+    parentId?: number | null;
     pageName?: string | null;
     action?: string | null;
     pattern?: string | null;
@@ -284,9 +286,17 @@ export default function PageEdit() {
             : "Select an action to see whether this field is supported.";
     }
 
+    const forbiddenParentIds = useMemo(
+        () => forbiddenPageParentIds(parentPages, page?.id),
+        [page?.id, parentPages]
+    );
+    const parentError = page?.parentId !== "" && forbiddenParentIds.has(Number(page?.parentId))
+        ? "A page cannot be its own parent or be moved below its descendant."
+        : undefined;
+
     const parentOptions = useMemo(() => {
         const options = parentPages
-            .filter(item => item.id !== page?.id)
+            .filter(item => !forbiddenParentIds.has(item.id))
             .map(item => {
                 const details = [item.pageName, item.action, item.pattern]
                     .filter((value, index, values): value is string => Boolean(value) && values.indexOf(value) === index)
@@ -296,7 +306,9 @@ export default function PageEdit() {
             });
         const currentParent = page?.parentId;
 
-        if (currentParent !== "" && !options.some(item => item.value === String(currentParent))) {
+        if (currentParent !== ""
+            && !forbiddenParentIds.has(Number(currentParent))
+            && !options.some(item => item.value === String(currentParent))) {
             options.unshift({
                 value: String(currentParent),
                 label: `#${currentParent} — unknown page`
@@ -304,7 +316,7 @@ export default function PageEdit() {
         }
 
         return options;
-    }, [page?.id, page?.parentId, parentPages]);
+    }, [forbiddenParentIds, page?.parentId, parentPages]);
 
     function update<K extends keyof EditablePage>(key: K, value: EditablePage[K]) {
         setPage(current => current ? { ...current, [key]: value } : current);
@@ -317,6 +329,11 @@ export default function PageEdit() {
 
         if (!page.action) {
             notifications.show({ color: "red", title: "Invalid page", message: "Action is required" });
+            return;
+        }
+
+        if (parentError) {
+            notifications.show({ color: "red", title: "Invalid parent", message: parentError });
             return;
         }
 
@@ -410,6 +427,7 @@ export default function PageEdit() {
                 />
                 <Select
                     label="Parent ID"
+                    error={parentError}
                     searchable
                     clearable
                     data={parentOptions}

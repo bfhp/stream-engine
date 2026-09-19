@@ -22,6 +22,7 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Prevented page hierarchy cycles in the admin editor, repaired cyclic root-page parent assignments, and made runtime ancestor traversal fail fast on already-corrupt cyclic data.
 - Prevented production startup failures when optimized Composer classmaps contain optional integration classes whose development-only dependencies are not installed.
 
 ## [0.2.1] - 2026-09-17

@@ -185,17 +185,7 @@ final readonly class MenuService
      */
     private function pageAncestors(Page $page): array
     {
-        $ancestors = [];
-        $current = $page;
-
-        while ($current !== null) {
-            array_unshift($ancestors, $current);
-            $current = $current->parentId !== null
-                ? $this->pageTree->get($current->parentId)
-                : null;
-        }
-
-        return $ancestors;
+        return $this->pageTree->ancestors($page);
     }
 
     private function currentUserParam(string $name, User $currentUser): ?string

@@ -2384,15 +2384,9 @@ class ForumsController extends AbstractController
      */
     private function resolveTopicForPage(Page $page, string $topicSlug): ?Feed
     {
-        $current = $page;
-
-        while ($current->parentId !== null) {
-            $current = $this->pageTree->get($current->parentId);
-
-            if ($current === null) {
-                return null;
-            }
-
+        $ancestors = $this->pageTree->ancestors($page);
+        array_pop($ancestors);
+        foreach (array_reverse($ancestors) as $current) {
             if ($current->action !== 'forums.topic-list') {
                 continue;
             }

@@ -3,6 +3,7 @@
 namespace Tests\Core;
 
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use StreamEngine\Core\PageTree;
 use StreamEngine\Domain\Page;
 use StreamEngine\Service\AccessService;
@@ -110,6 +111,17 @@ class PageTreeTest extends TestCase
         // Since parent 99 does not exist,
         // path should contain only its own segment.
         $this->assertSame('/orphan/', $this->tree->buildPath($orphan));
+    }
+
+    public function testBuildPathFailsFastForAParentCycle(): void
+    {
+        $first = self::makePage(20, 21, 'first');
+        $tree = new PageTree([$first, self::makePage(21, 20, 'second')]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Page hierarchy cycle detected');
+
+        $tree->buildPath($first);
     }
 
     public function testFindByTermVocabulary(): void

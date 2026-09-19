@@ -431,8 +431,12 @@ class AdminController extends AbstractController
             throw new ValidationException('Invalid access rule');
         }
 
+        $parentId = $this->optionalPositiveInt($input['parentId'] ?? null, 'Invalid parent page');
+        $currentId = isset($existing['id']) ? (int) $existing['id'] : null;
+        $this->validatePageParent($parentId, $currentId);
+
         $data = [
-            'parentId' => $this->optionalInt($input['parentId'] ?? null),
+            'parentId' => $parentId,
             'pattern' => $pattern,
             'action' => $action,
             'pageName' => $this->optionalString($input['pageName'] ?? null),
@@ -448,6 +452,41 @@ class AdminController extends AbstractController
         $this->validatePageActionContract($data, $existing);
 
         return $data;
+    }
+
+    /** @throws ValidationException */
+    private function validatePageParent(?int $parentId, ?int $currentId): void
+    {
+        if ($parentId === null) {
+            return;
+        }
+
+        if ($parentId === $currentId) {
+            throw new ValidationException('A page cannot be its own parent');
+        }
+
+        $byId = [];
+        foreach ($this->pageRepository->findAllForAdmin() as $page) {
+            $byId[$page['id']] = $page;
+        }
+
+        if (! isset($byId[$parentId])) {
+            throw new ValidationException('Parent page not found');
+        }
+
+        $ancestorId = $parentId;
+        $visited = [];
+        while ($ancestorId !== null) {
+            if ($ancestorId === $currentId) {
+                throw new ValidationException('A page cannot be moved below its descendant');
+            }
+            if (isset($visited[$ancestorId])) {
+                throw new ValidationException('Parent page hierarchy contains a cycle');
+            }
+
+            $visited[$ancestorId] = true;
+            $ancestorId = $byId[$ancestorId]['parentId'] ?? null;
+        }
     }
 
     /**

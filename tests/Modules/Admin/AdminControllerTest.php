@@ -267,7 +267,10 @@ final class AdminControllerTest extends TestCase
 
     public function testAValidPageCreateIsSavedAndReturned(): void
     {
-        $module = $this->makeModule(lastInsertId: 77, feedTypes: [42 => 'article']);
+        $parent = $this->legacyPageRow();
+        $parent['id'] = 1;
+        $parent['parent'] = null;
+        $module = $this->makeModule(rows: [$parent], lastInsertId: 77, feedTypes: [42 => 'article']);
 
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $this->withValidCsrf();
@@ -290,6 +293,50 @@ final class AdminControllerTest extends TestCase
         $this->assertSame('{"template":"about","commentsEnabled":true}', $this->writes[0][1][4]);
         $this->assertStringContainsString('UNIX_TIMESTAMP()', $this->writes[0][0]);
         $this->assertNotContains(123, $this->writes[0][1]);
+    }
+
+    public function testPageCannotBeMovedBelowItsDescendant(): void
+    {
+        $current = $this->legacyPageRow();
+        $current['id'] = 1;
+        $current['parent'] = null;
+        $descendant = $this->legacyPageRow();
+        $descendant['id'] = 2;
+        $descendant['parent'] = 1;
+        $module = $this->makeModule(rows: [$current, $descendant], row: $current);
+
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode([
+            'parentId' => 2,
+            'action' => 'feedback.show',
+            'accessRule' => 'public',
+        ]));
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('descendant');
+
+        $module->callApi($this->makeApiPage('admin.page', ['GET', 'PATCH']), ['id' => 1]);
+    }
+
+    public function testPageCannotBeItsOwnParent(): void
+    {
+        $current = $this->legacyPageRow();
+        $current['id'] = 1;
+        $module = $this->makeModule(row: $current);
+
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode([
+            'parentId' => 1,
+            'action' => 'feedback.show',
+            'accessRule' => 'public',
+        ]));
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('own parent');
+
+        $module->callApi($this->makeApiPage('admin.page', ['GET', 'PATCH']), ['id' => 1]);
     }
 
     public function testPageCreateRejectsAnUnknownAction(): void

@@ -155,6 +155,27 @@ final class InstallationSchemaTest extends TestCase
         });
     }
 
+    public function testRootPageRepairMigrationBreaksAParentCycle(): void
+    {
+        $root = dirname(__DIR__, 2);
+        $this->withEmptyDatabase(function (PDO $pdo) use ($root): void {
+            $this->executeScript($pdo, $root.'/migrations/20260912000000_initial.sql');
+            $pdo->exec(
+                "INSERT INTO pages (id, parent, pattern, action, updated)
+                 VALUES (1, NULL, '', 'article.show-id', 1),
+                        (2, 1, 'contacts', 'feedback.show', 1)"
+            );
+            $pdo->exec('UPDATE pages SET parent = 2 WHERE id = 1');
+
+            $this->executeScript($pdo, $root.'/migrations/20260919010000_repair_root_page_parent.sql');
+
+            self::assertSame(
+                [[1, null], [2, 1]],
+                $pdo->query('SELECT id, parent FROM pages ORDER BY id')->fetchAll(PDO::FETCH_NUM),
+            );
+        });
+    }
+
     public function testInstallerCompletesAUsableInstallationFromTheReleaseSnapshot(): void
     {
         $root = dirname(__DIR__, 2);
