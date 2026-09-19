@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
     buildFeedTypeOptions,
     fieldDescription,
+    fixedPageActionValue,
     isPageActionFieldDisabled,
     routeConfigurationWarnings,
     type PageAction,
@@ -72,9 +73,21 @@ describe("page action configuration contracts", () => {
     it("describes required, unsupported and legacy fields", () => {
         expect(fieldDescription(idAction(), "feedId")).toContain("Required by article.show-id");
         expect(fieldDescription(idAction(), "feedId")).toContain("referenced feed must have type: article");
-        expect(fieldDescription(action(), "feedType")).toContain("Required by article.show-slug");
+        expect(fieldDescription(action(), "feedType"))
+            .toBe("Set automatically by article.show-slug: article.");
         expect(fieldDescription(action(), "termVocabulary")).toBe("Not used by article.show-slug.");
         expect(fieldDescription(undefined, "feedType")).toContain("legacy values");
+    });
+
+    it("identifies the sole required value that the editor can apply automatically", () => {
+        expect(fixedPageActionValue(action(), "feedType")).toBe("article");
+        expect(fixedPageActionValue(action(), "listFeedType")).toBeUndefined();
+        expect(fixedPageActionValue(action({
+            fields: {
+                ...action().fields,
+                feedType: { status: "required", values: ["article", "forum"] }
+            }
+        }), "feedType")).toBeUndefined();
     });
 
     it("filters constrained selectors while retaining an invalid current value", () => {

@@ -82,8 +82,11 @@ export function fieldDescription(action: PageAction | undefined, field: PageActi
 
     const contract = action.fields[field];
     const requirement = action.requirements.find(item => item.oneOf.includes(field));
+    const fixedValue = fixedPageActionValue(action, field);
     const parts = [
-        contract.status === "unsupported"
+        fixedValue
+            ? `Set automatically by ${action.action}: ${fixedValue}.`
+            : contract.status === "unsupported"
             ? `Not used by ${action.action}.`
             : contract.status === "required"
                 ? `Required by ${action.action}.`
@@ -95,7 +98,7 @@ export function fieldDescription(action: PageAction | undefined, field: PageActi
             .map(item => PAGE_ACTION_FIELD_LABELS[item])
             .join(" / ")} is required.`);
     }
-    if (contract.values) {
+    if (contract.values && !fixedValue) {
         parts.push(`Allowed: ${contract.values.join(", ")}.`);
     }
     if (contract.feedTypes) {
@@ -103,6 +106,17 @@ export function fieldDescription(action: PageAction | undefined, field: PageActi
     }
 
     return parts.join(" ");
+}
+
+export function fixedPageActionValue(
+    action: PageAction | undefined,
+    field: PageActionFieldName
+): string | undefined {
+    const contract = action?.fields[field];
+
+    return contract?.status === "required" && contract.values?.length === 1
+        ? contract.values[0]
+        : undefined;
 }
 
 export function allowedValues(

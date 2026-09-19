@@ -16,6 +16,7 @@ import { parsePageSettings, type PageSettings } from "../lib/page-settings";
 import {
     buildFeedTypeOptions,
     fieldDescription,
+    fixedPageActionValue,
     isPageActionFieldDisabled,
     type PageAction,
     type PageActionFieldName,
@@ -224,6 +225,28 @@ export default function PageEdit() {
         [actions, page?.action]
     );
 
+    const fixedFeedType = fixedPageActionValue(selectedAction, "feedType");
+    const fixedListFeedType = fixedPageActionValue(selectedAction, "listFeedType");
+
+    useEffect(() => {
+        if (!selectedAction) {
+            return;
+        }
+
+        setPage(current => {
+            if (!current || current.action !== selectedAction.action) {
+                return current;
+            }
+
+            const feedType = fixedFeedType ?? current.feedType;
+            const listFeedType = fixedListFeedType ?? current.listFeedType;
+
+            return feedType === current.feedType && listFeedType === current.listFeedType
+                ? current
+                : { ...current, feedType, listFeedType };
+        });
+    }, [fixedFeedType, fixedListFeedType, selectedAction]);
+
     const feedTypeOptions = useMemo(
         () => buildFeedTypeOptions(FEED_TYPE_LABELS, selectedAction, "feedType", page?.feedType || ""),
         [page?.feedType, selectedAction]
@@ -401,11 +424,12 @@ export default function PageEdit() {
                     error={actionErrors.feedType}
                     required={isRequired("feedType")}
                     searchable
-                    clearable
                     data={feedTypeOptions}
                     value={page.feedType || null}
                     onChange={value => update("feedType", value || "")}
-                    disabled={isPageActionFieldDisabled(selectedAction, "feedType", page.feedType)}
+                    disabled={isPageActionFieldDisabled(selectedAction, "feedType", page.feedType)
+                        || page.feedType === fixedFeedType}
+                    clearable={!fixedFeedType}
                     nothingFoundMessage="No feed types found"
                 />
                 <Select
@@ -414,11 +438,12 @@ export default function PageEdit() {
                     error={actionErrors.listFeedType}
                     required={isRequired("listFeedType")}
                     searchable
-                    clearable
                     data={listFeedTypeOptions}
                     value={page.listFeedType || null}
                     onChange={value => update("listFeedType", value || "")}
-                    disabled={isPageActionFieldDisabled(selectedAction, "listFeedType", page.listFeedType)}
+                    disabled={isPageActionFieldDisabled(selectedAction, "listFeedType", page.listFeedType)
+                        || page.listFeedType === fixedListFeedType}
+                    clearable={!fixedListFeedType}
                     nothingFoundMessage="No feed types found"
                 />
                 <TextInput
