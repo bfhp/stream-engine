@@ -1,6 +1,6 @@
 {
     "format": 1,
-    "release": "0.2.1",
+    "release": "0.2.2",
     "schema": "schema.sql",
     "schema_checksum": "8aa7073c7f8860136292a284958b06acfcd5080f063c5a7e549fd5ca6f8719ec",
     "migrations": [
@@ -18,6 +18,11 @@
             "version": "20260915000000_enforce_feed_slug_scopes",
             "file": "20260915000000_enforce_feed_slug_scopes.sql",
             "checksum": "880f92ccd707aecfcfa55f011f6b597f822117de1a0d194340b03acdef3688cd"
+        },
+        {
+            "version": "20260919000000_split_page_show_actions",
+            "file": "20260919000000_split_page_show_actions.sql",
+            "checksum": "4d117e511c13cba622abe8b42e1393b945388550c2c143038e1a88acbce7fa8c"
         }
     ]
 }

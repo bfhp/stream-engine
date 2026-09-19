@@ -7,13 +7,17 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-09-19
+
 ### Added
 
 - A read-only admin catalog of page actions exported by module controllers through `pageActions()`.
+- A profile page is now created during installation.
 
 ### Changed
 
 - Split dual-purpose article, community, and blog-post show page actions into explicit `-id` and `-slug` actions, including migration of existing pages.
+- Added automatic dark-mode support to the admin interface.
 - Made page update timestamps server-managed and removed them from the Pages editor.
 - Replaced free-form action, feed type, list feed type, and parent ID fields in the Pages editor with searchable selectors while preserving unknown legacy values.
 - Extended page actions with backend-enforced configuration contracts for feed IDs, feed types, list feed types, and term vocabularies, including constrained and compound requirements.
@@ -22,8 +26,10 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Allowed the admin feed editor to save feeds with an empty slug where the feed type permits it.
 - Prevented page hierarchy cycles in the admin editor, enforced an empty pattern and no parent for the root page, and made runtime ancestor traversal fail fast on already-corrupt cyclic data.
 - Prevented production startup failures when optimized Composer classmaps contain optional integration classes whose development-only dependencies are not installed.
+- Preserved trailing slashes in generated sitemap URLs.
 
 ## [0.2.1] - 2026-09-17
 
