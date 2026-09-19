@@ -155,20 +155,20 @@ the base theme contains a hard-coded `data-bs-theme="dark"`.
 - Define theme asset delivery and cache invalidation, then test selection,
   fallback behavior, and settings persistence.
 
-### Admin: menu editor
+### Admin: complete the menu editor
 
-`MenuRepository` currently only reads the entire menu, and there is no separate
-admin CRUD interface.
+The admin already provides CRUD for nested menu items, including all existing
+item types, targets, parent, group, label, access rule, and numeric sort order.
 
-- Add a tree editor for creating, editing, deleting, and ordering items and
-  groups.
-- Support the existing `internal`, `external`, `dynamic`, `action`, and
-  `divider` types, as well as page/url/action, parent, group, label, access rule,
-  and a new enabled state.
-- On the server, validate cycles and missing parent/page/action references and
-  save ordering atomically; before deleting a parent, require an explicit
-  decision about its child items.
-- Add a preview for the current user and tests for the tree, ACL, and reordering.
+- Add an explicit enabled state for menu items.
+- Replace manual sort-order editing with tree reordering for items and groups,
+  and save each reorder atomically.
+- Validate page and action references in the application layer. Cycle and
+  parent validation already exist.
+- When deleting a parent, let the administrator explicitly choose what happens
+  to its children instead of only rejecting the deletion.
+- Add a preview rendered for the current administrator and tests for tree
+  construction, ACL filtering, and reordering.
 
 ### Registration
 
