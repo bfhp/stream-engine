@@ -2097,8 +2097,7 @@ final class FeedServiceTest extends TestCase
     public function testCreateFeedInsertsSanitizedFeedAndReturnsPersistedResult(
         string $inputSlug,
         ?string $storedSlug
-    ): void
-    {
+    ): void {
         $user = new User(id: 7, email: 'user@example.com', role: AccessService::ROLE_USER);
         $createdAt = time() - 50;
 
@@ -2196,8 +2195,7 @@ final class FeedServiceTest extends TestCase
     public function testUpdateFeedUpdatesSanitizedFieldsAndReturnsRefreshedFeed(
         string $inputSlug,
         ?string $storedSlug
-    ): void
-    {
+    ): void {
         $user = new User(id: 7, email: 'user@example.com', role: AccessService::ROLE_USER);
         $existingCreatedAt = time() - 5000;
 
