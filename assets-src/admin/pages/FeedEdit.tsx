@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 
 import Editor from "@monaco-editor/react";
 
-import { TextInput, Button, Stack, Group, ActionIcon, Text, Select } from "@mantine/core";
+import { TextInput, Button, Stack, Group, ActionIcon, Text, Select, useComputedColorScheme } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 
 import { IconFileUpload } from "@tabler/icons-react";
@@ -15,6 +15,7 @@ export default function FeedEdit() {
 
     const { id } = useParams();
     const navigate = useNavigate();
+    const colorScheme = useComputedColorScheme("light");
 
     const [feed, setFeed] = useState<any>(null);
     const [saving, setSaving] = useState(false);
@@ -205,6 +206,7 @@ export default function FeedEdit() {
 
             <Editor
                 height="400px"
+                theme={colorScheme === "dark" ? "vs-dark" : "light"}
                 defaultLanguage="html"
                 value={feed.content}
                 onMount={(editor, _monaco) => {

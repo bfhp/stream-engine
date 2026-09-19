@@ -7,7 +7,8 @@ import {
     Select,
     Stack,
     Text,
-    Tooltip
+    Tooltip,
+    useComputedColorScheme
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { IconDeviceFloppy, IconRefresh } from "@tabler/icons-react";
@@ -87,6 +88,7 @@ function indexWidgets(items: Setting[]): WidgetMap {
 }
 
 export default function Widgets() {
+    const colorScheme = useComputedColorScheme("light");
     const [widgets, setWidgets] = useState<WidgetMap>({});
     const [drafts, setDrafts] = useState<WidgetDrafts>(DEFAULT_DRAFTS);
     const [placement, setPlacement] = useState<Placement>("after_header");
@@ -239,6 +241,7 @@ export default function Widgets() {
                 <Text fw={500} mb={6}>HTML</Text>
                 <Editor
                     height="520px"
+                    theme={colorScheme === "dark" ? "vs-dark" : "light"}
                     defaultLanguage="html"
                     value={currentValue}
                     onChange={value => setDrafts(current => ({

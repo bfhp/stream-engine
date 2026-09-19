@@ -1,8 +1,17 @@
 <!DOCTYPE html>
-<html>
+<html data-mantine-color-scheme="light">
 <head>
     <title>{{ title }}</title>
     <meta charset="utf-8">
+    <meta name="color-scheme" content="light dark">
+    <script>
+        try {
+            document.documentElement.setAttribute(
+                "data-mantine-color-scheme",
+                window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+            );
+        } catch (error) {}
+    </script>
     <link rel="stylesheet" href="/assets/css/admin.css">
     <link rel="stylesheet" href="/assets/css/custom-content.css">
 </head>
