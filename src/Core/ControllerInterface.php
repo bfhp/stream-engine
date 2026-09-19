@@ -12,7 +12,14 @@ use StreamEngine\View\ViewModel;
 interface ControllerInterface
 {
     /**
-     * @return array<string, string>
+     * Each action may use the legacy display-label shorthand or a descriptor
+     * consumed by ModuleRegistry and the pages editor.
+     *
+     * @return array<string, string|array{
+     *     label: string,
+     *     fields?: array<string, string|array{status: string, values?: list<string>, feedTypes?: list<string>}>,
+     *     requirements?: list<array{oneOf: list<string>}>
+     * }>
      */
     public static function pageActions(): array;
 

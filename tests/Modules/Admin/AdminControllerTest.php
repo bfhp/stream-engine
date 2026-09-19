@@ -41,6 +41,7 @@ final class AdminControllerTest extends TestCase
     /**
      * @param array<string, string> $settings seeded settings rows
      * @param list<array<string, mixed>> $rows what every other SELECT returns
+     * @param array<int, string> $feedTypes feed id => type
      */
     private function makeModule(
         bool $isAdmin = true,
@@ -49,6 +50,7 @@ final class AdminControllerTest extends TestCase
         ?array $row = null,
         int $lastInsertId = 77,
         ?array $fetchOneRows = null,
+        array $feedTypes = [],
     ): AdminController {
         $db = $this->createStub(PdoDatabase::class);
 
@@ -66,16 +68,25 @@ final class AdminControllerTest extends TestCase
                 return $rows;
             }
         );
-        if ($fetchOneRows !== null) {
-            $fetchOneIndex = 0;
-            $db->method('fetchOne')->willReturnCallback(
-                function () use ($fetchOneRows, &$fetchOneIndex): ?array {
-                    return $fetchOneRows[$fetchOneIndex++] ?? null;
+        $fetchOneIndex = 0;
+        $db->method('fetchOne')->willReturnCallback(
+            function (string $sql, array $params = []) use (
+                $fetchOneRows,
+                &$fetchOneIndex,
+                $feedTypes,
+                $row
+            ): ?array {
+                if (str_contains($sql, 'FROM feeds')) {
+                    $id = (int) ($params[0] ?? 0);
+
+                    return isset($feedTypes[$id]) ? ['type' => $feedTypes[$id]] : null;
                 }
-            );
-        } else {
-            $db->method('fetchOne')->willReturn($row);
-        }
+
+                return $fetchOneRows !== null
+                    ? ($fetchOneRows[$fetchOneIndex++] ?? null)
+                    : $row;
+            }
+        );
         $db->method('lastInsertId')->willReturn($lastInsertId);
         $db->method('execute')->willReturnCallback(
             function (string $sql, array $params = []): int {
@@ -194,11 +205,16 @@ final class AdminControllerTest extends TestCase
             static fn (array $item): bool => $item['action'] === 'admin.index'
         ));
 
-        $this->assertSame([[
-            'action' => 'admin.index',
-            'label' => 'Administrator interface',
-            'module' => 'Admin',
-        ]], $adminAction);
+        $this->assertCount(1, $adminAction);
+        $this->assertSame('Administrator interface', $adminAction[0]['label']);
+        $this->assertSame('Admin', $adminAction[0]['module']);
+        $this->assertSame([], $adminAction[0]['requirements']);
+        $this->assertSame([
+            'feedId' => ['status' => 'unsupported'],
+            'feedType' => ['status' => 'unsupported'],
+            'listFeedType' => ['status' => 'unsupported'],
+            'termVocabulary' => ['status' => 'unsupported'],
+        ], $adminAction[0]['fields']);
     }
 
     public function testCreatingAPageRequiresCsrfBeforeValidation(): void
@@ -251,7 +267,7 @@ final class AdminControllerTest extends TestCase
 
     public function testAValidPageCreateIsSavedAndReturned(): void
     {
-        $module = $this->makeModule(lastInsertId: 77);
+        $module = $this->makeModule(lastInsertId: 77, feedTypes: [42 => 'article']);
 
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $this->withValidCsrf();
@@ -260,6 +276,7 @@ final class AdminControllerTest extends TestCase
             'pattern' => 'about',
             'action' => 'article.show',
             'pageName' => 'About',
+            'feedId' => 42,
             'accessRule' => 'public',
             'settings' => '{"template":"about","commentsEnabled":true}',
         ]));
@@ -270,6 +287,155 @@ final class AdminControllerTest extends TestCase
         $this->assertSame('article.show', $response['action']);
         $this->assertSame('about', $this->writes[0][1][1]);
         $this->assertSame('{"template":"about","commentsEnabled":true}', $this->writes[0][1][4]);
+    }
+
+    public function testPageCreateRejectsAnUnknownAction(): void
+    {
+        $module = $this->makeModule();
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode([
+            'action' => 'removed.show',
+            'accessRule' => 'public',
+        ]));
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage("Unknown page action 'removed.show'");
+
+        $module->callApi($this->makeApiPage('admin.pages', ['GET', 'POST']));
+    }
+
+    #[DataProvider('invalidPageActionConfigurations')]
+    public function testPageCreateValidatesTheSelectedActionContract(array $input, string $message): void
+    {
+        $module = $this->makeModule();
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode($input + ['accessRule' => 'public']));
+
+        try {
+            $module->callApi($this->makeApiPage('admin.pages', ['GET', 'POST']));
+            $this->fail('Invalid page action configuration was saved.');
+        } catch (ValidationException $e) {
+            $this->assertSame($message, $e->getMessage());
+            $this->assertSame([], $this->writes);
+        }
+    }
+
+    public static function invalidPageActionConfigurations(): array
+    {
+        return [
+            'required field' => [
+                ['action' => 'sections.list'],
+                "Feed ID is required for page action 'sections.list'",
+            ],
+            'unsupported field' => [
+                ['action' => 'admin.index', 'feedId' => 12],
+                "Feed ID is not supported by page action 'admin.index'",
+            ],
+            'constrained value' => [
+                ['action' => 'articles.list', 'feedType' => 'forum', 'listFeedType' => 'article'],
+                "Invalid Feed type for page action 'articles.list'",
+            ],
+            'one-of requirement' => [
+                ['action' => 'article.show'],
+                "At least one of Feed ID, Feed type is required for page action 'article.show'",
+            ],
+        ];
+    }
+
+    public function testPageCreateValidatesAReferencedFeedType(): void
+    {
+        $module = $this->makeModule(feedTypes: [42 => 'forum']);
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode([
+            'action' => 'article.show',
+            'feedId' => 42,
+            'accessRule' => 'public',
+        ]));
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage("Feed ID 42 has an invalid type for page action 'article.show'");
+
+        $module->callApi($this->makeApiPage('admin.pages', ['GET', 'POST']));
+    }
+
+    public function testPageCreateRejectsAMissingReferencedFeed(): void
+    {
+        $module = $this->makeModule();
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode([
+            'action' => 'sections.list',
+            'feedId' => 404,
+            'accessRule' => 'public',
+        ]));
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('Feed ID 404 does not exist');
+
+        $module->callApi($this->makeApiPage('admin.pages', ['GET', 'POST']));
+    }
+
+    public function testUnknownLegacyActionCanBePreservedWithoutChangingItsConfiguration(): void
+    {
+        $row = $this->legacyPageRow();
+        $module = $this->makeModule(fetchOneRows: [$row, $row]);
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode([
+            'pattern' => 'legacy-new-path',
+            'action' => 'removed.show',
+            'pageName' => 'Legacy page',
+            'feedType' => 'legacy-feed',
+            'feedId' => 8,
+            'accessRule' => 'public',
+        ]));
+
+        $this->callAndDecode($module, $this->makeApiPage('admin.page', ['GET', 'PATCH']), ['id' => 9]);
+
+        $this->assertSame('legacy-new-path', $this->writes[0][1][1]);
+    }
+
+    public function testUnknownLegacyActionConfigurationCannotBeChanged(): void
+    {
+        $module = $this->makeModule(fetchOneRows: [$this->legacyPageRow()]);
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode([
+            'action' => 'removed.show',
+            'feedType' => 'different-feed',
+            'feedId' => 8,
+            'accessRule' => 'public',
+        ]));
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage(
+            "Configuration fields of unknown page action 'removed.show' cannot be changed"
+        );
+
+        $module->callApi($this->makeApiPage('admin.page', ['GET', 'PATCH']), ['id' => 9]);
+    }
+
+    /** @return array<string, mixed> */
+    private function legacyPageRow(): array
+    {
+        return [
+            'id' => 9,
+            'parent' => 1,
+            'pattern' => 'legacy',
+            'action' => 'removed.show',
+            'page_name' => 'Legacy page',
+            'settings' => null,
+            'feed_type' => 'legacy-feed',
+            'list_feed_type' => null,
+            'term_vocabulary' => null,
+            'feed_id' => 8,
+            'changefreq' => null,
+            'updated' => 123,
+            'access_rule' => 'public',
+        ];
     }
 
     public function testAValidPageUpdateIsSaved(): void

@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace StreamEngine\Controllers;
 
 use RuntimeException;
+use StreamEngine\Core\AbstractController;
 use StreamEngine\Core\Cache;
 use StreamEngine\Core\Config;
 use StreamEngine\Core\Formatter;
@@ -158,7 +159,16 @@ final class ActionProbeController implements ControllerInterface
     public static function pageActions(): array
     {
         return [
-            'probe.show' => 'Probe show page',
+            'probe.show' => [
+                'label' => 'Probe show page',
+                'fields' => [
+                    'feedType' => ['status' => 'required', 'values' => ['probe']],
+                    'feedId' => 'optional',
+                ],
+                'requirements' => [
+                    ['oneOf' => ['feedType', 'feedId']],
+                ],
+            ],
         ];
     }
 
@@ -196,6 +206,19 @@ final class ActionProbeController implements ControllerInterface
 
 final class PlainClass
 {
+}
+
+final class InvalidActionContractController extends AbstractController
+{
+    public static function pageActions(): array
+    {
+        return [
+            'invalid.show' => [
+                'label' => 'Invalid action',
+                'fields' => ['mysteryField' => 'required'],
+            ],
+        ];
+    }
 }
 
 final class CronProbeController implements ControllerInterface

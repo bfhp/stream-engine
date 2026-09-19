@@ -128,6 +128,47 @@ Rebuild the classmap with `composer dump-autoload` after changing controller
 classes. See [Modules](MODULES.md) for the root Composer configuration and
 module ID conventions.
 
+## Page action configuration descriptors
+
+`ControllerInterface::pageActions()` is also the source of truth for the
+Pages editor. A plain string value remains supported as shorthand for an
+action that uses none of the action-specific page fields:
+
+```php
+return ['module.index' => 'Module landing page'];
+```
+
+An action that uses page configuration must declare a descriptor beside its
+label:
+
+```php
+return [
+    'module.show' => [
+        'label' => 'Show item',
+        'fields' => [
+            'feedId' => ['status' => 'optional', 'feedTypes' => ['article']],
+            'feedType' => ['status' => 'optional', 'values' => ['article']],
+        ],
+        'requirements' => [
+            ['oneOf' => ['feedId', 'feedType']],
+        ],
+    ],
+];
+```
+
+The only configurable field names are `feedId`, `feedType`, `listFeedType`,
+and `termVocabulary`. Their status is `unsupported`, `optional`, or
+`required`; omitted fields normalize to `unsupported`. `values` restricts a
+string field to specific registered values. `feedTypes` restricts the type of
+the feed referenced by `feedId`. A `oneOf` requirement means that at least one
+of its listed supported fields must be set.
+
+`ModuleRegistry` validates and normalizes descriptors during bootstrap. The
+admin catalog returns that normalized contract, and the admin write API
+enforces the same rules. New pages cannot use an unregistered action. A page
+left behind by a removed module may still be edited, but its unknown action
+and four action-specific configuration fields must remain logically unchanged.
+
 ## Where this applies
 
 All module directories. The common admin shell discovers page descriptions

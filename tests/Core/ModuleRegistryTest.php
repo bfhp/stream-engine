@@ -6,8 +6,10 @@ namespace Tests\Core;
 
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use StreamEngine\Core\ModuleRegistry;
 use StreamEngine\Controllers\ActionProbeController;
 use StreamEngine\Controllers\FactoryProbeController;
+use StreamEngine\Controllers\InvalidActionContractController;
 use StreamEngine\Controllers\PlainClass;
 use StreamEngine\Modules\Forums\ForumsController;
 
@@ -56,12 +58,50 @@ final class ModuleRegistryTest extends TestCase
         self::assertSame('Probe', $registry->feedTypes()['probe']);
         self::assertNull($registry->idForAction('missing'));
         self::assertNull($registry->controllerClassFor('Missing'));
+
+        $action = $registry->pageAction('probe.show');
+        self::assertNotNull($action);
+        self::assertSame('Probe show page', $action['label']);
+        self::assertSame(['status' => 'required', 'values' => ['probe']], $action['fields']['feedType']);
+        self::assertSame(['status' => 'optional'], $action['fields']['feedId']);
+        self::assertSame(['status' => 'unsupported'], $action['fields']['termVocabulary']);
+        self::assertSame([['oneOf' => ['feedType', 'feedId']]], $action['requirements']);
+        self::assertNull($registry->pageAction('missing'));
     }
 
     public function testStandaloneControllerRetainsItsShortName(): void
     {
         $registry = \StreamEngine\Controllers\registryWithFixtures([ActionProbeController::class]);
         self::assertSame('ActionProbeController', $registry->idForAction('probe.show'));
+    }
+
+    public function testMalformedPageActionContractIsRejectedDuringBootstrap(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage("Unknown page action field 'mysteryField' in 'invalid.show'");
+
+        \StreamEngine\Controllers\registryWithFixtures([InvalidActionContractController::class]);
+    }
+
+    public function testEveryRegisteredActionHasANormalizedConfigurationContract(): void
+    {
+        $registry = new ModuleRegistry();
+        $feedTypes = array_keys($registry->feedTypes());
+
+        foreach ($registry->pageActions() as $action) {
+            self::assertSame(ModuleRegistry::PAGE_ACTION_FIELDS, array_keys($action['fields']), $action['action']);
+
+            foreach ($action['fields'] as $field => $descriptor) {
+                self::assertContains($descriptor['status'], ['unsupported', 'optional', 'required']);
+
+                if (isset($descriptor['values']) && in_array($field, ['feedType', 'listFeedType'], true)) {
+                    self::assertSame([], array_diff($descriptor['values'], $feedTypes), $action['action']);
+                }
+                if (isset($descriptor['feedTypes'])) {
+                    self::assertSame([], array_diff($descriptor['feedTypes'], $feedTypes), $action['action']);
+                }
+            }
+        }
     }
 
     public function testNonControllerIsIgnored(): void

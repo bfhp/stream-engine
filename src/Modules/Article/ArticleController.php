@@ -31,9 +31,29 @@ class ArticleController extends AbstractController
     public static function pageActions(): array
     {
         return [
-            'article.show' => 'Show article (default)',
-            'articles.list' => 'List articles',
-            'sections.list' => 'List sections',
+            'article.show' => [
+                'label' => 'Show article (default)',
+                'fields' => [
+                    'feedId' => ['status' => 'optional', 'feedTypes' => ['article']],
+                    'feedType' => ['status' => 'optional', 'values' => ['article']],
+                ],
+                'requirements' => [
+                    ['oneOf' => ['feedId', 'feedType']],
+                ],
+            ],
+            'articles.list' => [
+                'label' => 'List articles',
+                'fields' => [
+                    'feedType' => ['status' => 'required', 'values' => ['article-section']],
+                    'listFeedType' => ['status' => 'required', 'values' => ['article']],
+                ],
+            ],
+            'sections.list' => [
+                'label' => 'List sections',
+                'fields' => [
+                    'feedId' => 'required',
+                ],
+            ],
         ];
     }
 

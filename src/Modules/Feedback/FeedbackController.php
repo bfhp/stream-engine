@@ -29,7 +29,12 @@ class FeedbackController extends AbstractController
     public static function pageActions(): array
     {
         return [
-            'feedback.show' => 'Feedback form',
+            'feedback.show' => [
+                'label' => 'Feedback form',
+                'fields' => [
+                    'feedId' => 'optional',
+                ],
+            ],
         ];
     }
 

@@ -214,17 +214,40 @@ class UsersController extends AbstractController
     {
         return [
             'users.list' => 'Users list page',
-            'user.show' => 'User profile page',
+            'user.show' => [
+                'label' => 'User profile page',
+                'fields' => [
+                    'feedType' => ['status' => 'required', 'values' => ['blog']],
+                ],
+            ],
             'user.register' => 'User registration page',
             'user.retrieve' => 'Password retrieval page',
             'user.post-new' => 'New blog post page',
-            'user.post-show' => 'Blog post page',
+            'user.post-show' => [
+                'label' => 'Blog post page',
+                'fields' => [
+                    'feedId' => ['status' => 'optional', 'feedTypes' => ['blog-post']],
+                    'feedType' => ['status' => 'required', 'values' => ['blog-post']],
+                ],
+            ],
             'user.post-edit' => 'Blog post edit page',
             'community.main' => 'Community page',
             'community.create' => 'Create community page',
-            'community.show' => 'Single community page',
+            'community.show' => [
+                'label' => 'Single community page',
+                'fields' => [
+                    'feedId' => ['status' => 'optional', 'feedTypes' => ['community']],
+                    'feedType' => ['status' => 'required', 'values' => ['community']],
+                ],
+            ],
             'community.post-new' => 'New community post page',
-            'community.post-show' => 'Community post page',
+            'community.post-show' => [
+                'label' => 'Community post page',
+                'fields' => [
+                    'feedId' => ['status' => 'optional', 'feedTypes' => ['blog-post']],
+                    'feedType' => ['status' => 'required', 'values' => ['blog-post']],
+                ],
+            ],
             'community.post-edit' => 'Community post edit page',
             'community.manage' => 'Community manage page',
         ];

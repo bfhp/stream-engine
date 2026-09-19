@@ -135,8 +135,18 @@ class ForumsController extends AbstractController
     {
         return [
             'forums.list' => 'List forums',
-            'forums.topic-list' => 'List topics of a forum section',
-            'forums.topic-view' => 'View a forum topic and its replies',
+            'forums.topic-list' => [
+                'label' => 'List topics of a forum section',
+                'fields' => [
+                    'feedType' => ['status' => 'required', 'values' => ['forum']],
+                ],
+            ],
+            'forums.topic-view' => [
+                'label' => 'View a forum topic and its replies',
+                'fields' => [
+                    'feedType' => ['status' => 'required', 'values' => ['forum-post']],
+                ],
+            ],
             'forums.topic-new' => 'Create a new topic in a forum section',
             'forums.topic-edit' => 'Edit an existing forum topic',
         ];

@@ -14,6 +14,7 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 ### Changed
 
 - Replaced free-form action, feed type, list feed type, and parent ID fields in the Pages editor with searchable selectors while preserving unknown legacy values.
+- Extended page actions with backend-enforced configuration contracts for feed IDs, feed types, list feed types, and term vocabularies, including constrained and compound requirements.
 - Made the feedback page's hint feed optional; pages without a feed now use the configured page name and render without hint content or feed metadata.
 
 ### Fixed

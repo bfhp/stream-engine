@@ -252,9 +252,11 @@ class AdminController extends AbstractController
         if ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
             Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
 
+            $existing = $this->pageRepository->findForAdminById($id);
+
             echo Formatter::json($this->pageRepository->updateFromAdminData(
                 $id,
-                $this->validatedPageData($this->jsonBody())
+                $this->validatedPageData($this->jsonBody(), $existing)
             ));
 
             return;
@@ -401,7 +403,7 @@ class AdminController extends AbstractController
      * @return array<string, mixed>
      * @throws ValidationException
      */
-    private function validatedPageData(array $input): array
+    private function validatedPageData(array $input, ?array $existing = null): array
     {
         $pattern = trim((string) ($input['pattern'] ?? ''));
         $action = trim((string) ($input['action'] ?? ''));
@@ -429,7 +431,7 @@ class AdminController extends AbstractController
             throw new ValidationException('Invalid access rule');
         }
 
-        return [
+        $data = [
             'parentId' => $this->optionalInt($input['parentId'] ?? null),
             'pattern' => $pattern,
             'action' => $action,
@@ -438,11 +440,100 @@ class AdminController extends AbstractController
             'feedType' => $this->optionalString($input['feedType'] ?? null),
             'listFeedType' => $this->optionalString($input['listFeedType'] ?? null),
             'termVocabulary' => $this->optionalString($input['termVocabulary'] ?? null),
-            'feedId' => $this->optionalInt($input['feedId'] ?? null),
+            'feedId' => $this->optionalPositiveInt($input['feedId'] ?? null, 'Feed ID must be a positive integer'),
             'changefreq' => $changefreq !== '' ? $changefreq : null,
             'updated' => $this->optionalInt($input['updated'] ?? null) ?? time(),
             'accessRule' => $accessRule,
         ];
+
+        $this->validatePageActionContract($data, $existing);
+
+        return $data;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, mixed>|null $existing
+     * @throws ValidationException
+     */
+    private function validatePageActionContract(array $data, ?array $existing): void
+    {
+        $action = $data['action'];
+        $descriptor = $this->modules->pageAction($action);
+
+        if ($descriptor === null) {
+            if ($existing === null || ($existing['action'] ?? null) !== $action) {
+                throw new ValidationException("Unknown page action '$action'");
+            }
+
+            foreach (ModuleRegistry::PAGE_ACTION_FIELDS as $field) {
+                $existingValue = $field === 'feedId'
+                    ? $this->optionalInt($existing[$field] ?? null)
+                    : $this->optionalString($existing[$field] ?? null);
+                if ($data[$field] !== $existingValue) {
+                    throw new ValidationException(
+                        "Configuration fields of unknown page action '$action' cannot be changed"
+                    );
+                }
+            }
+
+            return;
+        }
+
+        foreach ($descriptor['fields'] as $field => $fieldDescriptor) {
+            $value = $data[$field];
+            $hasValue = $value !== null;
+            $label = $this->pageActionFieldLabel($field);
+
+            if ($fieldDescriptor['status'] === 'unsupported' && $hasValue) {
+                throw new ValidationException("$label is not supported by page action '$action'");
+            }
+            if ($fieldDescriptor['status'] === 'required' && ! $hasValue) {
+                throw new ValidationException("$label is required for page action '$action'");
+            }
+            if ($hasValue
+                && isset($fieldDescriptor['values'])
+                && ! in_array($value, $fieldDescriptor['values'], true)) {
+                throw new ValidationException("Invalid $label for page action '$action'");
+            }
+            if ($hasValue && $field === 'feedId' && $fieldDescriptor['status'] !== 'unsupported') {
+                $feed = $this->db->fetchOne('SELECT type FROM feeds WHERE id = ?', [$value]);
+                if ($feed === null) {
+                    throw new ValidationException("Feed ID $value does not exist");
+                }
+                if (isset($fieldDescriptor['feedTypes'])
+                    && ! in_array($feed['type'] ?? null, $fieldDescriptor['feedTypes'], true)) {
+                    throw new ValidationException("Feed ID $value has an invalid type for page action '$action'");
+                }
+            }
+        }
+
+        foreach ($descriptor['requirements'] as $requirement) {
+            if (array_filter(
+                $requirement['oneOf'],
+                static fn (string $field): bool => $data[$field] !== null
+            ) === []) {
+                $labels = array_map($this->pageActionFieldLabel(...), $requirement['oneOf']);
+                throw new ValidationException(
+                    sprintf(
+                        "At least one of %s is required for page action '%s'",
+                        implode(', ', $labels),
+                        $action
+                    )
+                );
+            }
+        }
+    }
+
+    private function pageActionFieldLabel(string $field): string
+    {
+        return match ($field) {
+            'feedId' => 'Feed ID',
+            'feedType' => 'Feed type',
+            'listFeedType' => 'List feed type',
+            'termVocabulary' => 'Term vocabulary',
+            default => $field,
+        };
     }
 
     /**
