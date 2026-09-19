@@ -20,8 +20,8 @@ use StreamEngine\Service\AccessService;
 use StreamEngine\Service\FeedService;
 
 /**
- * The three page renderers behind `article.show`, `articles.list` and
- * `sections.list`.
+ * The page renderers behind `article.show-id`, `article.show-slug`,
+ * `articles.list` and `sections.list`.
  *
  * They are thin, and that is the point: each one resolves a feed, refuses if it
  * cannot, and hands the rest to a template. So the value here is in the
@@ -132,7 +132,7 @@ final class ArticleControllerTest extends TestCase
         );
 
         $view = $this->makeController($feedService)
-            ->show($this->makePage('article.show', pattern: 'about', feedId: 12), ['slug' => 'anything']);
+            ->show($this->makePage('article.show-id', pattern: 'about', feedId: 12, feedType: null), ['slug' => 'anything']);
 
         $this->assertNotNull($view);
         $this->assertSame('modules/article/article.show.twig', $view->template);
@@ -148,24 +148,20 @@ final class ArticleControllerTest extends TestCase
             ->willReturn($this->makeFeed(12, 'privet'));
 
         $view = $this->makeController($feedService)
-            ->show($this->makePage('article.show', pattern: '{slug}'), ['slug' => 'privet']);
+            ->show($this->makePage('article.show-slug', pattern: '{slug}'), ['slug' => 'privet']);
 
         $this->assertNotNull($view);
         $this->assertSame('privet', $view->data['feed']->slug);
     }
 
-    /**
-     * Neither a feed id nor a slug pattern means the page row says nothing
-     * about what to render - a configuration error, and loud.
-     */
-    public function testAPageThatNamesNoFeedAtAllFailsLoudly(): void
+    public function testAnIdPageWithoutAFeedIdIsRefused(): void
     {
         $controller = $this->makeController($this->createStub(FeedService::class));
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Feed not defined');
+        $this->expectException(ForbiddenException::class);
+        $this->expectExceptionMessage('Article feed not found');
 
-        $controller->show($this->makePage('article.show', pattern: 'about'));
+        $controller->show($this->makePage('article.show-id', pattern: 'about', feedType: null));
     }
 
     /* ===============================
@@ -178,7 +174,7 @@ final class ArticleControllerTest extends TestCase
         $feedService->method('getFeedById')->willReturn($this->makeFeed(12, 'about'));
 
         $view = $this->makeController($feedService)
-            ->show($this->makePage('article.show', feedId: 12));
+            ->show($this->makePage('article.show-id', feedId: 12, feedType: null));
 
         // Title, description, image and canonical all come off the feed - the
         // page row supplies none of them, so a renderer that used $page->
@@ -204,7 +200,7 @@ final class ArticleControllerTest extends TestCase
         $this->expectException(ForbiddenException::class);
         $this->expectExceptionMessage('Article feed not found');
 
-        $controller->show($this->makePage('article.show', pattern: '{slug}'), ['slug' => 'нет-такой']);
+        $controller->show($this->makePage('article.show-slug', pattern: '{slug}'), ['slug' => 'нет-такой']);
     }
 
     /**
@@ -218,7 +214,7 @@ final class ArticleControllerTest extends TestCase
         $withParent->method('getFeedById')->willReturn($this->makeFeed(12, 'about', parentId: 4));
         $withParent->method('getPrevNext')->willReturn(['prev' => null, 'next' => null]);
 
-        $view = $this->makeController($withParent)->show($this->makePage('article.show', feedId: 12));
+        $view = $this->makeController($withParent)->show($this->makePage('article.show-id', feedId: 12, feedType: null));
         $this->assertNotNull($view->data['siblings']);
 
         $topLevel = $this->createStub(FeedService::class);
@@ -227,7 +223,7 @@ final class ArticleControllerTest extends TestCase
             new RuntimeException('prev/next should not be fetched for a top-level article')
         );
 
-        $view = $this->makeController($topLevel)->show($this->makePage('article.show', feedId: 12));
+        $view = $this->makeController($topLevel)->show($this->makePage('article.show-id', feedId: 12, feedType: null));
         $this->assertNull($view->data['siblings']);
     }
 
@@ -242,7 +238,7 @@ final class ArticleControllerTest extends TestCase
         $enabled->method('getComments')->willReturn(['items' => [], 'cursor' => null]);
 
         $view = $this->makeController($enabled)
-            ->show($this->makePage('article.show', feedId: 12, commentsEnabled: true));
+            ->show($this->makePage('article.show-id', feedId: 12, commentsEnabled: true, feedType: null));
         $this->assertNotNull($view->data['comments']);
 
         $disabled = $this->createStub(FeedService::class);
@@ -252,7 +248,7 @@ final class ArticleControllerTest extends TestCase
         );
 
         $view = $this->makeController($disabled)
-            ->show($this->makePage('article.show', feedId: 12, commentsEnabled: false));
+            ->show($this->makePage('article.show-id', feedId: 12, commentsEnabled: false, feedType: null));
         $this->assertNull($view->data['comments']);
     }
 
@@ -403,7 +399,7 @@ final class ArticleControllerTest extends TestCase
             params: ['slug' => 'section-a'],
         );
         $articlePage = $this->makePage(
-            'article.show',
+            'article.show-slug',
             pattern: '{slug}',
             id: 3,
             parentId: 2,
@@ -457,7 +453,7 @@ final class ArticleControllerTest extends TestCase
         $feedService = $this->createStub(FeedService::class);
         $feedService->method('getFeedByParentAndSlug')->willReturn($this->makeFeed(3, 'article-a'));
 
-        $page = $this->makePage('article.show', pattern: '{slug}');
+        $page = $this->makePage('article.show-slug', pattern: '{slug}');
         $page->params = ['slug' => 'article-a'];
 
         $breadcrumb = $this->makeController($feedService)->getBreadcrumb($page);
@@ -478,7 +474,7 @@ final class ArticleControllerTest extends TestCase
         $feedService = $this->createStub(FeedService::class);
         $feedService->method('getFeedByParentAndSlug')->willReturn(null);
 
-        $page = $this->makePage('article.show', pattern: '{slug}');
+        $page = $this->makePage('article.show-slug', pattern: '{slug}');
         $page->params = ['slug' => 'нет-такой'];
 
         $controller = $this->makeController($feedService);

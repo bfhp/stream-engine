@@ -566,7 +566,7 @@ class CommunityService
 
     /**
      * Builds a freshly created community's canonical URL directly against
-     * 'community.show' - same explicit UrlGenerator::page() approach
+     * 'community.show-slug' - same explicit UrlGenerator::page() approach
      * BlogPostService::buildPostCanonicalUrl() uses instead of the generic
      * per-feed-type walker, except here it's not strictly required (a
      * community has no per-owner URL segment the walker can't fill in) -
@@ -576,7 +576,7 @@ class CommunityService
      */
     private function buildCommunityCanonicalUrl(Feed $community): ?string
     {
-        $page = $this->pageTree->findByAction('community.show');
+        $page = $this->pageTree->findByAction('community.show-slug');
 
         if ($page === null || $community->slug === null) {
             return null;

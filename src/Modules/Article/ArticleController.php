@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace StreamEngine\Modules\Article;
 
-use RuntimeException;
 use StreamEngine\Core\AbstractController;
 use StreamEngine\Core\Exceptions\ForbiddenException;
 use StreamEngine\Core\Exceptions\NotFoundException;
@@ -31,14 +30,16 @@ class ArticleController extends AbstractController
     public static function pageActions(): array
     {
         return [
-            'article.show' => [
-                'label' => 'Show article (default)',
+            'article.show-id' => [
+                'label' => 'Show a fixed article',
                 'fields' => [
-                    'feedId' => ['status' => 'optional', 'feedTypes' => ['article']],
-                    'feedType' => ['status' => 'optional', 'values' => ['article']],
+                    'feedId' => ['status' => 'required', 'feedTypes' => ['article']],
                 ],
-                'requirements' => [
-                    ['oneOf' => ['feedId', 'feedType']],
+            ],
+            'article.show-slug' => [
+                'label' => 'Show an article from the route slug',
+                'fields' => [
+                    'feedType' => ['status' => 'required', 'values' => ['article']],
                 ],
             ],
             'articles.list' => [
@@ -71,7 +72,7 @@ class ArticleController extends AbstractController
      */
     public function getBreadcrumb(Page $page): ?Breadcrumb
     {
-        if ($page->action === 'articles.list' || $page->action === 'article.show') {
+        if ($page->action === 'articles.list' || $page->action === 'article.show-slug') {
             if (key_exists('slug', $page->params)) {
                 $pageFeed = $this->resolveFeedForPage($page, (string) $page->params['slug']);
             } else {
@@ -98,26 +99,30 @@ class ArticleController extends AbstractController
         return match ($page->action) {
             'articles.list' => $this->showArticleListPage($page, (string) $args['slug']),
             'sections.list' => $this->showSectionsListPage($page),
-            'article.show' => $this->showArticlePage($page, $page->pattern === '{slug}' ? (string) $args['slug'] : null),
+            'article.show-id' => $this->showArticlePage($page, $this->resolveArticleById($page)),
+            'article.show-slug' => $this->showArticlePage(
+                $page,
+                $this->resolveFeedForPage($page, (string) ($args['slug'] ?? ''))
+            ),
             default => throw new ForbiddenException('Unknown page action'),
         };
     }
 
+    private function resolveArticleById(Page $page): ?Feed
+    {
+        if ($page->feedId === null) {
+            return null;
+        }
+
+        return $this->feedService->getFeedById($page->feedId, $this->context->user);
+    }
+
     /**
-     * @throws NotFoundException
      * @throws ForbiddenException
      * @throws ValidationException
      */
-    public function showArticlePage(Page $page, ?string $slug): ?ViewModel
+    private function showArticlePage(Page $page, ?Feed $articleFeed): ViewModel
     {
-        if ($page->feedId) {
-            $articleFeed = $this->feedService->getFeedById($page->feedId, $this->context->user);
-        } elseif ($page->pattern === '{slug}') {
-            $articleFeed = $this->resolveFeedForPage($page, $slug);
-        } else {
-            throw new RuntimeException('Feed not defined');
-        }
-
         if (!$articleFeed) {
             throw new ForbiddenException('Article feed not found');
         }

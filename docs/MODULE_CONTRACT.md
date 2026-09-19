@@ -139,18 +139,21 @@ return ['module.index' => 'Module landing page'];
 ```
 
 An action that uses page configuration must declare a descriptor beside its
-label:
+label. When different fields select different lookup algorithms, expose them
+as different actions instead of making one action infer its mode:
 
 ```php
 return [
-    'module.show' => [
-        'label' => 'Show item',
+    'module.show-id' => [
+        'label' => 'Show a fixed item',
         'fields' => [
-            'feedId' => ['status' => 'optional', 'feedTypes' => ['article']],
-            'feedType' => ['status' => 'optional', 'values' => ['article']],
+            'feedId' => ['status' => 'required', 'feedTypes' => ['article']],
         ],
-        'requirements' => [
-            ['oneOf' => ['feedId', 'feedType']],
+    ],
+    'module.show-slug' => [
+        'label' => 'Show an item from the route slug',
+        'fields' => [
+            'feedType' => ['status' => 'required', 'values' => ['article']],
         ],
     ],
 ];
@@ -161,7 +164,9 @@ and `termVocabulary`. Their status is `unsupported`, `optional`, or
 `required`; omitted fields normalize to `unsupported`. `values` restricts a
 string field to specific registered values. `feedTypes` restricts the type of
 the feed referenced by `feedId`. A `oneOf` requirement means that at least one
-of its listed supported fields must be set.
+of its listed supported fields must be set. It is intended for fields that are
+truly interchangeable inputs to the same behavior, not for choosing between
+different resolvers such as a fixed ID and a route slug.
 
 `ModuleRegistry` validates and normalizes descriptors during bootstrap. The
 admin catalog returns that normalized contract, and the admin write API

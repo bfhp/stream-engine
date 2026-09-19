@@ -500,7 +500,7 @@ final class UrlGeneratorTest extends TestCase
             self::makePage(id: 1, parentId: null, pattern: ''),
             self::makePage(id: 2, parentId: 1, pattern: 'users'),
             $this->makeActionPage(id: 3, parentId: 2, pattern: '{username}', action: 'user.show', feedType: 'blog'),
-            $this->makeActionPage(id: 4, parentId: 3, pattern: '{slug}', action: 'user.post-show', feedType: 'blog-post'),
+            $this->makeActionPage(id: 4, parentId: 3, pattern: '{slug}', action: 'user.post-show-slug', feedType: 'blog-post'),
         ];
 
         $generator = new UrlGenerator(
@@ -539,7 +539,7 @@ final class UrlGeneratorTest extends TestCase
             self::makePage(id: 1, parentId: null, pattern: ''),
             self::makePage(id: 2, parentId: 1, pattern: 'users'),
             $this->makeActionPage(id: 3, parentId: 2, pattern: '{username}', action: 'user.show', feedType: 'blog'),
-            $this->makeActionPage(id: 4, parentId: 3, pattern: '{slug}', action: 'user.post-show', feedType: 'blog-post'),
+            $this->makeActionPage(id: 4, parentId: 3, pattern: '{slug}', action: 'user.post-show-slug', feedType: 'blog-post'),
         ];
 
         $generator = new UrlGenerator(
@@ -585,8 +585,8 @@ final class UrlGeneratorTest extends TestCase
         $pages = [
             self::makePage(id: 1, parentId: null, pattern: ''),
             self::makePage(id: 2, parentId: 1, pattern: 'comm'),
-            $this->makeActionPage(id: 3, parentId: 2, pattern: '{slug}', action: 'community.show', feedType: 'community'),
-            $this->makeActionPage(id: 4, parentId: 3, pattern: '{slug}', action: 'community.post-show', feedType: 'blog-post'),
+            $this->makeActionPage(id: 3, parentId: 2, pattern: '{slug}', action: 'community.show-slug', feedType: 'community'),
+            $this->makeActionPage(id: 4, parentId: 3, pattern: '{slug}', action: 'community.post-show-slug', feedType: 'blog-post'),
         ];
 
         $generator = new UrlGenerator(

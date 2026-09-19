@@ -118,6 +118,43 @@ final class InstallationSchemaTest extends TestCase
         });
     }
 
+    public function testShowActionMigrationMakesTheResolverModeExplicit(): void
+    {
+        $root = dirname(__DIR__, 2);
+        $this->withEmptyDatabase(function (PDO $pdo) use ($root): void {
+            $this->executeScript($pdo, $root.'/migrations/20260912000000_initial.sql');
+            $actions = ['article.show', 'community.show', 'user.post-show', 'community.post-show'];
+
+            $insert = $pdo->prepare(
+                'INSERT INTO pages
+                 (pattern, action, feed_type, list_feed_type, term_vocabulary, feed_id, updated)
+                 VALUES (?, ?, ?, ?, ?, ?, 1)'
+            );
+            foreach ($actions as $action) {
+                $insert->execute(['fixed', $action, 'legacy-type', 'legacy-list', 'legacy-vocabulary', 42]);
+                $insert->execute(['{slug}', $action, 'expected-type', 'legacy-list', 'legacy-vocabulary', null]);
+            }
+
+            $this->executeScript($pdo, $root.'/migrations/20260919000000_split_page_show_actions.sql');
+
+            self::assertSame(
+                [
+                    ['article.show-id', null, null, null, 42],
+                    ['article.show-slug', 'expected-type', null, null, null],
+                    ['community.show-id', null, null, null, 42],
+                    ['community.show-slug', 'expected-type', null, null, null],
+                    ['user.post-show-id', null, null, null, 42],
+                    ['user.post-show-slug', 'expected-type', null, null, null],
+                    ['community.post-show-id', null, null, null, 42],
+                    ['community.post-show-slug', 'expected-type', null, null, null],
+                ],
+                $pdo->query(
+                    'SELECT action, feed_type, list_feed_type, term_vocabulary, feed_id FROM pages ORDER BY id'
+                )->fetchAll(PDO::FETCH_NUM),
+            );
+        });
+    }
+
     public function testInstallerCompletesAUsableInstallationFromTheReleaseSnapshot(): void
     {
         $root = dirname(__DIR__, 2);
@@ -163,7 +200,7 @@ final class InstallationSchemaTest extends TestCase
                 self::assertIsString($adminHash);
                 self::assertTrue(password_verify('a-secure-password', $adminHash));
                 self::assertSame(
-                    ['article.show', 'article', 'Welcome to Stream Engine'],
+                    ['article.show-id', null, 'Welcome to Stream Engine'],
                     $pdo->query('SELECT action, feed_type, page_name FROM pages WHERE id = 1')
                         ->fetch(PDO::FETCH_NUM),
                 );

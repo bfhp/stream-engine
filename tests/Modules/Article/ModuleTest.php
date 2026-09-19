@@ -29,7 +29,7 @@ final class ModuleTest extends TestCase
         );
         $context = new RequestContext(new User(1, '', AccessService::ROLE_USER), new \DateTimeZone('UTC'));
 
-        $controller = $factory->createForPage($this->pageWithAction('article.show'), $context);
+        $controller = $factory->createForPage($this->pageWithAction('article.show-slug'), $context);
 
         $this->assertInstanceOf(ArticleController::class, $controller);
     }

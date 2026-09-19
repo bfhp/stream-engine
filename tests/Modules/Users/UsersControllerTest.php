@@ -303,7 +303,7 @@ final class UsersControllerTest extends TestCase
             requestMethods: ['GET'],
             responseType: 'html',
             accessRule: AccessService::ACCESS_PUBLIC,
-            action: 'user.post-show',
+            action: 'user.post-show-slug',
         );
     }
 
@@ -1006,6 +1006,40 @@ final class UsersControllerTest extends TestCase
         );
     }
 
+    public function testFixedPostActionsResolveByFeedIdWithoutRouteParameters(): void
+    {
+        $module = $this->makeUsersModule($this->createStub(PdoDatabase::class));
+        $post = $this->makeBlogPostFeed();
+        $feedService = $this->createMock(FeedService::class);
+        $feedService->expects($this->exactly(2))
+            ->method('getFeedById')
+            ->with(902, $this->anything())
+            ->willReturn($post);
+        $feedService->expects($this->never())->method('getFeedByParentAndSlug');
+        $this->setFeedService($module, $feedService);
+
+        $resolve = (new ReflectionClass(UsersController::class))->getMethod('resolveBlogPostForShow');
+        foreach (['user.post-show-id', 'community.post-show-id'] as $action) {
+            $page = new Page(
+                id: 60,
+                parentId: null,
+                pattern: 'fixed-post',
+                pageName: 'Fixed post',
+                settings: null,
+                feedType: null,
+                listFeedType: null,
+                feedId: 902,
+                commentsEnabled: false,
+                requestMethods: ['GET'],
+                responseType: 'html',
+                accessRule: AccessService::ACCESS_PUBLIC,
+                action: $action,
+            );
+
+            $this->assertSame($post, $resolve->invoke($module, $page, []));
+        }
+    }
+
     public function testShowBlogPostPageRendersFoundPost(): void
     {
         $page = $this->makeBlogPostShowPage();
@@ -1167,7 +1201,7 @@ final class UsersControllerTest extends TestCase
             requestMethods: ['GET'],
             responseType: 'html',
             accessRule: AccessService::ACCESS_PUBLIC,
-            action: 'community.post-show',
+            action: 'community.post-show-slug',
         );
     }
 
@@ -2302,7 +2336,7 @@ final class UsersControllerTest extends TestCase
             requestMethods: ['GET'],
             responseType: 'html',
             accessRule: AccessService::ACCESS_PUBLIC,
-            action: 'community.show',
+            action: 'community.show-slug',
         );
     }
 
@@ -2551,7 +2585,7 @@ final class UsersControllerTest extends TestCase
             requestMethods: ['GET'],
             responseType: 'html',
             accessRule: AccessService::ACCESS_PUBLIC,
-            action: 'community.show',
+            action: 'community.show-slug',
         );
 
         $db = $this->createMock(PdoDatabase::class);
@@ -2584,7 +2618,7 @@ final class UsersControllerTest extends TestCase
             new UrlGenerator(new PageTree([$page, $communityShowPage]), new FakeFeedRepository([]), new ArrayCache())
         );
 
-        // buildPopularCommunitiesWidget() resolves 'community.show' via
+        // buildPopularCommunitiesWidget() resolves 'community.show-slug' via
         // the controller's own pageTree property (separate from the
         // UrlGenerator's own tree set just above) to build each row's URL.
         $this->setPageTree($module, new PageTree([$communityShowPage]));
@@ -2652,7 +2686,7 @@ final class UsersControllerTest extends TestCase
             requestMethods: ['GET'],
             responseType: 'html',
             accessRule: AccessService::ACCESS_PUBLIC,
-            action: 'community.show',
+            action: 'community.show-slug',
         );
 
         $db = $this->createStub(PdoDatabase::class);

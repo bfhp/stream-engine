@@ -330,7 +330,15 @@ final readonly class Installer
                 throw new RuntimeException('Page id 1 is already occupied by a non-root page.');
             }
 
+            if ($existing['action'] === 'article.show-id' && (int) $existing['feed_id'] === $welcomeFeedId) {
+                return;
+            }
+
             if ($existing['action'] === 'article.show' && (int) $existing['feed_id'] === $welcomeFeedId) {
+                $pdo->exec(
+                    "UPDATE pages SET action = 'article.show-id', feed_type = NULL WHERE id = 1"
+                );
+
                 return;
             }
 
@@ -339,8 +347,8 @@ final readonly class Installer
             if ($existing['action'] === 'users.list' && $existing['feed_id'] === null) {
                 $update = $pdo->prepare(
                     "UPDATE pages SET
-                        action = 'article.show', page_name = ?, settings = '{}',
-                        feed_type = 'article', feed_id = ?, changefreq = 'monthly', updated = UNIX_TIMESTAMP()
+                        action = 'article.show-id', page_name = ?, settings = '{}',
+                        feed_type = NULL, feed_id = ?, changefreq = 'monthly', updated = UNIX_TIMESTAMP()
                      WHERE id = 1"
                 );
                 $update->execute([self::WELCOME_TITLE, $welcomeFeedId]);
@@ -353,9 +361,9 @@ final readonly class Installer
 
         $statement = $pdo->prepare(
             "INSERT INTO pages (
-                id, parent, pattern, action, page_name, settings, feed_type,
+                id, parent, pattern, action, page_name, settings,
                 feed_id, changefreq, updated, access_rule
-             ) VALUES (1, NULL, '', 'article.show', ?, '{}', 'article', ?, 'monthly', UNIX_TIMESTAMP(), 'public')"
+             ) VALUES (1, NULL, '', 'article.show-id', ?, '{}', ?, 'monthly', UNIX_TIMESTAMP(), 'public')"
         );
         $statement->execute([self::WELCOME_TITLE, $welcomeFeedId]);
     }
@@ -458,7 +466,7 @@ final readonly class Installer
              FROM pages p
              INNER JOIN feeds f ON f.id = p.feed_id
              WHERE p.id = 1 AND p.parent IS NULL AND p.pattern = ''
-               AND p.action = 'article.show' AND p.feed_type = 'article'
+               AND p.action = 'article.show-id' AND p.feed_type IS NULL
                AND f.type = 'article' AND f.owner_id = 1 AND f.visibility = 'public'"
         )->fetchColumn();
         $profilePage = $pdo->query(

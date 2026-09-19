@@ -91,7 +91,7 @@ final class CommunityListService
         // module isn't installed, in which case cards render without links -
         // this module must not depend on another one's pages existing
         // (docs/MODULE_CONTRACT.md), so their absence is a supported state.
-        $showPage = $this->pageTree->findByAction('community.show');
+        $showPage = $this->pageTree->findByAction('community.show-slug');
         $managePage = $this->pageTree->findByAction('community.manage');
 
         return [

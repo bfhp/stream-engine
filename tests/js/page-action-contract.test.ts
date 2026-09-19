@@ -10,22 +10,35 @@ import {
 
 function action(overrides: Partial<PageAction> = {}): PageAction {
     return {
-        action: "article.show",
-        label: "Show article",
+        action: "article.show-slug",
+        label: "Show an article from the route slug",
         module: "Article",
         fields: {
-            feedId: { status: "optional", feedTypes: ["article"] },
-            feedType: { status: "optional", values: ["article"] },
+            feedId: { status: "unsupported" },
+            feedType: { status: "required", values: ["article"] },
             listFeedType: { status: "unsupported" },
             termVocabulary: { status: "unsupported" }
         },
-        requirements: [{ oneOf: ["feedId", "feedType"] }],
+        requirements: [],
         ...overrides
     };
 }
 
+function idAction(): PageAction {
+    return action({
+        action: "article.show-id",
+        label: "Show a fixed article",
+        fields: {
+            feedId: { status: "required", feedTypes: ["article"] },
+            feedType: { status: "unsupported" },
+            listFeedType: { status: "unsupported" },
+            termVocabulary: { status: "unsupported" }
+        }
+    });
+}
+
 describe("page action configuration contracts", () => {
-    it("reports unsupported, constrained and compound field errors", () => {
+    it("reports unsupported, required and constrained field errors", () => {
         expect(validatePageActionConfiguration(action(), {
             feedId: "",
             feedType: "forum",
@@ -33,7 +46,7 @@ describe("page action configuration contracts", () => {
             termVocabulary: ""
         })).toEqual({
             feedType: "Feed type must be one of: article.",
-            listFeedType: "List feed type is not used by article.show. Clear it before saving."
+            listFeedType: "List feed type is not used by article.show-slug. Clear it before saving."
         });
 
         expect(validatePageActionConfiguration(action(), {
@@ -42,15 +55,25 @@ describe("page action configuration contracts", () => {
             listFeedType: "",
             termVocabulary: ""
         })).toEqual({
-            feedId: "Set at least one of: Feed ID, Feed type.",
-            feedType: "Set at least one of: Feed ID, Feed type."
+            feedType: "Feed type is required by article.show-slug."
+        });
+
+        expect(validatePageActionConfiguration(idAction(), {
+            feedId: "",
+            feedType: "article",
+            listFeedType: "",
+            termVocabulary: ""
+        })).toEqual({
+            feedId: "Feed ID is required by article.show-id.",
+            feedType: "Feed type is not used by article.show-id. Clear it before saving."
         });
     });
 
     it("describes required, unsupported and legacy fields", () => {
-        expect(fieldDescription(action(), "feedId")).toContain("At least one of Feed ID / Feed type");
-        expect(fieldDescription(action(), "feedId")).toContain("referenced feed must have type: article");
-        expect(fieldDescription(action(), "termVocabulary")).toBe("Not used by article.show.");
+        expect(fieldDescription(idAction(), "feedId")).toContain("Required by article.show-id");
+        expect(fieldDescription(idAction(), "feedId")).toContain("referenced feed must have type: article");
+        expect(fieldDescription(action(), "feedType")).toContain("Required by article.show-slug");
+        expect(fieldDescription(action(), "termVocabulary")).toBe("Not used by article.show-slug.");
         expect(fieldDescription(undefined, "feedType")).toContain("legacy values");
     });
 

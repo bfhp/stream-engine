@@ -37,12 +37,12 @@ class BlogPostService
 
     /**
      * Slugs a blog post is never allowed to land on - they'd collide with
-     * other static pages already mounted as siblings of user.post-show
+     * other static pages already mounted as siblings of user.post-show-slug
      * under user.show ({username}), e.g. 'post' is user.post-new's own
      * pattern. Router::resolve() matches static routes before dynamic ones
      * (see its own doc comment), so a post whose slug happened to be one of
      * these would silently become unreachable at its own URL - the request
-     * would resolve to the static page instead of user.post-show with
+     * would resolve to the static page instead of user.post-show-slug with
      * slug='post'/'friends'/etc. uniqueBlogPostSlug() treats these exactly
      * like an already-taken slug, appending the same numeric suffix.
      *
@@ -132,8 +132,8 @@ class BlogPostService
      *
      * canonicalUrl comes straight from UrlGenerator::feed() - its generic
      * feed-type chain walker builds both shapes correctly the same way (a
-     * personal post via user.show/{username} + user.post-show/{slug}, and a
-     * community post via community.show/{slug} + community.post-show/{slug}):
+     * personal post via user.show/{username} + user.post-show-slug/{slug}, and a
+     * community post via community.show-slug/{slug} + community.post-show-slug/{slug}):
      * each root page's one placeholder is filled from its matched feed's own
      * slug column, whatever that placeholder is named (see
      * UrlGenerator::fillFeedPlaceholder()) - which is exactly why

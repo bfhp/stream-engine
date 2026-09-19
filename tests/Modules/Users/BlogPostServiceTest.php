@@ -174,7 +174,7 @@ final class BlogPostServiceTest extends TestCase
                 requestMethods: ['GET'],
                 responseType: 'raw',
                 accessRule: AccessService::ACCESS_PUBLIC,
-                action: 'user.post-show',
+                action: 'user.post-show-slug',
             ),
             // Same reasoning as the blog/blog-post pair above -
             // deleteBlogPost()'s wrong-feed-type test resolves a feed whose

@@ -223,28 +223,43 @@ class UsersController extends AbstractController
             'user.register' => 'User registration page',
             'user.retrieve' => 'Password retrieval page',
             'user.post-new' => 'New blog post page',
-            'user.post-show' => [
-                'label' => 'Blog post page',
+            'user.post-show-id' => [
+                'label' => 'Fixed blog post page',
                 'fields' => [
-                    'feedId' => ['status' => 'optional', 'feedTypes' => ['blog-post']],
+                    'feedId' => ['status' => 'required', 'feedTypes' => ['blog-post']],
+                ],
+            ],
+            'user.post-show-slug' => [
+                'label' => 'Blog post page from the route slug',
+                'fields' => [
                     'feedType' => ['status' => 'required', 'values' => ['blog-post']],
                 ],
             ],
             'user.post-edit' => 'Blog post edit page',
             'community.main' => 'Community page',
             'community.create' => 'Create community page',
-            'community.show' => [
-                'label' => 'Single community page',
+            'community.show-id' => [
+                'label' => 'Fixed community page',
                 'fields' => [
-                    'feedId' => ['status' => 'optional', 'feedTypes' => ['community']],
+                    'feedId' => ['status' => 'required', 'feedTypes' => ['community']],
+                ],
+            ],
+            'community.show-slug' => [
+                'label' => 'Community page from the route slug',
+                'fields' => [
                     'feedType' => ['status' => 'required', 'values' => ['community']],
                 ],
             ],
             'community.post-new' => 'New community post page',
-            'community.post-show' => [
-                'label' => 'Community post page',
+            'community.post-show-id' => [
+                'label' => 'Fixed community post page',
                 'fields' => [
-                    'feedId' => ['status' => 'optional', 'feedTypes' => ['blog-post']],
+                    'feedId' => ['status' => 'required', 'feedTypes' => ['blog-post']],
+                ],
+            ],
+            'community.post-show-slug' => [
+                'label' => 'Community post page from the route slug',
+                'fields' => [
                     'feedType' => ['status' => 'required', 'values' => ['blog-post']],
                 ],
             ],
@@ -262,10 +277,10 @@ class UsersController extends AbstractController
             }
         }
 
-        // Same idea as 'user.post-show' below - community.show's own
+        // Same idea as 'user.post-show-slug' below - community.show's own
         // pageName ("Community page") isn't fit to show in the trail,
         // the crumb should read as the community's own title.
-        if ($page->action === 'community.show' && key_exists('slug', $page->params)) {
+        if ($page->action === 'community.show-slug' && key_exists('slug', $page->params)) {
             $community = $this->feedService->getFeedByParentAndSlug(
                 null,
                 $page->params['slug'],
@@ -283,7 +298,7 @@ class UsersController extends AbstractController
         // fit to show in the trail - the crumb should read as the post's own
         // title, and its slug segment needs to be real so
         // BreadcrumbsService::finalize() builds a working path.
-        if ($page->action === 'user.post-show' && key_exists('slug', $page->params)) {
+        if ($page->action === 'user.post-show-slug' && key_exists('slug', $page->params)) {
             $post = $this->resolveBlogPostByRoute($page, $page->params['slug'], $this->context->user);
 
             if ($post && $post->type === 'blog-post') {
@@ -291,14 +306,14 @@ class UsersController extends AbstractController
             }
         }
 
-        // Same idea as 'user.post-show' above, for a post viewed at its
+        // Same idea as 'user.post-show-slug' above, for a post viewed at its
         // community.post-show URL instead. $page->params here is this one
         // page's own local regex match (see Router::resolve() - each
         // breadcrumb Page keeps its own $pageParams, not the route's
         // aggregate $params), so it's the post's own slug even though
         // community.show's own {slug} segment (the community's slug,
         // matched one level up) uses the exact same placeholder name.
-        if ($page->action === 'community.post-show' && key_exists('slug', $page->params)) {
+        if ($page->action === 'community.post-show-slug' && key_exists('slug', $page->params)) {
             $post = $this->resolveBlogPostByRoute($page, $page->params['slug'], $this->context->user);
 
             if ($post && $post->type === 'blog-post') {
@@ -323,13 +338,25 @@ class UsersController extends AbstractController
             'user.register' => $this->showRegisterPage($page),
             'user.retrieve' => $this->showRetrievePage($page),
             'user.post-new' => $this->showBlogPostFormPage($page, $args),
-            'user.post-show' => $this->showBlogPostPage($page, $args),
+            'user.post-show-id',
+            'user.post-show-slug' => $this->showBlogPostPage(
+                $page,
+                $this->resolveBlogPostForShow($page, $args)
+            ),
             'user.post-edit' => $this->showBlogPostEditPage($page, $args),
             'community.main' => $this->showCommunityPage($page),
             'community.create' => $this->showCommunityCreatePage($page),
-            'community.show' => $this->showCommunityShowPage($page, $args),
+            'community.show-id',
+            'community.show-slug' => $this->showCommunityShowPage(
+                $page,
+                $this->resolveCommunityFeed($page, $args, $this->context->user)
+            ),
             'community.post-new' => $this->showCommunityPostFormPage($page, $args),
-            'community.post-show' => $this->showCommunityPostPage($page, $args),
+            'community.post-show-id',
+            'community.post-show-slug' => $this->showCommunityPostPage(
+                $page,
+                $this->resolveBlogPostForShow($page, $args)
+            ),
             'community.post-edit' => $this->showCommunityPostEditPage($page, $args),
             'community.manage' => $this->showCommunityManagePage($page, $args),
             default => throw new ForbiddenException('Unknown page action'),
@@ -1644,19 +1671,18 @@ class UsersController extends AbstractController
     }
 
     /**
-     * action=community.show: a single community's own page - mounted at
-     * pages.action 'community.show' ({slug} under community.main, feed_type
-     * 'community'). A literal feedId pinned on the page row wins; otherwise
-     * the slug is resolved explicitly in the top-level community namespace.
+     * A single community's own page. `community.show-id` resolves a fixed
+     * feed, while `community.show-slug` resolves the route's {slug} in the
+     * top-level community namespace. Both actions share this renderer after
+     * resolution.
      *
      * @throws NotFoundException
      * @throws ForbiddenException
      * @throws ValidationException
      */
-    private function showCommunityShowPage(Page $page, array $args): ViewModel
+    private function showCommunityShowPage(Page $page, Feed $community): ViewModel
     {
         $viewer = $this->context->user;
-        $community = $this->resolveCommunityFeed($page, $args, $viewer);
 
         $owner = $this->userService->findPublicUserById($community->ownerId);
 
@@ -1742,7 +1768,10 @@ class UsersController extends AbstractController
      */
     private function resolveCommunityFeed(Page $page, array $args, User $viewer): Feed
     {
-        if ($page->feedId) {
+        if ($page->action === 'community.show-id') {
+            if ($page->feedId === null) {
+                throw new NotFoundException($this->tm->trans('community.not_found'));
+            }
             $community = $this->feedService->getFeedById($page->feedId, $viewer);
         } else {
             $slug = trim((string) ($args['slug'] ?? ''));
@@ -1763,7 +1792,7 @@ class UsersController extends AbstractController
     /**
      * action=community.manage: the community owner's own settings +
      * member-moderation page - mounted as a child of a single community's
-     * own page (action 'community.show', {slug}), same {slug}-inherited-
+     * own page (action 'community.show-slug', {slug}), same {slug}-inherited-
      * from-parent nesting as community.post-new (see
      * resolveCommunityFeed()'s own use above). Owner-only: the page row's
      * own access_rule only ever gates "must be logged in" (see
@@ -1791,7 +1820,7 @@ class UsersController extends AbstractController
             throw new ForbiddenException($this->tm->trans('community.manage_forbidden'));
         }
 
-        $communityShowPage = $this->pageTree->findByAction('community.show');
+        $communityShowPage = $this->pageTree->findByAction('community.show-slug');
         $cancelUrl = $communityShowPage !== null && $community->slug !== null
             ? $this->urlGenerator->page($communityShowPage, ['slug' => $community->slug])
             : null;
@@ -1834,7 +1863,7 @@ class UsersController extends AbstractController
     /**
      * action=community.post-new: the "write a post into this community"
      * editor - mounted as a child of a single community's own page
-     * (action 'community.show', {slug}), same nesting community.post-new's
+     * (action 'community.show-slug', {slug}), same nesting community.post-new's
      * own pattern ('post') mirrors user.post-new's under user.show
      * ({username}). Reuses showBlogPostFormPage()'s exact view/template
      * (modules/users/blog-post-form.twig) - only the API target and cancel
@@ -1865,7 +1894,7 @@ class UsersController extends AbstractController
             : null;
 
         $cancelUrl = null;
-        $communityShowPage = $this->pageTree->findByAction('community.show');
+        $communityShowPage = $this->pageTree->findByAction('community.show-slug');
         if ($communityShowPage !== null && $community->slug !== null) {
             $cancelUrl = $this->urlGenerator->page($communityShowPage, ['slug' => $community->slug]);
         }
@@ -2302,7 +2331,7 @@ class UsersController extends AbstractController
         $rows = (new MembershipRepository($this->db))
             ->findUserCommunities($viewer->id, self::MY_COMMUNITIES_WIDGET_LIMIT);
 
-        $communityShowPage = $this->pageTree->findByAction('community.show');
+        $communityShowPage = $this->pageTree->findByAction('community.show-slug');
 
         return array_map(function (array $row) use ($communityShowPage): array {
             $slug = (string) ($row['slug'] ?? '');
@@ -2372,7 +2401,7 @@ class UsersController extends AbstractController
             LIMIT '.self::COMMUNITY_WIDGET_LIST_LIMIT
         );
 
-        $communityShowPage = $this->pageTree->findByAction('community.show');
+        $communityShowPage = $this->pageTree->findByAction('community.show-slug');
 
         return array_map(function (array $row) use ($communityShowPage): array {
             $url = $communityShowPage !== null && $row['slug']
@@ -2534,7 +2563,7 @@ class UsersController extends AbstractController
 
     /**
      * The blog-post editor's "edit" mode - mounted as a child of the post's
-     * own {slug} page (action 'user.post-show'), so it shares that exact
+     * own {slug} page (action 'user.post-show-slug'), so it shares that exact
      * slug segment (e.g. /blog/{slug}/edit/) instead of needing its own
      * {id} routing. resolvePostForEdit() below mirrors showBlogPostPage()'s
      * own "prefer a literal feedId pinned on the page row, else look the
@@ -2751,13 +2780,10 @@ class UsersController extends AbstractController
     }
 
     /**
-     * Resolves the Feed a {slug}-based post page (user.post-show or
-     * community.post-show - both feed_type 'blog-post') is showing: a
-     * literal feedId pinned on the page row wins, else look it up by its
-     * own slug segment. Shared by showBlogPostPage() and
-     * showCommunityPostPage() - which page led here doesn't change how the
-     * post itself is found, only how its canonical URL/breadcrumb get
-     * built afterwards (see each method's own canonical-building code).
+     * Resolves the Feed a post page is showing. The `*-id` actions load their
+     * fixed feed directly; the `*-slug` actions resolve the post inside the
+     * route's blog/community container rather than globally. Both renderers
+     * consume the same resolved Feed afterwards.
      *
      * @throws NotFoundException
      * @throws ForbiddenException
@@ -2765,15 +2791,16 @@ class UsersController extends AbstractController
      */
     private function resolveBlogPostForShow(Page $page, array $args): Feed
     {
-        $slug = trim((string) ($args['slug'] ?? ''));
-
-        if ($slug === '') {
-            throw new NotFoundException($this->tm->trans('blog.post_not_found'));
-        }
-
-        if ($page->feedId) {
+        if (in_array($page->action, ['user.post-show-id', 'community.post-show-id'], true)) {
+            if ($page->feedId === null) {
+                throw new NotFoundException($this->tm->trans('blog.post_not_found'));
+            }
             $post = $this->feedService->getFeedById($page->feedId, $this->context->user);
         } else {
+            $slug = trim((string) ($args['slug'] ?? ''));
+            if ($slug === '') {
+                throw new NotFoundException($this->tm->trans('blog.post_not_found'));
+            }
             $post = $this->resolveBlogPostByRoute($page, $slug, $this->context->user);
         }
 
@@ -2810,7 +2837,7 @@ class UsersController extends AbstractController
                 }
 
                 $parent = $this->feedService->getFeedByTypeAndSlug('blog', $username, $user);
-            } elseif ($current->action === 'community.show') {
+            } elseif ($current->action === 'community.show-slug') {
                 $communitySlug = trim((string) ($current->params['slug'] ?? ''));
                 if ($communitySlug === '') {
                     return null;
@@ -2822,6 +2849,8 @@ class UsersController extends AbstractController
                     $user,
                     'community'
                 );
+            } elseif ($current->action === 'community.show-id' && $current->feedId !== null) {
+                $parent = $this->feedService->getFeedById($current->feedId, $user);
             }
 
             if ($parent === null) {
@@ -2841,7 +2870,7 @@ class UsersController extends AbstractController
 
     /**
      * Reads a single published blog post - mounted at pages.action
-     * 'user.post-show' ({slug} under the blog root page, feed_type
+     * 'user.post-show-slug' ({slug} under the blog root page, feed_type
      * 'blog-post'). The route resolves its personal-blog parent from the
      * matched username first, so a same-slug post in another personal blog
      * or in a community cannot be selected here.
@@ -2850,10 +2879,8 @@ class UsersController extends AbstractController
      * @throws ForbiddenException
      * @throws ValidationException
      */
-    private function showBlogPostPage(Page $page, array $args): ViewModel
+    private function showBlogPostPage(Page $page, Feed $post): ViewModel
     {
-        $post = $this->resolveBlogPostForShow($page, $args);
-
         $comments = null;
         if ($page->commentsEnabled) {
             $comments = $this->feedService->getComments($post->id, null, $this->context->user);
@@ -3005,7 +3032,7 @@ class UsersController extends AbstractController
 
     /**
      * Reads a single published post at its community URL - mounted at
-     * pages.action 'community.post-show' ({slug} under community.show,
+     * pages.action 'community.post-show-slug' ({slug} under community.show,
      * feed_type 'blog-post'). Post resolution is identical to
      * showBlogPostPage() (resolveBlogPostForShow()), but the matched community
      * is resolved first and becomes the post lookup's parent. The defensive
@@ -3018,9 +3045,8 @@ class UsersController extends AbstractController
      * @throws ForbiddenException
      * @throws ValidationException
      */
-    private function showCommunityPostPage(Page $page, array $args): ViewModel
+    private function showCommunityPostPage(Page $page, Feed $post): ViewModel
     {
-        $post = $this->resolveBlogPostForShow($page, $args);
         $viewer = $this->context->user;
 
         if ($post->containerId === null || $post->containerType !== 'community') {
@@ -3099,7 +3125,7 @@ class UsersController extends AbstractController
 
         $deleteRedirectUrl = '/';
         if ($community !== null) {
-            $communityShowPage = $this->pageTree->findByAction('community.show');
+            $communityShowPage = $this->pageTree->findByAction('community.show-slug');
             if ($communityShowPage !== null && $community->slug !== null) {
                 $deleteRedirectUrl = $this->urlGenerator->page($communityShowPage, ['slug' => $community->slug]);
             }

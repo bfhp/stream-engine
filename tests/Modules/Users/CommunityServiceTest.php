@@ -566,7 +566,7 @@ final class CommunityServiceTest extends TestCase
             ['GET'],
             'html',
             AccessService::ACCESS_AUTHENTICATED,
-            $approval ? 'community.show' : 'community.manage',
+            $approval ? 'community.show-slug' : 'community.manage',
         );
         $community = Feed::fromRow([
             ...$this->makeCommunityRow(self::COMMUNITY_ID, 7, '<Community>', null),

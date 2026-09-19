@@ -43,7 +43,7 @@ final class CommunityListServiceTest extends TestCase
     }
 
     /**
-     * Minimal 'community.show' and 'community.manage' pages so the service has
+     * Minimal 'community.show-slug' and 'community.manage' pages so the service has
      * something to resolve card URLs against. Nested the way the real page tree
      * is (manage is a child of the community page), so the generated paths
      * differ from each other and a mixed-up lookup would show up.
@@ -81,7 +81,7 @@ final class CommunityListServiceTest extends TestCase
                 requestMethods: ['GET'],
                 responseType: 'html',
                 accessRule: AccessService::ACCESS_PUBLIC,
-                action: 'community.show',
+                action: 'community.show-slug',
             ),
             new Page(
                 id: 3,

@@ -223,7 +223,7 @@ final class AdminControllerTest extends TestCase
 
         $_SERVER['REQUEST_METHOD'] = 'POST';
         unset($_COOKIE['csrfToken'], $_SERVER['HTTP_X_CSRF_TOKEN']);
-        PhpInputStreamMock::register(json_encode(['action' => 'article.show']));
+        PhpInputStreamMock::register(json_encode(['action' => 'article.show-slug']));
 
         $this->expectException(ValidationException::class);
 
@@ -236,7 +236,7 @@ final class AdminControllerTest extends TestCase
 
         $_SERVER['REQUEST_METHOD'] = 'PATCH';
         unset($_COOKIE['csrfToken'], $_SERVER['HTTP_X_CSRF_TOKEN']);
-        PhpInputStreamMock::register(json_encode(['action' => 'article.show']));
+        PhpInputStreamMock::register(json_encode(['action' => 'article.show-slug']));
 
         $this->expectException(ValidationException::class);
 
@@ -249,7 +249,7 @@ final class AdminControllerTest extends TestCase
         $module = $this->makeModule();
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $this->withValidCsrf();
-        PhpInputStreamMock::register(json_encode(['action' => 'article.show', 'accessRule' => $rule]));
+        PhpInputStreamMock::register(json_encode(['action' => 'article.show-slug', 'accessRule' => $rule]));
 
         try {
             $module->callApi($this->makeApiPage('admin.pages', ['GET', 'POST']), []);
@@ -274,7 +274,7 @@ final class AdminControllerTest extends TestCase
         PhpInputStreamMock::register(json_encode([
             'parentId' => 1,
             'pattern' => 'about',
-            'action' => 'article.show',
+            'action' => 'article.show-id',
             'pageName' => 'About',
             'feedId' => 42,
             'accessRule' => 'public',
@@ -284,7 +284,7 @@ final class AdminControllerTest extends TestCase
         $response = $this->callAndDecode($module, $this->makeApiPage('admin.pages', ['GET', 'POST']));
 
         $this->assertSame(77, $response['id']);
-        $this->assertSame('article.show', $response['action']);
+        $this->assertSame('article.show-id', $response['action']);
         $this->assertSame('about', $this->writes[0][1][1]);
         $this->assertSame('{"template":"about","commentsEnabled":true}', $this->writes[0][1][4]);
     }
@@ -337,9 +337,13 @@ final class AdminControllerTest extends TestCase
                 ['action' => 'articles.list', 'feedType' => 'forum', 'listFeedType' => 'article'],
                 "Invalid Feed type for page action 'articles.list'",
             ],
-            'one-of requirement' => [
-                ['action' => 'article.show'],
-                "At least one of Feed ID, Feed type is required for page action 'article.show'",
+            'slug action requires a feed type' => [
+                ['action' => 'article.show-slug'],
+                "Feed type is required for page action 'article.show-slug'",
+            ],
+            'id action requires a feed id' => [
+                ['action' => 'article.show-id'],
+                "Feed ID is required for page action 'article.show-id'",
             ],
         ];
     }
@@ -350,13 +354,13 @@ final class AdminControllerTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $this->withValidCsrf();
         PhpInputStreamMock::register(json_encode([
-            'action' => 'article.show',
+            'action' => 'article.show-id',
             'feedId' => 42,
             'accessRule' => 'public',
         ]));
 
         $this->expectException(ValidationException::class);
-        $this->expectExceptionMessage("Feed ID 42 has an invalid type for page action 'article.show'");
+        $this->expectExceptionMessage("Feed ID 42 has an invalid type for page action 'article.show-id'");
 
         $module->callApi($this->makeApiPage('admin.pages', ['GET', 'POST']));
     }
@@ -467,7 +471,7 @@ final class AdminControllerTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $this->withValidCsrf();
         PhpInputStreamMock::register(json_encode([
-            'action' => 'article.show',
+            'action' => 'article.show-slug',
             'settings' => '{broken',
         ]));
 

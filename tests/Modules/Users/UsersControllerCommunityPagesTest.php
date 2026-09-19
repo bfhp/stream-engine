@@ -224,7 +224,7 @@ final class UsersControllerCommunityPagesTest extends TestCase
         $resolved = $this->call(
             $module,
             'resolveCommunityFeed',
-            $this->page('community.post-new', feedId: 42),
+            $this->page('community.show-id', feedId: 42),
             [],
             new User(0, '', AccessService::ROLE_USER)
         );
@@ -351,7 +351,7 @@ final class UsersControllerCommunityPagesTest extends TestCase
 
     public function testCancellingGoesBackToTheCommunity(): void
     {
-        $communityShow = $this->page('community.show', '{slug}');
+        $communityShow = $this->page('community.show-slug', '{slug}');
 
         $view = $this->postFormModule(pages: [$communityShow])->show(
             $this->page('community.post-new'),
