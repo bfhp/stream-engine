@@ -80,10 +80,12 @@ function blankPage(): EditablePage {
 }
 
 function normalizePage(data: Partial<Omit<EditablePage, "settings">> & { settings?: string | null }): EditablePage {
+    const isRootPage = data.id === 1;
+
     return {
         id: data.id,
-        parentId: data.parentId ?? "",
-        pattern: data.pattern ?? "",
+        parentId: isRootPage ? "" : data.parentId ?? "",
+        pattern: isRootPage ? "" : data.pattern ?? "",
         action: data.action ?? "",
         pageName: data.pageName ?? "",
         settings: parsePageSettings(data.settings),
@@ -408,6 +410,7 @@ export default function PageEdit() {
                     label="Pattern"
                     value={page.pattern}
                     onChange={event => update("pattern", event.currentTarget.value)}
+                    disabled={page.id === 1}
                 />
                 <Select
                     label="Action"
@@ -433,7 +436,7 @@ export default function PageEdit() {
                     data={parentOptions}
                     value={page.parentId === "" ? null : String(page.parentId)}
                     onChange={value => update("parentId", value === null ? "" : Number(value))}
-                    disabled={parentPagesLoading}
+                    disabled={parentPagesLoading || page.id === 1}
                     nothingFoundMessage="No parent pages found"
                 />
                 <Select

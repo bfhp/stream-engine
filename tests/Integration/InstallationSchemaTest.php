@@ -165,13 +165,13 @@ final class InstallationSchemaTest extends TestCase
                  VALUES (1, NULL, '', 'article.show-id', 1),
                         (2, 1, 'contacts', 'feedback.show', 1)"
             );
-            $pdo->exec('UPDATE pages SET parent = 2 WHERE id = 1');
+            $pdo->exec("UPDATE pages SET parent = 2, pattern = 'home' WHERE id = 1");
 
             $this->executeScript($pdo, $root.'/migrations/20260919010000_repair_root_page_parent.sql');
 
             self::assertSame(
-                [[1, null], [2, 1]],
-                $pdo->query('SELECT id, parent FROM pages ORDER BY id')->fetchAll(PDO::FETCH_NUM),
+                [[1, null, ''], [2, 1, 'contacts']],
+                $pdo->query('SELECT id, parent, pattern FROM pages ORDER BY id')->fetchAll(PDO::FETCH_NUM),
             );
         });
     }

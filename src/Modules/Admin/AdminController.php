@@ -433,6 +433,9 @@ class AdminController extends AbstractController
 
         $parentId = $this->optionalPositiveInt($input['parentId'] ?? null, 'Invalid parent page');
         $currentId = isset($existing['id']) ? (int) $existing['id'] : null;
+        if ($currentId === 1 && ($parentId !== null || $pattern !== '')) {
+            throw new ValidationException('The root page cannot have a parent or pattern');
+        }
         $this->validatePageParent($parentId, $currentId);
 
         $data = [

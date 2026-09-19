@@ -298,17 +298,17 @@ final class AdminControllerTest extends TestCase
     public function testPageCannotBeMovedBelowItsDescendant(): void
     {
         $current = $this->legacyPageRow();
-        $current['id'] = 1;
+        $current['id'] = 10;
         $current['parent'] = null;
         $descendant = $this->legacyPageRow();
-        $descendant['id'] = 2;
-        $descendant['parent'] = 1;
+        $descendant['id'] = 11;
+        $descendant['parent'] = 10;
         $module = $this->makeModule(rows: [$current, $descendant], row: $current);
 
         $_SERVER['REQUEST_METHOD'] = 'PATCH';
         $this->withValidCsrf();
         PhpInputStreamMock::register(json_encode([
-            'parentId' => 2,
+            'parentId' => 11,
             'action' => 'feedback.show',
             'accessRule' => 'public',
         ]));
@@ -316,19 +316,19 @@ final class AdminControllerTest extends TestCase
         $this->expectException(ValidationException::class);
         $this->expectExceptionMessage('descendant');
 
-        $module->callApi($this->makeApiPage('admin.page', ['GET', 'PATCH']), ['id' => 1]);
+        $module->callApi($this->makeApiPage('admin.page', ['GET', 'PATCH']), ['id' => 10]);
     }
 
     public function testPageCannotBeItsOwnParent(): void
     {
         $current = $this->legacyPageRow();
-        $current['id'] = 1;
+        $current['id'] = 10;
         $module = $this->makeModule(row: $current);
 
         $_SERVER['REQUEST_METHOD'] = 'PATCH';
         $this->withValidCsrf();
         PhpInputStreamMock::register(json_encode([
-            'parentId' => 1,
+            'parentId' => 10,
             'action' => 'feedback.show',
             'accessRule' => 'public',
         ]));
@@ -336,7 +336,37 @@ final class AdminControllerTest extends TestCase
         $this->expectException(ValidationException::class);
         $this->expectExceptionMessage('own parent');
 
+        $module->callApi($this->makeApiPage('admin.page', ['GET', 'PATCH']), ['id' => 10]);
+    }
+
+    #[DataProvider('invalidRootPageConfigurations')]
+    public function testRootPageCannotHaveAParentOrPattern(array $input): void
+    {
+        $current = $this->legacyPageRow();
+        $current['id'] = 1;
+        $current['parent'] = null;
+        $current['pattern'] = '';
+        $module = $this->makeModule(row: $current);
+
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode($input + [
+            'action' => 'feedback.show',
+            'accessRule' => 'public',
+        ]));
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('root page');
+
         $module->callApi($this->makeApiPage('admin.page', ['GET', 'PATCH']), ['id' => 1]);
+    }
+
+    public static function invalidRootPageConfigurations(): array
+    {
+        return [
+            'parent' => [['parentId' => 2]],
+            'pattern' => [['pattern' => 'home']],
+        ];
     }
 
     public function testPageCreateRejectsAnUnknownAction(): void
