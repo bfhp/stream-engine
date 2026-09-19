@@ -148,6 +148,7 @@ final class SitemapControllerTest extends TestCase
         $this->assertStringContainsString('https://example.test/sitemap-article-2.xml', $output);
         $this->assertStringContainsString('https://example.test/sitemap-term-author.xml', $output);
         $this->assertStringContainsString('https://example.test/sitemap-term-author-2.xml', $output);
+        $this->assertStringNotContainsString('.xml/', $output);
         $this->assertStringNotContainsString('sitemap-secret.xml', $output);
     }
 
@@ -321,6 +322,7 @@ final class SitemapControllerTest extends TestCase
         $this->assertStringContainsString('Disallow: /admin/', $output);
         $this->assertStringContainsString('Disallow: /api/', $output);
         $this->assertStringContainsString('Sitemap: https://example.test/sitemap-index.xml', $output);
+        $this->assertStringNotContainsString('sitemap-index.xml/', $output);
     }
 
     // NOTE: the If-Modified-Since 304 short-circuit in handleRobotsTxtRequest()

@@ -402,7 +402,7 @@ class SitemapController extends AbstractController
         $path = $this->urlGenerator->action('sitemap.sitemap', ['slug' => $slug])
             ?? throw new RuntimeException('Sitemap page URL is not configured');
 
-        return $this->absoluteUrl($path);
+        return rtrim($this->absoluteUrl($path), '/');
     }
 
     private function absoluteSitemapFileUrl(string $file): string
