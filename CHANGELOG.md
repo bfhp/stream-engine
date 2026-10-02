@@ -7,6 +7,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-10-02
+
 ### Added
 
 - Complete English and Russian localization for the administration interface,

@@ -2,6 +2,15 @@
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
+CREATE TABLE `admin_dashboard_layouts` (
+  `user_id` int(10) unsigned NOT NULL,
+  `layout_version` int(10) unsigned NOT NULL,
+  `layout_json` longtext NOT NULL,
+  `updated_at` int(10) unsigned NOT NULL,
+  PRIMARY KEY (`user_id`),
+  CONSTRAINT `fk_admin_dashboard_layout_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
 CREATE TABLE `conversations` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `direct_key` varchar(50) DEFAULT NULL,
@@ -230,11 +239,14 @@ CREATE TABLE `menu` (
   `action` varchar(100) DEFAULT NULL,
   `label` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `sort_order` int(10) unsigned DEFAULT 0,
+  `group_order` int(10) unsigned NOT NULL DEFAULT 0,
+  `enabled` tinyint(1) NOT NULL DEFAULT 1,
   `access_rule` varchar(20) NOT NULL DEFAULT 'public' CHECK (`access_rule` in ('public','authenticated','moderator','admin')),
   PRIMARY KEY (`id`),
   UNIQUE KEY `menu_group` (`menu_group`,`parent`,`sort_order`),
   KEY `menu_pages_id_fk` (`page_id`),
   KEY `menu_sort_order_id_index` (`sort_order`,`id`),
+  KEY `menu_group_order_index` (`group_order`,`menu_group`,`sort_order`,`id`),
   CONSTRAINT `menu_pages_id_fk` FOREIGN KEY (`page_id`) REFERENCES `pages` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
