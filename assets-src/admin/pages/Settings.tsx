@@ -38,7 +38,8 @@ const LOCALE_OPTIONS = [
     { value: "ar", label: trans("js.admin.locale_ar") },
     { value: "it", label: trans("js.admin.locale_it") },
     { value: "ja", label: trans("js.admin.locale_ja") },
-    { value: "ko", label: trans("js.admin.locale_ko") }
+    { value: "ko", label: trans("js.admin.locale_ko") },
+    { value: "zh-cn", label: trans("js.admin.locale_zh_cn") }
 ];
 
 function defaultValue(key: EditableKey): string {

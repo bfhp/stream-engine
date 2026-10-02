@@ -990,6 +990,7 @@ return [
     'js.admin.locale_it' => 'イタリア語 (it)',
     'js.admin.locale_ja' => '日本語 (ja)',
     'js.admin.locale_ko' => '韓国語 (ko)',
+    'js.admin.locale_zh_cn' => '中国語（簡体字）(zh-cn)',
     'js.admin.nav.dashboard' => 'ダッシュボード',
     'js.admin.nav.feeds' => 'フィード',
     'js.admin.nav.pages' => 'ページ',

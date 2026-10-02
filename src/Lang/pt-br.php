@@ -990,6 +990,7 @@ E-mail: {email}
     'js.admin.locale_it' => 'Italiano (it)',
     'js.admin.locale_ja' => 'Japonês (ja)',
     'js.admin.locale_ko' => 'Coreano (ko)',
+    'js.admin.locale_zh_cn' => 'Chinês simplificado (zh-cn)',
     'js.admin.nav.dashboard' => 'Painel',
     'js.admin.nav.feeds' => 'Feeds',
     'js.admin.nav.pages' => 'Páginas',
