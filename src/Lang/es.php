@@ -991,6 +991,7 @@ Correo: {email}
     'js.admin.locale_ja' => 'Japonés (ja)',
     'js.admin.locale_ko' => 'Coreano (ko)',
     'js.admin.locale_zh_cn' => 'Chino simplificado (zh-cn)',
+    'js.admin.locale_nl' => 'Neerlandés (nl)',
     'js.admin.nav.dashboard' => 'Panel',
     'js.admin.nav.feeds' => 'Feeds',
     'js.admin.nav.pages' => 'Páginas',

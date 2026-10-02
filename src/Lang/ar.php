@@ -991,6 +991,7 @@ return [
     'js.admin.locale_ja' => 'اليابانية (ja)',
     'js.admin.locale_ko' => 'الكورية (ko)',
     'js.admin.locale_zh_cn' => 'الصينية المبسطة (zh-cn)',
+    'js.admin.locale_nl' => 'الهولندية (nl)',
     'js.admin.nav.dashboard' => 'لوحة التحكم',
     'js.admin.nav.feeds' => 'الخلاصات',
     'js.admin.nav.pages' => 'الصفحات',
