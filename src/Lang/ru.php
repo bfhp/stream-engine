@@ -1025,6 +1025,7 @@ return [
     'js.admin.unit_mb' => 'МБ',
     'js.admin.locale_en' => 'Английский (en)',
     'js.admin.locale_de' => 'Немецкий (de)',
+    'js.admin.locale_fr' => 'Французский (fr)',
     'js.admin.nav.dashboard' => 'Панель управления',
     'js.admin.nav.feeds' => 'Ленты',
     'js.admin.nav.pages' => 'Страницы',

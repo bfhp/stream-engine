@@ -9,7 +9,7 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- Added the German (`de`) interface locale with a full catalog, admin locale
+- Added the German (`de`) and French (`fr`) interface locales with a full catalog, admin locale
   option, and singular/plural handling for server-side units.
 - Added a visual theme gallery with catalog-based selection, validated
   per-theme settings, safe previews, fallback, and versioned assets.

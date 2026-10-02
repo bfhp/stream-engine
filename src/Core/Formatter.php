@@ -159,6 +159,11 @@ class Formatter
             return abs($n) === 1 ? $one : $many;
         }
 
+        // French treats both 0 and 1 as singular.
+        if (str_starts_with(strtolower($this->locale), 'fr')) {
+            return abs($n) < 2 ? $one : $many;
+        }
+
         $n = abs($n) % 100;
         $n1 = $n % 10;
 

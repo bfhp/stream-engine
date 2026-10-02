@@ -989,6 +989,7 @@ E-Mail: {email}
     'js.admin.unit_mb' => 'MB',
     'js.admin.locale_en' => 'Englisch (en)',
     'js.admin.locale_de' => 'Deutsch (de)',
+    'js.admin.locale_fr' => 'Französisch (fr)',
     'js.admin.nav.dashboard' => 'Dashboard',
     'js.admin.nav.feeds' => 'Feeds',
     'js.admin.nav.pages' => 'Seiten',
