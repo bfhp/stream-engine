@@ -45,8 +45,10 @@ open-source libraries and infrastructure.
 - Twig themes with an explicit override and ownership model, and a visual theme
   gallery with validated per-theme settings
 - Localization infrastructure with English, German, French, Russian, Spanish,
-  Brazilian Portuguese, and Arabic catalogs (Arabic is translated, but
-  right-to-left layout is not supported yet)
+  Brazilian Portuguese, and Arabic catalogs
+- Right-to-left support: locale-driven `dir`, a separate Bootstrap RTL build,
+  logical CSS properties, mirrored directional icons, and bidi isolation for
+  user-generated text on the site and in the administration interface
 
 The current backlog and known limitations are tracked in
 [docs/TODO.md](docs/TODO.md).

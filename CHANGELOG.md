@@ -13,6 +13,29 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
   option, and singular/plural handling for server-side units.
 - Added a visual theme gallery with catalog-based selection, validated
   per-theme settings, safe previews, fallback, and versioned assets.
+- Added right-to-left support. The locale decides the document direction
+  (`TranslationManager::direction()`, Twig `dir`, `<html dir>` on site, admin,
+  error, and email layouts), and Arabic-style plural rules are applied on the
+  server and in the browser.
+- Added a separate `bootstrap-rtl.css` build that the engine loads instead of
+  `bootstrap.css` for right-to-left locales (`ThemeCatalog::forDirection()`),
+  so only one Bootstrap build is ever loaded.
+- Mirrored directional icons in right-to-left mode, and added `dir="auto"` and
+  `<bdi>` isolation for user-generated names, titles, comments, posts, and
+  messages.
+- The administration interface now uses Mantine's `DirectionProvider` and
+  direction-aware indent, outdent, back, and nesting markers.
+
+### Changed
+
+- Bootstrap CSS is no longer bundled into `site.css`; it is its own
+  `/assets/css/bootstrap.css` entry listed by the default theme. Themes that list
+  core `site.css` without Bootstrap get it prepended automatically. Run
+  `npm run build` after upgrading.
+- Site and messenger styles use logical CSS properties (`inline-start`/`inline-end`,
+  `inset-inline-*`, logical border radii) instead of left/right.
+- Vitest workers disable Node's experimental `localStorage` to avoid a
+  `--localstorage-file` warning on Node 25+.
 
 ## [0.2.3] - 2026-10-02
 
