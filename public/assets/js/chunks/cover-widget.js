@@ -1,5 +1,5 @@
 /*! Third-party licenses: /assets/THIRD_PARTY_LICENSES.md */
-import{n as e}from"./i18n.js";import{t}from"./uploads.js";import{t as n}from"./api-errors.js";function r(r){let{slot:i,urlInput:a,uploadsApiUrl:o,prompt:s,onError:c}=r;if(!i||!a)return;function l(){i.innerHTML=`
+import{r as e}from"./i18n.js";import{t}from"./uploads.js";import{t as n}from"./api-errors.js";function r(r){let{slot:i,urlInput:a,uploadsApiUrl:o,prompt:s,onError:c}=r;if(!i||!a)return;function l(){i.innerHTML=`
             <div class="blog-post-cover-drop" data-cover-drop>
                 <i class="bi bi-card-image fs-4"></i>
                 <div>

@@ -28,6 +28,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- Locale choices are now discovered from catalogs during installation and in
+  administration, with complete-catalog checks and regional-code fallback.
 - Bootstrap CSS is no longer bundled into `site.css`; it is its own
   `/assets/css/bootstrap.css` entry listed by the default theme. Themes that list
   core `site.css` without Bootstrap get it prepended automatically. Run

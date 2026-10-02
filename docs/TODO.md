@@ -1,7 +1,7 @@
 # TODO
 
 The project's current backlog. Last reviewed against the code and tests on
-**October 2, 2026**.
+**October 3, 2026**.
 
 This file contains only unfinished work and decisions that have been made but
 not yet implemented. Completed work is not recorded here; Git provides that
@@ -16,14 +16,6 @@ Priorities:
 - **P2** — product improvements, refactoring, and localized technical debt.
 
 ## P2
-
-### Localization
-
-- Make every added locale available during installation and in administration
-  settings without maintaining a separate hard-coded locale list.
-- Extend locale catalog tests so every catalog has the same required keys as
-  English and locale selection/fallback works for both base and regional
-  locale codes.
 
 ### Registration
 

@@ -68,6 +68,21 @@ final class WebInstallerTest extends TestCase
         self::assertStringNotContainsString('name="admin_password" value=', $response->body);
     }
 
+    public function testGetOffersEveryDiscoveredLocale(): void
+    {
+        $installer = new WebInstaller(null, $this->languagesDirectory, static function (): void {
+        });
+
+        $response = $installer->handle('GET', ['locale' => 'pt-br'], 'csrf-secret');
+
+        foreach (glob($this->languagesDirectory.'/*.php') ?: [] as $file) {
+            $locale = pathinfo($file, PATHINFO_FILENAME);
+            self::assertStringContainsString('option value="'.$locale.'"', $response->body);
+        }
+        self::assertStringContainsString('option value="pt-br" selected', $response->body);
+        self::assertStringNotContainsString('<input name="locale"', $response->body);
+    }
+
     public function testGetRendersSystemPreflightReport(): void
     {
         $report = new InstallationPreflightReport([

@@ -15,7 +15,7 @@ import { notifications } from "@mantine/notifications";
 import { IconDeviceFloppy, IconRefresh } from "@tabler/icons-react";
 import { csrfHeaders } from "../../shared/csrf";
 import { formatTimestamp } from "../lib/format";
-import { trans } from "../../shared/i18n";
+import { getAvailableLocales, getLocale, trans } from "../../shared/i18n";
 
 type Setting = {
     key: string;
@@ -28,21 +28,14 @@ type SettingsMap = Partial<Record<EditableKey, Setting>>;
 type Drafts = Record<EditableKey, string>;
 
 const EDITABLE_KEYS: EditableKey[] = ["site_name", "locale", "uploads.user_limit_mb"];
-const LOCALE_OPTIONS = [
-    { value: "en", label: trans("js.admin.locale_en") },
-    { value: "ar", label: trans("js.admin.locale_ar") },
-    { value: "es", label: trans("js.admin.locale_es") },
-    { value: "zh-cn", label: trans("js.admin.locale_zh_cn") },
-    { value: "ru", label: trans("js.admin.locale_ru") },
-    { value: "fr", label: trans("js.admin.locale_fr") },
-    { value: "de", label: trans("js.admin.locale_de") },
-    { value: "it", label: trans("js.admin.locale_it") },
-    { value: "ja", label: trans("js.admin.locale_ja") },
-    { value: "ko", label: trans("js.admin.locale_ko") },
-    { value: "nl", label: trans("js.admin.locale_nl") },
-    { value: "pl", label: trans("js.admin.locale_pl") },
-    { value: "pt-br", label: trans("js.admin.locale_pt_br") }
-];
+const displayNames = new Intl.DisplayNames([getLocale()], { type: "language" });
+const localeCollator = new Intl.Collator(getLocale());
+const LOCALE_OPTIONS = getAvailableLocales()
+    .map(locale => ({
+        value: locale,
+        label: `${displayNames.of(locale) || locale} (${locale})`
+    }))
+    .sort((left, right) => localeCollator.compare(left.label, right.label));
 
 function defaultValue(key: EditableKey): string {
     if (key === "locale") {

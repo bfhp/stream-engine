@@ -7,7 +7,7 @@ export type TranslationParams = Record<string, string | number>;
 export type TranslationCatalog = Record<string, TranslationValue>;
 
 function resolveLocale(available: Record<string, TranslationCatalog>, requestedLocale: string): string {
-    const locale = requestedLocale.toLowerCase();
+    const locale = requestedLocale.trim().toLowerCase().replace(/_/g, "-");
     const baseLocale = locale.split("-")[0];
 
     if (available[locale]) return locale;
@@ -16,6 +16,11 @@ function resolveLocale(available: Record<string, TranslationCatalog>, requestedL
     if (available.ru) return "ru";
 
     return Object.keys(available)[0] ?? locale;
+}
+
+/** Locale codes discovered from the build-time language catalogs. */
+export function getAvailableLocales(): string[] {
+    return Object.keys(catalogs).sort();
 }
 
 export function selectCatalog(

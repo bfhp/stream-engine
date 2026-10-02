@@ -180,9 +180,21 @@ final readonly class WebInstaller
         $tokenField = $this->installationToken !== null
             ? '<label>Installation token<input type="password" name="installation_token" autocomplete="off" required></label><p class="hint">Copy the token from <code>storage/installation-token</code> on the server.</p>'.$error('installation_token')
             : '<p class="hint">This browser owns the one-hour installation session.</p>';
+        $localeOptions = '';
+        foreach ($this->availableLocales() as $locale) {
+            $label = class_exists(\Locale::class)
+                ? \Locale::getDisplayName($locale, 'en')
+                : $locale;
+            $localeOptions .= sprintf(
+                '<option value="%s"%s>%s</option>',
+                self::escape($locale),
+                $locale === $values['locale'] ? ' selected' : '',
+                self::escape(sprintf('%s (%s)', $label !== '' ? $label : $locale, $locale)),
+            );
+        }
 
         return $this->layout('Install Stream Engine', sprintf(
-            '<main><h1>Install Stream Engine</h1><p class="intro">Connect this site to its new database and create the first administrator.</p>%s%s<form method="post" action="/install" novalidate><input type="hidden" name="csrf_token" value="%s">%s<h2>Environment</h2><label>Site URL<input type="url" name="site_url" value="%s" required></label>%s<div class="row"><label>Database host<input name="db_host" value="%s" required></label><label>Database port<input type="number" name="db_port" value="%s" min="1" max="65535" required></label></div>%s%s<label>Database name<input name="db_name" value="%s" required></label>%s<label>Database username<input name="db_username" value="%s" required></label>%s<label>Database password<input type="password" name="db_password" autocomplete="new-password"></label>%s<h2>Site</h2><label>Site name<input name="site_name" value="%s" maxlength="150" required></label>%s<label>Locale<input name="locale" value="%s" maxlength="5" required></label>%s<h2>Administrator</h2><label>Administrator email<input type="email" name="admin_email" value="%s" required></label>%s<label>Administrator name<input name="admin_name" value="%s" maxlength="50" required></label>%s<label>Administrator password<input type="password" name="admin_password" minlength="%d" maxlength="255" autocomplete="new-password" required></label><p class="hint">10–255 characters; spaces, Unicode and special characters are allowed.</p>%s<label>Repeat administrator password<input type="password" name="admin_password_confirmation" minlength="%d" maxlength="255" autocomplete="new-password" required></label><button type="submit">Install Stream Engine</button></form></main>',
+            '<main><h1>Install Stream Engine</h1><p class="intro">Connect this site to its new database and create the first administrator.</p>%s%s<form method="post" action="/install" novalidate><input type="hidden" name="csrf_token" value="%s">%s<h2>Environment</h2><label>Site URL<input type="url" name="site_url" value="%s" required></label>%s<div class="row"><label>Database host<input name="db_host" value="%s" required></label><label>Database port<input type="number" name="db_port" value="%s" min="1" max="65535" required></label></div>%s%s<label>Database name<input name="db_name" value="%s" required></label>%s<label>Database username<input name="db_username" value="%s" required></label>%s<label>Database password<input type="password" name="db_password" autocomplete="new-password"></label>%s<h2>Site</h2><label>Site name<input name="site_name" value="%s" maxlength="150" required></label>%s<label>Locale<select name="locale" required>%s</select></label>%s<h2>Administrator</h2><label>Administrator email<input type="email" name="admin_email" value="%s" required></label>%s<label>Administrator name<input name="admin_name" value="%s" maxlength="50" required></label>%s<label>Administrator password<input type="password" name="admin_password" minlength="%d" maxlength="255" autocomplete="new-password" required></label><p class="hint">10–255 characters; spaces, Unicode and special characters are allowed.</p>%s<label>Repeat administrator password<input type="password" name="admin_password_confirmation" minlength="%d" maxlength="255" autocomplete="new-password" required></label><button type="submit">Install Stream Engine</button></form></main>',
             $error('form'),
             $this->preflight($preflightReport ?? $this->preflightReport),
             self::escape($csrfToken),
@@ -200,7 +212,7 @@ final readonly class WebInstaller
             $error('db_password'),
             self::escape($values['site_name']),
             $error('site_name'),
-            self::escape($values['locale']),
+            $localeOptions,
             $error('locale'),
             self::escape($values['admin_email']),
             $error('admin_email'),
@@ -210,6 +222,22 @@ final readonly class WebInstaller
             $error('admin_password'),
             InstallationConfig::MIN_PASSWORD_LENGTH,
         ));
+    }
+
+    /** @return list<string> */
+    private function availableLocales(): array
+    {
+        $files = glob(rtrim($this->languagesDirectory, '/').'/*.php') ?: [];
+        $locales = [];
+        foreach ($files as $file) {
+            $locale = pathinfo($file, PATHINFO_FILENAME);
+            if (preg_match('/\A[a-z][a-z0-9]*(?:-[a-z0-9]+)*\z/i', $locale) === 1) {
+                $locales[] = strtolower($locale);
+            }
+        }
+        sort($locales);
+
+        return array_values(array_unique($locales));
     }
 
     private function preflight(?InstallationPreflightReport $report): string
@@ -243,7 +271,7 @@ final readonly class WebInstaller
 
     private function layout(string $title, string $content): string
     {
-        return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'.self::escape($title).'</title><style>html{color-scheme:light dark;font:16px/1.5 system-ui,sans-serif}body{margin:0;background:#f3f5f7;color:#17202a}main{box-sizing:border-box;max-width:42rem;margin:5vh auto;padding:2rem;border-radius:1rem;background:#fff;box-shadow:0 1rem 3rem #17202a18}h1{margin-top:0}h2{margin-top:2rem}.intro,.hint{color:#5d6d7e}.hint{font-size:.875rem;margin-top:-.5rem}.row{display:grid;grid-template-columns:2fr 1fr;gap:1rem}label{display:grid;gap:.35rem;margin:1rem 0;font-weight:600}input{box-sizing:border-box;width:100%;padding:.75rem;border:1px solid #aeb6bf;border-radius:.5rem;background:#fff;color:#17202a;font:inherit}button{margin-top:1rem;padding:.8rem 1.2rem;border:0;border-radius:.5rem;background:#1769e0;color:#fff;font:inherit;font-weight:700;cursor:pointer}.error{padding:.65rem .8rem;border-radius:.4rem;background:#fdecea;color:#a61b1b}.preflight ul{padding:0;list-style:none}.check{display:grid;gap:.15rem;margin:.5rem 0;padding:.65rem .8rem;border-radius:.4rem}.check span{font-size:.875rem}.passed{background:#eaf7ee;color:#176b34}.failed{background:#fdecea;color:#a61b1b}@media(max-width:36rem){.row{grid-template-columns:1fr}}@media(prefers-color-scheme:dark){body{background:#111820;color:#eef2f5}main{background:#1c2732}input{background:#111820;color:#eef2f5;border-color:#506070}.intro,.hint{color:#aebbc7}.passed{background:#183c26;color:#a7e7bd}.failed{background:#471f22;color:#ffc2c2}}</style></head><body>'.$content.'</body></html>';
+        return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'.self::escape($title).'</title><style>html{color-scheme:light dark;font:16px/1.5 system-ui,sans-serif}body{margin:0;background:#f3f5f7;color:#17202a}main{box-sizing:border-box;max-width:42rem;margin:5vh auto;padding:2rem;border-radius:1rem;background:#fff;box-shadow:0 1rem 3rem #17202a18}h1{margin-top:0}h2{margin-top:2rem}.intro,.hint{color:#5d6d7e}.hint{font-size:.875rem;margin-top:-.5rem}.row{display:grid;grid-template-columns:2fr 1fr;gap:1rem}label{display:grid;gap:.35rem;margin:1rem 0;font-weight:600}input,select{box-sizing:border-box;width:100%;padding:.75rem;border:1px solid #aeb6bf;border-radius:.5rem;background:#fff;color:#17202a;font:inherit}button{margin-top:1rem;padding:.8rem 1.2rem;border:0;border-radius:.5rem;background:#1769e0;color:#fff;font:inherit;font-weight:700;cursor:pointer}.error{padding:.65rem .8rem;border-radius:.4rem;background:#fdecea;color:#a61b1b}.preflight ul{padding:0;list-style:none}.check{display:grid;gap:.15rem;margin:.5rem 0;padding:.65rem .8rem;border-radius:.4rem}.check span{font-size:.875rem}.passed{background:#eaf7ee;color:#176b34}.failed{background:#fdecea;color:#a61b1b}@media(max-width:36rem){.row{grid-template-columns:1fr}}@media(prefers-color-scheme:dark){body{background:#111820;color:#eef2f5}main{background:#1c2732}input,select{background:#111820;color:#eef2f5;border-color:#506070}.intro,.hint{color:#aebbc7}.passed{background:#183c26;color:#a7e7bd}.failed{background:#471f22;color:#ffc2c2}}</style></head><body>'.$content.'</body></html>';
     }
 
     private function string(mixed $value): string

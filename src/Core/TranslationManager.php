@@ -11,13 +11,13 @@ class TranslationManager
 
     public function __construct(string $locale, string $fallback = 'en')
     {
-        $this->locale = $locale;
+        $this->locale = self::normalizeLocale($locale);
 
-        $this->messages = $this->load($locale);
+        $this->messages = $this->loadWithBaseFallback($this->locale);
 
-        // fallback
-        if ($locale !== $fallback) {
-            $fallbackMessages = $this->load($fallback);
+        $fallback = self::normalizeLocale($fallback);
+        if ($this->locale !== $fallback) {
+            $fallbackMessages = $this->loadWithBaseFallback($fallback);
             $this->messages = array_merge($fallbackMessages, $this->messages);
         }
     }
@@ -55,17 +55,37 @@ class TranslationManager
         return require $file;
     }
 
+    private function loadWithBaseFallback(string $locale): array
+    {
+        $base = explode('-', $locale, 2)[0];
+        $messages = $base !== $locale ? $this->load($base) : [];
+
+        return array_merge($messages, $this->load($locale));
+    }
+
+    private static function normalizeLocale(string $locale): string
+    {
+        $locale = strtolower(str_replace('_', '-', trim($locale)));
+
+        return preg_match('/\A[a-z][a-z0-9]*(?:-[a-z0-9]+)*\z/', $locale) === 1
+            ? $locale
+            : '';
+    }
+
     /** @return list<string> */
     public static function availableLocales(): array
     {
         $files = glob(__DIR__.'/../Lang/*.php') ?: [];
-        $locales = array_map(
-            static fn (string $file): string => pathinfo($file, PATHINFO_FILENAME),
-            $files,
-        );
+        $locales = [];
+        foreach ($files as $file) {
+            $locale = pathinfo($file, PATHINFO_FILENAME);
+            if (preg_match('/\A[a-z][a-z0-9]*(?:-[a-z0-9]+)*\z/i', $locale) === 1) {
+                $locales[] = strtolower($locale);
+            }
+        }
         sort($locales);
 
-        return array_values($locales);
+        return array_values(array_unique($locales));
     }
 
     // --- PHP Translator ---

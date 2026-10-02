@@ -1,2 +1,2 @@
 /*! Third-party licenses: /assets/THIRD_PARTY_LICENSES.md */
-import{r as e}from"./i18n.js";function t(t){if(t>=1048576){let n=t/1048576;return`${n.toFixed(1)} ${e(`js.common.megabyte`,n)}`}if(t>=1024){let n=Math.round(t/1024);return`${n} ${e(`js.common.kilobyte`,n)}`}return`${t} ${e(`js.common.byte`,t)}`}export{t};
+import{i as e}from"./i18n.js";function t(t){if(t>=1048576){let n=t/1048576;return`${n.toFixed(1)} ${e(`js.common.megabyte`,n)}`}if(t>=1024){let n=Math.round(t/1024);return`${n} ${e(`js.common.kilobyte`,n)}`}return`${t} ${e(`js.common.byte`,t)}`}export{t};

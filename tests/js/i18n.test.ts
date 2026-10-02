@@ -25,6 +25,7 @@ describe("browser translations", () => {
         };
 
         expect(selectCatalog(catalogs, "es-ES")["js.label"]).toBe("Spanish");
+        expect(selectCatalog(catalogs, "ES_mx")["js.label"]).toBe("Spanish");
         expect(selectCatalog(catalogs, "es-ES")["js.fallback"]).toBe("Fallback");
         expect(selectCatalog(catalogs, "de")["js.label"]).toBe("English");
     });

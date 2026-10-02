@@ -51,6 +51,26 @@ final class TranslationManagerTest extends TestCase
         $this->assertSame('zz', $tm->getLocale());
     }
 
+    public function testSelectsExactAndBaseCatalogsForNormalizedRegionalLocales(): void
+    {
+        $this->assertSame(
+            'Alemão (de)',
+            (new TranslationManager('pt_BR', 'en'))->trans('js.admin.locale_de')
+        );
+        $this->assertSame(
+            'Mostrar más',
+            (new TranslationManager('ES-mx', 'en'))->trans('js.common.load_more')
+        );
+        $this->assertSame(
+            'Show more',
+            (new TranslationManager('zz-ZZ', 'en-GB'))->trans('js.common.load_more')
+        );
+        $this->assertSame(
+            'Show more',
+            (new TranslationManager('../ru', 'en'))->trans('js.common.load_more')
+        );
+    }
+
     public function testGetAllReturnsLoadedMessages(): void
     {
         $tm = new TranslationManager('ru', 'ru');
@@ -95,20 +115,16 @@ final class TranslationManagerTest extends TestCase
         $this->assertCount(count($allFeedKeys), $forJs);
     }
 
-    public function testEverySupportedLocaleContainsTheCompleteAdminCatalog(): void
+    public function testEverySupportedLocaleContainsTheCompleteEnglishCatalog(): void
     {
         $english = new TranslationManager('en', 'en');
-        $adminKeys = array_values(array_filter(
-            array_keys($english->getAll()),
-            static fn (string $key): bool => str_starts_with($key, 'js.admin.')
-                || str_starts_with($key, 'admin.error.')
-                || str_starts_with($key, 'admin.page_action.')
-        ));
+        $englishKeys = array_keys($english->getAll());
 
-        $this->assertSame(['ar', 'de', 'en', 'es', 'fr', 'it', 'ja', 'ko', 'nl', 'pl', 'pt-br', 'ru', 'zh-cn'], TranslationManager::availableLocales());
+        $this->assertContains('en', TranslationManager::availableLocales());
         foreach (TranslationManager::availableLocales() as $locale) {
             $messages = (new TranslationManager($locale, $locale))->getAll();
-            foreach ($adminKeys as $key) {
+            $this->assertSameSize($englishKeys, $messages, "Catalog size differs for $locale");
+            foreach ($englishKeys as $key) {
                 $this->assertArrayHasKey($key, $messages, "Missing $key in $locale");
             }
         }
