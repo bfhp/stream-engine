@@ -989,6 +989,7 @@ return [
     'js.admin.locale_ar' => 'العربية (ar)',
     'js.admin.locale_it' => 'الإيطالية (it)',
     'js.admin.locale_ja' => 'اليابانية (ja)',
+    'js.admin.locale_ko' => 'الكورية (ko)',
     'js.admin.nav.dashboard' => 'لوحة التحكم',
     'js.admin.nav.feeds' => 'الخلاصات',
     'js.admin.nav.pages' => 'الصفحات',

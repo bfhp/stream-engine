@@ -989,6 +989,7 @@ Email: {email}
     'js.admin.locale_ar' => 'Arabic (ar)',
     'js.admin.locale_it' => 'Italian (it)',
     'js.admin.locale_ja' => 'Japanese (ja)',
+    'js.admin.locale_ko' => 'Korean (ko)',
     'js.admin.nav.dashboard' => 'Dashboard',
     'js.admin.nav.feeds' => 'Feeds',
     'js.admin.nav.pages' => 'Pages',
