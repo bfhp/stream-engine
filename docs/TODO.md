@@ -87,12 +87,37 @@ found.
 `Dashboard.tsx` is currently only a placeholder and does not provide an
 operational overview of the site.
 
-- Define and display useful summary metrics, recent activity, system health,
-  and shortcuts to common administration tasks.
-- Make every dashboard card permission-aware and provide explicit loading,
-  empty, and error states.
-- Cover the dashboard API, access rules, and rendering of each state with
-  tests.
+- Build a personalized dashboard from a server-defined catalog of admin cards,
+  with a separate saved layout for each administrator. This is administrative
+  UI state, not a global CMS setting; store it by user in a dedicated table and
+  version the serialized layout so future migrations are possible.
+- Let administrators show or hide cards, reorder them with drag and drop,
+  choose among card-supported sizes, and restore the default layout. Keep the
+  first version deliberately constrained: no arbitrary HTML, SQL, API URLs,
+  colors, nested grids, or user-defined cards.
+- Define core cards for user and content summaries, recent activity,
+  moderation work, system health, and shortcuts to common administration
+  tasks. Each card must declare its stable id, label, required permission,
+  supported sizes, default placement, and data provider.
+- Let modules contribute cards through `ModuleRegistry`. Call these
+  "dashboard cards" rather than widgets: public/theme placement widgets are a
+  separate concept and must not be reused as admin cards.
+- Treat the saved client layout only as a list of card ids, positions, and
+  sizes. Card definitions, queries, data, and authorization remain on the
+  server. Ignore missing cards and cards the current administrator may no
+  longer access without exposing their data.
+- Provide an aggregate dashboard API that returns the permitted catalog,
+  effective layout, and card data, plus an authenticated, CSRF-protected API
+  for saving and resetting the current administrator's layout. Keep the
+  contract open to loading expensive cards separately later without requiring
+  that complexity in the first version.
+- Make every card independent and provide explicit loading, ready, empty,
+  error, and unavailable states. One failed provider must not prevent the rest
+  of the dashboard from rendering.
+- Cover the catalog and module registration, per-card authorization, layout
+  validation and versioning, per-user persistence, default restoration,
+  missing/disabled cards, provider isolation, API authorization and CSRF, and
+  rendering of every card state with tests.
 
 ### Admin: interface localization
 
