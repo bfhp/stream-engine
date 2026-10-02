@@ -154,8 +154,8 @@ class Formatter
 
     public function plural(int $n, string $one, string $few, string $many): string
     {
-        // Germanic locales only distinguish singular and plural.
-        if (str_starts_with(strtolower($this->locale), 'de')) {
+        // German and Spanish only distinguish singular and plural.
+        if (preg_match('/^(de|es)(?![a-z])/i', $this->locale) === 1) {
             return abs($n) === 1 ? $one : $many;
         }
 

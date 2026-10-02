@@ -990,6 +990,7 @@ E-mail : {email}
     'js.admin.locale_en' => 'Anglais (en)',
     'js.admin.locale_de' => 'Allemand (de)',
     'js.admin.locale_fr' => 'Français (fr)',
+    'js.admin.locale_es' => 'Espagnol (es)',
     'js.admin.nav.dashboard' => 'Tableau de bord',
     'js.admin.nav.feeds' => 'Flux',
     'js.admin.nav.pages' => 'Pages',
