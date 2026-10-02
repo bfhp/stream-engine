@@ -984,6 +984,42 @@ final class AdminControllerTest extends TestCase
         $module->callApi($this->makeApiPage('admin.users', ['GET']));
     }
 
+    public function testDashboardReturnsCatalogLayoutAndIsolatedCardResults(): void
+    {
+        $module = $this->makeModule(fetchOneRows: [
+            null,
+            ['total' => 4, 'active' => 3, 'inactive' => 1],
+        ], currentUserId: 9);
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+
+        $response = $this->callAndDecode($module, $this->makeApiPage('admin.dashboard', ['GET', 'PATCH', 'DELETE']));
+
+        $this->assertSame(1, $response['version']);
+        $this->assertContains('admin.users-summary', array_column($response['catalog'], 'id'));
+        $this->assertContains('admin.shortcuts', array_column($response['layout']['items'], 'id'));
+        $this->assertContains('ready', array_column($response['cards'], 'status'));
+    }
+
+    #[DataProvider('dashboardMutationMethods')]
+    public function testDashboardMutationsRequireCsrf(string $method): void
+    {
+        $module = $this->makeModule(currentUserId: 9);
+        $_SERVER['REQUEST_METHOD'] = $method;
+        PhpInputStreamMock::register('{}');
+
+        try {
+            $module->callApi($this->makeApiPage('admin.dashboard', ['GET', 'PATCH', 'DELETE']));
+            $this->fail('Dashboard mutation without CSRF was accepted.');
+        } catch (ValidationException) {
+            $this->assertSame([], $this->writes);
+        }
+    }
+
+    public static function dashboardMutationMethods(): array
+    {
+        return [['PATCH'], ['DELETE']];
+    }
+
     /** @return array<string, mixed> */
     private function adminUserRow(): array
     {
@@ -1037,6 +1073,7 @@ final class AdminControllerTest extends TestCase
             'admin.setting' => ['GET', 'PATCH'],
             'admin.users' => ['GET'],
             'admin.user' => ['GET', 'PATCH'],
+            'admin.dashboard' => ['GET', 'PATCH', 'DELETE'],
         ] as $action => $methods) {
             $page = $tree->findByAction($action);
 
@@ -1078,6 +1115,7 @@ final class AdminControllerTest extends TestCase
         $setting = (new Router($tree))->resolve('/api/v1/admin/settings/site_name');
         $users = (new Router($tree))->resolve('/api/v1/admin/users');
         $user = (new Router($tree))->resolve('/api/v1/admin/users/42');
+        $dashboard = (new Router($tree))->resolve('/api/v1/admin/dashboard');
 
         $this->assertSame('admin.pages', $list['page']->action ?? null);
         $this->assertSame('admin.page', $item['page']->action ?? null);
@@ -1092,5 +1130,6 @@ final class AdminControllerTest extends TestCase
         $this->assertSame('admin.users', $users['page']->action ?? null);
         $this->assertSame('admin.user', $user['page']->action ?? null);
         $this->assertSame(['id' => '42'], $user['params']);
+        $this->assertSame('admin.dashboard', $dashboard['page']->action ?? null);
     }
 }

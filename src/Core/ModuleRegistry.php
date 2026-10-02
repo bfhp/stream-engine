@@ -22,6 +22,9 @@ final class ModuleRegistry
         'required',
     ];
 
+    public const array DASHBOARD_CARD_SIZES = ['small', 'medium', 'wide'];
+    public const array DASHBOARD_CARD_KINDS = ['metrics', 'links'];
+
     /** @var array<string, class-string<ControllerInterface>> id => controller class */
     private array $controllers = [];
 
@@ -41,6 +44,9 @@ final class ModuleRegistry
 
     /** @var array<string, string> feed type => display label */
     private array $feedTypes = [];
+
+    /** @var array<string, array<string, mixed>> dashboard card id => normalized descriptor */
+    private array $dashboardCards = [];
 
     public function __construct()
     {
@@ -88,14 +94,98 @@ final class ModuleRegistry
 
                 $this->feedTypes[$type] = $label;
             }
+
+            if (is_subclass_of($controllerClass, DashboardCardProviderInterface::class)) {
+                foreach ($controllerClass::dashboardCards() as $descriptor) {
+                    $card = $this->normalizeDashboardCard($descriptor, $id, $controllerClass);
+                    if (isset($this->dashboardCards[$card['id']])) {
+                        throw new RuntimeException("Duplicate dashboard card id '{$card['id']}'");
+                    }
+                    $this->dashboardCards[$card['id']] = $card;
+                }
+            }
         }
 
         ksort($this->feedTypes);
+        ksort($this->dashboardCards);
         $this->validatePageActionFeedTypes();
         usort(
             $this->pageActions,
             static fn (array $a, array $b): int => [$a['module'], $a['action']] <=> [$b['module'], $b['action']]
         );
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function dashboardCards(): array
+    {
+        return array_values($this->dashboardCards);
+    }
+
+    /** @return array<string, mixed>|null */
+    public function dashboardCard(string $id): ?array
+    {
+        return $this->dashboardCards[$id] ?? null;
+    }
+
+    /** @param mixed $descriptor @param class-string<DashboardCardProviderInterface> $provider */
+    private function normalizeDashboardCard(mixed $descriptor, string $module, string $provider): array
+    {
+        if (! is_array($descriptor)
+            || array_diff(array_keys($descriptor), [
+                'id', 'label', 'kind', 'permission', 'sizes', 'defaultSize', 'defaultPosition',
+            ]) !== []) {
+            throw new RuntimeException("Invalid dashboard card declared by $module");
+        }
+
+        $id = $descriptor['id'] ?? null;
+        $label = $descriptor['label'] ?? null;
+        $kind = $descriptor['kind'] ?? null;
+        $permission = $descriptor['permission'] ?? null;
+        $sizes = $descriptor['sizes'] ?? null;
+        $defaultSize = $descriptor['defaultSize'] ?? null;
+        $defaultPosition = $descriptor['defaultPosition'] ?? null;
+
+        if (! is_string($id) || ! preg_match('/\A[a-z][a-z0-9-]*(?:\.[a-z][a-z0-9-]*)+\z/D', $id)) {
+            throw new RuntimeException("Invalid dashboard card id declared by $module");
+        }
+        if (! is_string($label) || trim($label) === '') {
+            throw new RuntimeException("Dashboard card '$id' must have a label");
+        }
+        if (! is_string($kind) || ! in_array($kind, self::DASHBOARD_CARD_KINDS, true)) {
+            throw new RuntimeException("Dashboard card '$id' has an invalid kind");
+        }
+        if (! is_string($permission) || ! in_array($permission, \StreamEngine\Service\AccessService::ACCESS_RULES, true)) {
+            throw new RuntimeException("Dashboard card '$id' has an invalid permission");
+        }
+        if (! is_array($sizes) || $sizes === []) {
+            throw new RuntimeException("Dashboard card '$id' must support at least one size");
+        }
+        $sizes = array_values(array_unique($sizes));
+        if (array_filter(
+            $sizes,
+            static fn (mixed $size): bool => ! is_string($size)
+                || ! in_array($size, self::DASHBOARD_CARD_SIZES, true),
+        ) !== []) {
+            throw new RuntimeException("Dashboard card '$id' has an invalid size");
+        }
+        if (! is_string($defaultSize) || ! in_array($defaultSize, $sizes, true)) {
+            throw new RuntimeException("Dashboard card '$id' has an invalid default size");
+        }
+        if (! is_int($defaultPosition) || $defaultPosition < 0) {
+            throw new RuntimeException("Dashboard card '$id' has an invalid default position");
+        }
+
+        return [
+            'id' => $id,
+            'label' => trim($label),
+            'kind' => $kind,
+            'permission' => $permission,
+            'sizes' => $sizes,
+            'defaultSize' => $defaultSize,
+            'defaultPosition' => $defaultPosition,
+            'module' => $module,
+            'provider' => $provider,
+        ];
     }
 
     /**

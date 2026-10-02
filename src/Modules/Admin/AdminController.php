@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace StreamEngine\Modules\Admin;
 
 use StreamEngine\Core\AbstractController;
+use StreamEngine\Core\DashboardCardProviderInterface;
 use StreamEngine\Core\Exceptions\ForbiddenException;
 use StreamEngine\Core\Exceptions\NotFoundException;
 use StreamEngine\Core\Exceptions\ValidationException;
@@ -22,14 +23,100 @@ use StreamEngine\Repository\MenuRepository;
 use StreamEngine\Repository\SettingsRepository;
 use StreamEngine\Repository\UserRepository;
 use StreamEngine\Service\AccessService;
+use StreamEngine\Service\AdminDashboardService;
+use StreamEngine\Repository\DashboardLayoutRepository;
 use StreamEngine\View\ViewModel;
 
-class AdminController extends AbstractController
+class AdminController extends AbstractController implements DashboardCardProviderInterface
 {
     public static function pageActions(): array
     {
         return [
             'admin.index' => 'Administrator interface',
+        ];
+    }
+
+    public static function dashboardCards(): array
+    {
+        return [
+            [
+                'id' => 'admin.users-summary',
+                'label' => 'Users',
+                'kind' => 'metrics',
+                'permission' => AccessService::ACCESS_ADMIN,
+                'sizes' => ['small', 'medium'],
+                'defaultSize' => 'small',
+                'defaultPosition' => 10,
+            ],
+            [
+                'id' => 'admin.content-summary',
+                'label' => 'Content',
+                'kind' => 'metrics',
+                'permission' => AccessService::ACCESS_ADMIN,
+                'sizes' => ['small', 'medium'],
+                'defaultSize' => 'small',
+                'defaultPosition' => 20,
+            ],
+            [
+                'id' => 'admin.shortcuts',
+                'label' => 'Shortcuts',
+                'kind' => 'links',
+                'permission' => AccessService::ACCESS_ADMIN,
+                'sizes' => ['small', 'medium', 'wide'],
+                'defaultSize' => 'medium',
+                'defaultPosition' => 30,
+            ],
+        ];
+    }
+
+    public static function dashboardCardData(string $cardId, PdoDatabase $db, RequestContext $context): array
+    {
+        return match ($cardId) {
+            'admin.users-summary' => self::usersSummaryCard($db),
+            'admin.content-summary' => self::contentSummaryCard($db),
+            'admin.shortcuts' => [
+                'status' => 'ready',
+                'data' => [
+                    ['label' => 'Manage users', 'href' => '#/users'],
+                    ['label' => 'Create page', 'href' => '#/pages/new'],
+                    ['label' => 'Settings', 'href' => '#/settings'],
+                ],
+            ],
+            default => ['status' => 'unavailable', 'data' => null],
+        };
+    }
+
+    private static function usersSummaryCard(PdoDatabase $db): array
+    {
+        $row = $db->fetchOne(
+            'SELECT COUNT(*) AS total,
+                    COALESCE(SUM(is_active = 1), 0) AS active,
+                    COALESCE(SUM(is_active = 0), 0) AS inactive
+             FROM users'
+        ) ?? [];
+
+        return [
+            'status' => (int) ($row['total'] ?? 0) > 0 ? 'ready' : 'empty',
+            'data' => [
+                ['label' => 'Total', 'value' => (int) ($row['total'] ?? 0)],
+                ['label' => 'Active', 'value' => (int) ($row['active'] ?? 0)],
+                ['label' => 'Inactive', 'value' => (int) ($row['inactive'] ?? 0)],
+            ],
+        ];
+    }
+
+    private static function contentSummaryCard(PdoDatabase $db): array
+    {
+        $row = $db->fetchOne(
+            'SELECT COUNT(*) AS total, COUNT(DISTINCT type) AS types FROM feeds'
+        ) ?? [];
+
+        return [
+            'status' => (int) ($row['total'] ?? 0) > 0 ? 'ready' : 'empty',
+            'data' => [
+                ['label' => 'Items', 'value' => (int) ($row['total'] ?? 0)],
+                ['label' => 'Types', 'value' => (int) ($row['types'] ?? 0)],
+            ],
         ];
     }
 
@@ -56,6 +143,7 @@ class AdminController extends AbstractController
     private readonly MenuRepository $menuRepository;
     private readonly SettingsRepository $settingsRepository;
     private readonly UserRepository $userRepository;
+    private readonly AdminDashboardService $dashboardService;
 
     public function __construct(
         PdoDatabase $db,
@@ -69,6 +157,11 @@ class AdminController extends AbstractController
         $this->menuRepository = new MenuRepository($db);
         $this->settingsRepository = new SettingsRepository($db);
         $this->userRepository = new UserRepository($db);
+        $this->dashboardService = new AdminDashboardService(
+            new DashboardLayoutRepository($db),
+            $modules,
+            $db,
+        );
     }
 
     /**
@@ -127,6 +220,9 @@ class AdminController extends AbstractController
             case 'admin.user':
                 $this->handleUserRequest((int) ($args['id'] ?? 0));
                 break;
+            case 'admin.dashboard':
+                $this->handleDashboardRequest();
+                break;
             default:
                 parent::callApi($page, $args);
         }
@@ -141,6 +237,18 @@ class AdminController extends AbstractController
                 parentId: $apiPageId,
                 pattern: 'admin',
                 requestMethods: ['GET'],
+                accessRule: AccessService::ACCESS_ADMIN,
+            )
+        );
+
+        $dashboardPageId = $pageTree->getMaxPageId();
+        $pageTree->add(
+            Page::api(
+                id: $dashboardPageId,
+                parentId: $adminApiPageId,
+                pattern: 'dashboard',
+                requestMethods: ['GET', 'PATCH', 'DELETE'],
+                action: 'admin.dashboard',
                 accessRule: AccessService::ACCESS_ADMIN,
             )
         );
@@ -253,6 +361,26 @@ class AdminController extends AbstractController
             )
         );
 
+    }
+
+    /** @throws ValidationException */
+    private function handleDashboardRequest(): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
+            Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
+            echo Formatter::json($this->dashboardService->save($this->context, $this->jsonBody()));
+
+            return;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+            Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
+            echo Formatter::json($this->dashboardService->reset($this->context));
+
+            return;
+        }
+
+        echo Formatter::json($this->dashboardService->payload($this->context));
     }
 
     /** @throws ValidationException */

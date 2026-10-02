@@ -16,6 +16,7 @@ use StreamEngine\Core\Cache;
 use StreamEngine\Core\Config;
 use StreamEngine\Core\Formatter;
 use StreamEngine\Core\ControllerInterface;
+use StreamEngine\Core\DashboardCardProviderInterface;
 use StreamEngine\Core\PageTree;
 use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Core\RequestContext;
@@ -218,6 +219,69 @@ final class InvalidActionContractController extends AbstractController
                 'fields' => ['mysteryField' => 'required'],
             ],
         ];
+    }
+}
+
+final class DashboardProbeController extends AbstractController implements DashboardCardProviderInterface
+{
+    public static function dashboardCards(): array
+    {
+        return [[
+            'id' => 'probe.summary',
+            'label' => 'Probe summary',
+            'kind' => 'metrics',
+            'permission' => AccessService::ACCESS_ADMIN,
+            'sizes' => ['small', 'wide'],
+            'defaultSize' => 'small',
+            'defaultPosition' => 90,
+        ]];
+    }
+
+    public static function dashboardCardData(string $cardId, PdoDatabase $db, RequestContext $context): array
+    {
+        return ['status' => 'ready', 'data' => [['label' => 'Probe', 'value' => 1]]];
+    }
+}
+
+final class FailingDashboardProbeController extends AbstractController implements DashboardCardProviderInterface
+{
+    public static function dashboardCards(): array
+    {
+        return [[
+            'id' => 'failing.summary',
+            'label' => 'Failing summary',
+            'kind' => 'metrics',
+            'permission' => AccessService::ACCESS_ADMIN,
+            'sizes' => ['small'],
+            'defaultSize' => 'small',
+            'defaultPosition' => 100,
+        ]];
+    }
+
+    public static function dashboardCardData(string $cardId, PdoDatabase $db, RequestContext $context): array
+    {
+        throw new RuntimeException('Provider failed');
+    }
+}
+
+final class InvalidDashboardProbeController extends AbstractController implements DashboardCardProviderInterface
+{
+    public static function dashboardCards(): array
+    {
+        return [[
+            'id' => 'not valid',
+            'label' => 'Invalid',
+            'kind' => 'metrics',
+            'permission' => AccessService::ACCESS_ADMIN,
+            'sizes' => ['small'],
+            'defaultSize' => 'small',
+            'defaultPosition' => 1,
+        ]];
+    }
+
+    public static function dashboardCardData(string $cardId, PdoDatabase $db, RequestContext $context): array
+    {
+        return ['status' => 'ready', 'data' => []];
     }
 }
 

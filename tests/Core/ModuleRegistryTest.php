@@ -10,6 +10,8 @@ use StreamEngine\Core\ModuleRegistry;
 use StreamEngine\Controllers\ActionProbeController;
 use StreamEngine\Controllers\FactoryProbeController;
 use StreamEngine\Controllers\InvalidActionContractController;
+use StreamEngine\Controllers\DashboardProbeController;
+use StreamEngine\Controllers\InvalidDashboardProbeController;
 use StreamEngine\Controllers\PlainClass;
 use StreamEngine\Modules\Forums\ForumsController;
 
@@ -81,6 +83,26 @@ final class ModuleRegistryTest extends TestCase
         $this->expectExceptionMessage("Unknown page action field 'mysteryField' in 'invalid.show'");
 
         \StreamEngine\Controllers\registryWithFixtures([InvalidActionContractController::class]);
+    }
+
+    public function testModulesCanRegisterNormalizedDashboardCards(): void
+    {
+        $registry = \StreamEngine\Controllers\registryWithFixtures([DashboardProbeController::class]);
+        $card = $registry->dashboardCard('probe.summary');
+
+        self::assertNotNull($card);
+        self::assertSame('Probe summary', $card['label']);
+        self::assertSame(['small', 'wide'], $card['sizes']);
+        self::assertSame(DashboardProbeController::class, $card['provider']);
+        self::assertContains($card, $registry->dashboardCards());
+    }
+
+    public function testMalformedDashboardCardContractIsRejectedDuringBootstrap(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Invalid dashboard card id');
+
+        \StreamEngine\Controllers\registryWithFixtures([InvalidDashboardProbeController::class]);
     }
 
     public function testEveryRegisteredActionHasANormalizedConfigurationContract(): void

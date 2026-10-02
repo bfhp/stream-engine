@@ -118,3 +118,46 @@ shared browser utilities instead of paths relative to the engine checkout.
 
 Rebuild the frontend after adding or removing modules and deploy PHP and
 assets together. Removing a module does not delete its data or settings.
+
+## Admin dashboard cards
+
+A controller may additionally implement `DashboardCardProviderInterface` to
+contribute generic metric or shortcut cards. Card ids are global, stable, and
+namespaced; `ModuleRegistry` rejects malformed definitions and collisions at
+bootstrap.
+
+```php
+final class NotesController extends AbstractController implements DashboardCardProviderInterface
+{
+    public static function dashboardCards(): array
+    {
+        return [[
+            'id' => 'notes.summary',
+            'label' => 'Notes',
+            'kind' => 'metrics',
+            'permission' => AccessService::ACCESS_ADMIN,
+            'sizes' => ['small', 'medium'],
+            'defaultSize' => 'small',
+            'defaultPosition' => 50,
+        ]];
+    }
+
+    public static function dashboardCardData(
+        string $cardId,
+        PdoDatabase $db,
+        RequestContext $context,
+    ): array {
+        return [
+            'status' => 'ready',
+            'data' => [['label' => 'Total', 'value' => 42]],
+        ];
+    }
+}
+```
+
+The supported sizes are `small`, `medium`, and `wide`; the generic kinds are
+`metrics` and `links`. A provider returns `ready`, `empty`, or `unavailable`
+plus its data. Exceptions are isolated and expose only an `error` state to the
+client. The server checks the declared permission before invoking a provider.
+Saved layouts contain only card ids, positions, and supported sizes, so module
+code and queries never come from browser-controlled configuration.
