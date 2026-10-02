@@ -102,7 +102,7 @@
             {% if pollLocked %}
                 <div class="card-body">
                     <div class="fw-semibold mb-2">{{ poll.question }}</div>
-                    <ul class="mb-0 text-body-secondary" style="font-size: .85rem; padding-left: 1.1rem; line-height: 1.8">
+                    <ul class="mb-0 text-body-secondary" style="font-size: .85rem; padding-inline-start: 1.1rem; line-height: 1.8">
                         {% for option in poll.options %}
                             <li>{{ option }}</li>
                         {% endfor %}
@@ -243,7 +243,7 @@
         <div class="card bg-body-tertiary border-secondary-subtle">
             <div class="card-body">
                 <h2 class="h6 card-title mb-2"><i class="bi bi-info-circle me-1"></i>{{ trans('view.forums.topic.form.47') }}</h2>
-                <ul class="mb-0 text-body-secondary" style="font-size: .82rem; padding-left: 1.1rem; line-height: 1.7">
+                <ul class="mb-0 text-body-secondary" style="font-size: .82rem; padding-inline-start: 1.1rem; line-height: 1.7">
                     <li>{{ trans('view.forums.topic.form.48') }}</li>
                     <li>{{ trans('view.forums.topic.form.49') }}</li>
                     <li>{{ trans('view.forums.topic.form.50') }}</li>

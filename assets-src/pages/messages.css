@@ -100,7 +100,7 @@
     width: 340px;
     flex-shrink: 0;
     background: var(--msgr-bg-surface);
-    border-right: 1px solid var(--msgr-border);
+    border-inline-end: 1px solid var(--msgr-border);
     display: flex;
     flex-direction: column;
     min-height: 0;
@@ -123,7 +123,7 @@
 
 .msgr-search .bi {
     position: absolute;
-    left: 10px;
+    inset-inline-start: 10px;
     font-size: 15px;
     color: var(--msgr-text-faint);
     pointer-events: none;
@@ -132,7 +132,8 @@
 .msgr-search-input {
     width: 100%;
     height: 40px;
-    padding: 0 12px 0 34px;
+    padding-block: 0;
+    padding-inline: 34px 12px;
     border-radius: 8px;
     border: none;
     box-shadow: inset 0 0 0 1px var(--msgr-border);
@@ -216,7 +217,7 @@
     gap: 12px;
     padding: 10px 14px;
     cursor: pointer;
-    border-left: 3px solid transparent;
+    border-inline-start: 3px solid transparent;
     background: transparent;
     transition: background 120ms ease;
 }
@@ -226,7 +227,7 @@
 }
 
 .msgr-conv-row.is-active {
-    border-left-color: var(--msgr-accent);
+    border-inline-start-color: var(--msgr-accent);
     background: var(--msgr-accent-soft);
 }
 
@@ -286,7 +287,7 @@
 
 .msgr-avatar-status {
     position: absolute;
-    right: -1px;
+    inset-inline-end: -1px;
     bottom: -1px;
     width: 11px;
     height: 11px;
@@ -395,7 +396,8 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 0 16px 0 20px;
+    padding-block: 0;
+    padding-inline: 20px 16px;
     background: var(--msgr-bg-surface);
     border-bottom: 1px solid var(--msgr-border);
 }
@@ -542,14 +544,16 @@
     padding: 9px 13px;
     font-size: 14px;
     line-height: 1.45;
-    border-radius: 14px 14px 14px 4px;
+    border-radius: 14px;
+    border-end-start-radius: 4px;
     background: var(--msgr-bg-surface);
     color: var(--msgr-text);
     border: 1px solid var(--msgr-border);
 }
 
 .msgr-msg-group.is-own .msgr-bubble {
-    border-radius: 14px 14px 4px 14px;
+    border-radius: 14px;
+    border-end-end-radius: 4px;
     background: var(--msgr-accent);
     color: #fff;
     border: none;
@@ -578,13 +582,13 @@
     display: block;
     margin: 4px 0;
     padding: 2px 8px;
-    border-left: 3px solid var(--msgr-accent);
+    border-inline-start: 3px solid var(--msgr-accent);
     background: var(--msgr-bg-canvas);
     color: var(--msgr-text-muted);
 }
 
 .msgr-msg-group.is-own .msgr-bubble-text blockquote {
-    border-left-color: rgba(255, 255, 255, 0.6);
+    border-inline-start-color: rgba(255, 255, 255, 0.6);
     background: rgba(255, 255, 255, 0.15);
     color: rgba(255, 255, 255, 0.92);
 }
@@ -593,9 +597,9 @@
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    margin-left: 8px;
+    margin-inline-start: 8px;
     font-size: 11px;
-    float: right;
+    float: inline-end;
     position: relative;
     top: 4px;
     color: var(--msgr-text-faint);
@@ -641,11 +645,11 @@
 }
 
 .msgr-msg-group.is-other .msgr-msg-actions {
-    right: -12px;
+    inset-inline-end: -12px;
 }
 
 .msgr-msg-group.is-own .msgr-msg-actions {
-    left: -12px;
+    inset-inline-start: -12px;
 }
 
 .msgr-msg-action-btn {
@@ -678,14 +682,14 @@
     display: block;
     margin-bottom: 5px;
     padding: 4px 8px;
-    border-left: 3px solid var(--msgr-accent);
+    border-inline-start: 3px solid var(--msgr-accent);
     border-radius: 4px;
     background: var(--msgr-bg-canvas);
     color: var(--msgr-text-muted);
 }
 
 .msgr-msg-group.is-own .msgr-bubble-reply {
-    border-left-color: rgba(255, 255, 255, 0.6);
+    border-inline-start-color: rgba(255, 255, 255, 0.6);
     background: rgba(255, 255, 255, 0.15);
     color: rgba(255, 255, 255, 0.92);
 }
@@ -803,10 +807,11 @@
     gap: 10px;
     max-width: 840px;
     margin: 0 auto 8px;
-    padding: 8px 10px 8px 12px;
+    padding-block: 8px;
+    padding-inline: 12px 10px;
     background: var(--msgr-bg-canvas);
     border-radius: 8px;
-    border-left: 3px solid var(--msgr-accent);
+    border-inline-start: 3px solid var(--msgr-accent);
 }
 
 .msgr-edit-preview[hidden] {
@@ -854,10 +859,11 @@
     gap: 10px;
     max-width: 840px;
     margin: 0 auto 8px;
-    padding: 8px 10px 8px 12px;
+    padding-block: 8px;
+    padding-inline: 12px 10px;
     background: var(--msgr-bg-canvas);
     border-radius: 8px;
-    border-left: 3px solid var(--msgr-accent);
+    border-inline-start: 3px solid var(--msgr-accent);
 }
 
 .msgr-reply-preview[hidden] {
@@ -913,10 +919,11 @@
     gap: 10px;
     max-width: 840px;
     margin: 0 auto 8px;
-    padding: 6px 10px 6px 6px;
+    padding-block: 6px;
+    padding-inline: 6px 10px;
     background: var(--msgr-bg-canvas);
     border-radius: 8px;
-    border-left: 3px solid var(--msgr-accent);
+    border-inline-start: 3px solid var(--msgr-accent);
 }
 
 .msgr-attach-preview[hidden] {
@@ -1008,7 +1015,8 @@
     padding: 8px 12px;
     background: var(--msgr-bg-surface);
     border: 1px solid var(--msgr-border);
-    border-radius: 12px 12px 12px 4px;
+    border-radius: 12px;
+    border-end-start-radius: 4px;
 }
 
 .msgr-typing-dots span {
@@ -1203,7 +1211,8 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 0 16px 0 12px;
+    padding-block: 0;
+    padding-inline: 12px 16px;
     border-bottom: 1px solid var(--msgr-border);
     font-size: 16px;
     font-weight: 600;
@@ -1286,7 +1295,8 @@
     align-items: center;
     gap: 6px;
     height: 28px;
-    padding: 0 6px 0 10px;
+    padding-block: 0;
+    padding-inline: 10px 6px;
     border-radius: 999px;
     background: var(--msgr-accent-soft);
     color: var(--msgr-accent-soft-text);
@@ -1308,14 +1318,14 @@
 
 .msgr-newconv-search .bi {
     position: absolute;
-    left: 10px;
+    inset-inline-start: 10px;
     font-size: 15px;
     color: var(--msgr-text-faint);
     pointer-events: none;
 }
 
 .msgr-newconv-search .msgr-search-input {
-    padding-left: 34px;
+    padding-inline-start: 34px;
 }
 
 .msgr-newconv-label {
@@ -1404,11 +1414,11 @@
 .msgr-drawer {
     position: absolute;
     top: 0;
-    right: 0;
+    inset-inline-end: 0;
     bottom: 0;
     width: 340px;
     background: var(--msgr-bg-surface);
-    border-left: 1px solid var(--msgr-border);
+    border-inline-start: 1px solid var(--msgr-border);
     box-shadow: -8px 0 24px rgba(0, 0, 0, 0.35);
     z-index: 11;
     display: flex;
@@ -1425,7 +1435,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 12px 0 20px;
+    padding-block: 0;
+    padding-inline: 20px 12px;
     border-bottom: 1px solid var(--msgr-border);
     font-size: 16px;
     font-weight: 600;
