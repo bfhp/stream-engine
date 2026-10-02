@@ -44,8 +44,10 @@ open-source libraries and infrastructure.
 - Local uploads and S3-compatible object storage
 - Twig themes with an explicit override and ownership model, and a visual theme
   gallery with validated per-theme settings
-- Localization infrastructure with English, German, French, Russian, Spanish,
-  Brazilian Portuguese, and Arabic catalogs
+- Localization infrastructure with English, Russian, German, French, Spanish,
+  Brazilian Portuguese, Italian, Dutch, Polish, Arabic, Japanese, Korean, and
+  Simplified Chinese catalogs, with locale-aware plural forms on the server
+  and in the browser
 - Right-to-left support: locale-driven `dir`, a separate Bootstrap RTL build,
   logical CSS properties, mirrored directional icons, and bidi isolation for
   user-generated text on the site and in the administration interface
