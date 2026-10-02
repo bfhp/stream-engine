@@ -20,6 +20,9 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 - Dashboard cards for user and content totals, recent registrations and
   content, pending community membership requests, cron and notification queue
   health, and common administration shortcuts.
+- A complete menu editor with explicit enabled state, tree and group ordering,
+  an ACL-aware preview for the current administrator, and deliberate child
+  handling when deleting parent items.
 
 ### Changed
 
@@ -28,6 +31,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 - Dashboard provider failures are isolated to their own cards, which expose
   explicit loading, empty, unavailable, and error states without preventing
   the rest of the dashboard from rendering.
+- Menu order is now persisted as a single atomic tree update instead of through
+  manually entered numeric positions.
 
 ### Security
 
@@ -40,6 +45,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
   clients to avoid disclosing restricted module cards.
 - Validated module-provided dashboard payloads by card kind and restricted
   dashboard links to internal admin routes before they reach the browser.
+- Validated menu page targets and frontend action hooks in the application
+  layer before saving them.
 
 ## [0.2.2] - 2026-09-19
 

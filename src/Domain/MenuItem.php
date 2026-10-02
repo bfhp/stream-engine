@@ -26,6 +26,8 @@ final class MenuItem
     public ?string $label;
     public string $accessRule;
     public int $sortOrder;
+    public int $groupOrder;
+    public bool $enabled;
 
     public array $children = [];
 
@@ -42,6 +44,8 @@ final class MenuItem
         ?string $label,
         string $accessRule,
         int $sortOrder,
+        int $groupOrder = 0,
+        bool $enabled = true,
     ) {
         $this->id = $id;
         $this->parentId = $parentId;
@@ -53,6 +57,8 @@ final class MenuItem
         $this->label = $label;
         $this->accessRule = $accessRule;
         $this->sortOrder = $sortOrder;
+        $this->groupOrder = $groupOrder;
+        $this->enabled = $enabled;
     }
 
     public function isLink(): bool
@@ -95,6 +101,8 @@ final class MenuItem
             label: $row['label'] ?? null,
             accessRule: $row['access_rule'],
             sortOrder: (int) $row['sort_order'],
+            groupOrder: (int) ($row['group_order'] ?? 0),
+            enabled: (bool) ($row['enabled'] ?? true),
         );
     }
 }

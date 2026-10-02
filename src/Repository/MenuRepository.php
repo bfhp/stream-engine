@@ -25,6 +25,8 @@ final readonly class MenuRepository
         'label',
         'access_rule',
         'sort_order',
+        'group_order',
+        'enabled',
     ];
 
     public function __construct(
@@ -34,13 +36,13 @@ final readonly class MenuRepository
 
     /**
      * Load all menu items from database.
-     * Uses index: menu_sort_order_id_index (sort_order, id)
+     * Uses index: menu_group_order_index (group_order, menu_group, sort_order, id)
      *
      * @return list<MenuItem>
      */
     public function findAll(): array
     {
-        $rows = $this->db->fetchAll('SELECT * FROM menu ORDER BY sort_order');
+        $rows = $this->db->fetchAll('SELECT * FROM menu ORDER BY group_order, sort_order, id');
         return array_map([MenuItem::class, 'fromRow'], $rows);
     }
 
@@ -52,7 +54,7 @@ final readonly class MenuRepository
         return array_map(
             $this->mapAdminRow(...),
             $this->db->fetchAll(
-                'SELECT '.implode(', ', self::ADMIN_COLUMNS).' FROM menu ORDER BY menu_group, parent, sort_order, id'
+                'SELECT '.implode(', ', self::ADMIN_COLUMNS).' FROM menu ORDER BY group_order, menu_group, parent, sort_order, id'
             )
         );
     }
@@ -73,8 +75,8 @@ final readonly class MenuRepository
         $this->db->execute(
             'INSERT INTO menu (
                 parent, menu_group, type, page_id, url,
-                action, label, access_rule, sort_order
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                action, label, access_rule, sort_order, group_order, enabled
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             $this->adminParams($data)
         );
 
@@ -96,7 +98,9 @@ final readonly class MenuRepository
                 action = ?,
                 label = ?,
                 access_rule = ?,
-                sort_order = ?
+                sort_order = ?,
+                group_order = ?,
+                enabled = ?
             WHERE id = ?',
             [...$this->adminParams($data), $id]
         );
@@ -114,6 +118,89 @@ final readonly class MenuRepository
         $this->db->execute('DELETE FROM menu WHERE id = ?', [$id]);
     }
 
+    /**
+     * Persist the complete menu forest in one transaction. Moving every row to
+     * a temporary unique order first avoids transient unique-key collisions.
+     *
+     * @param list<array{id:int,parentId:?int,menuGroup:string,sortOrder:int,groupOrder:int}> $items
+     */
+    public function reorder(array $items): void
+    {
+        $this->db->begin();
+
+        try {
+            foreach ($items as $item) {
+                $this->db->execute(
+                    'UPDATE menu SET menu_group = ?, parent = NULL, sort_order = 0 WHERE id = ?',
+                    ['__menu_reorder__'.$item['id'], $item['id']]
+                );
+            }
+            foreach ($items as $item) {
+                $this->db->execute(
+                    'UPDATE menu SET parent = ?, menu_group = ?, sort_order = ?, group_order = ? WHERE id = ?',
+                    [$item['parentId'], $item['menuGroup'], $item['sortOrder'], $item['groupOrder'], $item['id']]
+                );
+            }
+
+            $this->db->commit();
+        } catch (\Throwable $e) {
+            $this->db->rollback();
+            throw $e;
+        }
+    }
+
+    public function deleteWithChildren(int $id, string $strategy): void
+    {
+        $items = $this->findAllForAdmin();
+        $byId = array_column($items, null, 'id');
+        $item = $byId[$id] ?? null;
+        if ($item === null) {
+            return;
+        }
+
+        $this->db->begin();
+        try {
+            if ($strategy === 'promote') {
+                $this->db->execute(
+                    'UPDATE menu SET parent = ?, sort_order = sort_order + ? WHERE parent = ?',
+                    [$item['parentId'], 1_000_000_000, $id]
+                );
+                $this->db->execute('DELETE FROM menu WHERE id = ?', [$id]);
+            } else {
+                $ids = [$id];
+                for ($index = 0; $index < count($ids); $index++) {
+                    foreach ($items as $candidate) {
+                        if ($candidate['parentId'] === $ids[$index] && ! in_array($candidate['id'], $ids, true)) {
+                            $ids[] = $candidate['id'];
+                        }
+                    }
+                }
+                $placeholders = implode(', ', array_fill(0, count($ids), '?'));
+                $this->db->execute("DELETE FROM menu WHERE id IN ($placeholders)", $ids);
+            }
+
+            $this->normalizeOrders();
+            $this->db->commit();
+        } catch (\Throwable $e) {
+            $this->db->rollback();
+            throw $e;
+        }
+    }
+
+    private function normalizeOrders(): void
+    {
+        $rows = $this->findAllForAdmin();
+        $positions = [];
+        foreach ($rows as $row) {
+            $key = $row['menuGroup'].'/'.($row['parentId'] ?? 'root');
+            $positions[$key] = ($positions[$key] ?? 0) + 10;
+            $this->db->execute(
+                'UPDATE menu SET sort_order = ? WHERE id = ?',
+                [$positions[$key], $row['id']]
+            );
+        }
+    }
+
     /** @param array<string, mixed> $row */
     private function mapAdminRow(array $row): array
     {
@@ -128,6 +215,8 @@ final readonly class MenuRepository
             'label' => $row['label'],
             'accessRule' => $row['access_rule'],
             'sortOrder' => (int) $row['sort_order'],
+            'groupOrder' => (int) ($row['group_order'] ?? 0),
+            'enabled' => (bool) ($row['enabled'] ?? true),
         ];
     }
 
@@ -147,6 +236,8 @@ final readonly class MenuRepository
             $data['label'],
             $data['accessRule'],
             $data['sortOrder'],
+            $data['groupOrder'],
+            $data['enabled'] ? 1 : 0,
         ];
     }
 }

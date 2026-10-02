@@ -248,6 +248,9 @@ class AdminController extends AbstractController implements DashboardCardProvide
         'dynamic',
     ];
 
+    /** Frontend hooks that the default theme implements for action items. */
+    private const array MENU_ACTIONS = ['logout'];
+
     private readonly PageRepository $pageRepository;
     private readonly MenuRepository $menuRepository;
     private readonly SettingsRepository $settingsRepository;
@@ -316,6 +319,9 @@ class AdminController extends AbstractController implements DashboardCardProvide
                 break;
             case 'admin.menu':
                 $this->handleMenuRequest((int) ($args['id'] ?? 0));
+                break;
+            case 'admin.menu-preview':
+                $this->handleMenuPreviewRequest();
                 break;
             case 'admin.settings':
                 $this->handleSettingsRequest();
@@ -394,8 +400,20 @@ class AdminController extends AbstractController implements DashboardCardProvide
                 id: $menusPageId,
                 parentId: $adminApiPageId,
                 pattern: 'menus',
-                requestMethods: ['GET', 'POST'],
+                requestMethods: ['GET', 'POST', 'PATCH'],
                 action: 'admin.menus',
+                accessRule: AccessService::ACCESS_ADMIN,
+            )
+        );
+
+        $menuPreviewPageId = $pageTree->getMaxPageId();
+        $pageTree->add(
+            Page::api(
+                id: $menuPreviewPageId,
+                parentId: $menusPageId,
+                pattern: 'preview',
+                requestMethods: ['GET'],
+                action: 'admin.menu-preview',
                 accessRule: AccessService::ACCESS_ADMIN,
             )
         );
@@ -733,7 +751,50 @@ class AdminController extends AbstractController implements DashboardCardProvide
             return;
         }
 
+        if ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
+            Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
+            $items = $this->validatedMenuOrder($this->jsonBody());
+            $this->menuRepository->reorder($items);
+            echo Formatter::json(['data' => $this->menuRepository->findAllForAdmin()]);
+
+            return;
+        }
+
         echo Formatter::json(['data' => $this->menuRepository->findAllForAdmin()]);
+    }
+
+    private function handleMenuPreviewRequest(): void
+    {
+        $items = array_values(array_filter(
+            $this->menuRepository->findAllForAdmin(),
+            fn (array $item): bool => $item['enabled']
+                && AccessService::allows($this->context->user, $item['accessRule'])
+        ));
+        $byParent = [];
+        foreach ($items as $item) {
+            $byParent[$item['parentId'] ?? 0][] = $item;
+        }
+
+        $build = function (int $parentId, string $group) use (&$build, $byParent): array {
+            return array_map(
+                fn (array $item): array => $item + ['children' => $build($item['id'], $group)],
+                array_values(array_filter(
+                    $byParent[$parentId] ?? [],
+                    static fn (array $item): bool => $item['menuGroup'] === $group
+                ))
+            );
+        };
+
+        $groups = [];
+        foreach ($items as $item) {
+            $groups[$item['menuGroup']] = $item['groupOrder'];
+        }
+        asort($groups, SORT_NUMERIC);
+
+        echo Formatter::json(['groups' => array_map(
+            static fn (string $name): array => ['name' => $name, 'items' => $build(0, $name)],
+            array_keys($groups)
+        )]);
     }
 
     /**
@@ -768,11 +829,20 @@ class AdminController extends AbstractController implements DashboardCardProvide
                 throw new NotFoundException('Menu item not found');
             }
 
-            if ($this->menuRepository->hasChildren($id)) {
-                throw new ValidationException('Move or delete child menu items first');
+            $input = $this->jsonBody();
+            $strategy = (string) ($input['children'] ?? 'reject');
+            if (! in_array($strategy, ['reject', 'promote', 'delete'], true)) {
+                throw new ValidationException('Invalid child deletion strategy');
+            }
+            if ($this->menuRepository->hasChildren($id) && $strategy === 'reject') {
+                throw new ValidationException('Choose whether to promote or delete child menu items');
             }
 
-            $this->menuRepository->delete($id);
+            if ($strategy === 'reject') {
+                $this->menuRepository->delete($id);
+            } else {
+                $this->menuRepository->deleteWithChildren($id, $strategy);
+            }
             echo Formatter::json(['deleted' => true]);
 
             return;
@@ -1035,6 +1105,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
         $action = $this->optionalString($input['action'] ?? null);
         $parentId = $this->optionalPositiveInt($input['parentId'] ?? null, 'Invalid parent');
         $pageId = $this->optionalPositiveInt($input['pageId'] ?? null, 'Invalid page');
+        $enabled = $input['enabled'] ?? true;
 
         if ($menuGroup === '' || strlen($menuGroup) > 100) {
             throw new ValidationException('Menu group is required and must not exceed 100 characters');
@@ -1077,6 +1148,9 @@ class AdminController extends AbstractController implements DashboardCardProvide
         if ($type === 'action' && $action === null) {
             throw new ValidationException('Action is required for action menu items');
         }
+        if ($type === 'action' && ! in_array($action, self::MENU_ACTIONS, true)) {
+            throw new ValidationException('Unknown menu action');
+        }
 
         if ($type !== 'divider' && $label === null) {
             throw new ValidationException('Label is required');
@@ -1101,6 +1175,10 @@ class AdminController extends AbstractController implements DashboardCardProvide
             }
         }
 
+        if (! is_bool($enabled)) {
+            throw new ValidationException('Enabled must be a boolean');
+        }
+
         if ($parentId !== null) {
             $parent = $byId[$parentId] ?? null;
             if ($parent === null) {
@@ -1119,6 +1197,11 @@ class AdminController extends AbstractController implements DashboardCardProvide
                 $visited[$ancestorId] = true;
                 $ancestorId = $byId[$ancestorId]['parentId'] ?? null;
             }
+        }
+
+        if (in_array($type, ['internal', 'dynamic'], true)
+            && $this->pageRepository->findForAdminById((int) $pageId) === null) {
+            throw new ValidationException('Referenced page does not exist');
         }
 
         if (in_array($type, ['external', 'action', 'divider'], true)) {
@@ -1144,7 +1227,112 @@ class AdminController extends AbstractController implements DashboardCardProvide
             'label' => $label,
             'accessRule' => $accessRule,
             'sortOrder' => $sortOrder,
+            'groupOrder' => $this->menuGroupOrder($menuGroup, $items),
+            'enabled' => $enabled,
         ];
+    }
+
+    /**
+     * @param list<array<string, mixed>> $items
+     */
+    private function menuGroupOrder(string $group, array $items): int
+    {
+        $maximum = 0;
+        foreach ($items as $item) {
+            if ($item['menuGroup'] === $group) {
+                return (int) ($item['groupOrder'] ?? 0);
+            }
+            $maximum = max($maximum, (int) ($item['groupOrder'] ?? 0));
+        }
+
+        return $maximum + 10;
+    }
+
+    /**
+     * @param array<string, mixed> $input
+     * @return list<array{id:int,parentId:?int,menuGroup:string,sortOrder:int,groupOrder:int}>
+     * @throws ValidationException
+     */
+    private function validatedMenuOrder(array $input): array
+    {
+        $submitted = $input['items'] ?? null;
+        $groups = $input['groups'] ?? null;
+        if (! is_array($submitted) || ! is_array($groups)) {
+            throw new ValidationException('The complete menu order is required');
+        }
+
+        $existing = $this->menuRepository->findAllForAdmin();
+        $existingIds = array_map(static fn (array $item): int => $item['id'], $existing);
+        $existingById = array_column($existing, null, 'id');
+        $existingGroups = array_values(array_unique(array_column($existing, 'menuGroup')));
+        sort($existingGroups);
+        $submittedIds = [];
+        $normalizedGroups = [];
+        foreach ($groups as $group) {
+            if (! is_string($group) || trim($group) === '' || in_array($group, $normalizedGroups, true)) {
+                throw new ValidationException('Invalid menu group order');
+            }
+            $normalizedGroups[] = $group;
+        }
+        $checkGroups = $normalizedGroups;
+        sort($checkGroups);
+        if ($checkGroups !== $existingGroups) {
+            throw new ValidationException('The complete menu group order is required');
+        }
+
+        $normalized = [];
+        $siblingPositions = [];
+        foreach ($submitted as $item) {
+            if (! is_array($item) || ! is_int($item['id'] ?? null) || ! is_string($item['menuGroup'] ?? null)) {
+                throw new ValidationException('Invalid menu order item');
+            }
+            $id = $item['id'];
+            $parentId = $this->optionalPositiveInt($item['parentId'] ?? null, 'Invalid menu parent');
+            $group = $item['menuGroup'];
+            if (in_array($id, $submittedIds, true) || ! in_array($group, $normalizedGroups, true)) {
+                throw new ValidationException('Invalid menu order item');
+            }
+            if (($existingById[$id]['menuGroup'] ?? null) !== $group) {
+                throw new ValidationException('Menu group cannot be changed while reordering');
+            }
+            $submittedIds[] = $id;
+            $key = $group.'/'.($parentId ?? 'root');
+            $siblingPositions[$key] = ($siblingPositions[$key] ?? 0) + 10;
+            $normalized[$id] = [
+                'id' => $id,
+                'parentId' => $parentId,
+                'menuGroup' => $group,
+                'sortOrder' => $siblingPositions[$key],
+                'groupOrder' => (array_search($group, $normalizedGroups, true) + 1) * 10,
+            ];
+        }
+
+        sort($existingIds);
+        $checkIds = $submittedIds;
+        sort($checkIds);
+        if ($checkIds !== $existingIds) {
+            throw new ValidationException('The complete menu order is required');
+        }
+
+        foreach ($normalized as $id => $item) {
+            $parentId = $item['parentId'];
+            if ($parentId === null) {
+                continue;
+            }
+            if (! isset($normalized[$parentId]) || $normalized[$parentId]['menuGroup'] !== $item['menuGroup']) {
+                throw new ValidationException('Parent must belong to the same menu group');
+            }
+            $seen = [$id => true];
+            while ($parentId !== null) {
+                if (isset($seen[$parentId])) {
+                    throw new ValidationException('Menu hierarchy contains a cycle');
+                }
+                $seen[$parentId] = true;
+                $parentId = $normalized[$parentId]['parentId'] ?? null;
+            }
+        }
+
+        return array_values($normalized);
     }
 
     private function optionalString(mixed $value): ?string

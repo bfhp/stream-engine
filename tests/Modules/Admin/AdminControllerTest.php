@@ -618,6 +618,99 @@ final class AdminControllerTest extends TestCase
         $this->assertSame('https://example.com/help', $this->writes[0][1][4]);
     }
 
+    public function testMenuPageReferenceMustExist(): void
+    {
+        $module = $this->makeModule();
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode([
+            'menuGroup' => 'main',
+            'type' => 'internal',
+            'pageId' => 999,
+            'label' => 'Missing',
+            'accessRule' => 'public',
+            'sortOrder' => 10,
+            'enabled' => true,
+        ]));
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('Referenced page does not exist');
+        $module->callApi($this->makeApiPage('admin.menus', ['GET', 'POST', 'PATCH']));
+    }
+
+    public function testUnknownMenuActionIsRejected(): void
+    {
+        $module = $this->makeModule();
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode([
+            'menuGroup' => 'main',
+            'type' => 'action',
+            'action' => 'does-not-exist',
+            'label' => 'Broken',
+            'accessRule' => 'public',
+            'sortOrder' => 10,
+            'enabled' => true,
+        ]));
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('Unknown menu action');
+        $module->callApi($this->makeApiPage('admin.menus', ['GET', 'POST', 'PATCH']));
+    }
+
+    public function testCompleteTreeOrderIsSavedAsOneBatch(): void
+    {
+        $first = [
+            'id' => 1, 'parent' => null, 'menu_group' => 'main', 'type' => 'divider',
+            'page_id' => null, 'url' => null, 'action' => null, 'label' => null,
+            'access_rule' => 'public', 'sort_order' => 10, 'group_order' => 10, 'enabled' => 1,
+        ];
+        $second = $first;
+        $second['id'] = 2;
+        $second['sort_order'] = 20;
+        $module = $this->makeModule(rows: [$first, $second]);
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode([
+            'groups' => ['main'],
+            'items' => [
+                ['id' => 2, 'parentId' => null, 'menuGroup' => 'main'],
+                ['id' => 1, 'parentId' => 2, 'menuGroup' => 'main'],
+            ],
+        ]));
+
+        $this->callAndDecode($module, $this->makeApiPage('admin.menus', ['GET', 'POST', 'PATCH']));
+
+        $this->assertCount(4, $this->writes);
+        $this->assertSame([null, 'main', 10, 10, 2], $this->writes[2][1]);
+        $this->assertSame([2, 'main', 10, 10, 1], $this->writes[3][1]);
+    }
+
+    public function testPreviewOmitsDisabledItemsAndBuildsTheTree(): void
+    {
+        $parent = [
+            'id' => 1, 'parent' => null, 'menu_group' => 'main', 'type' => 'divider',
+            'page_id' => null, 'url' => null, 'action' => null, 'label' => null,
+            'access_rule' => 'public', 'sort_order' => 10, 'group_order' => 10, 'enabled' => 1,
+        ];
+        $child = $parent;
+        $child['id'] = 2;
+        $child['parent'] = 1;
+        $child['label'] = 'Child';
+        $hidden = $parent;
+        $hidden['id'] = 3;
+        $hidden['enabled'] = 0;
+        $module = $this->makeModule(rows: [$parent, $child, $hidden]);
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+
+        $response = $this->callAndDecode($module, $this->makeApiPage('admin.menu-preview', ['GET']));
+
+        $this->assertSame('main', $response['groups'][0]['name']);
+        $this->assertSame(1, $response['groups'][0]['items'][0]['id']);
+        $this->assertSame(2, $response['groups'][0]['items'][0]['children'][0]['id']);
+        $this->assertCount(1, $response['groups'][0]['items']);
+    }
+
     public function testMenuItemCannotBeMovedBelowItsDescendant(): void
     {
         $current = [
@@ -1140,8 +1233,9 @@ final class AdminControllerTest extends TestCase
             'admin.pages' => ['GET', 'POST'],
             'admin.page' => ['GET', 'PATCH'],
             'admin.page-actions' => ['GET'],
-            'admin.menus' => ['GET', 'POST'],
+            'admin.menus' => ['GET', 'POST', 'PATCH'],
             'admin.menu' => ['GET', 'PATCH', 'DELETE'],
+            'admin.menu-preview' => ['GET'],
             'admin.settings' => ['GET', 'POST'],
             'admin.setting' => ['GET', 'PATCH'],
             'admin.users' => ['GET'],
@@ -1185,6 +1279,7 @@ final class AdminControllerTest extends TestCase
         $pageActions = (new Router($tree))->resolve('/api/v1/admin/page-actions');
         $menus = (new Router($tree))->resolve('/api/v1/admin/menus');
         $menu = (new Router($tree))->resolve('/api/v1/admin/menus/8');
+        $menuPreview = (new Router($tree))->resolve('/api/v1/admin/menus/preview');
         $settings = (new Router($tree))->resolve('/api/v1/admin/settings');
         $setting = (new Router($tree))->resolve('/api/v1/admin/settings/site_name');
         $users = (new Router($tree))->resolve('/api/v1/admin/users');
@@ -1199,6 +1294,7 @@ final class AdminControllerTest extends TestCase
         $this->assertSame('admin.menus', $menus['page']->action ?? null);
         $this->assertSame('admin.menu', $menu['page']->action ?? null);
         $this->assertSame(['id' => '8'], $menu['params']);
+        $this->assertSame('admin.menu-preview', $menuPreview['page']->action ?? null);
         $this->assertSame('admin.settings', $settings['page']->action ?? null);
         $this->assertSame('admin.setting', $setting['page']->action ?? null);
         $this->assertSame(['key' => 'site_name'], $setting['params']);

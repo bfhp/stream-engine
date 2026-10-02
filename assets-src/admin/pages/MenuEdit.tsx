@@ -4,12 +4,13 @@ import {
     Button,
     Group,
     Modal,
-    NumberInput,
+    Radio,
     Select,
     SimpleGrid,
     Stack,
     Text,
-    TextInput
+    TextInput,
+    Switch
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { IconTrash } from "@tabler/icons-react";
@@ -32,7 +33,9 @@ function blankItem(items: MenuItemRecord[]): MenuItemRecord {
         action: null,
         label: "",
         accessRule: "public",
-        sortOrder: (rootOrders.length > 0 ? Math.max(...rootOrders) : 0) + 10
+        sortOrder: (rootOrders.length > 0 ? Math.max(...rootOrders) : 0) + 10,
+        groupOrder: items.find(item => item.menuGroup === "main")?.groupOrder ?? 10,
+        enabled: true
     };
 }
 
@@ -55,6 +58,7 @@ export default function MenuEdit() {
     const [saving, setSaving] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(false);
+    const [childStrategy, setChildStrategy] = useState<"promote" | "delete">("promote");
 
     useEffect(() => {
         if (!id) {
@@ -140,7 +144,11 @@ export default function MenuEdit() {
 
     function remove() {
         setDeleting(true);
-        fetch(`/api/v1/admin/menus/${id}`, { method: "DELETE", headers: csrfHeaders() })
+        fetch(`/api/v1/admin/menus/${id}`, {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json", ...csrfHeaders() },
+            body: JSON.stringify({ children: childStrategy })
+        })
             .then(response => responseJson(response, "Failed to delete menu item"))
             .then(() => {
                 notifications.show({ color: "green", message: "Menu item deleted", autoClose: 2000 });
@@ -158,6 +166,7 @@ export default function MenuEdit() {
     }
 
     const needsPage = item.type === "internal" || item.type === "dynamic";
+    const hasChildren = items.some(candidate => candidate.parentId === item.id);
 
     return (
         <Stack>
@@ -242,12 +251,14 @@ export default function MenuEdit() {
                     />
                 )}
                 {item.type === "action" && (
-                    <TextInput
+                    <Select
                         label="Frontend action"
-                        description="Rendered as a data-* attribute"
+                        description="Only hooks implemented by the active frontend are accepted"
                         required
-                        value={item.action || ""}
-                        onChange={event => update("action", event.currentTarget.value)}
+                        data={[{ value: "logout", label: "Log out" }]}
+                        value={item.action}
+                        onChange={value => update("action", value)}
+                        allowDeselect={false}
                     />
                 )}
                 <Select
@@ -262,20 +273,29 @@ export default function MenuEdit() {
                     onChange={value => update("accessRule", value || "public")}
                     allowDeselect={false}
                 />
-                <NumberInput
-                    label="Sort order"
-                    description="Lower values are shown first"
-                    min={0}
-                    step={10}
-                    allowDecimal={false}
-                    value={item.sortOrder}
-                    onChange={value => update("sortOrder", Number(value) || 0)}
+                <Switch
+                    label="Enabled"
+                    description="Disabled items stay configured but are hidden from navigation"
+                    checked={item.enabled}
+                    onChange={event => update("enabled", event.currentTarget.checked)}
                 />
             </SimpleGrid>
 
             <Modal opened={confirmDelete} onClose={() => setConfirmDelete(false)} title="Delete menu item?" centered>
                 <Stack>
-                    <Text>This cannot be undone. Items with children cannot be deleted.</Text>
+                    <Text>This cannot be undone.</Text>
+                    {hasChildren && (
+                        <Radio.Group
+                            label="What should happen to child items?"
+                            value={childStrategy}
+                            onChange={value => setChildStrategy(value as "promote" | "delete")}
+                        >
+                            <Stack mt="xs" gap="xs">
+                                <Radio value="promote" label="Move children to the deleted item's parent" />
+                                <Radio value="delete" label="Delete the complete subtree" />
+                            </Stack>
+                        </Radio.Group>
+                    )}
                     <Group justify="flex-end">
                         <Button variant="default" onClick={() => setConfirmDelete(false)}>Cancel</Button>
                         <Button color="red" loading={deleting} onClick={remove}>Delete</Button>

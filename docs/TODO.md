@@ -126,21 +126,6 @@ the base theme contains a hard-coded `data-bs-theme="dark"`.
 - Define theme asset delivery and cache invalidation, then test selection,
   fallback behavior, and settings persistence.
 
-### Admin: complete the menu editor
-
-The admin already provides CRUD for nested menu items, including all existing
-item types, targets, parent, group, label, access rule, and numeric sort order.
-
-- Add an explicit enabled state for menu items.
-- Replace manual sort-order editing with tree reordering for items and groups,
-  and save each reorder atomically.
-- Validate page and action references in the application layer. Cycle and
-  parent validation already exist.
-- When deleting a parent, let the administrator explicitly choose what happens
-  to its children instead of only rejecting the deletion.
-- Add a preview rendered for the current administrator and tests for tree
-  construction, ACL filtering, and reordering.
-
 ### Registration
 
 - Integrate a real CAPTCHA or remove the hidden, unfinished markup from the

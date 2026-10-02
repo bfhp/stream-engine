@@ -214,18 +214,14 @@ final class RoutingRepositoriesTest extends TestCase
     }
 
     /**
-     * The ordering is done in SQL and only by `sort_order` - no tie-break on
-     * id, despite the index being (sort_order, id). Two items sharing a
-     * sort_order therefore come back in whatever order the storage engine
-     * chose, which is stable in practice and unspecified in principle.
-     * Asserted as "the query orders by sort_order" rather than as an order over
-     * equal keys, which would be asserting a coincidence.
+     * Group order is applied before sibling order and id is the stable
+     * tie-breaker for legacy rows that still share a position.
      */
     public function testTheOrderingIsLeftToTheDatabase(): void
     {
         $this->menu(self::menuRow());
 
-        $this->assertStringContainsString('ORDER BY sort_order', $this->queries[0]);
+        $this->assertStringContainsString('ORDER BY group_order, sort_order, id', $this->queries[0]);
     }
 
     public function testTheRepositoryDoesNotFilterByRole(): void

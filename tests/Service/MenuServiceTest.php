@@ -125,6 +125,15 @@ final class MenuServiceTest extends TestCase
         $this->assertSame(self::ROOT_ITEM, $result[0]->id);
     }
 
+    public function testDisabledItemsAreExcludedWithTheirSubtree(): void
+    {
+        $parent = self::makeMenuItem(self::ROOT_ITEM, null, self::GROUP_HEADER, self::BLOG_PAGE, AccessService::ACCESS_PUBLIC);
+        $parent->enabled = false;
+        $child = self::makeMenuItem(self::CHILD_ITEM, self::ROOT_ITEM, self::GROUP_HEADER, self::POST_PAGE, AccessService::ACCESS_PUBLIC);
+
+        $this->assertSame([], $this->service->build([$parent, $child], self::GROUP_HEADER, [], new User(0, '')));
+    }
+
     public function testNavigationUsesTheSameAudienceRulesAsPages(): void
     {
         foreach ([

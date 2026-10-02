@@ -52,6 +52,7 @@ final readonly class MenuService
             $allItems,
             static fn (MenuItem $item) =>
                 $item->menuGroup === $group
+                && $item->enabled
                 && AccessService::allows($currentUser, $item->accessRule)
         );
 

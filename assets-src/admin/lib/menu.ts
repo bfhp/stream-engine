@@ -9,6 +9,17 @@ export type MenuItemRecord = {
     label: string | null;
     accessRule: string;
     sortOrder: number;
+    groupOrder: number;
+    enabled: boolean;
+};
+
+export type MenuPreviewItem = MenuItemRecord & {
+    children: MenuPreviewItem[];
+};
+
+export type MenuPreviewGroup = {
+    name: string;
+    items: MenuPreviewItem[];
 };
 
 export function menuTarget(item: MenuItemRecord): string {
