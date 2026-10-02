@@ -6,6 +6,7 @@ namespace StreamEngine\Service;
 
 use StreamEngine\Core\DashboardCardProviderInterface;
 use StreamEngine\Core\Exceptions\ValidationException;
+use StreamEngine\Core\Exceptions\NotFoundException;
 use StreamEngine\Core\ModuleRegistry;
 use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Core\RequestContext;
@@ -55,6 +56,29 @@ final readonly class AdminDashboardService
         $this->layouts->delete($context->user->id);
 
         return $this->payload($context);
+    }
+
+    /** @return array{id:string,status:string,data:mixed} */
+    public function card(string $id, RequestContext $context): array
+    {
+        $catalog = $this->permittedCatalog($context->user);
+        $descriptor = null;
+        foreach ($catalog as $candidate) {
+            if ($candidate['id'] === $id) {
+                $descriptor = $candidate;
+                break;
+            }
+        }
+        if ($descriptor === null) {
+            // Unknown and unauthorized cards deliberately look identical.
+            throw new NotFoundException('Dashboard card not found');
+        }
+
+        return $this->resolveCards(
+            ['items' => [['id' => $id, 'size' => $descriptor['defaultSize'], 'position' => 0]]],
+            [$descriptor],
+            $context,
+        )[0];
     }
 
     /** @return list<array<string,mixed>> */

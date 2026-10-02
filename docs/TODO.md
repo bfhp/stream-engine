@@ -92,13 +92,13 @@ requests, cron/delivery health, and shortcuts. Layout editing supports
 accessible drag and drop with keyboard ordering controls. Public/theme
 placement widgets remain a separate concept, and the layout contract remains
 intentionally constrained: do not add arbitrary HTML, SQL, API URLs, colors,
-nested grids, or user-defined cards.
+nested grids, or user-defined cards. The aggregate endpoint remains the
+initial-load default; a permission-checked per-card endpoint supports isolated
+retries and is the migration path if measurements later justify lazy loading.
 
-- Define whether expensive cards need separate lazy-loading endpoints after
-  measuring the aggregate endpoint; preserve independent loading, ready,
-  empty, error, and unavailable states if they do.
-- Extend coverage alongside real cards for their queries, fine-grained access
-  rules, empty/error states, and disabled-module behavior.
+- Add component-level rendering tests for every generic card state. Cover
+  disabled-module removal and restoration once explicit module enable/disable
+  state exists.
 
 ### Admin: interface localization
 

@@ -7,6 +7,38 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Complete admin user management with server-side pagination, search, role and
+  status filters, and editing of account identity, role, and activation state.
+- A personalized admin dashboard with versioned per-administrator layouts,
+  configurable card visibility and size, accessible drag-and-drop ordering,
+  keyboard controls, and default-layout restoration.
+- A validated dashboard-card extension contract for modules, including
+  permission-aware discovery, isolated data providers, generic metric, link,
+  and list renderers, and per-card refresh endpoints.
+- Dashboard cards for user and content totals, recent registrations and
+  content, pending community membership requests, cron and notification queue
+  health, and common administration shortcuts.
+
+### Changed
+
+- Deactivating an account from the admin interface now revokes all of that
+  user's active sessions immediately.
+- Dashboard provider failures are isolated to their own cards, which expose
+  explicit loading, empty, unavailable, and error states without preventing
+  the rest of the dashboard from rendering.
+
+### Security
+
+- Enforced admin user mutations and dashboard layout changes on the server
+  with authorization, validation, and CSRF protection independent of the UI.
+- Protected the reserved system account, prevented administrators from
+  changing their own role or active status, and prevented demotion or
+  deactivation of the last active administrator.
+- Made unknown and unauthorized dashboard card IDs indistinguishable to API
+  clients to avoid disclosing restricted module cards.
+
 ## [0.2.2] - 2026-09-19
 
 ### Added

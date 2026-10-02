@@ -1000,6 +1000,22 @@ final class AdminControllerTest extends TestCase
         $this->assertContains('ready', array_column($response['cards'], 'status'));
     }
 
+    public function testOneDashboardCardCanBeFetchedIndependently(): void
+    {
+        $module = $this->makeModule(currentUserId: 9);
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+
+        $response = $this->callAndDecode(
+            $module,
+            $this->makeApiPage('admin.dashboard-card', ['GET']),
+            ['id' => 'admin.shortcuts'],
+        );
+
+        $this->assertSame('admin.shortcuts', $response['id']);
+        $this->assertSame('ready', $response['status']);
+        $this->assertSame('#/users', $response['data'][0]['href']);
+    }
+
     #[DataProvider('dashboardMutationMethods')]
     public function testDashboardMutationsRequireCsrf(string $method): void
     {
@@ -1131,6 +1147,7 @@ final class AdminControllerTest extends TestCase
             'admin.users' => ['GET'],
             'admin.user' => ['GET', 'PATCH'],
             'admin.dashboard' => ['GET', 'PATCH', 'DELETE'],
+            'admin.dashboard-card' => ['GET'],
         ] as $action => $methods) {
             $page = $tree->findByAction($action);
 
@@ -1173,6 +1190,7 @@ final class AdminControllerTest extends TestCase
         $users = (new Router($tree))->resolve('/api/v1/admin/users');
         $user = (new Router($tree))->resolve('/api/v1/admin/users/42');
         $dashboard = (new Router($tree))->resolve('/api/v1/admin/dashboard');
+        $dashboardCard = (new Router($tree))->resolve('/api/v1/admin/dashboard/cards/admin.system-health');
 
         $this->assertSame('admin.pages', $list['page']->action ?? null);
         $this->assertSame('admin.page', $item['page']->action ?? null);
@@ -1188,5 +1206,7 @@ final class AdminControllerTest extends TestCase
         $this->assertSame('admin.user', $user['page']->action ?? null);
         $this->assertSame(['id' => '42'], $user['params']);
         $this->assertSame('admin.dashboard', $dashboard['page']->action ?? null);
+        $this->assertSame('admin.dashboard-card', $dashboardCard['page']->action ?? null);
+        $this->assertSame(['id' => 'admin.system-health'], $dashboardCard['params']);
     }
 }

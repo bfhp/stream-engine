@@ -128,9 +128,9 @@ class AdminController extends AbstractController implements DashboardCardProvide
         return [
             'status' => (int) ($row['total'] ?? 0) > 0 ? 'ready' : 'empty',
             'data' => [
-                ['label' => 'Total', 'value' => (int) ($row['total'] ?? 0)],
-                ['label' => 'Active', 'value' => (int) ($row['active'] ?? 0)],
-                ['label' => 'Inactive', 'value' => (int) ($row['inactive'] ?? 0)],
+                ['label' => 'Total', 'value' => (int) ($row['total'] ?? 0), 'href' => '#/users'],
+                ['label' => 'Active', 'value' => (int) ($row['active'] ?? 0), 'href' => '#/users'],
+                ['label' => 'Inactive', 'value' => (int) ($row['inactive'] ?? 0), 'href' => '#/users'],
             ],
         ];
     }
@@ -144,8 +144,8 @@ class AdminController extends AbstractController implements DashboardCardProvide
         return [
             'status' => (int) ($row['total'] ?? 0) > 0 ? 'ready' : 'empty',
             'data' => [
-                ['label' => 'Items', 'value' => (int) ($row['total'] ?? 0)],
-                ['label' => 'Types', 'value' => (int) ($row['types'] ?? 0)],
+                ['label' => 'Items', 'value' => (int) ($row['total'] ?? 0), 'href' => '#/feeds'],
+                ['label' => 'Types', 'value' => (int) ($row['types'] ?? 0), 'href' => '#/feeds'],
             ],
         ];
     }
@@ -332,6 +332,9 @@ class AdminController extends AbstractController implements DashboardCardProvide
             case 'admin.dashboard':
                 $this->handleDashboardRequest();
                 break;
+            case 'admin.dashboard-card':
+                $this->handleDashboardCardRequest((string) ($args['id'] ?? ''));
+                break;
             default:
                 parent::callApi($page, $args);
         }
@@ -358,6 +361,29 @@ class AdminController extends AbstractController implements DashboardCardProvide
                 pattern: 'dashboard',
                 requestMethods: ['GET', 'PATCH', 'DELETE'],
                 action: 'admin.dashboard',
+                accessRule: AccessService::ACCESS_ADMIN,
+            )
+        );
+
+        $dashboardCardsPageId = $pageTree->getMaxPageId();
+        $pageTree->add(
+            Page::api(
+                id: $dashboardCardsPageId,
+                parentId: $dashboardPageId,
+                pattern: 'cards',
+                requestMethods: ['GET'],
+                accessRule: AccessService::ACCESS_ADMIN,
+            )
+        );
+
+        $dashboardCardPageId = $pageTree->getMaxPageId();
+        $pageTree->add(
+            Page::api(
+                id: $dashboardCardPageId,
+                parentId: $dashboardCardsPageId,
+                pattern: '{id:[a-z][a-z0-9.-]*}',
+                requestMethods: ['GET'],
+                action: 'admin.dashboard-card',
                 accessRule: AccessService::ACCESS_ADMIN,
             )
         );
@@ -490,6 +516,12 @@ class AdminController extends AbstractController implements DashboardCardProvide
         }
 
         echo Formatter::json($this->dashboardService->payload($this->context));
+    }
+
+    /** @throws NotFoundException */
+    private function handleDashboardCardRequest(string $id): void
+    {
+        echo Formatter::json($this->dashboardService->card($id, $this->context));
     }
 
     /** @throws ValidationException */

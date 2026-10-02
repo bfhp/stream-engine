@@ -9,6 +9,7 @@ use PHPUnit\Framework\TestCase;
 use StreamEngine\Controllers\DashboardProbeController;
 use StreamEngine\Controllers\FailingDashboardProbeController;
 use StreamEngine\Core\Exceptions\ValidationException;
+use StreamEngine\Core\Exceptions\NotFoundException;
 use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Core\RequestContext;
 use StreamEngine\Domain\User;
@@ -80,6 +81,33 @@ final class AdminDashboardServiceTest extends TestCase
         self::assertSame([], $payload['catalog']);
         self::assertSame([], $payload['layout']['items']);
         self::assertSame([], $payload['cards']);
+    }
+
+    public function testOnePermittedCardCanBeRefreshedIndependently(): void
+    {
+        [$service] = $this->service([DashboardProbeController::class]);
+
+        $result = $service->card('probe.summary', $this->context());
+
+        self::assertSame('probe.summary', $result['id']);
+        self::assertSame('ready', $result['status']);
+    }
+
+    public function testUnknownAndUnauthorizedIndividualCardsAreNotDisclosed(): void
+    {
+        [$service] = $this->service([DashboardProbeController::class]);
+
+        foreach ([
+            ['missing.card', $this->context()],
+            ['probe.summary', $this->context(role: AccessService::ROLE_MODERATOR)],
+        ] as [$id, $context]) {
+            try {
+                $service->card($id, $context);
+                self::fail('Unavailable card was disclosed.');
+            } catch (NotFoundException $e) {
+                self::assertSame('Dashboard card not found', $e->getMessage());
+            }
+        }
     }
 
     public function testValidLayoutIsSavedForTheCurrentAdministrator(): void

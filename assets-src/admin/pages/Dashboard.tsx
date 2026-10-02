@@ -21,7 +21,7 @@ type DashboardPayload = {
     version: number; catalog: CardDefinition[];
     layout: { version: number; items: LayoutItem[] }; cards: CardResult[];
 };
-type Metric = { label: string; value: string | number; format?: "timestamp" };
+type Metric = { label: string; value: string | number; format?: "timestamp"; href?: string };
 type Shortcut = { label: string; href: string };
 type ListItem = { id: string; label: string; description?: string; timestamp?: number; href?: string };
 
@@ -44,6 +44,8 @@ export default function Dashboard() {
     const [saving, setSaving] = useState(false);
     const [draggingId, setDraggingId] = useState<string | null>(null);
     const [orderAnnouncement, setOrderAnnouncement] = useState("");
+    const [cardOverrides, setCardOverrides] = useState<Record<string, CardResult>>({});
+    const [cardLoading, setCardLoading] = useState<Set<string>>(() => new Set());
 
     useEffect(() => {
         const controller = new AbortController();
@@ -54,7 +56,10 @@ export default function Dashboard() {
                 if (!response.ok) throw await requestError(response, "Failed to load dashboard");
                 return response.json() as Promise<DashboardPayload>;
             })
-            .then(setPayload)
+            .then(next => {
+                setPayload(next);
+                setCardOverrides({});
+            })
             .catch(fetchError => {
                 if (fetchError.name !== "AbortError") setError(fetchError.message || "Failed to load dashboard");
             })
@@ -68,10 +73,10 @@ export default function Dashboard() {
         () => new Map((payload?.catalog || []).map(card => [card.id, card])),
         [payload]
     );
-    const results = useMemo(
-        () => new Map((payload?.cards || []).map(card => [card.id, card])),
-        [payload]
-    );
+    const results = useMemo(() => new Map([
+        ...(payload?.cards || []).map(card => [card.id, card] as const),
+        ...Object.values(cardOverrides).map(card => [card.id, card] as const)
+    ]), [cardOverrides, payload]);
     const customizerCards = useMemo(() => {
         const catalog = payload?.catalog || [];
         const byId = new Map(catalog.map(card => [card.id, card]));
@@ -146,18 +151,42 @@ export default function Dashboard() {
             .finally(() => setSaving(false));
     }
 
-    function renderContent(definition: CardDefinition, result: CardResult | undefined) {
-        if (!result) return <Skeleton height={70} />;
+    function refreshCard(id: string) {
+        setCardLoading(current => new Set(current).add(id));
+        fetch(`/api/v1/admin/dashboard/cards/${encodeURIComponent(id)}`)
+            .then(async response => {
+                if (!response.ok) throw await requestError(response, "Failed to load card");
+                return response.json() as Promise<CardResult>;
+            })
+            .then(result => setCardOverrides(current => ({ ...current, [id]: result })))
+            .catch(refreshError => {
+                setCardOverrides(current => ({ ...current, [id]: { id, status: "error", data: null } }));
+                notifications.show({ color: "red", title: "Card was not refreshed", message: refreshError.message });
+            })
+            .finally(() => setCardLoading(current => {
+                const next = new Set(current);
+                next.delete(id);
+                return next;
+            }));
+    }
+
+    function renderContent(definition: CardDefinition, result: CardResult | undefined, isLoading: boolean) {
+        if (isLoading || !result) return <Skeleton height={70} />;
         if (result.status === "error") return <Alert color="red">This card could not be loaded.</Alert>;
         if (result.status === "unavailable") return <Text c="dimmed">This card is currently unavailable.</Text>;
         if (result.status === "empty") return <Text c="dimmed">No data yet.</Text>;
         if (definition.kind === "metrics") {
             const metrics = Array.isArray(result.data) ? result.data as Metric[] : [];
             return <SimpleGrid cols={{ base: 1, sm: Math.min(metrics.length, 3) }}>
-                {metrics.map(metric => <div key={metric.label}>
-                    <Text size="xl" fw={700}>{metric.format === "timestamp" ? formatTimestamp(Number(metric.value)) : metric.value}</Text>
-                    <Text size="sm" c="dimmed">{metric.label}</Text>
-                </div>)}
+                {metrics.map(metric => {
+                    const content = <>
+                        <Text size="xl" fw={700}>{metric.format === "timestamp" ? formatTimestamp(Number(metric.value)) : metric.value}</Text>
+                        <Text size="sm" c="dimmed">{metric.label}</Text>
+                    </>;
+                    return metric.href
+                        ? <Box component="a" key={metric.label} href={metric.href} style={{ color: "inherit", textDecoration: "none" }}>{content}</Box>
+                        : <div key={metric.label}>{content}</div>;
+                })}
             </SimpleGrid>;
         }
         if (definition.kind === "links") {
@@ -192,8 +221,13 @@ export default function Dashboard() {
                 if (!definition) return null;
                 return <Grid.Col key={item.id} span={{ base: 12, sm: dashboardGridSpan(item.size) }}>
                     <Card withBorder h="100%">
-                        <Text fw={600} mb="md">{definition.label}</Text>
-                        {renderContent(definition, results.get(item.id))}
+                        <Group justify="space-between" mb="md">
+                            <Text fw={600}>{definition.label}</Text>
+                            <Tooltip label="Refresh card"><ActionIcon variant="subtle" size="sm"
+                                loading={cardLoading.has(item.id)} aria-label={`Refresh ${definition.label}`}
+                                onClick={() => refreshCard(item.id)}><IconRefresh size={15} /></ActionIcon></Tooltip>
+                        </Group>
+                        {renderContent(definition, results.get(item.id), cardLoading.has(item.id))}
                     </Card>
                 </Grid.Col>;
             })}
