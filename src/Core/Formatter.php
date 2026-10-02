@@ -177,6 +177,18 @@ class Formatter
             return abs($n) === 1 ? $one : $many;
         }
 
+        // Arabic: 1 is singular, 3-10 take the plural noun, 11+ the singular
+        // (accusative) noun; 2 (dual) and 0 are approximated with the plural.
+        if (preg_match('/^ar(?![a-z])/i', $this->locale) === 1) {
+            $n = abs($n);
+            if ($n === 1) {
+                return $one;
+            }
+            $mod = $n % 100;
+
+            return ($mod >= 11) ? $many : $few;
+        }
+
         // French and Portuguese treat both 0 and 1 as singular.
         if (preg_match('/^(fr|pt)(?![a-z])/i', $this->locale) === 1) {
             return abs($n) < 2 ? $one : $many;

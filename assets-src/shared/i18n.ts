@@ -38,6 +38,13 @@ function selectForm(forms: string[], count: number): string {
         return plural(count, forms[0], forms[1], forms[2]);
     }
 
+    if (resolvedLocale.startsWith("ar") && forms.length >= 3) {
+        const n = Math.abs(count);
+        if (n === 1) return forms[0];
+
+        return n % 100 >= 11 ? forms[2] : forms[1];
+    }
+
     const category = new Intl.PluralRules(resolvedLocale).select(count);
     if (forms.length === 2) return category === "one" ? forms[0] : forms[1];
     if (category === "one") return forms[0];
