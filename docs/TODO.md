@@ -16,20 +16,6 @@ Priorities:
   gap in test coverage;
 - **P2** — product improvements, refactoring, and localized technical debt.
 
-## Current check status
-
-The following checks were green at the time of the review:
-
-- `composer test` — 2,112 tests, 8,628 assertions, 7 skipped;
-- `npm test` — 28 files, 477 tests;
-- `npm run typecheck`;
-- `npm run build`;
-- `composer audit:csrf`.
-
-There is no current coverage report: `composer test:coverage` requires a
-running Docker daemon. Old coverage percentages were deliberately removed
-because they became misleading after more tests were added.
-
 ## P1
 
 ### Authorization and roles
@@ -74,27 +60,19 @@ WordPress import remains outside normal coverage: it is a one-off manual tool
 in `bin/wp-import.php`. Test it only when import work resumes or a regression is
 found.
 
-### Automated checks and CI
-
-- The CSRF audit is included in PHPUnit (`tests/Security/CsrfCoverageTest.php`),
-  runs with `composer test`, and can be run separately with
-  `composer audit:csrf`.
-
 ## P2
 
-### Admin: dashboard
+### Localization
 
-The dashboard foundation now provides a server-defined module card catalog,
-versioned per-administrator layouts, permission filtering, isolated providers,
-an aggregate API, save/reset operations, and generic metric/link/list renderers.
-The core set covers users, content, recent activity, pending community
-requests, cron/delivery health, and shortcuts. Layout editing supports
-accessible drag and drop with keyboard ordering controls. Public/theme
-placement widgets remain a separate concept, and the layout contract remains
-intentionally constrained: do not add arbitrary HTML, SQL, API URLs, colors,
-nested grids, or user-defined cards. The aggregate endpoint remains the
-initial-load default; a permission-checked per-card endpoint supports isolated
-retries and is the migration path if measurements later justify lazy loading.
+- Add complete interface translations for German (`de`), French (`fr`),
+  Spanish (`es`), Brazilian Portuguese (`pt-BR`), Italian (`it`), Japanese
+  (`ja`), Korean (`ko`), Simplified Chinese (`zh-CN`), Dutch (`nl`), and Polish
+  (`pl`).
+- Make every added locale available during installation and in administration
+  settings without maintaining a separate hard-coded locale list.
+- Extend locale coverage tests so every catalog has the same required keys as
+  English and locale selection/fallback works for both base and regional
+  locale codes.
 
 ### Registration
 
