@@ -10,6 +10,7 @@ use StreamEngine\Core\Exceptions\NotFoundException;
 use StreamEngine\Core\ModuleRegistry;
 use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Core\RequestContext;
+use StreamEngine\Core\TranslationManager;
 use StreamEngine\Domain\User;
 use StreamEngine\Repository\DashboardLayoutRepository;
 use RuntimeException;
@@ -23,6 +24,7 @@ final readonly class AdminDashboardService
         private DashboardLayoutRepository $layouts,
         private ModuleRegistry $modules,
         private PdoDatabase $db,
+        private ?TranslationManager $tm = null,
     ) {
     }
 
@@ -72,7 +74,7 @@ final readonly class AdminDashboardService
         }
         if ($descriptor === null) {
             // Unknown and unauthorized cards deliberately look identical.
-            throw new NotFoundException('Dashboard card not found');
+            throw new NotFoundException($this->message('admin.error.dashboard_card_not_found', 'Dashboard card not found'));
         }
 
         return $this->resolveCards(
@@ -153,7 +155,7 @@ final readonly class AdminDashboardService
     private function validateLayout(array $input, array $catalog): array
     {
         if (($input['version'] ?? null) !== self::LAYOUT_VERSION || ! is_array($input['items'] ?? null)) {
-            throw new ValidationException('Invalid dashboard layout version or items');
+            throw new ValidationException($this->message('admin.error.dashboard_layout', 'Invalid dashboard layout version or items'));
         }
         $byId = [];
         foreach ($catalog as $card) {
@@ -164,19 +166,19 @@ final readonly class AdminDashboardService
         $seenPositions = [];
         foreach ($input['items'] as $item) {
             if (! is_array($item) || array_diff(array_keys($item), ['id', 'size', 'position']) !== []) {
-                throw new ValidationException('Invalid dashboard layout item');
+                throw new ValidationException($this->message('admin.error.dashboard_item', 'Invalid dashboard layout item'));
             }
             $id = $item['id'] ?? null;
             $size = $item['size'] ?? null;
             $position = $item['position'] ?? null;
             if (! is_string($id) || ! isset($byId[$id]) || isset($seenIds[$id])) {
-                throw new ValidationException('Unknown or duplicate dashboard card');
+                throw new ValidationException($this->message('admin.error.dashboard_unknown_card', 'Unknown or duplicate dashboard card'));
             }
             if (! is_string($size) || ! in_array($size, $byId[$id]['sizes'], true)) {
-                throw new ValidationException("Invalid size for dashboard card '$id'");
+                throw new ValidationException($this->message('admin.error.dashboard_size', "Invalid size for dashboard card '$id'", ['id' => $id]));
             }
             if (! is_int($position) || $position < 0 || isset($seenPositions[$position])) {
-                throw new ValidationException('Dashboard card positions must be unique non-negative integers');
+                throw new ValidationException($this->message('admin.error.dashboard_positions', 'Dashboard card positions must be unique non-negative integers'));
             }
             $seenIds[$id] = true;
             $seenPositions[$position] = true;
@@ -294,5 +296,11 @@ final readonly class AdminDashboardService
     {
         return is_string($href)
             && preg_match('/\A#\/[a-z0-9][a-z0-9\/._?=&%-]*\z/D', $href) === 1;
+    }
+
+    /** @param array<string, scalar> $params */
+    private function message(string $key, string $fallback, array $params = []): string
+    {
+        return $this->tm?->trans($key, $params) ?? $fallback;
     }
 }

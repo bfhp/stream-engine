@@ -52,15 +52,15 @@ type ParentPage = {
 };
 
 const CHANGEFREQ_OPTIONS = [
-    { value: "", label: "Default" },
-    { value: "always", label: "always" },
-    { value: "hourly", label: "hourly" },
-    { value: "daily", label: "daily" },
-    { value: "weekly", label: "weekly" },
-    { value: "monthly", label: "monthly" },
-    { value: "yearly", label: "yearly" },
-    { value: "never", label: "never" },
-    { value: "noindex", label: "noindex" }
+    { value: "", label: trans("js.admin.default") },
+    { value: "always", label: trans("js.admin.changefreq.always") },
+    { value: "hourly", label: trans("js.admin.changefreq.hourly") },
+    { value: "daily", label: trans("js.admin.changefreq.daily") },
+    { value: "weekly", label: trans("js.admin.changefreq.weekly") },
+    { value: "monthly", label: trans("js.admin.changefreq.monthly") },
+    { value: "yearly", label: trans("js.admin.changefreq.yearly") },
+    { value: "never", label: trans("js.admin.changefreq.never") },
+    { value: "noindex", label: trans("js.admin.changefreq.noindex") }
 ];
 
 function blankPage(): EditablePage {
@@ -124,7 +124,7 @@ export default function PageEdit() {
         fetch(`/api/v1/admin/pages/${id}`)
             .then(async response => {
                 if (!response.ok) {
-                    throw new Error(await response.text() || "Failed to load page");
+                    throw new Error(await response.text() || trans("js.admin.pages.load_one_failed"));
                 }
 
                 return response.json();
@@ -133,8 +133,8 @@ export default function PageEdit() {
             .catch(err => {
                 notifications.show({
                     color: "red",
-                    title: "Error",
-                    message: err.message || "Failed to load page"
+                    title: trans("js.admin.error"),
+                    message: err.message || trans("js.admin.pages.load_one_failed")
                 });
             })
             .finally(() => setLoading(false));
@@ -147,7 +147,7 @@ export default function PageEdit() {
         fetch("/api/v1/admin/page-actions", { signal: controller.signal })
             .then(async response => {
                 if (!response.ok) {
-                    throw new Error(await response.text() || "Failed to load page actions");
+                    throw new Error(await response.text() || trans("js.admin.pages.actions_load_failed"));
                 }
 
                 return response.json();
@@ -157,8 +157,8 @@ export default function PageEdit() {
                 if (err.name !== "AbortError") {
                     notifications.show({
                         color: "red",
-                        title: "Error",
-                        message: err.message || "Failed to load page actions"
+                        title: trans("js.admin.error"),
+                        message: err.message || trans("js.admin.pages.actions_load_failed")
                     });
                 }
             })
@@ -178,7 +178,7 @@ export default function PageEdit() {
         fetch("/api/v1/admin/pages", { signal: controller.signal })
             .then(async response => {
                 if (!response.ok) {
-                    throw new Error(await response.text() || "Failed to load parent pages");
+                    throw new Error(await response.text() || trans("js.admin.pages.parents_load_failed"));
                 }
 
                 return response.json();
@@ -188,8 +188,8 @@ export default function PageEdit() {
                 if (err.name !== "AbortError") {
                     notifications.show({
                         color: "red",
-                        title: "Error",
-                        message: err.message || "Failed to load parent pages"
+                        title: trans("js.admin.error"),
+                        message: err.message || trans("js.admin.pages.parents_load_failed")
                     });
                 }
             })
@@ -207,7 +207,7 @@ export default function PageEdit() {
 
         actions.forEach(item => {
             const options = grouped.get(item.module) || [];
-            options.push({ value: item.action, label: `${item.label} (${item.action})` });
+            options.push({ value: item.action, label: `${trans(item.label)} (${item.action})` });
             grouped.set(item.module, options);
         });
 
@@ -216,8 +216,8 @@ export default function PageEdit() {
 
         if (currentAction && !actions.some(item => item.action === currentAction)) {
             data.unshift({
-                group: "Unavailable",
-                items: [{ value: currentAction, label: `${currentAction} (unknown action)` }]
+                group: trans("js.admin.unavailable"),
+                items: [{ value: currentAction, label: `${currentAction} (${trans("js.admin.unknown_action")})` }]
             });
         }
 
@@ -285,7 +285,7 @@ export default function PageEdit() {
     function actionFieldDescription(field: PageActionFieldName): string {
         return page?.action
             ? fieldDescription(selectedAction, field)
-            : "Select an action to see whether this field is supported.";
+            : trans("js.admin.pages.select_action_help");
     }
 
     const forbiddenParentIds = useMemo(
@@ -293,7 +293,7 @@ export default function PageEdit() {
         [page?.id, parentPages]
     );
     const parentError = page?.parentId !== "" && forbiddenParentIds.has(Number(page?.parentId))
-        ? "A page cannot be its own parent or be moved below its descendant."
+        ? trans("js.admin.pages.parent_error")
         : undefined;
 
     const parentOptions = useMemo(() => {
@@ -304,7 +304,7 @@ export default function PageEdit() {
                     .filter((value, index, values): value is string => Boolean(value) && values.indexOf(value) === index)
                     .join(" · ");
 
-                return { value: String(item.id), label: `#${item.id} — ${details || "Root"}` };
+                return { value: String(item.id), label: `#${item.id} — ${details || trans("js.admin.root")}` };
             });
         const currentParent = page?.parentId;
 
@@ -313,7 +313,7 @@ export default function PageEdit() {
             && !options.some(item => item.value === String(currentParent))) {
             options.unshift({
                 value: String(currentParent),
-                label: `#${currentParent} — unknown page`
+                label: `#${currentParent} — ${trans("js.admin.unknown_page")}`
             });
         }
 
@@ -330,20 +330,20 @@ export default function PageEdit() {
         }
 
         if (!page.action) {
-            notifications.show({ color: "red", title: "Invalid page", message: "Action is required" });
+            notifications.show({ color: "red", title: trans("js.admin.pages.invalid"), message: trans("js.admin.pages.action_required") });
             return;
         }
 
         if (parentError) {
-            notifications.show({ color: "red", title: "Invalid parent", message: parentError });
+            notifications.show({ color: "red", title: trans("js.admin.pages.invalid_parent"), message: parentError });
             return;
         }
 
         if (Object.keys(actionErrors).length > 0) {
             notifications.show({
                 color: "red",
-                title: "Invalid action configuration",
-                message: "Review the highlighted page action fields before saving."
+                title: trans("js.admin.pages.invalid_action"),
+                message: trans("js.admin.pages.review_action_fields")
             });
             return;
         }
@@ -360,7 +360,7 @@ export default function PageEdit() {
         })
             .then(async response => {
                 if (!response.ok) {
-                    throw new Error(await response.text() || "Save failed");
+                    throw new Error(await response.text() || trans("js.admin.save_failed"));
                 }
 
                 return response.json();
@@ -371,7 +371,7 @@ export default function PageEdit() {
 
                 notifications.show({
                     color: "green",
-                    message: "Page saved",
+                    message: trans("js.admin.pages.saved"),
                     autoClose: 2000
                 });
 
@@ -382,54 +382,54 @@ export default function PageEdit() {
             .catch(err => {
                 notifications.show({
                     color: "red",
-                    title: "Error",
-                    message: err.message || "Failed to save page"
+                    title: trans("js.admin.error"),
+                    message: err.message || trans("js.admin.pages.save_failed")
                 });
             })
             .finally(() => setSaving(false));
     }
 
     if (!page || loading) {
-        return <Text>Loading...</Text>;
+        return <Text>{trans("js.admin.loading")}</Text>;
     }
 
     return (
         <Stack>
             <Group justify="space-between">
                 <Button variant="light" onClick={() => navigate("/pages")}>
-                    Back
+                    {trans("js.admin.back")}
                 </Button>
 
                 <Button loading={saving} onClick={save}>
-                    Save
+                    {trans("js.admin.save")}
                 </Button>
             </Group>
 
             <SimpleGrid cols={{ base: 1, md: 2 }}>
                 <TextInput
-                    label="Pattern"
+                    label={trans("js.admin.pattern")}
                     value={page.pattern}
                     onChange={event => update("pattern", event.currentTarget.value)}
                     disabled={page.id === 1}
                 />
                 <Select
-                    label="Action"
+                    label={trans("js.admin.action")}
                     required
                     searchable
                     data={actionOptions}
                     value={page.action}
                     onChange={value => update("action", value || "")}
                     disabled={actionsLoading}
-                    nothingFoundMessage="No actions found"
+                    nothingFoundMessage={trans("js.admin.pages.no_actions")}
                     allowDeselect={false}
                 />
                 <TextInput
-                    label="Page name"
+                    label={trans("js.admin.page_name")}
                     value={page.pageName}
                     onChange={event => update("pageName", event.currentTarget.value)}
                 />
                 <Select
-                    label="Parent ID"
+                    label={trans("js.admin.parent_id")}
                     error={parentError}
                     searchable
                     clearable
@@ -437,10 +437,10 @@ export default function PageEdit() {
                     value={page.parentId === "" ? null : String(page.parentId)}
                     onChange={value => update("parentId", value === null ? "" : Number(value))}
                     disabled={parentPagesLoading || page.id === 1}
-                    nothingFoundMessage="No parent pages found"
+                    nothingFoundMessage={trans("js.admin.pages.no_parents")}
                 />
                 <Select
-                    label="Feed type"
+                    label={trans("js.admin.feed_type")}
                     description={actionFieldDescription("feedType")}
                     error={actionErrors.feedType}
                     required={isRequired("feedType")}
@@ -451,10 +451,10 @@ export default function PageEdit() {
                     disabled={isPageActionFieldDisabled(selectedAction, "feedType", page.feedType)
                         || page.feedType === fixedFeedType}
                     clearable={!fixedFeedType}
-                    nothingFoundMessage="No feed types found"
+                    nothingFoundMessage={trans("js.admin.pages.no_feed_types")}
                 />
                 <Select
-                    label="List feed type"
+                    label={trans("js.admin.list_feed_type")}
                     description={actionFieldDescription("listFeedType")}
                     error={actionErrors.listFeedType}
                     required={isRequired("listFeedType")}
@@ -465,10 +465,10 @@ export default function PageEdit() {
                     disabled={isPageActionFieldDisabled(selectedAction, "listFeedType", page.listFeedType)
                         || page.listFeedType === fixedListFeedType}
                     clearable={!fixedListFeedType}
-                    nothingFoundMessage="No feed types found"
+                    nothingFoundMessage={trans("js.admin.pages.no_feed_types")}
                 />
                 <TextInput
-                    label="Term vocabulary"
+                    label={trans("js.admin.term_vocabulary")}
                     description={actionFieldDescription("termVocabulary")}
                     error={actionErrors.termVocabulary}
                     required={isRequired("termVocabulary")}
@@ -477,7 +477,7 @@ export default function PageEdit() {
                     disabled={isPageActionFieldDisabled(selectedAction, "termVocabulary", page.termVocabulary)}
                 />
                 <NumberInput
-                    label="Feed ID"
+                    label={trans("js.admin.feed_id")}
                     description={actionFieldDescription("feedId")}
                     error={actionErrors.feedId}
                     required={isRequired("feedId")}
@@ -487,7 +487,7 @@ export default function PageEdit() {
                     disabled={isPageActionFieldDisabled(selectedAction, "feedId", page.feedId)}
                 />
                 <Select
-                    label="Changefreq"
+                    label={trans("js.admin.changefreq")}
                     data={CHANGEFREQ_OPTIONS}
                     value={page.changefreq}
                     onChange={value => update("changefreq", value || "")}
@@ -510,8 +510,8 @@ export default function PageEdit() {
             {page.action && (
                 <Text size="sm" c="dimmed">
                     {selectedAction
-                        ? `${selectedAction.label} · ${selectedAction.module} · ${selectedAction.action}`
-                        : `${page.action} · unavailable legacy action`}
+                        ? `${trans(selectedAction.label)} · ${selectedAction.module} · ${selectedAction.action}`
+                        : `${page.action} · ${trans("js.admin.pages.unavailable_legacy_action")}`}
                 </Text>
             )}
 

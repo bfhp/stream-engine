@@ -32,7 +32,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
     public static function pageActions(): array
     {
         return [
-            'admin.index' => 'Administrator interface',
+            'admin.index' => 'js.admin.page_action.admin',
         ];
     }
 
@@ -41,7 +41,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
         return [
             [
                 'id' => 'admin.users-summary',
-                'label' => 'Users',
+                'label' => 'js.admin.dashboard.cards.users',
                 'kind' => 'metrics',
                 'permission' => AccessService::ACCESS_ADMIN,
                 'sizes' => ['small', 'medium'],
@@ -50,7 +50,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
             ],
             [
                 'id' => 'admin.content-summary',
-                'label' => 'Content',
+                'label' => 'js.admin.dashboard.cards.content',
                 'kind' => 'metrics',
                 'permission' => AccessService::ACCESS_ADMIN,
                 'sizes' => ['small', 'medium'],
@@ -59,7 +59,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
             ],
             [
                 'id' => 'admin.shortcuts',
-                'label' => 'Shortcuts',
+                'label' => 'js.admin.dashboard.cards.shortcuts',
                 'kind' => 'links',
                 'permission' => AccessService::ACCESS_ADMIN,
                 'sizes' => ['small', 'medium', 'wide'],
@@ -68,7 +68,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
             ],
             [
                 'id' => 'admin.recent-activity',
-                'label' => 'Recent activity',
+                'label' => 'js.admin.dashboard.cards.recent',
                 'kind' => 'list',
                 'permission' => AccessService::ACCESS_ADMIN,
                 'sizes' => ['medium', 'wide'],
@@ -77,7 +77,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
             ],
             [
                 'id' => 'admin.moderation-summary',
-                'label' => 'Moderation',
+                'label' => 'js.admin.dashboard.cards.moderation',
                 'kind' => 'metrics',
                 'permission' => AccessService::ACCESS_ADMIN,
                 'sizes' => ['small', 'medium'],
@@ -86,7 +86,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
             ],
             [
                 'id' => 'admin.system-health',
-                'label' => 'System health',
+                'label' => 'js.admin.dashboard.cards.health',
                 'kind' => 'metrics',
                 'permission' => AccessService::ACCESS_ADMIN,
                 'sizes' => ['medium', 'wide'],
@@ -104,9 +104,9 @@ class AdminController extends AbstractController implements DashboardCardProvide
             'admin.shortcuts' => [
                 'status' => 'ready',
                 'data' => [
-                    ['label' => 'Manage users', 'href' => '#/users'],
-                    ['label' => 'Create page', 'href' => '#/pages/new'],
-                    ['label' => 'Settings', 'href' => '#/settings'],
+                    ['label' => 'js.admin.dashboard.manage_users', 'href' => '#/users'],
+                    ['label' => 'js.admin.dashboard.create_page', 'href' => '#/pages/new'],
+                    ['label' => 'js.admin.nav.settings', 'href' => '#/settings'],
                 ],
             ],
             'admin.recent-activity' => self::recentActivityCard($db),
@@ -128,9 +128,9 @@ class AdminController extends AbstractController implements DashboardCardProvide
         return [
             'status' => (int) ($row['total'] ?? 0) > 0 ? 'ready' : 'empty',
             'data' => [
-                ['label' => 'Total', 'value' => (int) ($row['total'] ?? 0), 'href' => '#/users'],
-                ['label' => 'Active', 'value' => (int) ($row['active'] ?? 0), 'href' => '#/users'],
-                ['label' => 'Inactive', 'value' => (int) ($row['inactive'] ?? 0), 'href' => '#/users'],
+                ['label' => 'js.admin.total', 'value' => (int) ($row['total'] ?? 0), 'href' => '#/users'],
+                ['label' => 'js.admin.status.active', 'value' => (int) ($row['active'] ?? 0), 'href' => '#/users'],
+                ['label' => 'js.admin.status.inactive', 'value' => (int) ($row['inactive'] ?? 0), 'href' => '#/users'],
             ],
         ];
     }
@@ -144,8 +144,8 @@ class AdminController extends AbstractController implements DashboardCardProvide
         return [
             'status' => (int) ($row['total'] ?? 0) > 0 ? 'ready' : 'empty',
             'data' => [
-                ['label' => 'Items', 'value' => (int) ($row['total'] ?? 0), 'href' => '#/feeds'],
-                ['label' => 'Types', 'value' => (int) ($row['types'] ?? 0), 'href' => '#/feeds'],
+                ['label' => 'js.admin.items', 'value' => (int) ($row['total'] ?? 0), 'href' => '#/feeds'],
+                ['label' => 'js.admin.types', 'value' => (int) ($row['types'] ?? 0), 'href' => '#/feeds'],
             ],
         ];
     }
@@ -160,8 +160,8 @@ class AdminController extends AbstractController implements DashboardCardProvide
             $name = trim((string) ($row['nick'] ?? '')) ?: '#'.(int) $row['id'];
             $items[] = [
                 'id' => 'user-'.(int) $row['id'],
-                'label' => $name.' registered',
-                'description' => 'User',
+                'label' => $name,
+                'description' => 'js.admin.dashboard.new_user',
                 'timestamp' => (int) ($row['created_at'] ?? 0),
                 'href' => '#/users',
             ];
@@ -169,11 +169,11 @@ class AdminController extends AbstractController implements DashboardCardProvide
         foreach ($db->fetchAll(
             'SELECT id, title, type, created_at FROM feeds ORDER BY created_at DESC, id DESC LIMIT 5'
         ) as $row) {
-            $title = trim((string) ($row['title'] ?? '')) ?: 'Feed #'.(int) $row['id'];
+            $title = trim((string) ($row['title'] ?? '')) ?: '#'.(int) $row['id'];
             $items[] = [
                 'id' => 'feed-'.(int) $row['id'],
                 'label' => $title,
-                'description' => (string) ($row['type'] ?? 'Content'),
+                'description' => (string) ($row['type'] ?? 'js.admin.content'),
                 'timestamp' => (int) ($row['created_at'] ?? 0),
                 'href' => '#/feeds/'.(int) $row['id'],
             ];
@@ -196,7 +196,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
 
         return [
             'status' => $pending > 0 ? 'ready' : 'empty',
-            'data' => [['label' => 'Pending join requests', 'value' => $pending]],
+            'data' => [['label' => 'js.admin.dashboard.pending_requests', 'value' => $pending]],
         ];
     }
 
@@ -216,15 +216,15 @@ class AdminController extends AbstractController implements DashboardCardProvide
         return [
             'status' => 'ready',
             'data' => [
-                ['label' => 'Cron tasks', 'value' => (int) ($cron['tasks'] ?? 0)],
+                ['label' => 'js.admin.dashboard.cron_tasks', 'value' => (int) ($cron['tasks'] ?? 0)],
                 [
-                    'label' => 'Last cron run',
+                    'label' => 'js.admin.dashboard.last_cron',
                     'value' => (int) ($cron['last_run'] ?? 0),
                     'format' => 'timestamp',
                 ],
-                ['label' => 'Stale cron locks', 'value' => (int) ($cron['stale_locks'] ?? 0)],
-                ['label' => 'Pending deliveries', 'value' => (int) ($deliveries['pending'] ?? 0)],
-                ['label' => 'Failed deliveries', 'value' => (int) ($deliveries['failed'] ?? 0)],
+                ['label' => 'js.admin.dashboard.stale_locks', 'value' => (int) ($cron['stale_locks'] ?? 0)],
+                ['label' => 'js.admin.dashboard.pending_deliveries', 'value' => (int) ($deliveries['pending'] ?? 0)],
+                ['label' => 'js.admin.dashboard.failed_deliveries', 'value' => (int) ($deliveries['failed'] ?? 0)],
             ],
         ];
     }
@@ -273,6 +273,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
             new DashboardLayoutRepository($db),
             $modules,
             $db,
+            $tm,
         );
     }
 
@@ -282,7 +283,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
     public function show(Page $page, array $args = []): ?ViewModel
     {
         if (! $this->accessService->isAdmin($this->context->user)) {
-            throw new ForbiddenException('Forbidden');
+            throw new ForbiddenException($this->tm->trans('admin.error.forbidden'));
         }
 
         return ViewModel::fromPage(
@@ -301,7 +302,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
         header('Content-Type: application/json');
 
         if (! $this->accessService->isAdmin($this->context->user)) {
-            throw new ForbiddenException('Forbidden');
+            throw new ForbiddenException($this->tm->trans('admin.error.forbidden'));
         }
 
         switch ($page->action) {
@@ -550,17 +551,17 @@ class AdminController extends AbstractController implements DashboardCardProvide
         $perPage = 25;
         $role = $query->trimmed('role');
         if ($role !== '' && ! in_array($role, AccessService::ROLES, true)) {
-            throw new ValidationException('Invalid role filter');
+            throw new ValidationException($this->tm->trans('admin.error.invalid_role_filter'));
         }
 
         $status = $query->trimmed('status');
         if (! in_array($status, ['', 'active', 'inactive'], true)) {
-            throw new ValidationException('Invalid status filter');
+            throw new ValidationException($this->tm->trans('admin.error.invalid_status_filter'));
         }
 
         $search = $query->trimmed('q');
         if (mb_strlen($search) > 255) {
-            throw new ValidationException('Search query must not exceed 255 characters');
+            throw new ValidationException($this->tm->trans('admin.error.search_too_long'));
         }
 
         $isActive = match ($status) {
@@ -601,7 +602,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
     private function handleUserRequest(int $id): void
     {
         if ($id <= 0) {
-            throw new NotFoundException('User not found');
+            throw new NotFoundException($this->tm->trans('admin.error.user_not_found'));
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
@@ -610,7 +611,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
 
         $existing = $this->userRepository->findForAdminById($id);
         if ($existing === null) {
-            throw new NotFoundException('User not found');
+            throw new NotFoundException($this->tm->trans('admin.error.user_not_found'));
         }
 
         if ($_SERVER['REQUEST_METHOD'] !== 'PATCH') {
@@ -620,7 +621,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
         }
 
         if ($id === \StreamEngine\Domain\User::SYSTEM_USER_ID) {
-            throw new ForbiddenException('The system account cannot be changed');
+            throw new ForbiddenException($this->tm->trans('admin.error.system_account'));
         }
 
         $data = $this->validatedUserData($this->jsonBody(), $existing);
@@ -628,21 +629,21 @@ class AdminController extends AbstractController implements DashboardCardProvide
             || $data['isActive'] !== $existing['isActive'];
 
         if ($id === $this->context->user->id && $changesPrivileges) {
-            throw new ForbiddenException('You cannot change your own role or active status');
+            throw new ForbiddenException($this->tm->trans('admin.error.own_privileges'));
         }
 
         if ($existing['role'] === AccessService::ROLE_ADMIN
             && $existing['isActive']
             && ($data['role'] !== AccessService::ROLE_ADMIN || ! $data['isActive'])
             && $this->userRepository->countActiveAdministrators() <= 1) {
-            throw new ValidationException('The last active administrator cannot be demoted or deactivated');
+            throw new ValidationException($this->tm->trans('admin.error.last_admin'));
         }
 
         if ($this->userRepository->emailBelongsToAnotherUser($data['email'], $id)) {
-            throw new ValidationException('Email is already in use');
+            throw new ValidationException($this->tm->trans('admin.error.email_used'));
         }
         if ($this->userRepository->usernameBelongsToAnotherUser($data['username'], $id)) {
-            throw new ValidationException('Username is already in use');
+            throw new ValidationException($this->tm->trans('admin.error.username_used'));
         }
 
         $this->userRepository->updateFromAdminData($id, $data);
@@ -665,19 +666,19 @@ class AdminController extends AbstractController implements DashboardCardProvide
         $isActive = $input['isActive'] ?? $existing['isActive'];
 
         if (! filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 255) {
-            throw new ValidationException('Invalid email address');
+            throw new ValidationException($this->tm->trans('admin.error.invalid_email'));
         }
         if (mb_strlen($nick) > 50) {
-            throw new ValidationException('Display name must not exceed 50 characters');
+            throw new ValidationException($this->tm->trans('admin.error.display_name_too_long'));
         }
         if (! preg_match('/\A[A-Za-z0-9][A-Za-z0-9_-]{2,29}\z/D', $username)) {
-            throw new ValidationException('Username must be 3-30 characters using letters, numbers, _ or -');
+            throw new ValidationException($this->tm->trans('admin.error.invalid_username'));
         }
         if (! is_string($role) || ! in_array($role, AccessService::ROLES, true)) {
-            throw new ValidationException('Invalid user role');
+            throw new ValidationException($this->tm->trans('admin.error.invalid_user_role'));
         }
         if (! is_bool($isActive)) {
-            throw new ValidationException('Active status must be a boolean');
+            throw new ValidationException($this->tm->trans('admin.error.invalid_active'));
         }
 
         return compact('email', 'nick', 'username', 'role', 'isActive');
@@ -708,7 +709,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
     private function handlePageRequest(int $id): void
     {
         if ($id <= 0) {
-            throw new NotFoundException('Page not found');
+            throw new NotFoundException($this->tm->trans('admin.error.page_not_found'));
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
@@ -727,7 +728,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
         $page = $this->pageRepository->findForAdminById($id);
 
         if ($page === null) {
-            throw new NotFoundException('Page not found');
+            throw new NotFoundException($this->tm->trans('admin.error.page_not_found'));
         }
 
         echo Formatter::json($page);
@@ -735,7 +736,15 @@ class AdminController extends AbstractController implements DashboardCardProvide
 
     private function handlePageActionsRequest(): void
     {
-        echo Formatter::json(['data' => $this->modules->pageActions()]);
+        $actions = array_map(function (array $descriptor): array {
+            $key = 'admin.page_action.'.$descriptor['action'];
+            $translated = $this->tm->trans($key);
+            $descriptor['label'] = $translated === $key ? $descriptor['label'] : $translated;
+
+            return $descriptor;
+        }, $this->modules->pageActions());
+
+        echo Formatter::json(['data' => $actions]);
     }
 
     /** @throws ValidationException */
@@ -804,14 +813,14 @@ class AdminController extends AbstractController implements DashboardCardProvide
     private function handleMenuRequest(int $id): void
     {
         if ($id <= 0) {
-            throw new NotFoundException('Menu item not found');
+            throw new NotFoundException($this->tm->trans('admin.error.menu_not_found'));
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
             Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
 
             if ($this->menuRepository->findForAdminById($id) === null) {
-                throw new NotFoundException('Menu item not found');
+                throw new NotFoundException($this->tm->trans('admin.error.menu_not_found'));
             }
 
             echo Formatter::json($this->menuRepository->updateFromAdminData(
@@ -826,16 +835,16 @@ class AdminController extends AbstractController implements DashboardCardProvide
             Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
 
             if ($this->menuRepository->findForAdminById($id) === null) {
-                throw new NotFoundException('Menu item not found');
+                throw new NotFoundException($this->tm->trans('admin.error.menu_not_found'));
             }
 
             $input = $this->jsonBody();
             $strategy = (string) ($input['children'] ?? 'reject');
             if (! in_array($strategy, ['reject', 'promote', 'delete'], true)) {
-                throw new ValidationException('Invalid child deletion strategy');
+                throw new ValidationException($this->tm->trans('admin.error.invalid_child_strategy'));
             }
             if ($this->menuRepository->hasChildren($id) && $strategy === 'reject') {
-                throw new ValidationException('Choose whether to promote or delete child menu items');
+                throw new ValidationException($this->tm->trans('admin.error.choose_child_strategy'));
             }
 
             if ($strategy === 'reject') {
@@ -851,7 +860,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
         $item = $this->menuRepository->findForAdminById($id);
 
         if ($item === null) {
-            throw new NotFoundException('Menu item not found');
+            throw new NotFoundException($this->tm->trans('admin.error.menu_not_found'));
         }
 
         echo Formatter::json($item);
@@ -866,6 +875,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
             Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
 
             ['key' => $key, 'value' => $value] = $this->validatedSettingData($this->jsonBody(), true);
+            $this->validateSettingValue($key, $value);
 
             echo Formatter::json($this->settingsRepository->setForAdmin($key, $value));
 
@@ -887,6 +897,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
             Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
 
             ['value' => $value] = $this->validatedSettingData($this->jsonBody(), false);
+            $this->validateSettingValue($key, $value);
 
             echo Formatter::json($this->settingsRepository->setForAdmin($key, $value));
 
@@ -896,7 +907,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
         $setting = $this->settingsRepository->findForAdminByKey($key);
 
         if ($setting === null) {
-            throw new NotFoundException('Setting not found');
+            throw new NotFoundException($this->tm->trans('admin.error.setting_not_found'));
         }
 
         echo Formatter::json($setting);
@@ -925,30 +936,30 @@ class AdminController extends AbstractController implements DashboardCardProvide
         $changefreq = trim((string) ($input['changefreq'] ?? ''));
 
         if ($action === '') {
-            throw new ValidationException('Action is required');
+            throw new ValidationException($this->tm->trans('admin.error.action_required'));
         }
 
         if ($settings !== '') {
             json_decode($settings, true);
 
             if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new ValidationException('Settings must be valid JSON');
+                throw new ValidationException($this->tm->trans('admin.error.settings_json'));
             }
         }
 
         if ($changefreq !== '' && ! in_array($changefreq, self::CHANGEFREQ_VALUES, true)) {
-            throw new ValidationException('Invalid changefreq');
+            throw new ValidationException($this->tm->trans('admin.error.invalid_changefreq'));
         }
 
         $accessRule = $input['accessRule'] ?? null;
         if (! is_string($accessRule) || ! in_array($accessRule, AccessService::ACCESS_RULES, true)) {
-            throw new ValidationException('Invalid access rule');
+            throw new ValidationException($this->tm->trans('admin.error.invalid_access'));
         }
 
-        $parentId = $this->optionalPositiveInt($input['parentId'] ?? null, 'Invalid parent page');
+        $parentId = $this->optionalPositiveInt($input['parentId'] ?? null, $this->tm->trans('admin.error.invalid_parent_page'));
         $currentId = isset($existing['id']) ? (int) $existing['id'] : null;
         if ($currentId === 1 && ($parentId !== null || $pattern !== '')) {
-            throw new ValidationException('The root page cannot have a parent or pattern');
+            throw new ValidationException($this->tm->trans('admin.error.root_page'));
         }
         $this->validatePageParent($parentId, $currentId);
 
@@ -961,7 +972,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
             'feedType' => $this->optionalString($input['feedType'] ?? null),
             'listFeedType' => $this->optionalString($input['listFeedType'] ?? null),
             'termVocabulary' => $this->optionalString($input['termVocabulary'] ?? null),
-            'feedId' => $this->optionalPositiveInt($input['feedId'] ?? null, 'Feed ID must be a positive integer'),
+            'feedId' => $this->optionalPositiveInt($input['feedId'] ?? null, $this->tm->trans('admin.error.invalid_feed_id')),
             'changefreq' => $changefreq !== '' ? $changefreq : null,
             'accessRule' => $accessRule,
         ];
@@ -979,7 +990,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
         }
 
         if ($parentId === $currentId) {
-            throw new ValidationException('A page cannot be its own parent');
+            throw new ValidationException($this->tm->trans('admin.error.page_own_parent'));
         }
 
         $byId = [];
@@ -988,17 +999,17 @@ class AdminController extends AbstractController implements DashboardCardProvide
         }
 
         if (! isset($byId[$parentId])) {
-            throw new ValidationException('Parent page not found');
+            throw new ValidationException($this->tm->trans('admin.error.parent_page_not_found'));
         }
 
         $ancestorId = $parentId;
         $visited = [];
         while ($ancestorId !== null) {
             if ($ancestorId === $currentId) {
-                throw new ValidationException('A page cannot be moved below its descendant');
+                throw new ValidationException($this->tm->trans('admin.error.page_descendant'));
             }
             if (isset($visited[$ancestorId])) {
-                throw new ValidationException('Parent page hierarchy contains a cycle');
+                throw new ValidationException($this->tm->trans('admin.error.page_cycle'));
             }
 
             $visited[$ancestorId] = true;
@@ -1018,7 +1029,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
 
         if ($descriptor === null) {
             if ($existing === null || ($existing['action'] ?? null) !== $action) {
-                throw new ValidationException("Unknown page action '$action'");
+                throw new ValidationException($this->tm->trans('admin.error.unknown_page_action', ['action' => $action]));
             }
 
             foreach (ModuleRegistry::PAGE_ACTION_FIELDS as $field) {
@@ -1027,7 +1038,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
                     : $this->optionalString($existing[$field] ?? null);
                 if ($data[$field] !== $existingValue) {
                     throw new ValidationException(
-                        "Configuration fields of unknown page action '$action' cannot be changed"
+                        $this->tm->trans('admin.error.unknown_action_fields', ['action' => $action])
                     );
                 }
             }
@@ -1041,24 +1052,24 @@ class AdminController extends AbstractController implements DashboardCardProvide
             $label = $this->pageActionFieldLabel($field);
 
             if ($fieldDescriptor['status'] === 'unsupported' && $hasValue) {
-                throw new ValidationException("$label is not supported by page action '$action'");
+                throw new ValidationException($this->tm->trans('admin.error.action_field_unsupported', ['label' => $label, 'action' => $action]));
             }
             if ($fieldDescriptor['status'] === 'required' && ! $hasValue) {
-                throw new ValidationException("$label is required for page action '$action'");
+                throw new ValidationException($this->tm->trans('admin.error.action_field_required', ['label' => $label, 'action' => $action]));
             }
             if ($hasValue
                 && isset($fieldDescriptor['values'])
                 && ! in_array($value, $fieldDescriptor['values'], true)) {
-                throw new ValidationException("Invalid $label for page action '$action'");
+                throw new ValidationException($this->tm->trans('admin.error.action_field_invalid', ['label' => $label, 'action' => $action]));
             }
             if ($hasValue && $field === 'feedId' && $fieldDescriptor['status'] !== 'unsupported') {
                 $feed = $this->db->fetchOne('SELECT type FROM feeds WHERE id = ?', [$value]);
                 if ($feed === null) {
-                    throw new ValidationException("Feed ID $value does not exist");
+                    throw new ValidationException($this->tm->trans('admin.error.feed_not_found', ['id' => $value]));
                 }
                 if (isset($fieldDescriptor['feedTypes'])
                     && ! in_array($feed['type'] ?? null, $fieldDescriptor['feedTypes'], true)) {
-                    throw new ValidationException("Feed ID $value has an invalid type for page action '$action'");
+                    throw new ValidationException($this->tm->trans('admin.error.feed_invalid_type', ['id' => $value, 'action' => $action]));
                 }
             }
         }
@@ -1070,11 +1081,10 @@ class AdminController extends AbstractController implements DashboardCardProvide
             ) === []) {
                 $labels = array_map($this->pageActionFieldLabel(...), $requirement['oneOf']);
                 throw new ValidationException(
-                    sprintf(
-                        "At least one of %s is required for page action '%s'",
-                        implode(', ', $labels),
-                        $action
-                    )
+                    $this->tm->trans('admin.error.action_one_of', [
+                        'labels' => implode(', ', $labels),
+                        'action' => $action,
+                    ])
                 );
             }
         }
@@ -1083,10 +1093,10 @@ class AdminController extends AbstractController implements DashboardCardProvide
     private function pageActionFieldLabel(string $field): string
     {
         return match ($field) {
-            'feedId' => 'Feed ID',
-            'feedType' => 'Feed type',
-            'listFeedType' => 'List feed type',
-            'termVocabulary' => 'Term vocabulary',
+            'feedId' => $this->tm->trans('js.admin.feed_id'),
+            'feedType' => $this->tm->trans('js.admin.feed_type'),
+            'listFeedType' => $this->tm->trans('js.admin.list_feed_type'),
+            'termVocabulary' => $this->tm->trans('js.admin.term_vocabulary'),
             default => $field,
         };
     }
@@ -1103,61 +1113,61 @@ class AdminController extends AbstractController implements DashboardCardProvide
         $label = $this->optionalString($input['label'] ?? null);
         $url = $this->optionalString($input['url'] ?? null);
         $action = $this->optionalString($input['action'] ?? null);
-        $parentId = $this->optionalPositiveInt($input['parentId'] ?? null, 'Invalid parent');
-        $pageId = $this->optionalPositiveInt($input['pageId'] ?? null, 'Invalid page');
+        $parentId = $this->optionalPositiveInt($input['parentId'] ?? null, $this->tm->trans('admin.error.invalid_parent'));
+        $pageId = $this->optionalPositiveInt($input['pageId'] ?? null, $this->tm->trans('admin.error.invalid_page'));
         $enabled = $input['enabled'] ?? true;
 
         if ($menuGroup === '' || strlen($menuGroup) > 100) {
-            throw new ValidationException('Menu group is required and must not exceed 100 characters');
+            throw new ValidationException($this->tm->trans('admin.error.menu_group'));
         }
 
         if (! in_array($type, self::MENU_TYPES, true)) {
-            throw new ValidationException('Invalid menu item type');
+            throw new ValidationException($this->tm->trans('admin.error.invalid_menu_type'));
         }
 
         $accessRule = $input['accessRule'] ?? null;
         if (! is_string($accessRule) || ! in_array($accessRule, AccessService::ACCESS_RULES, true)) {
-            throw new ValidationException('Invalid access rule');
+            throw new ValidationException($this->tm->trans('admin.error.invalid_access'));
         }
 
         $sortOrder = $input['sortOrder'] ?? null;
         if (! is_int($sortOrder) || $sortOrder < 0) {
-            throw new ValidationException('Sort order must be a non-negative integer');
+            throw new ValidationException($this->tm->trans('admin.error.invalid_sort_order'));
         }
 
         if ($label !== null && strlen($label) > 150) {
-            throw new ValidationException('Label must not exceed 150 characters');
+            throw new ValidationException($this->tm->trans('admin.error.label_too_long'));
         }
 
         if ($url !== null && strlen($url) > 255) {
-            throw new ValidationException('URL must not exceed 255 characters');
+            throw new ValidationException($this->tm->trans('admin.error.url_too_long'));
         }
 
         if ($action !== null && strlen($action) > 100) {
-            throw new ValidationException('Action must not exceed 100 characters');
+            throw new ValidationException($this->tm->trans('admin.error.action_too_long'));
         }
 
         if (in_array($type, ['internal', 'dynamic'], true) && $pageId === null) {
-            throw new ValidationException('Page is required for internal and dynamic menu items');
+            throw new ValidationException($this->tm->trans('admin.error.menu_page_required'));
         }
 
         if ($type === 'external' && $url === null) {
-            throw new ValidationException('URL is required for external menu items');
+            throw new ValidationException($this->tm->trans('admin.error.menu_url_required'));
         }
 
         if ($type === 'action' && $action === null) {
-            throw new ValidationException('Action is required for action menu items');
+            throw new ValidationException($this->tm->trans('admin.error.menu_action_required'));
         }
         if ($type === 'action' && ! in_array($action, self::MENU_ACTIONS, true)) {
-            throw new ValidationException('Unknown menu action');
+            throw new ValidationException($this->tm->trans('admin.error.unknown_menu_action'));
         }
 
         if ($type !== 'divider' && $label === null) {
-            throw new ValidationException('Label is required');
+            throw new ValidationException($this->tm->trans('admin.error.label_required'));
         }
 
         if ($currentId !== null && $parentId === $currentId) {
-            throw new ValidationException('A menu item cannot be its own parent');
+            throw new ValidationException($this->tm->trans('admin.error.menu_own_parent'));
         }
 
         $items = $this->menuRepository->findAllForAdmin();
@@ -1171,28 +1181,28 @@ class AdminController extends AbstractController implements DashboardCardProvide
                 && $item['parentId'] === $parentId
                 && $item['sortOrder'] === $sortOrder
             ) {
-                throw new ValidationException('Another item at this level already uses the same sort order');
+                throw new ValidationException($this->tm->trans('admin.error.duplicate_sort_order'));
             }
         }
 
         if (! is_bool($enabled)) {
-            throw new ValidationException('Enabled must be a boolean');
+            throw new ValidationException($this->tm->trans('admin.error.invalid_enabled'));
         }
 
         if ($parentId !== null) {
             $parent = $byId[$parentId] ?? null;
             if ($parent === null) {
-                throw new ValidationException('Parent menu item not found');
+                throw new ValidationException($this->tm->trans('admin.error.parent_menu_not_found'));
             }
             if ($parent['menuGroup'] !== $menuGroup) {
-                throw new ValidationException('Parent must belong to the same menu group');
+                throw new ValidationException($this->tm->trans('admin.error.parent_menu_group'));
             }
 
             $ancestorId = $parentId;
             $visited = [];
             while ($ancestorId !== null && ! isset($visited[$ancestorId])) {
                 if ($ancestorId === $currentId) {
-                    throw new ValidationException('A menu item cannot be moved below its descendant');
+                    throw new ValidationException($this->tm->trans('admin.error.menu_descendant'));
                 }
                 $visited[$ancestorId] = true;
                 $ancestorId = $byId[$ancestorId]['parentId'] ?? null;
@@ -1201,7 +1211,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
 
         if (in_array($type, ['internal', 'dynamic'], true)
             && $this->pageRepository->findForAdminById((int) $pageId) === null) {
-            throw new ValidationException('Referenced page does not exist');
+            throw new ValidationException($this->tm->trans('admin.error.referenced_page'));
         }
 
         if (in_array($type, ['external', 'action', 'divider'], true)) {
@@ -1258,7 +1268,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
         $submitted = $input['items'] ?? null;
         $groups = $input['groups'] ?? null;
         if (! is_array($submitted) || ! is_array($groups)) {
-            throw new ValidationException('The complete menu order is required');
+            throw new ValidationException($this->tm->trans('admin.error.complete_menu_order'));
         }
 
         $existing = $this->menuRepository->findAllForAdmin();
@@ -1270,30 +1280,30 @@ class AdminController extends AbstractController implements DashboardCardProvide
         $normalizedGroups = [];
         foreach ($groups as $group) {
             if (! is_string($group) || trim($group) === '' || in_array($group, $normalizedGroups, true)) {
-                throw new ValidationException('Invalid menu group order');
+                throw new ValidationException($this->tm->trans('admin.error.invalid_menu_group_order'));
             }
             $normalizedGroups[] = $group;
         }
         $checkGroups = $normalizedGroups;
         sort($checkGroups);
         if ($checkGroups !== $existingGroups) {
-            throw new ValidationException('The complete menu group order is required');
+            throw new ValidationException($this->tm->trans('admin.error.complete_menu_group_order'));
         }
 
         $normalized = [];
         $siblingPositions = [];
         foreach ($submitted as $item) {
             if (! is_array($item) || ! is_int($item['id'] ?? null) || ! is_string($item['menuGroup'] ?? null)) {
-                throw new ValidationException('Invalid menu order item');
+                throw new ValidationException($this->tm->trans('admin.error.invalid_menu_order_item'));
             }
             $id = $item['id'];
-            $parentId = $this->optionalPositiveInt($item['parentId'] ?? null, 'Invalid menu parent');
+            $parentId = $this->optionalPositiveInt($item['parentId'] ?? null, $this->tm->trans('admin.error.invalid_menu_parent'));
             $group = $item['menuGroup'];
             if (in_array($id, $submittedIds, true) || ! in_array($group, $normalizedGroups, true)) {
-                throw new ValidationException('Invalid menu order item');
+                throw new ValidationException($this->tm->trans('admin.error.invalid_menu_order_item'));
             }
             if (($existingById[$id]['menuGroup'] ?? null) !== $group) {
-                throw new ValidationException('Menu group cannot be changed while reordering');
+                throw new ValidationException($this->tm->trans('admin.error.menu_group_reorder'));
             }
             $submittedIds[] = $id;
             $key = $group.'/'.($parentId ?? 'root');
@@ -1311,7 +1321,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
         $checkIds = $submittedIds;
         sort($checkIds);
         if ($checkIds !== $existingIds) {
-            throw new ValidationException('The complete menu order is required');
+            throw new ValidationException($this->tm->trans('admin.error.complete_menu_order'));
         }
 
         foreach ($normalized as $id => $item) {
@@ -1320,12 +1330,12 @@ class AdminController extends AbstractController implements DashboardCardProvide
                 continue;
             }
             if (! isset($normalized[$parentId]) || $normalized[$parentId]['menuGroup'] !== $item['menuGroup']) {
-                throw new ValidationException('Parent must belong to the same menu group');
+                throw new ValidationException($this->tm->trans('admin.error.parent_menu_group'));
             }
             $seen = [$id => true];
             while ($parentId !== null) {
                 if (isset($seen[$parentId])) {
-                    throw new ValidationException('Menu hierarchy contains a cycle');
+                    throw new ValidationException($this->tm->trans('admin.error.menu_cycle'));
                 }
                 $seen[$parentId] = true;
                 $parentId = $normalized[$parentId]['parentId'] ?? null;
@@ -1390,7 +1400,15 @@ class AdminController extends AbstractController implements DashboardCardProvide
     private function validateSettingKey(string $key): void
     {
         if ($key === '' || strlen($key) > 100 || ! preg_match('/\A[A-Za-z0-9_.-]+\z/', $key)) {
-            throw new ValidationException('Setting key must contain only letters, numbers, dots, dashes and underscores');
+            throw new ValidationException($this->tm->trans('admin.error.setting_key'));
+        }
+    }
+
+    /** @throws ValidationException */
+    private function validateSettingValue(string $key, string $value): void
+    {
+        if ($key === 'locale' && ! in_array($value, TranslationManager::availableLocales(), true)) {
+            throw new ValidationException($this->tm->trans('admin.error.invalid_locale'));
         }
     }
 }

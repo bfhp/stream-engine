@@ -142,8 +142,7 @@ describe("formatTimestamp()", () => {
     it("renders a real timestamp as a local date and time", () => {
         const formatted = formatTimestamp(1_700_000_000);
 
-        // The locale is the admin's own browser, so the exact string is
-        // theirs - what matters is that it is a date rather than a number.
+        // The exact rendering is locale-sensitive, but it must be a date.
         expect(formatted).not.toBe("-");
         expect(formatted).toContain("2023");
     });
@@ -151,8 +150,8 @@ describe("formatTimestamp()", () => {
     it("reads seconds, not milliseconds", () => {
         // The API sends Unix seconds. Off by a factor of 1000 the label would
         // land in 1970 and look plausible enough to ship.
-        expect(formatTimestamp(1_700_000_000))
-            .toBe(new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" })
+        expect(formatTimestamp(1_700_000_000, "en"))
+            .toBe(new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" })
                 .format(new Date(1_700_000_000_000)));
     });
 
@@ -164,6 +163,12 @@ describe("formatTimestamp()", () => {
         // The guard is falsy, not `=== null`, and that is right here: the
         // epoch is not a time anything synced at.
         expect(formatTimestamp(0)).toBe("-");
+    });
+
+    it("uses the CMS locale instead of the browser locale", () => {
+        expect(formatTimestamp(1_700_000_000, "ru"))
+            .toBe(new Intl.DateTimeFormat("ru", { dateStyle: "medium", timeStyle: "short" })
+                .format(new Date(1_700_000_000_000)));
     });
 });
 
@@ -180,7 +185,7 @@ describe("formatSize()", () => {
 
     it("uses plain bytes below a kilobyte", () => {
         expect(formatSize(512)).toBe("512 B");
-        expect(formatSize(1023)).toBe("1023 B");
+        expect(formatSize(1023)).toBe("1,023 B");
     });
 
     it("switches to kilobytes at exactly 1024", () => {
@@ -189,7 +194,7 @@ describe("formatSize()", () => {
     });
 
     it("switches to megabytes at exactly a mebibyte", () => {
-        expect(formatSize(1024 * 1024 - 1)).toBe("1024.0 KB");
+        expect(formatSize(1024 * 1024 - 1)).toBe("1,024.0 KB");
         expect(formatSize(1024 * 1024)).toBe("1.0 MB");
     });
 
@@ -198,5 +203,10 @@ describe("formatSize()", () => {
         // question this label answers.
         expect(formatSize(94_371_840)).toBe("90.0 MB");
         expect(formatSize(98_566_144)).toBe("94.0 MB");
+    });
+
+    it("localizes decimal separators", () => {
+        expect(formatSize(1536, "ru")).toContain("1,5");
+        expect(formatSize(1536, "en")).toContain("1.5");
     });
 });

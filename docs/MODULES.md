@@ -96,7 +96,7 @@ import type { AdminPage } from "@stream-engine/admin/module-pages";
 export default [
     {
         path: "/notes",
-        label: "Notes",
+        labelKey: "js.notes.admin.navigation",
         load: () => import("./Notes"),
     },
 ] satisfies AdminPage[];
@@ -111,6 +111,14 @@ hyphens, with no trailing slash. Duplicate paths and engine sections are
 reserved. API handlers must enforce authorization and CSRF independently of
 menu visibility. Modules register API routes and cron tasks through their
 controller's existing methods.
+
+Admin navigation labels are translation keys, not display text. Define each
+`labelKey` in every supported `src/Lang/<locale>.php` catalog. Browser
+translations use the locale selected in CMS settings, fall back to the English
+catalog when a locale omits a key, and finally display the key itself when it
+is absent from both catalogs. The same fallback order applies on the server.
+Changing the CMS locale reloads the admin shell after the setting is saved so
+labels and `Intl` date, time, and number formatting change together.
 
 The root Vite and TypeScript configurations map `@stream-engine` to the
 installed engine's `assets-src/` directory. Module code uses that alias for

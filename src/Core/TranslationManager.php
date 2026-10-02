@@ -33,6 +33,19 @@ class TranslationManager
         return require $file;
     }
 
+    /** @return list<string> */
+    public static function availableLocales(): array
+    {
+        $files = glob(__DIR__.'/../Lang/*.php') ?: [];
+        $locales = array_map(
+            static fn (string $file): string => pathinfo($file, PATHINFO_FILENAME),
+            $files,
+        );
+        sort($locales);
+
+        return array_values($locales);
+    }
+
     // --- PHP Translator ---
 
     public function trans(string $key, array $params = []): string

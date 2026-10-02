@@ -1,3 +1,5 @@
+import { trans } from "../../shared/i18n";
+
 export type PageSettings = Record<string, unknown> & { shareButtons?: boolean; commentsEnabled?: boolean };
 
 export function parsePageSettings(value: string | null | undefined): PageSettings {
@@ -15,4 +17,3 @@ export function parsePageSettings(value: string | null | undefined): PageSetting
 
     return settings as PageSettings;
 }
-import { trans } from "../../shared/i18n";

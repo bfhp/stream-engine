@@ -1,6 +1,7 @@
 import { Alert, Box, Button, Group, SimpleGrid, Skeleton, Stack, Text } from "@mantine/core";
-import { formatTimestamp } from "../lib/format";
+import { formatNumber, formatTimestamp } from "../lib/format";
 import type { DashboardSize } from "../lib/dashboard";
+import { trans } from "../../shared/i18n";
 
 export type CardDefinition = {
     id: string;
@@ -35,13 +36,13 @@ export default function DashboardCardContent({
 }: DashboardCardContentProps) {
     if (loading || !result) return <Skeleton height={70} data-card-state="loading" />;
     if (result.status === "error") {
-        return <Alert color="red" data-card-state="error">This card could not be loaded.</Alert>;
+        return <Alert color="red" data-card-state="error">{trans("js.admin.dashboard.card_error")}</Alert>;
     }
     if (result.status === "unavailable") {
-        return <Text c="dimmed" data-card-state="unavailable">This card is currently unavailable.</Text>;
+        return <Text c="dimmed" data-card-state="unavailable">{trans("js.admin.dashboard.card_unavailable")}</Text>;
     }
     if (result.status === "empty") {
-        return <Text c="dimmed" data-card-state="empty">No data yet.</Text>;
+        return <Text c="dimmed" data-card-state="empty">{trans("js.admin.dashboard.card_empty")}</Text>;
     }
     if (definition.kind === "metrics") {
         const metrics = Array.isArray(result.data) ? result.data as Metric[] : [];
@@ -50,9 +51,10 @@ export default function DashboardCardContent({
             {metrics.map(metric => {
                 const content = <>
                     <Text size="xl" fw={700}>
-                        {metric.format === "timestamp" ? formatTimestamp(Number(metric.value)) : metric.value}
+                        {metric.format === "timestamp" ? formatTimestamp(Number(metric.value))
+                            : typeof metric.value === "number" ? formatNumber(metric.value) : metric.value}
                     </Text>
-                    <Text size="sm" c="dimmed">{metric.label}</Text>
+                    <Text size="sm" c="dimmed">{trans(metric.label)}</Text>
                 </>;
                 return metric.href
                     ? <Box component="a" key={metric.label} href={metric.href}
@@ -65,7 +67,7 @@ export default function DashboardCardContent({
         const links = Array.isArray(result.data) ? result.data as Shortcut[] : [];
         return <Group data-card-state="ready" data-card-kind="links">
             {links.map(link => <Button key={link.href} component="a" href={link.href} variant="light">
-                {link.label}
+                {trans(link.label)}
             </Button>)}
         </Group>;
     }
@@ -75,9 +77,9 @@ export default function DashboardCardContent({
         {items.map(item => <Group key={item.id} justify="space-between" wrap="nowrap">
             <div>
                 {item.href
-                    ? <Text component="a" href={item.href} fw={500}>{item.label}</Text>
-                    : <Text fw={500}>{item.label}</Text>}
-                {item.description && <Text c="dimmed" size="xs">{item.description}</Text>}
+                    ? <Text component="a" href={item.href} fw={500}>{trans(item.label)}</Text>
+                    : <Text fw={500}>{trans(item.label)}</Text>}
+                {item.description && <Text c="dimmed" size="xs">{trans(item.description)}</Text>}
             </div>
             {item.timestamp && <Text c="dimmed" size="xs" style={{ whiteSpace: "nowrap" }}>
                 {formatTimestamp(item.timestamp)}

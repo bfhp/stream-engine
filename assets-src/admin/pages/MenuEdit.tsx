@@ -16,6 +16,7 @@ import { notifications } from "@mantine/notifications";
 import { IconTrash } from "@tabler/icons-react";
 import { csrfHeaders } from "../../shared/csrf";
 import { type MenuItemRecord } from "../lib/menu";
+import { trans } from "../../shared/i18n";
 
 type PageOption = { id: number; pattern?: string; action?: string; pageName?: string };
 
@@ -67,11 +68,11 @@ export default function MenuEdit() {
 
         setLoading(true);
         Promise.all([
-            fetch("/api/v1/admin/menus").then(response => responseJson(response, "Failed to load menu items")),
-            fetch("/api/v1/admin/pages").then(response => responseJson(response, "Failed to load pages")),
+            fetch("/api/v1/admin/menus").then(response => responseJson(response, trans("js.admin.menu.load_failed"))),
+            fetch("/api/v1/admin/pages").then(response => responseJson(response, trans("js.admin.pages.load_failed"))),
             isNew
                 ? Promise.resolve(null)
-                : fetch(`/api/v1/admin/menus/${id}`).then(response => responseJson(response, "Failed to load menu item"))
+                : fetch(`/api/v1/admin/menus/${id}`).then(response => responseJson(response, trans("js.admin.menu.item_load_failed")))
         ])
             .then(([menuData, pageData, current]) => {
                 const loadedItems = Array.isArray(menuData.data) ? menuData.data : [];
@@ -81,8 +82,8 @@ export default function MenuEdit() {
             })
             .catch(err => notifications.show({
                 color: "red",
-                title: "Error",
-                message: err.message || "Failed to load menu item"
+                title: trans("js.admin.error"),
+                message: err.message || trans("js.admin.menu.item_load_failed")
             }))
             .finally(() => setLoading(false));
     }, [id, isNew]);
@@ -111,12 +112,12 @@ export default function MenuEdit() {
         })
         .map(candidate => ({
             value: String(candidate.id),
-            label: `${candidate.label || "Divider"} (#${candidate.id})`
+            label: `${candidate.label || trans("js.admin.menu.divider")} (#${candidate.id})`
         })), [item, items]);
 
     const pageOptions = useMemo(() => pages.map(page => ({
         value: String(page.id),
-        label: `${page.pageName || page.action || page.pattern || "Root"} (#${page.id})`
+        label: `${page.pageName || page.action || page.pattern || trans("js.admin.root")} (#${page.id})`
     })), [pages]);
 
     function save() {
@@ -130,15 +131,15 @@ export default function MenuEdit() {
             headers: { "Content-Type": "application/json", ...csrfHeaders() },
             body: JSON.stringify(item)
         })
-            .then(response => responseJson(response, "Failed to save menu item"))
+            .then(response => responseJson(response, trans("js.admin.menu.item_save_failed")))
             .then(saved => {
                 setItem(saved);
-                notifications.show({ color: "green", message: "Menu item saved", autoClose: 2000 });
+                notifications.show({ color: "green", message: trans("js.admin.menu.item_saved"), autoClose: 2000 });
                 if (isNew && saved.id) {
                     navigate(`/menus/${saved.id}`, { replace: true });
                 }
             })
-            .catch(err => notifications.show({ color: "red", title: "Error", message: err.message }))
+            .catch(err => notifications.show({ color: "red", title: trans("js.admin.error"), message: err.message }))
             .finally(() => setSaving(false));
     }
 
@@ -149,12 +150,12 @@ export default function MenuEdit() {
             headers: { "Content-Type": "application/json", ...csrfHeaders() },
             body: JSON.stringify({ children: childStrategy })
         })
-            .then(response => responseJson(response, "Failed to delete menu item"))
+            .then(response => responseJson(response, trans("js.admin.menu.item_delete_failed")))
             .then(() => {
-                notifications.show({ color: "green", message: "Menu item deleted", autoClose: 2000 });
+                notifications.show({ color: "green", message: trans("js.admin.menu.item_deleted"), autoClose: 2000 });
                 navigate("/menus", { replace: true });
             })
-            .catch(err => notifications.show({ color: "red", title: "Error", message: err.message }))
+            .catch(err => notifications.show({ color: "red", title: trans("js.admin.error"), message: err.message }))
             .finally(() => {
                 setDeleting(false);
                 setConfirmDelete(false);
@@ -162,7 +163,7 @@ export default function MenuEdit() {
     }
 
     if (!item || loading) {
-        return <Text>Loading...</Text>;
+        return <Text>{trans("js.admin.loading")}</Text>;
     }
 
     const needsPage = item.type === "internal" || item.type === "dynamic";
@@ -172,25 +173,25 @@ export default function MenuEdit() {
         <Stack>
             <Group justify="space-between">
                 <Group>
-                    <Button variant="light" onClick={() => navigate("/menus")}>Back</Button>
+                    <Button variant="light" onClick={() => navigate("/menus")}>{trans("js.admin.back")}</Button>
                     {!isNew && (
                         <Button color="red" variant="light" leftSection={<IconTrash size={16} />} onClick={() => setConfirmDelete(true)}>
-                            Delete
+                            {trans("js.admin.delete")}
                         </Button>
                     )}
                 </Group>
-                <Button loading={saving} onClick={save}>Save</Button>
+                <Button loading={saving} onClick={save}>{trans("js.admin.save")}</Button>
             </Group>
 
             <div>
-                <Text fw={700} size="xl">{isNew ? "New menu item" : `Menu item #${item.id}`}</Text>
-                <Text c="dimmed" size="sm">Choose where and how this item appears in site navigation</Text>
+                <Text fw={700} size="xl">{isNew ? trans("js.admin.menu.new") : trans("js.admin.menu.item_number", { id: item.id ?? "" })}</Text>
+                <Text c="dimmed" size="sm">{trans("js.admin.menu.edit_help")}</Text>
             </div>
 
             <SimpleGrid cols={{ base: 1, md: 2 }}>
                 <TextInput
-                    label="Menu group"
-                    description="For example: main or bottom"
+                    label={trans("js.admin.menu.group")}
+                    description={trans("js.admin.menu.group_help")}
                     required
                     value={item.menuGroup}
                     onChange={event => setItem(current => current ? {
@@ -200,14 +201,14 @@ export default function MenuEdit() {
                     } : current)}
                 />
                 <Select
-                    label="Type"
+                    label={trans("js.admin.type")}
                     required
                     data={[
-                        { value: "internal", label: "Internal page" },
-                        { value: "dynamic", label: "Dynamic page" },
-                        { value: "external", label: "External link" },
-                        { value: "action", label: "Frontend action" },
-                        { value: "divider", label: "Divider" }
+                        { value: "internal", label: trans("js.admin.menu.type_internal") },
+                        { value: "dynamic", label: trans("js.admin.menu.type_dynamic") },
+                        { value: "external", label: trans("js.admin.menu.type_external") },
+                        { value: "action", label: trans("js.admin.menu.type_action") },
+                        { value: "divider", label: trans("js.admin.menu.divider") }
                     ]}
                     value={item.type}
                     onChange={value => update("type", (value || "internal") as MenuItemRecord["type"])}
@@ -215,16 +216,16 @@ export default function MenuEdit() {
                 />
                 {item.type !== "divider" && (
                     <TextInput
-                        label="Label"
+                        label={trans("js.admin.label")}
                         required
                         value={item.label || ""}
                         onChange={event => update("label", event.currentTarget.value)}
                     />
                 )}
                 <Select
-                    label="Parent item"
-                    description="Only items in the same group can be parents"
-                    placeholder="Top level"
+                    label={trans("js.admin.menu.parent_item")}
+                    description={trans("js.admin.menu.parent_help")}
+                    placeholder={trans("js.admin.menu.top_level")}
                     data={parentOptions}
                     value={item.parentId ? String(item.parentId) : null}
                     onChange={value => update("parentId", value ? Number(value) : null)}
@@ -233,7 +234,7 @@ export default function MenuEdit() {
                 />
                 {needsPage && (
                     <Select
-                        label="Page"
+                        label={trans("js.admin.page")}
                         required
                         searchable
                         data={pageOptions}
@@ -252,53 +253,53 @@ export default function MenuEdit() {
                 )}
                 {item.type === "action" && (
                     <Select
-                        label="Frontend action"
-                        description="Only hooks implemented by the active frontend are accepted"
+                        label={trans("js.admin.menu.frontend_action")}
+                        description={trans("js.admin.menu.frontend_action_help")}
                         required
-                        data={[{ value: "logout", label: "Log out" }]}
+                        data={[{ value: "logout", label: trans("js.admin.menu.logout") }]}
                         value={item.action}
                         onChange={value => update("action", value)}
                         allowDeselect={false}
                     />
                 )}
                 <Select
-                    label="Access"
+                    label={trans("js.admin.access")}
                     data={[
-                        { value: "public", label: "Public" },
-                        { value: "authenticated", label: "Authenticated" },
-                        { value: "moderator", label: "Moderator" },
-                        { value: "admin", label: "Administrator" }
+                        { value: "public", label: trans("js.admin.access_public") },
+                        { value: "authenticated", label: trans("js.admin.access_authenticated") },
+                        { value: "moderator", label: trans("js.admin.access_moderator") },
+                        { value: "admin", label: trans("js.admin.access_admin") }
                     ]}
                     value={item.accessRule}
                     onChange={value => update("accessRule", value || "public")}
                     allowDeselect={false}
                 />
                 <Switch
-                    label="Enabled"
-                    description="Disabled items stay configured but are hidden from navigation"
+                    label={trans("js.admin.enabled")}
+                    description={trans("js.admin.menu.enabled_help")}
                     checked={item.enabled}
                     onChange={event => update("enabled", event.currentTarget.checked)}
                 />
             </SimpleGrid>
 
-            <Modal opened={confirmDelete} onClose={() => setConfirmDelete(false)} title="Delete menu item?" centered>
+            <Modal opened={confirmDelete} onClose={() => setConfirmDelete(false)} title={trans("js.admin.menu.delete_title")} centered>
                 <Stack>
-                    <Text>This cannot be undone.</Text>
+                    <Text>{trans("js.admin.cannot_undo")}</Text>
                     {hasChildren && (
                         <Radio.Group
-                            label="What should happen to child items?"
+                            label={trans("js.admin.menu.children_question")}
                             value={childStrategy}
                             onChange={value => setChildStrategy(value as "promote" | "delete")}
                         >
                             <Stack mt="xs" gap="xs">
-                                <Radio value="promote" label="Move children to the deleted item's parent" />
-                                <Radio value="delete" label="Delete the complete subtree" />
+                                <Radio value="promote" label={trans("js.admin.menu.children_promote")} />
+                                <Radio value="delete" label={trans("js.admin.menu.children_delete")} />
                             </Stack>
                         </Radio.Group>
                     )}
                     <Group justify="flex-end">
-                        <Button variant="default" onClick={() => setConfirmDelete(false)}>Cancel</Button>
-                        <Button color="red" loading={deleting} onClick={remove}>Delete</Button>
+                        <Button variant="default" onClick={() => setConfirmDelete(false)}>{trans("js.admin.cancel")}</Button>
+                        <Button color="red" loading={deleting} onClick={remove}>{trans("js.admin.delete")}</Button>
                     </Group>
                 </Stack>
             </Modal>

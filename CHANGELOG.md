@@ -9,6 +9,11 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Complete English and Russian localization for the administration interface,
+  including built-in and module-provided navigation, dashboard cards, form
+  labels, notifications, and server-side validation errors.
+- Locale coverage checks that require every supported language to provide the
+  complete admin catalog.
 - Complete admin user management with server-side pagination, search, role and
   status filters, and editing of account identity, role, and activation state.
 - A personalized admin dashboard with versioned per-administrator layouts,
@@ -26,6 +31,11 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- Admin date, time, number, and byte formatting now follows the locale selected
+  in CMS settings instead of the browser locale; saving a locale change reloads
+  the admin shell so labels and formatting switch together.
+- Module admin pages now declare a translation `labelKey`; missing translations
+  fall back to English and then to the visible key.
 - Deactivating an account from the admin interface now revokes all of that
   user's active sessions immediately.
 - Dashboard provider failures are isolated to their own cards, which expose

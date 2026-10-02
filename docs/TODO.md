@@ -1,7 +1,7 @@
 # TODO
 
 The project's current backlog. Last reviewed against the code and tests on
-**September 12, 2026**.
+**October 2, 2026**.
 
 This file contains only unfinished work and decisions that have been made but
 not yet implemented. Completed work is not recorded here; Git provides that
@@ -20,8 +20,8 @@ Priorities:
 
 The following checks were green at the time of the review:
 
-- `composer test` — 2,428 tests, 10,115 assertions, 5 skipped;
-- `npm test` — 27 files, 496 tests;
+- `composer test` — 2,103 tests, 8,563 assertions, 7 skipped;
+- `npm test` — 28 files, 477 tests;
 - `npm run typecheck`;
 - `npm run build`;
 - `composer audit:csrf`.
@@ -95,19 +95,6 @@ intentionally constrained: do not add arbitrary HTML, SQL, API URLs, colors,
 nested grids, or user-defined cards. The aggregate endpoint remains the
 initial-load default; a permission-checked per-card endpoint supports isolated
 retries and is the migration path if measurements later justify lazy loading.
-
-### Admin: interface localization
-
-The admin interface is only partially translated: several pages and navigation
-elements still contain English string literals, and formatting currently
-follows the browser locale rather than the locale selected in CMS settings.
-
-- Route all user-facing admin text, including module-provided navigation and
-  validation/error messages, through the translation system.
-- Make the selected CMS locale control admin labels and locale-sensitive date,
-  time, and number formatting, with a documented fallback for missing keys.
-- Ensure changing the locale updates the interface predictably and add tests
-  that exercise every supported locale without relying on the browser locale.
 
 ### Admin: theme selection and settings
 

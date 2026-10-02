@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { collectModulePages, type AdminPage } from "../../assets-src/admin/module-pages";
 
-const page = (path: string): AdminPage => ({ path, label: "Example", load: vi.fn() });
+const page = (path: string): AdminPage => ({ path, labelKey: "js.example.admin", load: vi.fn() });
 
 describe("admin module pages", () => {
     it("has no external routes when no modules are present", () => {
@@ -15,7 +15,7 @@ describe("admin module pages", () => {
     });
     it("rejects duplicate and built-in section routes", () => {
         expect(() => collectModulePages({ a: { default: [page("/sync"), page("/sync")] } })).toThrow(/Duplicate/);
-        for (const path of ["/feeds", "/feeds/new", "/pages", "/settings", "/widgets", "/users"]) {
+        for (const path of ["/feeds", "/feeds/new", "/pages", "/menus", "/settings", "/widgets", "/users"]) {
             expect(() => collectModulePages({ a: { default: [page(path)] } })).toThrow(/reserved/);
         }
     });
@@ -24,6 +24,6 @@ describe("admin module pages", () => {
             expect(() => collectModulePages({ a: { default: [page(path)] } })).toThrow(/Invalid/);
         }
         expect(() => collectModulePages({ a: { default: null } })).toThrow(/page list/);
-        expect(() => collectModulePages({ a: { default: [{ ...page("/sync"), label: "" }] } })).toThrow(/Invalid/);
+        expect(() => collectModulePages({ a: { default: [{ ...page("/sync"), labelKey: "" }] } })).toThrow(/Invalid/);
     });
 });

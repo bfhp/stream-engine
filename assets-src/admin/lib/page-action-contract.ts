@@ -1,3 +1,5 @@
+import { trans } from "../../shared/i18n";
+
 export const PAGE_ACTION_FIELDS = [
     "feedId",
     "feedType",
@@ -29,10 +31,10 @@ export type PageAction = {
 export type PageActionConfiguration = Record<PageActionFieldName, string | number | "">;
 
 export const PAGE_ACTION_FIELD_LABELS: Record<PageActionFieldName, string> = {
-    feedId: "Feed ID",
-    feedType: "Feed type",
-    listFeedType: "List feed type",
-    termVocabulary: "Term vocabulary"
+    feedId: trans("js.admin.feed_id"),
+    feedType: trans("js.admin.feed_type"),
+    listFeedType: trans("js.admin.list_feed_type"),
+    termVocabulary: trans("js.admin.term_vocabulary")
 };
 
 function hasValue(value: string | number | ""): boolean {
@@ -51,11 +53,11 @@ export function validatePageActionConfiguration(
         const label = PAGE_ACTION_FIELD_LABELS[field];
 
         if (contract.status === "unsupported" && hasValue(value)) {
-            errors[field] = `${label} is not used by ${action.action}. Clear it before saving.`;
+            errors[field] = trans("js.admin.page_action.not_used_error", { label, action: action.action });
         } else if (contract.status === "required" && !hasValue(value)) {
-            errors[field] = `${label} is required by ${action.action}.`;
+            errors[field] = trans("js.admin.page_action.required_error", { label, action: action.action });
         } else if (hasValue(value) && contract.values && !contract.values.includes(String(value))) {
-            errors[field] = `${label} must be one of: ${contract.values.join(", ")}.`;
+            errors[field] = trans("js.admin.page_action.allowed_error", { label, values: contract.values.join(", ") });
         }
     });
 
@@ -64,9 +66,9 @@ export function validatePageActionConfiguration(
             return;
         }
 
-        const message = `Set at least one of: ${requirement.oneOf
+        const message = trans("js.admin.page_action.one_of_error", { fields: requirement.oneOf
             .map(field => PAGE_ACTION_FIELD_LABELS[field])
-            .join(", ")}.`;
+            .join(", ") });
         requirement.oneOf.forEach(field => {
             errors[field] ??= message;
         });
@@ -77,7 +79,7 @@ export function validatePageActionConfiguration(
 
 export function fieldDescription(action: PageAction | undefined, field: PageActionFieldName): string {
     if (!action) {
-        return "The action contract is unavailable; existing legacy values will be preserved.";
+        return trans("js.admin.page_action.contract_unavailable");
     }
 
     const contract = action.fields[field];
@@ -85,24 +87,24 @@ export function fieldDescription(action: PageAction | undefined, field: PageActi
     const fixedValue = fixedPageActionValue(action, field);
     const parts = [
         fixedValue
-            ? `Set automatically by ${action.action}: ${fixedValue}.`
+            ? trans("js.admin.page_action.automatic", { action: action.action, value: fixedValue })
             : contract.status === "unsupported"
-            ? `Not used by ${action.action}.`
+            ? trans("js.admin.page_action.not_used", { action: action.action })
             : contract.status === "required"
-                ? `Required by ${action.action}.`
-                : `Optional for ${action.action}.`
+                ? trans("js.admin.page_action.required", { action: action.action })
+                : trans("js.admin.page_action.optional", { action: action.action })
     ];
 
     if (requirement) {
-        parts.push(`At least one of ${requirement.oneOf
+        parts.push(trans("js.admin.page_action.one_of", { fields: requirement.oneOf
             .map(item => PAGE_ACTION_FIELD_LABELS[item])
-            .join(" / ")} is required.`);
+            .join(" / ") }));
     }
     if (contract.values && !fixedValue) {
-        parts.push(`Allowed: ${contract.values.join(", ")}.`);
+        parts.push(trans("js.admin.page_action.allowed", { values: contract.values.join(", ") }));
     }
     if (contract.feedTypes) {
-        parts.push(`The referenced feed must have type: ${contract.feedTypes.join(", ")}.`);
+        parts.push(trans("js.admin.page_action.feed_types", { values: contract.feedTypes.join(", ") }));
     }
 
     return parts.join(" ");
@@ -134,7 +136,7 @@ export function buildFeedTypeOptions(
 ): Array<{ value: string; label: string }> {
     if (action?.fields[field].status === "unsupported") {
         return currentValue
-            ? [{ value: currentValue, label: `${currentValue} (not supported)` }]
+            ? [{ value: currentValue, label: `${currentValue} (${trans("js.admin.not_supported")})` }]
             : [];
     }
 
@@ -146,7 +148,7 @@ export function buildFeedTypeOptions(
     if (currentValue && !options.some(option => option.value === currentValue)) {
         options.unshift({
             value: currentValue,
-            label: `${currentValue} (${currentValue in labels ? "not allowed" : "unknown type"})`
+            label: `${currentValue} (${trans(currentValue in labels ? "js.admin.not_allowed" : "js.admin.unknown_type")})`
         });
     }
 
@@ -176,13 +178,13 @@ export function routeConfigurationWarnings(configuration: {
     const warnings: string[] = [];
 
     if (hasFeedType && !hasPlaceholder && !hasFeedId) {
-        warnings.push("Feed type usually needs a route placeholder such as {slug} (or {username}).");
+        warnings.push(trans("js.admin.page_action.warning_feed_type"));
     }
     if (hasPlaceholder && hasFeedId && !hasFeedType) {
-        warnings.push("Feed ID pins one feed, so the route placeholder does not select a feed dynamically.");
+        warnings.push(trans("js.admin.page_action.warning_feed_id"));
     }
     if (hasPlaceholder && hasFeedId && hasFeedType) {
-        warnings.push("Feed ID takes precedence when loading content; verify that this route is intentionally pinned.");
+        warnings.push(trans("js.admin.page_action.warning_precedence"));
     }
 
     return warnings;

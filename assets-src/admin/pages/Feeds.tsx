@@ -25,7 +25,8 @@ import {
 } from "@tabler/icons-react";
 import { FEED_TYPES } from "../../shared/feed-types";
 import { makeFeedLabel } from "../lib/feed-label";
-import { formatTimestamp } from "../lib/format";
+import { formatNumber, formatTimestamp } from "../lib/format";
+import { trans, transChoiceWithCount } from "../../shared/i18n";
 
 type FeedListItem = {
     id: number;
@@ -71,17 +72,17 @@ const COLUMN_STORAGE_KEY = "stream-engine.admin.feeds.columns";
 
 const COLUMNS: Array<{ key: ColumnKey; label: string }> = [
     { key: "id", label: "ID" },
-    { key: "title", label: "Title" },
-    { key: "type", label: "Type" },
-    { key: "slug", label: "Slug" },
-    { key: "owner", label: "Owner" },
-    { key: "parent", label: "Parent" },
-    { key: "visibility", label: "Visibility" },
-    { key: "position", label: "Position" },
-    { key: "rating", label: "Rating" },
-    { key: "views", label: "Views" },
-    { key: "created", label: "Created" },
-    { key: "updated", label: "Updated" }
+    { key: "title", label: trans("js.admin.title") },
+    { key: "type", label: trans("js.admin.type") },
+    { key: "slug", label: trans("js.admin.slug") },
+    { key: "owner", label: trans("js.admin.owner") },
+    { key: "parent", label: trans("js.admin.parent") },
+    { key: "visibility", label: trans("js.admin.visibility") },
+    { key: "position", label: trans("js.admin.position") },
+    { key: "rating", label: trans("js.admin.rating") },
+    { key: "views", label: trans("js.admin.views") },
+    { key: "created", label: trans("js.admin.created") },
+    { key: "updated", label: trans("js.admin.updated") }
 ];
 
 const DEFAULT_COLUMNS: ColumnKey[] = [
@@ -119,7 +120,7 @@ function ratingLabel(feed: FeedListItem): string {
         return "-";
     }
 
-    return ((feed.ratingSum || 0) / count).toFixed(2);
+    return formatNumber((feed.ratingSum || 0) / count, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function numericValue(value: string): string {
@@ -145,10 +146,10 @@ export default function Feeds() {
     const hasParent = parentId !== "";
 
     const sortOptions = useMemo(() => [
-        { value: "id_desc", label: "ID: newest first" },
-        { value: "created_desc", label: "Created: newest first", disabled: !hasType },
-        { value: "position_asc", label: "Position: low to high", disabled: !hasParent },
-        { value: "rating_desc", label: "Rating: high to low", disabled: !hasType }
+        { value: "id_desc", label: trans("js.admin.feeds.sort_id") },
+        { value: "created_desc", label: trans("js.admin.feeds.sort_created"), disabled: !hasType },
+        { value: "position_asc", label: trans("js.admin.feeds.sort_position"), disabled: !hasParent },
+        { value: "rating_desc", label: trans("js.admin.feeds.sort_rating"), disabled: !hasType }
     ], [hasParent, hasType]);
 
     useEffect(() => {
@@ -195,7 +196,7 @@ export default function Feeds() {
         fetch(`/api/v1/feeds?${params.toString()}`, { signal: controller.signal })
             .then(async response => {
                 if (!response.ok) {
-                    throw new Error(await response.text() || "Failed to load feeds");
+                    throw new Error(await response.text() || trans("js.admin.feeds.load_failed"));
                 }
 
                 return response.json();
@@ -203,7 +204,7 @@ export default function Feeds() {
             .then(data => setFeeds(Array.isArray(data.data) ? data.data : []))
             .catch(err => {
                 if (err.name !== "AbortError") {
-                    setError(err.message || "Failed to load feeds");
+                    setError(err.message || trans("js.admin.feeds.load_failed"));
                 }
             })
             .finally(() => {
@@ -255,7 +256,7 @@ export default function Feeds() {
 
         return (
             <Table.Th key={key}>
-                <Tooltip label={disabled ? "Needs an indexed filter" : "Sort"}>
+                <Tooltip label={trans(disabled ? "js.admin.feeds.indexed_filter_required" : "js.admin.sort")}>
                     <Button
                         variant="subtle"
                         size="compact-sm"
@@ -310,11 +311,11 @@ export default function Feeds() {
                 return (
                     <Stack gap={0}>
                         <Text size="sm">{ratingLabel(feed)}</Text>
-                        <Text size="xs" c="dimmed">{feed.ratingCount || 0} votes</Text>
+                        <Text size="xs" c="dimmed">{transChoiceWithCount("js.admin.feeds.votes", feed.ratingCount || 0)}</Text>
                     </Stack>
                 );
             case "views":
-                return feed.views ?? 0;
+                return formatNumber(feed.views ?? 0);
             case "created":
                 return (
                     <Text size="sm" c="dimmed" title={feed.createdAtTitle || undefined}>
@@ -337,8 +338,8 @@ export default function Feeds() {
                         w={110}
                     />
                     <Select
-                        label="Type"
-                        placeholder="All"
+                        label={trans("js.admin.type")}
+                        placeholder={trans("js.admin.all")}
                         data={FEED_TYPES}
                         value={type}
                         onChange={setType}
@@ -347,25 +348,25 @@ export default function Feeds() {
                         w={210}
                     />
                     <TextInput
-                        label="Slug"
+                        label={trans("js.admin.slug")}
                         value={slug}
                         onChange={(event) => setSlug(event.currentTarget.value)}
                         w={220}
                     />
                     <TextInput
-                        label="Owner"
+                        label={trans("js.admin.owner")}
                         value={ownerId}
                         onChange={(event) => setOwnerId(numericValue(event.currentTarget.value))}
                         w={120}
                     />
                     <TextInput
-                        label="Parent"
+                        label={trans("js.admin.parent")}
                         value={parentId}
                         onChange={(event) => setParentId(numericValue(event.currentTarget.value))}
                         w={120}
                     />
                     <Select
-                        label="Sort"
+                        label={trans("js.admin.sort")}
                         data={sortOptions}
                         value={sort}
                         onChange={(value) => setSort((value || "id_desc") as SortKey)}
@@ -373,7 +374,7 @@ export default function Feeds() {
                         w={230}
                     />
                     <NumberInput
-                        label="Limit"
+                        label={trans("js.admin.limit")}
                         min={1}
                         max={500}
                         value={limit}
@@ -385,7 +386,7 @@ export default function Feeds() {
                 <Group gap="xs">
                     <Menu shadow="md" width={220}>
                         <Menu.Target>
-                            <Tooltip label="Columns">
+                            <Tooltip label={trans("js.admin.columns")}>
                                 <ActionIcon variant="default" size="lg">
                                     <IconColumns3 size={18} />
                                 </ActionIcon>
@@ -406,35 +407,35 @@ export default function Feeds() {
 
                     <Menu shadow="md" width={240}>
                         <Menu.Target>
-                            <Tooltip label="Placeholders">
+                            <Tooltip label={trans("js.admin.feeds.placeholders")}>
                                 <ActionIcon variant="default" size="lg">
                                     <IconAdjustmentsHorizontal size={18} />
                                 </ActionIcon>
                             </Tooltip>
                         </Menu.Target>
                         <Menu.Dropdown>
-                            <Menu.Label>Waiting for indexes</Menu.Label>
-                            <Menu.Item disabled>Title contains</Menu.Item>
-                            <Menu.Item disabled>Visibility</Menu.Item>
-                            <Menu.Item disabled>Updated date range</Menu.Item>
-                            <Menu.Item disabled>Views range</Menu.Item>
+                            <Menu.Label>{trans("js.admin.feeds.waiting_indexes")}</Menu.Label>
+                            <Menu.Item disabled>{trans("js.admin.feeds.title_contains")}</Menu.Item>
+                            <Menu.Item disabled>{trans("js.admin.visibility")}</Menu.Item>
+                            <Menu.Item disabled>{trans("js.admin.feeds.updated_range")}</Menu.Item>
+                            <Menu.Item disabled>{trans("js.admin.feeds.views_range")}</Menu.Item>
                         </Menu.Dropdown>
                     </Menu>
 
-                    <Tooltip label="Reset filters">
+                    <Tooltip label={trans("js.admin.reset_filters")}>
                         <ActionIcon variant="default" size="lg" onClick={resetFilters}>
                             <IconFilterOff size={18} />
                         </ActionIcon>
                     </Tooltip>
 
-                    <Tooltip label="Reload">
+                    <Tooltip label={trans("js.admin.reload")}>
                         <ActionIcon variant="default" size="lg" onClick={() => setRefreshKey(value => value + 1)}>
                             <IconRefresh size={18} />
                         </ActionIcon>
                     </Tooltip>
 
                     <Button leftSection={<IconPlus size={16} />} onClick={() => navigate("/feeds/new")}>
-                        New feed
+                        {trans("js.admin.feeds.new")}
                     </Button>
                 </Group>
             </Group>
@@ -466,7 +467,7 @@ export default function Feeds() {
                         {feeds.length === 0 && !loading ? (
                             <Table.Tr>
                                 <Table.Td colSpan={visibleColumns.length}>
-                                    <Text c="dimmed" ta="center" py="xl">No feeds</Text>
+                                    <Text c="dimmed" ta="center" py="xl">{trans("js.admin.feeds.empty")}</Text>
                                 </Table.Td>
                             </Table.Tr>
                         ) : null}
@@ -474,7 +475,7 @@ export default function Feeds() {
                 </Table>
             </Table.ScrollContainer>
 
-            {loading ? <Text c="dimmed" size="sm">Loading...</Text> : null}
+            {loading ? <Text c="dimmed" size="sm">{trans("js.admin.loading")}</Text> : null}
         </Stack>
     );
 }

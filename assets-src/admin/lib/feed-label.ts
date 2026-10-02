@@ -11,6 +11,8 @@
    which is the difference between a millisecond and a timeout.
    ========================================================================== */
 
+import { trans } from "../../shared/i18n";
+
 const PREVIEW_LENGTH = 140;
 
 /**
@@ -54,7 +56,7 @@ export function makeFeedLabel(feed: FeedLabelSource): string {
     const content = stripHtml(feed.content || "");
 
     if (content === "") {
-        return `Feed #${feed.id}`;
+        return trans("js.admin.feeds.item_number", { id: feed.id });
     }
 
     return content.length > PREVIEW_LENGTH

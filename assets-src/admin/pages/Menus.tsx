@@ -4,6 +4,7 @@ import { IconArrowDown, IconArrowUp, IconCornerDownLeft, IconCornerDownRight, Ic
 import { Link, useNavigate } from "react-router-dom";
 import { csrfHeaders } from "../../shared/csrf";
 import { menuDepth, type MenuItemRecord, type MenuPreviewGroup, type MenuPreviewItem } from "../lib/menu";
+import { trans } from "../../shared/i18n";
 
 async function responseJson(response: Response, fallback: string) {
     const body = await response.json().catch(() => null);
@@ -13,7 +14,7 @@ async function responseJson(response: Response, fallback: string) {
 
 function PreviewItems({ items }: { items: MenuPreviewItem[] }) {
     return <Stack gap={4} ml="md">{items.map(item => <div key={item.id}>
-        <Text size="sm">{item.label || "Divider"}</Text>
+        <Text size="sm">{item.label || trans("js.admin.menu.divider")}</Text>
         {item.children.length > 0 && <PreviewItems items={item.children} />}
     </div>)}</Stack>;
 }
@@ -31,9 +32,9 @@ export default function Menus() {
 
     const loadPreview = useCallback(() => {
         fetch("/api/v1/admin/menus/preview")
-            .then(response => responseJson(response, "Failed to load menu preview"))
+            .then(response => responseJson(response, trans("js.admin.menu.preview_load_failed")))
             .then(data => setPreview(Array.isArray(data.groups) ? data.groups : []))
-            .catch(err => setError(err.message || "Failed to load menu preview"));
+            .catch(err => setError(err.message || trans("js.admin.menu.preview_load_failed")));
     }, []);
 
     useEffect(() => {
@@ -41,12 +42,12 @@ export default function Menus() {
         setLoading(true);
         setError(null);
         fetch("/api/v1/admin/menus", { signal: controller.signal })
-            .then(response => responseJson(response, "Failed to load menu items"))
+            .then(response => responseJson(response, trans("js.admin.menu.load_failed")))
             .then(data => {
                 setItems(Array.isArray(data.data) ? data.data : []);
                 loadPreview();
             })
-            .catch(err => { if (err.name !== "AbortError") setError(err.message || "Failed to load menu items"); })
+            .catch(err => { if (err.name !== "AbortError") setError(err.message || trans("js.admin.menu.load_failed")); })
             .finally(() => { if (!controller.signal.aborted) setLoading(false); });
         return () => controller.abort();
     }, [loadPreview, refreshKey]);
@@ -130,24 +131,24 @@ export default function Menus() {
                 items: orderedItems.map(item => ({ id: item.id, parentId: item.parentId, menuGroup: item.menuGroup }))
             })
         })
-            .then(response => responseJson(response, "Failed to save menu order"))
+            .then(response => responseJson(response, trans("js.admin.menu.order_save_failed")))
             .then(data => { setItems(Array.isArray(data.data) ? data.data : []); loadPreview(); })
-            .catch(err => setError(err.message || "Failed to save menu order"))
+            .catch(err => setError(err.message || trans("js.admin.menu.order_save_failed")))
             .finally(() => setSaving(false));
     }
 
     return <Stack>
         <Group justify="space-between" align="end">
-            <div><Text fw={700} size="xl">Menus</Text><Text c="dimmed" size="sm">Navigation groups and nested menu items</Text></div>
+            <div><Text fw={700} size="xl">{trans("js.admin.menu.title")}</Text><Text c="dimmed" size="sm">{trans("js.admin.menu.subtitle")}</Text></div>
             <Group>
-                <Tooltip label="Refresh"><ActionIcon variant="default" loading={loading} onClick={() => setRefreshKey(key => key + 1)}><IconRefresh size={18} /></ActionIcon></Tooltip>
-                <Button variant="light" loading={saving} disabled={!reorderingEnabled} onClick={saveOrder}>Save order</Button>
-                <Button component={Link} to="/menus/new" leftSection={<IconPlus size={16} />}>New menu item</Button>
+                <Tooltip label={trans("js.admin.refresh")}><ActionIcon variant="default" loading={loading} onClick={() => setRefreshKey(key => key + 1)}><IconRefresh size={18} /></ActionIcon></Tooltip>
+                <Button variant="light" loading={saving} disabled={!reorderingEnabled} onClick={saveOrder}>{trans("js.admin.menu.save_order")}</Button>
+                <Button component={Link} to="/menus/new" leftSection={<IconPlus size={16} />}>{trans("js.admin.menu.new")}</Button>
             </Group>
         </Group>
         <Group align="end" grow>
-            <TextInput label="Search" placeholder="Label, group, type or target" value={query} onChange={event => setQuery(event.currentTarget.value)} />
-            <Select label="Menu group" placeholder="All groups" data={groupNames.map(value => ({ value, label: value }))} value={group} onChange={setGroup} clearable />
+            <TextInput label={trans("js.admin.search")} placeholder={trans("js.admin.menu.search_placeholder")} value={query} onChange={event => setQuery(event.currentTarget.value)} />
+            <Select label={trans("js.admin.menu.group")} placeholder={trans("js.admin.menu.all_groups")} data={groupNames.map(value => ({ value, label: value }))} value={group} onChange={setGroup} clearable />
         </Group>
         {error && <Text c="red">{error}</Text>}
         <SimpleGrid cols={{ base: 1, xl: 3 }}>
@@ -156,8 +157,8 @@ export default function Menus() {
                     <Group p="sm" justify="space-between">
                         <Text fw={600}>{name}</Text>
                         <Group gap={4}>
-                            <ActionIcon variant="subtle" disabled={!reorderingEnabled || groupIndex === 0} onClick={() => moveGroup(name, -1)} aria-label="Move group up"><IconArrowUp size={16} /></ActionIcon>
-                            <ActionIcon variant="subtle" disabled={!reorderingEnabled || groupIndex === groupNames.length - 1} onClick={() => moveGroup(name, 1)} aria-label="Move group down"><IconArrowDown size={16} /></ActionIcon>
+                            <ActionIcon variant="subtle" disabled={!reorderingEnabled || groupIndex === 0} onClick={() => moveGroup(name, -1)} aria-label={trans("js.admin.menu.group_up")}><IconArrowUp size={16} /></ActionIcon>
+                            <ActionIcon variant="subtle" disabled={!reorderingEnabled || groupIndex === groupNames.length - 1} onClick={() => moveGroup(name, 1)} aria-label={trans("js.admin.menu.group_down")}><IconArrowDown size={16} /></ActionIcon>
                         </Group>
                     </Group>
                     <Table striped highlightOnHover><Table.Tbody>
@@ -165,27 +166,27 @@ export default function Menus() {
                             const siblings = orderedItems.filter(candidate => candidate.menuGroup === item.menuGroup && candidate.parentId === item.parentId);
                             const siblingIndex = siblings.findIndex(candidate => candidate.id === item.id);
                             return <Table.Tr key={item.id} style={{ cursor: "pointer" }} onClick={() => navigate(`/menus/${item.id}`)}>
-                                <Table.Td><Text pl={menuDepth(item, byId) * 20}>{menuDepth(item, byId) > 0 && "↳ "}{item.label || <Text span c="dimmed">Divider</Text>}</Text></Table.Td>
+                                <Table.Td><Text pl={menuDepth(item, byId) * 20}>{menuDepth(item, byId) > 0 && "↳ "}{item.label || <Text span c="dimmed">{trans("js.admin.menu.divider")}</Text>}</Text></Table.Td>
                                 <Table.Td><Badge variant="light">{item.type}</Badge></Table.Td>
-                                <Table.Td>{item.enabled ? <Badge color="green">Enabled</Badge> : <Badge color="gray">Disabled</Badge>}</Table.Td>
+                                <Table.Td>{item.enabled ? <Badge color="green">{trans("js.admin.enabled")}</Badge> : <Badge color="gray">{trans("js.admin.disabled")}</Badge>}</Table.Td>
                                 <Table.Td onClick={event => event.stopPropagation()}><Group gap={2} justify="flex-end" wrap="nowrap">
-                                    <ActionIcon variant="subtle" disabled={!reorderingEnabled || siblingIndex === 0} onClick={() => moveSibling(item, -1)} aria-label="Move item up"><IconArrowUp size={16} /></ActionIcon>
-                                    <ActionIcon variant="subtle" disabled={!reorderingEnabled || siblingIndex === siblings.length - 1} onClick={() => moveSibling(item, 1)} aria-label="Move item down"><IconArrowDown size={16} /></ActionIcon>
-                                    <ActionIcon variant="subtle" disabled={!reorderingEnabled || orderedItems.findIndex(candidate => candidate.id === item.id) === 0} onClick={() => indent(item)} aria-label="Indent item"><IconCornerDownRight size={16} /></ActionIcon>
-                                    <ActionIcon variant="subtle" disabled={!reorderingEnabled || item.parentId === null} onClick={() => outdent(item)} aria-label="Outdent item"><IconCornerDownLeft size={16} /></ActionIcon>
-                                    <ActionIcon component={Link} to={`/menus/${item.id}`} variant="subtle" aria-label="Edit"><IconEdit size={18} /></ActionIcon>
+                                    <ActionIcon variant="subtle" disabled={!reorderingEnabled || siblingIndex === 0} onClick={() => moveSibling(item, -1)} aria-label={trans("js.admin.menu.item_up")}><IconArrowUp size={16} /></ActionIcon>
+                                    <ActionIcon variant="subtle" disabled={!reorderingEnabled || siblingIndex === siblings.length - 1} onClick={() => moveSibling(item, 1)} aria-label={trans("js.admin.menu.item_down")}><IconArrowDown size={16} /></ActionIcon>
+                                    <ActionIcon variant="subtle" disabled={!reorderingEnabled || orderedItems.findIndex(candidate => candidate.id === item.id) === 0} onClick={() => indent(item)} aria-label={trans("js.admin.menu.indent")}><IconCornerDownRight size={16} /></ActionIcon>
+                                    <ActionIcon variant="subtle" disabled={!reorderingEnabled || item.parentId === null} onClick={() => outdent(item)} aria-label={trans("js.admin.menu.outdent")}><IconCornerDownLeft size={16} /></ActionIcon>
+                                    <ActionIcon component={Link} to={`/menus/${item.id}`} variant="subtle" aria-label={trans("js.admin.edit")}><IconEdit size={18} /></ActionIcon>
                                 </Group></Table.Td>
                             </Table.Tr>;
                         })}
                     </Table.Tbody></Table>
                 </Paper>)}
-                {!loading && filteredItems.length === 0 && <Text c="dimmed" ta="center">No menu items found</Text>}
+                {!loading && filteredItems.length === 0 && <Text c="dimmed" ta="center">{trans("js.admin.menu.empty")}</Text>}
             </Stack>
             <Paper withBorder p="md">
-                <Group mb="md"><IconEye size={18} /><Text fw={600}>Preview for you</Text></Group>
+                <Group mb="md"><IconEye size={18} /><Text fw={600}>{trans("js.admin.menu.preview")}</Text></Group>
                 <Stack>{preview.map(previewGroup => <div key={previewGroup.name}>
                     <Text size="sm" fw={600}>{previewGroup.name}</Text><PreviewItems items={previewGroup.items} />
-                </div>)}{preview.length === 0 && <Text c="dimmed" size="sm">No enabled items are visible.</Text>}</Stack>
+                </div>)}{preview.length === 0 && <Text c="dimmed" size="sm">{trans("js.admin.menu.preview_empty")}</Text>}</Stack>
             </Paper>
         </SimpleGrid>
     </Stack>;

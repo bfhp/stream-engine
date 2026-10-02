@@ -2,18 +2,19 @@ import { lazy, type ComponentType, type LazyExoticComponent } from "react";
 
 export type AdminPage = {
     path: string;
-    label: string;
+    /** Translation key supplied by the module; missing keys visibly fall back to the key. */
+    labelKey: string;
     load: () => Promise<{ default: ComponentType }>;
 };
 
 export type AdminPageModules = Record<string, { default: AdminPage[] }>;
 
-export type AdminRoute = Pick<AdminPage, "path" | "label"> & {
+export type AdminRoute = Pick<AdminPage, "path" | "labelKey"> & {
     Component: LazyExoticComponent<ComponentType>;
 };
 
 // Reserve whole built-in sections, including their parameterized editor routes.
-const builtInSections = new Set(["feeds", "pages", "settings", "widgets", "users"]);
+const builtInSections = new Set(["feeds", "pages", "menus", "settings", "widgets", "users"]);
 
 export function collectModulePages(modules: AdminPageModules): AdminPage[] {
     const pages: AdminPage[] = [];
@@ -23,7 +24,8 @@ export function collectModulePages(modules: AdminPageModules): AdminPage[] {
         if (!Array.isArray(entries)) throw new Error(`Admin module ${source} must export a page list`);
         for (const page of entries) {
             if (!page || typeof page.path !== "string" || !/^\/[a-z0-9-]+(?:\/[a-z0-9-]+)*$/.test(page.path)
-                || typeof page.label !== "string" || !page.label.trim() || typeof page.load !== "function") {
+                || typeof page.labelKey !== "string" || !/^js\.[a-z0-9_.-]+$/.test(page.labelKey)
+                || typeof page.load !== "function") {
                 throw new Error(`Invalid admin page in ${source}`);
             }
             if (builtInSections.has(page.path.split("/")[1]) || paths.has(page.path)) {
@@ -39,7 +41,7 @@ export function collectModulePages(modules: AdminPageModules): AdminPage[] {
 export function createModuleRoutes(modules: AdminPageModules): AdminRoute[] {
     return collectModulePages(modules).map(page => ({
         path: page.path,
-        label: page.label,
+        labelKey: page.labelKey,
         Component: lazy(page.load),
     }));
 }

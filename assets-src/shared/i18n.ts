@@ -70,7 +70,12 @@ export function transChoice(key: string, count: number, params: TranslationParam
 }
 
 export function transChoiceWithCount(key: string, count: number, params: TranslationParams = {}): string {
-    return `${count} ${transChoice(key, count, params)}`;
+    return `${new Intl.NumberFormat(resolvedLocale).format(count)} ${transChoice(key, count, params)}`;
+}
+
+/** The normalized CMS locale selected by the server for this document. */
+export function getLocale(): string {
+    return resolvedLocale;
 }
 
 /** Replaces the build-time catalog for an isolated unit test. */

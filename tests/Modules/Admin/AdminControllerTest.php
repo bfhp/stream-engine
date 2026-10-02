@@ -108,7 +108,7 @@ final class AdminControllerTest extends TestCase
                 new DateTimeZone('UTC')
             ),
             $accessService,
-            new TranslationManager('ru', 'en'),
+            new TranslationManager('en', 'en'),
             new ModuleRegistry(),
         );
     }
@@ -894,6 +894,22 @@ final class AdminControllerTest extends TestCase
         }
     }
 
+    public function testAnUnsupportedInterfaceLocaleIsRefused(): void
+    {
+        $module = $this->makeModule();
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode(['value' => 'zz']));
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('Unsupported interface locale');
+
+        $module->callApi(
+            $this->makeApiPage('admin.setting', ['GET', 'PATCH']),
+            ['key' => 'locale']
+        );
+    }
+
     /* ===============================
        User management API
     =============================== */
@@ -1182,8 +1198,8 @@ final class AdminControllerTest extends TestCase
         $metrics = array_column($card['data'], 'value', 'label');
 
         $this->assertSame('ready', $card['status']);
-        $this->assertSame(1, $metrics['Stale cron locks']);
-        $this->assertSame(2, $metrics['Failed deliveries']);
+        $this->assertSame(1, $metrics['js.admin.dashboard.stale_locks']);
+        $this->assertSame(2, $metrics['js.admin.dashboard.failed_deliveries']);
     }
 
     /** @return array<string, mixed> */

@@ -30,7 +30,7 @@ type Drafts = Record<EditableKey, string>;
 const EDITABLE_KEYS: EditableKey[] = ["site_name", "locale", "uploads.user_limit_mb"];
 const LOCALE_OPTIONS = [
     { value: "ru", label: trans("js.admin.locale_ru") },
-    { value: "en", label: "English (en)" }
+    { value: "en", label: trans("js.admin.locale_en") }
 ];
 
 function defaultValue(key: EditableKey): string {
@@ -76,7 +76,7 @@ export default function Settings() {
         fetch("/api/v1/admin/settings", { signal: controller.signal })
             .then(async response => {
                 if (!response.ok) {
-                    throw new Error(await response.text() || "Failed to load settings");
+                    throw new Error(await response.text() || trans("js.admin.settings.load_failed"));
                 }
 
                 return response.json();
@@ -95,7 +95,7 @@ export default function Settings() {
             })
             .catch(err => {
                 if (err.name !== "AbortError") {
-                    setError(err.message || "Failed to load settings");
+                    setError(err.message || trans("js.admin.settings.load_failed"));
                 }
             })
             .finally(() => {
@@ -130,6 +130,7 @@ export default function Settings() {
         }
 
         setSaving(true);
+        const localeChanged = dirtyKeys.includes("locale");
 
         Promise.all(dirtyKeys.map(key =>
             fetch(`/api/v1/admin/settings/${encodeURIComponent(key)}`, {
@@ -141,7 +142,7 @@ export default function Settings() {
                 body: JSON.stringify({ value: drafts[key] })
             }).then(async response => {
                 if (!response.ok) {
-                    throw new Error(await response.text() || "Save failed");
+                    throw new Error(await response.text() || trans("js.admin.save_failed"));
                 }
 
                 return response.json();
@@ -155,32 +156,36 @@ export default function Settings() {
 
                 notifications.show({
                     color: "green",
-                    message: "Settings saved",
+                    message: trans("js.admin.settings.saved"),
                     autoClose: 2000
                 });
+                if (localeChanged) {
+                    window.location.reload();
+                }
             })
             .catch(err => {
                 notifications.show({
                     color: "red",
-                    title: "Error",
-                    message: err.message || "Failed to save settings"
+                    title: trans("js.admin.error"),
+                    message: err.message || trans("js.admin.settings.save_failed")
                 });
             })
             .finally(() => setSaving(false));
+
     }
 
     return (
         <Stack>
             <Group justify="space-between" align="end">
                 <div>
-                    <Text fw={700} size="xl">Settings</Text>
+                    <Text fw={700} size="xl">{trans("js.admin.settings.title")}</Text>
                     <Text c="dimmed" size="sm">
-                        Updated: {formatTimestamp(lastUpdated)}
+                        {trans("js.admin.updated")}: {formatTimestamp(lastUpdated)}
                     </Text>
                 </div>
 
                 <Group>
-                    <Tooltip label="Refresh">
+                    <Tooltip label={trans("js.admin.refresh")}>
                         <ActionIcon
                             variant="default"
                             loading={loading}
@@ -196,7 +201,7 @@ export default function Settings() {
                         leftSection={<IconDeviceFloppy size={16} />}
                         onClick={saveSettings}
                     >
-                        Save
+                        {trans("js.admin.save")}
                     </Button>
                 </Group>
             </Group>
@@ -205,16 +210,16 @@ export default function Settings() {
 
             <SimpleGrid cols={{ base: 1, md: 2 }}>
                 <TextInput
-                    label="Site name"
-                    description="Setting key: site_name"
+                    label={trans("js.admin.settings.site_name")}
+                    description={trans("js.admin.settings.key", { key: "site_name" })}
                     placeholder="Stream Engine"
                     value={drafts.site_name}
                     onChange={event => updateDraft("site_name", event.currentTarget.value)}
                 />
 
                 <Select
-                    label="Interface locale"
-                    description="Setting key: locale"
+                    label={trans("js.admin.settings.locale")}
+                    description={trans("js.admin.settings.key", { key: "locale" })}
                     data={LOCALE_OPTIONS}
                     value={drafts.locale}
                     onChange={value => updateDraft("locale", value || defaultValue("locale"))}
@@ -222,8 +227,8 @@ export default function Settings() {
                 />
 
                 <NumberInput
-                    label="User upload limit"
-                    description="Setting key: uploads.user_limit_mb"
+                    label={trans("js.admin.settings.upload_limit")}
+                    description={trans("js.admin.settings.key", { key: "uploads.user_limit_mb" })}
                     suffix=" MB"
                     min={1}
                     step={50}

@@ -84,4 +84,29 @@ final class TranslationManagerTest extends TestCase
         );
         $this->assertCount(count($allFeedKeys), $forJs);
     }
+
+    public function testEverySupportedLocaleContainsTheCompleteAdminCatalog(): void
+    {
+        $english = new TranslationManager('en', 'en');
+        $adminKeys = array_values(array_filter(
+            array_keys($english->getAll()),
+            static fn (string $key): bool => str_starts_with($key, 'js.admin.')
+                || str_starts_with($key, 'admin.error.')
+                || str_starts_with($key, 'admin.page_action.')
+        ));
+
+        $this->assertSame(['en', 'ru'], TranslationManager::availableLocales());
+        foreach (TranslationManager::availableLocales() as $locale) {
+            $messages = (new TranslationManager($locale, $locale))->getAll();
+            foreach ($adminKeys as $key) {
+                $this->assertArrayHasKey($key, $messages, "Missing $key in $locale");
+            }
+        }
+
+        $this->assertSame('Dashboard', $english->trans('js.admin.dashboard.title'));
+        $this->assertSame(
+            'Панель управления',
+            (new TranslationManager('ru', 'ru'))->trans('js.admin.dashboard.title')
+        );
+    }
 }

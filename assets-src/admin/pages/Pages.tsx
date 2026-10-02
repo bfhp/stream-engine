@@ -42,7 +42,7 @@ export default function Pages() {
         fetch("/api/v1/admin/pages", { signal: controller.signal })
             .then(async response => {
                 if (!response.ok) {
-                    throw new Error(await response.text() || "Failed to load pages");
+                    throw new Error(await response.text() || trans("js.admin.pages.load_failed"));
                 }
 
                 return response.json();
@@ -50,7 +50,7 @@ export default function Pages() {
             .then(data => setPages(Array.isArray(data.data) ? data.data : []))
             .catch(err => {
                 if (err.name !== "AbortError") {
-                    setError(err.message || "Failed to load pages");
+                    setError(err.message || trans("js.admin.pages.load_failed"));
                 }
             })
             .finally(() => {
@@ -84,12 +84,12 @@ export default function Pages() {
         <Stack>
             <Group justify="space-between" align="end">
                 <div>
-                    <Text fw={700} size="xl">Pages</Text>
-                    <Text c="dimmed" size="sm">Routing table records from pages</Text>
+                    <Text fw={700} size="xl">{trans("js.admin.pages.title")}</Text>
+                    <Text c="dimmed" size="sm">{trans("js.admin.pages.subtitle")}</Text>
                 </div>
 
                 <Group>
-                    <Tooltip label="Refresh">
+                    <Tooltip label={trans("js.admin.refresh")}>
                         <ActionIcon
                             variant="default"
                             loading={loading}
@@ -104,14 +104,14 @@ export default function Pages() {
                         to="/pages/new"
                         leftSection={<IconPlus size={16} />}
                     >
-                        New page
+                        {trans("js.admin.pages.new")}
                     </Button>
                 </Group>
             </Group>
 
             <TextInput
-                label="Search"
-                placeholder="ID, action, pattern, title, feed"
+                label={trans("js.admin.search")}
+                placeholder={trans("js.admin.pages.search_placeholder")}
                 value={query}
                 onChange={event => setQuery(event.currentTarget.value)}
             />
@@ -122,11 +122,11 @@ export default function Pages() {
                 <Table.Thead>
                     <Table.Tr>
                         <Table.Th>ID</Table.Th>
-                        <Table.Th>Parent</Table.Th>
-                        <Table.Th>Pattern</Table.Th>
-                        <Table.Th>Action</Table.Th>
-                        <Table.Th>Name</Table.Th>
-                        <Table.Th>Feed</Table.Th>
+                        <Table.Th>{trans("js.admin.parent")}</Table.Th>
+                        <Table.Th>{trans("js.admin.pattern")}</Table.Th>
+                        <Table.Th>{trans("js.admin.action")}</Table.Th>
+                        <Table.Th>{trans("js.admin.name")}</Table.Th>
+                        <Table.Th>{trans("js.admin.feed")}</Table.Th>
                         <Table.Th>{trans("js.admin.access")}</Table.Th>
                         <Table.Th />
                     </Table.Tr>
@@ -140,7 +140,7 @@ export default function Pages() {
                         >
                             <Table.Td>{page.id}</Table.Td>
                             <Table.Td>{page.parentId ?? "-"}</Table.Td>
-                            <Table.Td>{page.pattern || <Text c="dimmed">root</Text>}</Table.Td>
+                            <Table.Td>{page.pattern || <Text c="dimmed">{trans("js.admin.root")}</Text>}</Table.Td>
                             <Table.Td><Badge variant="light">{page.action || "-"}</Badge></Table.Td>
                             <Table.Td>{page.pageName || "-"}</Table.Td>
                             <Table.Td>
@@ -150,7 +150,7 @@ export default function Pages() {
                             </Table.Td>
                             <Table.Td>{page.accessRule ?? "public"}</Table.Td>
                             <Table.Td onClick={event => event.stopPropagation()}>
-                                <Tooltip label="Edit">
+                                <Tooltip label={trans("js.admin.edit")}>
                                     <ActionIcon
                                         component={Link}
                                         to={`/pages/${page.id}`}
@@ -166,7 +166,7 @@ export default function Pages() {
                     {!loading && filteredPages.length === 0 && (
                         <Table.Tr>
                             <Table.Td colSpan={8}>
-                                <Text c="dimmed" ta="center">No pages found</Text>
+                                <Text c="dimmed" ta="center">{trans("js.admin.pages.empty")}</Text>
                             </Table.Td>
                         </Table.Tr>
                     )}

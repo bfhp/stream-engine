@@ -10,6 +10,7 @@ import { IconFileUpload } from "@tabler/icons-react";
 import { FEED_TYPES } from "../../shared/feed-types";
 import { uploadFile } from "../../shared/uploads";
 import { csrfHeaders } from "../../shared/csrf";
+import { trans } from "../../shared/i18n";
 
 export default function FeedEdit() {
 
@@ -75,7 +76,7 @@ export default function FeedEdit() {
             .then(async r => {
                 if (!r.ok) {
                     const text = await r.text();
-                    throw new Error(text || "Save failed");
+                    throw new Error(text || trans("js.admin.save_failed"));
                 }
                 return r.json();
             })
@@ -84,7 +85,7 @@ export default function FeedEdit() {
 
                 notifications.show({
                     color: "green",
-                    message: "Feed saved",
+                    message: trans("js.admin.feeds.saved"),
                     autoClose: 2000
                 });
 
@@ -95,8 +96,8 @@ export default function FeedEdit() {
             .catch(err => {
                 notifications.show({
                     color: "red",
-                    title: "Error",
-                    message: err.message || "Failed to save feed"
+                    title: trans("js.admin.error"),
+                    message: err.message || trans("js.admin.feeds.save_failed")
                 });
             })
             .finally(() => {
@@ -123,7 +124,7 @@ export default function FeedEdit() {
     }
 
     if (!feed) {
-        return "Loading...";
+        return trans("js.admin.loading");
     }
 
     return (
@@ -134,12 +135,12 @@ export default function FeedEdit() {
                     variant="light"
                     onClick={() => navigate("/feeds")}
                 >
-                    ← Back
+                    ← {trans("js.admin.back")}
                 </Button>
             </Group>
 
             <TextInput
-                label="Title"
+                label={trans("js.admin.title")}
                 value={feed.title || ""}
                 onChange={(e) =>
                     setFeed({ ...feed, title: e.currentTarget.value })
@@ -147,7 +148,7 @@ export default function FeedEdit() {
             />
 
             <TextInput
-                label="Slug"
+                label={trans("js.admin.slug")}
                 value={feed.slug || ""}
                 onChange={(e) =>
                     setFeed({ ...feed, slug: e.currentTarget.value })
@@ -155,7 +156,7 @@ export default function FeedEdit() {
             />
 
             <Select
-                label="Type"
+                label={trans("js.admin.type")}
                 data={FEED_TYPES}
                 value={feed.type || ""}
                 onChange={(value) =>
@@ -166,7 +167,7 @@ export default function FeedEdit() {
             />
 
             <TextInput
-                label="parentId"
+                label={trans("js.admin.parent_id")}
                 value={feed.parentId || ""}
                 onChange={(e) =>
                     setFeed({ ...feed, parentId: e.currentTarget.value })
@@ -174,7 +175,7 @@ export default function FeedEdit() {
             />
 
             <TextInput
-                label="Description"
+                label={trans("js.admin.description")}
                 value={feed.description || ""}
                 onChange={(e) =>
                     setFeed({ ...feed, description: e.currentTarget.value })
@@ -182,7 +183,7 @@ export default function FeedEdit() {
             />
 
             <TextInput
-                label="imageUrl"
+                label={trans("js.admin.image_url")}
                 value={feed.imageUrl || ""}
                 onChange={(e) =>
                     setFeed({ ...feed, imageUrl: e.currentTarget.value })
@@ -190,7 +191,7 @@ export default function FeedEdit() {
             />
 
             <Group justify="space-between">
-                <Text fw={500}>Content</Text>
+                <Text fw={500}>{trans("js.admin.content")}</Text>
 
                 <Group>
 
@@ -241,7 +242,7 @@ export default function FeedEdit() {
                 loading={saving}
                 onClick={save}
             >
-                Save
+                {trans("js.admin.save")}
             </Button>
 
         </Stack>

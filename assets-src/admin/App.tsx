@@ -14,6 +14,7 @@ import Widgets from "./pages/Widgets";
 import Menus from "./pages/Menus";
 import MenuEdit from "./pages/MenuEdit";
 import type { AdminRoute } from "./module-pages";
+import { trans } from "../shared/i18n";
 
 type AppProps = {
     moduleAdminPages: AdminRoute[];
@@ -28,7 +29,7 @@ export default function App({ moduleAdminPages }: AppProps) {
                 <Route path="/menus/:id" element={<MenuEdit />} />
                 {moduleAdminPages.map(({ path, Component }) => (
                     <Route key={path} path={path} element={
-                        <Suspense fallback={<p>Loading…</p>}><Component /></Suspense>
+                        <Suspense fallback={<p>{trans("js.admin.loading")}</p>}><Component /></Suspense>
                     } />
                 ))}
                 <Route path="/feeds" element={<Feeds />} />
