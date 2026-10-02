@@ -222,6 +222,7 @@ Key documentation:
 - [Theme ownership and override contract](docs/THEME_CONTRACT.md)
 - [Performance contract](docs/PERFORMANCE_CONTRACT.md)
 - [Backlog and project status](docs/TODO.md)
+- [Test coverage backlog](docs/TEST_COVERAGE_TODO.md)
 
 ## Contributing
 

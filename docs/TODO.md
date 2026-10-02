@@ -12,48 +12,8 @@ Priorities:
 
 - **P0** — a clean installation does not work, the user receives a false
   success response, or data may be lost or returned incorrectly;
-- **P1** — important reliability, security, or operational work, or a major
-  gap in test coverage;
+- **P1** — important reliability, security, or operational work;
 - **P2** — product improvements, refactoring, and localized technical debt.
-
-## P1
-
-### Test coverage
-
-First obtain a fresh `composer test:coverage` report; do not use numbers from
-the old report as a prioritization criterion.
-
-Backend:
-
-- extend the existing empty-database installation test into a post-install
-  smoke test covering regular registration, a system notification, and library
-  page creation;
-- cover the `StreamEngine` branches that become reachable after extracting
-  `Response`;
-- cover the remaining branches in `ProfileController`, `MessagesController`,
-  `APIController`, and `FeedRepository`, chosen according to the fresh report;
-- add an integration ACL test against a real database: a non-admin sees only
-  records they own, public records, and records accessible through membership;
-- test `S3ObjectStorage` in a separate integration suite with a test bucket
-  instead of mocking the SDK in unit tests.
-
-Frontend:
-
-- comment DOM contracts: cursor pagination, reply ordering, duplicate-submit
-  protection, errors, and escaping;
-- favorites, ratings, “continue reading,” and `openDirectMessage()`;
-- profile dirty state and the friends tab;
-- friendship and membership button state machines in `users.ts`;
-- forum attachment/submit guards and the blog post tag editor.
-
-`initMessages()` must be refactored first: extract pure computations, collect
-DOM references through `resolveRefs(root)`, and return `{ stop() }` to clear
-intervals and listeners. Then test polling races, message deduplication, read
-receipts, attachment request IDs, and hash navigation.
-
-WordPress import remains outside normal coverage: it is a one-off manual tool
-in `bin/wp-import.php`. Test it only when import work resumes or a regression is
-found.
 
 ## P2
 
@@ -65,7 +25,7 @@ found.
   (`pl`).
 - Make every added locale available during installation and in administration
   settings without maintaining a separate hard-coded locale list.
-- Extend locale coverage tests so every catalog has the same required keys as
+- Extend locale catalog tests so every catalog has the same required keys as
   English and locale selection/fallback works for both base and regional
   locale codes.
 
@@ -129,7 +89,7 @@ watermark.
 
 The current `tsc` check is green, but the project is not in strict mode.
 
-First, expand the actual coverage of `npm run typecheck`: tests in
+First, expand the actual scope of `npm run typecheck`: tests in
 `tests/Site/js/`, as well as `vite-build-data.ts`, `vite.config.ts`, and
 `vitest.config.ts`, are currently excluded. Include them in the main
 `tsconfig.json` or check them with a separate configuration while keeping the
