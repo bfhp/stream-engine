@@ -86,16 +86,14 @@ found.
 
 The dashboard foundation now provides a server-defined module card catalog,
 versioned per-administrator layouts, permission filtering, isolated providers,
-an aggregate API, save/reset operations, and generic metric/link renderers.
-Public/theme placement widgets remain a separate concept.
+an aggregate API, save/reset operations, and generic metric/link/list renderers.
+The core set covers users, content, recent activity, pending community
+requests, cron/delivery health, and shortcuts. Layout editing supports
+accessible drag and drop with keyboard ordering controls. Public/theme
+placement widgets remain a separate concept, and the layout contract remains
+intentionally constrained: do not add arbitrary HTML, SQL, API URLs, colors,
+nested grids, or user-defined cards.
 
-- Replace the temporary up/down ordering controls with accessible drag and
-  drop while retaining keyboard controls. Showing/hiding cards, supported size
-  selection, default restoration, and the intentionally constrained layout
-  contract already work; do not add arbitrary HTML, SQL, API URLs, colors,
-  nested grids, or user-defined cards.
-- Add core cards for recent activity, moderation work, and system health. The
-  current user/content summaries and shortcuts are only the initial set.
 - Define whether expensive cards need separate lazy-loading endpoints after
   measuring the aggregate endpoint; preserve independent loading, ready,
   empty, error, and unavailable states if they do.

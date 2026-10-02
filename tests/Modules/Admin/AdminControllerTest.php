@@ -1020,6 +1020,63 @@ final class AdminControllerTest extends TestCase
         return [['PATCH'], ['DELETE']];
     }
 
+    public function testRecentActivityCardCombinesAndSortsUsersAndContent(): void
+    {
+        $db = $this->createStub(PdoDatabase::class);
+        $db->method('fetchAll')->willReturnCallback(static fn (string $sql): array => str_contains($sql, 'FROM users')
+            ? [['id' => 7, 'nick' => 'Alice', 'username' => 'alice', 'created_at' => 100]]
+            : [['id' => 12, 'title' => 'New post', 'type' => 'article', 'created_at' => 200]]);
+
+        $card = AdminController::dashboardCardData(
+            'admin.recent-activity',
+            $db,
+            new RequestContext(new User(9, 'admin@example.com', AccessService::ROLE_ADMIN), new DateTimeZone('UTC')),
+        );
+
+        $this->assertSame('ready', $card['status']);
+        $this->assertSame(['feed-12', 'user-7'], array_column($card['data'], 'id'));
+        $this->assertSame('#/feeds/12', $card['data'][0]['href']);
+    }
+
+    public function testModerationCardCountsPendingCommunityRequests(): void
+    {
+        $db = $this->createStub(PdoDatabase::class);
+        $db->method('fetchOne')->willReturn(['pending' => 3]);
+
+        $card = AdminController::dashboardCardData(
+            'admin.moderation-summary',
+            $db,
+            new RequestContext(new User(9, 'admin@example.com', AccessService::ROLE_ADMIN), new DateTimeZone('UTC')),
+        );
+
+        $this->assertSame('ready', $card['status']);
+        $this->assertSame(3, $card['data'][0]['value']);
+    }
+
+    public function testSystemHealthCardReportsCronAndDeliveryProblems(): void
+    {
+        $db = $this->createStub(PdoDatabase::class);
+        $rows = [
+            ['tasks' => 4, 'last_run' => 1_700_000_000, 'stale_locks' => 1],
+            ['pending' => 6, 'failed' => 2],
+        ];
+        $index = 0;
+        $db->method('fetchOne')->willReturnCallback(static function () use (&$rows, &$index): array {
+            return $rows[$index++];
+        });
+
+        $card = AdminController::dashboardCardData(
+            'admin.system-health',
+            $db,
+            new RequestContext(new User(9, 'admin@example.com', AccessService::ROLE_ADMIN), new DateTimeZone('UTC')),
+        );
+        $metrics = array_column($card['data'], 'value', 'label');
+
+        $this->assertSame('ready', $card['status']);
+        $this->assertSame(1, $metrics['Stale cron locks']);
+        $this->assertSame(2, $metrics['Failed deliveries']);
+    }
+
     /** @return array<string, mixed> */
     private function adminUserRow(): array
     {

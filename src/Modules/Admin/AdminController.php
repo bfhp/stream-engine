@@ -66,6 +66,33 @@ class AdminController extends AbstractController implements DashboardCardProvide
                 'defaultSize' => 'medium',
                 'defaultPosition' => 30,
             ],
+            [
+                'id' => 'admin.recent-activity',
+                'label' => 'Recent activity',
+                'kind' => 'list',
+                'permission' => AccessService::ACCESS_ADMIN,
+                'sizes' => ['medium', 'wide'],
+                'defaultSize' => 'wide',
+                'defaultPosition' => 40,
+            ],
+            [
+                'id' => 'admin.moderation-summary',
+                'label' => 'Moderation',
+                'kind' => 'metrics',
+                'permission' => AccessService::ACCESS_ADMIN,
+                'sizes' => ['small', 'medium'],
+                'defaultSize' => 'small',
+                'defaultPosition' => 50,
+            ],
+            [
+                'id' => 'admin.system-health',
+                'label' => 'System health',
+                'kind' => 'metrics',
+                'permission' => AccessService::ACCESS_ADMIN,
+                'sizes' => ['medium', 'wide'],
+                'defaultSize' => 'medium',
+                'defaultPosition' => 60,
+            ],
         ];
     }
 
@@ -82,6 +109,9 @@ class AdminController extends AbstractController implements DashboardCardProvide
                     ['label' => 'Settings', 'href' => '#/settings'],
                 ],
             ],
+            'admin.recent-activity' => self::recentActivityCard($db),
+            'admin.moderation-summary' => self::moderationSummaryCard($db),
+            'admin.system-health' => self::systemHealthCard($db),
             default => ['status' => 'unavailable', 'data' => null],
         };
     }
@@ -116,6 +146,85 @@ class AdminController extends AbstractController implements DashboardCardProvide
             'data' => [
                 ['label' => 'Items', 'value' => (int) ($row['total'] ?? 0)],
                 ['label' => 'Types', 'value' => (int) ($row['types'] ?? 0)],
+            ],
+        ];
+    }
+
+    private static function recentActivityCard(PdoDatabase $db): array
+    {
+        $items = [];
+        foreach ($db->fetchAll(
+            'SELECT id, nick, username, created_at FROM users WHERE id <> ? ORDER BY created_at DESC, id DESC LIMIT 5',
+            [\StreamEngine\Domain\User::SYSTEM_USER_ID],
+        ) as $row) {
+            $name = trim((string) ($row['nick'] ?? '')) ?: '#'.(int) $row['id'];
+            $items[] = [
+                'id' => 'user-'.(int) $row['id'],
+                'label' => $name.' registered',
+                'description' => 'User',
+                'timestamp' => (int) ($row['created_at'] ?? 0),
+                'href' => '#/users',
+            ];
+        }
+        foreach ($db->fetchAll(
+            'SELECT id, title, type, created_at FROM feeds ORDER BY created_at DESC, id DESC LIMIT 5'
+        ) as $row) {
+            $title = trim((string) ($row['title'] ?? '')) ?: 'Feed #'.(int) $row['id'];
+            $items[] = [
+                'id' => 'feed-'.(int) $row['id'],
+                'label' => $title,
+                'description' => (string) ($row['type'] ?? 'Content'),
+                'timestamp' => (int) ($row['created_at'] ?? 0),
+                'href' => '#/feeds/'.(int) $row['id'],
+            ];
+        }
+        usort($items, static fn (array $a, array $b): int => [$b['timestamp'], $b['id']] <=> [$a['timestamp'], $a['id']]);
+        $items = array_slice($items, 0, 8);
+
+        return ['status' => $items === [] ? 'empty' : 'ready', 'data' => $items];
+    }
+
+    private static function moderationSummaryCard(PdoDatabase $db): array
+    {
+        $row = $db->fetchOne(
+            'SELECT COUNT(*) AS pending
+             FROM memberships m
+             INNER JOIN membership_roles mr ON mr.id = m.membership_role_id
+             WHERE mr.role_level = 0'
+        ) ?? [];
+        $pending = (int) ($row['pending'] ?? 0);
+
+        return [
+            'status' => $pending > 0 ? 'ready' : 'empty',
+            'data' => [['label' => 'Pending join requests', 'value' => $pending]],
+        ];
+    }
+
+    private static function systemHealthCard(PdoDatabase $db): array
+    {
+        $cron = $db->fetchOne(
+            'SELECT COUNT(*) AS tasks, MAX(last_run) AS last_run,
+                    COALESCE(SUM(locked_at IS NOT NULL AND locked_at < UNIX_TIMESTAMP() - 3600), 0) AS stale_locks
+             FROM cron_runs'
+        ) ?? [];
+        $deliveries = $db->fetchOne(
+            "SELECT COALESCE(SUM(status = 'pending'), 0) AS pending,
+                    COALESCE(SUM(status = 'failed'), 0) AS failed
+             FROM notification_deliveries"
+        ) ?? [];
+
+        return [
+            'status' => 'ready',
+            'data' => [
+                ['label' => 'Cron tasks', 'value' => (int) ($cron['tasks'] ?? 0)],
+                [
+                    'label' => 'Last cron run',
+                    'value' => (int) ($cron['last_run'] ?? 0),
+                    'format' => 'timestamp',
+                ],
+                ['label' => 'Stale cron locks', 'value' => (int) ($cron['stale_locks'] ?? 0)],
+                ['label' => 'Pending deliveries', 'value' => (int) ($deliveries['pending'] ?? 0)],
+                ['label' => 'Failed deliveries', 'value' => (int) ($deliveries['failed'] ?? 0)],
             ],
         ];
     }

@@ -23,7 +23,7 @@ final class ModuleRegistry
     ];
 
     public const array DASHBOARD_CARD_SIZES = ['small', 'medium', 'wide'];
-    public const array DASHBOARD_CARD_KINDS = ['metrics', 'links'];
+    public const array DASHBOARD_CARD_KINDS = ['metrics', 'links', 'list'];
 
     /** @var array<string, class-string<ControllerInterface>> id => controller class */
     private array $controllers = [];

@@ -1,17 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-    ActionIcon, Alert, Button, Card, Checkbox, Grid, Group, Modal, Select, SimpleGrid,
+    ActionIcon, Alert, Box, Button, Card, Checkbox, Grid, Group, Modal, Select, SimpleGrid,
     Skeleton, Stack, Text, Tooltip
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { IconArrowDown, IconArrowUp, IconRefresh, IconSettings } from "@tabler/icons-react";
+import { IconArrowDown, IconArrowUp, IconGripVertical, IconRefresh, IconSettings } from "@tabler/icons-react";
 import { csrfHeaders } from "../../shared/csrf";
 import {
-    dashboardGridSpan, moveLayoutItem, orderedLayout, type DashboardSize, type LayoutItem
+    dashboardGridSpan, moveLayoutItem, moveLayoutItemTo, orderedLayout,
+    type DashboardSize, type LayoutItem
 } from "../lib/dashboard";
+import { formatTimestamp } from "../lib/format";
 
 type CardDefinition = {
-    id: string; label: string; kind: "metrics" | "links"; sizes: DashboardSize[];
+    id: string; label: string; kind: "metrics" | "links" | "list"; sizes: DashboardSize[];
     defaultSize: DashboardSize; defaultPosition: number; module: string;
 };
 type CardResult = { id: string; status: "ready" | "empty" | "error" | "unavailable"; data: unknown };
@@ -19,8 +21,9 @@ type DashboardPayload = {
     version: number; catalog: CardDefinition[];
     layout: { version: number; items: LayoutItem[] }; cards: CardResult[];
 };
-type Metric = { label: string; value: string | number };
+type Metric = { label: string; value: string | number; format?: "timestamp" };
 type Shortcut = { label: string; href: string };
+type ListItem = { id: string; label: string; description?: string; timestamp?: number; href?: string };
 
 async function requestError(response: Response, fallback: string): Promise<Error> {
     const text = await response.text();
@@ -39,6 +42,8 @@ export default function Dashboard() {
     const [customizing, setCustomizing] = useState(false);
     const [draft, setDraft] = useState<LayoutItem[]>([]);
     const [saving, setSaving] = useState(false);
+    const [draggingId, setDraggingId] = useState<string | null>(null);
+    const [orderAnnouncement, setOrderAnnouncement] = useState("");
 
     useEffect(() => {
         const controller = new AbortController();
@@ -110,6 +115,20 @@ export default function Dashboard() {
             .finally(() => setSaving(false));
     }
 
+    function moveCard(id: string, direction: -1 | 1) {
+        setDraft(current => moveLayoutItem(current, id, direction));
+        const card = definitions.get(id);
+        if (card) setOrderAnnouncement(`${card.label} moved ${direction < 0 ? "up" : "down"}.`);
+    }
+
+    function dropCard(targetId: string) {
+        if (!draggingId) return;
+        setDraft(current => moveLayoutItemTo(current, draggingId, targetId));
+        const card = definitions.get(draggingId);
+        if (card) setOrderAnnouncement(`${card.label} reordered.`);
+        setDraggingId(null);
+    }
+
     function resetLayout() {
         setSaving(true);
         fetch("/api/v1/admin/dashboard", { method: "DELETE", headers: csrfHeaders() })
@@ -136,12 +155,23 @@ export default function Dashboard() {
             const metrics = Array.isArray(result.data) ? result.data as Metric[] : [];
             return <SimpleGrid cols={{ base: 1, sm: Math.min(metrics.length, 3) }}>
                 {metrics.map(metric => <div key={metric.label}>
-                    <Text size="xl" fw={700}>{metric.value}</Text><Text size="sm" c="dimmed">{metric.label}</Text>
+                    <Text size="xl" fw={700}>{metric.format === "timestamp" ? formatTimestamp(Number(metric.value)) : metric.value}</Text>
+                    <Text size="sm" c="dimmed">{metric.label}</Text>
                 </div>)}
             </SimpleGrid>;
         }
-        const links = Array.isArray(result.data) ? result.data as Shortcut[] : [];
-        return <Group>{links.map(link => <Button key={link.href} component="a" href={link.href} variant="light">{link.label}</Button>)}</Group>;
+        if (definition.kind === "links") {
+            const links = Array.isArray(result.data) ? result.data as Shortcut[] : [];
+            return <Group>{links.map(link => <Button key={link.href} component="a" href={link.href} variant="light">{link.label}</Button>)}</Group>;
+        }
+        const items = Array.isArray(result.data) ? result.data as ListItem[] : [];
+        return <Stack gap="xs">{items.map(item => <Group key={item.id} justify="space-between" wrap="nowrap">
+            <div>
+                {item.href ? <Text component="a" href={item.href} fw={500}>{item.label}</Text> : <Text fw={500}>{item.label}</Text>}
+                {item.description && <Text c="dimmed" size="xs">{item.description}</Text>}
+            </div>
+            {item.timestamp && <Text c="dimmed" size="xs" style={{ whiteSpace: "nowrap" }}>{formatTimestamp(item.timestamp)}</Text>}
+        </Group>)}</Stack>;
     }
 
     return <Stack>
@@ -173,18 +203,37 @@ export default function Dashboard() {
             <Stack>
                 {customizerCards.map(card => {
                     const item = draft.find(candidate => candidate.id === card.id);
-                    return <Card key={card.id} withBorder padding="sm">
+                    return <Card key={card.id} withBorder padding="sm"
+                        onDragOver={event => { if (item && draggingId) event.preventDefault(); }}
+                        onDrop={() => item && dropCard(card.id)}
+                        style={{ opacity: draggingId === card.id ? 0.55 : 1 }}>
                         <Group justify="space-between" wrap="nowrap">
-                            <Checkbox checked={Boolean(item)} label={card.label} onChange={event => toggleCard(card, event.currentTarget.checked)} />
+                            <Group wrap="nowrap">
+                                {item && <Box component="span" draggable role="button" tabIndex={0}
+                                    aria-label={`Drag ${card.label}; use arrow keys to reorder`}
+                                    aria-grabbed={draggingId === card.id}
+                                    onDragStart={() => setDraggingId(card.id)} onDragEnd={() => setDraggingId(null)}
+                                    onKeyDown={event => {
+                                        if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+                                            event.preventDefault();
+                                            moveCard(card.id, event.key === "ArrowUp" ? -1 : 1);
+                                        }
+                                    }}
+                                    style={{ cursor: "grab", display: "inline-flex" }}><IconGripVertical size={18} /></Box>}
+                                <Checkbox checked={Boolean(item)} label={card.label} onChange={event => toggleCard(card, event.currentTarget.checked)} />
+                            </Group>
                             {item && <Group wrap="nowrap">
                                 <Select size="xs" w={120} data={card.sizes} value={item.size} allowDeselect={false}
                                     onChange={value => value && setDraft(current => current.map(candidate => candidate.id === card.id ? { ...candidate, size: value as DashboardSize } : candidate))} />
-                                <ActionIcon variant="subtle" aria-label="Move up" onClick={() => setDraft(current => moveLayoutItem(current, card.id, -1))}><IconArrowUp size={16} /></ActionIcon>
-                                <ActionIcon variant="subtle" aria-label="Move down" onClick={() => setDraft(current => moveLayoutItem(current, card.id, 1))}><IconArrowDown size={16} /></ActionIcon>
+                                <ActionIcon variant="subtle" aria-label={`Move ${card.label} up`} onClick={() => moveCard(card.id, -1)}><IconArrowUp size={16} /></ActionIcon>
+                                <ActionIcon variant="subtle" aria-label={`Move ${card.label} down`} onClick={() => moveCard(card.id, 1)}><IconArrowDown size={16} /></ActionIcon>
                             </Group>}
                         </Group>
                     </Card>;
                 })}
+                <Text component="div" aria-live="polite" pos="absolute" style={{ width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>
+                    {orderAnnouncement}
+                </Text>
                 <Group justify="space-between"><Button color="red" variant="subtle" loading={saving} onClick={resetLayout}>Restore defaults</Button>
                     <Group><Button variant="default" onClick={() => setCustomizing(false)}>Cancel</Button><Button loading={saving} onClick={saveLayout}>Save</Button></Group>
                 </Group>

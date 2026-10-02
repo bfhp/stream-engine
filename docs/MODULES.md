@@ -156,7 +156,7 @@ final class NotesController extends AbstractController implements DashboardCardP
 ```
 
 The supported sizes are `small`, `medium`, and `wide`; the generic kinds are
-`metrics` and `links`. A provider returns `ready`, `empty`, or `unavailable`
+`metrics`, `links`, and `list`. A provider returns `ready`, `empty`, or `unavailable`
 plus its data. Exceptions are isolated and expose only an `error` state to the
 client. The server checks the declared permission before invoking a provider.
 Saved layouts contain only card ids, positions, and supported sizes, so module

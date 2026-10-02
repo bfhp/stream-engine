@@ -17,6 +17,18 @@ export function moveLayoutItem(items: LayoutItem[], id: string, direction: -1 | 
     return ordered.map((item, nextIndex) => ({ ...item, position: nextIndex * 10 }));
 }
 
+export function moveLayoutItemTo(items: LayoutItem[], sourceId: string, targetId: string): LayoutItem[] {
+    const ordered = orderedLayout(items);
+    const sourceIndex = ordered.findIndex(item => item.id === sourceId);
+    const targetIndex = ordered.findIndex(item => item.id === targetId);
+    if (sourceIndex < 0 || targetIndex < 0 || sourceIndex === targetIndex) return ordered;
+
+    const [source] = ordered.splice(sourceIndex, 1);
+    ordered.splice(targetIndex, 0, source);
+
+    return ordered.map((item, index) => ({ ...item, position: index * 10 }));
+}
+
 export function dashboardGridSpan(size: DashboardSize): number {
     if (size === "wide") return 12;
     if (size === "medium") return 6;

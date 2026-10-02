@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { dashboardGridSpan, moveLayoutItem, orderedLayout } from "../../assets-src/admin/lib/dashboard";
+import {
+    dashboardGridSpan, moveLayoutItem, moveLayoutItemTo, orderedLayout
+} from "../../assets-src/admin/lib/dashboard";
 
 describe("admin dashboard layout helpers", () => {
     it("orders cards deterministically and normalizes positions", () => {
@@ -26,5 +28,18 @@ describe("admin dashboard layout helpers", () => {
         expect(dashboardGridSpan("small")).toBe(4);
         expect(dashboardGridSpan("medium")).toBe(6);
         expect(dashboardGridSpan("wide")).toBe(12);
+    });
+
+    it("moves a dragged card before its drop target", () => {
+        expect(moveLayoutItemTo([
+            { id: "a.card", size: "small", position: 0 },
+            { id: "b.card", size: "medium", position: 10 },
+            { id: "c.card", size: "wide", position: 20 }
+        ], "c.card", "a.card").map(item => item.id)).toEqual(["c.card", "a.card", "b.card"]);
+        expect(moveLayoutItemTo([
+            { id: "a.card", size: "small", position: 0 },
+            { id: "b.card", size: "medium", position: 10 },
+            { id: "c.card", size: "wide", position: 20 }
+        ], "b.card", "c.card").map(item => item.id)).toEqual(["a.card", "c.card", "b.card"]);
     });
 });
