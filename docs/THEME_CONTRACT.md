@@ -131,6 +131,13 @@ URLs, traversal, and arbitrary public paths are rejected. Rendered asset URLs
 receive an mtime-based `?v=` value, so changing the manifest or asset invalidates
 browser caches.
 
+Core Bootstrap is its own stylesheet, `/assets/css/bootstrap.css`, separate from
+`/assets/css/site.css`. For right-to-left locales (see `<html dir>`) the engine
+replaces it with `/assets/css/bootstrap-rtl.css` at render time, so only one
+build is loaded. A theme that lists `site.css` without Bootstrap gets
+`bootstrap.css` prepended automatically; a theme that ships its own Bootstrap
+should provide its own RTL handling.
+
 If the selected theme disappears or its manifest is invalid, the application
 uses `views/themes/default/`. If an override produces a Twig loader, runtime,
 or syntax error, the request is retried once with the default theme. An

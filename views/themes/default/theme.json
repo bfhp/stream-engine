@@ -16,6 +16,7 @@
   },
   "assets": {
     "styles": [
+      "/assets/css/bootstrap.css",
       "/assets/css/site.css",
       "/assets/css/custom-content.css"
     ],

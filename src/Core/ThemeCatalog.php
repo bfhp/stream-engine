@@ -14,6 +14,10 @@ final class ThemeCatalog
 {
     public const string DEFAULT_ID = 'default';
 
+    private const string SITE_CSS = '/assets/css/site.css';
+    private const string BOOTSTRAP = '/assets/css/bootstrap.css';
+    private const string BOOTSTRAP_RTL = '/assets/css/bootstrap-rtl.css';
+
     /** @var array<string, array<string, mixed>>|null */
     private ?array $themes = null;
 
@@ -51,6 +55,32 @@ final class ThemeCatalog
         return $this->find($id)
             ?? $this->find(self::DEFAULT_ID)
             ?? $this->builtInDefault();
+    }
+
+    /**
+     * Swaps the core LTR Bootstrap stylesheet for its RTL build when the
+     * interface is right-to-left, so only one of the two is ever loaded.
+     *
+     * @param array<string, mixed> $theme
+     * @return array<string, mixed>
+     */
+    public function forDirection(array $theme, bool $rtl): array
+    {
+        if (! $rtl || ! isset($theme['assets']['styles']) || ! is_array($theme['assets']['styles'])) {
+            return $theme;
+        }
+        if (! is_file($this->publicDir.self::BOOTSTRAP_RTL)) {
+            return $theme;
+        }
+
+        $theme['assets']['styles'] = array_map(
+            static fn (string $url): string => str_starts_with($url, self::BOOTSTRAP.'?')
+                ? self::BOOTSTRAP_RTL.substr($url, strlen(self::BOOTSTRAP))
+                : $url,
+            $theme['assets']['styles'],
+        );
+
+        return $theme;
     }
 
     public function legacyThemeId(): ?string
@@ -218,6 +248,14 @@ final class ThemeCatalog
             if (! is_array($items)) {
                 return null;
             }
+            // Core site.css no longer bundles Bootstrap; themes that reuse it
+            // without listing Bootstrap keep working.
+            if ($kind === 'styles'
+                && in_array(self::SITE_CSS, $items, true)
+                && ! in_array(self::BOOTSTRAP, $items, true)
+                && is_file($this->publicDir.self::BOOTSTRAP)) {
+                array_unshift($items, self::BOOTSTRAP);
+            }
             foreach ($items as $url) {
                 if (! is_string($url)
                     || ! preg_match('#\A/(?:assets|themes/'.preg_quote($id, '#').')/[A-Za-z0-9_./-]+\z#', $url)
@@ -252,7 +290,7 @@ final class ThemeCatalog
                 ],
             ],
             'assets' => [
-                'styles' => ['/assets/css/site.css', '/assets/css/custom-content.css'],
+                'styles' => [self::BOOTSTRAP, self::SITE_CSS, '/assets/css/custom-content.css'],
                 'scripts' => ['/assets/js/site.js'],
             ],
         ];

@@ -55,6 +55,32 @@ final class ThemeCatalogTest extends TestCase
         self::assertMatchesRegularExpression('#^/assets/css/site\.css\?v=\d+$#', $theme['assets']['styles'][0]);
     }
 
+    public function testBootstrapIsPrependedForThemesReusingCoreSiteCss(): void
+    {
+        file_put_contents($this->root.'/public/assets/css/bootstrap.css', 'a{}');
+
+        $theme = (new ThemeCatalog($this->root.'/themes', $this->root.'/public'))->find('default');
+
+        self::assertMatchesRegularExpression('#^/assets/css/bootstrap\.css\?v=\d+$#', $theme['assets']['styles'][0]);
+        self::assertMatchesRegularExpression('#^/assets/css/site\.css\?v=\d+$#', $theme['assets']['styles'][1]);
+    }
+
+    public function testRtlSwapsBootstrapForItsRtlBuildOnly(): void
+    {
+        file_put_contents($this->root.'/public/assets/css/bootstrap.css', 'a{}');
+        $catalog = new ThemeCatalog($this->root.'/themes', $this->root.'/public');
+        $theme = $catalog->find('default');
+
+        self::assertSame($theme, $catalog->forDirection($theme, true), 'No RTL build deployed: unchanged.');
+
+        file_put_contents($this->root.'/public/assets/css/bootstrap-rtl.css', 'a{}');
+        self::assertSame($theme, $catalog->forDirection($theme, false));
+        $rtl = $catalog->forDirection($theme, true);
+        self::assertMatchesRegularExpression('#^/assets/css/bootstrap-rtl\.css\?v=\d+$#', $rtl['assets']['styles'][0]);
+        self::assertSame($theme['assets']['styles'][1], $rtl['assets']['styles'][1]);
+        self::assertCount(2, $rtl['assets']['styles']);
+    }
+
     public function testInvalidThemeIsNotSelectableAndFallsBackToDefault(): void
     {
         mkdir($this->root.'/themes/broken');

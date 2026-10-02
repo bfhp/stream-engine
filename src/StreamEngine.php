@@ -156,6 +156,7 @@ class StreamEngine
 
         $this->tm = new TranslationManager($this->settings->getString('locale'), 'en');
         $this->fmt = new Formatter($this->tm, $this->settings->getString('locale'));
+        $this->activeTheme = $this->themeCatalog->forDirection($this->activeTheme, $this->tm->isRtl());
 
         $pageRepository = new PageRepository($this->db);
         $pages = $pageRepository->findAll();
@@ -309,7 +310,10 @@ class StreamEngine
             $currentUser = $this->currentUser();
             $previewId = $this->previewThemeId($currentUser);
             if ($previewId !== null) {
-                $this->activeTheme = $this->themeService->active($previewId);
+                $this->activeTheme = $this->themeCatalog->forDirection(
+                    $this->themeService->active($previewId),
+                    $this->tm->isRtl(),
+                );
                 $twig = $this->createTwigEnvironment($this->activeTheme);
             }
             $requestContext = $this->requestContext($currentUser);
@@ -530,7 +534,10 @@ class StreamEngine
                 $this->activeTheme['id'],
                 $e->getMessage(),
             ));
-            $this->activeTheme = $this->themeService->active(ThemeCatalog::DEFAULT_ID);
+            $this->activeTheme = $this->themeCatalog->forDirection(
+                $this->themeService->active(ThemeCatalog::DEFAULT_ID),
+                $this->tm->isRtl(),
+            );
             $view->data['theme'] = $this->activeTheme;
             $twig = $this->createTwigEnvironment($this->activeTheme);
             $content = $twig->render($view->template, $view->data);

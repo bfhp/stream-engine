@@ -29,7 +29,7 @@ function moduleAssetEntries(): Record<string, string> {
 }
 
 const moduleEntries = moduleAssetEntries();
-const builtInEntryNames = ["admin", "site", "register", "search", "feedback", "messages", "retrieve", "profile", "users", "forums", "blog-post-form"];
+const builtInEntryNames = ["admin", "site", "register", "search", "feedback", "messages", "retrieve", "profile", "users", "forums", "blog-post-form", "bootstrap", "bootstrap-rtl"];
 for (const name of Object.keys(moduleEntries)) {
     if (builtInEntryNames.includes(name)) throw new Error(`Reserved module asset entry: ${name}`);
 }
@@ -60,6 +60,8 @@ export default defineConfig({
                 ...moduleEntries,
                 admin: "assets-src/admin/main.tsx",
                 site: "assets-src/site/main.ts",
+                bootstrap: "assets-src/site/bootstrap-ltr.ts",
+                "bootstrap-rtl": "assets-src/site/bootstrap-rtl.ts",
                 register: path.join(engineAssets, "pages/register.ts"),
                 search: path.join(engineAssets, "pages/search.ts"),
                 feedback: path.join(engineAssets, "pages/feedback.ts"),
