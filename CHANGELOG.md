@@ -38,6 +38,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
   deactivation of the last active administrator.
 - Made unknown and unauthorized dashboard card IDs indistinguishable to API
   clients to avoid disclosing restricted module cards.
+- Validated module-provided dashboard payloads by card kind and restricted
+  dashboard links to internal admin routes before they reach the browser.
 
 ## [0.2.2] - 2026-09-19
 

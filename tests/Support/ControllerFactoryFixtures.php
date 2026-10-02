@@ -264,6 +264,30 @@ final class FailingDashboardProbeController extends AbstractController implement
     }
 }
 
+final class UnsafeDashboardProbeController extends AbstractController implements DashboardCardProviderInterface
+{
+    public static function dashboardCards(): array
+    {
+        return [[
+            'id' => 'unsafe.shortcuts',
+            'label' => 'Unsafe shortcuts',
+            'kind' => 'links',
+            'permission' => AccessService::ACCESS_ADMIN,
+            'sizes' => ['small'],
+            'defaultSize' => 'small',
+            'defaultPosition' => 110,
+        ]];
+    }
+
+    public static function dashboardCardData(string $cardId, PdoDatabase $db, RequestContext $context): array
+    {
+        return ['status' => 'ready', 'data' => [[
+            'label' => 'Unsafe',
+            'href' => 'javascript:alert(1)',
+        ]]];
+    }
+}
+
 final class InvalidDashboardProbeController extends AbstractController implements DashboardCardProviderInterface
 {
     public static function dashboardCards(): array

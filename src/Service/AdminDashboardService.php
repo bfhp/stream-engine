@@ -12,6 +12,7 @@ use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Core\RequestContext;
 use StreamEngine\Domain\User;
 use StreamEngine\Repository\DashboardLayoutRepository;
+use RuntimeException;
 use Throwable;
 
 final readonly class AdminDashboardService
@@ -211,8 +212,9 @@ final readonly class AdminDashboardService
                 $status = $result['status'] ?? null;
                 if (! in_array($status, ['ready', 'empty', 'unavailable'], true)
                     || ! array_key_exists('data', $result)) {
-                    throw new \RuntimeException('Invalid dashboard card result');
+                    throw new RuntimeException('Invalid dashboard card result');
                 }
+                $this->validateCardData($descriptor, $status, $result['data']);
                 $resolved[] = ['id' => $item['id'], 'status' => $status, 'data' => $result['data']];
             } catch (Throwable) {
                 $resolved[] = ['id' => $item['id'], 'status' => 'error', 'data' => null];
@@ -220,5 +222,77 @@ final readonly class AdminDashboardService
         }
 
         return $resolved;
+    }
+
+    /** @param array<string,mixed> $descriptor */
+    private function validateCardData(array $descriptor, string $status, mixed $data): void
+    {
+        if ($status !== 'ready') {
+            return;
+        }
+        if (! is_array($data) || ! array_is_list($data) || $data === []) {
+            throw new RuntimeException("Dashboard card '{$descriptor['id']}' returned invalid data");
+        }
+
+        foreach ($data as $item) {
+            if (! is_array($item)) {
+                throw new RuntimeException("Dashboard card '{$descriptor['id']}' returned an invalid item");
+            }
+            match ($descriptor['kind']) {
+                'metrics' => $this->validateMetric($item),
+                'links' => $this->validateLink($item),
+                'list' => $this->validateListItem($item),
+                default => throw new RuntimeException('Unknown dashboard card kind'),
+            };
+        }
+    }
+
+    /** @param array<string,mixed> $item */
+    private function validateMetric(array $item): void
+    {
+        $this->requireKeys($item, ['label', 'value'], ['format', 'href']);
+        if (! is_string($item['label']) || trim($item['label']) === ''
+            || ! is_string($item['value']) && ! is_int($item['value']) && ! is_float($item['value'])
+            || isset($item['format']) && $item['format'] !== 'timestamp'
+            || isset($item['href']) && ! $this->isSafeAdminHref($item['href'])) {
+            throw new RuntimeException('Invalid dashboard metric');
+        }
+    }
+
+    /** @param array<string,mixed> $item */
+    private function validateLink(array $item): void
+    {
+        $this->requireKeys($item, ['label', 'href']);
+        if (! is_string($item['label']) || trim($item['label']) === '' || ! $this->isSafeAdminHref($item['href'])) {
+            throw new RuntimeException('Invalid dashboard link');
+        }
+    }
+
+    /** @param array<string,mixed> $item */
+    private function validateListItem(array $item): void
+    {
+        $this->requireKeys($item, ['id', 'label'], ['description', 'timestamp', 'href']);
+        if (! is_string($item['id']) || trim($item['id']) === ''
+            || ! is_string($item['label']) || trim($item['label']) === ''
+            || isset($item['description']) && ! is_string($item['description'])
+            || isset($item['timestamp']) && (! is_int($item['timestamp']) || $item['timestamp'] < 0)
+            || isset($item['href']) && ! $this->isSafeAdminHref($item['href'])) {
+            throw new RuntimeException('Invalid dashboard list item');
+        }
+    }
+
+    /** @param array<string,mixed> $item @param list<string> $required @param list<string> $optional */
+    private function requireKeys(array $item, array $required, array $optional = []): void
+    {
+        if (array_diff($required, array_keys($item)) !== []
+            || array_diff(array_keys($item), [...$required, ...$optional]) !== []) {
+            throw new RuntimeException('Invalid dashboard card item fields');
+        }
+    }
+
+    private function isSafeAdminHref(mixed $href): bool
+    {
+        return is_string($href)
+            && preg_match('/\A#\/[a-z0-9][a-z0-9\/._?=&%-]*\z/D', $href) === 1;
     }
 }

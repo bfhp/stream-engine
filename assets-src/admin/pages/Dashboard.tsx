@@ -10,20 +10,14 @@ import {
     dashboardGridSpan, moveLayoutItem, moveLayoutItemTo, orderedLayout,
     type DashboardSize, type LayoutItem
 } from "../lib/dashboard";
-import { formatTimestamp } from "../lib/format";
+import DashboardCardContent, {
+    type CardDefinition, type CardResult
+} from "../components/DashboardCardContent";
 
-type CardDefinition = {
-    id: string; label: string; kind: "metrics" | "links" | "list"; sizes: DashboardSize[];
-    defaultSize: DashboardSize; defaultPosition: number; module: string;
-};
-type CardResult = { id: string; status: "ready" | "empty" | "error" | "unavailable"; data: unknown };
 type DashboardPayload = {
     version: number; catalog: CardDefinition[];
     layout: { version: number; items: LayoutItem[] }; cards: CardResult[];
 };
-type Metric = { label: string; value: string | number; format?: "timestamp"; href?: string };
-type Shortcut = { label: string; href: string };
-type ListItem = { id: string; label: string; description?: string; timestamp?: number; href?: string };
 
 async function requestError(response: Response, fallback: string): Promise<Error> {
     const text = await response.text();
@@ -170,39 +164,6 @@ export default function Dashboard() {
             }));
     }
 
-    function renderContent(definition: CardDefinition, result: CardResult | undefined, isLoading: boolean) {
-        if (isLoading || !result) return <Skeleton height={70} />;
-        if (result.status === "error") return <Alert color="red">This card could not be loaded.</Alert>;
-        if (result.status === "unavailable") return <Text c="dimmed">This card is currently unavailable.</Text>;
-        if (result.status === "empty") return <Text c="dimmed">No data yet.</Text>;
-        if (definition.kind === "metrics") {
-            const metrics = Array.isArray(result.data) ? result.data as Metric[] : [];
-            return <SimpleGrid cols={{ base: 1, sm: Math.min(metrics.length, 3) }}>
-                {metrics.map(metric => {
-                    const content = <>
-                        <Text size="xl" fw={700}>{metric.format === "timestamp" ? formatTimestamp(Number(metric.value)) : metric.value}</Text>
-                        <Text size="sm" c="dimmed">{metric.label}</Text>
-                    </>;
-                    return metric.href
-                        ? <Box component="a" key={metric.label} href={metric.href} style={{ color: "inherit", textDecoration: "none" }}>{content}</Box>
-                        : <div key={metric.label}>{content}</div>;
-                })}
-            </SimpleGrid>;
-        }
-        if (definition.kind === "links") {
-            const links = Array.isArray(result.data) ? result.data as Shortcut[] : [];
-            return <Group>{links.map(link => <Button key={link.href} component="a" href={link.href} variant="light">{link.label}</Button>)}</Group>;
-        }
-        const items = Array.isArray(result.data) ? result.data as ListItem[] : [];
-        return <Stack gap="xs">{items.map(item => <Group key={item.id} justify="space-between" wrap="nowrap">
-            <div>
-                {item.href ? <Text component="a" href={item.href} fw={500}>{item.label}</Text> : <Text fw={500}>{item.label}</Text>}
-                {item.description && <Text c="dimmed" size="xs">{item.description}</Text>}
-            </div>
-            {item.timestamp && <Text c="dimmed" size="xs" style={{ whiteSpace: "nowrap" }}>{formatTimestamp(item.timestamp)}</Text>}
-        </Group>)}</Stack>;
-    }
-
     return <Stack>
         <Group justify="space-between">
             <div><Text fw={700} size="xl">Dashboard</Text><Text c="dimmed" size="sm">Your administration overview</Text></div>
@@ -227,7 +188,8 @@ export default function Dashboard() {
                                 loading={cardLoading.has(item.id)} aria-label={`Refresh ${definition.label}`}
                                 onClick={() => refreshCard(item.id)}><IconRefresh size={15} /></ActionIcon></Tooltip>
                         </Group>
-                        {renderContent(definition, results.get(item.id), cardLoading.has(item.id))}
+                        <DashboardCardContent definition={definition} result={results.get(item.id)}
+                            loading={cardLoading.has(item.id)} />
                     </Card>
                 </Grid.Col>;
             })}

@@ -96,9 +96,8 @@ nested grids, or user-defined cards. The aggregate endpoint remains the
 initial-load default; a permission-checked per-card endpoint supports isolated
 retries and is the migration path if measurements later justify lazy loading.
 
-- Add component-level rendering tests for every generic card state. Cover
-  disabled-module removal and restoration once explicit module enable/disable
-  state exists.
+- Cover disabled-module card removal and restoration once explicit module
+  enable/disable state exists.
 
 ### Admin: interface localization
 

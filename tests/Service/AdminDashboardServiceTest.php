@@ -8,6 +8,7 @@ use DateTimeZone;
 use PHPUnit\Framework\TestCase;
 use StreamEngine\Controllers\DashboardProbeController;
 use StreamEngine\Controllers\FailingDashboardProbeController;
+use StreamEngine\Controllers\UnsafeDashboardProbeController;
 use StreamEngine\Core\Exceptions\ValidationException;
 use StreamEngine\Core\Exceptions\NotFoundException;
 use StreamEngine\Core\PdoDatabase;
@@ -70,6 +71,20 @@ final class AdminDashboardServiceTest extends TestCase
         self::assertSame('error', $states['failing.summary']);
         self::assertSame('ready', $states['probe.summary']);
         self::assertSame('ready', $states['admin.shortcuts']);
+    }
+
+    public function testMalformedOrUnsafeProviderDataBecomesAnIsolatedError(): void
+    {
+        [$service] = $this->service([
+            DashboardProbeController::class,
+            UnsafeDashboardProbeController::class,
+        ]);
+
+        $payload = $service->payload($this->context());
+        $states = array_column($payload['cards'], 'status', 'id');
+
+        self::assertSame('error', $states['unsafe.shortcuts']);
+        self::assertSame('ready', $states['probe.summary']);
     }
 
     public function testCardsAreFilteredByTheirServerSidePermission(): void
