@@ -491,7 +491,7 @@
                 {% endif %}
             </div>
             {% if parentForum %}
-                <a href="{{ parentForum.canonicalUrl }}" class="link-quiet">{{ trans('view.forums.topic.view.41') }}{{ parentForum.title }}»</a>
+                <a href="{{ parentForum.canonicalUrl }}" class="link-quiet">{{ trans('view.forums.topic.view.41', {title: parentForum.title}) }}</a>
             {% endif %}
         </div>
 

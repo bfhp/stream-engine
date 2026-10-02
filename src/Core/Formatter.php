@@ -189,6 +189,11 @@ class Formatter
             return ($mod >= 11) ? $many : $few;
         }
 
+        // Japanese has no grammatical plural; catalogs repeat one form.
+        if (preg_match('/^ja(?![a-z])/i', $this->locale) === 1) {
+            return $many;
+        }
+
         // French and Portuguese treat both 0 and 1 as singular.
         if (preg_match('/^(fr|pt)(?![a-z])/i', $this->locale) === 1) {
             return abs($n) < 2 ? $one : $many;
