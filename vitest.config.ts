@@ -34,6 +34,13 @@ export default defineConfig({
         // keeps CI stable on runners that report more CPUs than they can
         // sustain concurrently.
         maxWorkers: 2,
+        // Node 25+ ships its own experimental `localStorage`, and the jsdom
+        // environment touching that global makes Node print "`--localstorage-file`
+        // was provided without a valid path". jsdom has its own localStorage, so
+        // disable Node's in the workers (flag only passed where Node knows it).
+        execArgv: process.allowedNodeEnvironmentFlags.has("--no-experimental-webstorage")
+            ? ["--no-experimental-webstorage"]
+            : [],
         // No globals: tests import describe/it/expect explicitly, so the
         // bare tsconfig.json needs no "types" entry to typecheck them.
         globals: false,
