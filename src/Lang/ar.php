@@ -987,6 +987,7 @@ return [
     'js.admin.locale_es' => 'الإسبانية (es)',
     'js.admin.locale_pt_br' => 'البرتغالية البرازيلية (pt-br)',
     'js.admin.locale_ar' => 'العربية (ar)',
+    'js.admin.locale_it' => 'الإيطالية (it)',
     'js.admin.nav.dashboard' => 'لوحة التحكم',
     'js.admin.nav.feeds' => 'الخلاصات',
     'js.admin.nav.pages' => 'الصفحات',

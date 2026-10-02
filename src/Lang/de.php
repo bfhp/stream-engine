@@ -987,6 +987,7 @@ E-Mail: {email}
     'js.admin.locale_es' => 'Spanisch (es)',
     'js.admin.locale_pt_br' => 'Brasilianisches Portugiesisch (pt-br)',
     'js.admin.locale_ar' => 'Arabisch (ar)',
+    'js.admin.locale_it' => 'Italienisch (it)',
     'js.admin.nav.dashboard' => 'Dashboard',
     'js.admin.nav.feeds' => 'Feeds',
     'js.admin.nav.pages' => 'Seiten',

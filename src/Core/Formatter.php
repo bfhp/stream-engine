@@ -172,8 +172,8 @@ class Formatter
 
     public function plural(int $n, string $one, string $few, string $many): string
     {
-        // German and Spanish only distinguish singular and plural.
-        if (preg_match('/^(de|es)(?![a-z])/i', $this->locale) === 1) {
+        // German, Spanish and Italian only distinguish singular and plural.
+        if (preg_match('/^(de|es|it)(?![a-z])/i', $this->locale) === 1) {
             return abs($n) === 1 ? $one : $many;
         }
 
