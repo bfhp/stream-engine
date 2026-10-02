@@ -117,6 +117,20 @@ final class FormatterTest extends TestCase
         $this->assertSame('few', $arabic->plural(103, 'one', 'few', 'many'));
     }
 
+    public function testPluralChoosesPolishForms(): void
+    {
+        $polish = new Formatter(new TranslationManager('pl', 'en'), 'pl');
+
+        $this->assertSame('one', $polish->plural(1, 'one', 'few', 'many'));
+        $this->assertSame('few', $polish->plural(2, 'one', 'few', 'many'));
+        $this->assertSame('few', $polish->plural(24, 'one', 'few', 'many'));
+        $this->assertSame('many', $polish->plural(5, 'one', 'few', 'many'));
+        $this->assertSame('many', $polish->plural(12, 'one', 'few', 'many'));
+        $this->assertSame('many', $polish->plural(21, 'one', 'few', 'many'));
+        $this->assertSame('few', $polish->plural(22, 'one', 'few', 'many'));
+        $this->assertSame('many', $polish->plural(0, 'one', 'few', 'many'));
+    }
+
     public function testPluralChoosesCorrectRussianForm(): void
     {
         [$one, $few, $many] = $this->tm->getAll()['time.minute'];

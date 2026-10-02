@@ -1028,6 +1028,7 @@ return [
     'js.admin.locale_ko' => 'Корейский (ko)',
     'js.admin.locale_zh_cn' => 'Китайский упрощённый (zh-cn)',
     'js.admin.locale_nl' => 'Нидерландский (nl)',
+    'js.admin.locale_pl' => 'Польский (pl)',
     'js.admin.nav.dashboard' => 'Панель управления',
     'js.admin.nav.feeds' => 'Ленты',
     'js.admin.nav.pages' => 'Страницы',

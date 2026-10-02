@@ -194,6 +194,19 @@ class Formatter
             return $many;
         }
 
+        // Polish: only exactly 1 is singular; 2-4 (except 12-14) take the paucal
+        // form, everything else the genitive plural.
+        if (preg_match('/^pl(?![a-z])/i', $this->locale) === 1) {
+            $n = abs($n);
+            if ($n === 1) {
+                return $one;
+            }
+            $mod10 = $n % 10;
+            $mod100 = $n % 100;
+
+            return ($mod10 >= 2 && $mod10 <= 4 && ($mod100 < 12 || $mod100 > 14)) ? $few : $many;
+        }
+
         // French and Portuguese treat both 0 and 1 as singular.
         if (preg_match('/^(fr|pt)(?![a-z])/i', $this->locale) === 1) {
             return abs($n) < 2 ? $one : $many;

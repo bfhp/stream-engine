@@ -19,7 +19,6 @@ Priorities:
 
 ### Localization
 
-- Add complete interface translations for Polish (`pl`).
 - Make every added locale available during installation and in administration
   settings without maintaining a separate hard-coded locale list.
 - Extend locale catalog tests so every catalog has the same required keys as

@@ -992,6 +992,7 @@ return [
     'js.admin.locale_ko' => '韩语 (ko)',
     'js.admin.locale_zh_cn' => '简体中文 (zh-cn)',
     'js.admin.locale_nl' => '荷兰语 (nl)',
+    'js.admin.locale_pl' => '波兰语 (pl)',
     'js.admin.nav.dashboard' => '仪表盘',
     'js.admin.nav.feeds' => '信息流',
     'js.admin.nav.pages' => '页面',

@@ -992,6 +992,7 @@ return [
     'js.admin.locale_ko' => '韓国語 (ko)',
     'js.admin.locale_zh_cn' => '中国語（簡体字）(zh-cn)',
     'js.admin.locale_nl' => 'オランダ語 (nl)',
+    'js.admin.locale_pl' => 'ポーランド語 (pl)',
     'js.admin.nav.dashboard' => 'ダッシュボード',
     'js.admin.nav.feeds' => 'フィード',
     'js.admin.nav.pages' => 'ページ',

@@ -992,6 +992,7 @@ E-Mail: {email}
     'js.admin.locale_ko' => 'Koreanisch (ko)',
     'js.admin.locale_zh_cn' => 'Vereinfachtes Chinesisch (zh-cn)',
     'js.admin.locale_nl' => 'Niederländisch (nl)',
+    'js.admin.locale_pl' => 'Polnisch (pl)',
     'js.admin.nav.dashboard' => 'Dashboard',
     'js.admin.nav.feeds' => 'Feeds',
     'js.admin.nav.pages' => 'Seiten',
