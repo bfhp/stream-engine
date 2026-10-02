@@ -154,6 +154,11 @@ class Formatter
 
     public function plural(int $n, string $one, string $few, string $many): string
     {
+        // Germanic locales only distinguish singular and plural.
+        if (str_starts_with(strtolower($this->locale), 'de')) {
+            return abs($n) === 1 ? $one : $many;
+        }
+
         $n = abs($n) % 100;
         $n1 = $n % 10;
 

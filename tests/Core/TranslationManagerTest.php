@@ -95,7 +95,7 @@ final class TranslationManagerTest extends TestCase
                 || str_starts_with($key, 'admin.page_action.')
         ));
 
-        $this->assertSame(['en', 'ru'], TranslationManager::availableLocales());
+        $this->assertSame(['de', 'en', 'ru'], TranslationManager::availableLocales());
         foreach (TranslationManager::availableLocales() as $locale) {
             $messages = (new TranslationManager($locale, $locale))->getAll();
             foreach ($adminKeys as $key) {

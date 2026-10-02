@@ -19,7 +19,7 @@ Priorities:
 
 ### Localization
 
-- Add complete interface translations for German (`de`), French (`fr`),
+- Add complete interface translations for French (`fr`),
   Spanish (`es`), Brazilian Portuguese (`pt-BR`), Italian (`it`), Japanese
   (`ja`), Korean (`ko`), Simplified Chinese (`zh-CN`), Dutch (`nl`), and Polish
   (`pl`).
