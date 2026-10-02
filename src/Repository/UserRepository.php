@@ -27,6 +27,153 @@ final readonly class UserRepository
     }
 
     /**
+     * Admin-only account catalogue. Unlike the public user list this includes
+     * inactive accounts and private identifiers, so it must only be exposed by
+     * an endpoint which has already enforced ACCESS_ADMIN.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function findForAdmin(
+        int $limit,
+        int $offset,
+        string $query = '',
+        ?string $role = null,
+        ?bool $isActive = null,
+    ): array {
+        [$where, $params] = $this->adminUsersWhere($query, $role, $isActive);
+        $limit = max(1, min($limit, 100));
+        $offset = max(0, $offset);
+
+        $rows = $this->db->fetchAll(
+            "
+            SELECT u.id, u.email, u.nick, u.username, u.role, u.is_active, u.created_at
+            FROM users u
+            $where
+            ORDER BY u.created_at DESC, u.id DESC
+            LIMIT $limit OFFSET $offset
+            ",
+            $params,
+        );
+
+        return array_map($this->mapAdminUser(...), $rows);
+    }
+
+    public function countForAdmin(string $query = '', ?string $role = null, ?bool $isActive = null): int
+    {
+        [$where, $params] = $this->adminUsersWhere($query, $role, $isActive);
+        $row = $this->db->fetchOne("SELECT COUNT(*) AS total FROM users u $where", $params);
+
+        return (int) ($row['total'] ?? 0);
+    }
+
+    /** @return array<string, mixed>|null */
+    public function findForAdminById(int $id): ?array
+    {
+        $row = $this->db->fetchOne(
+            "
+            SELECT u.id, u.email, u.nick, u.username, u.role, u.is_active, u.created_at
+            FROM users u
+            WHERE u.id = ?
+            ",
+            [$id],
+        );
+
+        return $row === null ? null : $this->mapAdminUser($row);
+    }
+
+    public function emailBelongsToAnotherUser(string $email, int $userId): bool
+    {
+        return $this->db->fetchOne(
+            'SELECT 1 FROM users WHERE email = ? AND id <> ? LIMIT 1',
+            [$email, $userId],
+        ) !== null;
+    }
+
+    public function usernameBelongsToAnotherUser(string $username, int $userId): bool
+    {
+        return $this->db->fetchOne(
+            'SELECT 1 FROM users WHERE username = ? AND id <> ? LIMIT 1',
+            [$username, $userId],
+        ) !== null;
+    }
+
+    public function countActiveAdministrators(): int
+    {
+        $row = $this->db->fetchOne(
+            "SELECT COUNT(*) AS total FROM users WHERE role = 'admin' AND is_active = 1"
+        );
+
+        return (int) ($row['total'] ?? 0);
+    }
+
+    /** @param array{email:string,nick:string,username:string,role:string,isActive:bool} $data */
+    public function updateFromAdminData(int $id, array $data): void
+    {
+        $this->db->execute(
+            "
+            UPDATE users
+            SET email = ?, nick = ?, username = ?, role = ?, is_active = ?
+            WHERE id = ?
+            ",
+            [
+                $data['email'],
+                $data['nick'],
+                $data['username'],
+                $data['role'],
+                $data['isActive'] ? 1 : 0,
+                $id,
+            ],
+        );
+
+        // Deactivation takes effect immediately for already signed-in clients.
+        if (! $data['isActive']) {
+            $this->db->execute('DELETE FROM user_sessions WHERE user_id = ?', [$id]);
+        }
+    }
+
+    /** @return array{string, list<mixed>} */
+    private function adminUsersWhere(string $query, ?string $role, ?bool $isActive): array
+    {
+        $conditions = [];
+        $params = [];
+        $query = trim($query);
+
+        if ($query !== '') {
+            $like = '%'.$query.'%';
+            $conditions[] = '(u.email LIKE ? OR u.nick LIKE ? OR u.username LIKE ?'
+                .(ctype_digit($query) ? ' OR u.id = ?' : '').')';
+            array_push($params, $like, $like, $like);
+            if (ctype_digit($query)) {
+                $params[] = (int) $query;
+            }
+        }
+        if ($role !== null) {
+            $conditions[] = 'u.role = ?';
+            $params[] = $role;
+        }
+        if ($isActive !== null) {
+            $conditions[] = 'u.is_active = ?';
+            $params[] = $isActive ? 1 : 0;
+        }
+
+        return [$conditions === [] ? '' : 'WHERE '.implode(' AND ', $conditions), $params];
+    }
+
+    /** @param array<string, mixed> $row @return array<string, mixed> */
+    private function mapAdminUser(array $row): array
+    {
+        return [
+            'id' => (int) $row['id'],
+            'email' => (string) $row['email'],
+            'nick' => (string) ($row['nick'] ?? ''),
+            'username' => (string) ($row['username'] ?? ''),
+            'role' => (string) $row['role'],
+            'isActive' => (bool) $row['is_active'],
+            'createdAt' => (int) ($row['created_at'] ?? 0),
+        ];
+    }
+
+    /**
      * Uses index: PRIMARY(id)
      * Uses index: PRIMARY(id) on roles join.
      */

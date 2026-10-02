@@ -12,6 +12,7 @@ use StreamEngine\Core\Formatter;
 use StreamEngine\Core\ModuleRegistry;
 use StreamEngine\Core\PageTree;
 use StreamEngine\Core\PdoDatabase;
+use StreamEngine\Core\QueryParams;
 use StreamEngine\Core\RequestContext;
 use StreamEngine\Core\Security;
 use StreamEngine\Core\TranslationManager;
@@ -19,6 +20,7 @@ use StreamEngine\Domain\Page;
 use StreamEngine\Repository\PageRepository;
 use StreamEngine\Repository\MenuRepository;
 use StreamEngine\Repository\SettingsRepository;
+use StreamEngine\Repository\UserRepository;
 use StreamEngine\Service\AccessService;
 use StreamEngine\View\ViewModel;
 
@@ -53,6 +55,7 @@ class AdminController extends AbstractController
     private readonly PageRepository $pageRepository;
     private readonly MenuRepository $menuRepository;
     private readonly SettingsRepository $settingsRepository;
+    private readonly UserRepository $userRepository;
 
     public function __construct(
         PdoDatabase $db,
@@ -65,6 +68,7 @@ class AdminController extends AbstractController
         $this->pageRepository = new PageRepository($db);
         $this->menuRepository = new MenuRepository($db);
         $this->settingsRepository = new SettingsRepository($db);
+        $this->userRepository = new UserRepository($db);
     }
 
     /**
@@ -116,6 +120,12 @@ class AdminController extends AbstractController
                 break;
             case 'admin.setting':
                 $this->handleSettingRequest((string) ($args['key'] ?? ''));
+                break;
+            case 'admin.users':
+                $this->handleUsersRequest();
+                break;
+            case 'admin.user':
+                $this->handleUserRequest((int) ($args['id'] ?? 0));
                 break;
             default:
                 parent::callApi($page, $args);
@@ -219,6 +229,171 @@ class AdminController extends AbstractController
             )
         );
 
+        $usersPageId = $pageTree->getMaxPageId();
+        $pageTree->add(
+            Page::api(
+                id: $usersPageId,
+                parentId: $adminApiPageId,
+                pattern: 'users',
+                requestMethods: ['GET'],
+                action: 'admin.users',
+                accessRule: AccessService::ACCESS_ADMIN,
+            )
+        );
+
+        $userPageId = $pageTree->getMaxPageId();
+        $pageTree->add(
+            Page::api(
+                id: $userPageId,
+                parentId: $usersPageId,
+                pattern: '{id:\d+}',
+                requestMethods: ['GET', 'PATCH'],
+                action: 'admin.user',
+                accessRule: AccessService::ACCESS_ADMIN,
+            )
+        );
+
+    }
+
+    /** @throws ValidationException */
+    private function handleUsersRequest(): void
+    {
+        $query = QueryParams::fromGlobals();
+        $page = max(1, $query->int('page', 1));
+        $perPage = 25;
+        $role = $query->trimmed('role');
+        if ($role !== '' && ! in_array($role, AccessService::ROLES, true)) {
+            throw new ValidationException('Invalid role filter');
+        }
+
+        $status = $query->trimmed('status');
+        if (! in_array($status, ['', 'active', 'inactive'], true)) {
+            throw new ValidationException('Invalid status filter');
+        }
+
+        $search = $query->trimmed('q');
+        if (mb_strlen($search) > 255) {
+            throw new ValidationException('Search query must not exceed 255 characters');
+        }
+
+        $isActive = match ($status) {
+            'active' => true,
+            'inactive' => false,
+            default => null,
+        };
+        $total = $this->userRepository->countForAdmin($search, $role !== '' ? $role : null, $isActive);
+        $totalPages = max(1, (int) ceil($total / $perPage));
+        $page = min($page, $totalPages);
+
+        echo Formatter::json([
+            'data' => $this->userRepository->findForAdmin(
+                $perPage,
+                ($page - 1) * $perPage,
+                $search,
+                $role !== '' ? $role : null,
+                $isActive,
+            ),
+            'pagination' => [
+                'currentPage' => $page,
+                'totalPages' => $totalPages,
+                'total' => $total,
+                'limit' => $perPage,
+            ],
+            'meta' => [
+                'currentUserId' => $this->context->user->id,
+                'systemUserId' => \StreamEngine\Domain\User::SYSTEM_USER_ID,
+            ],
+        ]);
+    }
+
+    /**
+     * @throws NotFoundException
+     * @throws ValidationException
+     * @throws ForbiddenException
+     */
+    private function handleUserRequest(int $id): void
+    {
+        if ($id <= 0) {
+            throw new NotFoundException('User not found');
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
+            Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
+        }
+
+        $existing = $this->userRepository->findForAdminById($id);
+        if ($existing === null) {
+            throw new NotFoundException('User not found');
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'PATCH') {
+            echo Formatter::json($existing);
+
+            return;
+        }
+
+        if ($id === \StreamEngine\Domain\User::SYSTEM_USER_ID) {
+            throw new ForbiddenException('The system account cannot be changed');
+        }
+
+        $data = $this->validatedUserData($this->jsonBody(), $existing);
+        $changesPrivileges = $data['role'] !== $existing['role']
+            || $data['isActive'] !== $existing['isActive'];
+
+        if ($id === $this->context->user->id && $changesPrivileges) {
+            throw new ForbiddenException('You cannot change your own role or active status');
+        }
+
+        if ($existing['role'] === AccessService::ROLE_ADMIN
+            && $existing['isActive']
+            && ($data['role'] !== AccessService::ROLE_ADMIN || ! $data['isActive'])
+            && $this->userRepository->countActiveAdministrators() <= 1) {
+            throw new ValidationException('The last active administrator cannot be demoted or deactivated');
+        }
+
+        if ($this->userRepository->emailBelongsToAnotherUser($data['email'], $id)) {
+            throw new ValidationException('Email is already in use');
+        }
+        if ($this->userRepository->usernameBelongsToAnotherUser($data['username'], $id)) {
+            throw new ValidationException('Username is already in use');
+        }
+
+        $this->userRepository->updateFromAdminData($id, $data);
+
+        echo Formatter::json([...$existing, ...$data, 'id' => $id]);
+    }
+
+    /**
+     * @param array<string, mixed> $input
+     * @param array<string, mixed> $existing
+     * @return array{email:string,nick:string,username:string,role:string,isActive:bool}
+     * @throws ValidationException
+     */
+    private function validatedUserData(array $input, array $existing): array
+    {
+        $email = trim((string) ($input['email'] ?? $existing['email']));
+        $nick = trim((string) ($input['nick'] ?? $existing['nick']));
+        $username = trim((string) ($input['username'] ?? $existing['username']));
+        $role = $input['role'] ?? $existing['role'];
+        $isActive = $input['isActive'] ?? $existing['isActive'];
+
+        if (! filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 255) {
+            throw new ValidationException('Invalid email address');
+        }
+        if (mb_strlen($nick) > 50) {
+            throw new ValidationException('Display name must not exceed 50 characters');
+        }
+        if (! preg_match('/\A[A-Za-z0-9][A-Za-z0-9_-]{2,29}\z/D', $username)) {
+            throw new ValidationException('Username must be 3-30 characters using letters, numbers, _ or -');
+        }
+        if (! is_string($role) || ! in_array($role, AccessService::ROLES, true)) {
+            throw new ValidationException('Invalid user role');
+        }
+        if (! is_bool($isActive)) {
+            throw new ValidationException('Active status must be a boolean');
+        }
+
+        return compact('email', 'nick', 'username', 'role', 'isActive');
     }
 
     /**

@@ -34,6 +34,7 @@ final class AdminControllerTest extends TestCase
         );
 
         PhpInputStreamMock::restore();
+        $_GET = [];
 
         $this->writes = [];
     }
@@ -51,6 +52,7 @@ final class AdminControllerTest extends TestCase
         int $lastInsertId = 77,
         ?array $fetchOneRows = null,
         array $feedTypes = [],
+        int $currentUserId = 1,
     ): AdminController {
         $db = $this->createStub(PdoDatabase::class);
 
@@ -102,7 +104,7 @@ final class AdminControllerTest extends TestCase
         return new AdminController(
             $db,
             new RequestContext(
-                new User(id: 1, email: 'admin@example.com', role: AccessService::ROLE_ADMIN),
+                new User(id: $currentUserId, email: 'admin@example.com', role: AccessService::ROLE_ADMIN),
                 new DateTimeZone('UTC')
             ),
             $accessService,
@@ -800,6 +802,203 @@ final class AdminControllerTest extends TestCase
     }
 
     /* ===============================
+       User management API
+    =============================== */
+
+    public function testUserListReturnsPrivateAdminRowsAndPagination(): void
+    {
+        $module = $this->makeModule(
+            rows: [$this->adminUserRow()],
+            fetchOneRows: [['total' => 1]],
+            currentUserId: 9,
+        );
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_GET = ['q' => 'alice', 'role' => 'moderator', 'status' => 'active', 'page' => '3'];
+
+        $response = $this->callAndDecode($module, $this->makeApiPage('admin.users', ['GET']));
+
+        $this->assertSame('alice@example.com', $response['data'][0]['email']);
+        $this->assertTrue($response['data'][0]['isActive']);
+        $this->assertSame(1, $response['pagination']['total']);
+        $this->assertSame(1, $response['pagination']['currentPage']);
+        $this->assertSame(9, $response['meta']['currentUserId']);
+        $this->assertSame(User::SYSTEM_USER_ID, $response['meta']['systemUserId']);
+    }
+
+    public function testInvalidUserListFilterIsRejected(): void
+    {
+        $module = $this->makeModule();
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_GET = ['role' => 'owner'];
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('Invalid role filter');
+        $module->callApi($this->makeApiPage('admin.users', ['GET']));
+    }
+
+    public function testUserUpdateRequiresCsrfBeforeReadingOrSaving(): void
+    {
+        $module = $this->makeModule(fetchOneRows: [$this->adminUserRow()]);
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        PhpInputStreamMock::register('{}');
+
+        try {
+            $module->callApi($this->makeApiPage('admin.user', ['GET', 'PATCH']), ['id' => 7]);
+            $this->fail('Missing CSRF token must be rejected.');
+        } catch (ValidationException) {
+            $this->assertSame([], $this->writes);
+        }
+    }
+
+    public function testValidUserProfileAndRoleChangesAreSaved(): void
+    {
+        $module = $this->makeModule(
+            fetchOneRows: [$this->adminUserRow(), null, null],
+            currentUserId: 9,
+        );
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode([
+            'email' => 'new@example.com',
+            'nick' => 'New name',
+            'username' => 'new_name',
+            'role' => 'moderator',
+            'isActive' => true,
+        ]));
+
+        $response = $this->callAndDecode(
+            $module,
+            $this->makeApiPage('admin.user', ['GET', 'PATCH']),
+            ['id' => 7],
+        );
+
+        $this->assertSame('new@example.com', $response['email']);
+        $this->assertSame('moderator', $response['role']);
+        $this->assertCount(1, $this->writes);
+        $this->assertStringContainsString('UPDATE users', $this->writes[0][0]);
+        $this->assertSame(['new@example.com', 'New name', 'new_name', 'moderator', 1, 7], $this->writes[0][1]);
+    }
+
+    public function testDeactivatingAUserRevokesExistingSessions(): void
+    {
+        $module = $this->makeModule(
+            fetchOneRows: [$this->adminUserRow(), null, null],
+            currentUserId: 9,
+        );
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode(['isActive' => false]));
+
+        $this->callAndDecode(
+            $module,
+            $this->makeApiPage('admin.user', ['GET', 'PATCH']),
+            ['id' => 7],
+        );
+
+        $this->assertCount(2, $this->writes);
+        $this->assertStringContainsString('DELETE FROM user_sessions', $this->writes[1][0]);
+        $this->assertSame([7], $this->writes[1][1]);
+    }
+
+    public function testSystemAccountCannotBeChanged(): void
+    {
+        $system = $this->adminUserRow();
+        $system['id'] = User::SYSTEM_USER_ID;
+        $module = $this->makeModule(fetchOneRows: [$system], currentUserId: 9);
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode(['nick' => 'Changed']));
+
+        $this->expectException(ForbiddenException::class);
+        $this->expectExceptionMessage('system account');
+        $module->callApi(
+            $this->makeApiPage('admin.user', ['GET', 'PATCH']),
+            ['id' => User::SYSTEM_USER_ID],
+        );
+    }
+
+    public function testAdministratorCannotChangeTheirOwnPrivileges(): void
+    {
+        $self = $this->adminUserRow();
+        $self['role'] = 'admin';
+        $module = $this->makeModule(fetchOneRows: [$self], currentUserId: 7);
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode(['role' => 'user']));
+
+        $this->expectException(ForbiddenException::class);
+        $this->expectExceptionMessage('own role');
+        $module->callApi($this->makeApiPage('admin.user', ['GET', 'PATCH']), ['id' => 7]);
+    }
+
+    public function testLastActiveAdministratorCannotBeDeactivated(): void
+    {
+        $administrator = $this->adminUserRow();
+        $administrator['role'] = 'admin';
+        $module = $this->makeModule(
+            fetchOneRows: [$administrator, ['total' => 1]],
+            currentUserId: 9,
+        );
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode(['isActive' => false]));
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('last active administrator');
+        $module->callApi($this->makeApiPage('admin.user', ['GET', 'PATCH']), ['id' => 7]);
+    }
+
+    #[DataProvider('invalidAdminUserData')]
+    public function testInvalidUserChangesAreRejected(array $change): void
+    {
+        $module = $this->makeModule(fetchOneRows: [$this->adminUserRow()], currentUserId: 9);
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode($change));
+
+        try {
+            $module->callApi($this->makeApiPage('admin.user', ['GET', 'PATCH']), ['id' => 7]);
+            $this->fail('Invalid user data must be rejected.');
+        } catch (ValidationException) {
+            $this->assertSame([], $this->writes);
+        }
+    }
+
+    public static function invalidAdminUserData(): array
+    {
+        return [
+            'invalid email' => [['email' => 'not-an-email']],
+            'invalid username' => [['username' => 'no spaces allowed']],
+            'invalid role' => [['role' => 'owner']],
+            'non-boolean status' => [['isActive' => 1]],
+            'long display name' => [['nick' => str_repeat('x', 51)]],
+        ];
+    }
+
+    public function testUserApiIsRefusedToNonAdminsEvenWhenTheRouteIsCalledDirectly(): void
+    {
+        $module = $this->makeModule(isAdmin: false);
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+
+        $this->expectException(ForbiddenException::class);
+        $module->callApi($this->makeApiPage('admin.users', ['GET']));
+    }
+
+    /** @return array<string, mixed> */
+    private function adminUserRow(): array
+    {
+        return [
+            'id' => 7,
+            'email' => 'alice@example.com',
+            'nick' => 'Alice',
+            'username' => 'alice',
+            'role' => 'user',
+            'is_active' => 1,
+            'created_at' => 1_700_000_000,
+        ];
+    }
+
+    /* ===============================
        show()
     =============================== */
 
@@ -836,6 +1035,8 @@ final class AdminControllerTest extends TestCase
             'admin.menu' => ['GET', 'PATCH', 'DELETE'],
             'admin.settings' => ['GET', 'POST'],
             'admin.setting' => ['GET', 'PATCH'],
+            'admin.users' => ['GET'],
+            'admin.user' => ['GET', 'PATCH'],
         ] as $action => $methods) {
             $page = $tree->findByAction($action);
 
@@ -875,6 +1076,8 @@ final class AdminControllerTest extends TestCase
         $menu = (new Router($tree))->resolve('/api/v1/admin/menus/8');
         $settings = (new Router($tree))->resolve('/api/v1/admin/settings');
         $setting = (new Router($tree))->resolve('/api/v1/admin/settings/site_name');
+        $users = (new Router($tree))->resolve('/api/v1/admin/users');
+        $user = (new Router($tree))->resolve('/api/v1/admin/users/42');
 
         $this->assertSame('admin.pages', $list['page']->action ?? null);
         $this->assertSame('admin.page', $item['page']->action ?? null);
@@ -886,5 +1089,8 @@ final class AdminControllerTest extends TestCase
         $this->assertSame('admin.settings', $settings['page']->action ?? null);
         $this->assertSame('admin.setting', $setting['page']->action ?? null);
         $this->assertSame(['key' => 'site_name'], $setting['params']);
+        $this->assertSame('admin.users', $users['page']->action ?? null);
+        $this->assertSame('admin.user', $user['page']->action ?? null);
+        $this->assertSame(['id' => '42'], $user['params']);
     }
 }

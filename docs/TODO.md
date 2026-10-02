@@ -94,19 +94,6 @@ operational overview of the site.
 - Cover the dashboard API, access rules, and rendering of each state with
   tests.
 
-### Admin: user management
-
-`Users.tsx` is currently only a placeholder; administrators cannot manage
-users through the admin interface.
-
-- Add a paginated, searchable user list with relevant status and role filters.
-- Define and implement the permitted account operations, including profile and
-  role changes, activation/deactivation, and safe handling of privileged or
-  self-targeted accounts.
-- Enforce every operation on the server independently of the UI and cover
-  authorization, validation, audit-sensitive actions, and list states with
-  tests.
-
 ### Admin: interface localization
 
 The admin interface is only partially translated: several pages and navigation
