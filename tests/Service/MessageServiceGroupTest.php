@@ -31,9 +31,9 @@ use StreamEngine\Service\MessageService;
  * invisible in every list, reachable by nobody, and impossible to delete
  * through the interface.
  *
- * One thing pinned as a decision rather than approved: in a group, **any
- * participant may remove any other**. There is no owner or moderator check
- * here - see `testAnyParticipantCanRemoveAnyOther`.
+ * The creator becomes the first administrator. Administrators manage group
+ * membership, ordinary participants may only remove themselves, and the
+ * earliest remaining participant takes over if the last administrator leaves.
  */
 final class MessageServiceGroupTest extends TestCase
 {
@@ -42,16 +42,48 @@ final class MessageServiceGroupTest extends TestCase
 
     /**
      * @param list<int>                 $participantIds who isParticipant() says yes for
+     * @param list<int>                 $adminIds       participants whose role is admin
      * @param array<string, mixed>|null $meta           what getMeta() returns
      */
     private function makeService(
         array $participantIds = [],
-        ?array $meta = ['id' => '11', 'direct_key' => null]
+        ?array $meta = ['id' => '11', 'direct_key' => null],
+        array $adminIds = [7]
     ): MessageService {
         $db = $this->createStub(PdoDatabase::class);
 
         $db->method('fetchOne')->willReturnCallback(
-            static function (string $sql, array $params = []) use ($participantIds, $meta): ?array {
+            static function (string $sql, array $params = []) use ($participantIds, $adminIds, $meta): ?array {
+                if (str_contains($sql, 'SELECT role')) {
+                    $userId = (int) ($params[1] ?? 0);
+                    if (! in_array($userId, $participantIds, true)) {
+                        return null;
+                    }
+
+                    return ['role' => in_array($userId, $adminIds, true) ? 'admin' : 'member'];
+                }
+
+                if (str_contains($sql, "role = 'admin'")) {
+                    $excludedId = (int) ($params[1] ?? 0);
+                    foreach ($adminIds as $adminId) {
+                        if ($adminId !== $excludedId && in_array($adminId, $participantIds, true)) {
+                            return ['1' => '1'];
+                        }
+                    }
+
+                    return null;
+                }
+
+                if (str_contains($sql, 'ORDER BY joined_at')) {
+                    $excludedId = (int) ($params[1] ?? 0);
+                    $others = array_values(array_filter(
+                        $participantIds,
+                        static fn (int $id): bool => $id !== $excludedId
+                    ));
+
+                    return $others === [] ? null : ['user_id' => (string) min($others)];
+                }
+
                 if (str_contains($sql, 'SELECT 1')) {
                     // isParticipant($conversationId, $userId) - params[1] is
                     // whose membership is being asked about.
@@ -131,6 +163,14 @@ final class MessageServiceGroupTest extends TestCase
         $insert = $this->writesTo('conversation_participants')[0];
 
         self::assertContains(7, array_map('intval', $insert[1]));
+    }
+
+    public function testTheCreatorBecomesTheGroupAdministrator(): void
+    {
+        $this->makeService()->createGroup(7, [3, 9], 'Разработка');
+
+        $roleUpdate = $this->writesTo('conversation_participants')[1];
+        self::assertSame(['admin', 11, 7], $roleUpdate[1]);
     }
 
     public function testTheCreatorIsNotAddedTwiceIfTheyAreInTheListAlready(): void
@@ -230,6 +270,13 @@ final class MessageServiceGroupTest extends TestCase
         $this->expectException(ForbiddenException::class);
 
         $this->makeService(participantIds: [3, 9])->addParticipants(11, 7, [5]);
+    }
+
+    public function testARegularParticipantMayNotAddPeople(): void
+    {
+        $this->expectException(ForbiddenException::class);
+
+        $this->makeService(participantIds: [3, 7, 9])->addParticipants(11, 9, [5]);
     }
 
     public function testMembershipIsCheckedBeforeAnythingIsLoaded(): void
@@ -358,18 +405,16 @@ final class MessageServiceGroupTest extends TestCase
         self::assertSame([11, 3], array_map('intval', $delete[1]));
     }
 
-    /**
-     * Any participant may remove any other - there is no owner or moderator
-     * check on this path. Recorded as it stands rather than approved: for a
-     * private group of people who chose each other it is defensible, and for a
-     * larger one it means the newest member can empty the room. Adding a role
-     * check would be a behaviour change, so it belongs in a decision rather
-     * than in a test that quietly assumes the current answer is right.
-     */
-    public function testAnyParticipantCanRemoveAnyOther(): void
+    public function testARegularParticipantCannotRemoveAnotherParticipant(): void
     {
-        // 9 is not the creator and has no special role; 3 is removed anyway.
+        $this->expectException(ForbiddenException::class);
+
         $this->makeService(participantIds: [3, 7, 9])->removeParticipant(11, 9, 3);
+    }
+
+    public function testAnAdministratorCanRemoveAnotherParticipant(): void
+    {
+        $this->makeService(participantIds: [3, 7, 9])->removeParticipant(11, 7, 3);
 
         self::assertNotSame([], $this->writesTo('DELETE FROM conversation_participants'));
     }
@@ -383,5 +428,17 @@ final class MessageServiceGroupTest extends TestCase
         $delete = $this->writesTo('DELETE FROM conversation_participants')[0];
 
         self::assertSame([11, 7], array_map('intval', $delete[1]));
+    }
+
+    public function testTheLastAdministratorHandsOverBeforeLeaving(): void
+    {
+        $this->makeService(participantIds: [3, 7, 9])->removeParticipant(11, 7, 7);
+
+        $roleUpdates = array_values(array_filter(
+            $this->writesTo('conversation_participants'),
+            static fn (array $write): bool => str_contains($write[0], 'SET role')
+        ));
+
+        self::assertSame(['admin', 11, 3], $roleUpdates[0][1]);
     }
 }

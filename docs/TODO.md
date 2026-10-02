@@ -18,11 +18,6 @@ Priorities:
 
 ## P1
 
-### Authorization and roles
-
-- Decide the rule for group conversations: currently, any participant can
-  remove any other participant.
-
 ### Test coverage
 
 First obtain a fresh `composer test:coverage` report; do not use numbers from

@@ -51,6 +51,7 @@ type ApiConversationDetail = {
     other_user_id: number | null;
     other_user_online: boolean | null;
     participants: ApiParticipant[];
+    can_manage_participants: boolean;
     last_message_id: number;
     last_read_message_id: number;
     unread_count: number;
@@ -1504,6 +1505,11 @@ export function initMessages() {
 
         groupTitleEl.textContent = activeDetail.title;
         groupCountEl.textContent = transChoiceWithCount('js.common.participant', activeDetail.participants.length);
+        groupAddToggleBtn.hidden = !activeDetail.can_manage_participants;
+        if (!activeDetail.can_manage_participants) {
+            groupAddOpen = false;
+            groupAddPanel.hidden = true;
+        }
 
         groupMembersEl.innerHTML = activeDetail.participants.map((p) => {
             const isMe = p.id === currentUserId;
@@ -1513,7 +1519,7 @@ export function initMessages() {
                     <div class="msgr-member-body">
                         <div class="msgr-member-name">${cms.escapeHtml(p.displayName)}${isMe ? trans('js.messenger.you_parenthetical') : ''}</div>
                     </div>
-                    ${!isMe ? `<button type="button" class="msgr-member-remove" data-remove-member="${p.id}" title="${trans('js.common.remove')}"><i class="bi bi-x-lg"></i></button>` : ''}
+                    ${!isMe && activeDetail.can_manage_participants ? `<button type="button" class="msgr-member-remove" data-remove-member="${p.id}" title="${trans('js.common.remove')}"><i class="bi bi-x-lg"></i></button>` : ''}
                 </div>`;
         }).join('');
     }

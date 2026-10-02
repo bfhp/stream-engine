@@ -31,6 +31,59 @@ final readonly class ParticipantRepository
     /**
      * Uses index: PRIMARY(conversation_id, user_id)
      */
+    public function getRole(int $conversationId, int $userId): ?string
+    {
+        $row = $this->db->fetchOne(
+            "SELECT role
+             FROM conversation_participants
+             WHERE conversation_id = ? AND user_id = ?",
+            [$conversationId, $userId]
+        );
+
+        return $row !== null ? (string) $row['role'] : null;
+    }
+
+    /**
+     * Uses index: PRIMARY(conversation_id, user_id)
+     */
+    public function setRole(int $conversationId, int $userId, string $role): void
+    {
+        $this->db->execute(
+            "UPDATE conversation_participants
+             SET role = ?
+             WHERE conversation_id = ? AND user_id = ?",
+            [$role, $conversationId, $userId]
+        );
+    }
+
+    public function hasOtherAdmin(int $conversationId, int $userId): bool
+    {
+        return $this->db->fetchOne(
+            "SELECT 1
+             FROM conversation_participants
+             WHERE conversation_id = ? AND user_id != ? AND role = 'admin'
+             LIMIT 1",
+            [$conversationId, $userId]
+        ) !== null;
+    }
+
+    public function findOldestOtherUserId(int $conversationId, int $userId): ?int
+    {
+        $row = $this->db->fetchOne(
+            "SELECT user_id
+             FROM conversation_participants
+             WHERE conversation_id = ? AND user_id != ?
+             ORDER BY joined_at, user_id
+             LIMIT 1",
+            [$conversationId, $userId]
+        );
+
+        return $row !== null ? (int) $row['user_id'] : null;
+    }
+
+    /**
+     * Uses index: PRIMARY(conversation_id, user_id)
+     */
     public function getUserIds(int $conversationId): array
     {
         $rows = $this->db->fetchAll(

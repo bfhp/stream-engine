@@ -151,6 +151,7 @@ final readonly class MessageService
         try {
             $conversationId = $this->conversations->createGroup($title);
             $this->participants->addUsersIgnore($conversationId, $userIds);
+            $this->participants->setRole($conversationId, $ownerId, 'admin');
             $this->db->commit();
             return $conversationId;
         } catch (Throwable $e) {
@@ -263,6 +264,8 @@ final readonly class MessageService
             'other_user_id' => $otherUserId,
             'other_user_online' => $isGroup ? null : isset($online[$otherUserId]),
             'participants' => $participants,
+            'can_manage_participants' => $isGroup
+                && $this->participants->getRole($conversationId, $userId) === 'admin',
             'last_message_id' => $lastMessageId,
             'last_read_message_id' => $lastReadId,
             'unread_count' => $unreadCount,
@@ -293,8 +296,9 @@ final readonly class MessageService
      */
     public function addParticipants(int $conversationId, int $userId, array $userIds): void
     {
-        // 🔒 access
-        if (!$this->participants->isParticipant($conversationId, $userId)) {
+        // Adding somebody exposes the group's existing history, so membership
+        // management belongs to group administrators.
+        if ($this->participants->getRole($conversationId, $userId) !== 'admin') {
             throw new ForbiddenException('Access denied');
         }
 
@@ -327,8 +331,8 @@ final readonly class MessageService
      */
     public function removeParticipant(int $conversationId, int $actorId, int $targetUserId): void
     {
-        // current user must be a member
-        if (!$this->participants->isParticipant($conversationId, $actorId)) {
+        $actorRole = $this->participants->getRole($conversationId, $actorId);
+        if ($actorRole === null) {
             throw new ForbiddenException('Access denied');
         }
 
@@ -343,9 +347,38 @@ final readonly class MessageService
             throw new ForbiddenException('Cannot modify direct conversation');
         }
 
-        // checking that the user is participant
-        if (!$this->participants->isParticipant($conversationId, $targetUserId)) {
+        $targetRole = $this->participants->getRole($conversationId, $targetUserId);
+        if ($targetRole === null) {
             return; // already removed — okay
+        }
+
+        // Everyone may leave a group, but only an administrator may remove
+        // somebody else.
+        if ($targetUserId !== $actorId && $actorRole !== 'admin') {
+            throw new ForbiddenException('Only group administrators may remove participants');
+        }
+
+        // Keep the group manageable without a separate ownership-transfer
+        // flow: if the last administrator leaves, the earliest remaining
+        // participant takes over.
+        if ($targetUserId === $actorId
+            && $targetRole === 'admin'
+            && ! $this->participants->hasOtherAdmin($conversationId, $actorId)
+        ) {
+            $successorId = $this->participants->findOldestOtherUserId($conversationId, $actorId);
+            if ($successorId !== null) {
+                $this->db->begin();
+                try {
+                    $this->participants->setRole($conversationId, $successorId, 'admin');
+                    $this->participants->removeUser($conversationId, $targetUserId);
+                    $this->db->commit();
+                } catch (Throwable $e) {
+                    $this->db->rollback();
+                    throw $e;
+                }
+
+                return;
+            }
         }
 
         $this->participants->removeUser($conversationId, $targetUserId);

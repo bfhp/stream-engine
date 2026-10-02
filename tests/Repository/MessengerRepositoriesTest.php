@@ -250,6 +250,43 @@ final class MessengerRepositoriesTest extends TestCase
         $this->assertFalse($absent->isParticipant(5, 99));
     }
 
+    public function testParticipantRoleIsReadAndUpdatedForOneMembership(): void
+    {
+        $repository = new ParticipantRepository($this->db(['role' => 'admin']));
+
+        $this->assertSame('admin', $repository->getRole(5, 7));
+        $repository->setRole(5, 7, 'member');
+
+        [$sql, $params] = $this->only($this->writes);
+        $this->assertStringContainsString('SET role = ?', $sql);
+        $this->assertSame(['member', 5, 7], $params);
+    }
+
+    public function testMissingParticipantHasNoRole(): void
+    {
+        $this->assertNull((new ParticipantRepository($this->db()))->getRole(5, 99));
+    }
+
+    public function testOtherAdministratorLookupExcludesTheDepartingUser(): void
+    {
+        $repository = new ParticipantRepository($this->db(['1' => '1']));
+
+        $this->assertTrue($repository->hasOtherAdmin(5, 7));
+        [$sql, $params] = $this->only($this->reads);
+        $this->assertStringContainsString("user_id != ? AND role = 'admin'", $sql);
+        $this->assertSame([5, 7], $params);
+    }
+
+    public function testOldestRemainingParticipantIsSelectedAsSuccessor(): void
+    {
+        $repository = new ParticipantRepository($this->db(['user_id' => '3']));
+
+        $this->assertSame(3, $repository->findOldestOtherUserId(5, 7));
+        [$sql, $params] = $this->only($this->reads);
+        $this->assertStringContainsString('ORDER BY joined_at, user_id', $sql);
+        $this->assertSame([5, 7], $params);
+    }
+
     /**
      * Typing is a 5-second TTL rather than a start/stop protocol - nothing has
      * to send "stopped typing", and a client that vanishes mid-word stops
