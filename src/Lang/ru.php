@@ -1210,6 +1210,10 @@ return [
     'js.admin.themes.load_failed' => 'Не удалось загрузить темы',
     'js.admin.themes.save_failed' => 'Не удалось сохранить тему',
     'js.admin.themes.saved' => 'Тема сохранена',
+    'js.admin.themes.active' => 'Активна',
+    'js.admin.themes.select' => 'Выбрать тему «{name}»',
+    'js.admin.themes.configure' => 'Настройки темы «{name}»',
+    'js.admin.themes.no_settings' => 'У этой темы нет настраиваемых параметров.',
 
     'js.admin.widgets.title' => 'Виджеты',
     'js.admin.widgets.placement' => 'Область',

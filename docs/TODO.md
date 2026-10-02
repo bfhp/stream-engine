@@ -20,7 +20,7 @@ Priorities:
 
 The following checks were green at the time of the review:
 
-- `composer test` — 2,112 tests, 8,616 assertions, 7 skipped;
+- `composer test` — 2,112 tests, 8,628 assertions, 7 skipped;
 - `npm test` — 28 files, 477 tests;
 - `npm run typecheck`;
 - `npm run build`;

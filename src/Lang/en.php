@@ -1174,6 +1174,10 @@ Email: {email}
     'js.admin.themes.load_failed' => 'Failed to load themes',
     'js.admin.themes.save_failed' => 'Failed to save theme',
     'js.admin.themes.saved' => 'Theme saved',
+    'js.admin.themes.active' => 'Active',
+    'js.admin.themes.select' => 'Select theme {name}',
+    'js.admin.themes.configure' => 'Settings for {name}',
+    'js.admin.themes.no_settings' => 'This theme has no configurable settings.',
 
     'js.admin.widgets.title' => 'Widgets',
     'js.admin.widgets.placement' => 'Placement',
