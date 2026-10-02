@@ -26,9 +26,9 @@
                     height="120"
                 >
 
-                <h2 class="h4 mb-0">{{ profileUser.getDisplayName() }}</h2>
+                <h2 class="h4 mb-0"><bdi>{{ profileUser.getDisplayName() }}</bdi></h2>
                 {% if profileUser.username %}
-                    <p class="text-body-secondary small mb-2">@{{ profileUser.username }}</p>
+                    <p class="text-body-secondary small mb-2">@<bdi>{{ profileUser.username }}</bdi></p>
                 {% endif %}
 
                 {% if canViewProfilePresence is not defined or canViewProfilePresence %}

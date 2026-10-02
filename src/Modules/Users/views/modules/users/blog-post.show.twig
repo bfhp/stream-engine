@@ -15,9 +15,9 @@
                 <div>
                     <div class="fw-semibold">
                         {% if authorUrl %}
-                            <a href="{{ authorUrl }}">{{ feed.authorDisplayName }}</a>
+                            <a href="{{ authorUrl }}"><bdi>{{ feed.authorDisplayName }}</bdi></a>
                         {% else %}
-                            {{ feed.authorDisplayName }}
+                            <bdi>{{ feed.authorDisplayName }}</bdi>
                         {% endif %}
                     </div>
                     {% if feed.createdAtLabel %}
@@ -61,7 +61,7 @@
             {% endif %}
         </div>
 
-        <h1 class="h2 mb-3">{{ feed.title }}</h1>
+        <h1 class="h2 mb-3" dir="auto"><bdi>{{ feed.title }}</bdi></h1>
     {% endblock %}
 
     {% block blog_post_image %}
@@ -71,7 +71,7 @@
     {% endblock %}
 
     {% block blog_post_content %}
-        <div class="trix-content">
+        <div class="trix-content" dir="auto">
             {{ feed.content|raw }}
         </div>
     {% endblock %}

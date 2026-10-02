@@ -25,7 +25,7 @@
                         <div class="d-flex align-items-center gap-2" data-user-row data-user-id="{{ subscriber.id }}">
                             <a href="{{ subscriber.url ?: '#' }}" class="d-flex align-items-center gap-2 text-body text-decoration-none flex-grow-1">
                                 <img src="{{ subscriber.avatarUrl }}" alt="" class="rounded-circle bg-body-secondary object-fit-cover flex-shrink-0" width="36" height="36">
-                                <span class="small">{{ subscriber.displayName }}</span>
+                                <span class="small"><bdi>{{ subscriber.displayName }}</bdi></span>
                             </a>
                             <button type="button" class="btn btn-sm btn-outline-success" data-manage-approve>
                                 <i class="bi bi-check-lg me-1"></i>{{ trans('view.users.community.manage.members.02') }}
@@ -50,7 +50,7 @@
                         <div class="d-flex align-items-center gap-2" data-user-row data-user-id="{{ member.id }}">
                             <a href="{{ member.url ?: '#' }}" class="d-flex align-items-center gap-2 text-body text-decoration-none flex-grow-1">
                                 <img src="{{ member.avatarUrl }}" alt="" class="rounded-circle bg-body-secondary object-fit-cover flex-shrink-0" width="36" height="36">
-                                <span class="small">{{ member.displayName }}</span>
+                                <span class="small"><bdi>{{ member.displayName }}</bdi></span>
                                 <span class="badge text-bg-secondary">{{ member.roleLabel }}</span>
                             </a>
                             {% if member.id != community.ownerId %}

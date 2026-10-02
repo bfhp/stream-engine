@@ -29,10 +29,10 @@ type Drafts = Record<EditableKey, string>;
 
 const EDITABLE_KEYS: EditableKey[] = ["site_name", "locale", "uploads.user_limit_mb"];
 const LOCALE_OPTIONS = [
-    { value: "ru", label: trans("js.admin.locale_ru") },
     { value: "en", label: trans("js.admin.locale_en") },
     { value: "de", label: trans("js.admin.locale_de") },
     { value: "fr", label: trans("js.admin.locale_fr") },
+    { value: "ru", label: trans("js.admin.locale_ru") },
     { value: "es", label: trans("js.admin.locale_es") },
     { value: "pt-br", label: trans("js.admin.locale_pt_br") },
     { value: "ar", label: trans("js.admin.locale_ar") }

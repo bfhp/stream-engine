@@ -14,7 +14,7 @@
                 {% endblock %}
                 {% block comment_meta %}
                     <div class="comment-meta-text min-w-0">
-                        <div class="comment-author fw-semibold lh-sm">{{ comment.authorDisplayName }}</div>
+                        <div class="comment-author fw-semibold lh-sm"><bdi>{{ comment.authorDisplayName }}</bdi></div>
                         {% if comment.createdAtLabel %}
                             <time class="comment-date small text-secondary"
                                   datetime="{{ comment.createdAt ? comment.createdAt|date('c') : '' }}"
@@ -28,7 +28,7 @@
         {% endblock %}
 
         {% block comment_content %}
-            <div class="comment-content content">
+            <div class="comment-content content" dir="auto">
                 {{ comment.content|raw }}
             </div>
         {% endblock %}

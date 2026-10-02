@@ -36,8 +36,8 @@ import{n as e}from"./chunks/i18n.js";import{t}from"./chunks/api-errors.js";impor
                     <div class="card-body d-flex align-items-center gap-3">
                         ${a}
                         <div class="min-w-0">
-                            <div class="fw-semibold text-truncate">${t.url?`<a href="${p.escapeHtml(t.url)}" class="text-body text-decoration-none stretched-link">${n}</a>`:n}</div>
-                            ${t.username?`<div class="text-body-secondary small text-truncate">@${p.escapeHtml(t.username)}</div>`:``}
+                            <div class="fw-semibold text-truncate"><bdi>${t.url?`<a href="${p.escapeHtml(t.url)}" class="text-body text-decoration-none stretched-link">${n}</a>`:n}</bdi></div>
+                            ${t.username?`<div class="text-body-secondary small text-truncate">@<bdi>${p.escapeHtml(t.username)}</bdi></div>`:``}
                             <time class="text-body-secondary small d-block" datetime="${s}">
                                 ${e(`js.users.member_since`,{date:o})}
                             </time>

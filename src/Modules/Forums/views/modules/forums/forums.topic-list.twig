@@ -112,7 +112,7 @@
                                                 <a href="{{ lastPost.topicUrl }}" class="d-block text-decoration-none text-truncate"
                                                    style="font-size: .85rem" title="{{ lastPost.topicTitle }}">{{ lastPost.topicTitle }}</a>
                                                 <div class="text-body-secondary text-truncate" style="font-size: .76rem"
-                                                     title="{{ lastPost.whenTitle }}">{{ lastPost.authorName }}, {{ lastPost.when }}</div>
+                                                     title="{{ lastPost.whenTitle }}"><bdi>{{ lastPost.authorName }}</bdi>, {{ lastPost.when }}</div>
                                             </div>
                                         {% else %}
                                             <span class="text-body-secondary" style="font-size: .82rem">{{ trans('view.forums.list.10') }}</span>
@@ -156,13 +156,13 @@
                                             <div style="min-width: 0">
                                                 <a href="{{ topic.canonicalUrl }}" class="text-decoration-none" style="font-size: 1rem">{{ topic.title }}</a>
                                                 <div class="text-body-secondary" style="font-size: .78rem">
-                                                    <i class="bi bi-person me-1"></i>{{ topic.authorDisplayName }}, {{ topic.createdAtLabel }}
+                                                    <i class="bi bi-person me-1"></i><bdi>{{ topic.authorDisplayName }}</bdi>, {{ topic.createdAtLabel }}
                                                 </div>
                                                 <div class="d-sm-none text-body-secondary" style="font-size: .78rem">
                                                     {{ row.replies }} {{ trans('view.forums.topic.list.05') }}
                                                 </div>
                                                 <div class="d-lg-none text-body-secondary text-truncate" style="font-size: .78rem">
-                                                    <i class="bi bi-clock-history me-1"></i>{{ row.lastAuthorName }}, {{ row.lastWhen }}
+                                                    <i class="bi bi-clock-history me-1"></i><bdi>{{ row.lastAuthorName }}</bdi>, {{ row.lastWhen }}
                                                 </div>
                                             </div>
                                         </div>
@@ -176,7 +176,7 @@
                                             <img src="{{ row.lastAuthorAvatarUrl }}" alt="{{ row.lastAuthorName }}"
                                                  class="rounded-circle object-fit-cover flex-shrink-0" width="32" height="32">
                                             <div style="min-width: 0">
-                                                <span class="d-block text-truncate" style="font-size: .85rem" title="{{ row.lastWhenTitle }}">{{ row.lastAuthorName }}</span>
+                                                <span class="d-block text-truncate" style="font-size: .85rem" title="{{ row.lastWhenTitle }}"><bdi>{{ row.lastAuthorName }}</bdi></span>
                                                 <div class="text-body-secondary text-truncate" style="font-size: .76rem" title="{{ row.lastWhenTitle }}">{{ row.lastWhen }}</div>
                                             </div>
                                         </div>

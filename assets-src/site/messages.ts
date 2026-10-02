@@ -359,7 +359,7 @@ export function initMessages() {
                 <div class="msgr-conv-avatar-wrap">${avatarHtml}</div>
                 <div class="msgr-conv-body">
                     <div class="msgr-conv-top">
-                        <span class="msgr-conv-title">${cms.escapeHtml(c.title)}</span>
+                        <span class="msgr-conv-title"><bdi>${cms.escapeHtml(c.title)}</bdi></span>
                         <span class="msgr-conv-time">${timeText}</span>
                     </div>
                     <div class="msgr-conv-bottom">
@@ -800,7 +800,7 @@ export function initMessages() {
             <a class="msgr-attachment-file" href="${a.url}" download="${cms.escapeHtml(a.original_name)}" target="_blank" rel="noopener">
                 <i class="bi bi-file-earmark-arrow-down-fill"></i>
                 <span class="msgr-attachment-file-body">
-                    <span class="msgr-attachment-file-name">${cms.escapeHtml(a.original_name)}</span>
+                    <span class="msgr-attachment-file-name"><bdi>${cms.escapeHtml(a.original_name)}</bdi></span>
                     <span class="msgr-attachment-file-size">${bytesToLabel(a.size)}</span>
                 </span>
             </a>`;
@@ -861,7 +861,7 @@ export function initMessages() {
             ${renderMessageActions(m, isOwn)}
             ${replyHtml}
             ${attachmentHtml}
-            ${m.text ? `<span class="msgr-bubble-text">${m.text}</span>` : ''}
+            ${m.text ? `<span class="msgr-bubble-text" dir="auto">${m.text}</span>` : ''}
             <span class="msgr-bubble-meta">${m.edited ? `<span class="msgr-edited">${trans('js.messenger.edited')}</span>` : ''}<span>${formatTime(m.created_at)}</span>${readStatusHtml}</span>`;
     }
 
@@ -891,7 +891,7 @@ export function initMessages() {
                 <div class="msgr-msg-row">
                     <div class="msgr-msg-avatar-slot">${avatarHtml}</div>
                     <div class="msgr-msg-col">
-                        ${showName ? `<div class="msgr-msg-name-row"><span class="msgr-msg-name" style="color:${avatarColor(m.user_id)}">${cms.escapeHtml(senderName)}</span></div>` : ''}
+                        ${showName ? `<div class="msgr-msg-name-row"><span class="msgr-msg-name" style="color:${avatarColor(m.user_id)}"><bdi>${cms.escapeHtml(senderName)}</bdi></span></div>` : ''}
                         <div class="msgr-bubble${isImageAttachment ? ' has-attachment-image' : ''}">
                             ${renderBubbleContent(m, isOwn)}
                         </div>
@@ -1365,7 +1365,7 @@ export function initMessages() {
         } else {
             newGroupChipsEl.hidden = false;
             newGroupChipsEl.innerHTML = Array.from(selectedGroupIds.entries()).map(([id, name]) => `
-                <span class="msgr-chip" data-chip-id="${id}">${cms.escapeHtml(name)}<i class="bi bi-x-lg"></i></span>
+                <span class="msgr-chip" data-chip-id="${id}"><bdi>${cms.escapeHtml(name)}</bdi><i class="bi bi-x-lg"></i></span>
             `).join('');
         }
         newGroupCreateBtn.disabled = selectedGroupIds.size === 0;

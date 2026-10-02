@@ -70,7 +70,7 @@ function initUsersList() {
             ? `<a href="${cms.escapeHtml(item.url)}" class="text-body text-decoration-none stretched-link">${displayName}</a>`
             : displayName;
         const username = item.username
-            ? `<div class="text-body-secondary small text-truncate">@${cms.escapeHtml(item.username)}</div>`
+            ? `<div class="text-body-secondary small text-truncate">@<bdi>${cms.escapeHtml(item.username)}</bdi></div>`
             : '';
 
         return `
@@ -79,7 +79,7 @@ function initUsersList() {
                     <div class="card-body d-flex align-items-center gap-3">
                         ${avatar}
                         <div class="min-w-0">
-                            <div class="fw-semibold text-truncate">${name}</div>
+                            <div class="fw-semibold text-truncate"><bdi>${name}</bdi></div>
                             ${username}
                             <time class="text-body-secondary small d-block" datetime="${dateTime}">
                                 ${trans('js.users.member_since', { date })}

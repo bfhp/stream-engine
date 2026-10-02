@@ -103,7 +103,7 @@
                                 {% block community_mine_item %}
                                     <a href="{{ community.url ?: '#' }}" class="d-flex align-items-center gap-2 text-body text-decoration-none">
                                         <img src="{{ community.imageUrl }}" alt="" class="rounded-circle bg-body-secondary object-fit-cover flex-shrink-0" width="36" height="36">
-                                        <span class="small text-truncate" style="min-width: 0;">{{ community.title }}</span>
+                                        <span class="small text-truncate" style="min-width: 0;"><bdi>{{ community.title }}</bdi></span>
                                         <span class="badge {{ community.statusClass }} ms-auto">{{ community.statusLabel }}</span>
                                     </a>
                                 {% endblock %}
@@ -130,7 +130,7 @@
                             {% block community_popular_item %}
                                 <a href="{{ community.url ?: '#' }}" class="d-flex align-items-center gap-2 text-body text-decoration-none">
                                     <img src="{{ community.imageUrl }}" alt="" class="rounded-circle bg-body-secondary object-fit-cover flex-shrink-0" width="36" height="36">
-                                    <span class="small text-truncate" style="min-width: 0;">{{ community.title }}</span>
+                                    <span class="small text-truncate" style="min-width: 0;"><bdi>{{ community.title }}</bdi></span>
                                     {% if community.memberCount is not null %}
                                         <span class="badge text-bg-secondary ms-auto">{{ community.memberCount }}</span>
                                     {% endif %}
@@ -158,7 +158,7 @@
                             {% block community_new_item %}
                                 <a href="{{ community.url ?: '#' }}" class="d-flex align-items-center gap-2 text-body text-decoration-none">
                                     <img src="{{ community.imageUrl }}" alt="" class="rounded-circle bg-body-secondary object-fit-cover flex-shrink-0" width="36" height="36">
-                                    <span class="small text-truncate" style="min-width: 0;">{{ community.title }}</span>
+                                    <span class="small text-truncate" style="min-width: 0;"><bdi>{{ community.title }}</bdi></span>
                                     {% if community.createdAtLabel %}
                                         <span class="text-body-secondary small ms-auto">{{ community.createdAtLabel }}</span>
                                     {% endif %}

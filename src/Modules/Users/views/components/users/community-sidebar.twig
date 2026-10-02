@@ -67,14 +67,14 @@
                     height="80"
                 >
                 <div class="flex-grow-1">
-                    <h2 class="h5 mb-1">{{ community.title }}</h2>
+                    <h2 class="h5 mb-1"><bdi>{{ community.title }}</bdi></h2>
                     {% if owner %}
                         <p class="text-body-secondary small mb-0">
                             {{ trans('view.users.community.sidebar.01') }}
                             {% if ownerUrl %}
-                                <a href="{{ ownerUrl }}" class="text-body">{{ owner.getDisplayName() }}</a>
+                                <a href="{{ ownerUrl }}" class="text-body"><bdi>{{ owner.getDisplayName() }}</bdi></a>
                             {% else %}
-                                {{ owner.getDisplayName() }}
+                                <bdi>{{ owner.getDisplayName() }}</bdi>
                             {% endif %}
                         </p>
                     {% endif %}
@@ -201,7 +201,7 @@
                         {% block community_members_item %}
                             <a href="{{ member.url ?: '#' }}" class="d-flex align-items-center gap-2 text-body text-decoration-none">
                                 <img src="{{ member.avatarUrl }}" alt="" class="rounded-circle bg-body-secondary object-fit-cover flex-shrink-0" width="36" height="36">
-                                <span class="small">{{ member.displayName }}</span>
+                                <span class="small"><bdi>{{ member.displayName }}</bdi></span>
                                 {% if member.roleLabel %}<span class="badge text-bg-secondary ms-auto">{{ member.roleLabel }}</span>{% endif %}
                             </a>
                         {% endblock %}

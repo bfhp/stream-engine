@@ -80,7 +80,7 @@
                                                 {% endif %}
                                                 <div style="min-width: 0">
                                                     <a href="{{ subForum.canonicalUrl }}" class="text-decoration-none"
-                                                       style="font-size: 1rem">{{ subForum.title }}</a>
+                                                       style="font-size: 1rem"><bdi>{{ subForum.title }}</bdi></a>
                                                     {% if unreadCount > 0 %}
                                                         <span class="badge text-bg-primary rounded-pill ms-1" style="font-size: .68rem">{{ unreadCount }}</span>
                                                     {% endif %}
@@ -96,7 +96,7 @@
                                                             <i class="bi bi-clock-history me-1"></i><a
                                                                 href="{{ lastPost.topicUrl }}"
                                                                 class="text-decoration-none">{{ lastPost.topicTitle }}</a>
-                                                            &mdash; {{ lastPost.authorName }}, {{ lastPost.when }}
+                                                            &mdash; <bdi>{{ lastPost.authorName }}</bdi>, {{ lastPost.when }}
                                                         </div>
                                                     {% endif %}
                                                 </div>
@@ -121,7 +121,7 @@
                                                         <a href="{{ lastPost.topicUrl }}" class="d-block text-decoration-none text-truncate"
                                                            style="font-size: .85rem" title="{{ lastPost.topicTitle }}">{{ lastPost.topicTitle }}</a>
                                                         <div class="text-body-secondary text-truncate" style="font-size: .76rem"
-                                                             title="{{ lastPost.whenTitle }}">{{ lastPost.authorName }}, {{ lastPost.when }}</div>
+                                                             title="{{ lastPost.whenTitle }}"><bdi>{{ lastPost.authorName }}</bdi>, {{ lastPost.when }}</div>
                                                     </div>
                                                 </div>
                                             {% else %}
@@ -190,9 +190,9 @@
                         <div class="text-body-secondary">
                             {% for member in onlineNow.members %}
                                 {%- if member.url -%}
-                                    <a href="{{ member.url }}" class="text-decoration-none">{{ member.displayName }}</a>
+                                    <a href="{{ member.url }}" class="text-decoration-none"><bdi>{{ member.displayName }}</bdi></a>
                                 {%- else -%}
-                                    <span>{{ member.displayName }}</span>
+                                    <span><bdi>{{ member.displayName }}</bdi></span>
                                 {%- endif -%}
                                 {{- not loop.last ? ', ' : '' -}}
                             {% endfor %}

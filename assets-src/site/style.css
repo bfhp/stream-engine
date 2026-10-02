@@ -771,3 +771,24 @@ trix-editor .attachment__progress {
 .sidebar-sticky .widget-block:first-child {
     margin-top: 0;
 }
+
+/* Right-to-left: mirror icons whose glyph encodes a direction. The pseudo
+   element is the inline-block that carries the glyph; the <i> itself is
+   inline and cannot be transformed. Media transport icons (skip-*) are
+   deliberately not mirrored: playback controls keep their LTR convention. */
+[dir="rtl"] :is(
+    .bi-chevron-left, .bi-chevron-right,
+    .bi-chevron-double-left, .bi-chevron-double-right,
+    .bi-arrow-left, .bi-arrow-right,
+    .bi-arrow-left-short, .bi-arrow-right-short,
+    .bi-arrow-left-circle, .bi-arrow-right-circle,
+    .bi-arrow-left-circle-fill, .bi-arrow-right-circle-fill,
+    .bi-box-arrow-left, .bi-box-arrow-right,
+    .bi-box-arrow-in-left, .bi-box-arrow-in-right,
+    .bi-caret-left, .bi-caret-right,
+    .bi-caret-left-fill, .bi-caret-right-fill,
+    .bi-reply, .bi-reply-fill, .bi-reply-all, .bi-reply-all-fill,
+    .bi-send, .bi-send-fill, .bi-chat-left-text
+)::before {
+    transform: scaleX(-1);
+}

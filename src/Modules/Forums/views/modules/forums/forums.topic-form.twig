@@ -19,7 +19,7 @@
 {% block content %}
     <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
         <h1 class="h3 mb-0">{{ isEdit ? trans('forums.topic_edit') : trans('forums.topic_new') }}</h1>
-        <span class="text-body-secondary" style="font-size: .82rem"><i class="bi bi-folder2-open me-1"></i>{{ feed.title }}</span>
+        <span class="text-body-secondary" style="font-size: .82rem"><i class="bi bi-folder2-open me-1"></i><bdi>{{ feed.title }}</bdi></span>
     </div>
 
     <div class="alert alert-secondary d-flex align-items-start gap-2 mb-3" style="border-color: var(--bs-border-color-translucent); font-size: .85rem">

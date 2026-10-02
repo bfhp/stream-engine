@@ -511,7 +511,7 @@ function initAttachments(
         item.row.innerHTML = `
             <div style="width:40px;height:40px;flex:0 0 auto;border-radius:6px;background-color:var(--bs-secondary-bg);display:inline-flex;align-items:center;justify-content:center;color:#8ea3c0"><i class="bi ${item.icon}"></i></div>
             <div style="flex:1;min-width:0">
-                <div style="font-size:.86rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${cms.escapeHtml(item.name)}</div>
+                <div style="font-size:.86rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><bdi>${cms.escapeHtml(item.name)}</bdi></div>
                 <div class="text-body-secondary" style="font-size:.78rem">${statusText}</div>
                 ${item.status === "uploading" ? '<div class="progress mt-1" style="height:4px"><div class="progress-bar" data-attachment-progress style="width:0%"></div></div>' : ""}
             </div>
@@ -744,7 +744,7 @@ function initTopicPreview(form: HTMLFormElement, source: TopicPreviewSource) {
                 <div class="d-flex align-items-center gap-2 p-2" style="border:1px solid var(--bs-border-color);border-radius:.5rem">
                     <i class="bi ${row.icon} fs-5 text-body-secondary"></i>
                     <div style="min-width:0">
-                        <div class="text-truncate" style="font-size:.85rem">${cms.escapeHtml(row.name)}</div>
+                        <div class="text-truncate" style="font-size:.85rem"><bdi>${cms.escapeHtml(row.name)}</bdi></div>
                         <div class="text-body-secondary" style="font-size:.76rem">${row.sizeLabel}</div>
                     </div>
                 </div>

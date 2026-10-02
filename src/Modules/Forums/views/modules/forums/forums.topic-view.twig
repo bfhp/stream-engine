@@ -10,9 +10,9 @@
                 {% if parentForum %}
                     <a href="{{ parentForum.canonicalUrl }}" class="section-eyebrow d-inline-block mb-2 text-decoration-none">{{ trans('view.forums.topic.list.01') }} {{ parentForum.title }}</a>
                 {% endif %}
-                <h1 class="fw-bold mb-2" style="font-size: 2rem; text-wrap: pretty">{{ feed.title }}</h1>
+                <h1 class="fw-bold mb-2" dir="auto" style="font-size: 2rem; text-wrap: pretty"><bdi>{{ feed.title }}</bdi></h1>
                 <div class="d-flex flex-wrap align-items-center gap-3 text-body-secondary" style="font-size: .82rem">
-                    <span class="d-inline-flex align-items-center gap-1"><i class="bi bi-person"></i>{{ feed.authorDisplayName }}</span>
+                    <span class="d-inline-flex align-items-center gap-1"><i class="bi bi-person"></i><bdi>{{ feed.authorDisplayName }}</bdi></span>
                     {% if feed.createdAtTitle %}
                         <span class="d-inline-flex align-items-center gap-1" title="{{ feed.createdAtTitle }}"><i class="bi bi-calendar3"></i>{{ feed.createdAtLabel }}</span>
                     {% endif %}
@@ -229,7 +229,7 @@
                                 <div class="flex-shrink-0 d-flex flex-row flex-md-column align-items-center align-items-md-start gap-3 gap-md-2" style="width: 100%; max-width: 11.5rem">
                                     <img src="{{ post.authorAvatarUrl }}" alt="{{ postFeed.authorDisplayName }}" class="rounded-circle object-fit-cover flex-shrink-0" width="56" height="56">
                                     <div style="min-width: 0">
-                                        <span class="d-block fw-semibold text-truncate" style="font-size: .95rem">{{ postFeed.authorDisplayName }}</span>
+                                        <span class="d-block fw-semibold text-truncate" style="font-size: .95rem"><bdi>{{ postFeed.authorDisplayName }}</bdi></span>
                                         {% if post.isTopicAuthor %}
                                             <span class="badge text-bg-primary mt-1" style="font-size: .66rem">{{ trans('view.forums.topic.view.20') }}</span>
                                         {% endif %}
@@ -306,7 +306,7 @@
                                         </div>
                                         <a href="#post-{{ post.number }}" class="text-decoration-none text-body-secondary font-monospace" style="font-size: .78rem" title="{{ trans('view.forums.topic.view.28') }}">#{{ post.number }}</a>
                                     </div>
-                                    <div class="content" data-comment-content-wrapper="{{ postFeed.id }}" style="font-size: .95rem; line-height: 1.7; overflow-wrap: anywhere">
+                                    <div class="content" dir="auto" data-comment-content-wrapper="{{ postFeed.id }}" style="font-size: .95rem; line-height: 1.7; overflow-wrap: anywhere">
                                         {{ postFeed.content|raw }}
                                     </div>
                                     {% if post.attachments %}

@@ -34,9 +34,9 @@
                     <div class="d-flex align-items-center flex-wrap gap-2 text-body-secondary small mb-2">
                         <img src="{{ post.authorAvatarUrl }}" alt="" class="rounded-circle bg-body-secondary object-fit-cover flex-shrink-0" width="24" height="24">
                         {% if post.authorUrl %}
-                            <a href="{{ post.authorUrl }}" class="fw-semibold text-body text-decoration-none">{{ post.authorName }}</a>
+                            <a href="{{ post.authorUrl }}" class="fw-semibold text-body text-decoration-none"><bdi>{{ post.authorName }}</bdi></a>
                         {% else %}
-                            <span class="fw-semibold">{{ post.authorName }}</span>
+                            <span class="fw-semibold"><bdi>{{ post.authorName }}</bdi></span>
                         {% endif %}
                         {% if post.dateLabel %}<span>&middot;</span><span>{{ post.dateLabel }}</span>{% endif %}
                         {% if post.readTimeLabel %}<span>&middot;</span><span>{{ post.readTimeLabel }}</span>{% endif %}

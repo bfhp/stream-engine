@@ -12,7 +12,7 @@
             {% endblock %}
             {% block reply_meta %}
                 <div class="comment-meta-text min-w-0">
-                    <div class="comment-author fw-semibold lh-sm">{{ reply.authorDisplayName }}</div>
+                    <div class="comment-author fw-semibold lh-sm"><bdi>{{ reply.authorDisplayName }}</bdi></div>
                     {% if reply.createdAtLabel %}
                         <time class="comment-date small text-secondary"
                               datetime="{{ reply.createdAt ? reply.createdAt|date('c') : '' }}"
@@ -26,7 +26,7 @@
     {% endblock %}
 
     {% block reply_content %}
-        <div class="reply-content">
+        <div class="reply-content" dir="auto">
             {{ reply.content|raw }}
         </div>
     {% endblock %}

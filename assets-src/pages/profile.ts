@@ -499,7 +499,7 @@ function initProfileFriends(): void {
                 ? `<a href="${cms.escapeHtml(item.url)}" class="text-body text-decoration-none">${cms.escapeHtml(item.displayName)}</a>`
                 : cms.escapeHtml(item.displayName),
             subtitle: item.username
-                ? `<div class="text-body-secondary small text-truncate">@${cms.escapeHtml(item.username)}</div>`
+                ? `<div class="text-body-secondary small text-truncate">@<bdi>${cms.escapeHtml(item.username)}</bdi></div>`
                 : "",
             badge: badge(item.status),
             actions: actions(item),

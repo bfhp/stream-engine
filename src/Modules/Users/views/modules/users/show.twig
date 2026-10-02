@@ -100,7 +100,7 @@
                             {% block friends_list_item %}
                                 <a href="{{ friend.url ?: '#' }}" class="d-flex align-items-center gap-2 text-body text-decoration-none">
                                         <img src="{{ friend.avatarUrl }}" alt="" class="rounded-circle bg-body-secondary object-fit-cover flex-shrink-0" width="36" height="36">
-                                    <span class="small">{{ friend.displayName }}</span>
+                                    <span class="small"><bdi>{{ friend.displayName }}</bdi></span>
                                 </a>
                             {% endblock %}
                         {% endfor %}
