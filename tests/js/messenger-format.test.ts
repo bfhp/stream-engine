@@ -32,6 +32,9 @@ function at(year: number, month: number, day: number, hour = 12, minute = 0): nu
 
 const NOW = new Date(2026, 2, 15, 14, 30, 0); // Sunday 15 March 2026, 14:30 local
 
+document.documentElement.dataset.dateFormat = "dmy";
+document.documentElement.dataset.timeFormat = "24h";
+
 describe("pad()", () => {
     it("pads a single digit and leaves two alone", () => {
         expect(pad(0)).toBe("00");
@@ -129,14 +132,12 @@ describe("formatConvTime()", () => {
     it("switches to a date on the seventh day", () => {
         // Exactly a week back is where the weekday would start repeating and
         // stop meaning anything.
-        expect(formatConvTime(at(2026, 3, 8), NOW)).toBe("08.03.26");
+        expect(formatConvTime(at(2026, 3, 8), NOW)).toBe("08.03.2026");
     });
 
-    it("uses a two-digit year, and gets 2000-2009 right", () => {
-        // `String(year).slice(2)` - the case that breaks a naive `% 100`
-        // written as a number, which would render 2007 as "7".
-        expect(formatConvTime(at(2007, 1, 5), NOW)).toBe("05.01.07");
-        expect(formatConvTime(at(2000, 12, 31), NOW)).toBe("31.12.00");
+    it("uses the configured date format", () => {
+        expect(formatConvTime(at(2007, 1, 5), NOW)).toBe("05.01.2007");
+        expect(formatConvTime(at(2000, 12, 31), NOW)).toBe("31.12.2000");
     });
 });
 

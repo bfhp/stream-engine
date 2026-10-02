@@ -155,7 +155,12 @@ class StreamEngine
         $this->widgets = new WidgetService($this->settings);
 
         $this->tm = new TranslationManager($this->settings->getString('locale'), 'en');
-        $this->fmt = new Formatter($this->tm, $this->settings->getString('locale'));
+        $this->fmt = new Formatter(
+            $this->tm,
+            $this->settings->getString('locale'),
+            $this->settings->getString('date_format', 'auto'),
+            $this->settings->getString('time_format', 'auto'),
+        );
         $this->activeTheme = $this->themeCatalog->forDirection($this->activeTheme, $this->tm->isRtl());
 
         $pageRepository = new PageRepository($this->db);
@@ -403,6 +408,8 @@ class StreamEngine
         ]);
         $twig->addGlobal('locale', $this->tm->getLocale());
         $twig->addGlobal('dir', $this->tm->direction());
+        $twig->addGlobal('dateFormat', $this->settings->getString('date_format', 'auto'));
+        $twig->addGlobal('timeFormat', $this->settings->getString('time_format', 'auto'));
         $twig->addFunction(new TwigFunction('trans', [$this->tm, 'trans']));
         $twig->addFunction(new TwigFunction('trans_choice', [$this->fmt, 'transChoice']));
         $twig->addFunction(new TwigFunction('action_url', [$this->urlGenerator, 'action']));

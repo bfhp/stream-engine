@@ -9,6 +9,7 @@ import { initOffsetLoadMore } from "./offset-load-more";
 import { initCoverWidget } from "../shared/cover-widget";
 import { initAudioPlayers } from "./audio-player";
 import { trans } from "../shared/i18n";
+import { formatDateValue } from "../shared/date-time-format";
 
 // @ts-ignore
 const cms = window.CMS;
@@ -47,7 +48,7 @@ function initUsersList() {
             return '';
         }
 
-        return new Intl.DateTimeFormat('ru-RU').format(date);
+        return formatDateValue(date);
     }
 
     // Cards (not a plain list) so a browsing/search page full of users scans

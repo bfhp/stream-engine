@@ -12,16 +12,28 @@ use Normalizer;
 
 class Formatter
 {
+    public const DATE_FORMATS = ['auto', 'dmy', 'mdy', 'iso'];
+    public const TIME_FORMATS = ['auto', '24h', '12h'];
+
     private string $locale;
+    private string $dateFormat;
+    private string $timeFormat;
     private TranslationManager $tm;
     private ?IntlDateFormatter $dateFormatter = null;
     private ?IntlDateFormatter $dateTimeFormatter = null;
     private ?IntlDateFormatter $monthYearFormatter = null;
 
-    public function __construct(TranslationManager $tm, string $locale = 'en')
+    public function __construct(
+        TranslationManager $tm,
+        string $locale = 'en',
+        string $dateFormat = 'auto',
+        string $timeFormat = 'auto',
+    )
     {
         $this->tm = $tm;
         $this->locale = $locale;
+        $this->dateFormat = in_array($dateFormat, self::DATE_FORMATS, true) ? $dateFormat : 'auto';
+        $this->timeFormat = in_array($timeFormat, self::TIME_FORMATS, true) ? $timeFormat : 'auto';
     }
 
     private function dateFormatter(): IntlDateFormatter
@@ -31,10 +43,10 @@ class Formatter
                 $this->locale,
                 IntlDateFormatter::LONG,
                 IntlDateFormatter::NONE,
-                null,
-                null,
-                'd MMMM yyyy'
             );
+            // Keep the established long, localized-month rendering for
+            // existing installations when the new setting is left on auto.
+            $this->dateFormatter->setPattern($this->datePattern() ?? 'd MMMM yyyy');
         }
 
         return $this->dateFormatter;
@@ -48,6 +60,13 @@ class Formatter
                 IntlDateFormatter::LONG,
                 IntlDateFormatter::SHORT
             );
+            if ($this->dateFormat !== 'auto' || $this->timeFormat !== 'auto') {
+                $datePattern = $this->datePattern()
+                    ?? (new IntlDateFormatter($this->locale, IntlDateFormatter::LONG, IntlDateFormatter::NONE))->getPattern();
+                $timePattern = $this->timePattern()
+                    ?? (new IntlDateFormatter($this->locale, IntlDateFormatter::NONE, IntlDateFormatter::SHORT))->getPattern();
+                $this->dateTimeFormatter->setPattern($datePattern.', '.$timePattern);
+            }
         }
 
         return $this->dateTimeFormatter;
@@ -70,6 +89,25 @@ class Formatter
         }
 
         return $this->monthYearFormatter;
+    }
+
+    private function datePattern(): ?string
+    {
+        return match ($this->dateFormat) {
+            'dmy' => 'dd.MM.yyyy',
+            'mdy' => 'MM/dd/yyyy',
+            'iso' => 'yyyy-MM-dd',
+            default => null,
+        };
+    }
+
+    private function timePattern(): ?string
+    {
+        return match ($this->timeFormat) {
+            '24h' => 'HH:mm',
+            '12h' => 'h:mm a',
+            default => null,
+        };
     }
 
     // --- DATE ---

@@ -1451,5 +1451,11 @@ class AdminController extends AbstractController implements DashboardCardProvide
         if ($key === 'locale' && ! in_array($value, TranslationManager::availableLocales(), true)) {
             throw new ValidationException($this->tm->trans('admin.error.invalid_locale'));
         }
+        if ($key === 'date_format' && ! in_array($value, Formatter::DATE_FORMATS, true)) {
+            throw new ValidationException($this->tm->trans('admin.error.invalid_date_format'));
+        }
+        if ($key === 'time_format' && ! in_array($value, Formatter::TIME_FORMATS, true)) {
+            throw new ValidationException($this->tm->trans('admin.error.invalid_time_format'));
+        }
     }
 }

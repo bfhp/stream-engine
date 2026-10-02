@@ -23,11 +23,11 @@ type Setting = {
     updatedAt: number;
 };
 
-type EditableKey = "site_name" | "locale" | "uploads.user_limit_mb";
+type EditableKey = "site_name" | "locale" | "date_format" | "time_format" | "uploads.user_limit_mb";
 type SettingsMap = Partial<Record<EditableKey, Setting>>;
 type Drafts = Record<EditableKey, string>;
 
-const EDITABLE_KEYS: EditableKey[] = ["site_name", "locale", "uploads.user_limit_mb"];
+const EDITABLE_KEYS: EditableKey[] = ["site_name", "locale", "date_format", "time_format", "uploads.user_limit_mb"];
 const displayNames = new Intl.DisplayNames([getLocale()], { type: "language" });
 const localeCollator = new Intl.Collator(getLocale());
 const LOCALE_OPTIONS = getAvailableLocales()
@@ -36,10 +36,25 @@ const LOCALE_OPTIONS = getAvailableLocales()
         label: `${displayNames.of(locale) || locale} (${locale})`
     }))
     .sort((left, right) => localeCollator.compare(left.label, right.label));
+const DATE_FORMAT_OPTIONS = [
+    { value: "auto", label: trans("js.admin.settings.format_auto") },
+    { value: "dmy", label: trans("js.admin.settings.date_dmy") },
+    { value: "mdy", label: trans("js.admin.settings.date_mdy") },
+    { value: "iso", label: trans("js.admin.settings.date_iso") },
+];
+const TIME_FORMAT_OPTIONS = [
+    { value: "auto", label: trans("js.admin.settings.format_auto") },
+    { value: "24h", label: trans("js.admin.settings.time_24h") },
+    { value: "12h", label: trans("js.admin.settings.time_12h") },
+];
 
 function defaultValue(key: EditableKey): string {
     if (key === "locale") {
         return "ru";
+    }
+
+    if (key === "date_format" || key === "time_format") {
+        return "auto";
     }
 
     if (key === "uploads.user_limit_mb") {
@@ -64,6 +79,8 @@ export default function Settings() {
     const [drafts, setDrafts] = useState<Drafts>({
         site_name: "",
         locale: "ru",
+        date_format: "auto",
+        time_format: "auto",
         "uploads.user_limit_mb": "500"
     });
     const [loading, setLoading] = useState(false);
@@ -93,6 +110,8 @@ export default function Settings() {
                 setDrafts({
                     site_name: nextSettings.site_name?.value ?? defaultValue("site_name"),
                     locale: nextSettings.locale?.value ?? defaultValue("locale"),
+                    date_format: nextSettings.date_format?.value ?? defaultValue("date_format"),
+                    time_format: nextSettings.time_format?.value ?? defaultValue("time_format"),
                     "uploads.user_limit_mb": nextSettings["uploads.user_limit_mb"]?.value
                         ?? defaultValue("uploads.user_limit_mb")
                 });
@@ -134,7 +153,9 @@ export default function Settings() {
         }
 
         setSaving(true);
-        const localeChanged = dirtyKeys.includes("locale");
+        const displayFormatChanged = dirtyKeys.some(key =>
+            key === "locale" || key === "date_format" || key === "time_format"
+        );
 
         Promise.all(dirtyKeys.map(key =>
             fetch(`/api/v1/admin/settings/${encodeURIComponent(key)}`, {
@@ -163,7 +184,7 @@ export default function Settings() {
                     message: trans("js.admin.settings.saved"),
                     autoClose: 2000
                 });
-                if (localeChanged) {
+                if (displayFormatChanged) {
                     window.location.reload();
                 }
             })
@@ -227,6 +248,24 @@ export default function Settings() {
                     data={LOCALE_OPTIONS}
                     value={drafts.locale}
                     onChange={value => updateDraft("locale", value || defaultValue("locale"))}
+                    allowDeselect={false}
+                />
+
+                <Select
+                    label={trans("js.admin.settings.date_format")}
+                    description={trans("js.admin.settings.key", { key: "date_format" })}
+                    data={DATE_FORMAT_OPTIONS}
+                    value={drafts.date_format}
+                    onChange={value => updateDraft("date_format", value || defaultValue("date_format"))}
+                    allowDeselect={false}
+                />
+
+                <Select
+                    label={trans("js.admin.settings.time_format")}
+                    description={trans("js.admin.settings.key", { key: "time_format" })}
+                    data={TIME_FORMAT_OPTIONS}
+                    value={drafts.time_format}
+                    onChange={value => updateDraft("time_format", value || defaultValue("time_format"))}
                     allowDeselect={false}
                 />
 

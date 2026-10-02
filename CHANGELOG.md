@@ -7,6 +7,14 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added global date and time format selectors to the administration settings,
+  with locale-based, day-first, month-first, ISO, 24-hour, and 12-hour options.
+  The selected formats are validated server-side and applied consistently to
+  server-rendered dates, the admin interface, user lists, and the messenger;
+  per-user timezone detection remains unchanged.
+
 ## [0.3.0] - 2026-10-03
 
 ### Added

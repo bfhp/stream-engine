@@ -14,16 +14,14 @@
  * A Unix timestamp (seconds) formatted with the CMS locale from the document.
  */
 import { getLocale, trans } from "../../shared/i18n";
+import { formatDateTimeValue } from "../../shared/date-time-format";
 
 export function formatTimestamp(timestamp: number | null, locale = getLocale()): string {
     if (!timestamp) {
         return "-";
     }
 
-    return new Intl.DateTimeFormat(locale, {
-        dateStyle: "medium",
-        timeStyle: "short"
-    }).format(new Date(timestamp * 1000));
+    return formatDateTimeValue(new Date(timestamp * 1000), locale);
 }
 
 /**

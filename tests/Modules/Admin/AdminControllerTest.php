@@ -924,6 +924,31 @@ final class AdminControllerTest extends TestCase
         );
     }
 
+    #[DataProvider('invalidDisplayFormatProvider')]
+    public function testAnUnsupportedDisplayFormatIsRefused(string $key, string $message): void
+    {
+        $module = $this->makeModule();
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode(['value' => 'unsupported']));
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage($message);
+
+        $module->callApi(
+            $this->makeApiPage('admin.setting', ['GET', 'PATCH']),
+            ['key' => $key]
+        );
+    }
+
+    public static function invalidDisplayFormatProvider(): array
+    {
+        return [
+            ['date_format', 'Unsupported date format'],
+            ['time_format', 'Unsupported time format'],
+        ];
+    }
+
     public function testThemeCatalogIsReturnedWithoutFilesystemPaths(): void
     {
         $module = $this->makeModule();

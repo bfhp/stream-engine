@@ -47,6 +47,31 @@ final class FormatterTest extends TestCase
         $this->assertMatchesRegularExpression('/14:30/', $formatted);
     }
 
+    public function testConfiguredDateAndTimeFormatsAreApplied(): void
+    {
+        $date = new DateTimeImmutable('2026-04-23 14:30:00 UTC');
+
+        $european = new Formatter($this->tm, 'ru', 'dmy', '24h');
+        $this->assertSame('23.04.2026', $european->date($date));
+        $this->assertSame('23.04.2026, 14:30', $european->datetime($date));
+
+        $american = new Formatter(new TranslationManager('en', 'en'), 'en', 'mdy', '12h');
+        $this->assertSame('04/23/2026', $american->date($date));
+        $this->assertSame('04/23/2026, 2:30 PM', $american->datetime($date));
+
+        $iso = new Formatter($this->tm, 'ru', 'iso', '24h');
+        $this->assertSame('2026-04-23, 14:30', $iso->datetime($date));
+    }
+
+    public function testUnknownFormatsFallBackToLocaleDefaults(): void
+    {
+        $date = new DateTimeImmutable('2026-04-23 14:30:00 UTC');
+        $fallback = new Formatter($this->tm, 'ru', 'unknown', 'unknown');
+
+        $this->assertSame($this->formatter->date($date), $fallback->date($date));
+        $this->assertSame($this->formatter->datetime($date), $fallback->datetime($date));
+    }
+
     public function testRelativeFormatsRecentIntervals(): void
     {
         $this->assertSame(

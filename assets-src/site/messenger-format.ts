@@ -1,4 +1,5 @@
 import { trans } from "../shared/i18n";
+import { formatDateValue, formatTimeValue } from "../shared/date-time-format";
 
 /* ==========================================================================
    Messenger formatting and derived state
@@ -79,9 +80,7 @@ export function startOfDay(d: Date): Date {
 }
 
 export function formatTime(unixSeconds: number): string {
-    const d = new Date(unixSeconds * 1000);
-
-    return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    return formatTimeValue(new Date(unixSeconds * 1000));
 }
 
 /**
@@ -113,9 +112,7 @@ export function formatConvTime(unixSeconds: number, now: Date = new Date()): str
     if (diff <= 0) return formatTime(unixSeconds);
     if (diff < 7) return WEEKDAYS_SHORT[new Date(unixSeconds * 1000).getDay()];
 
-    const d = new Date(unixSeconds * 1000);
-
-    return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${String(d.getFullYear()).slice(2)}`;
+    return formatDateValue(new Date(unixSeconds * 1000), 'short');
 }
 
 /**
@@ -135,9 +132,7 @@ export function formatDayLabel(unixSeconds: number, now: Date = new Date()): str
         return w.charAt(0).toUpperCase() + w.slice(1);
     }
 
-    const d = new Date(unixSeconds * 1000);
-
-    return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
+    return formatDateValue(new Date(unixSeconds * 1000));
 }
 
 /* ===============================
