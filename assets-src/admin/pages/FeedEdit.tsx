@@ -11,6 +11,7 @@ import { FEED_TYPES } from "../../shared/feed-types";
 import { uploadFile } from "../../shared/uploads";
 import { csrfHeaders } from "../../shared/csrf";
 import { trans } from "../../shared/i18n";
+import { isRtl } from "../lib/direction";
 
 export default function FeedEdit() {
 
@@ -135,7 +136,7 @@ export default function FeedEdit() {
                     variant="light"
                     onClick={() => navigate("/feeds")}
                 >
-                    ← {trans("js.admin.back")}
+                    {isRtl() ? "→" : "←"} {trans("js.admin.back")}
                 </Button>
             </Group>
 

@@ -51,7 +51,7 @@ function ThemePreview({ theme, colorMode }: { theme: Theme; colorMode: string })
                 {["#ff6b6b", "#ffd43b", "#51cf66"].map(color => (
                     <Box key={color} w={7} h={7} bg={color} style={{ borderRadius: "50%" }} />
                 ))}
-                <Box h={7} ml={5} flex={1} bg={muted} opacity={0.45} style={{ borderRadius: 4 }} />
+                <Box h={7} ms={5} flex={1} bg={muted} opacity={0.45} style={{ borderRadius: 4 }} />
             </Group>
             <Box bg={surface} p="xs" mb="xs" style={{ borderRadius: 6 }}>
                 <Group justify="space-between">
@@ -234,7 +234,7 @@ export default function Themes() {
                                 aria-pressed={selected}
                                 aria-label={trans("js.admin.themes.select", { name: theme.name })}
                                 onClick={() => selectTheme(theme.id)}
-                                style={{ display: "block", width: "100%", textAlign: "left" }}
+                                style={{ display: "block", width: "100%", textAlign: "start" }}
                             >
                                 <ThemePreview theme={theme} colorMode={colorMode} />
                                 <Box p="md">

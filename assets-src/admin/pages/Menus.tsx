@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { csrfHeaders } from "../../shared/csrf";
 import { menuDepth, type MenuItemRecord, type MenuPreviewGroup, type MenuPreviewItem } from "../lib/menu";
 import { trans } from "../../shared/i18n";
+import { isRtl } from "../lib/direction";
 
 async function responseJson(response: Response, fallback: string) {
     const body = await response.json().catch(() => null);
@@ -13,7 +14,7 @@ async function responseJson(response: Response, fallback: string) {
 }
 
 function PreviewItems({ items }: { items: MenuPreviewItem[] }) {
-    return <Stack gap={4} ml="md">{items.map(item => <div key={item.id}>
+    return <Stack gap={4} ms="md">{items.map(item => <div key={item.id}>
         <Text size="sm">{item.label || trans("js.admin.menu.divider")}</Text>
         {item.children.length > 0 && <PreviewItems items={item.children} />}
     </div>)}</Stack>;
@@ -166,14 +167,14 @@ export default function Menus() {
                             const siblings = orderedItems.filter(candidate => candidate.menuGroup === item.menuGroup && candidate.parentId === item.parentId);
                             const siblingIndex = siblings.findIndex(candidate => candidate.id === item.id);
                             return <Table.Tr key={item.id} style={{ cursor: "pointer" }} onClick={() => navigate(`/menus/${item.id}`)}>
-                                <Table.Td><Text pl={menuDepth(item, byId) * 20}>{menuDepth(item, byId) > 0 && "↳ "}{item.label || <Text span c="dimmed">{trans("js.admin.menu.divider")}</Text>}</Text></Table.Td>
+                                <Table.Td><Text ps={menuDepth(item, byId) * 20}>{menuDepth(item, byId) > 0 && (isRtl() ? "↲ " : "↳ ")}{item.label || <Text span c="dimmed">{trans("js.admin.menu.divider")}</Text>}</Text></Table.Td>
                                 <Table.Td><Badge variant="light">{item.type}</Badge></Table.Td>
                                 <Table.Td>{item.enabled ? <Badge color="green">{trans("js.admin.enabled")}</Badge> : <Badge color="gray">{trans("js.admin.disabled")}</Badge>}</Table.Td>
                                 <Table.Td onClick={event => event.stopPropagation()}><Group gap={2} justify="flex-end" wrap="nowrap">
                                     <ActionIcon variant="subtle" disabled={!reorderingEnabled || siblingIndex === 0} onClick={() => moveSibling(item, -1)} aria-label={trans("js.admin.menu.item_up")}><IconArrowUp size={16} /></ActionIcon>
                                     <ActionIcon variant="subtle" disabled={!reorderingEnabled || siblingIndex === siblings.length - 1} onClick={() => moveSibling(item, 1)} aria-label={trans("js.admin.menu.item_down")}><IconArrowDown size={16} /></ActionIcon>
-                                    <ActionIcon variant="subtle" disabled={!reorderingEnabled || orderedItems.findIndex(candidate => candidate.id === item.id) === 0} onClick={() => indent(item)} aria-label={trans("js.admin.menu.indent")}><IconCornerDownRight size={16} /></ActionIcon>
-                                    <ActionIcon variant="subtle" disabled={!reorderingEnabled || item.parentId === null} onClick={() => outdent(item)} aria-label={trans("js.admin.menu.outdent")}><IconCornerDownLeft size={16} /></ActionIcon>
+                                    <ActionIcon variant="subtle" disabled={!reorderingEnabled || orderedItems.findIndex(candidate => candidate.id === item.id) === 0} onClick={() => indent(item)} aria-label={trans("js.admin.menu.indent")}>{isRtl() ? <IconCornerDownLeft size={16} /> : <IconCornerDownRight size={16} />}</ActionIcon>
+                                    <ActionIcon variant="subtle" disabled={!reorderingEnabled || item.parentId === null} onClick={() => outdent(item)} aria-label={trans("js.admin.menu.outdent")}>{isRtl() ? <IconCornerDownRight size={16} /> : <IconCornerDownLeft size={16} />}</ActionIcon>
                                     <ActionIcon component={Link} to={`/menus/${item.id}`} variant="subtle" aria-label={trans("js.admin.edit")}><IconEdit size={18} /></ActionIcon>
                                 </Group></Table.Td>
                             </Table.Tr>;

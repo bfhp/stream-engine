@@ -2,13 +2,14 @@ import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
 
 import ReactDOM from "react-dom/client";
-import { MantineProvider, type MantineColorSchemeManager } from "@mantine/core";
+import { DirectionProvider, MantineProvider, type MantineColorSchemeManager } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
 import { HashRouter } from "react-router-dom";
 
 import "../shared/custom-content.css";
 
 import App from "./App";
+import { isRtl } from "./lib/direction";
 import { createModuleRoutes, type AdminPageModules } from "./module-pages";
 
 const systemColorSchemeManager: MantineColorSchemeManager = {
@@ -23,14 +24,16 @@ export function mountAdmin(modules: AdminPageModules = {}): void {
     ReactDOM.createRoot(
         document.getElementById("root")!
     ).render(
-        <MantineProvider
-            colorSchemeManager={systemColorSchemeManager}
-            defaultColorScheme="auto"
-        >
-            <Notifications />
-            <HashRouter>
-                <App moduleAdminPages={createModuleRoutes(modules)} />
-            </HashRouter>
-        </MantineProvider>
+        <DirectionProvider initialDirection={isRtl() ? "rtl" : "ltr"} detectDirection={false}>
+            <MantineProvider
+                colorSchemeManager={systemColorSchemeManager}
+                defaultColorScheme="auto"
+            >
+                <Notifications />
+                <HashRouter>
+                    <App moduleAdminPages={createModuleRoutes(modules)} />
+                </HashRouter>
+            </MantineProvider>
+        </DirectionProvider>
     );
 }

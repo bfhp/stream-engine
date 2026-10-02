@@ -174,7 +174,7 @@ export default function Dashboard() {
             </Group>
         </Group>
 
-        {error && <Alert color="red" title={trans("js.admin.dashboard.unavailable")}>{error}<Button ml="md" size="compact-sm" variant="light" onClick={() => setRefreshKey(key => key + 1)}>{trans("js.admin.try_again")}</Button></Alert>}
+        {error && <Alert color="red" title={trans("js.admin.dashboard.unavailable")}>{error}<Button ms="md" size="compact-sm" variant="light" onClick={() => setRefreshKey(key => key + 1)}>{trans("js.admin.try_again")}</Button></Alert>}
         {loading && !payload && <SimpleGrid cols={{ base: 1, md: 3 }}>{[1, 2, 3].map(id => <Skeleton key={id} height={160} />)}</SimpleGrid>}
         {!error && payload && payload.layout.items.length === 0 && <Alert>{trans("js.admin.dashboard.no_cards")}</Alert>}
         {!error && payload && <Grid>
