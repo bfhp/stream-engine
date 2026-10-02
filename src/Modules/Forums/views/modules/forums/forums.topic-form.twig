@@ -204,7 +204,7 @@
                     </p>
                 {% else %}
                     <p class="small text-body-secondary mb-3">
-                        <i class="bi bi-people me-1"></i>{{ trans('view.forums.topic.form.34') }} {{ forumTotals.topics }} {{ forumTotals.topics == 1 ? trans('view.forums.topic.form.35') : trans('view.forums.list.09') }} {{ trans('view.forums.topic.form.36') }} {{ forumTotals.posts }} {{ trans('view.forums.topic.form.37') }}{{ forumTotals.posts == 1 ? trans('view.forums.topic.form.38') : (forumTotals.posts in [2,3,4] ? trans('view.forums.topic.form.39') : trans('view.forums.topic.form.40')) }}.
+                        <i class="bi bi-people me-1"></i>{{ trans('view.forums.topic.form.34') }} {{ forumTotals.topics }} {{ trans_choice('forums.topic_unit', forumTotals.topics) }} {{ trans('view.forums.topic.form.36') }} {{ forumTotals.posts }} {{ trans_choice('forums.post_unit', forumTotals.posts) }}.
                     </p>
                 {% endif %}
                 <div class="d-grid gap-2">

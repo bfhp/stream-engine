@@ -16,9 +16,9 @@
                     {% if feed.createdAtTitle %}
                         <span class="d-inline-flex align-items-center gap-1" title="{{ feed.createdAtTitle }}"><i class="bi bi-calendar3"></i>{{ feed.createdAtLabel }}</span>
                     {% endif %}
-                    <span class="d-inline-flex align-items-center gap-1"><i class="bi bi-chat-square-text"></i><span style="font-variant-numeric: tabular-nums">{{ topicTotals.posts }}</span> {{ trans('view.forums.topic.form.37') }}{{ topicTotals.posts == 1 ? trans('view.forums.topic.form.38') : (topicTotals.posts in [2,3,4] ? trans('view.forums.topic.form.39') : trans('view.forums.topic.form.40')) }}</span>
-                    <span class="d-inline-flex align-items-center gap-1"><i class="bi bi-people"></i><span style="font-variant-numeric: tabular-nums">{{ topicTotals.participants }}</span> {{ trans('view.forums.topic.view.01') }}{{ topicTotals.participants == 1 ? '' : (topicTotals.participants in [2,3,4] ? trans('view.forums.topic.view.02') : trans('view.forums.topic.view.03')) }}</span>
-                    <span class="d-inline-flex align-items-center gap-1"><i class="bi bi-eye"></i><span style="font-variant-numeric: tabular-nums">{{ topicTotals.views }}</span> {{ trans('view.forums.topic.view.04') }}{{ topicTotals.views == 1 ? '' : (topicTotals.views in [2,3,4] ? trans('view.forums.topic.view.02') : trans('view.forums.topic.view.03')) }}</span>
+                    <span class="d-inline-flex align-items-center gap-1"><i class="bi bi-chat-square-text"></i><span style="font-variant-numeric: tabular-nums">{{ topicTotals.posts }}</span> {{ trans_choice('forums.post_unit', topicTotals.posts) }}</span>
+                    <span class="d-inline-flex align-items-center gap-1"><i class="bi bi-people"></i><span style="font-variant-numeric: tabular-nums">{{ topicTotals.participants }}</span> {{ trans_choice('forums.participant', topicTotals.participants) }}</span>
+                    <span class="d-inline-flex align-items-center gap-1"><i class="bi bi-eye"></i><span style="font-variant-numeric: tabular-nums">{{ topicTotals.views }}</span> {{ trans_choice('forums.view_unit', topicTotals.views) }}</span>
                     {% if poll %}
                         <a href="#topic-poll" class="d-inline-flex align-items-center gap-1 text-decoration-none link-quiet" style="font-size: .82rem"><i class="bi bi-bar-chart-line"></i>{{ trans('view.forums.topic.form.10') }}</a>
                     {% endif %}
@@ -216,7 +216,7 @@
                 <div class="flex-grow-1" style="min-width: 0">
                     <h2 class="h6 mb-0 fw-semibold">{{ trans('view.forums.topic.view.18') }}</h2>
                     <div class="text-body-secondary" style="font-size: .78rem">
-                        {{ topicTotals.posts }} {{ trans('view.forums.topic.form.37') }}{{ topicTotals.posts == 1 ? trans('view.forums.topic.form.38') : (topicTotals.posts in [2,3,4] ? trans('view.forums.topic.form.39') : trans('view.forums.topic.form.40')) }}{{ trans('view.forums.topic.view.19') }} {{ pagination.current }} {{ trans('view.forums.topic.list.08') }} {{ pagination.total }}
+                        {{ topicTotals.posts }} {{ trans_choice('forums.post_unit', topicTotals.posts) }}{{ trans('view.forums.topic.view.19') }} {{ pagination.current }} {{ trans('view.forums.topic.list.08') }} {{ pagination.total }}
                     </div>
                 </div>
             </div>

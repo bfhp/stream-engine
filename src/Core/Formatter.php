@@ -143,11 +143,29 @@ class Formatter
     {
         $forms = $this->tm->getAll()[$key] ?? null;
 
-        if (!$forms || count($forms) < 3) {
+        if (!is_array($forms) || count($forms) < 3) {
             return $key; // fallback
         }
 
         return $this->plural($n, $forms[0], $forms[1], $forms[2]);
+    }
+
+    /**
+     * Picks the plural form of a noun stored as a list in the catalog
+     * (`[one, few, many]`, or `[one, other]`) for the active locale. The
+     * count itself is not included so templates can style it separately.
+     */
+    public function transChoice(string $key, int $count): string
+    {
+        $forms = $this->tm->getAll()[$key] ?? null;
+
+        if (!is_array($forms) || count($forms) < 2) {
+            return $key;
+        }
+
+        $forms = array_values($forms);
+
+        return $this->plural($count, $forms[0], $forms[1], $forms[2] ?? $forms[1]);
     }
 
     // --- NUMBERS / TEXT ---

@@ -90,6 +90,22 @@ final class FormatterTest extends TestCase
         );
     }
 
+    public function testTransChoiceUsesCatalogFormsForTheActiveLocale(): void
+    {
+        $this->assertSame('сообщение', $this->formatter->transChoice('forums.post_unit', 21));
+        $this->assertSame('сообщения', $this->formatter->transChoice('forums.post_unit', 3));
+        $this->assertSame('сообщений', $this->formatter->transChoice('forums.post_unit', 5));
+        $this->assertSame('missing.key', $this->formatter->transChoice('missing.key', 1));
+
+        $german = new Formatter(new TranslationManager('de', 'en'), 'de');
+        $this->assertSame('Beitrag', $german->transChoice('forums.post_unit', 1));
+        $this->assertSame('Beiträge', $german->transChoice('forums.post_unit', 21));
+
+        $french = new Formatter(new TranslationManager('fr', 'en'), 'fr');
+        $this->assertSame('message', $french->transChoice('forums.post_unit', 0));
+        $this->assertSame('messages', $french->transChoice('forums.post_unit', 2));
+    }
+
     public function testPluralChoosesCorrectRussianForm(): void
     {
         [$one, $few, $many] = $this->tm->getAll()['time.minute'];
