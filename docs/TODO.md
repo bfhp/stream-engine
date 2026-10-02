@@ -96,9 +96,6 @@ nested grids, or user-defined cards. The aggregate endpoint remains the
 initial-load default; a permission-checked per-card endpoint supports isolated
 retries and is the migration path if measurements later justify lazy loading.
 
-- Cover disabled-module card removal and restoration once explicit module
-  enable/disable state exists.
-
 ### Admin: interface localization
 
 The admin interface is only partially translated: several pages and navigation
@@ -111,24 +108,6 @@ follows the browser locale rather than the locale selected in CMS settings.
   time, and number formatting, with a documented fallback for missing keys.
 - Ensure changing the locale updates the interface predictably and add tests
   that exercise every supported locale without relying on the browser locale.
-
-### Admin: enabling modules and components
-
-`ModuleRegistry` currently treats every controller in the Composer classmap as
-active, while widgets have no separate enabled state: empty HTML effectively
-acts as an implicit off switch.
-
-- Establish consistent UI terminology: a module is a functional extension; a
-  component/widget is a theme placement element.
-- Store module state and do not register actions, APIs, cron jobs, views, or
-  admin pages for a disabled module. Make the installation and admin system
-  modules impossible to disable.
-- Before disabling a module, show its dependencies and uses in pages, feeds,
-  and menus; do not leave active routes whose handler has disappeared.
-- Add an explicit enabled switch for widgets instead of the “empty HTML”
-  convention.
-- Cover bootstrap, cache clearing, re-enabling, and action/feed-type conflicts
-  with integration tests.
 
 ### Admin: theme selection and settings
 
