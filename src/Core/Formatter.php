@@ -159,8 +159,8 @@ class Formatter
             return abs($n) === 1 ? $one : $many;
         }
 
-        // French treats both 0 and 1 as singular.
-        if (str_starts_with(strtolower($this->locale), 'fr')) {
+        // French and Portuguese treat both 0 and 1 as singular.
+        if (preg_match('/^(fr|pt)(?![a-z])/i', $this->locale) === 1) {
             return abs($n) < 2 ? $one : $many;
         }
 

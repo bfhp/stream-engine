@@ -19,7 +19,7 @@ Priorities:
 
 ### Localization
 
-- Add complete interface translations for Brazilian Portuguese (`pt-BR`), Italian (`it`),
+- Add complete interface translations for Italian (`it`),
   Japanese (`ja`), Korean (`ko`), Simplified Chinese (`zh-CN`), Dutch (`nl`), and Polish
   (`pl`).
 - Make every added locale available during installation and in administration

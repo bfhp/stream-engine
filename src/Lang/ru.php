@@ -1027,6 +1027,7 @@ return [
     'js.admin.locale_de' => 'Немецкий (de)',
     'js.admin.locale_fr' => 'Французский (fr)',
     'js.admin.locale_es' => 'Испанский (es)',
+    'js.admin.locale_pt_br' => 'Португальский (Бразилия) (pt-br)',
     'js.admin.nav.dashboard' => 'Панель управления',
     'js.admin.nav.feeds' => 'Ленты',
     'js.admin.nav.pages' => 'Страницы',
