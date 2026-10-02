@@ -22,6 +22,28 @@ class TranslationManager
         }
     }
 
+    /** Base language codes written right-to-left. */
+    private const RTL_LANGUAGES = ['ar', 'ckb', 'dv', 'fa', 'he', 'ps', 'sd', 'ug', 'ur', 'yi'];
+
+    /** Whether the locale (e.g. "ar", "he", "fa-IR") is written right-to-left. */
+    public static function isRtlLocale(string $locale): bool
+    {
+        $base = strtolower(preg_split('/[-_]/', trim($locale), 2)[0] ?? '');
+
+        return in_array($base, self::RTL_LANGUAGES, true);
+    }
+
+    public function isRtl(): bool
+    {
+        return self::isRtlLocale($this->locale);
+    }
+
+    /** Value for the HTML `dir` attribute: "rtl" or "ltr". */
+    public function direction(): string
+    {
+        return $this->isRtl() ? 'rtl' : 'ltr';
+    }
+
     private function load(string $locale): array
     {
         $file = __DIR__ . "/../Lang/$locale.php";

@@ -9,6 +9,16 @@ use StreamEngine\Core\TranslationManager;
 
 final class TranslationManagerTest extends TestCase
 {
+    public function testDirectionFollowsTheLocaleScript(): void
+    {
+        $this->assertSame('rtl', (new TranslationManager('ar', 'en'))->direction());
+        $this->assertTrue(TranslationManager::isRtlLocale('fa-IR'));
+        $this->assertTrue(TranslationManager::isRtlLocale('HE'));
+        $this->assertSame('ltr', (new TranslationManager('ru', 'en'))->direction());
+        $this->assertFalse(TranslationManager::isRtlLocale('pt-br'));
+        $this->assertFalse(TranslationManager::isRtlLocale(''));
+    }
+
     public function testReturnsLoadedTranslationForExistingKey(): void
     {
         $tm = new TranslationManager('ru', 'ru');
