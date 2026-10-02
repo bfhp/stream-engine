@@ -15,7 +15,7 @@ describe("admin module pages", () => {
     });
     it("rejects duplicate and built-in section routes", () => {
         expect(() => collectModulePages({ a: { default: [page("/sync"), page("/sync")] } })).toThrow(/Duplicate/);
-        for (const path of ["/feeds", "/feeds/new", "/pages", "/menus", "/settings", "/widgets", "/users"]) {
+        for (const path of ["/feeds", "/feeds/new", "/pages", "/menus", "/settings", "/themes", "/widgets", "/users"]) {
             expect(() => collectModulePages({ a: { default: [page(path)] } })).toThrow(/reserved/);
         }
     });

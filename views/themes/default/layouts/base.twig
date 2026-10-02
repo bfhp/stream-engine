@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ locale }}" data-bs-theme="dark">
+<html lang="{{ locale }}" data-bs-theme="{{ theme.values.color_mode|default('dark') }}">
 {% block layout_head %}
 <head>
     <meta charset="utf-8">
@@ -18,12 +18,13 @@
     {% endblock %}
 
     {% block head_theme %}
-        <meta name="theme-color" content="#0F172A">
+        <meta name="theme-color" content="{{ theme.themeColor|default('#0F172A') }}">
     {% endblock %}
 
     {% block head_css %}
-        <link rel="stylesheet" href="/assets/css/site.css">
-        <link rel="stylesheet" href="/assets/css/custom-content.css">
+        {% for asset in theme.assets.styles %}
+            <link rel="stylesheet" href="{{ asset }}">
+        {% endfor %}
     {% endblock %}
 
     {% if canonical and siteUrl %}
@@ -43,7 +44,9 @@
     {% endblock %}
 
     {% block head_js %}
-        <script src="/assets/js/site.js" type="module" defer></script>
+        {% for asset in theme.assets.scripts %}
+            <script src="{{ asset }}" type="module" defer></script>
+        {% endfor %}
     {% endblock %}
 
     {% block head_ext %}

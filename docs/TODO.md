@@ -20,7 +20,7 @@ Priorities:
 
 The following checks were green at the time of the review:
 
-- `composer test` — 2,103 tests, 8,563 assertions, 7 skipped;
+- `composer test` — 2,112 tests, 8,616 assertions, 7 skipped;
 - `npm test` — 28 files, 477 tests;
 - `npm run typecheck`;
 - `npm run build`;
@@ -95,23 +95,6 @@ intentionally constrained: do not add arbitrary HTML, SQL, API URLs, colors,
 nested grids, or user-defined cards. The aggregate endpoint remains the
 initial-load default; a permission-checked per-card endpoint supports isolated
 retries and is the migration path if measurements later justify lazy loading.
-
-### Admin: theme selection and settings
-
-The active theme is currently specified only through the `THEME_DIR` path, and
-the base theme contains a hard-coded `data-bs-theme="dark"`.
-
-- Introduce a theme catalog with manifest/id/name and select themes in settings
-  without accepting an arbitrary path from the admin API. Preserve the fallback
-  to `views/themes/default/` defined by `docs/THEME_CONTRACT.md`.
-- Define a theme settings schema and defaults; store values in a theme
-  namespace, validate them on the server, and preserve them separately when
-  switching themes.
-- Move color mode and other base-theme parameters out of Twig literals and into
-  these settings; provide a safe preview and a return to the default when a
-  theme is missing or broken.
-- Define theme asset delivery and cache invalidation, then test selection,
-  fallback behavior, and settings persistence.
 
 ### Registration
 

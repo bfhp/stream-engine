@@ -15,10 +15,14 @@ use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Core\RequestContext;
 use StreamEngine\Core\Router;
 use StreamEngine\Core\TranslationManager;
+use StreamEngine\Core\ThemeCatalog;
 use StreamEngine\Domain\Page;
 use StreamEngine\Domain\User;
 use StreamEngine\Modules\Admin\AdminController;
 use StreamEngine\Service\AccessService;
+use StreamEngine\Repository\SettingsRepository;
+use StreamEngine\Service\SettingsService;
+use StreamEngine\Service\ThemeService;
 use Tests\Support\PhpInputStreamMock;
 
 final class AdminControllerTest extends TestCase
@@ -100,6 +104,15 @@ final class AdminControllerTest extends TestCase
 
         $accessService = $this->createStub(AccessService::class);
         $accessService->method('isAdmin')->willReturn($isAdmin);
+        $settingsRepository = new SettingsRepository($db);
+        $themeService = new ThemeService(
+            new ThemeCatalog(
+                dirname(__DIR__, 3).'/views/themes',
+                dirname(__DIR__, 3).'/public',
+            ),
+            new SettingsService($settingsRepository),
+            $settingsRepository,
+        );
 
         return new AdminController(
             $db,
@@ -110,6 +123,7 @@ final class AdminControllerTest extends TestCase
             $accessService,
             new TranslationManager('en', 'en'),
             new ModuleRegistry(),
+            $themeService,
         );
     }
 
@@ -910,6 +924,44 @@ final class AdminControllerTest extends TestCase
         );
     }
 
+    public function testThemeCatalogIsReturnedWithoutFilesystemPaths(): void
+    {
+        $module = $this->makeModule();
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+
+        $response = $this->callAndDecode($module, $this->makeApiPage('admin.themes', ['GET', 'PATCH']));
+
+        $this->assertSame('default', $response['activeId']);
+        $this->assertSame('default', $response['themes'][0]['id']);
+        $this->assertArrayNotHasKey('path', $response['themes'][0]);
+    }
+
+    public function testThemeUpdateRequiresCsrf(): void
+    {
+        $module = $this->makeModule();
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        PhpInputStreamMock::register(json_encode(['themeId' => 'default', 'settings' => []]));
+
+        $this->expectException(ValidationException::class);
+
+        $module->callApi($this->makeApiPage('admin.themes', ['GET', 'PATCH']), []);
+    }
+
+    public function testThemeNamespaceCannotBypassTheSchemaThroughGenericSettings(): void
+    {
+        $module = $this->makeModule();
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode(['value' => 'anything']));
+
+        $this->expectException(ValidationException::class);
+
+        $module->callApi(
+            $this->makeApiPage('admin.setting', ['GET', 'PATCH']),
+            ['key' => 'theme.default.undeclared']
+        );
+    }
+
     /* ===============================
        User management API
     =============================== */
@@ -1254,6 +1306,7 @@ final class AdminControllerTest extends TestCase
             'admin.menu-preview' => ['GET'],
             'admin.settings' => ['GET', 'POST'],
             'admin.setting' => ['GET', 'PATCH'],
+            'admin.themes' => ['GET', 'PATCH'],
             'admin.users' => ['GET'],
             'admin.user' => ['GET', 'PATCH'],
             'admin.dashboard' => ['GET', 'PATCH', 'DELETE'],
@@ -1298,6 +1351,7 @@ final class AdminControllerTest extends TestCase
         $menuPreview = (new Router($tree))->resolve('/api/v1/admin/menus/preview');
         $settings = (new Router($tree))->resolve('/api/v1/admin/settings');
         $setting = (new Router($tree))->resolve('/api/v1/admin/settings/site_name');
+        $themes = (new Router($tree))->resolve('/api/v1/admin/themes');
         $users = (new Router($tree))->resolve('/api/v1/admin/users');
         $user = (new Router($tree))->resolve('/api/v1/admin/users/42');
         $dashboard = (new Router($tree))->resolve('/api/v1/admin/dashboard');
@@ -1314,6 +1368,7 @@ final class AdminControllerTest extends TestCase
         $this->assertSame('admin.settings', $settings['page']->action ?? null);
         $this->assertSame('admin.setting', $setting['page']->action ?? null);
         $this->assertSame(['key' => 'site_name'], $setting['params']);
+        $this->assertSame('admin.themes', $themes['page']->action ?? null);
         $this->assertSame('admin.users', $users['page']->action ?? null);
         $this->assertSame('admin.user', $user['page']->action ?? null);
         $this->assertSame(['id' => '42'], $user['params']);

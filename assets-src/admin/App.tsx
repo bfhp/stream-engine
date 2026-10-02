@@ -10,6 +10,7 @@ import { Suspense } from "react";
 import Pages from "./pages/Pages";
 import PageEdit from "./pages/PageEdit";
 import Settings from "./pages/Settings";
+import Themes from "./pages/Themes";
 import Widgets from "./pages/Widgets";
 import Menus from "./pages/Menus";
 import MenuEdit from "./pages/MenuEdit";
@@ -36,6 +37,7 @@ export default function App({ moduleAdminPages }: AppProps) {
                 <Route path="/pages" element={<Pages />} />
                 <Route path="/menus" element={<Menus />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/themes" element={<Themes />} />
                 <Route path="/widgets" element={<Widgets />} />
                 <Route path="/users" element={<Users />} />
                 <Route path="/" element={<Dashboard />} />

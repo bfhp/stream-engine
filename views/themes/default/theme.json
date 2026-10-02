@@ -1,0 +1,26 @@
+{
+  "id": "default",
+  "name": "Default",
+  "version": "1",
+  "themeColor": "#0F172A",
+  "settings": {
+    "color_mode": {
+      "type": "select",
+      "label": "Color mode",
+      "default": "dark",
+      "options": {
+        "dark": "Dark",
+        "light": "Light"
+      }
+    }
+  },
+  "assets": {
+    "styles": [
+      "/assets/css/site.css",
+      "/assets/css/custom-content.css"
+    ],
+    "scripts": [
+      "/assets/js/site.js"
+    ]
+  }
+}

@@ -11,12 +11,14 @@ use StreamEngine\Core\ModuleRegistry;
 use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Core\RequestContext;
 use StreamEngine\Core\TranslationManager;
+use StreamEngine\Core\ThemeCatalog;
 use StreamEngine\Domain\Page;
 use StreamEngine\Domain\User;
 use StreamEngine\Modules\Admin\AdminController;
 use StreamEngine\Repository\SettingsRepository;
 use StreamEngine\Service\AccessService;
 use StreamEngine\Service\SettingsService;
+use StreamEngine\Service\ThemeService;
 
 final class ModuleTest extends TestCase
 {
@@ -24,10 +26,17 @@ final class ModuleTest extends TestCase
     {
         $db = $this->createStub(PdoDatabase::class);
 
+        $settingsRepository = new SettingsRepository($db);
+        $settingsService = new SettingsService($settingsRepository);
         $services = [
             $db,
             $this->createStub(AccessService::class),
-            new SettingsService(new SettingsRepository($db)),
+            $settingsService,
+            new ThemeService(
+                new ThemeCatalog(dirname(__DIR__, 3).'/views/themes', dirname(__DIR__, 3).'/public'),
+                $settingsService,
+                $settingsRepository,
+            ),
             new Config([]),
         // Injected only so Security::verifyCsrf() can translate its error
         // messages - see AdminController::callApi().

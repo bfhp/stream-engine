@@ -83,7 +83,59 @@ module.
   — a theme is platform-adjacent presentation, and a module's own content
   should not depend on a specific theme supplying it.
 
-## Override resolution — how a new theme is meant to work
+## Catalog, settings, and override resolution
+
+Every selectable theme is a direct child of `views/themes/` and has a
+`theme.json` manifest. The manifest owns the stable `id`, display `name`,
+version, a settings schema with defaults, and ordered `styles`/`scripts` asset
+lists. `THEME_DIR` remains an environment-only compatibility hook: when it
+points to a directory with a valid manifest, that theme joins the catalog. An
+admin selects only a catalog ID; filesystem paths are never accepted by the
+admin API.
+
+A minimal manifest looks like this:
+
+```json
+{
+  "id": "example",
+  "name": "Example",
+  "version": "1",
+  "themeColor": "#0F172A",
+  "settings": {
+    "color_mode": {
+      "type": "select",
+      "label": "Color mode",
+      "default": "dark",
+      "options": { "dark": "Dark", "light": "Light" }
+    }
+  },
+  "assets": {
+    "styles": ["/themes/example/site.css"],
+    "scripts": ["/themes/example/site.js"]
+  }
+}
+```
+
+Theme values are stored as `theme.<id>.<setting>`, while `theme.active` stores
+the selected ID. This keeps each theme's values intact when switching. The
+server accepts only keys declared by that theme and validates select, color,
+boolean, and string values against the manifest schema.
+
+`themeColor` is fixed theme metadata rather than an administrator setting. It
+sets the browser chrome color through `<meta name="theme-color">`; changing it
+requires changing the theme manifest.
+
+Theme assets must be deployed below `public/themes/<id>/` and referenced as
+`/themes/<id>/...`; a theme may also reuse core `/assets/...` files. External
+URLs, traversal, and arbitrary public paths are rejected. Rendered asset URLs
+receive an mtime-based `?v=` value, so changing the manifest or asset invalidates
+browser caches.
+
+If the selected theme disappears or its manifest is invalid, the application
+uses `views/themes/default/`. If an override produces a Twig loader, runtime,
+or syntax error, the request is retried once with the default theme. An
+administrator can preview a catalog theme with `?theme_preview=<id>` without
+changing the saved selection; non-administrators cannot activate previews.
 
 The loader (`StreamEngine::handleRequest()`) resolves a template name
 (`layouts/base.twig`, `components/article/example.twig`, ...) against an
@@ -91,17 +143,17 @@ ordered list of filesystem paths and returns the first match. For a theme
 to be a genuine override layer — able to restyle a layout while leaving
 everything it doesn't touch alone — that search order needs to be:
 
-1. The directory configured by `THEME_DIR`, checked first so the site can
-   override anything below. This layer is optional.
+1. The selected catalog theme directory, checked first so the site can override
+   anything below. This layer is optional.
 2. `views/themes/default/` — the baseline theme, providing every
    layout/partial/platform-component a new theme doesn't bother overriding.
 3. Each module's own `views/` — so a module's components resolve even when
    no theme (default or active) overrides them.
 
-Concretely: a site can set `THEME_DIR=/var/www/site/views/theme` and put only
-the files it wants to change there, such as `layouts/base.twig` and
-`partials/header.twig`. Every other template keeps resolving from `default`
-or from the module that owns it.
+Concretely: a site can set `THEME_DIR=/var/www/site/views/theme`, add a valid
+manifest, and put only the templates it wants to change there, such as
+`layouts/base.twig` and `partials/header.twig`. Every other template keeps
+resolving from `default` or from the module that owns it.
 
 ## Where this applies
 

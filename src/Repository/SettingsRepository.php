@@ -53,6 +53,21 @@ final readonly class SettingsRepository
         );
     }
 
+    /** @param array<string, string> $settings */
+    public function setMany(array $settings): void
+    {
+        $this->db->begin();
+        try {
+            foreach ($settings as $key => $value) {
+                $this->set($key, $value);
+            }
+            $this->db->commit();
+        } catch (\Throwable $e) {
+            $this->db->rollback();
+            throw $e;
+        }
+    }
+
     /**
      * @return list<array{key: string, value: string, updatedAt: int}>
      */

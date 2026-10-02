@@ -34,6 +34,7 @@ export default function AdminLayout({ moduleAdminPages }: AdminLayoutProps) {
                 <NavLink component={Link} to="/pages" label={trans("js.admin.nav.pages")} />
                 <NavLink component={Link} to="/menus" label={trans("js.admin.nav.menus")} />
                 <NavLink component={Link} to="/settings" label={trans("js.admin.nav.settings")} />
+                <NavLink component={Link} to="/themes" label={trans("js.admin.nav.themes")} />
                 <NavLink component={Link} to="/widgets" label={trans("js.admin.nav.widgets")} />
                 {moduleAdminPages.map(({ path, labelKey }) => (
                     <NavLink key={path} component={Link} to={path} label={trans(labelKey)} />

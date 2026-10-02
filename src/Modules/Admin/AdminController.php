@@ -24,6 +24,7 @@ use StreamEngine\Repository\SettingsRepository;
 use StreamEngine\Repository\UserRepository;
 use StreamEngine\Service\AccessService;
 use StreamEngine\Service\AdminDashboardService;
+use StreamEngine\Service\ThemeService;
 use StreamEngine\Repository\DashboardLayoutRepository;
 use StreamEngine\View\ViewModel;
 
@@ -263,6 +264,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
         private readonly AccessService $accessService,
         private readonly TranslationManager $tm,
         private readonly ModuleRegistry $modules,
+        private readonly ThemeService $themeService,
     ) {
         parent::__construct($db, $context);
         $this->pageRepository = new PageRepository($db);
@@ -326,6 +328,9 @@ class AdminController extends AbstractController implements DashboardCardProvide
                 break;
             case 'admin.settings':
                 $this->handleSettingsRequest();
+                break;
+            case 'admin.themes':
+                $this->handleThemesRequest();
                 break;
             case 'admin.setting':
                 $this->handleSettingRequest((string) ($args['key'] ?? ''));
@@ -487,6 +492,18 @@ class AdminController extends AbstractController implements DashboardCardProvide
                 pattern: '{key:[A-Za-z0-9_.-]+}',
                 requestMethods: ['GET', 'PATCH'],
                 action: 'admin.setting',
+                accessRule: AccessService::ACCESS_ADMIN,
+            )
+        );
+
+        $themesPageId = $pageTree->getMaxPageId();
+        $pageTree->add(
+            Page::api(
+                id: $themesPageId,
+                parentId: $adminApiPageId,
+                pattern: 'themes',
+                requestMethods: ['GET', 'PATCH'],
+                action: 'admin.themes',
                 accessRule: AccessService::ACCESS_ADMIN,
             )
         );
@@ -911,6 +928,26 @@ class AdminController extends AbstractController implements DashboardCardProvide
         }
 
         echo Formatter::json($setting);
+    }
+
+    /** @throws ValidationException */
+    private function handleThemesRequest(): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
+            Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
+            $input = $this->jsonBody();
+            $themeId = $input['themeId'] ?? null;
+            $settings = $input['settings'] ?? [];
+            if (! is_string($themeId) || ! is_array($settings)) {
+                throw new ValidationException($this->tm->trans('admin.error.invalid_theme'));
+            }
+
+            echo Formatter::json($this->themeService->save($themeId, $settings));
+
+            return;
+        }
+
+        echo Formatter::json($this->themeService->payload());
     }
 
     /**
@@ -1399,7 +1436,11 @@ class AdminController extends AbstractController implements DashboardCardProvide
      */
     private function validateSettingKey(string $key): void
     {
-        if ($key === '' || strlen($key) > 100 || ! preg_match('/\A[A-Za-z0-9_.-]+\z/', $key)) {
+        if ($key === ''
+            || strlen($key) > 100
+            || ! preg_match('/\A[A-Za-z0-9_.-]+\z/', $key)
+            || $key === ThemeService::ACTIVE_KEY
+            || str_starts_with($key, 'theme.')) {
             throw new ValidationException($this->tm->trans('admin.error.setting_key'));
         }
     }

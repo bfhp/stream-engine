@@ -30,6 +30,7 @@ use StreamEngine\Core\QueryParams;
 use StreamEngine\Core\RequestContext;
 use StreamEngine\Core\Router;
 use StreamEngine\Core\Security;
+use StreamEngine\Core\ThemeCatalog;
 use StreamEngine\Core\TranslationManager;
 use StreamEngine\Core\UrlGenerator;
 use StreamEngine\Domain\Page;
@@ -64,6 +65,7 @@ use StreamEngine\Service\NotificationService;
 use StreamEngine\Service\PollService;
 use StreamEngine\Service\SettingsService;
 use StreamEngine\Service\TermService;
+use StreamEngine\Service\ThemeService;
 use StreamEngine\Service\UploadService;
 use StreamEngine\Service\UserService;
 use StreamEngine\Service\WidgetService;
@@ -121,6 +123,13 @@ class StreamEngine
 
     private Formatter $fmt;
 
+    private ThemeCatalog $themeCatalog;
+
+    private ThemeService $themeService;
+
+    /** @var array<string, mixed> */
+    private array $activeTheme;
+
     private float $startTime;
 
     public function __construct()
@@ -138,7 +147,11 @@ class StreamEngine
             $this->cache->flush();
         }
 
-        $this->settings = new SettingsService(new SettingsRepository($this->db));
+        $settingsRepository = new SettingsRepository($this->db);
+        $this->settings = new SettingsService($settingsRepository);
+        $this->themeCatalog = ThemeCatalog::forApplication($this->config);
+        $this->themeService = new ThemeService($this->themeCatalog, $this->settings, $settingsRepository);
+        $this->activeTheme = $this->themeService->active();
         $this->widgets = new WidgetService($this->settings);
 
         $this->tm = new TranslationManager($this->settings->getString('locale'), 'en');
@@ -274,6 +287,7 @@ class StreamEngine
             $this->messageService,
             $this->notificationService,
             $this->pollService,
+            $this->themeService,
         );
 
         $this->initCronAndApi();
@@ -284,7 +298,7 @@ class StreamEngine
      */
     public function handleRequest(): void
     {
-        $twig = $this->createTwigEnvironment();
+        $twig = $this->createTwigEnvironment($this->activeTheme);
         $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         $pageData = (new Router($this->pageTree))->resolve($path);
         $responseType = $pageData['page']->responseType
@@ -293,6 +307,11 @@ class StreamEngine
 
         try {
             $currentUser = $this->currentUser();
+            $previewId = $this->previewThemeId($currentUser);
+            if ($previewId !== null) {
+                $this->activeTheme = $this->themeService->active($previewId);
+                $twig = $this->createTwigEnvironment($this->activeTheme);
+            }
             $requestContext = $this->requestContext($currentUser);
             $pageContent = $this->pageContent($pageData, $currentUser);
 
@@ -358,12 +377,13 @@ class StreamEngine
         return is_string($path) && ($path === '/api' || str_starts_with($path, '/api/'));
     }
 
-    private function createTwigEnvironment(): CachedEnvironment
+    /** @param array<string, mixed> $theme */
+    private function createTwigEnvironment(array $theme): CachedEnvironment
     {
         $loader = new FilesystemLoader();
 
-        if ($themeDir = $this->config->themeDir()) {
-            $loader->addPath($themeDir);
+        if ($theme['id'] !== ThemeCatalog::DEFAULT_ID && is_dir((string) $theme['path'])) {
+            $loader->addPath((string) $theme['path']);
         }
 
         $loader->addPath(__DIR__.'/../views/themes/default');
@@ -382,6 +402,16 @@ class StreamEngine
         $twig->addFunction(new TwigFunction('action_url', [$this->urlGenerator, 'action']));
 
         return $twig;
+    }
+
+    private function previewThemeId(User $currentUser): ?string
+    {
+        $id = $_GET['theme_preview'] ?? null;
+        if (! is_string($id) || $id === '' || ! $this->accessService->isAdmin($currentUser)) {
+            return null;
+        }
+
+        return $this->themeCatalog->find($id) !== null ? $id : null;
     }
 
     private function currentUser(): User
@@ -431,6 +461,7 @@ class StreamEngine
             'siteUrl' => $this->config->siteUrl(),
             'locale' => $this->settings->getString('locale'),
             'widgets' => $this->widgets->placements(),
+            'theme' => $this->activeTheme,
         ];
 
         if (! $currentUser->isGuest()) {
@@ -485,7 +516,23 @@ class StreamEngine
         $view->data['runtime'] = sprintf('%.1fms', (microtime(true) - $this->startTime) * 1000);
 
         // Get page HTML content
-        $content = $twig->render($view->template, $view->data);
+        try {
+            $content = $twig->render($view->template, $view->data);
+        } catch (LoaderError|RuntimeError|SyntaxError $e) {
+            if ($this->activeTheme['id'] === ThemeCatalog::DEFAULT_ID) {
+                throw $e;
+            }
+
+            error_log(sprintf(
+                "Theme '%s' failed to render; using the default theme: %s",
+                $this->activeTheme['id'],
+                $e->getMessage(),
+            ));
+            $this->activeTheme = $this->themeService->active(ThemeCatalog::DEFAULT_ID);
+            $view->data['theme'] = $this->activeTheme;
+            $twig = $this->createTwigEnvironment($this->activeTheme);
+            $content = $twig->render($view->template, $view->data);
+        }
 
         // Checking If-Modified-Since
         $watcher = $twig->getWatcher();
@@ -576,12 +623,23 @@ class StreamEngine
             header('Content-Type: text/html; charset=UTF-8');
         }
 
-        echo $twig->render('error.twig', [
+        $data = [
             ...$pageContent,
+            'theme' => $pageContent['theme'] ?? $this->activeTheme,
             'status' => $status,
             'title' => $this->errorTitle($status),
             'message' => $message,
-        ]);
+        ];
+        try {
+            echo $twig->render('error.twig', $data);
+        } catch (LoaderError|RuntimeError|SyntaxError $e) {
+            if (($this->activeTheme['id'] ?? ThemeCatalog::DEFAULT_ID) === ThemeCatalog::DEFAULT_ID) {
+                throw $e;
+            }
+            $this->activeTheme = $this->themeService->active(ThemeCatalog::DEFAULT_ID);
+            $data['theme'] = $this->activeTheme;
+            echo $this->createTwigEnvironment($this->activeTheme)->render('error.twig', $data);
+        }
     }
 
     private function errorTitle(int $status): string
@@ -673,7 +731,16 @@ class StreamEngine
     private function render404(CachedEnvironment $twig, array $pageContent = []): void
     {
         http_response_code(404);
-        echo $twig->render('404.twig', $pageContent);
+        try {
+            echo $twig->render('404.twig', $pageContent);
+        } catch (LoaderError|RuntimeError|SyntaxError $e) {
+            if (($this->activeTheme['id'] ?? ThemeCatalog::DEFAULT_ID) === ThemeCatalog::DEFAULT_ID) {
+                throw $e;
+            }
+            $this->activeTheme = $this->themeService->active(ThemeCatalog::DEFAULT_ID);
+            $pageContent['theme'] = $this->activeTheme;
+            echo $this->createTwigEnvironment($this->activeTheme)->render('404.twig', $pageContent);
+        }
     }
 
     /* Doesn't lock process */

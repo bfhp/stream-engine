@@ -7,6 +7,11 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added a dedicated theme administration section with catalog-based selection,
+  validated per-theme settings, safe previews, fallback, and versioned assets.
+
 ## [0.2.3] - 2026-10-02
 
 ### Added

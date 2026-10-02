@@ -240,6 +240,7 @@ export default function Settings() {
                     )}
                 />
             </SimpleGrid>
+
         </Stack>
     );
 }
