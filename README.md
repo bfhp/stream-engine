@@ -36,14 +36,17 @@ open-source libraries and infrastructure.
 - User registration, authentication, profiles, friendships, and memberships
 - Private and group conversations, notifications, and email delivery
 - Comments, ratings, favorites, tags, search, and sitemap generation
-- A React administration interface for pages, feeds, users, widgets, and
-  settings
+- A React administration interface for pages, feeds, users, menus, widgets,
+  themes, and settings, with a personalized module-extensible dashboard
 - Modular backend controllers, module-owned templates, and discoverable module
   assets and admin pages
 - Database migrations and shared CLI/web installation infrastructure
 - Local uploads and S3-compatible object storage
-- Twig themes with an explicit override and ownership model
-- English and Russian localization infrastructure
+- Twig themes with an explicit override and ownership model, and a visual theme
+  gallery with validated per-theme settings
+- Localization infrastructure with English, German, French, Russian, Spanish,
+  Brazilian Portuguese, and Arabic catalogs (Arabic is translated, but
+  right-to-left layout is not supported yet)
 
 The current backlog and known limitations are tracked in
 [docs/TODO.md](docs/TODO.md).
