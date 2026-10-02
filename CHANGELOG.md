@@ -7,6 +7,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-03
+
 ### Added
 
 - Added the German (`de`), French (`fr`), Spanish (`es`), Brazilian Portuguese (`pt-br`), Arabic (`ar`), Italian (`it`), Japanese (`ja`), Korean (`ko`), Simplified Chinese (`zh-cn`), Dutch (`nl`), and Polish (`pl`) interface locales with a full catalog, admin locale

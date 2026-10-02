@@ -1,6 +1,6 @@
 {
     "format": 1,
-    "release": "0.2.3",
+    "release": "0.3.0",
     "schema": "schema.sql",
     "schema_checksum": "59eab305919ce881cacb8b9929d49cce1f833912d02729efdce9882c73e297f5",
     "migrations": [
@@ -33,6 +33,11 @@
             "version": "20261002010000_complete_admin_menu_editor",
             "file": "20261002010000_complete_admin_menu_editor.sql",
             "checksum": "f578c08fa14fbbbbb58f668265d3bcf13c267f9b81231ad865a188f5f6609588"
+        },
+        {
+            "version": "20261002020000_assign_group_conversation_admins",
+            "file": "20261002020000_assign_group_conversation_admins.sql",
+            "checksum": "4a1c0198806867ad2eb9bae6a04c5eec713bce7d1cd0f82c9e61ea014a297be4"
         }
     ]
 }
