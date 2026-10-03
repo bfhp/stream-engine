@@ -28,8 +28,7 @@ class Formatter
         string $locale = 'en',
         string $dateFormat = 'auto',
         string $timeFormat = 'auto',
-    )
-    {
+    ) {
         $this->tm = $tm;
         $this->locale = $locale;
         $this->dateFormat = in_array($dateFormat, self::DATE_FORMATS, true) ? $dateFormat : 'auto';
