@@ -1,4 +1,3 @@
-import { Toast, Modal, Tooltip } from "bootstrap";
 import {
     siVk,
     siTelegram,
@@ -16,6 +15,7 @@ import { getApiErrorMessage } from "../shared/api-errors";
 import { resolveSameOriginUrl } from "../shared/navigation-url";
 import { escapeHtml } from "../shared/escape";
 import { trans, transChoice, transChoiceWithCount } from "../shared/i18n";
+import { ui } from "../shared/ui";
 
 const CMS = (() => {
 
@@ -110,17 +110,14 @@ const CMS = (() => {
 
         if (!toastEl || !toastBody) return;
 
-        const toast = new Toast(toastEl, { delay: 5000 });
-
-        toastEl.className = "toast align-items-center border-0 text-bg-" + type;
-
         if (html) {
             toastBody.innerHTML = message;
         } else {
             toastBody.textContent = String(message ?? "");
         }
 
-        toast.show();
+        // How the type is shown (a class, an attribute) is the adapter's call.
+        ui.toast.show(toastEl, type);
     }
 
     /* ===============================
@@ -134,8 +131,6 @@ const CMS = (() => {
 
         if (!modalEl || !okBtn || !titleEl || !bodyEl) return;
 
-        const modal = new Modal(modalEl);
-
         let confirmed = false;
 
         // Assigning .onclick (rather than addEventListener/removeEventListener)
@@ -148,32 +143,31 @@ const CMS = (() => {
         okBtn.onclick = () => {
             confirmed = true;
             onConfirm?.();
-            modal.hide();
+            ui.modal.close(modalEl);
         };
 
         // Optional "closed without confirming" hook, for callers that disable
         // part of the UI before asking and need it back if the answer is no -
         // see initCommunityManageSettingsForm()'s Save button in users.ts.
         //
-        // Bootstrap fires hidden.bs.modal on every close including the OK path,
-        // hence the `confirmed` flag; and the listener removes itself, because
-        // one left attached would run this call's onDismiss when some *later*
-        // confirm() is dismissed - the same failure the okBtn.onclick note
-        // above describes. Each call registers its own closure, so a confirm()
-        // that supersedes an unanswered one still gets its own dismissal.
+        // The UI adapter reports every close including the OK path (see
+        // MODAL_CLOSED in shared/ui.ts), hence the `confirmed` flag; and the
+        // listener removes itself, because one left attached would run this
+        // call's onDismiss when some *later* confirm() is dismissed - the same
+        // failure the okBtn.onclick note above describes. Each call registers
+        // its own closure, so a confirm() that supersedes an unanswered one
+        // still gets its own dismissal.
         if (onDismiss) {
-            const handleHidden = () => {
-                modalEl.removeEventListener('hidden.bs.modal', handleHidden);
+            const off = ui.modal.onClosed(modalEl, () => {
+                off();
                 if (!confirmed) onDismiss();
-            };
-
-            modalEl.addEventListener('hidden.bs.modal', handleHidden);
+            });
         }
 
         titleEl.textContent = title;
         bodyEl.textContent = message;
 
-        modal.show();
+        ui.modal.open(modalEl);
     }
 
     /* ===============================
@@ -249,16 +243,7 @@ const CMS = (() => {
     }
 
     function initTooltips(root: ParentNode = document) {
-        const tooltipTriggerList = root.querySelectorAll('[data-bs-toggle="tooltip"]');
-
-        tooltipTriggerList.forEach(el => {
-            if (Tooltip.getInstance(el)) return;
-
-            new Tooltip(el, {
-                placement: 'top',
-                trigger: 'hover focus'
-            });
-        });
+        ui.tooltip.init(root);
     }
 
     function checkAndSetTimezoneCookie() {
@@ -999,6 +984,9 @@ const CMS = (() => {
         api,
         toast: toastMessage,
         confirm,
+        // Framework-neutral modal/toast/tooltip behavior; themes register
+        // their adapter with CMS.ui.register(). See shared/ui.ts.
+        ui,
         isAuthenticated,
         // The single HTML-escaper every page bundle uses - see its own note on
         // why it's shared through here rather than imported.

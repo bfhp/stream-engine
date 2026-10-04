@@ -83,7 +83,7 @@ The messenger (`msgr-*`) already uses its own classes. It stays on JSON + B, bec
 
 ## Action items
 
-1. [ ] Build `CMS.ui` (adapter + `clone/fill`) with a native adapter for `default` and `bootstrap-adapter.ts` for the `bootstrap` theme; remove direct `import … from "bootstrap"` from `app.ts` and `forums.ts`.
+1. [x] Build `CMS.ui` (adapter + `clone/fill`) with a native adapter for `default` and `bootstrap-adapter.ts` for the `bootstrap` theme; remove direct `import … from "bootstrap"` from `app.ts` and `forums.ts`.
 2. [ ] Add `partials/js-templates.twig` (spinner, empty, error, reply-form) and move spinners to it.
 3. [ ] Implement `render=html` for comments and switch `app.ts` to `comment.twig`. This is the pilot.
 4. [ ] Switch `user-cards`, `user-pagination`, `profile`, `search` and `initOffsetLoadMore` to `res.html`.

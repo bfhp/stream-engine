@@ -417,4 +417,24 @@ final class ModuleRegistry
 
         return array_values(array_unique($paths));
     }
+
+    /**
+     * Module views keyed by module directory name (`Article`, `Forums`, ...),
+     * for registering `@<Module>/...` Twig namespaces. The first module with a
+     * given name wins.
+     *
+     * @return array<string, string>
+     */
+    public function viewsNamespaces(): array
+    {
+        $namespaces = [];
+        foreach ($this->viewsPaths() as $path) {
+            $name = basename(dirname($path));
+            if (preg_match('/\A[A-Za-z][A-Za-z0-9_]*\z/', $name) === 1 && ! isset($namespaces[$name])) {
+                $namespaces[$name] = $path;
+            }
+        }
+
+        return $namespaces;
+    }
 }

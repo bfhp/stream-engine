@@ -391,15 +391,20 @@ class StreamEngine
     {
         $loader = new FilesystemLoader();
 
-        if ($theme['id'] !== ThemeCatalog::DEFAULT_ID && is_dir((string) $theme['path'])) {
-            $loader->addPath((string) $theme['path']);
+        // Search order: active theme → its parents → default → module views.
+        // lineage() always ends with `default`. Every theme is also reachable
+        // as `@<id>/...` and every module as `@<Module>/...`, so an override
+        // can extend the file it replaces.
+        foreach ($this->themeCatalog->lineage($theme) as $member) {
+            $loader->addPath($member['path']);
+            $loader->addPath($member['path'], $member['id']);
         }
-
-        $loader->addPath(__DIR__.'/../views/themes/default');
-        $loader->addPath(__DIR__.'/../views/themes/default', 'default');
 
         foreach ($this->modules->viewsPaths() as $moduleViewsPath) {
             $loader->addPath($moduleViewsPath);
+        }
+        foreach ($this->modules->viewsNamespaces() as $moduleName => $moduleViewsPath) {
+            $loader->addPath($moduleViewsPath, $moduleName);
         }
 
         $twig = new CachedEnvironment($loader, [

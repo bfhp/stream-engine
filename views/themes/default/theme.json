@@ -22,6 +22,9 @@
     ],
     "scripts": [
       "/assets/js/site.js"
-    ]
+    ],
+    "rtl": {
+      "/assets/css/bootstrap.css": "/assets/css/bootstrap-rtl.css"
+    }
   }
 }

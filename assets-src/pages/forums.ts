@@ -14,11 +14,9 @@
 import { uploadFile, uploadHeaders } from "../shared/uploads";
 import "trix";
 import "trix/dist/trix.css";
-// forums.topic-new's preview button (initTopicPreview()) needs its
-// own Bootstrap Modal instance. Use Bootstrap's package ESM entry here:
-// bootstrap/dist/js/bootstrap.bundle is UMD/CJS and makes Rolldown emit a
-// _commonjsHelpers chunk once more than one entry touches it.
-import { Modal } from "bootstrap";
+// forums.topic-new's preview button (initTopicPreview()) opens a modal
+// through the theme's UI adapter, never through a framework import.
+import { ui } from "../shared/ui";
 import { bytesToLabel } from "../shared/bytes";
 import { getApiErrorMessage } from "../shared/api-errors";
 import { trans, transChoiceWithCount } from "../shared/i18n";
@@ -785,7 +783,7 @@ function initTopicPreview(form: HTMLFormElement, source: TopicPreviewSource) {
             </div>
         `;
 
-        Modal.getOrCreateInstance(modalEl).show();
+        ui.modal.open(modalEl);
     });
 }
 

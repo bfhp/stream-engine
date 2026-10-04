@@ -9,14 +9,20 @@ use JsonException;
 /**
  * Discovers themes from server-controlled directories and validates their
  * public contract. Paths never cross the admin API boundary.
+ *
+ * Themes form a chain: every theme except `default` has a parent (`default`
+ * unless its manifest says otherwise). The chain decides template lookup
+ * order (see `lineage()`) and, unless a theme sets `inheritAssets: false`,
+ * which parent assets are loaded before its own.
  */
 final class ThemeCatalog
 {
     public const string DEFAULT_ID = 'default';
 
-    private const string SITE_CSS = '/assets/css/site.css';
-    private const string BOOTSTRAP = '/assets/css/bootstrap.css';
-    private const string BOOTSTRAP_RTL = '/assets/css/bootstrap-rtl.css';
+    /** Longest allowed parent chain, `default` included. */
+    private const int MAX_DEPTH = 8;
+
+    private const string ID_PATTERN = '/\A[a-z][a-z0-9-]{0,49}\z/';
 
     /** @var array<string, array<string, mixed>>|null */
     private ?array $themes = null;
@@ -58,25 +64,48 @@ final class ThemeCatalog
     }
 
     /**
-     * Swaps the core LTR Bootstrap stylesheet for its RTL build when the
-     * interface is right-to-left, so only one of the two is ever loaded.
+     * The theme followed by its ancestors, always ending with `default`, and
+     * only directories that exist. This is the template search order before
+     * module views.
+     *
+     * @param array<string, mixed> $theme
+     * @return list<array{id: string, path: string}>
+     */
+    public function lineage(array $theme): array
+    {
+        $ids = (array) ($theme['chain'] ?? [$theme['id'] ?? self::DEFAULT_ID]);
+        if (end($ids) !== self::DEFAULT_ID) {
+            $ids[] = self::DEFAULT_ID;
+        }
+
+        $result = [];
+        foreach ($ids as $id) {
+            $member = $id === ($theme['id'] ?? null) ? $theme : $this->resolve((string) $id);
+            $path = (string) ($member['path'] ?? '');
+            if (is_dir($path) && ! in_array($member['id'], array_column($result, 'id'), true)) {
+                $result[] = ['id' => (string) $member['id'], 'path' => $path];
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Swaps stylesheets for the right-to-left builds the theme chain declares
+     * in `assets.rtl`, so only one of each pair is ever loaded.
      *
      * @param array<string, mixed> $theme
      * @return array<string, mixed>
      */
     public function forDirection(array $theme, bool $rtl): array
     {
-        if (! $rtl || ! isset($theme['assets']['styles']) || ! is_array($theme['assets']['styles'])) {
-            return $theme;
-        }
-        if (! is_file($this->publicDir.self::BOOTSTRAP_RTL)) {
+        $map = $theme['assets']['rtl'] ?? [];
+        if (! $rtl || ! is_array($map) || $map === [] || ! is_array($theme['assets']['styles'] ?? null)) {
             return $theme;
         }
 
         $theme['assets']['styles'] = array_map(
-            static fn (string $url): string => str_starts_with($url, self::BOOTSTRAP.'?')
-                ? self::BOOTSTRAP_RTL.substr($url, strlen(self::BOOTSTRAP))
-                : $url,
+            static fn (string $url): string => $map[self::basePath($url)] ?? $url,
             $theme['assets']['styles'],
         );
 
@@ -111,21 +140,90 @@ final class ThemeCatalog
             $directories[] = $this->legacyThemeDir;
         }
 
-        $themes = [];
+        $raw = [];
         foreach (array_unique($directories) as $directory) {
             $theme = $this->readManifest($directory);
-            if ($theme !== null && ! isset($themes[$theme['id']])) {
-                $themes[$theme['id']] = $theme;
+            if ($theme !== null && ! isset($raw[$theme['id']])) {
+                $raw[$theme['id']] = $theme;
             }
         }
 
-        if (! isset($themes[self::DEFAULT_ID])) {
-            $themes[self::DEFAULT_ID] = $this->builtInDefault();
+        if (! isset($raw[self::DEFAULT_ID])) {
+            $raw[self::DEFAULT_ID] = $this->builtInDefault();
+        }
+        $raw[self::DEFAULT_ID]['parent'] = null;
+
+        $themes = [];
+        foreach ($raw as $id => $theme) {
+            $chain = $this->chain($id, $raw);
+            if ($chain === null) {
+                continue;
+            }
+            $theme['chain'] = $chain;
+            $theme['assets'] = $this->effectiveAssets($chain, $raw);
+            $themes[$id] = $theme;
         }
 
         ksort($themes);
 
         return $this->themes = $themes;
+    }
+
+    /**
+     * Walks parents up to `default`. A missing parent, a cycle or a chain
+     * deeper than MAX_DEPTH makes the theme unselectable.
+     *
+     * @param array<string, array<string, mixed>> $raw
+     * @return list<string>|null
+     */
+    private function chain(string $id, array $raw): ?array
+    {
+        $chain = [];
+        $current = $id;
+        while ($current !== null) {
+            if (! isset($raw[$current]) || in_array($current, $chain, true) || count($chain) >= self::MAX_DEPTH) {
+                return null;
+            }
+            $chain[] = $current;
+            $current = $raw[$current]['parent'];
+        }
+
+        return $chain;
+    }
+
+    /**
+     * Parent assets first, then the child's, deduplicated by path. A theme
+     * with `inheritAssets: false` starts a fresh list; its ancestors' assets
+     * are not loaded. RTL replacements merge the same way, child wins.
+     *
+     * @param list<string> $chain
+     * @param array<string, array<string, mixed>> $raw
+     * @return array{styles: list<string>, scripts: list<string>, rtl: array<string, string>}
+     */
+    private function effectiveAssets(array $chain, array $raw): array
+    {
+        $contributing = [];
+        foreach ($chain as $id) {
+            array_unshift($contributing, $raw[$id]);
+            if (! $raw[$id]['inheritAssets']) {
+                break;
+            }
+        }
+
+        $result = ['styles' => [], 'scripts' => [], 'rtl' => []];
+        foreach ($contributing as $theme) {
+            foreach (['styles', 'scripts'] as $kind) {
+                foreach ($theme['assets'][$kind] as $url) {
+                    $known = array_map(self::basePath(...), $result[$kind]);
+                    if (! in_array(self::basePath($url), $known, true)) {
+                        $result[$kind][] = $url;
+                    }
+                }
+            }
+            $result['rtl'] = $theme['assets']['rtl'] + $result['rtl'];
+        }
+
+        return $result;
     }
 
     /** @return array<string, mixed>|null */
@@ -148,7 +246,19 @@ final class ThemeCatalog
 
         $id = (string) ($manifest['id'] ?? '');
         $name = trim((string) ($manifest['name'] ?? ''));
-        if (! preg_match('/\A[a-z][a-z0-9-]{0,49}\z/', $id) || $name === '' || strlen($name) > 100) {
+        if (! preg_match(self::ID_PATTERN, $id) || $name === '' || strlen($name) > 100) {
+            return null;
+        }
+
+        // `default` is the root: whatever its manifest says, it has no parent.
+        $parent = $id === self::DEFAULT_ID ? null : ($manifest['parent'] ?? self::DEFAULT_ID);
+        if ($parent !== null
+            && (! is_string($parent) || ! preg_match(self::ID_PATTERN, $parent) || $parent === $id)) {
+            return null;
+        }
+
+        $inheritAssets = $manifest['inheritAssets'] ?? true;
+        if (! is_bool($inheritAssets)) {
             return null;
         }
 
@@ -173,6 +283,8 @@ final class ThemeCatalog
             'version' => (string) ($manifest['version'] ?? '1'),
             'themeColor' => $themeColor,
             'path' => $directory,
+            'parent' => $parent,
+            'inheritAssets' => $inheritAssets,
             'settings' => $settings,
             'assets' => $assets,
         ];
@@ -234,7 +346,13 @@ final class ThemeCatalog
         return $schema;
     }
 
-    /** @return array{styles: list<string>, scripts: list<string>}|null */
+    /**
+     * Validates the theme's own assets. `rtl` maps a stylesheet path to its
+     * right-to-left build; an entry whose RTL file is not deployed is
+     * skipped, so a missing build degrades to the LTR stylesheet.
+     *
+     * @return array{styles: list<string>, scripts: list<string>, rtl: array<string, string>}|null
+     */
     private function assets(mixed $input, string $id, string $manifestPath): ?array
     {
         if (! is_array($input)) {
@@ -242,36 +360,49 @@ final class ThemeCatalog
         }
 
         $versionTime = (int) filemtime($manifestPath);
-        $result = ['styles' => [], 'scripts' => []];
+        $result = ['styles' => [], 'scripts' => [], 'rtl' => []];
         foreach (['styles', 'scripts'] as $kind) {
             $items = $input[$kind] ?? [];
             if (! is_array($items)) {
                 return null;
             }
-            // Core site.css no longer bundles Bootstrap; themes that reuse it
-            // without listing Bootstrap keep working.
-            if ($kind === 'styles'
-                && in_array(self::SITE_CSS, $items, true)
-                && ! in_array(self::BOOTSTRAP, $items, true)
-                && is_file($this->publicDir.self::BOOTSTRAP)) {
-                array_unshift($items, self::BOOTSTRAP);
-            }
             foreach ($items as $url) {
-                if (! is_string($url)
-                    || ! preg_match('#\A/(?:assets|themes/'.preg_quote($id, '#').')/[A-Za-z0-9_./-]+\z#', $url)
-                    || str_contains($url, '..')) {
+                if (! $this->isAllowedUrl($url, $id) || ! is_file($this->publicDir.$url)) {
                     return null;
                 }
-                $file = $this->publicDir.$url;
-                if (! is_file($file)) {
-                    return null;
-                }
-                $versionTime = max($versionTime, (int) filemtime($file));
+                $versionTime = max($versionTime, (int) filemtime($this->publicDir.$url));
                 $result[$kind][] = $url.'?v='.$versionTime;
             }
         }
 
+        $rtl = $input['rtl'] ?? [];
+        if (! is_array($rtl)) {
+            return null;
+        }
+        foreach ($rtl as $ltrUrl => $rtlUrl) {
+            if (! $this->isAllowedUrl($ltrUrl, $id) || ! $this->isAllowedUrl($rtlUrl, $id)) {
+                return null;
+            }
+            if (is_file($this->publicDir.$rtlUrl)) {
+                $result['rtl'][$ltrUrl] = $rtlUrl.'?v='.max($versionTime, (int) filemtime($this->publicDir.$rtlUrl));
+            }
+        }
+
         return $result;
+    }
+
+    private function isAllowedUrl(mixed $url, string $id): bool
+    {
+        return is_string($url)
+            && preg_match('#\A/(?:assets|themes/'.preg_quote($id, '#').')/[A-Za-z0-9_./-]+\z#', $url) === 1
+            && ! str_contains($url, '..');
+    }
+
+    private static function basePath(string $url): string
+    {
+        $query = strpos($url, '?');
+
+        return $query === false ? $url : substr($url, 0, $query);
     }
 
     /** @return array<string, mixed> */
@@ -283,6 +414,8 @@ final class ThemeCatalog
             'version' => '1',
             'themeColor' => '#0F172A',
             'path' => rtrim($this->themesDir, '/').'/default',
+            'parent' => null,
+            'inheritAssets' => true,
             'settings' => [
                 'color_mode' => [
                     'type' => 'select', 'label' => 'Color mode', 'default' => 'dark',
@@ -290,8 +423,9 @@ final class ThemeCatalog
                 ],
             ],
             'assets' => [
-                'styles' => [self::BOOTSTRAP, self::SITE_CSS, '/assets/css/custom-content.css'],
+                'styles' => ['/assets/css/bootstrap.css', '/assets/css/site.css', '/assets/css/custom-content.css'],
                 'scripts' => ['/assets/js/site.js'],
+                'rtl' => ['/assets/css/bootstrap.css' => '/assets/css/bootstrap-rtl.css'],
             ],
         ];
     }

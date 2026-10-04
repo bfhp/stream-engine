@@ -1,14 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
- * app.ts pulls in Bootstrap at module scope purely to construct
- * Toast/Modal/Tooltip instances. None of that is under test here, and the
- * real Modal brings a lot of jsdom-unfriendly weight with it, so it is
- * stubbed. Everything else in app.ts is exercised for real.
+ * app.ts goes through the UI adapter (shared/ui.ts); these tests register
+ * the Bootstrap one, as site/main.ts does, with Bootstrap itself stubbed:
+ * the real Modal brings a lot of jsdom-unfriendly weight with it. Everything
+ * else in app.ts is exercised for real.
  */
 vi.mock("bootstrap", () => {
     class Stub {
         static getInstance() { return null; }
+        static getOrCreateInstance(el: HTMLElement) { return new this(el); }
+        constructor(_el?: HTMLElement) {}
         show() {}
         hide() {}
     }
@@ -24,6 +26,8 @@ vi.mock("bootstrap", () => {
 
         static getInstance() { return null; }
 
+        static getOrCreateInstance(el: HTMLElement) { return new ModalStub(el); }
+
         show() {}
 
         hide() {
@@ -36,6 +40,7 @@ vi.mock("bootstrap", () => {
 
 // Safe below vi.mock(): Vitest hoists the mock above every import in the file.
 import CMS from "../../assets-src/site/app";
+import "../../assets-src/site/ui-bootstrap";
 
 /**
  * A stand-in for fetch's Response. Built by hand rather than with the real

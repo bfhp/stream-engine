@@ -137,4 +137,13 @@ final class ModuleRegistryTest extends TestCase
         $registry = \StreamEngine\Controllers\registryWithFixtures([ForumsController::class, ActionProbeController::class]);
         self::assertContains(realpath(__DIR__.'/../../src/Modules/Forums/views'), $registry->viewsPaths());
     }
+
+    public function testViewsAreNamespacedByModuleDirectory(): void
+    {
+        $registry = \StreamEngine\Controllers\registryWithFixtures([ForumsController::class, ActionProbeController::class]);
+        self::assertSame(
+            realpath(__DIR__.'/../../src/Modules/Forums/views'),
+            $registry->viewsNamespaces()['Forums'] ?? null,
+        );
+    }
 }

@@ -116,6 +116,22 @@ A minimal manifest looks like this:
 }
 ```
 
+Optional inheritance and direction keys (see "Inheritance" below):
+
+```json
+{
+  "parent": "default",
+  "inheritAssets": true,
+  "assets": {
+    "rtl": { "/themes/example/site.css": "/themes/example/site-rtl.css" }
+  }
+}
+```
+
+`parent` defaults to `default` and is ignored on `default` itself.
+`inheritAssets` defaults to `true`. `assets.rtl` maps a stylesheet to its
+right-to-left build; an entry whose RTL file is not deployed is skipped.
+
 Theme values are stored as `theme.<id>.<setting>`, while `theme.active` stores
 the selected ID. This keeps each theme's values intact when switching. The
 server accepts only keys declared by that theme and validates select, color,
@@ -131,16 +147,14 @@ URLs, traversal, and arbitrary public paths are rejected. Rendered asset URLs
 receive an mtime-based `?v=` value, so changing the manifest or asset invalidates
 browser caches.
 
-Core Bootstrap is its own stylesheet, `/assets/css/bootstrap.css`, separate from
-`/assets/css/site.css`. For right-to-left locales (see `<html dir>`) the engine
-replaces it with `/assets/css/bootstrap-rtl.css` at render time, so only one
-build is loaded. A theme that lists `site.css` without Bootstrap gets
-`bootstrap.css` prepended automatically; a theme that ships its own Bootstrap
-should provide its own RTL handling.
-
-> Being removed (ADR-002): the automatic prepend and the RTL swap move into
-> the `bootstrap` theme's manifest. `default` will load no CSS framework and
-> handle RTL with logical properties.
+The engine adds no CSS framework on its own. Core Bootstrap is a separate
+stylesheet, `/assets/css/bootstrap.css`, that a manifest lists like any other
+asset. For right-to-left locales (see `<html dir>`) the engine swaps every
+stylesheet that the theme chain maps in `assets.rtl`, so only one build of
+each is loaded; `default` maps `bootstrap.css` to `bootstrap-rtl.css`. A
+theme that ships its own framework declares its own RTL mapping. (Per
+ADR-002, Bootstrap and its mapping later move from `default` to the
+`bootstrap` theme.)
 
 If the selected theme disappears or its manifest is invalid, the application
 uses `views/themes/default/`. If an override produces a Twig loader, runtime,
@@ -152,13 +166,14 @@ The loader (`StreamEngine::handleRequest()`) resolves a template name
 (`layouts/base.twig`, `components/article/example.twig`, ...) against an
 ordered list of filesystem paths and returns the first match. For a theme
 to be a genuine override layer — able to restyle a layout while leaving
-everything it doesn't touch alone — that search order needs to be:
+everything it doesn't touch alone — the search order is:
 
 1. The selected catalog theme directory, checked first so the site can override
    anything below. This layer is optional.
-2. `views/themes/default/` — the baseline theme, providing every
+2. Its parents, nearest first (see "Inheritance").
+3. `views/themes/default/` — the baseline theme, providing every
    layout/partial/platform-component a new theme doesn't bother overriding.
-3. Each module's own `views/` — so a module's components resolve even when
+4. Each module's own `views/` — so a module's components resolve even when
    no theme (default or active) overrides them.
 
 Concretely: a site can set `THEME_DIR=/var/www/site/views/theme`, add a valid
@@ -168,8 +183,9 @@ resolving from `default` or from the module that owns it.
 
 ## Theme layers: a bare base and themes built on it
 
-> Status: target state, see `docs/ADR-002-BASE-AND-BOOTSTRAP-THEMES.md`.
-> Today `default` is still the Bootstrap design.
+> Status: see `docs/ADR-002-BASE-AND-BOOTSTRAP-THEMES.md`. Inheritance,
+> namespaces and the UI adapter are implemented. `default` is still the
+> Bootstrap design, and the `bootstrap` theme does not exist yet.
 
 ### `default` is the base, not a design
 
@@ -220,9 +236,17 @@ A manifest may declare a parent; without one, the parent is `default`:
 The loader then searches *active → parent → … → `default` → module views*.
 Every theme is also registered as a Twig namespace (`@default`, `@bootstrap`,
 `@<id>`), and every module as `@<Module>` (`@Article/...`), so an override
-can `{% extends %}` the file it replaces instead of copying it. Parent assets
-are included before the child's unless the child sets
-`"inheritAssets": false`.
+can `{% extends %}` the file it replaces instead of copying it. Always extend
+through the namespace: inside `my-theme/layouts/base.twig`, a plain
+`{% extends 'layouts/base.twig' %}` resolves to the same file and recurses.
+
+Parent assets are included before the child's, deduplicated by path, unless
+the child sets `"inheritAssets": false` (templates are still inherited;
+only assets are not). RTL mappings are inherited too, and a child's entry
+wins.
+
+A theme whose parent is missing, which forms a cycle, or whose chain is
+deeper than 8 levels is not selectable and resolves to `default`.
 
 ### UI vocabulary
 
@@ -286,13 +310,27 @@ cascade described above:
    JS clones them with `CMS.ui.clone('<id>')` / `CMS.ui.fill('<id>', data)`.
    `data-slot="<name>"` receives text; `data-slot-attr="<attr>:<name>"`
    receives an attribute value. Slots never receive raw HTML.
-3. **UI adapter** — for behavior that comes from a framework's JS (modals,
-   toasts, tooltips). Scripts call `CMS.ui.modal.open(el)`,
-   `CMS.ui.modal.close(el)`, `CMS.ui.toast.show(message, type)`,
-   `CMS.ui.tooltip.init(root)`, never `import … from "bootstrap"`. The
-   `default` theme provides the native adapter; `bootstrap` registers the
-   Bootstrap one through its `assets.scripts`; a theme on another framework
-   registers its own.
+3. **UI adapter** (`assets-src/shared/ui.ts`, implemented) — for behavior
+   that comes from a framework's JS (modals, toasts, tooltips). Bundled code
+   imports `ui` from `shared/ui`; theme scripts use `window.CMS.ui`. Never
+   `import … from "bootstrap"` outside the adapter.
+
+   | Call | Does |
+   |---|---|
+   | `ui.modal.open(el)` / `ui.modal.close(el)` | Show / hide a modal element |
+   | `ui.modal.onClosed(el, fn)` | Runs `fn` on every close, however it happened; returns an unsubscribe |
+   | `ui.toast.show(el, type)` | Shows a toast element; `type` is `success`, `danger`, `warning` or `info` |
+   | `ui.tooltip.init(root)` | Enables tooltips on `[data-ui-tooltip]` (and legacy `[data-bs-toggle="tooltip"]`) |
+   | `ui.register(adapter)` | Replaces the adapter; the last registration wins |
+
+   An adapter implements `modalOpen`, `modalClose`, `toastShow`,
+   `tooltipInit`, and must dispatch `ui:modal-closed` on the modal element
+   on every close. The native adapter (`<dialog>` or `hidden`, a timed
+   toast, `title` tooltips) is the fallback; `site/ui-bootstrap.ts` is the
+   Bootstrap one. The higher-level `CMS.toast({ message, type })` and
+   `CMS.confirm({ ... })` fill the theme's markup and then go through the
+   adapter. Today `site.js` registers the Bootstrap adapter for `default`;
+   per ADR-002 it moves to the `bootstrap` theme.
 
 What a theme gets for free: anything it does not override is inherited from
 its parent chain down to `default` (fragments, `js-templates.twig`, the
@@ -313,8 +351,8 @@ fragment, template ID, slot, or adapter method must update it.
 | Template | `empty` | `partials/js-templates.twig` | `message` |
 | Template | `error` | `partials/js-templates.twig` | `message` |
 | Template | `reply-form` | `partials/js-templates.twig` | `parent-id`, `submit-label`, `cancel-label` |
-| Adapter | `modal` | theme script | `open(el)`, `close(el)` |
-| Adapter | `toast` | theme script | `show(message, type)` |
+| Adapter | `modal` | theme script | `open(el)`, `close(el)`, `onClosed(el, fn)` |
+| Adapter | `toast` | theme script | `show(el, type)` |
 | Adapter | `tooltip` | theme script | `init(root)` |
 
 Module-owned fragments (user cards, profile cards, search results) follow the
@@ -340,7 +378,7 @@ grep -rnE 'class="[^"]*\b(btn|card|badge|alert|list-group|form-control|spinner-b
   views/themes/default src/Modules --include="*.twig"
 
 # Direct framework imports outside the adapter:
-grep -rn 'from "bootstrap"' assets-src | grep -v adapter
+grep -rn 'from "bootstrap"' assets-src | grep -v ui-bootstrap.ts
 ```
 
 Both should come back empty once the migration in ADR-001 is done.

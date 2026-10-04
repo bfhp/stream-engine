@@ -152,12 +152,16 @@ Phases are ordered so the site works and looks the same after each one.
 
 ### Phase 0 — groundwork
 
-1. [ ] `theme.json` `parent` + loader chain + Twig namespaces for every theme
+1. [x] `theme.json` `parent` + loader chain + Twig namespaces for every theme
    and module (`StreamEngine::createTwigEnvironment`, `ThemeCatalog`).
-2. [ ] Remove the automatic `bootstrap.css` prepend and RTL swap from
-   `ThemeCatalog`; move both into the `bootstrap` theme manifest.
-3. [ ] `CMS.ui` adapter interface with a native implementation and a
-   Bootstrap implementation (ADR-001, item 1).
+2. [x] Remove the automatic `bootstrap.css` prepend and the hard-coded RTL
+   swap from `ThemeCatalog`; RTL builds are declared in the manifest
+   (`assets.rtl`). For now `default` declares Bootstrap and its mapping; they
+   move to the `bootstrap` manifest in Phase 1.
+3. [x] `CMS.ui` adapter interface with a native implementation and a
+   Bootstrap implementation (ADR-001, item 1). The Bootstrap adapter is still
+   imported by `site/main.ts`; it becomes a separate entry for the
+   `bootstrap` theme in Phase 1.
 
 ### Phase 1 — create `bootstrap` as a copy
 
