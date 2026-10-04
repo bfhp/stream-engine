@@ -328,6 +328,11 @@ final class ThemeCatalog
                     }
                     $options[$value] = $optionLabel;
                 }
+                if ($key === 'color_mode'
+                    && isset($options['light'], $options['dark'])
+                    && ! isset($options['system'])) {
+                    $options['system'] = 'System';
+                }
                 if (! array_key_exists($default, $options)) {
                     return null;
                 }
@@ -423,7 +428,7 @@ final class ThemeCatalog
             'settings' => [
                 'color_mode' => [
                     'type' => 'select', 'label' => 'Color mode', 'default' => 'dark',
-                    'options' => ['dark' => 'Dark', 'light' => 'Light'],
+                    'options' => ['dark' => 'Dark', 'light' => 'Light', 'system' => 'System'],
                 ],
             ],
             'assets' => [

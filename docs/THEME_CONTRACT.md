@@ -83,7 +83,7 @@ A minimal manifest looks like this:
       "type": "select",
       "label": "Color mode",
       "default": "dark",
-      "options": { "dark": "Dark", "light": "Light" }
+      "options": { "dark": "Dark", "light": "Light", "system": "System" }
     }
   },
   "assets": {
@@ -116,6 +116,12 @@ boolean, and string values against the manifest schema. A theme without its
 own saved value reads the nearest ancestor's saved value for a setting of the
 same name, if it is valid for this theme, before falling back to its manifest
 default.
+
+A `color_mode` select that offers both `light` and `dark` automatically also
+offers `system`, even when an older theme manifest does not declare it. The
+default layout resolves `system` from `prefers-color-scheme` before stylesheets
+load and follows operating-system changes while the page is open. Themes that
+replace the base layout must provide equivalent handling for the system mode.
 
 A site that never saved `theme.active` uses the `THEME_DIR` theme if there is
 one, otherwise `bootstrap` if it is installed, otherwise `default`.

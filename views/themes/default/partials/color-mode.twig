@@ -1,0 +1,22 @@
+{% if theme.values.color_mode|default('dark') == 'system' %}
+<script>
+    (() => {
+        const media = window.matchMedia('(prefers-color-scheme: dark)');
+        const root = document.documentElement;
+        const apply = () => {
+            const mode = media.matches ? 'dark' : 'light';
+            root.dataset.colorMode = mode;
+            if (root.hasAttribute('data-bs-theme')) {
+                root.dataset.bsTheme = mode;
+            }
+            const themeColor = document.querySelector('meta[name="theme-color"]');
+            if (themeColor) {
+                themeColor.content = mode === 'light' ? '#F8FAFC' : '{{ theme.themeColor|default('#0F172A') }}';
+            }
+        };
+
+        apply();
+        media.addEventListener?.('change', apply);
+    })();
+</script>
+{% endif %}

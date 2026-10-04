@@ -12,7 +12,8 @@
       "default": "dark",
       "options": {
         "dark": "Dark",
-        "light": "Light"
+        "light": "Light",
+        "system": "System"
       }
     }
   },

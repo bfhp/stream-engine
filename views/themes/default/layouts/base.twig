@@ -21,6 +21,8 @@
         <meta name="theme-color" content="{{ theme.values.color_mode|default('dark') == 'light' ? '#F8FAFC' : theme.themeColor|default('#0F172A') }}">
     {% endblock %}
 
+    {% include 'partials/color-mode.twig' %}
+
     {% block head_css %}
         {% for asset in theme.assets.styles %}
             <link rel="stylesheet" href="{{ asset }}">

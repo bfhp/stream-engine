@@ -117,6 +117,19 @@ final class ThemeServiceTest extends TestCase
         ], array_column($this->writes, 1));
     }
 
+    public function testSystemColorModeIsStored(): void
+    {
+        $response = $this->service()->save('default', [
+            'color_mode' => 'system',
+        ]);
+
+        self::assertSame('system', $response['theme']['values']['color_mode']);
+        self::assertSame(
+            ['theme.default.color_mode', 'system', 'system'],
+            $this->writes[0][1],
+        );
+    }
+
     public function testInvalidSchemaValueIsRejectedBeforeAnyWrite(): void
     {
         try {

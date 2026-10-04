@@ -55,6 +55,27 @@ final class ThemeCatalogTest extends TestCase
         self::assertMatchesRegularExpression('#^/assets/css/site\.css\?v=\d+$#', $theme['assets']['styles'][0]);
     }
 
+    public function testColorModeWithLightAndDarkAlsoOffersSystem(): void
+    {
+        $this->writeTheme('default', [
+            'settings' => [
+                'color_mode' => [
+                    'type' => 'select',
+                    'label' => 'Color mode',
+                    'default' => 'dark',
+                    'options' => ['dark' => 'Dark', 'light' => 'Light'],
+                ],
+            ],
+        ]);
+
+        $theme = (new ThemeCatalog($this->root.'/themes', $this->root.'/public'))->find('default');
+
+        self::assertSame(
+            ['dark' => 'Dark', 'light' => 'Light', 'system' => 'System'],
+            $theme['settings']['color_mode']['options'],
+        );
+    }
+
     public function testNoFrameworkIsPrependedImplicitly(): void
     {
         file_put_contents($this->root.'/public/assets/css/bootstrap.css', 'a{}');

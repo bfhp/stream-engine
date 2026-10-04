@@ -17,6 +17,7 @@ import {
     Tooltip,
     UnstyledButton
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { IconDeviceFloppy, IconExternalLink, IconRefresh } from "@tabler/icons-react";
 import { csrfHeaders } from "../../shared/csrf";
@@ -39,7 +40,8 @@ type Theme = {
 };
 
 function ThemePreview({ theme, colorMode }: { theme: Theme; colorMode: string }) {
-    const dark = colorMode !== "light";
+    const systemPrefersDark = useMediaQuery("(prefers-color-scheme: dark)");
+    const dark = colorMode === "system" ? systemPrefersDark : colorMode !== "light";
     const background = dark ? "#0b1220" : "#eef2f7";
     const surface = dark ? "#172033" : "#ffffff";
     const muted = dark ? "#526079" : "#c8d0dc";
