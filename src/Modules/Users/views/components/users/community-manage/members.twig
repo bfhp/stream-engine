@@ -13,54 +13,54 @@
         data-community-manage-members
         data-member-action-url-base="{{ memberActionUrlBase }}"
     >
-        <div class="card mb-3">
-            <div class="card-body">
-                <h2 class="h6 card-title mb-3">
-                    <i class="bi bi-hourglass-split me-1"></i>{{ trans('view.users.community.manage.members.01') }}
-                    {% if subscribersTotal %}<span class="text-body-secondary">({{ subscribersTotal }})</span>{% endif %}
+        <div class="ui-card users-panel">
+            <div>
+                <h2 class="users-panel__title">
+                    <i class="bi bi-hourglass-split"></i> {{ trans('view.users.community.manage.members.01') }}
+                    {% if subscribersTotal %}<span class="ui-muted">({{ subscribersTotal }})</span>{% endif %}
                 </h2>
 
-                <div class="d-flex flex-column gap-2" data-community-manage-subscribers>
+                <div class="users-people" data-community-manage-subscribers>
                     {% for subscriber in subscribers %}
-                        <div class="d-flex align-items-center gap-2" data-user-row data-user-id="{{ subscriber.id }}">
-                            <a href="{{ subscriber.url ?: '#' }}" class="d-flex align-items-center gap-2 text-body text-decoration-none flex-grow-1">
-                                <img src="{{ subscriber.avatarUrl }}" alt="" class="rounded-circle bg-body-secondary object-fit-cover flex-shrink-0" width="36" height="36">
-                                <span class="small"><bdi>{{ subscriber.displayName }}</bdi></span>
+                        <div class="users-manage-row" data-user-row data-user-id="{{ subscriber.id }}">
+                            <a href="{{ subscriber.url ?: '#' }}" class="users-person users-person--grow">
+                                <img src="{{ subscriber.avatarUrl }}" alt="" class="users-person__avatar" width="36" height="36">
+                                <span class="users-person__name"><bdi>{{ subscriber.displayName }}</bdi></span>
                             </a>
-                            <button type="button" class="btn btn-sm btn-outline-success" data-manage-approve>
-                                <i class="bi bi-check-lg me-1"></i>{{ trans('view.users.community.manage.members.02') }}
+                            <button type="button" class="ui-button ui-button--success ui-button--sm" data-manage-approve>
+                                <i class="bi bi-check-lg"></i> {{ trans('view.users.community.manage.members.02') }}
                             </button>
                         </div>
                     {% else %}
-                        <p class="text-body-secondary small mb-0">{{ trans('view.users.community.manage.members.03') }}</p>
+                        <p class="users-note">{{ trans('view.users.community.manage.members.03') }}</p>
                     {% endfor %}
                 </div>
             </div>
         </div>
 
-        <div class="card mb-3">
-            <div class="card-body">
-                <h2 class="h6 card-title mb-3">
-                    <i class="bi bi-people me-1"></i>{{ trans('community.manage_members') }}
-                    {% if membersTotal %}<span class="text-body-secondary">({{ membersTotal }})</span>{% endif %}
+        <div class="ui-card users-panel">
+            <div>
+                <h2 class="users-panel__title">
+                    <i class="bi bi-people"></i> {{ trans('community.manage_members') }}
+                    {% if membersTotal %}<span class="ui-muted">({{ membersTotal }})</span>{% endif %}
                 </h2>
 
-                <div class="d-flex flex-column gap-2" data-community-manage-members-list>
+                <div class="users-people" data-community-manage-members-list>
                     {% for member in members %}
-                        <div class="d-flex align-items-center gap-2" data-user-row data-user-id="{{ member.id }}">
-                            <a href="{{ member.url ?: '#' }}" class="d-flex align-items-center gap-2 text-body text-decoration-none flex-grow-1">
-                                <img src="{{ member.avatarUrl }}" alt="" class="rounded-circle bg-body-secondary object-fit-cover flex-shrink-0" width="36" height="36">
-                                <span class="small"><bdi>{{ member.displayName }}</bdi></span>
-                                <span class="badge text-bg-secondary">{{ member.roleLabel }}</span>
+                        <div class="users-manage-row" data-user-row data-user-id="{{ member.id }}">
+                            <a href="{{ member.url ?: '#' }}" class="users-person users-person--grow">
+                                <img src="{{ member.avatarUrl }}" alt="" class="users-person__avatar" width="36" height="36">
+                                <span class="users-person__name"><bdi>{{ member.displayName }}</bdi></span>
+                                <span class="ui-badge">{{ member.roleLabel }}</span>
                             </a>
                             {% if member.id != community.ownerId %}
-                                <button type="button" class="btn btn-sm btn-outline-danger" data-manage-remove>
-                                    <i class="bi bi-x-lg me-1"></i>{{ trans('view.users.community.manage.members.04') }}
+                                <button type="button" class="ui-button ui-button--danger ui-button--sm" data-manage-remove>
+                                    <i class="bi bi-x-lg"></i> {{ trans('view.users.community.manage.members.04') }}
                                 </button>
                             {% endif %}
                         </div>
                     {% else %}
-                        <p class="text-body-secondary small mb-0">{{ trans('view.users.community.manage.members.05') }}</p>
+                        <p class="users-note">{{ trans('view.users.community.manage.members.05') }}</p>
                     {% endfor %}
                 </div>
             </div>

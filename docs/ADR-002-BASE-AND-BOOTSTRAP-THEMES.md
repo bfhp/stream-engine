@@ -202,6 +202,14 @@ Progress:
   attribute, not classes. `bootstrap` has its own tab and card components
   and overrides `profile_tabs_class` and the unsubscribe page's class
   blocks.
+- Users: pages and components for `default`, styles in `modules/users.css`.
+  Script-built markup moved to templates: `post-card.twig` (+ `post-tag`,
+  with an `asTemplate` mode that renders every optional piece),
+  `person-row.twig` (friends, members), `user-card.twig` and
+  `users-pagination.twig` (users list); the friend and membership buttons
+  render one button per state and the script only toggles `hidden`.
+  `UsersController` passes a role tone (`statusTone`), not a CSS class.
+  `bootstrap` has its own copy of every Users template.
 
 ### Verify
 

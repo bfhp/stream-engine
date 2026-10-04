@@ -1,0 +1,13 @@
+{# A person or community in a sidebar list - friends (show.twig), community
+   members (community-sidebar.twig). Rendered per row and once more as a
+   <template> for the rows assets-src/pages/users.ts appends from the API.
+   Fill points: url, avatar, name, role (optional badge).
+   Expects: row {url, avatarUrl, displayName, roleLabel?}, asTemplate (bool). #}
+{% set asTemplate = asTemplate|default(false) %}
+<a href="{{ row.url ?: '#' }}" class="users-person" data-slot-attr="href:url">
+    <img src="{{ row.avatarUrl }}" alt="" class="users-person__avatar" width="36" height="36" data-slot-attr="src:avatar">
+    <span class="users-person__name"><bdi data-slot="name">{{ row.displayName }}</bdi></span>
+    {% if row.roleLabel|default(null) or asTemplate %}
+        <span class="ui-badge users-person__end" data-slot="role" data-slot-optional="role">{{ row.roleLabel|default('') }}</span>
+    {% endif %}
+</a>

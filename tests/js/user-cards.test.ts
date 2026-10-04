@@ -1,25 +1,54 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
-import {
-    FeedPostCard,
-    renderFeedCardMeta,
-    renderFeedCardRating,
-    renderFeedCardTags,
-    renderFeedCardThumbnail,
-    renderFeedPostCard,
-} from "../../assets-src/pages/user-cards";
-import { pageLink, pagination } from "../../assets-src/pages/user-pagination";
+import { FeedPostCard, postCardData, renderFeedPostCard } from "../../assets-src/pages/user-cards";
+import { pageLink, paginationData, renderPagination } from "../../assets-src/pages/user-pagination";
 
 /**
- * The two halves of the users/feed listings that are hand-synced with
- * something else: the card renderers mirror `components/users/post-card.twig`
- * card-for-card, and the paginator has to preserve whatever the visitor was
- * filtering by.
- *
- * Both fail quietly. A card that drifts from the partial only looks wrong
- * after "Показать ещё"; a paginator that drops the filter shows a different
- * set on page two and nobody reads the URL.
+ * The users/feed listings' client half. Cards and the pager are copies of
+ * the theme's templates (components/users/post-card.twig, post-tag.twig,
+ * users-pagination.twig), so what is asserted here is the mapping onto their
+ * fill points and the paginator's links - the two places that fail quietly:
+ * a card that drops the wrong piece only looks wrong after "show more", and
+ * a paginator that drops the filter shows a different set on page two.
  */
+
+/* The default theme's templates in template mode (asTemplate: true), kept in
+   step with the Twig files by hand. */
+const TEMPLATES = `
+<template data-ui="post-card"><article class="ui-card post-card">
+    <div class="post-card__media">
+        <img src="" alt="" data-slot-attr="src:image" data-slot-optional="image">
+        <div class="post-card__placeholder" data-slot-optional="noImage"><i class="bi bi-image"></i></div>
+    </div>
+    <div class="post-card__main">
+        <div class="post-card__meta" data-slot-optional="hasMeta">
+            <i class="bi bi-calendar3" data-slot-optional="date"></i><span data-slot="date" data-slot-optional="date"></span>
+            <span data-slot-optional="dateAndRead">&middot;</span>
+            <span data-slot="readTime" data-slot-optional="readTime"></span>
+        </div>
+        <h3><a href="#" class="post-card__link" data-slot="title" data-slot-attr="href:url"></a></h3>
+        <p class="post-card__excerpt" data-slot="excerpt" data-slot-optional="excerpt"></p>
+        <div class="post-card__tags" data-post-tags data-slot-optional="hasTags"></div>
+        <div class="post-card__stats">
+            <span><i class="bi bi-chat-left-text"></i><span data-slot="comments">0</span></span>
+            <span data-slot-optional="rating"><i class="bi bi-star-fill"></i><span data-slot="rating">0.0</span></span>
+            <span data-slot-optional="noRating"><i class="bi bi-star"></i>no evaluations</span>
+            <button type="button" data-audio-play-track-id="" data-slot-optional="audioTrackId" data-slot-attr="data-audio-play-track-id:audioTrackId">Listen.</button>
+        </div>
+    </div>
+</article></template>
+<template data-ui="post-card-tag"><span class="ui-badge post-card__tag" data-slot="tag">#</span></template>
+<template data-ui="users-pagination"><nav class="users-pagination">
+    <a href="#" data-slot-attr="href:prevUrl" data-slot-optional="prevUrl">Previous</a>
+    <span aria-disabled="true" data-slot-optional="noPrev">Previous</span>
+    <span data-slot="label"></span>
+    <a href="#" data-slot-attr="href:nextUrl" data-slot-optional="nextUrl">Next</a>
+    <span aria-disabled="true" data-slot-optional="noNext">Next</span>
+</nav></template>`;
+
+beforeEach(() => {
+    document.body.innerHTML = TEMPLATES;
+});
 
 function card(overrides: Partial<FeedPostCard> = {}): FeedPostCard {
     return {
@@ -37,212 +66,170 @@ function card(overrides: Partial<FeedPostCard> = {}): FeedPostCard {
     };
 }
 
+function render(item: FeedPostCard): HTMLElement {
+    const el = renderFeedPostCard(item);
+    expect(el).not.toBeNull();
+    return el!;
+}
+
 /* ===============================
-   renderFeedCardRating
+   Rating
 =============================== */
 
-describe("renderFeedCardRating()", () => {
+describe("rating", () => {
     /**
      * An average of zero out of zero votes is not a rating. Rendering it as
      * "0.0" makes every new post look badly reviewed rather than unreviewed.
      */
     it("says there are no ratings rather than showing zero", () => {
-        const html = renderFeedCardRating(card({ ratingCount: 0, ratingAverage: 0 }));
+        const el = render(card({ ratingCount: 0, ratingAverage: 0 }));
 
-        expect(html).toContain("no evaluations");
-        expect(html).not.toContain("0.0");
+        expect(el.textContent).toContain("no evaluations");
+        expect(el.textContent).not.toContain("0.0");
+        expect(el.querySelector(".bi-star-fill")).toBeNull();
     });
 
     it("shows one decimal once anyone has rated", () => {
-        expect(renderFeedCardRating(card({ ratingCount: 3, ratingAverage: 4.25 })))
-            .toContain("4.3");
+        expect(postCardData(card({ ratingCount: 3, ratingAverage: 4.25 })).rating).toBe("4.3");
     });
 
     it("coerces a string average, which is what JSON gives back", () => {
         // MySQL hands an AVG() back as a string; `"4".toFixed` would throw.
-        const html = renderFeedCardRating(card({
-            ratingCount: 1,
-            ratingAverage: "4" as unknown as number,
-        }));
-
-        expect(html).toContain("4.0");
+        expect(postCardData(card({ ratingCount: 1, ratingAverage: "4" as unknown as number })).rating).toBe("4.0");
     });
 
     it("uses the filled star only when there is a rating", () => {
-        expect(renderFeedCardRating(card({ ratingCount: 1, ratingAverage: 5 })))
-            .toContain("bi-star-fill");
-        expect(renderFeedCardRating(card({ ratingCount: 0 })))
-            .not.toContain("bi-star-fill");
+        const el = render(card({ ratingCount: 1, ratingAverage: 5 }));
+
+        expect(el.querySelector(".bi-star-fill")).not.toBeNull();
+        expect(el.textContent).not.toContain("no evaluations");
     });
 });
 
 /* ===============================
-   renderFeedCardTags
+   Tags
 =============================== */
 
-describe("renderFeedCardTags()", () => {
-    it("renders nothing at all when there are no tags", () => {
-        // Empty string, not an empty wrapper - the wrapper carries `mb-3`
-        // and would add a gap under every untagged card.
-        expect(renderFeedCardTags([])).toBe("");
+describe("tags", () => {
+    it("drops the tag row entirely when there are no tags", () => {
+        // An empty wrapper would add a gap under every untagged card.
+        expect(render(card({ tags: [] })).querySelector("[data-post-tags]")).toBeNull();
     });
 
     it("survives tags being absent from the payload", () => {
-        expect(renderFeedCardTags(undefined as unknown as string[])).toBe("");
+        expect(render(card({ tags: undefined as unknown as string[] })).querySelector("[data-post-tags]")).toBeNull();
     });
 
-    it("prefixes each tag with a hash", () => {
-        const html = renderFeedCardTags(["магия", "таро"]);
+    it("adds one tag copy per tag, prefixed with a hash", () => {
+        const tags = render(card({ tags: ["магия", "таро"] })).querySelectorAll(".post-card__tag");
 
-        expect(html).toContain("#магия");
-        expect(html).toContain("#таро");
-        expect((html.match(/badge/g) ?? []).length).toBe(2);
+        expect(Array.from(tags, (tag) => tag.textContent)).toEqual(["#магия", "#таро"]);
     });
 
-    it("escapes a tag", () => {
-        const html = renderFeedCardTags(['<img onerror="alert(1)">']);
+    it("puts a tag in as text", () => {
+        const el = render(card({ tags: ['<img onerror="alert(1)">'] }));
 
-        expect(html).toContain("&lt;img");
-        expect(html).not.toContain("<img");
+        expect(el.querySelector("img[onerror]")).toBeNull();
+        expect(el.querySelector(".post-card__tag")?.textContent).toBe('#<img onerror="alert(1)">');
     });
 });
 
 /* ===============================
-   renderFeedCardMeta
+   Meta line
 =============================== */
 
-describe("renderFeedCardMeta()", () => {
-    it("renders nothing when a profile card has neither date nor read time", () => {
+describe("meta line", () => {
+    it("drops the line when a card has neither date nor read time", () => {
         // Otherwise an empty line with a stray separator in it.
-        expect(renderFeedCardMeta(card({ dateLabel: null, readTimeLabel: null }), false)).toBe("");
+        expect(postCardData(card({ dateLabel: null, readTimeLabel: null })).hasMeta).toBe("");
+        expect(render(card({ dateLabel: null, readTimeLabel: null })).querySelector(".post-card__meta")).toBeNull();
     });
 
-    it("omits the separator when only one of the two is present", () => {
-        const dateOnly = renderFeedCardMeta(card({ readTimeLabel: null }), false);
-        const timeOnly = renderFeedCardMeta(card({ dateLabel: null }), false);
-
-        expect(dateOnly).not.toContain("&middot;");
-        expect(timeOnly).not.toContain("&middot;");
-        expect(renderFeedCardMeta(card(), false)).toContain("&middot;");
+    it("drops the separator when only one of the two is present", () => {
+        expect(render(card({ readTimeLabel: null })).textContent).not.toContain("·");
+        expect(render(card({ dateLabel: null })).textContent).not.toContain("·");
+        expect(render(card()).textContent).toContain("·");
     });
 
-    it("shows the author byline on a community card", () => {
-        const html = renderFeedCardMeta(
-            card({ authorName: "Иван", authorUrl: "/users/ivan/", authorAvatarUrl: "/a.webp" }),
-            true,
-        );
+    it("maps the author byline for a community card", () => {
+        const data = postCardData(card({ authorName: "Иван", authorUrl: "/users/ivan/", authorAvatarUrl: "/a.webp" }));
 
-        expect(html).toContain('href="/users/ivan/"');
-        expect(html).toContain("Иван");
-        expect(html).toContain('src="/a.webp"');
+        expect(data.authorName).toBe("Иван");
+        expect(data.authorUrl).toBe("/users/ivan/");
+        expect(data.authorAvatar).toBe("/a.webp");
+        expect(data.authorText).toBe("");
     });
 
-    it("renders an unlinked author when there is no profile to link to", () => {
-        const html = renderFeedCardMeta(card({ authorName: "Иван", authorUrl: null }), true);
+    it("asks for the unlinked author when there is no profile to link to", () => {
+        const data = postCardData(card({ authorName: "Иван", authorUrl: null }));
 
-        expect(html).toContain("Иван");
-        expect(html).not.toContain("<a ");
-    });
-
-    it("escapes the author name and both urls", () => {
-        const html = renderFeedCardMeta(
-            card({
-                authorName: '<img onerror="alert(1)">',
-                authorUrl: '/users/"onmouseover="alert(1)/',
-                authorAvatarUrl: '"onerror="alert(1)',
-            }),
-            true,
-        );
-
-        expect(html).not.toContain("<img onerror");
-        expect(html).not.toContain('="alert(1)"');
-        expect(html).toContain("&quot;");
-    });
-
-    it("still shows the byline when the community card has no date", () => {
-        // The author is the point of that variant; the date is optional.
-        const html = renderFeedCardMeta(
-            card({ authorName: "Иван", dateLabel: null, readTimeLabel: null }),
-            true,
-        );
-
-        expect(html).toContain("Иван");
-        expect(html).not.toBe("");
+        expect(data.authorUrl).toBe("");
+        expect(data.authorText).toBe("1");
     });
 });
 
 /* ===============================
-   renderFeedCardThumbnail
-=============================== */
-
-describe("renderFeedCardThumbnail()", () => {
-    it("renders a placeholder when there is no image", () => {
-        const html = renderFeedCardThumbnail(null);
-
-        expect(html).toContain("bi-image");
-        expect(html).not.toContain("<img");
-    });
-
-    it("escapes the image url", () => {
-        const html = renderFeedCardThumbnail('/img.jpg" onerror="alert(1)');
-
-        expect(html).toContain("&quot;");
-        expect(html).not.toContain('onerror="alert(1)"');
-    });
-});
-
-/* ===============================
-   renderFeedPostCard
+   The card
 =============================== */
 
 describe("renderFeedPostCard()", () => {
-    it("renders empty link text for a card with no title", () => {
-        // `escapeHtml(null)` is "" rather than "null" - the difference
-        // between a blank link and one that says "null".
-        const html = renderFeedPostCard(card({ title: null }), false);
+    it("returns null when the page has no card template", () => {
+        document.body.innerHTML = "";
 
-        expect(html).not.toContain("null");
-        expect(html).toMatch(/stretched-link">\s*<\/a>/);
+        expect(renderFeedPostCard(card())).toBeNull();
+    });
+
+    it("shows the placeholder when there is no image", () => {
+        const el = render(card({ imageUrl: null }));
+
+        expect(el.querySelector(".bi-image")).not.toBeNull();
+        expect(el.querySelector("img")).toBeNull();
+    });
+
+    it("sets the image as an attribute, never as markup", () => {
+        const el = render(card({ imageUrl: '/img.jpg" onerror="alert(1)' }));
+
+        expect(el.querySelector("img")?.getAttribute("src")).toBe('/img.jpg" onerror="alert(1)');
+        expect(el.querySelector("[onerror]")).toBeNull();
+    });
+
+    it("renders empty link text for a card with no title", () => {
+        const link = render(card({ title: null })).querySelector<HTMLAnchorElement>(".post-card__link")!;
+
+        expect(link.textContent).toBe("");
     });
 
     it("falls back to a hash href when there is no url", () => {
-        const html = renderFeedPostCard(card({ url: null }), false);
-
-        expect(html).toContain('href="#"');
+        expect(render(card({ url: null })).querySelector(".post-card__link")?.getAttribute("href")).toBe("#");
     });
 
-    it("escapes a title in both the text and the href", () => {
-        const html = renderFeedPostCard(
-            card({ title: '<b>"жирный"</b> & co', url: '/p/"onmouseover="alert(1)/' }),
-            false,
-        );
+    it("puts a title in as text and the url as an attribute", () => {
+        const el = render(card({ title: '<b>"жирный"</b> & co', url: '/p/"onmouseover="alert(1)/' }));
+        const link = el.querySelector(".post-card__link")!;
 
-        expect(html).toContain("&lt;b&gt;");
-        expect(html).toContain("&amp;");
-        expect(html).toContain("&quot;");
-        expect(html).not.toContain("<b>");
+        expect(link.textContent).toBe('<b>"жирный"</b> & co');
+        expect(link.querySelector("b")).toBeNull();
+        expect(link.getAttribute("href")).toBe('/p/"onmouseover="alert(1)/');
+        expect(el.querySelector("[onmouseover]")).toBeNull();
     });
 
-    it("omits the excerpt paragraph entirely when there is none", () => {
-        expect(renderFeedPostCard(card({ excerpt: null }), false)).not.toContain("card-text");
-        expect(renderFeedPostCard(card({ excerpt: "Начало текста" }), false)).toContain("Начало текста");
+    it("drops the excerpt paragraph when there is none", () => {
+        expect(render(card({ excerpt: null })).querySelector(".post-card__excerpt")).toBeNull();
+        expect(render(card({ excerpt: "Начало текста" })).querySelector(".post-card__excerpt")?.textContent).toBe("Начало текста");
     });
 
     it("coerces a missing comment count to zero", () => {
-        const html = renderFeedPostCard(
-            card({ commentCount: undefined as unknown as number }),
-            false,
-        );
+        const el = render(card({ commentCount: undefined as unknown as number }));
 
-        expect(html).toContain(">0<");
-        expect(html).not.toContain("undefined");
+        expect(el.querySelector('[data-slot="comments"]')?.textContent).toBe("0");
+        expect(el.textContent).not.toContain("undefined");
     });
 
-    it("renders a play button when the card has an audio track", () => {
-        const html = renderFeedPostCard(card({ audioTrackId: "post-10-track-25" }), false);
+    it("keeps the play button only when the card has an audio track", () => {
+        const withTrack = render(card({ audioTrackId: "post-10-track-25" }));
 
-        expect(html).toContain('data-audio-play-track-id="post-10-track-25"');
-        expect(html).toContain("Listen.");
+        expect(withTrack.querySelector("button")?.getAttribute("data-audio-play-track-id")).toBe("post-10-track-25");
+        expect(render(card()).querySelector("button")).toBeNull();
     });
 });
 
@@ -283,69 +270,54 @@ describe("pageLink()", () => {
 });
 
 /* ===============================
-   pagination
+   Pagination
 =============================== */
 
-describe("pagination()", () => {
+describe("pagination", () => {
     it("renders nothing when everything fits on one page", () => {
-        expect(pagination({ currentPage: 1, totalPages: 1 }, "/users/", "")).toBe("");
-        expect(pagination({ currentPage: 1, totalPages: 0 }, "/users/", "")).toBe("");
+        expect(paginationData({ currentPage: 1, totalPages: 1 }, "/users/", "")).toBeNull();
+        expect(paginationData({ currentPage: 1, totalPages: 0 }, "/users/", "")).toBeNull();
+        expect(renderPagination({ currentPage: 1, totalPages: 1 }, "/users/", "")).toBeNull();
     });
 
     it("treats missing meta as a single page", () => {
-        expect(pagination(undefined, "/users/", "")).toBe("");
-        expect(pagination({}, "/users/", "")).toBe("");
+        expect(paginationData(undefined, "/users/", "")).toBeNull();
+        expect(paginationData({}, "/users/", "")).toBeNull();
     });
 
     it("disables the previous control on the first page", () => {
-        const html = pagination({ currentPage: 1, totalPages: 3 }, "/users/", "");
+        const nav = renderPagination({ currentPage: 1, totalPages: 3 }, "/users/", "")!;
 
         // A span, not a disabled anchor - a disabled `<a>` is still
         // clickable, and page 0 is a 404.
-        expect(html).toMatch(/<span[^>]*disabled[^>]*>Previous<\/span>/);
-        expect(html).toContain('href="/users/?page=2"');
+        expect(nav.querySelectorAll("a")).toHaveLength(1);
+        expect(nav.querySelector('span[aria-disabled="true"]')?.textContent).toBe("Previous");
+        expect(nav.querySelector("a")?.getAttribute("href")).toBe("/users/?page=2");
     });
 
     it("disables the next control on the last page", () => {
-        const html = pagination({ currentPage: 3, totalPages: 3 }, "/users/", "");
+        const nav = renderPagination({ currentPage: 3, totalPages: 3 }, "/users/", "")!;
 
-        expect(html).toMatch(/<span[^>]*disabled[^>]*>Next<\/span>/);
-        expect(html).toContain('href="/users/?page=2"');
+        expect(nav.querySelector('span[aria-disabled="true"]')?.textContent).toBe("Next");
+        expect(nav.querySelector("a")?.getAttribute("href")).toBe("/users/?page=2");
     });
 
     it("links both ways in the middle", () => {
-        const html = pagination({ currentPage: 2, totalPages: 3 }, "/users/", "?q=x");
+        const nav = renderPagination({ currentPage: 2, totalPages: 3 }, "/users/", "?q=x")!;
 
-        expect(html).toContain('href="/users/?q=x"');
-        expect(html).toContain('href="/users/?q=x&amp;page=3"');
-        expect(html).not.toContain("disabled");
+        expect(Array.from(nav.querySelectorAll("a"), (a) => a.getAttribute("href")))
+            .toEqual(["/users/?q=x", "/users/?q=x&page=3"]);
+        expect(nav.querySelector('[aria-disabled="true"]')).toBeNull();
     });
 
     it("names the current position", () => {
-        expect(pagination({ currentPage: 2, totalPages: 7 }, "/users/", ""))
-            .toContain("Page 2 of 7");
+        expect(paginationData({ currentPage: 2, totalPages: 7 }, "/users/", "")?.label).toBe("Page 2 of 7");
     });
 
     it("carries the filter into both links", () => {
-        const html = pagination({ currentPage: 3, totalPages: 5 }, "/users/", "?q=иван");
+        const data = paginationData({ currentPage: 3, totalPages: 5 }, "/users/", "?q=иван")!;
 
-        // Prev goes to page 2 with the query; next to page 4 with it.
-        expect(html).toContain("page=2");
-        expect(html).toContain("page=4");
-        expect((html.match(/q=%D0%B8%D0%B2%D0%B0%D0%BD/g) ?? []).length).toBe(2);
-    });
-
-    /**
-     * The `&` joining query parameters is escaped in the attribute. HTML5
-     * resolves a *named* entity without its semicolon inside an attribute
-     * value, so an unescaped `&sect=x` would parse as `§=x` - the link would
-     * silently lose the filter. None of today's parameters hit that list,
-     * which is precisely why it would be found late.
-     */
-    it("escapes the ampersands joining the query parameters", () => {
-        const html = pagination({ currentPage: 2, totalPages: 3 }, "/users/", "?q=x");
-
-        expect(html).toContain('href="/users/?q=x&amp;page=3"');
-        expect(html).not.toContain('href="/users/?q=x&page=3"');
+        expect(data.prevUrl).toBe("/users/?q=%D0%B8%D0%B2%D0%B0%D0%BD&page=2");
+        expect(data.nextUrl).toBe("/users/?q=%D0%B8%D0%B2%D0%B0%D0%BD&page=4");
     });
 });

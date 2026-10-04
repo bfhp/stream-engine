@@ -3,17 +3,17 @@
 {% block content %}
 
     {% block blog_post_header %}
-        <div class="d-flex align-items-start justify-content-between gap-3 mb-2">
-            <div class="d-flex align-items-center gap-2">
+        <div class="blog-post-header">
+            <div class="users-person">
                 <img
                     src="{{ authorAvatarUrl }}"
                     alt="{{ feed.authorDisplayName }}"
-                    class="rounded-circle object-fit-cover"
+                    class="users-person__avatar"
                     width="40"
                     height="40"
                 >
                 <div>
-                    <div class="fw-semibold">
+                    <div class="blog-post-author">
                         {% if authorUrl %}
                             <a href="{{ authorUrl }}"><bdi>{{ feed.authorDisplayName }}</bdi></a>
                         {% else %}
@@ -21,7 +21,7 @@
                         {% endif %}
                     </div>
                     {% if feed.createdAtLabel %}
-                        <div class="small text-body-secondary">{{ feed.createdAtLabel }}</div>
+                        <div class="ui-muted ui-small">{{ feed.createdAtLabel }}</div>
                     {% endif %}
                 </div>
             </div>
@@ -35,21 +35,21 @@
                template never shows a button that the request would then
                reject - it just checks whether each URL/flag is present. #}
             {% if currentPostAudioTrackId or canDelete or editUrl %}
-                <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                <div class="blog-post-actions">
                     {% if currentPostAudioTrackId %}
-                        <button type="button" class="btn btn-sm btn-outline-primary" data-audio-play-track-id="{{ currentPostAudioTrackId }}">
+                        <button type="button" class="ui-button ui-button--secondary ui-button--sm" data-audio-play-track-id="{{ currentPostAudioTrackId }}">
                             <i class="bi bi-play-fill"></i> {{ trans('view.users.post.card.02') }}
                         </button>
                     {% endif %}
                     {% if editUrl %}
-                        <a href="{{ editUrl }}" class="btn btn-sm btn-outline-secondary">
+                        <a href="{{ editUrl }}" class="ui-button ui-button--secondary ui-button--sm">
                             <i class="bi bi-pencil"></i> {{ trans('view.forums.topic.view.06') }}
                         </a>
                     {% endif %}
                     {% if canDelete %}
                         <button
                             type="button"
-                            class="btn btn-sm btn-outline-danger"
+                            class="ui-button ui-button--danger ui-button--sm"
                             data-blog-post-delete
                             data-feed-id="{{ feed.id }}"
                             data-redirect-url="{{ deleteRedirectUrl }}"
@@ -61,12 +61,12 @@
             {% endif %}
         </div>
 
-        <h1 class="h2 mb-3" dir="auto"><bdi>{{ feed.title }}</bdi></h1>
+        <h1 class="blog-post-title" dir="auto"><bdi>{{ feed.title }}</bdi></h1>
     {% endblock %}
 
     {% block blog_post_image %}
         {% if feed.imageUrl %}
-            <img src="{{ feed.imageUrl }}" alt="{{ feed.title }}" class="img-fluid rounded mb-3 w-100" style="height: 320px; object-fit: cover;">
+            <img src="{{ feed.imageUrl }}" alt="{{ feed.title }}" class="blog-post-cover">
         {% endif %}
     {% endblock %}
 
@@ -80,30 +80,30 @@
        border-top and its own padding keep them from reading as more
        paragraphs of blog_post_content right above. #}
     {% block blog_post_engagement %}
-        <div class="d-flex flex-column align-items-center gap-3 text-center border-top pt-4 mt-4">
+        <div class="blog-post-engagement">
 
             {% block blog_post_rating %}
                 {# Generic feed rating widget (the shared implementation) - data-rate-feed/data-feed-id/data-user-rating
                    are picked up by CMS.initRating(), already called
                    globally in main.ts, so there's nothing extra to wire up
                    here. #}
-                <div class="blog-post-rating d-flex align-items-center justify-content-center flex-wrap gap-2"
+                <div class="blog-post-rating"
                      data-rate-feed
                      data-feed-id="{{ feed.id }}"
                      data-user-rating="{{ userRating ?? '' }}">
-                    <div class="rating-stars d-inline-flex" aria-label="{{ trans('view.users.blog.post.show.01') }}">
+                    <div class="rating-stars" aria-label="{{ trans('view.users.blog.post.show.01') }}">
                         {% for i in 1..5 %}
                             {% if user.isGuest %}
                                 <button type="button"
-                                        class="rating-star btn btn-link p-0 border-0"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#authFormModal"
+                                        class="rating-star"
+                                        data-ui-toggle="modal"
+                                        data-ui-target="#authFormModal"
                                         aria-label="{{ trans('view.common.rate_aria', {rating: i}) }}">
                                     <i class="bi bi-star"></i>
                                 </button>
                             {% else %}
                                 <button type="button"
-                                        class="rating-star btn btn-link p-0 border-0"
+                                        class="rating-star"
                                         data-value="{{ i }}"
                                         aria-label="{{ trans('view.common.rate_aria', {rating: i}) }}">
                                     <i class="bi {{ userRating and i <= userRating ? 'bi-star-fill' : 'bi-star' }}"></i>
@@ -111,7 +111,7 @@
                             {% endif %}
                         {% endfor %}
                     </div>
-                    <span class="rating-summary text-body-secondary small" data-rating-summary>
+                    <span class="rating-summary ui-muted ui-small" data-rating-summary>
                         {% if feed.ratingCount > 0 %}
                             {{ feed.ratingAverage|number_format(1) }} {{ trans('view.users.blog.post.show.02') }} {{ feed.ratingCount }}
                         {% else %}

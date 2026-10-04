@@ -2320,7 +2320,7 @@ class UsersController extends AbstractController
      * member/pending order MembershipRepository::findUserCommunities() uses
      * for the profile "Subscriptions" tab.
      *
-     * @return list<array{title: string, url: ?string, imageUrl: string, statusLabel: string, statusClass: string}>
+     * @return list<array{title: string, url: ?string, imageUrl: string, statusLabel: string, statusTone: string}>
      */
     private function buildMyCommunitiesWidget(User $viewer): array
     {
@@ -2349,15 +2349,18 @@ class UsersController extends AbstractController
     }
 
     /**
-     * @return array{statusLabel: string, statusClass: string}
+     * statusTone names the role (primary/info/success/secondary), never a CSS
+     * class - the theme's template decides what each tone looks like.
+     *
+     * @return array{statusLabel: string, statusTone: string}
      */
     private function communityMembershipBadge(int $roleLevel): array
     {
         return match ($roleLevel) {
-            3 => ['statusLabel' => $this->tm->trans('community.role.owner'), 'statusClass' => 'text-bg-primary'],
-            2 => ['statusLabel' => $this->tm->trans('community.role.moderator'), 'statusClass' => 'text-bg-info'],
-            1 => ['statusLabel' => $this->tm->trans('community.role.member'), 'statusClass' => 'text-bg-success'],
-            default => ['statusLabel' => $this->tm->trans('community.role.pending'), 'statusClass' => 'text-bg-secondary'],
+            3 => ['statusLabel' => $this->tm->trans('community.role.owner'), 'statusTone' => 'primary'],
+            2 => ['statusLabel' => $this->tm->trans('community.role.moderator'), 'statusTone' => 'info'],
+            1 => ['statusLabel' => $this->tm->trans('community.role.member'), 'statusTone' => 'success'],
+            default => ['statusLabel' => $this->tm->trans('community.role.pending'), 'statusTone' => 'secondary'],
         };
     }
 

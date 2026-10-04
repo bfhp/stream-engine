@@ -1,13 +1,13 @@
 /*! Third-party licenses: /assets/THIRD_PARTY_LICENSES.md */
 import{r as e}from"./i18n.js";import{t}from"./uploads.js";import{t as n}from"./api-errors.js";function r(r){let{slot:i,urlInput:a,uploadsApiUrl:o,prompt:s,onError:c}=r;if(!i||!a)return;function l(){i.innerHTML=`
             <div class="blog-post-cover-drop" data-cover-drop>
-                <i class="bi bi-card-image fs-4"></i>
+                <i class="bi bi-card-image blog-post-cover-icon"></i>
                 <div>
                     <div>${s}</div>
-                    <div class="small text-body-secondary">${e(`js.cover.formats`)}</div>
+                    <div class="blog-post-cover-hint">${e(`js.cover.formats`)}</div>
                 </div>
             </div>
-            <input type="file" class="d-none" accept="image/*" data-cover-file>
+            <input type="file" hidden accept="image/*" data-cover-file>
         `,a.value=``,d()}function u(t,n){let r=n.replace(/[<>&]/g,``);i.innerHTML=`
             <div class="blog-post-cover-file">
                 <div class="blog-post-cover-thumb" style="background-image:url('${t}')"></div>

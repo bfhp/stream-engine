@@ -1,0 +1,17 @@
+{# Bootstrap markup of the Users module's user-card.twig - same fill points. #}
+<div class="col">
+    <div class="card h-100 shadow-sm">
+        <div class="card-body d-flex align-items-center gap-3">
+            <img src="" alt="" class="rounded-circle flex-shrink-0" width="56" height="56" loading="lazy" data-slot-attr="src:avatar" data-slot-optional="avatar">
+            <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 56px; height: 56px; font-size: 1.25rem;" aria-hidden="true" data-slot="initial" data-slot-optional="initial"></div>
+            <div class="min-w-0">
+                <div class="fw-semibold text-truncate">
+                    <a href="#" class="text-body text-decoration-none stretched-link" data-slot-attr="href:url" data-slot-optional="url"><bdi data-slot="name"></bdi></a>
+                    <bdi data-slot="nameText" data-slot-optional="nameText"></bdi>
+                </div>
+                <div class="text-body-secondary small text-truncate" data-slot-optional="username">@<bdi data-slot="username"></bdi></div>
+                <time class="text-body-secondary small d-block" datetime="" data-slot="since" data-slot-attr="datetime:sinceIso"></time>
+            </div>
+        </div>
+    </div>
+</div>

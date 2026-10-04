@@ -273,10 +273,14 @@ div.feedback-hint > .list-group-flush > .list-group-item {
 
 /* Feed rating */
 .rating-stars {
+    display: inline-flex;
     gap: 0.15rem;
 }
 
 .rating-star {
+    padding: 0;
+    border: 0;
+    background: none;
     font-size: 1.15rem;
     line-height: 1;
     color: #f5a623;
@@ -381,6 +385,15 @@ div.feedback-hint > .list-group-flush > .list-group-item {
     border-radius: .5rem;
     cursor: pointer;
     transition: border-color .14s, background-color .14s;
+}
+
+.blog-post-cover-icon {
+    font-size: 1.5rem;
+}
+
+.blog-post-cover-hint {
+    font-size: .875em;
+    color: var(--bs-secondary-color);
 }
 
 .blog-post-cover-drop:hover {

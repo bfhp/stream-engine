@@ -4,13 +4,13 @@
 
     {% set fieldId = 'retrieveEmail' %}
 
-    <div class="mb-4">
-        <label for="{{ fieldId }}" class="form-label">
+    <div class="ui-field users-field">
+        <label for="{{ fieldId }}" class="ui-label">
             {{ trans('view.users.register.form.02') }}
         </label>
 
         <input
-                class="form-control"
+                class="ui-input"
                 type="email"
                 id="{{ fieldId }}"
                 name="email"
@@ -21,7 +21,7 @@
     </div>
 
     {% block retrieve_submit %}
-        <button type="submit" class="btn btn-primary">
+        <button type="submit" class="ui-button ui-button--primary">
             {{ trans('view.users.retrieve.form.01') }}
         </button>
     {% endblock %}

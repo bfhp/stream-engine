@@ -1,0 +1,34 @@
+{% extends "layouts/with-sidebar.twig" %}
+
+{# Bootstrap markup of the Users module's modules/users/verify.twig; keeps its hooks. #}
+
+{% block content %}
+
+    {% block register_header %}
+    <h1>{{ trans('user.registration') }} <small class="text-muted">{{ trans('view.users.register2.01') }}</small></h1>
+    <hr>
+    {% endblock %}
+
+    {% block verify_error %}
+    <div class="alert alert-danger">
+        <p class="lead mb-2">{{ trans('view.users.verify.01') }}</p>
+        <p class="mb-0">{{ trans('view.users.verify.02') }}</p>
+    </div>
+    {% endblock %}
+
+    {% block verify_details %}
+    <p>{{ trans('view.users.verify.03') }}</p>
+    {% endblock %}
+
+    {% block verify_actions %}
+    {% set registerUrl = action_url('user.register') %}
+    {% set feedbackUrl = action_url('feedback.show') %}
+    {% if registerUrl %}
+    <p>{{ trans('view.users.verify.04') }} <a href="{{ registerUrl }}">{{ trans('view.users.verify.05') }}</a> {{ trans('view.users.verify.06') }}</p>
+    {% endif %}
+    {% if feedbackUrl %}
+    <p>{{ trans('view.users.verify.07') }} <a href="{{ feedbackUrl }}">{{ trans('view.users.verify.08') }}</a>.</p>
+    {% endif %}
+    {% endblock %}
+
+{% endblock %}

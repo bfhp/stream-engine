@@ -41,7 +41,12 @@ export type OffsetLoadMoreOptions<T> = {
     listId: string;
     /** Removed wholesale when there is no next page. */
     wrapperSelector: string;
-    render: (item: T) => string;
+    /**
+     * One row: an element (normally a filled copy of a theme <template>, so
+     * the markup stays the theme's) or, for simple callers, an HTML string.
+     * null skips the row.
+     */
+    render: (item: T) => HTMLElement | string | null;
     errorMessage: string;
 };
 
@@ -73,7 +78,12 @@ export function initOffsetLoadMore<T>(options: OffsetLoadMoreOptions<T>): void {
 
             if (list) {
                 (res.items ?? []).forEach((item) => {
-                    list.insertAdjacentHTML('beforeend', options.render(item));
+                    const row = options.render(item);
+                    if (typeof row === 'string') {
+                        list.insertAdjacentHTML('beforeend', row);
+                    } else if (row) {
+                        list.append(row);
+                    }
                 });
             }
 

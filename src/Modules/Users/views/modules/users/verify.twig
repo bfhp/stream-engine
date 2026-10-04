@@ -3,14 +3,14 @@
 {% block content %}
 
     {% block register_header %}
-    <h1>{{ trans('user.registration') }} <small class="text-muted">{{ trans('view.users.register2.01') }}</small></h1>
+    <h1>{{ trans('user.registration') }} <small class="ui-muted">{{ trans('view.users.register2.01') }}</small></h1>
     <hr>
     {% endblock %}
 
     {% block verify_error %}
-    <div class="alert alert-danger">
-        <p class="lead mb-2">{{ trans('view.users.verify.01') }}</p>
-        <p class="mb-0">{{ trans('view.users.verify.02') }}</p>
+    <div class="ui-alert ui-alert--error">
+        <p class="users-lead">{{ trans('view.users.verify.01') }}</p>
+        <p class="users-tight">{{ trans('view.users.verify.02') }}</p>
     </div>
     {% endblock %}
 

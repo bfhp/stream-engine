@@ -1,0 +1,18 @@
+{# A card in the public users list (modules/users/list.twig). Only ever a
+   <template data-ui="user-card">: the list is rendered by
+   assets-src/pages/users.ts from the API. Fill points: avatar | initial,
+   url + name (linked) | nameText, username (optional), since, sinceIso. #}
+<div class="ui-card users-card">
+    <div class="ui-card__body users-card__body">
+        <img src="" alt="" class="users-card__avatar" width="56" height="56" loading="lazy" data-slot-attr="src:avatar" data-slot-optional="avatar">
+        <div class="users-card__initial" aria-hidden="true" data-slot="initial" data-slot-optional="initial"></div>
+        <div class="users-card__text">
+            <div class="users-card__name">
+                <a href="#" class="users-card__link" data-slot-attr="href:url" data-slot-optional="url"><bdi data-slot="name"></bdi></a>
+                <bdi data-slot="nameText" data-slot-optional="nameText"></bdi>
+            </div>
+            <div class="ui-muted ui-small users-card__sub" data-slot-optional="username">@<bdi data-slot="username"></bdi></div>
+            <time class="ui-muted ui-small users-card__since" datetime="" data-slot="since" data-slot-attr="datetime:sinceIso"></time>
+        </div>
+    </div>
+</div>

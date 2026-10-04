@@ -2,14 +2,14 @@ import {
     FeedPostCard,
     renderFeedPostCard,
 } from "./user-cards";
-import { pagination } from "./user-pagination";
+import { renderPagination } from "./user-pagination";
 import { getApiErrorMessage } from "../shared/api-errors";
-import { escapeHtml } from "../shared/escape";
 import { initOffsetLoadMore } from "./offset-load-more";
 import { initCoverWidget } from "../shared/cover-widget";
 import { initAudioPlayers } from "./audio-player";
 import { trans } from "../shared/i18n";
 import { formatDateValue } from "../shared/date-time-format";
+import { ui } from "../shared/ui";
 
 // @ts-ignore
 const cms = window.CMS;
@@ -51,61 +51,56 @@ function initUsersList() {
         return formatDateValue(date);
     }
 
-    // Cards (not a plain list) so a browsing/search page full of users scans
-    // well at a glance - same card idiom as the profile page's blog feed
-    // and friends list, just laid out as a responsive grid here.
-    function userItem(item: PublicUserListItem): string {
-        const displayName = cms.escapeHtml(item.displayName);
-        const initial = cms.escapeHtml(
-            (item.displayName ?? '').trim().charAt(0).toUpperCase()
-        );
-        const avatar = item.avatarUrl
-            ? `<img src="${cms.escapeHtml(item.avatarUrl)}" alt="" class="rounded-circle flex-shrink-0" width="56" height="56" loading="lazy">`
-            : `<div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 56px; height: 56px; font-size: 1.25rem;" aria-hidden="true">${initial}</div>`;
-        const date = formatDate(item.createdAt);
-        const dateTime = date !== '' ? new Date(Number(item.createdAt) * 1000).toISOString() : '';
-        // Whole card is clickable via stretched-link when a profile URL is
-        // known; some rows may lack a username (no public profile to link
-        // to yet), so those degrade to a plain, non-clickable card.
-        const name = item.url
-            ? `<a href="${cms.escapeHtml(item.url)}" class="text-body text-decoration-none stretched-link">${displayName}</a>`
-            : displayName;
-        const username = item.username
-            ? `<div class="text-body-secondary small text-truncate">@<bdi>${cms.escapeHtml(item.username)}</bdi></div>`
-            : '';
+    // The grid, the pager slot and the message line are list.twig's markup;
+    // each card is a copy of the theme's components/users/user-card.twig.
+    const grid = root.querySelector<HTMLElement>('[data-users-grid]');
+    const pager = root.querySelector<HTMLElement>('[data-users-pager]');
+    const message = root.querySelector<HTMLElement>('[data-users-message]');
 
-        return `
-            <div class="col">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body d-flex align-items-center gap-3">
-                        ${avatar}
-                        <div class="min-w-0">
-                            <div class="fw-semibold text-truncate"><bdi>${name}</bdi></div>
-                            ${username}
-                            <time class="text-body-secondary small d-block" datetime="${dateTime}">
-                                ${trans('js.users.member_since', { date })}
-                            </time>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
+    function showMessage(text: string, tone: 'muted' | 'danger' = 'muted'): void {
+        grid?.replaceChildren();
+        pager?.replaceChildren();
+        if (!message) return;
+        message.textContent = text;
+        message.dataset.tone = tone;
+        message.hidden = false;
+    }
+
+    function userCard(item: PublicUserListItem): HTMLElement | null {
+        const card = ui.clone('user-card');
+        if (!card) return null;
+
+        const date = formatDate(item.createdAt);
+        const name = item.displayName ?? '';
+
+        // A row without a username has no public profile to link to yet,
+        // so it degrades to a plain, non-clickable card; one without an
+        // avatar shows its initial instead.
+        return ui.fill(card, {
+            avatar: item.avatarUrl ?? '',
+            initial: item.avatarUrl ? '' : name.trim().charAt(0).toUpperCase(),
+            url: item.url ?? '',
+            name: item.url ? name : '',
+            nameText: item.url ? '' : name,
+            username: item.username ?? '',
+            since: trans('js.users.member_since', { date }),
+            sinceIso: date !== '' ? new Date(Number(item.createdAt) * 1000).toISOString() : '',
+        });
     }
 
     function render(data: PublicUsersPayload): void {
         const items = Array.isArray(data.data) ? data.data : [];
 
         if (!items.length) {
-            root.innerHTML = `<div class="text-muted">${trans('js.users.empty')}</div>`;
+            showMessage(trans('js.users.empty'));
             return;
         }
 
-        root.innerHTML = `
-            <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-3">
-                ${items.map(userItem).join('')}
-            </div>
-            ${pagination(data.pagination, pageUrl, window.location.search)}
-        `;
+        if (message) message.hidden = true;
+        grid?.replaceChildren(...items.map(userCard).filter((card): card is HTMLElement => card !== null));
+
+        const nav = renderPagination(data.pagination, pageUrl, window.location.search);
+        pager?.replaceChildren(...(nav ? [nav] : []));
     }
 
     async function loadUsers(): Promise<void> {
@@ -122,7 +117,7 @@ function initUsersList() {
             render(await response.json());
         } catch (error) {
             console.error(error);
-            root.innerHTML = `<div class="text-danger">${trans('js.users.load_failed')}</div>`;
+            showMessage(trans('js.users.load_failed'), 'danger');
         }
     }
 
@@ -142,7 +137,7 @@ function initBlogFeedLoadMore() {
         buttonSelector: '.load-more-blog-posts',
         listId: 'blog-feed-posts',
         wrapperSelector: '[data-blog-feed-load-more-wrapper]',
-        render: (item) => renderFeedPostCard(item, false),
+        render: renderFeedPostCard,
         errorMessage: trans('js.users.posts_load_failed'),
     });
 }
@@ -161,7 +156,7 @@ function initCommunityFeedLoadMore() {
         wrapperSelector: '[data-community-feed-load-more-wrapper]',
         // The community feed's cards carry a per-post author byline; the
         // profile's, above, do not - that flag is the only difference.
-        render: (item) => renderFeedPostCard(item, true),
+        render: renderFeedPostCard,
         errorMessage: trans('js.users.posts_load_failed'),
     });
 }
@@ -178,7 +173,7 @@ function initCommunityShowFeedLoadMore() {
         buttonSelector: '.load-more-community-show-posts',
         listId: 'community-show-feed-posts',
         wrapperSelector: '[data-community-show-feed-load-more-wrapper]',
-        render: (item) => renderFeedPostCard(item, true),
+        render: renderFeedPostCard,
         errorMessage: trans('js.users.posts_load_failed'),
     });
 }
@@ -193,15 +188,21 @@ interface FriendCard {
     url: string | null;
 }
 
+function renderPersonRow(item: { url: string | null; avatarUrl: string; displayName: string; roleLabel: string | null }): HTMLElement | null {
+    const row = ui.clone('person-row');
+    return row && ui.fill(row, {
+        url: item.url || '#',
+        avatar: item.avatarUrl,
+        name: item.displayName,
+        role: item.roleLabel ?? '',
+    });
+}
+
 function initFriendsLoadMore() {
-    // Mirrors the friends_list_item block in modules/users/show.twig - same
-    // kept-in-sync-by-hand trade-off as the feed cards in user-cards.ts.
-    const renderFriendRow = (item: FriendCard): string => `
-            <a href="${escapeHtml(item.url || '#')}" class="d-flex align-items-center gap-2 text-body text-decoration-none">
-                <img src="${escapeHtml(item.avatarUrl)}" alt="" class="rounded-circle bg-body-secondary object-fit-cover flex-shrink-0" width="36" height="36">
-                <span class="small">${escapeHtml(item.displayName)}</span>
-            </a>
-        `;
+    // A copy of the theme's components/users/person-row.twig, the same
+    // partial show.twig renders the first friends with.
+    const renderFriendRow = (item: FriendCard): HTMLElement | null =>
+        renderPersonRow({ url: item.url, avatarUrl: item.avatarUrl, displayName: item.displayName, roleLabel: null });
 
     initOffsetLoadMore<FriendCard>({
         containerId: 'friends-list',
@@ -223,27 +224,29 @@ interface FriendActionPayload {
     status: 'friends' | 'subscribed' | 'incoming' | 'none';
 }
 
+/**
+ * The friend button on a profile (profile-sidebar.twig). The theme renders
+ * one button per state inside [data-friend-action] - `friends`, `subscribed`
+ * and `none` (add; also what an incoming request shows) - with all but the
+ * current one hidden; a click sends that button's action and shows the
+ * button for the status the API answers with. Markup and wording stay in
+ * the theme.
+ */
 function initFriendButton() {
-    const button = document.querySelector<HTMLButtonElement>('.friend-action-btn');
-    if (!button) return;
+    const container = document.querySelector<HTMLElement>('[data-friend-action]');
+    const url = container?.dataset.friendUrl;
+    if (!container || !url) return;
+
+    const buttons = Array.from(container.querySelectorAll<HTMLButtonElement>('[data-friend-state]'));
 
     function applyStatus(status: string): void {
-        const isRelated = status === 'friends' || status === 'subscribed';
-
-        button!.dataset.action = isRelated ? 'remove' : 'add';
-        button!.className = isRelated
-            ? 'btn btn-outline-secondary friend-action-btn'
-            : 'btn btn-primary friend-action-btn';
-
-        const icon = status === 'friends' ? 'bi-person-check' : status === 'subscribed' ? 'bi-person-dash' : 'bi-person-plus';
-        const label = trans(status === 'friends' ? 'js.users.remove_friend' : status === 'subscribed' ? 'js.users.unsubscribe' : 'js.users.add_friend');
-
-        button!.innerHTML = `<i class="bi ${icon}"></i> ${label}`;
+        const state = status === 'friends' || status === 'subscribed' ? status : 'none';
+        buttons.forEach((button) => (button.hidden = button.dataset.friendState !== state));
     }
 
-    button.addEventListener('click', async () => {
-        const url = button.dataset.friendUrl;
-        if (!url) return;
+    container.addEventListener('click', async (event) => {
+        const button = (event.target as Element | null)?.closest<HTMLButtonElement>('[data-friend-state]');
+        if (!button || button.disabled) return;
 
         const method = button.dataset.action === 'remove' ? 'DELETE' : 'POST';
         button.disabled = true;
@@ -274,21 +277,9 @@ interface CommunityMemberCard {
 }
 
 function initCommunityMembersLoadMore() {
-    // Mirrors the community_members_item block in
-    // modules/users/community-show.twig.
-    const renderMemberRow = (item: CommunityMemberCard): string => {
-        const roleBadge = item.roleLabel
-            ? `<span class="badge text-bg-secondary ms-auto">${escapeHtml(item.roleLabel)}</span>`
-            : '';
-
-        return `
-            <a href="${escapeHtml(item.url || '#')}" class="d-flex align-items-center gap-2 text-body text-decoration-none">
-                <img src="${escapeHtml(item.avatarUrl)}" alt="" class="rounded-circle bg-body-secondary object-fit-cover flex-shrink-0" width="36" height="36">
-                <span class="small">${escapeHtml(item.displayName)}</span>
-                ${roleBadge}
-            </a>
-        `;
-    };
+    // A copy of the theme's components/users/person-row.twig, the same
+    // partial community-sidebar.twig renders the first members with.
+    const renderMemberRow = (item: CommunityMemberCard): HTMLElement | null => renderPersonRow(item);
 
     initOffsetLoadMore<CommunityMemberCard>({
         containerId: 'community-members',
@@ -310,40 +301,32 @@ interface CommunityMembershipPayload {
     status: 'owner' | 'moderator' | 'member' | 'pending' | 'none';
 }
 
+/**
+ * The join/leave button on a community (community-sidebar.twig). Same idea as
+ * initFriendButton(): one button per state inside [data-membership-action] -
+ * `none` (join), `pending`, `member` (leave; also a moderator's) - and a
+ * click shows the one for the status the API answers with. 'owner' never
+ * reaches here: leave() rejects it server-side, and no button is rendered
+ * for an owner.
+ */
 function initCommunityMembershipButton() {
-    const button = document.querySelector<HTMLButtonElement>('.community-membership-btn');
-    if (!button) return;
+    const container = document.querySelector<HTMLElement>('[data-membership-action]');
+    const url = container?.dataset.membershipUrl;
+    if (!container || !url) return;
+
+    const buttons = Array.from(container.querySelectorAll<HTMLButtonElement>('[data-membership-state]'));
 
     function applyStatus(status: string): void {
-        if (status === 'pending') {
-            button!.dataset.action = 'remove';
-            button!.dataset.status = 'pending';
-            button!.className = 'btn btn-outline-secondary community-membership-btn w-100';
-            button!.innerHTML = `<i class="bi bi-hourglass-split"></i> ${trans('js.users.membership_pending')}`;
-            return;
-        }
-
-        if (status === 'member' || status === 'moderator') {
-            button!.dataset.action = 'remove';
-            button!.dataset.status = status;
-            button!.className = 'btn btn-outline-secondary community-membership-btn w-100';
-            button!.innerHTML = `<i class="bi bi-box-arrow-right"></i> ${trans('js.users.leave_community')}`;
-            return;
-        }
-
-        // 'none' (or anything else, e.g. right after leaving) - the join
-        // button. 'owner' never reaches here: leave() rejects it
-        // server-side, and the button isn't rendered for an owner in the
-        // first place (see community-show.twig).
-        button!.dataset.action = 'add';
-        button!.dataset.status = 'none';
-        button!.className = 'btn btn-primary community-membership-btn w-100';
-        button!.innerHTML = `<i class="bi bi-person-plus"></i> ${trans('js.users.join')}`;
+        const state = status === 'pending' ? 'pending'
+            : status === 'member' || status === 'moderator' ? 'member'
+            : 'none';
+        buttons.forEach((button) => (button.hidden = button.dataset.membershipState !== state));
+        container!.dataset.status = status;
     }
 
-    button.addEventListener('click', async () => {
-        const url = button.dataset.membershipUrl;
-        if (!url) return;
+    container.addEventListener('click', async (event) => {
+        const button = (event.target as Element | null)?.closest<HTMLButtonElement>('[data-membership-state]');
+        if (!button || button.disabled) return;
 
         const method = button.dataset.action === 'remove' ? 'DELETE' : 'POST';
         button.disabled = true;
@@ -462,7 +445,7 @@ function initCommunityCreateForm() {
         setError();
         btnCreate!.disabled = true;
         const originalHtml = btnCreate!.innerHTML;
-        btnCreate!.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>${trans('js.users.creating')}`;
+        btnCreate!.innerHTML = `<span class="ui-spinner" aria-hidden="true"></span> ${trans('js.users.creating')}`;
 
         try {
             const community = await cms.api<{ redirectUrl?: string }>(apiUrl, {
@@ -532,7 +515,7 @@ function initCommunityManageSettingsForm() {
     const setStatus = (message = '', isError = false): void => {
         if (!statusEl) return;
         statusEl.textContent = message;
-        statusEl.classList.toggle('text-danger', isError);
+        statusEl.dataset.tone = isError ? 'danger' : 'muted';
     };
 
     initCoverWidget({
@@ -560,7 +543,7 @@ function initCommunityManageSettingsForm() {
         setStatus();
         btnSave!.disabled = true;
         const originalHtml = btnSave!.innerHTML;
-        btnSave!.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>${trans('js.common.saving')}`;
+        btnSave!.innerHTML = `<span class="ui-spinner" aria-hidden="true"></span> ${trans('js.common.saving')}`;
 
         // Set when the server asks for confirmation, which suspends this call
         // rather than finishing it - the button has to stay disabled until the

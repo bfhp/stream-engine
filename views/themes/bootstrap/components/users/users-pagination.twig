@@ -1,0 +1,8 @@
+{# Bootstrap markup of the Users module's users-pagination.twig - same fill points. #}
+<nav class="d-flex align-items-center justify-content-between mt-4" aria-label="{{ trans('js.pagination.users_aria') }}">
+    <a class="btn btn-outline-secondary" href="#" data-slot-attr="href:prevUrl" data-slot-optional="prevUrl">{{ trans('js.pagination.previous') }}</a>
+    <span class="btn btn-outline-secondary disabled" aria-disabled="true" data-slot-optional="noPrev">{{ trans('js.pagination.previous') }}</span>
+    <span class="text-body-secondary small" data-slot="label"></span>
+    <a class="btn btn-outline-secondary" href="#" data-slot-attr="href:nextUrl" data-slot-optional="nextUrl">{{ trans('js.pagination.next') }}</a>
+    <span class="btn btn-outline-secondary disabled" aria-disabled="true" data-slot-optional="noNext">{{ trans('js.pagination.next') }}</span>
+</nav>

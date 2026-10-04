@@ -128,7 +128,7 @@ type TrixEditorElement = HTMLElement & {
         if (!visibilityNote) return;
         const note = VISIBILITY_NOTES[visibilitySelect.value as keyof typeof VISIBILITY_NOTES]
             ?? VISIBILITY_NOTES.public;
-        visibilityNote.innerHTML = `<i class="bi ${note[0]} me-1"></i>${note[1]}`;
+        visibilityNote.innerHTML = `<i class="bi ${note[0]}"></i> ${note[1]}`;
     };
     visibilitySelect.addEventListener('change', syncVisibilityNote);
     syncVisibilityNote();
@@ -148,8 +148,8 @@ type TrixEditorElement = HTMLElement & {
 
         trackIdInput.value = '';
         trackSlot.innerHTML = '';
-        trackEmpty.classList.remove('d-none');
-        trackAddBtn.classList.remove('d-none');
+        trackEmpty.hidden = false;
+        trackAddBtn.hidden = false;
         trackFileInput.value = '';
     }
 
@@ -159,8 +159,8 @@ type TrixEditorElement = HTMLElement & {
         const safeName = name.replace(/[<>&]/g, '');
 
         trackIdInput.value = String(id);
-        trackEmpty.classList.add('d-none');
-        trackAddBtn.classList.add('d-none');
+        trackEmpty.hidden = true;
+        trackAddBtn.hidden = true;
         trackSlot.innerHTML = `
             <div class="blog-post-track-row">
                 <span class="blog-post-track-play"><i class="bi bi-music-note"></i></span>
@@ -254,7 +254,7 @@ type TrixEditorElement = HTMLElement & {
         btnPublish.disabled = true;
         btnDraft.disabled = true;
         const originalHtml = button.innerHTML;
-        button.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>${trans('js.common.saving')}`;
+        button.innerHTML = `<span class="ui-spinner" aria-hidden="true"></span> ${trans('js.common.saving')}`;
 
         try {
             const post = await cms.api<{ canonicalUrl?: string | null }>(apiUrl, {

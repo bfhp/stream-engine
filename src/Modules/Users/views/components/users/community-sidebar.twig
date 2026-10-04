@@ -56,23 +56,22 @@
        to the top of this shared sidebar so community.post-show (a single
        post's page) shows the same "which community is this" context a
        post's own community.show page does. #}
-    <div class="card mb-3">
-        <div class="card-body">
-            <div class="d-flex flex-wrap align-items-center gap-3">
+    <div class="ui-card users-panel">
+            <div class="users-identity">
                 <img
                     src="{{ imageUrl }}"
                     alt="{{ community.title }}"
-                    class="rounded-circle border bg-body-secondary object-fit-cover flex-shrink-0"
+                    class="users-identity__image"
                     width="80"
                     height="80"
                 >
-                <div class="flex-grow-1">
-                    <h2 class="h5 mb-1"><bdi>{{ community.title }}</bdi></h2>
+                <div class="users-identity__text">
+                    <h2 class="users-identity__title"><bdi>{{ community.title }}</bdi></h2>
                     {% if owner %}
-                        <p class="text-body-secondary small mb-0">
+                        <p class="users-note">
                             {{ trans('view.users.community.sidebar.01') }}
                             {% if ownerUrl %}
-                                <a href="{{ ownerUrl }}" class="text-body"><bdi>{{ owner.getDisplayName() }}</bdi></a>
+                                <a href="{{ ownerUrl }}" class="users-plain-link"><bdi>{{ owner.getDisplayName() }}</bdi></a>
                             {% else %}
                                 <bdi>{{ owner.getDisplayName() }}</bdi>
                             {% endif %}
@@ -82,7 +81,7 @@
             </div>
 
             {% if community.description %}
-                <p class="card-text mt-3 mb-0">{{ community.description }}</p>
+                <p class="users-identity__description">{{ community.description }}</p>
             {% endif %}
 
             {% block community_manage_stub %}
@@ -95,14 +94,13 @@
                    stub (per this feature's own spec, "Owner access
                    only"). #}
                 {% if manageUrl %}
-                    <div class="d-grid gap-2 mt-3">
-                        <a href="{{ manageUrl }}" class="btn btn-outline-secondary">
-                            <i class="bi bi-gear me-1"></i>{{ trans('view.users.community.sidebar.02') }}
+                    <div class="users-identity__actions">
+                        <a href="{{ manageUrl }}" class="ui-button ui-button--secondary ui-button--block">
+                            <i class="bi bi-gear"></i> {{ trans('view.users.community.sidebar.02') }}
                         </a>
                     </div>
                 {% endif %}
             {% endblock %}
-        </div>
     </div>
 {% endblock %}
 
@@ -120,35 +118,39 @@
        initCommunityMembershipButton() - a click rewrites this button in
        place from the JSON {status} the API responds with, same pattern
        as profile-sidebar.twig's .friend-action-btn/initFriendButton(). #}
-    <div class="card mb-3">
-        <div class="card-body">
-            {% if isGuest %}
-                <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#authFormModal">
+    <div class="ui-card users-panel">
+        {% if isGuest %}
+            <button type="button" class="ui-button ui-button--primary ui-button--block" data-ui-toggle="modal" data-ui-target="#authFormModal">
+                <i class="bi bi-person-plus"></i> {{ trans('view.users.community.sidebar.03') }}
+            </button>
+        {% elseif relationshipStatus == 'owner' %}
+            <p class="users-note">
+                <i class="bi bi-patch-check"></i> {{ trans('view.users.community.sidebar.04') }}
+            </p>
+        {% elseif relationshipStatus in ['none', 'pending', 'member', 'moderator'] %}
+            {# One button per state; users.ts initCommunityMembershipButton()
+               shows the one matching the status the API answers with. Keep
+               data-membership-* / data-action in a theme override. #}
+            {% set membershipState = relationshipStatus == 'moderator' ? 'member' : relationshipStatus %}
+            <div class="users-membership" data-membership-action data-membership-url="{{ membershipActionUrl }}" data-status="{{ relationshipStatus }}">
+                <button type="button" class="ui-button ui-button--primary ui-button--block" data-membership-state="none" data-action="add" {% if membershipState != 'none' %}hidden{% endif %}>
                     <i class="bi bi-person-plus"></i> {{ trans('view.users.community.sidebar.03') }}
                 </button>
-            {% elseif relationshipStatus == 'owner' %}
-                <p class="card-text text-body-secondary small mb-0">
-                    <i class="bi bi-patch-check"></i> {{ trans('view.users.community.sidebar.04') }}
-                </p>
-            {% elseif relationshipStatus == 'pending' %}
-                <button type="button" class="btn btn-outline-secondary community-membership-btn w-100" data-membership-url="{{ membershipActionUrl }}" data-action="remove" data-status="pending">
+                <button type="button" class="ui-button ui-button--secondary ui-button--block" data-membership-state="pending" data-action="remove" {% if membershipState != 'pending' %}hidden{% endif %}>
                     <i class="bi bi-hourglass-split"></i> {{ trans('view.users.community.sidebar.05') }}
                 </button>
-                <p class="text-body-secondary small mt-2 mb-0">{{ trans('view.users.community.sidebar.06') }}</p>
-            {% elseif relationshipStatus == 'member' or relationshipStatus == 'moderator' %}
-                <button type="button" class="btn btn-outline-secondary community-membership-btn w-100" data-membership-url="{{ membershipActionUrl }}" data-action="remove" data-status="{{ relationshipStatus }}">
+                <button type="button" class="ui-button ui-button--secondary ui-button--block" data-membership-state="member" data-action="remove" {% if membershipState != 'member' %}hidden{% endif %}>
                     <i class="bi bi-box-arrow-right"></i> {{ trans('view.users.community.sidebar.07') }}
                 </button>
-            {% elseif relationshipStatus == 'none' %}
-                <button type="button" class="btn btn-primary community-membership-btn w-100" data-membership-url="{{ membershipActionUrl }}" data-action="add" data-status="none">
-                    <i class="bi bi-person-plus"></i> {{ trans('view.users.community.sidebar.03') }}
-                </button>
-            {% else %}
-                <button type="button" class="btn btn-primary w-100" disabled title="{{ trans('view.users.community.sidebar.08') }}">
-                    <i class="bi bi-person-plus"></i> {{ trans('view.users.community.sidebar.03') }}
-                </button>
+            </div>
+            {% if relationshipStatus == 'pending' %}
+                <p class="users-note users-note--after">{{ trans('view.users.community.sidebar.06') }}</p>
             {% endif %}
-        </div>
+        {% else %}
+            <button type="button" class="ui-button ui-button--primary ui-button--block" disabled title="{{ trans('view.users.community.sidebar.08') }}">
+                <i class="bi bi-person-plus"></i> {{ trans('view.users.community.sidebar.03') }}
+            </button>
+        {% endif %}
     </div>
 {% endblock %}
 
@@ -189,34 +191,31 @@
        pattern as #friends-list/initFriendsLoadMore() on the profile
        page. Only real members show up here (pending subscribers don't -
        see MembershipRepository::findMembers()'s own docblock). #}
-    <div class="card mb-3" id="community-members" data-members-api-url="{{ membersApiUrl }}">
-        <div class="card-body">
-            <h2 class="h6 card-title mb-3">
-                {{ trans('community.manage_members') }}
-                {% if membersTotal %}<span class="text-body-secondary">({{ membersTotal }})</span>{% endif %}
-            </h2>
-            {% if hasMembers %}
-                <div class="d-flex flex-column gap-2" id="community-members-items">
-                    {% for member in members %}
-                        {% block community_members_item %}
-                            <a href="{{ member.url ?: '#' }}" class="d-flex align-items-center gap-2 text-body text-decoration-none">
-                                <img src="{{ member.avatarUrl }}" alt="" class="rounded-circle bg-body-secondary object-fit-cover flex-shrink-0" width="36" height="36">
-                                <span class="small"><bdi>{{ member.displayName }}</bdi></span>
-                                {% if member.roleLabel %}<span class="badge text-bg-secondary ms-auto">{{ member.roleLabel }}</span>{% endif %}
-                            </a>
-                        {% endblock %}
-                    {% endfor %}
+    <div class="ui-card users-panel" id="community-members" data-members-api-url="{{ membersApiUrl }}">
+        <h2 class="users-panel__title">
+            {{ trans('community.manage_members') }}
+            {% if membersTotal %}<span class="ui-muted">({{ membersTotal }})</span>{% endif %}
+        </h2>
+        {% if hasMembers %}
+            <div class="users-people" id="community-members-items">
+                {% for member in members %}
+                    {% block community_members_item %}
+                        {% include 'components/users/person-row.twig' with {row: member} only %}
+                    {% endblock %}
+                {% endfor %}
+            </div>
+            {% if membersNextOffset is not null %}
+                <div class="users-more users-more--compact" data-community-members-load-more-wrapper>
+                    <button type="button" class="ui-button ui-button--secondary ui-button--sm load-more-community-members" data-offset="{{ membersNextOffset }}">
+                        {{ trans('view.users.community.sidebar.13') }}
+                    </button>
                 </div>
-                {% if membersNextOffset is not null %}
-                    <div class="text-center mt-2" data-community-members-load-more-wrapper>
-                        <button type="button" class="btn btn-outline-secondary btn-sm load-more-community-members" data-offset="{{ membersNextOffset }}">
-                            {{ trans('view.users.community.sidebar.13') }}
-                        </button>
-                    </div>
-                {% endif %}
-            {% else %}
-                <p class="card-text text-body-secondary small mb-0">{{ trans('view.users.community.manage.members.05') }}</p>
+                <template data-ui="person-row">
+                    {%- include 'components/users/person-row.twig' with {row: {}, asTemplate: true} only -%}
+                </template>
             {% endif %}
-        </div>
+        {% else %}
+            <p class="users-note">{{ trans('view.users.community.manage.members.05') }}</p>
+        {% endif %}
     </div>
 {% endblock %}

@@ -1,0 +1,10 @@
+{# Previous / page N of M / next under the public users list. Only ever a
+   <template data-ui="users-pagination">, filled by assets-src/pages/
+   user-pagination.ts. Fill points: prevUrl | noPrev, label, nextUrl | noNext. #}
+<nav class="users-pagination" aria-label="{{ trans('js.pagination.users_aria') }}">
+    <a class="ui-button ui-button--secondary" href="#" data-slot-attr="href:prevUrl" data-slot-optional="prevUrl">{{ trans('js.pagination.previous') }}</a>
+    <span class="ui-button ui-button--secondary" aria-disabled="true" data-slot-optional="noPrev">{{ trans('js.pagination.previous') }}</span>
+    <span class="ui-muted ui-small" data-slot="label"></span>
+    <a class="ui-button ui-button--secondary" href="#" data-slot-attr="href:nextUrl" data-slot-optional="nextUrl">{{ trans('js.pagination.next') }}</a>
+    <span class="ui-button ui-button--secondary" aria-disabled="true" data-slot-optional="noNext">{{ trans('js.pagination.next') }}</span>
+</nav>

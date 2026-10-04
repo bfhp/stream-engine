@@ -3,17 +3,17 @@
 {% block content %}
 
     {% block register_header %}
-    <h1>{{ trans('user.registration') }} <small class="text-muted">{{ trans('view.users.register2.01') }}</small></h1>
+    <h1>{{ trans('user.registration') }} <small class="ui-muted">{{ trans('view.users.register2.01') }}</small></h1>
     <hr>
     {% endblock %}
 
     {% block register_success %}
-        <p class="lead">{{ trans('view.users.register2.02') }}</p>
+        <p class="users-lead">{{ trans('view.users.register2.02') }}</p>
         <p>{{ trans('view.users.register2.03') }}</p>
     {% endblock %}
 
     {% block register_actions %}
-        <a href="/" class="btn btn-primary">
+        <a href="/" class="ui-button ui-button--primary">
             {{ trans('view.not_found.home') }}
         </a>
     {% endblock %}

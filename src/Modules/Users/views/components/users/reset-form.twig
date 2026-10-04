@@ -8,13 +8,13 @@
     {% set password2Id = 'resetPassword2' %}
 
     {% block reset_password %}
-        <div class="mb-4">
-            <label for="{{ passwordId }}" class="form-label">
+        <div class="ui-field users-field">
+            <label for="{{ passwordId }}" class="ui-label">
                 {{ trans('view.profile.tabs.security.02') }}
             </label>
 
             <input
-                    class="form-control"
+                    class="ui-input"
                     type="password"
                     id="{{ passwordId }}"
                     name="password"
@@ -27,13 +27,13 @@
     {% endblock %}
 
     {% block reset_password_confirm %}
-        <div class="mb-4">
-            <label for="{{ password2Id }}" class="form-label">
+        <div class="ui-field users-field">
+            <label for="{{ password2Id }}" class="ui-label">
                 {{ trans('view.users.reset.form.02') }}
             </label>
 
             <input
-                    class="form-control"
+                    class="ui-input"
                     type="password"
                     id="{{ password2Id }}"
                     name="password2"
@@ -46,7 +46,7 @@
     {% endblock %}
 
     {% block reset_submit %}
-        <button type="submit" class="btn btn-primary">
+        <button type="submit" class="ui-button ui-button--primary">
             {{ trans('view.users.reset.form.03') }}
         </button>
     {% endblock %}

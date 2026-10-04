@@ -8,11 +8,11 @@
    differ between the two, everything else in this form is identical. #}
 {% set isCommunityPost = isCommunityPost is defined and isCommunityPost %}
 
-{% block main_class %}my-4{% endblock %}
+{% block main_class %}layout-main users-page{% endblock %}
 
 {% block content %}
-    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
-        <h1 class="h3 mb-0">{{ isEdit ? trans('blog.edit_post') : trans('view.users.blog.post.form.01') }}</h1>
+    <div class="users-heading">
+        <h1 class="users-heading__title">{{ isEdit ? trans('blog.edit_post') : trans('view.users.blog.post.form.01') }}</h1>
     </div>
 
     <form
@@ -24,21 +24,20 @@
         data-visibility-context="{{ isCommunityPost ? 'community' : 'personal' }}"
         {% if isEdit %}data-initial-tags="{{ initialTags|default([])|json_encode }}"{% endif %}
     >
-        <div class="card mb-3">
-            <div class="card-body">
-                <label class="form-label small text-uppercase text-body-secondary fw-semibold" for="postTitle">{{ trans('view.users.blog.post.form.02') }}</label>
+        <div class="ui-card users-panel">
+            <div>
+                <label class="ui-label users-caps" for="postTitle">{{ trans('view.users.blog.post.form.02') }}</label>
                 <input
                     type="text"
-                    class="form-control form-control-lg mb-3"
+                    class="ui-input users-input-lg blog-post-title-input"
                     id="postTitle"
                     name="title"
                     placeholder="{{ trans('view.users.blog.post.form.03') }}"
                     maxlength="200"
-                    style="font-size:1.4rem;font-weight:600"
                     value="{{ isEdit ? post.title : '' }}"
                 >
 
-                <label class="form-label small text-uppercase text-body-secondary fw-semibold" for="postContentEditor">{{ trans('view.users.blog.post.form.04') }}</label>
+                <label class="ui-label users-caps" for="postContentEditor">{{ trans('view.users.blog.post.form.04') }}</label>
                 <input id="postContent" type="hidden" name="content" value="{{ isEdit ? post.content : '' }}">
                 <trix-editor
                     id="postContentEditor"
@@ -47,9 +46,9 @@
                     placeholder="{{ trans('view.users.blog.post.form.05') }}"
                     data-blog-post-editor
                 ></trix-editor>
-                <div class="d-flex justify-content-between mt-2">
-                    <span class="small text-body-secondary" id="blogPostFormError" data-blog-post-error></span>
-                    <span class="small text-body-secondary" id="wordCount">{{ trans('view.forums.topic.form.08') }}</span>
+                <div class="blog-post-editor-footer">
+                    <span id="blogPostFormError" data-blog-post-error></span>
+                    <span id="wordCount">{{ trans('view.forums.topic.form.08') }}</span>
                 </div>
             </div>
         </div>
@@ -59,34 +58,34 @@
 {% block sidebar_widgets %}
     <div class="blog-post-sidebar-sticky" data-blog-post-form-owner>
 
-        <div class="card mb-3">
-            <div class="card-body">
-                <h2 class="h6 card-title mb-3"><i class="bi bi-gear me-1"></i>{{ trans('view.forums.topic.form.32') }}</h2>
-                <label class="form-label small text-uppercase text-body-secondary fw-semibold" for="postVisibility">{{ trans('view.users.blog.post.form.06') }}</label>
-                <select class="form-select mb-2" id="postVisibility" name="visibility">
+        <div class="ui-card users-panel">
+            <div>
+                <h2 class="users-panel__title"><i class="bi bi-gear"></i> {{ trans('view.forums.topic.form.32') }}</h2>
+                <label class="ui-label users-caps" for="postVisibility">{{ trans('view.users.blog.post.form.06') }}</label>
+                <select class="ui-select users-gap-sm" id="postVisibility" name="visibility">
                     <option value="public" {% if not isEdit or post.visibility != 'members' %}selected{% endif %}>{{ trans('view.users.blog.post.form.07') }}</option>
                     <option value="members" {% if isEdit and post.visibility == 'members' %}selected{% endif %}>{{ isCommunityPost ? trans('view.users.blog.post.form.08') : trans('view.users.blog.post.form.09') }}</option>
                 </select>
-                <p class="small text-body-secondary mb-3" id="visibilityNote"><i class="bi bi-globe me-1"></i>{{ trans('view.users.blog.post.form.10') }}</p>
-                <div class="d-grid gap-2">
-                    <button class="btn btn-primary" type="button" id="btnPublish" form="blogPostForm">
-                        <i class="bi bi-send me-1"></i>{{ isEdit ? trans('view.forums.topic.form.41') : trans('view.users.blog.post.form.11') }}
+                <p class="users-note users-gap" id="visibilityNote"><i class="bi bi-globe"></i> {{ trans('view.users.blog.post.form.10') }}</p>
+                <div class="users-stack">
+                    <button class="ui-button ui-button--primary" type="button" id="btnPublish" form="blogPostForm">
+                        <i class="bi bi-send"></i> {{ isEdit ? trans('view.forums.topic.form.41') : trans('view.users.blog.post.form.11') }}
                     </button>
-                    <button class="btn btn-outline-secondary" type="button" id="btnDraft" form="blogPostForm">
-                        <i class="bi bi-file-earmark-text me-1"></i>{{ trans('view.users.blog.post.form.12') }}
+                    <button class="ui-button ui-button--secondary" type="button" id="btnDraft" form="blogPostForm">
+                        <i class="bi bi-file-earmark-text"></i> {{ trans('view.users.blog.post.form.12') }}
                     </button>
                     {% if cancelUrl %}
-                        <a href="{{ cancelUrl }}" class="btn btn-link text-body-secondary">
-                            <i class="bi bi-x-lg me-1"></i>{{ trans('view.comments.cancel') }}
+                        <a href="{{ cancelUrl }}" class="ui-button ui-button--link users-cancel">
+                            <i class="bi bi-x-lg"></i> {{ trans('view.comments.cancel') }}
                         </a>
                     {% endif %}
                 </div>
             </div>
         </div>
 
-        <div class="card mb-3">
-            <div class="card-body">
-                <h2 class="h6 card-title mb-2"><i class="bi bi-card-image me-1"></i>{{ trans('view.users.blog.post.form.13') }}</h2>
+        <div class="ui-card users-panel">
+            <div>
+                <h2 class="users-panel__title users-panel__title--tight"><i class="bi bi-card-image"></i> {{ trans('view.users.blog.post.form.13') }}</h2>
                 <input type="hidden" id="coverImageUrl" data-cover-url value="{{ isEdit ? post.imageUrl : '' }}">
                 <div id="coverSlot" data-cover-slot>
                     {% if isEdit and post.imageUrl %}
@@ -99,24 +98,24 @@
                         </div>
                     {% else %}
                         <div class="blog-post-cover-drop" data-cover-drop>
-                            <i class="bi bi-card-image fs-4"></i>
+                            <i class="bi bi-card-image blog-post-cover-icon"></i>
                             <div>
                                 <div>{{ trans('view.users.blog.post.form.14') }}</div>
-                                <div class="small text-body-secondary">{{ trans('view.users.community.manage.settings.11') }}</div>
+                                <div class="blog-post-cover-hint">{{ trans('view.users.community.manage.settings.11') }}</div>
                             </div>
                         </div>
-                        <input type="file" class="d-none" accept="image/*" data-cover-file>
+                        <input type="file" hidden accept="image/*" data-cover-file>
                     {% endif %}
                 </div>
-                <p class="small text-body-secondary mt-2 mb-0"><i class="bi bi-share me-1"></i>{{ trans('view.users.blog.post.form.15') }}</p>
+                <p class="users-note users-note--after"><i class="bi bi-share"></i> {{ trans('view.users.blog.post.form.15') }}</p>
             </div>
         </div>
 
-        <div class="card mb-3">
-            <div class="card-body">
-                <h2 class="h6 card-title mb-2"><i class="bi bi-music-note-beamed me-1"></i>{{ trans('view.users.blog.post.form.16') }}</h2>
+        <div class="ui-card users-panel">
+            <div>
+                <h2 class="users-panel__title users-panel__title--tight"><i class="bi bi-music-note-beamed"></i> {{ trans('view.users.blog.post.form.16') }}</h2>
                 <input type="hidden" id="trackUploadId" data-track-id value="{{ isEdit and trackUploadId ? trackUploadId : '' }}">
-                <div class="d-flex flex-column gap-2 mb-2" id="trackSlot" data-track-slot>
+                <div class="users-people users-gap-sm" id="trackSlot" data-track-slot>
                     {% if isEdit and track %}
                         <div class="blog-post-track-row">
                             <span class="blog-post-track-play"><i class="bi bi-music-note"></i></span>
@@ -128,35 +127,35 @@
                         </div>
                     {% endif %}
                 </div>
-                <p class="small text-body-secondary mb-2" data-track-empty {% if isEdit and track %}style="display:none"{% endif %}>{{ trans('view.users.blog.post.form.17') }}</p>
-                <button class="btn btn-outline-secondary btn-sm w-100" type="button" data-track-add {% if isEdit and track %}style="display:none"{% endif %}>
-                    <i class="bi bi-plus-lg me-1"></i>{{ trans('view.users.blog.post.form.18') }}
+                <p class="users-note users-gap-sm" data-track-empty {% if isEdit and track %}hidden{% endif %}>{{ trans('view.users.blog.post.form.17') }}</p>
+                <button class="ui-button ui-button--secondary ui-button--sm ui-button--block" type="button" data-track-add {% if isEdit and track %}hidden{% endif %}>
+                    <i class="bi bi-plus-lg"></i> {{ trans('view.users.blog.post.form.18') }}
                 </button>
-                <input type="file" class="d-none" accept="audio/*" data-track-file>
+                <input type="file" hidden accept="audio/*" data-track-file>
             </div>
         </div>
 
-        <div class="card mb-3">
-            <div class="card-body">
-                <h2 class="h6 card-title mb-2"><i class="bi bi-cloud-arrow-up me-1"></i>{{ trans('view.users.blog.post.form.19') }}</h2>
-                <div class="d-flex justify-content-between small mb-1">
-                    <span class="text-body-secondary">{{ trans('view.users.blog.post.form.20') }}</span>
+        <div class="ui-card users-panel">
+            <div>
+                <h2 class="users-panel__title users-panel__title--tight"><i class="bi bi-cloud-arrow-up"></i> {{ trans('view.users.blog.post.form.19') }}</h2>
+                <div class="blog-post-storage">
+                    <span class="ui-muted">{{ trans('view.users.blog.post.form.20') }}</span>
                     <span>{{ uploadStorageUsedLabel }} {{ trans('view.forums.topic.list.08') }} {{ uploadStorageLimitLabel }}</span>
                 </div>
-                <div class="progress mb-2" role="progressbar" aria-valuenow="{{ uploadStoragePercent }}" aria-valuemin="0" aria-valuemax="100" style="height: 6px;">
-                    <div class="progress-bar" style="width: {{ uploadStoragePercent }}%"></div>
+                <div class="blog-post-storage-bar" role="progressbar" aria-valuenow="{{ uploadStoragePercent }}" aria-valuemin="0" aria-valuemax="100">
+                    <div class="blog-post-storage-bar__fill" style="width: {{ uploadStoragePercent }}%"></div>
                 </div>
-                <p class="small text-body-secondary mb-0">{{ trans('view.users.blog.post.form.21') }} {{ uploadStorageRemainingLabel }}.</p>
+                <p class="users-note">{{ trans('view.users.blog.post.form.21') }} {{ uploadStorageRemainingLabel }}.</p>
             </div>
         </div>
 
-        <div class="card mb-3">
-            <div class="card-body">
-                <h2 class="h6 card-title mb-3"><i class="bi bi-tags me-1"></i>{{ trans('view.users.blog.post.form.22') }}</h2>
+        <div class="ui-card users-panel">
+            <div>
+                <h2 class="users-panel__title"><i class="bi bi-tags"></i> {{ trans('view.users.blog.post.form.22') }}</h2>
                 <div class="blog-post-tag-wrap" data-tag-wrap>
                     <input type="text" class="blog-post-tag-field" data-tag-field placeholder="{{ trans('view.users.blog.post.form.23') }}">
                 </div>
-                <p class="small text-body-secondary mt-2 mb-0">{{ trans('view.users.blog.post.form.24') }}</p>
+                <p class="users-note users-note--after">{{ trans('view.users.blog.post.form.24') }}</p>
             </div>
         </div>
 

@@ -708,6 +708,7 @@ body {
 .rating-card__stars { display: flex; gap: .15rem; color: var(--ui-warning); font-size: 1.15rem; line-height: 1; }
 
 .profile-card { text-align: center; }
+.profile-friend-action { display: grid; gap: var(--ui-space-2); }
 .profile-card__name { font-size: 1.5rem; margin-block-end: 0; }
 .profile-card__presence { margin-block: var(--ui-space-2) var(--ui-space-3); }
 .profile-card__hint { margin: var(--ui-space-2) 0 0; }

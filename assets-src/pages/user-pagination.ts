@@ -1,14 +1,15 @@
 /* ==========================================================================
    Users list pagination
 
-   Two functions, hoisted out of `initUsersList()`'s closure and given their
-   inputs explicitly, so the thing they get wrong can be asserted: a
-   paginator that builds its links from scratch drops whatever the visitor
-   was filtering by, and the next page silently shows a different set.
+   Hoisted out of `initUsersList()`'s closure and given their inputs
+   explicitly, so the thing they get wrong can be asserted: a paginator that
+   builds its links from scratch drops whatever the visitor was filtering by,
+   and the next page silently shows a different set. The markup is the
+   theme's (`components/users/users-pagination.twig`).
    ========================================================================== */
 
-import { escapeHtml } from "../shared/escape";
 import { trans } from "../shared/i18n";
+import { ui, type SlotData } from "../shared/ui";
 
 export type PaginationMeta = {
     currentPage?: number;
@@ -42,42 +43,39 @@ export function pageLink(pageUrl: string, search: string, page: number): string 
 }
 
 /**
- * The prev/next nav under the list, or nothing at all when there is only one
- * page.
+ * The values for the users-pagination template's fill points, or null when
+ * there is only one page (no nav at all).
  *
- * At either end the control is a disabled `<span>` rather than an `<a>` -
- * a link to page 0 would 404, and a disabled anchor is still clickable.
+ * At either end the control is the template's disabled `<span>` rather than
+ * a link - a link to page 0 would 404, and a disabled anchor is still
+ * clickable. Hrefs go in through setAttribute, so the `&` joining query
+ * parameters needs no escaping.
  */
-export function pagination(meta: PaginationMeta | undefined, pageUrl: string, search: string): string {
-    const paginationData = meta || {};
-    const currentPage = Number(paginationData.currentPage || 1);
-    const totalPages = Number(paginationData.totalPages || 1);
+export function paginationData(meta: PaginationMeta | undefined, pageUrl: string, search: string): SlotData | null {
+    const paginationMeta = meta || {};
+    const currentPage = Number(paginationMeta.currentPage || 1);
+    const totalPages = Number(paginationMeta.totalPages || 1);
 
     if (totalPages <= 1) {
-        return '';
+        return null;
     }
 
-    // The href is escaped rather than interpolated raw. A query string joins
-    // its parameters with `&`, and HTML5 still resolves a *named* entity
-    // without its semicolon inside an attribute - so a filter called `sect`
-    // would make `&sect=x` parse as `§=x` and the link would quietly lose the
-    // filter. None of today's parameters (q, sort, direction, page) hit that
-    // list, which is exactly why it would be found late.
-    const href = (page: number): string => escapeHtml(pageLink(pageUrl, search, page));
+    const hasPrev = currentPage > 1;
+    const hasNext = currentPage < totalPages;
 
-    const prev = currentPage > 1
-        ? `<a class="btn btn-outline-secondary" href="${href(currentPage - 1)}">${trans("js.pagination.previous")}</a>`
-        : `<span class="btn btn-outline-secondary disabled" aria-disabled="true">${trans("js.pagination.previous")}</span>`;
+    return {
+        prevUrl: hasPrev ? pageLink(pageUrl, search, currentPage - 1) : "",
+        noPrev: hasPrev ? "" : "1",
+        nextUrl: hasNext ? pageLink(pageUrl, search, currentPage + 1) : "",
+        noNext: hasNext ? "" : "1",
+        label: trans("js.pagination.page_of", { current: currentPage, total: totalPages }),
+    };
+}
 
-    const next = currentPage < totalPages
-        ? `<a class="btn btn-outline-secondary" href="${href(currentPage + 1)}">${trans("js.pagination.next")}</a>`
-        : `<span class="btn btn-outline-secondary disabled" aria-disabled="true">${trans("js.pagination.next")}</span>`;
+/** The nav under the list: a filled copy of the theme's template, or null. */
+export function renderPagination(meta: PaginationMeta | undefined, pageUrl: string, search: string): HTMLElement | null {
+    const data = paginationData(meta, pageUrl, search);
+    const nav = data ? ui.clone("users-pagination") : null;
 
-    return `
-            <nav class="d-flex align-items-center justify-content-between mt-4" aria-label="${trans("js.pagination.users_aria")}">
-                ${prev}
-                <span class="text-body-secondary small">${trans("js.pagination.page_of", { current: currentPage, total: totalPages })}</span>
-                ${next}
-            </nav>
-        `;
+    return nav && data ? ui.fill(nav, data) : null;
 }

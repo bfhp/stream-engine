@@ -15,11 +15,11 @@
            sidebar). Guests open the login modal. newPostUrl is only set for a real member/
            moderator/owner (CommunityService::canPost()) - see
            UsersController::showCommunityShowPage(). #}
-        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-            <h2 class="mb-0">{{ trans('view.users.community.show.01') }}</h2>
+        <div class="users-heading">
+            <h2>{{ trans('view.users.community.show.01') }}</h2>
             {% if user.isGuest or newPostUrl %}
-                <a href="{{ user.isGuest ? '#authFormModal' : newPostUrl }}" {% if user.isGuest %}data-bs-toggle="modal" data-bs-target="#authFormModal"{% endif %} class="btn btn-primary btn-sm">
-                    <i class="bi bi-plus-lg me-1"></i>{{ trans('blog.new_post') }}
+                <a href="{{ user.isGuest ? '#authFormModal' : newPostUrl }}" {% if user.isGuest %}data-ui-toggle="modal" data-ui-target="#authFormModal"{% endif %} class="ui-button ui-button--primary ui-button--sm">
+                    <i class="bi bi-plus-lg"></i> {{ trans('blog.new_post') }}
                 </a>
             {% endif %}
         </div>
@@ -31,34 +31,38 @@
            community.main, but the endpoint is scoped to this community. #}
         <div id="community-show-feed" data-posts-api-url="{{ postsApiUrl }}">
             {% if hasPosts %}
-                <div class="d-flex flex-column gap-3" id="community-show-feed-posts">
+                <div class="users-feed" id="community-show-feed-posts">
                     {% for post in posts %}
                         {% include 'components/users/post-card.twig' with {post: post, showAuthor: true} only %}
                     {% endfor %}
                 </div>
 
                 {% if nextOffset is not null %}
-                    <div class="text-center mt-3" data-community-show-feed-load-more-wrapper>
+                    <div class="users-more" data-community-show-feed-load-more-wrapper>
                         <button
                             type="button"
-                            class="btn btn-outline-secondary load-more-community-show-posts"
+                            class="ui-button ui-button--secondary load-more-community-show-posts"
                             data-offset="{{ nextOffset }}"
                         >
                             {{ trans('view.users.community.sidebar.13') }}
                         </button>
                     </div>
+                    <template data-ui="post-card">
+                        {%- include 'components/users/post-card.twig' with {post: {}, showAuthor: true, asTemplate: true} only -%}
+                    </template>
+                    <template data-ui="post-card-tag">
+                        {%- include 'components/users/post-tag.twig' with {tag: ''} only -%}
+                    </template>
                 {% endif %}
             {% endif %}
 
             {% if isEmpty %}
-                <div class="card">
-                    <div class="card-body text-center text-body-secondary py-5">
-                        <i class="bi bi-journal-text fs-1 d-block mb-2"></i>
-                        <p class="mb-0 text-body">{{ trans('view.users.community.show.02') }}</p>
-                        {% if user.isGuest or newPostUrl %}
-                            <a href="{{ user.isGuest ? '#authFormModal' : newPostUrl }}" {% if user.isGuest %}data-bs-toggle="modal" data-bs-target="#authFormModal"{% endif %} class="btn btn-primary mt-4"><i class="bi bi-plus-lg me-1"></i>{{ trans('view.users.community.show.03') }}</a>
-                        {% endif %}
-                    </div>
+                <div class="ui-card users-empty">
+                    <i class="bi bi-journal-text users-empty__icon"></i>
+                    <p class="users-empty__title">{{ trans('view.users.community.show.02') }}</p>
+                    {% if user.isGuest or newPostUrl %}
+                        <a href="{{ user.isGuest ? '#authFormModal' : newPostUrl }}" {% if user.isGuest %}data-ui-toggle="modal" data-ui-target="#authFormModal"{% endif %} class="ui-button ui-button--primary users-empty__action"><i class="bi bi-plus-lg"></i> {{ trans('view.users.community.show.03') }}</a>
+                    {% endif %}
                 </div>
             {% endif %}
         </div>

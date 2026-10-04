@@ -52,7 +52,7 @@
                        partial, doesn't compute them yet (same gap
                        authorRatingCount already has above), so the button
                        stays a disabled stub there. users.ts's
-                       initFriendButton() wires up .friend-action-btn's
+                       initFriendButton() wires up [data-friend-action]'s
                        click handler and rewrites this button in place from
                        the JSON {status} the API responds with - see
                        UsersController::handleUserFriendRequest(). There's
@@ -74,18 +74,22 @@
                             <button type="button" class="ui-button ui-button--primary" data-ui-toggle="modal" data-ui-target="#authFormModal">
                                 <i class="bi bi-person-plus"></i> {{ trans('view.profile.add_friend') }}
                             </button>
-                        {% elseif relationshipStatus == 'friends' %}
-                            <button type="button" class="ui-button ui-button--secondary friend-action-btn" data-friend-url="{{ friendActionUrl }}" data-action="remove">
-                                <i class="bi bi-person-check"></i> {{ trans('view.profile.remove_friend') }}
-                            </button>
-                        {% elseif relationshipStatus == 'subscribed' %}
-                            <button type="button" class="ui-button ui-button--secondary friend-action-btn" data-friend-url="{{ friendActionUrl }}" data-action="remove">
-                                <i class="bi bi-person-dash"></i> {{ trans('view.profile.unsubscribe') }}
-                            </button>
                         {% elseif relationshipStatus is defined and relationshipStatus is not null %}
-                            <button type="button" class="ui-button ui-button--primary friend-action-btn" data-friend-url="{{ friendActionUrl }}" data-action="add">
-                                <i class="bi bi-person-plus"></i> {{ trans('view.profile.add_friend') }}
-                            </button>
+                            {# One button per state; users.ts initFriendButton() shows the
+                               one matching the status the API answers with. An incoming
+                               request shows the add button. #}
+                            {% set friendState = relationshipStatus in ['friends', 'subscribed'] ? relationshipStatus : 'none' %}
+                            <div class="profile-friend-action" data-friend-action data-friend-url="{{ friendActionUrl }}">
+                                <button type="button" class="ui-button ui-button--secondary" data-friend-state="friends" data-action="remove" {% if friendState != 'friends' %}hidden{% endif %}>
+                                    <i class="bi bi-person-check"></i> {{ trans('view.profile.remove_friend') }}
+                                </button>
+                                <button type="button" class="ui-button ui-button--secondary" data-friend-state="subscribed" data-action="remove" {% if friendState != 'subscribed' %}hidden{% endif %}>
+                                    <i class="bi bi-person-dash"></i> {{ trans('view.profile.unsubscribe') }}
+                                </button>
+                                <button type="button" class="ui-button ui-button--primary" data-friend-state="none" data-action="add" {% if friendState != 'none' %}hidden{% endif %}>
+                                    <i class="bi bi-person-plus"></i> {{ trans('view.profile.add_friend') }}
+                                </button>
+                            </div>
                         {% else %}
                             <button type="button" class="ui-button ui-button--primary" disabled title="{{ trans('view.profile.coming_soon') }}">
                                 <i class="bi bi-person-plus"></i> {{ trans('view.profile.add_friend') }}

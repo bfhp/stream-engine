@@ -1,14 +1,14 @@
 {% extends "layouts/simple.twig" %}
 
 {% block content %}
-    <div class="container">
+    <div class="ui-container">
         <h1>{{ title }}</h1>
 
-        <form class="row g-2 align-items-end mb-4" method="get" action="{{ listUrl }}">
-            <div class="col-12 col-md-5">
-                <label class="form-label" for="users-filter-q">{{ trans('view.users.list.01') }}</label>
+        <form class="users-filter" method="get" action="{{ listUrl }}">
+            <div class="users-filter__query">
+                <label class="ui-label" for="users-filter-q">{{ trans('view.users.list.01') }}</label>
                 <input
-                    class="form-control"
+                    class="ui-input"
                     id="users-filter-q"
                     type="search"
                     name="q"
@@ -16,36 +16,50 @@
                 >
             </div>
 
-            <div class="col-6 col-md-3">
-                <label class="form-label" for="users-filter-sort">{{ trans('view.users.list.02') }}</label>
-                <select class="form-select" id="users-filter-sort" name="sort">
+            <div class="users-filter__sort">
+                <label class="ui-label" for="users-filter-sort">{{ trans('view.users.list.02') }}</label>
+                <select class="ui-select" id="users-filter-sort" name="sort">
                     <option value="registered" {% if filters.sort == 'registered' %}selected{% endif %}>{{ trans('view.users.list.03') }}</option>
                     <option value="name" {% if filters.sort == 'name' %}selected{% endif %}>{{ trans('view.users.list.01') }}</option>
                 </select>
             </div>
 
-            <div class="col-6 col-md-2">
-                <label class="form-label" for="users-filter-direction">{{ trans('view.users.list.04') }}</label>
-                <select class="form-select" id="users-filter-direction" name="direction">
+            <div class="users-filter__direction">
+                <label class="ui-label" for="users-filter-direction">{{ trans('view.users.list.04') }}</label>
+                <select class="ui-select" id="users-filter-direction" name="direction">
                     <option value="desc" {% if filters.direction == 'desc' %}selected{% endif %}>{{ trans('view.users.list.05') }}</option>
                     <option value="asc" {% if filters.direction == 'asc' %}selected{% endif %}>{{ trans('view.users.list.06') }}</option>
                 </select>
             </div>
 
-            <div class="col-12 col-md-2 d-flex gap-2">
-                <button class="btn btn-primary flex-grow-1" type="submit">{{ trans('view.users.list.07') }}</button>
+            <div class="users-filter__actions">
+                <button class="ui-button ui-button--primary users-filter__submit" type="submit">{{ trans('view.users.list.07') }}</button>
                 {% if filters.q or filters.sort != 'registered' or filters.direction != 'desc' %}
-                    <a class="btn btn-outline-secondary" href="{{ listUrl }}">{{ trans('view.users.list.08') }}</a>
+                    <a class="ui-button ui-button--secondary" href="{{ listUrl }}">{{ trans('view.users.list.08') }}</a>
                 {% endif %}
             </div>
         </form>
 
+        {# Filled by assets-src/pages/users.ts initUsersList(): cards are copies
+           of components/users/user-card.twig, the pager of users-pagination.twig.
+           Keep the data-users-* hooks in a theme override. #}
         <div
             data-users-list
             data-api-url="{{ apiUrl }}"
             data-page-url="{{ listUrl }}"
         >
-            <div class="text-muted">{{ trans('view.users.list.09') }}</div>
+            {% block users_list_grid %}
+                <div class="users-grid" data-users-grid></div>
+            {% endblock %}
+            <div data-users-pager></div>
+            <div class="users-message" data-users-message>{{ trans('view.users.list.09') }}</div>
         </div>
+
+        <template data-ui="user-card">
+            {%- include 'components/users/user-card.twig' -%}
+        </template>
+        <template data-ui="users-pagination">
+            {%- include 'components/users/users-pagination.twig' -%}
+        </template>
     </div>
 {% endblock %}

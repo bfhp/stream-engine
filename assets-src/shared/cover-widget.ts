@@ -49,13 +49,13 @@ export function initCoverWidget(options: CoverWidgetOptions): void {
     function renderDrop(): void {
         slot!.innerHTML = `
             <div class="blog-post-cover-drop" data-cover-drop>
-                <i class="bi bi-card-image fs-4"></i>
+                <i class="bi bi-card-image blog-post-cover-icon"></i>
                 <div>
                     <div>${prompt}</div>
-                    <div class="small text-body-secondary">${trans('js.cover.formats')}</div>
+                    <div class="blog-post-cover-hint">${trans('js.cover.formats')}</div>
                 </div>
             </div>
-            <input type="file" class="d-none" accept="image/*" data-cover-file>
+            <input type="file" hidden accept="image/*" data-cover-file>
         `;
         urlInput!.value = '';
         wire();
