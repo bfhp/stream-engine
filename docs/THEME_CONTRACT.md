@@ -17,29 +17,6 @@ theme has to carry `components/article/*` and
 separable, and creating a new theme means re-implementing every module's
 markup from scratch.
 
-## Why this is a problem today, not hypothetically
-
-Right now every component lives under `views/themes/default/components/`,
-regardless of who it belongs to. Two very different kinds of templates are
-mixed together in that one folder:
-
-- **Platform/shared components** — `nav/*`, `comments/*`, `auth/*`,
-  `share/*`, `common/*`, `ui/*`. These render data owned by Core/Service
-  (`FeedService` for comments, `AuthService` for auth, `MenuService`/
-  `PageTree` for nav) or are pure UI atoms (modals, toasts, tabs) with no
-  domain knowledge. Nothing wrong with these living in the theme — they're
-  legitimately theme content, used across unrelated modules.
-- **Module-owned components** — `article/*`,
-  `users/*`, `feedback/*`, `search/*`, `messages/*`, `profile/tabs/*`. Each of
-  these is `{% include %}`-ed from exactly one module's page templates and
-  renders that module's domain data. Such templates belong to their module,
-  while shared navigation and authentication markup belong to the theme.
-
-That second group is misplaced. It's why "add a theme" currently means
-"recreate every module's component markup," and it's why nobody can look at
-`views/themes/default/components/` and tell which files a new theme is
-required to provide versus which ones belong to a module and travel with it.
-
 ## Ownership rule
 
 A component's folder name is the test: if it names a module
@@ -51,8 +28,8 @@ module-owned and lives at:
 src/Modules/<Name>/views/components/<name>/*.twig
 ```
 
-referenced the same way it is today — `{% include 'components/<name>/...' %}`
-— just resolved from the module's own views path instead of the theme's.
+referenced as `{% include 'components/<name>/...' %}` and resolved from the
+module's own views path (after the theme chain, so a theme can override it).
 This is consistent with `docs/MODULE_CONTRACT.md`: a module's `views/`
 folder is what it owns, and components are as much "views" as the page
 template that includes them.
@@ -189,13 +166,6 @@ resolving from `default` or from the module that owns it.
 
 ## Theme layers: a bare base and themes built on it
 
-> Status: see `docs/ADR-002-BASE-AND-BOOTSTRAP-THEMES.md`. Done: `default`
-> is framework-free - platform layer and module templates (Feedback, Search,
-> Article, Profile, Users, Forums; Messages already was; the admin is a
-> separate app) - and `bootstrap` keeps the previous look by overriding them
-> (see "Module templates in themes"). A module's own styles live in
-> `assets-src/site/modules/<module>.css` (bundled into `site.css`).
-
 ### `default` is the base, not a design
 
 `default` is the smallest theme that keeps every feature working: pages,
@@ -280,6 +250,10 @@ components:
   scripts, not styling.
 - An override is optional. A module template no theme overrides renders as
   the module wrote it, under every theme.
+- A module's own styles live in `assets-src/site/modules/<module>.css`,
+  imported by `assets-src/site/main.ts` (so bundled into `site.css`). Styles
+  for script-driven state (a chosen poll bar, a drag-over drop zone) are
+  written to work under any theme, because themes keep the same hooks.
 
 This follows the ownership rule: the module still owns its content and its
 default markup; the theme only replaces presentation it chooses to.
@@ -319,16 +293,13 @@ Themes built on `default` load `base.css` (before their own CSS) so these
 classes keep working wherever the theme did not override the markup.
 
 Visibility is the `hidden` attribute in every theme, not a class (`d-none`
-and the like): scripts toggle `hidden`, and both `base.css` and Bootstrap's
-reboot hide it.
+and the like): scripts toggle `hidden`. A theme must keep `[hidden]`
+stronger than its framework's display utilities (`bootstrap-skin.css`
+re-declares `[hidden] { display: none !important; }` after Bootstrap).
+Likewise, invalid fields are marked with `aria-invalid="true"`, not a
+framework class.
 
 ## JS surface: client-side markup belongs to the theme too
-
-> Status: see `docs/ADR-001-JS-THEME-MARKUP.md`. The UI adapter, the
-> declarative toggles and `<template>` rendering are implemented, and
-> comments use them. Module scripts (users, profile, search, forums, ...)
-> still build Bootstrap markup in template strings; they move to
-> `<template>` with their modules.
 
 The ownership rule above applies to markup created in the browser as well.
 If JS inserts HTML with framework classes baked in (`btn`, `card`, `badge`,
@@ -370,9 +341,26 @@ cascade described above:
    | `data-slot-attr="attr:key attr2:key2"` | Attribute values; an empty value removes the attribute |
    | `data-slot-optional="key"` | The element is removed when the value is empty |
 
+   Conventions that keep templates free of logic:
+
+   - **Flags** are `"1"` or `""`, so `data-slot-optional` and
+     `data-slot-attr` can drop an element or attribute (`data-empty`,
+     `hidden`, ...).
+   - **Optional pieces.** A component rendered both on the server and as a
+     template takes an `asTemplate` flag that renders every optional branch
+     with its fill point, so the script can remove what it does not need.
+   - **States** (friend / request sent / friends, joined / not joined) are
+     separate elements rendered by Twig and switched with `hidden`, not text
+     and classes rewritten by the script.
+   - **Tones** (success, error, a role) are a `data-tone` attribute the
+     stylesheet colors, never class names chosen in JS or in a controller.
+   - **Icons** may be swapped as `bi-*` glyph classes; their color comes from
+     CSS.
+
    Small transient states with no component of their own (a spinner inside
    a button while saving, an empty or error message) may stay in the script
-   as plain text or minimal markup without framework classes.
+   as plain text or minimal markup with `default`'s classes (`ui-spinner`,
+   `ui-muted`), which every theme loads with `base.css`.
 2. **Declarative toggles** (`shared/ui.ts`, any theme):
 
    | Markup | Does |
@@ -431,11 +419,17 @@ template, slot, toggle or adapter method must update it.
 | Adapter | `toast` | theme script | `show(el, type)` |
 | Adapter | `tooltip` | theme script | `init(root)` |
 
-Module-owned templates (post cards, user cards, search results, ...) follow
-the ownership rule: the component lives in
-`src/Modules/<Name>/views/components/`, the module page renders its
-`<template>`, and its name and slots are listed in that module's docs, not
-here. A theme overriding such a component must keep its fill points.
+Module-owned templates follow the ownership rule: the component lives in
+the module's `views/`, the module page renders its `<template>`, and the
+component's header comment lists its fill points. A theme overriding such a
+component must keep them.
+
+| Module | Templates | Rendered by |
+|---|---|---|
+| Search | `search-result` | `components/search/results.twig` |
+| Profile | `profile-friend-card`, `profile-community-card` | `components/profile/tabs/{friends,subscriptions}.twig` |
+| Users | `post-card`, `post-card-tag`, `person-row`, `user-card`, `users-pagination` | the pages that list them (`show`, `community`, `community-show`, `list`) |
+| Forums | `forum-poll-option`, `forum-attachment-upload`, `forum-topic-preview`, `forum-preview-attachment`, `forum-preview-poll-option` | `modules/forums/forums.topic-form.twig` |
 
 ### What JS must never do
 
@@ -452,7 +446,7 @@ here. A theme overriding such a component must keep its fill points.
 # Framework classes inside client-side template strings:
 grep -rnE 'class="([^"]* )?(btn|card|badge|alert|list-group|form-control|spinner-border|d-flex|d-none)\b' assets-src
 
-# Framework classes and data-bs-* in the base theme and module views (ADR-002):
+# Framework classes and data-bs-* in the base theme and module views:
 grep -rnE 'class="([^"]* )?(btn|card|badge|alert|list-group|form-control|spinner-border|d-flex|d-none)\b|data-bs-' \
   views/themes/default src/Modules --include="*.twig"
 
@@ -460,9 +454,38 @@ grep -rnE 'class="([^"]* )?(btn|card|badge|alert|list-group|form-control|spinner
 grep -rn 'from "bootstrap"' assets-src | grep -v ui-bootstrap.ts
 ```
 
-All three should come back empty once the module migrations are done; for
-`views/themes/default` the second one already does. Bootstrap classes in
+All three must come back empty (the admin, `src/Modules/Admin`, is a
+separate app and out of scope). Bootstrap classes in
 `views/themes/bootstrap` are expected and not checked.
+
+## Why it is built this way
+
+Alternatives that were tried or weighed, so they are not proposed again
+without a new reason:
+
+- **Bootstrap in `default`.** Every theme inherited Bootstrap, the error
+  fallback brought it back, and a theme on another framework had to
+  override almost everything. Hence a framework-free `default`.
+- **A shared `ui-*` vocabulary that each theme maps onto its framework**
+  (Sass `@extend`). Implemented for four modules and reverted: it grew into
+  a home-made mini-framework of ~60 classes, needed a Sass + `rtlcss` build,
+  and turned a one-class change into a mapping exercise. Overriding a Twig
+  block is something every theme author already knows.
+- **Server-rendered HTML fragments for API responses** (`?render=html`).
+  No slot contract, but a second, theme- and locale-dependent response
+  format and Twig on every endpoint. `<template>` keeps the API JSON-only.
+- **Renderers in theme JS** (`CMS.ui.register('comment', fn)`). Every theme
+  would rewrite client-side rendering in JS, and markup would drift from
+  Twig.
+- **A class map in `theme.json`.** Changes classes, not structure; a
+  Bootstrap card and a utility-first card differ in markup.
+
+The costs accepted with this design: a theme carries its own copies of the
+templates it restyles and can lag behind a module that changes them (kept
+small by blocks and by hooks living outside what themes change); under a
+theme built on `default`, `base.css` and the theme's CSS share the page
+(they share no class names, and the theme's CSS loads later); every
+feature lands in `default` first and is checked in `bootstrap`.
 
 ## Where this applies
 

@@ -3,9 +3,8 @@
 
    Scripts never import a UI framework (Bootstrap, ...) directly. They call
    `ui.modal.open(el)`, `ui.toast.show(el, type)`, `ui.tooltip.init(root)`,
-   and whichever adapter the active theme registered does the work. See
-   docs/ADR-001-JS-THEME-MARKUP.md and the "JS surface" section of
-   docs/THEME_CONTRACT.md.
+   and whichever adapter the active theme registered does the work. See the
+   "JS surface" section of docs/THEME_CONTRACT.md.
 
    - The native adapter below is the fallback and the one the framework-free
      `default` theme uses: <dialog>, a timed toast, `title` tooltips.

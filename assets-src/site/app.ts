@@ -716,15 +716,11 @@ const CMS = (() => {
             card.remove();
 
             if (grid && !grid.querySelector("[data-favorite-card]")) {
-                const empty = document.createElement("div");
-                empty.className = "col-12";
-
-                const message = document.createElement("div");
-                message.className = "text-muted";
+                // ui-muted is base.css, which every theme loads.
+                const message = document.createElement("p");
+                message.className = "ui-muted";
                 message.textContent = grid.dataset.favoritesEmptyMessage ?? trans("js.favorite.empty");
-
-                empty.appendChild(message);
-                grid.appendChild(empty);
+                grid.appendChild(message);
             }
         }, 200);
     }
@@ -902,7 +898,7 @@ const CMS = (() => {
         const originalHtml = button.innerHTML;
 
         button.disabled = true;
-        button.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ${trans("js.messages.opening")}`;
+        button.innerHTML = `<span class="ui-spinner" aria-hidden="true"></span> ${trans("js.messages.opening")}`;
 
         try {
             const messagesUrl = resolveSameOriginUrl(button.dataset.messagesUrl);

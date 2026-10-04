@@ -757,10 +757,10 @@ body {
 .status-page__lead { font-size: 1.25rem; }
 
 /* 5. --bs-* bridge ----------------------------------------------------------
-   site.css (module styles: comments, polls, share, blog form, Trix, ...) still
-   reads Bootstrap's custom properties. Map them onto ui tokens until site.css
-   is split per module (ADR-002 Phase 2). The `bootstrap` theme does not load
-   this file, so Bootstrap's own values win there. */
+   Parts of site.css (shared styles and the "any theme" state rules of the
+   module stylesheets) read Bootstrap's custom properties so they work under
+   both themes. Map them onto ui tokens here. The `bootstrap` theme loads
+   this file before Bootstrap, whose own values then win. */
 :root,
 [data-color-mode] {
     --bs-body-color: var(--ui-text);

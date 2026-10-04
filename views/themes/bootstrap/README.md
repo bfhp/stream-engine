@@ -2,7 +2,7 @@
 
 The reference extended theme: the site's Bootstrap look, built on top of the
 `default` base theme. Copy this folder when you start a theme of your own.
-See `docs/THEME_CONTRACT.md` and `docs/ADR-002-BASE-AND-BOOTSTRAP-THEMES.md`.
+See `docs/THEME_CONTRACT.md`.
 
 ## The rule
 
@@ -56,13 +56,12 @@ Always extend through a namespace (`@default/...`, `@Users/...`); a plain
 `color_mode` has the same name as in `default`, so a value saved for
 `default` carries over until one is saved here.
 
-## Status
+## What it overrides
 
-The platform layer is done. Modules rewritten for `default` so far, with
-their Bootstrap overrides here: Feedback (`modules/feedback/page.twig`,
-`components/feedback/form.twig`), Search (`components/search/results.twig`,
-`components/search/result.twig`), Article (`components/article/*.twig`,
-`modules/article/article.show.twig`), Profile (`components/profile/**`,
-`modules/profile/*.twig`), Users (`components/users/**`,
-`modules/users/*.twig`), Forums (`modules/forums/*.twig`). Messages was
-already framework-free.
+Module templates with Bootstrap markup: Feedback (`modules/feedback/page.twig`,
+`components/feedback/form.twig`), Search (`components/search/*.twig`),
+Article (`components/article/*.twig`, `modules/article/article.show.twig`),
+Profile (`components/profile/**`, `modules/profile/*.twig`), Users
+(`components/users/**`, `modules/users/*.twig`), Forums
+(`modules/forums/*.twig`). Messages uses its own classes and is not
+overridden. When a module's template changes, update its copy here.
