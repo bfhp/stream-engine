@@ -17,7 +17,11 @@ use JsonException;
  */
 final class ThemeCatalog
 {
+    /** The base every theme inherits from, and the error fallback. */
     public const string DEFAULT_ID = 'default';
+
+    /** Used when the site has never chosen a theme, if it is installed. */
+    public const string PREFERRED_ID = 'bootstrap';
 
     /** Longest allowed parent chain, `default` included. */
     private const int MAX_DEPTH = 8;
@@ -424,7 +428,7 @@ final class ThemeCatalog
             ],
             'assets' => [
                 'styles' => ['/assets/css/bootstrap.css', '/assets/css/site.css', '/assets/css/custom-content.css'],
-                'scripts' => ['/assets/js/site.js'],
+                'scripts' => ['/assets/js/site.js', '/assets/js/ui-bootstrap.js'],
                 'rtl' => ['/assets/css/bootstrap.css' => '/assets/css/bootstrap-rtl.css'],
             ],
         ];

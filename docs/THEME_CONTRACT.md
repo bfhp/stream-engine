@@ -135,7 +135,13 @@ right-to-left build; an entry whose RTL file is not deployed is skipped.
 Theme values are stored as `theme.<id>.<setting>`, while `theme.active` stores
 the selected ID. This keeps each theme's values intact when switching. The
 server accepts only keys declared by that theme and validates select, color,
-boolean, and string values against the manifest schema.
+boolean, and string values against the manifest schema. A theme without its
+own saved value reads the nearest ancestor's saved value for a setting of the
+same name, if it is valid for this theme, before falling back to its manifest
+default.
+
+A site that never saved `theme.active` uses the `THEME_DIR` theme if there is
+one, otherwise `bootstrap` if it is installed, otherwise `default`.
 
 `themeColor` is fixed theme metadata rather than an administrator setting. It
 sets the browser chrome color through `<meta name="theme-color">`; changing it
@@ -185,7 +191,8 @@ resolving from `default` or from the module that owns it.
 
 > Status: see `docs/ADR-002-BASE-AND-BOOTSTRAP-THEMES.md`. Inheritance,
 > namespaces and the UI adapter are implemented. `default` is still the
-> Bootstrap design, and the `bootstrap` theme does not exist yet.
+> Bootstrap design and lists the same assets as `bootstrap`; the `bootstrap`
+> theme exists but has no templates of its own yet (Phase 1).
 
 ### `default` is the base, not a design
 
@@ -329,8 +336,10 @@ cascade described above:
    toast, `title` tooltips) is the fallback; `site/ui-bootstrap.ts` is the
    Bootstrap one. The higher-level `CMS.toast({ message, type })` and
    `CMS.confirm({ ... })` fill the theme's markup and then go through the
-   adapter. Today `site.js` registers the Bootstrap adapter for `default`;
-   per ADR-002 it moves to the `bootstrap` theme.
+   adapter. The Bootstrap adapter is its own bundle,
+   `/assets/js/ui-bootstrap.js`, listed in the `bootstrap` manifest (and in
+   `default`'s until ADR-002 Phase 2). Never import it from another bundle:
+   Bootstrap loaded twice installs its data API twice.
 
 What a theme gets for free: anything it does not override is inherited from
 its parent chain down to `default` (fragments, `js-templates.twig`, the

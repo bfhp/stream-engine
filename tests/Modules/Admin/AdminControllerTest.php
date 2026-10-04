@@ -956,9 +956,11 @@ final class AdminControllerTest extends TestCase
 
         $response = $this->callAndDecode($module, $this->makeApiPage('admin.themes', ['GET', 'PATCH']));
 
-        $this->assertSame('default', $response['activeId']);
-        $this->assertSame('default', $response['themes'][0]['id']);
-        $this->assertArrayNotHasKey('path', $response['themes'][0]);
+        $this->assertSame(ThemeCatalog::PREFERRED_ID, $response['activeId']);
+        $this->assertSame(['bootstrap', 'default'], array_column($response['themes'], 'id'));
+        foreach ($response['themes'] as $theme) {
+            $this->assertArrayNotHasKey('path', $theme);
+        }
     }
 
     public function testThemeUpdateRequiresCsrf(): void

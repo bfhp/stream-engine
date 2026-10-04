@@ -14,38 +14,18 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
   The selected formats are validated server-side and applied consistently to
   server-rendered dates, the admin interface, user lists, and the messenger;
   per-user timezone detection remains unchanged.
-- Added theme inheritance. A `theme.json` may declare `parent` (default:
-  `default`); templates resolve through the whole chain before module views,
-  and parent assets load before the child's unless it sets
-  `"inheritAssets": false`. A theme with a missing or cyclic parent is not
-  selectable and falls back to `default`.
-- Registered every theme in the chain as a Twig namespace (`@<id>/...`) and
-  every module's views as `@<Module>/...`, so an override can extend the file
-  it replaces instead of copying it.
-- Added `assets.rtl` to theme manifests: a map from a stylesheet to its
-  right-to-left build, inherited along the chain.
-- Added a framework-neutral UI adapter (`assets-src/shared/ui.ts`, exposed as
-  `CMS.ui`) for modals, toasts and tooltips, with a native implementation and
-  a Bootstrap one (`site/ui-bootstrap.ts`). Themes can register their own
-  with `CMS.ui.register()`.
-- Added ADR-001 (JS markup comes from the active theme) and ADR-002
-  (framework-free `default` theme plus a `bootstrap` reference theme), and
-  the matching "Theme layers" and "JS surface" sections in
-  `docs/THEME_CONTRACT.md`.
+- Added theme inheritance: `parent` in `theme.json`, inherited templates,
+  assets and settings, and `@<theme>` / `@<Module>` Twig namespaces.
+- Added the `bootstrap` theme, built on `default`; it becomes the default
+  choice for sites that never selected a theme.
+- Added a UI adapter (`CMS.ui`) so scripts no longer depend on Bootstrap
+  directly.
 
 ### Changed
 
-- `ThemeCatalog` no longer prepends `bootstrap.css` to themes that list
-  `site.css`, and no longer swaps `bootstrap.css` for its RTL build by itself.
-  The `default` manifest now lists Bootstrap and declares the RTL mapping;
-  child themes get both through inheritance.
-- Non-default themes now inherit the assets of their parent chain (for most
-  themes, `default`'s Bootstrap, `site.css`, `custom-content.css` and
-  `site.js`). Set `"inheritAssets": false` to keep the previous
-  own-assets-only behavior.
-- `CMS.toast()`, `CMS.confirm()`, `CMS.initTooltips()` and the forum topic
-  preview go through the UI adapter instead of importing Bootstrap. Only
-  `site/ui-bootstrap.ts` imports Bootstrap's JS now.
+- Bootstrap is no longer added implicitly: themes declare it, including its
+  RTL build (`assets.rtl`), and its JS ships as `/assets/js/ui-bootstrap.js`.
+  Themes with `"inheritAssets": false` must list these themselves.
 
 ## [0.3.0] - 2026-10-03
 

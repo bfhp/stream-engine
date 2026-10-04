@@ -140,11 +140,17 @@ other selector.
   have a working example of `parent`, `@extends` and block overrides.
 - **Harder:** every module template must be rewritten to the UI vocabulary;
   new markup must be reviewed against it; two themes are tested.
-- **Migration:** existing installs with `theme.active = default` (or unset)
-  are switched to `bootstrap` by a migration, so their look does not change.
-  `theme.default.*` settings are copied to `theme.bootstrap.*`.
-- **Revisit:** whether `bootstrap` should be the installer's preselected
-  theme; whether the UI vocabulary needs a CI check.
+- **Switching installs (done in code, not a DB migration):** a site with no
+  saved `theme.active` uses `bootstrap` (`ThemeCatalog::PREFERRED_ID`), and a
+  child theme reads its parent's saved value for a same-named setting until
+  it has its own, so `color_mode` carries over without copying rows. A data
+  migration was avoided because it would require rebuilding the install
+  schema snapshot.
+- **Before Phase 2:** sites that explicitly saved `default` still need moving
+  to `bootstrap`, otherwise they turn plain when `default` drops Bootstrap.
+  Either a migration in the Phase 2 release (with the snapshot rebuilt) or a
+  release note asking administrators to pick `bootstrap`.
+- **Revisit:** whether the UI vocabulary needs a CI check.
 
 ## Plan
 
@@ -163,29 +169,35 @@ Phases are ordered so the site works and looks the same after each one.
    imported by `site/main.ts`; it becomes a separate entry for the
    `bootstrap` theme in Phase 1.
 
-### Phase 1 — create `bootstrap` as a copy
+### Phase 1 — create `bootstrap` on top of `default`
 
-4. [ ] Create `views/themes/bootstrap` with `"parent": "default"` and the
-   current Bootstrap assets; migrate installs to it. Nothing looks different.
+4. [x] Create `views/themes/bootstrap` with `"parent": "default"`,
+   `bootstrap.css` + its RTL mapping and `/assets/js/ui-bootstrap.js` (a
+   separate Vite entry; `site.js` no longer contains Bootstrap). No
+   templates yet: everything is inherited, so nothing looks different.
+   `default` lists the same three assets until Phase 2; deduplication by path
+   loads each once.
+5. [x] Sites that never chose a theme use `bootstrap`; settings inherit from
+   the parent (see Consequences).
 
 ### Phase 2 — strip `default`
 
-5. [ ] Define the UI vocabulary and write `base.css`.
-6. [ ] Rewrite `default` layouts, partials and platform components to the
+6. [ ] Define the UI vocabulary and write `base.css`.
+7. [ ] Rewrite `default` layouts, partials and platform components to the
    vocabulary, adding blocks; move Bootstrap-specific structure into
    `bootstrap` overrides that `{% extends '@default/...' %}`.
-7. [ ] Rewrite module templates to the vocabulary, module by module; add
+8. [ ] Rewrite module templates to the vocabulary, module by module; add
    the Sass mapping in `bootstrap` alongside each module.
-8. [ ] Replace `data-bs-*` with `data-ui-*` handled by the adapter.
-9. [ ] Finish ADR-001 items 2–4 (fragments and `<template>`s now come out
+9. [ ] Replace `data-bs-*` with `data-ui-*` handled by the adapter.
+10. [ ] Finish ADR-001 items 2–4 (fragments and `<template>`s now come out
    framework-free from `default`).
 
 ### Phase 3 — verify
 
-10. [ ] Visual regression: screenshots of key pages in `bootstrap` before vs
+11. [ ] Visual regression: screenshots of key pages in `bootstrap` before vs
     after each phase.
-11. [ ] Functional pass on `default`: every page, form, modal, toast,
+12. [ ] Functional pass on `default`: every page, form, modal, toast,
     comments, pagination, messenger.
-12. [ ] Grep checks from `THEME_CONTRACT.md` return nothing for `default`,
+13. [ ] Grep checks from `THEME_CONTRACT.md` return nothing for `default`,
     module views and `assets-src`.
-13. [ ] Update `THEME_CONTRACT.md` and `INSTALLATION.md`.
+14. [ ] Update `THEME_CONTRACT.md` and `INSTALLATION.md`.

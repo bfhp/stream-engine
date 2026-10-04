@@ -52,6 +52,58 @@ final class ThemeServiceTest extends TestCase
         self::assertTrue($active['fallback']);
     }
 
+    /**
+     * A manifest is valid only when every asset it lists exists in public/,
+     * so the `bootstrap` theme disappears until `/assets/js/ui-bootstrap.js`
+     * has been built - and while Vite empties public/assets mid-build.
+     */
+    private static function assertBootstrapThemeIsBuilt(): void
+    {
+        self::assertNotNull(
+            (new ThemeCatalog(dirname(__DIR__, 2).'/views/themes', dirname(__DIR__, 2).'/public'))->find('bootstrap'),
+            'The bootstrap theme is not in the catalog: run `npm run build` so its assets exist in public/assets.',
+        );
+    }
+
+    public function testSiteThatNeverChoseAThemeGetsThePreferredOne(): void
+    {
+        self::assertBootstrapThemeIsBuilt();
+        $active = $this->service()->active();
+
+        self::assertSame(ThemeCatalog::PREFERRED_ID, $active['configuredId']);
+        self::assertSame(ThemeCatalog::PREFERRED_ID, $active['id']);
+        self::assertFalse($active['fallback']);
+        self::assertSame(['bootstrap', 'default'], $active['chain']);
+    }
+
+    public function testExplicitDefaultSelectionIsKept(): void
+    {
+        self::assertSame('default', $this->service(['theme.active' => 'default'])->active()['id']);
+    }
+
+    public function testChildThemeInheritsTheParentsSavedSettingUntilItHasItsOwn(): void
+    {
+        self::assertBootstrapThemeIsBuilt();
+        $inherited = $this->service([
+            'theme.active' => 'bootstrap',
+            'theme.default.color_mode' => 'light',
+        ])->active();
+        self::assertSame('light', $inherited['values']['color_mode']);
+
+        $own = $this->service([
+            'theme.active' => 'bootstrap',
+            'theme.default.color_mode' => 'light',
+            'theme.bootstrap.color_mode' => 'dark',
+        ])->active();
+        self::assertSame('dark', $own['values']['color_mode']);
+
+        $invalid = $this->service([
+            'theme.active' => 'bootstrap',
+            'theme.default.color_mode' => 'sepia',
+        ])->active();
+        self::assertSame('dark', $invalid['values']['color_mode'], 'An invalid inherited value falls back to the manifest default.');
+    }
+
     public function testValidatedSettingsAreStoredInTheThemeNamespace(): void
     {
         $response = $this->service()->save('default', [

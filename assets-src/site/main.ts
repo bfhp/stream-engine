@@ -7,11 +7,6 @@ import "./img/default-community.svg?no-inline";
 
 import CMS from "./app";
 
-// Registers the Bootstrap UI adapter and Bootstrap's data API. Lives here
-// while `default` is the Bootstrap design; moves to the `bootstrap` theme's
-// own entry per docs/ADR-002-BASE-AND-BOOTSTRAP-THEMES.md.
-import "./ui-bootstrap";
-
 import "./auth";
 
 import { initMessengerGlobal } from "./messenger-global";

@@ -5,9 +5,11 @@
    the package also installs Bootstrap's data API (data-bs-toggle,
    data-bs-dismiss, ...), which the current templates still rely on.
 
-   Today `site/main.ts` imports this file, because `default` is still the
-   Bootstrap design. Per ADR-002 it moves to its own entry loaded by the
-   `bootstrap` theme, and `default` falls back to the native adapter.
+   Built as its own entry (/assets/js/ui-bootstrap.js) and listed in the
+   `bootstrap` theme's manifest. `default` lists it too until ADR-002 Phase 2
+   strips Bootstrap from the base; after that `default` uses the native
+   adapter. Never import this file from another bundle: loading Bootstrap
+   twice installs its data API twice.
 
    Uses Bootstrap's package ESM entry: bootstrap/dist/js/bootstrap.bundle is
    UMD/CJS and makes Rolldown emit a _commonjsHelpers chunk once more than

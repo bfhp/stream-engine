@@ -23,7 +23,10 @@ final readonly class ThemeService
     {
         return $this->settings->getString(
             self::ACTIVE_KEY,
-            $this->catalog->legacyThemeId() ?? ThemeCatalog::DEFAULT_ID,
+            $this->catalog->legacyThemeId()
+                ?? ($this->catalog->find(ThemeCatalog::PREFERRED_ID) !== null
+                    ? ThemeCatalog::PREFERRED_ID
+                    : ThemeCatalog::DEFAULT_ID),
         );
     }
 
@@ -90,14 +93,32 @@ final readonly class ThemeService
     {
         $values = [];
         foreach ($theme['settings'] as $key => $definition) {
-            $values[$key] = $this->settings->getString(
-                'theme.'.$theme['id'].'.'.$key,
-                (string) $definition['default'],
-            );
+            $values[$key] = $this->storedValue($theme, $key, $definition);
         }
         $theme['values'] = $values;
 
         return $theme;
+    }
+
+    private function storedValue(array $theme, string $key, array $definition): string
+    {
+        foreach ((array) ($theme['chain'] ?? [$theme['id']]) as $id) {
+            $owner = $id === $theme['id'] ? $theme : $this->catalog->find((string) $id);
+            if ($owner === null || ! isset($owner['settings'][$key])) {
+                continue;
+            }
+            $value = $this->settings->get('theme.'.$id.'.'.$key);
+            if (! is_string($value)) {
+                continue;
+            }
+            try {
+                return $this->validateValue($definition, $value);
+            } catch (ValidationException) {
+                continue;
+            }
+        }
+
+        return (string) $definition['default'];
     }
 
     private function validateValue(array $definition, mixed $value): string
@@ -136,7 +157,7 @@ final readonly class ThemeService
         $theme['values'] = [];
         foreach ($theme['settings'] as $key => $definition) {
             $theme['values'][$key] = $writes['theme.'.$themeId.'.'.$key]
-                ?? $this->settings->getString('theme.'.$themeId.'.'.$key, $definition['default']);
+                ?? $this->storedValue($theme, $key, $definition);
         }
         unset($theme['path']);
 
