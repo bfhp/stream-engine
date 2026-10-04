@@ -191,6 +191,9 @@ Progress:
   button are rendered by `results.twig`, `search.ts` builds no item markup;
   styles in `modules/search.css`; `bootstrap` overrides `results.twig`'s
   blocks and has its own `result.twig` with the same fill points.
+- Article: components for `default` (grids, card, sections, sibling
+  navigation), styles in `modules/article.css`; `bootstrap` has its own
+  `components/article/*.twig` and overrides `article_comments_class`.
 
 ### Verify
 

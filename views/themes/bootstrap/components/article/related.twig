@@ -1,0 +1,12 @@
+{# Bootstrap markup of the Article module's components/article/related.twig. #}
+{% if items %}
+    <div class="container">
+        <div class="row">
+
+            {% for item in items %}
+                {% include 'components/article/card.twig' with { item: item } %}
+            {% endfor %}
+
+        </div>
+    </div>
+{% endif %}

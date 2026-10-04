@@ -1,0 +1,55 @@
+/* ==========================================================================
+   Article module - styles for its own (framework-free) markup in
+   components/article/*.twig. Part of site.css.
+   ========================================================================== */
+
+/* Related articles and sections: one column, three from 768px. */
+.article-related,
+.article-sections {
+    display: grid;
+    gap: var(--ui-space-3);
+}
+
+@media (min-width: 768px) {
+    .article-related,
+    .article-sections {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+.article-card .ui-card__title {
+    margin-block-end: var(--ui-space-1);
+    font-size: 1.125rem;
+}
+
+.article-card .ui-muted {
+    margin-block-end: var(--ui-space-2);
+}
+
+.article-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ui-space-2);
+    margin-block-start: var(--ui-space-4);
+}
+
+.article-nav__next {
+    margin-inline-start: auto;
+}
+
+.article-section__title {
+    margin: 0;
+    padding: var(--ui-space-2) var(--ui-space-3);
+    border-block-end: 1px solid var(--ui-border);
+    background: var(--ui-surface-2);
+    font-size: 1.125rem;
+}
+
+.article-section__title:last-child {
+    border-block-end: 0;
+}
+
+.article-section__list {
+    margin: 0;
+    padding: var(--ui-space-3) var(--ui-space-3) var(--ui-space-3) calc(var(--ui-space-3) + 1.25rem);
+}

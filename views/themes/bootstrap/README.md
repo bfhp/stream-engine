@@ -61,5 +61,6 @@ Always extend through a namespace (`@default/...`, `@Users/...`); a plain
 The platform layer is done. Modules rewritten for `default` so far, with
 their Bootstrap overrides here: Feedback (`modules/feedback/page.twig`,
 `components/feedback/form.twig`), Search (`components/search/results.twig`,
-`components/search/result.twig`). The other modules' templates still use
+`components/search/result.twig`), Article (`components/article/*.twig`,
+`modules/article/article.show.twig`). The other modules' templates still use
 Bootstrap classes directly.

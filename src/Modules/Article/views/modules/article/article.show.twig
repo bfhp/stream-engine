@@ -20,7 +20,7 @@
 
     {% block article_comments %}
         {% if comments %}
-            <div class="container">
+            <div class="{% block article_comments_class %}ui-container{% endblock %}">
                 {% include 'partials/comments.twig' %}
             </div>
         {% endif %}
