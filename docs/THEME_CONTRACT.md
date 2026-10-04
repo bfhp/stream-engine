@@ -153,14 +153,14 @@ URLs, traversal, and arbitrary public paths are rejected. Rendered asset URLs
 receive an mtime-based `?v=` value, so changing the manifest or asset invalidates
 browser caches.
 
-The engine adds no CSS framework on its own. Core Bootstrap is a separate
-stylesheet, `/assets/css/bootstrap.css`, that a manifest lists like any other
-asset. For right-to-left locales (see `<html dir>`) the engine swaps every
-stylesheet that the theme chain maps in `assets.rtl`, so only one build of
-each is loaded; `default` maps `bootstrap.css` to `bootstrap-rtl.css`. A
-theme that ships its own framework declares its own RTL mapping. (Per
-ADR-002, Bootstrap and its mapping later move from `default` to the
-`bootstrap` theme.)
+The engine adds no CSS framework on its own; a theme lists its framework like
+any other asset. The `bootstrap` theme lists `/assets/css/bootstrap.css`
+(Bootstrap's own build) and `/assets/css/bootstrap-skin.css` (the site's
+colors and navbar/footer tweaks). For right-to-left locales (see
+`<html dir>`) the engine swaps every stylesheet that the theme chain maps in
+`assets.rtl`, so only one build of each is loaded; `bootstrap` maps
+`bootstrap.css` to `bootstrap-rtl.css`. `default` needs no mapping: its
+`base.css` uses logical properties.
 
 If the selected theme disappears or its manifest is invalid, the application
 uses `views/themes/default/`. If an override produces a Twig loader, runtime,
@@ -192,8 +192,9 @@ resolving from `default` or from the module that owns it.
 > Status: see `docs/ADR-002-BASE-AND-BOOTSTRAP-THEMES.md`. The platform layer
 > (layouts, partials, `components/*` in the theme) is done: `default` is
 > framework-free and `bootstrap` keeps the previous look. Module templates
-> still use Bootstrap classes and are migrated module by module, so under
-> `default` module pages are only partly styled until then.
+> still use Bootstrap classes; they move to framework-free markup module by
+> module, with `bootstrap` overriding them (see "Module templates in
+> themes"). Under `default`, module pages are only partly styled until then.
 
 ### `default` is the base, not a design
 
@@ -205,9 +206,8 @@ So it:
 - loads no CSS framework: `/assets/css/base.css` (custom properties for
   color, spacing and type; light/dark through `data-color-mode`; logical
   properties for RTL) plus the shared `site.css`;
-- uses semantic HTML, the UI vocabulary below and its own component classes
-  (`site-nav__*`, `ui-modal`, `comment-*`, ...), never framework classes or
-  `data-bs-*`;
+- uses semantic HTML and its own component classes (`site-nav__*`,
+  `ui-modal`, `comment-*`, ...), never framework classes or `data-bs-*`;
 - uses the native UI adapter (`<dialog>`, a toast region, `title`
   tooltips), `<details>` for dropdowns and the declarative `data-ui-*`
   toggles (see "JS surface");
@@ -238,14 +238,51 @@ theme authors copy from. It shows the ways to build on `default`:
    dropdowns, modals, toast, tabs, cards): same path, own markup. Keep the
    data-* hooks scripts rely on (`data-slot*`, `data-comment-form`,
    `data-reply-toggle`, ids such as `authFormModal`).
-4. **Bring its own assets and adapter**: Bootstrap with the theme skin
-   (`bootstrap.css`, RTL build in `assets.rtl`) and `ui-bootstrap.js`. It
-   sets `"inheritAssets": false` because Bootstrap must load before
+4. **Bring its own assets and adapter**: Bootstrap's prebuilt CSS (RTL
+   build in `assets.rtl`), the site skin (`bootstrap-skin.css`) and
+   `ui-bootstrap.js`. It sets `"inheritAssets": false` to control the order:
+   `base.css` first (see below), then Bootstrap and the skin, then
    `site.css`.
 
-Module templates are not copied into `bootstrap`: once they are migrated to
-the UI vocabulary, the theme maps `ui-*` onto Bootstrap with Sass
-(`.ui-button { @extend .btn; }`).
+### Module templates in themes
+
+The rule, in both directions:
+
+- **`default` knows nothing about any CSS framework and works without
+  one.** Module templates are written for `default`: semantic HTML, the
+  module's own classes and `default`'s classes, no framework classes.
+- **A theme overrides only the pieces of markup where it wants its own
+  framework's styles.** Everything it does not override keeps rendering
+  `default`'s markup, so a theme built on `default` loads `default`'s
+  `base.css` too - first, so the theme's framework wins for plain elements
+  while `default`'s classes keep styling the markup the theme left alone.
+
+There is no class mapping layer between modules and themes; a theme
+overrides a module's templates the same way it overrides platform
+components:
+
+```twig
+{# views/themes/bootstrap/modules/users/register1.twig - same path as the
+   module's own file, so it is found first; @Users/ reaches the original #}
+{% extends '@Users/modules/users/register1.twig' %}
+
+{% block register_header %}
+    <h1>{{ trans('user.registration') }} <small class="text-muted">{{ trans('view.users.register1.01') }}</small></h1>
+    <hr>
+{% endblock %}
+```
+
+- Prefer extending the module template (`@<Module>/...`) and overriding its
+  blocks over copying the whole file; a module therefore puts the parts a
+  theme is likely to restyle into blocks.
+- Keep the module's behavior hooks (`data-*` attributes, ids, `<template>`
+  fill points - see "JS surface"); they are the module's contract with its
+  scripts, not styling.
+- An override is optional. A module template no theme overrides renders as
+  the module wrote it, under every theme.
+
+This follows the ownership rule: the module still owns its content and its
+default markup; the theme only replaces presentation it chooses to.
 
 ### Inheritance
 
@@ -270,35 +307,28 @@ wins.
 A theme whose parent is missing, which forms a cycle, or whose chain is
 deeper than 8 levels is not selectable and resolves to `default`.
 
-### UI vocabulary
+### `default`'s own classes
 
-The classes module templates and JS-produced markup may use. Modules say
-*what* an element is; themes decide *how* it looks. Anything more specific
-uses the module's own classes (`msgr-*`, `comment-*`).
+`base.css` styles the markup of `default`'s own templates: a few generic
+`ui-*` classes (`ui-container`, `ui-button`, `ui-card`, `ui-input`,
+`ui-badge`, `ui-alert`, `ui-muted`, `ui-spinner`, ...) plus component classes
+(`site-nav__*`, `ui-modal`, `ui-toast`, `ui-tabs`, `comment-*`, ...). They
+are an implementation detail of `default`, not a vocabulary other themes must
+support or map: a theme that wants different markup overrides the template.
+Themes built on `default` load `base.css` (before their own CSS) so these
+classes keep working wherever the theme did not override the markup.
 
-| Class | Meaning |
-|---|---|
-| `ui-container` | Centered page-width wrapper |
-| `ui-button`, `ui-button--primary`, `--secondary`, `--success`, `--danger`, `--link`, `--sm`, `--block` | Buttons and button-like links |
-| `ui-card`, `ui-card__body`, `ui-card__title` | Boxed content |
-| `ui-badge`, `ui-badge--success` | Small label / counter |
-| `ui-alert`, `ui-alert--error`, `--success`, `--info` | Inline messages |
-| `ui-field`, `ui-input`, `ui-label`, `ui-help`, `ui-error` | Form controls |
-| `ui-stack`, `ui-cluster`, `ui-grid` | Layout primitives |
-| `ui-muted`, `ui-small`, `ui-visually-hidden` | Text utilities |
-| `ui-spinner` | Loading indicator |
-
-Visibility is the `hidden` attribute, not a class (`d-none` and the like).
-
-Adding a class here is a contract change: `default` must style it in
-`base.css`, and `bootstrap` must map it.
+Visibility is the `hidden` attribute in every theme, not a class (`d-none`
+and the like): scripts toggle `hidden`, and both `base.css` and Bootstrap's
+reboot hide it.
 
 ## JS surface: client-side markup belongs to the theme too
 
 > Status: see `docs/ADR-001-JS-THEME-MARKUP.md`. The UI adapter, the
-> declarative toggles and theme templates are implemented, and comments use
-> them. Module scripts (users, profile, search, forums, ...) still build
-> Bootstrap markup in template strings and are migrated with their modules.
+> declarative toggles and `<template>` rendering are implemented, and
+> comments use them. Module scripts (users, profile, search, forums, ...)
+> still build Bootstrap markup in template strings; they move to
+> `<template>` with their modules.
 
 The ownership rule above applies to markup created in the browser as well.
 If JS inserts HTML with framework classes baked in (`btn`, `card`, `badge`,
@@ -312,14 +342,23 @@ markup or import its JS directly. They get markup and behavior through these
 channels, all resolved through the same theme → parents → `default` → module
 cascade described above:
 
-1. **Theme templates** (`<template data-ui="...">`) — the active theme's
-   own components rendered with placeholder data by
-   `partials/js-templates.twig` (included by `layouts/base.twig`). Comments
-   use this: `comment`, `reply` and `load-replies` are `comment.twig`,
-   `reply.twig` and `load-replies.twig` themselves, so a theme that restyles
-   those files restyles AJAX comments too, with nothing to override in
-   `js-templates.twig`. A theme adds its own templates in the
-   `js_templates_extra` block.
+1. **`<template>` rendering** — the way API responses become markup. The
+   Twig component that renders an item on the server is rendered once more,
+   with placeholder data, inside `<template data-ui="<name>">`; the script
+   clones it and fills in the API data. One component, so a theme that
+   overrides it restyles both the server-rendered items and the ones the
+   script adds, with nothing to change in JS. The API keeps returning JSON.
+
+   - Platform templates (comments: `comment`, `reply`, `load-replies`) come
+     from `partials/js-templates.twig`, included by `layouts/base.twig`
+     only on pages that have comments. A theme adds its own in the
+     `js_templates_extra` block.
+   - A module renders its templates in its own page template, next to the
+     list they feed, and only on pages whose scripts use them (for example
+     a post card template inside the blog feed block). Never into every
+     page.
+   - One template per repeated item (a card, a row, a "show more" button),
+     not whole sections: what the script adds is items.
 
    JS does `ui.clone('<name>')` (null if the theme has no such template)
    and `ui.fill(el, data)`. Fill points in the markup:
@@ -331,12 +370,10 @@ cascade described above:
    | `data-slot-attr="attr:key attr2:key2"` | Attribute values; an empty value removes the attribute |
    | `data-slot-optional="key"` | The element is removed when the value is empty |
 
-2. **Server-rendered fragments** — for lists that already have a Twig
-   component and come from an endpoint (user and post cards, pagination,
-   search results). The endpoint renders the same `.twig` the full page uses
-   and returns `{ "html": "...", "meta": { ... } }` when asked with
-   `?render=html`. Not implemented yet; planned with the module migrations.
-3. **Declarative toggles** (`shared/ui.ts`, any theme):
+   Small transient states with no component of their own (a spinner inside
+   a button while saving, an empty or error message) may stay in the script
+   as plain text or minimal markup without framework classes.
+2. **Declarative toggles** (`shared/ui.ts`, any theme):
 
    | Markup | Does |
    |---|---|
@@ -347,7 +384,7 @@ cascade described above:
 
    Listen for `ui:tab-shown` (`TAB_SHOWN`) and use `ui.tabs.isActive(pane)`;
    the Bootstrap adapter re-emits `shown.bs.tab` as `ui:tab-shown`.
-4. **UI adapter** (`assets-src/shared/ui.ts`) — for behavior that comes
+3. **UI adapter** (`assets-src/shared/ui.ts`) — for behavior that comes
    from a framework's JS (modals, toasts, tooltips). Bundled code imports
    `ui` from `shared/ui`; theme scripts use `window.CMS.ui`. Never
    `import … from "bootstrap"` outside the adapter.
@@ -394,16 +431,18 @@ template, slot, toggle or adapter method must update it.
 | Adapter | `toast` | theme script | `show(el, type)` |
 | Adapter | `tooltip` | theme script | `init(root)` |
 
-Module-owned templates and fragments (user cards, profile cards, search
-results) follow the ownership rule: they live in
-`src/Modules/<Name>/views/components/` and are listed in that module's docs,
-not here.
+Module-owned templates (post cards, user cards, search results, ...) follow
+the ownership rule: the component lives in
+`src/Modules/<Name>/views/components/`, the module page renders its
+`<template>`, and its name and slots are listed in that module's docs, not
+here. A theme overriding such a component must keep its fill points.
 
 ### What JS must never do
 
-- Build markup with CSS-framework classes in template strings. Structural
-  hooks (`data-*` attributes, the module's own BEM-like classes such as
-  `msgr-*`) are fine; `btn`, `card`, `d-flex` and the like are not.
+- Build item markup in template strings: clone the item's `<template>`
+  instead. Structural hooks (`data-*` attributes, the module's own classes
+  such as `msgr-*`) in small transient markup are fine; `btn`, `card`,
+  `d-flex` and the like are not.
 - Import a UI framework's JS (`bootstrap`, ...) outside the adapter that the
   theme registers.
 
@@ -422,7 +461,8 @@ grep -rn 'from "bootstrap"' assets-src | grep -v ui-bootstrap.ts
 ```
 
 All three should come back empty once the module migrations are done; for
-`views/themes/default` the second one already does.
+`views/themes/default` the second one already does. Bootstrap classes in
+`views/themes/bootstrap` are expected and not checked.
 
 ## Where this applies
 

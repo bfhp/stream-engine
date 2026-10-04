@@ -1,211 +1,191 @@
 # ADR-002: A framework-free `default` theme and a Bootstrap theme built on top of it
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-10-04
 **Deciders:** bfhp
 **Related:** ADR-001 (JS markup comes from the active theme), `THEME_CONTRACT.md`
 
 ## Context
 
-Today `default` is both the fallback every other theme inherits from and a
+`default` used to be both the fallback every other theme inherits from and a
 complete Bootstrap design:
 
-- `theme.json` loads `/assets/css/bootstrap.css`, and `ThemeCatalog`
-  prepends it to any theme that lists `site.css` without it.
+- `theme.json` loaded `/assets/css/bootstrap.css`, and `ThemeCatalog`
+  prepended it to any theme that listed `site.css` without it.
 - 25 of 34 theme templates and 40 of 50 module templates
-  (`src/Modules/*/views`) use Bootstrap classes; 41 places use `data-bs-*`.
-- `site.js` bundles Bootstrap's JS (`Toast`, `Modal`, `Tooltip`).
+  (`src/Modules/*/views`) used Bootstrap classes; 41 places used `data-bs-*`.
+- `site.js` bundled Bootstrap's JS (`Toast`, `Modal`, `Tooltip`).
 
-As a result, every theme inherits Bootstrap whether it wants it or not. A
-theme on another framework has to override almost everything, and the
-fallback after a Twig error (`default`) silently brings Bootstrap back.
+So every theme inherited Bootstrap whether it wanted it or not, a theme on
+another framework had to override almost everything, and the fallback after a
+Twig error (`default`) silently brought Bootstrap back.
 
 ## Decision
 
-Split the current theme into two layers.
+Two layers, one rule: **`default` knows nothing about any CSS framework and
+works without one; a theme overrides the pieces of markup where it wants its
+own framework's styles.**
 
 ### 1. `default` — the base theme
 
 The smallest theme that keeps **all functionality**: every page, form,
 modal, toast, comment thread, pagination and messenger view works.
 
-- **No CSS framework.** Markup uses semantic HTML plus a small, documented
-  UI vocabulary of classes (see below). No `btn`, `card`, `d-flex`,
-  `data-bs-*`.
-- **Minimal CSS** (`/assets/css/base.css`): CSS custom properties for colors,
-  spacing and typography; light/dark through `color_mode` and
-  `prefers-color-scheme`; logical properties (`margin-inline-start`, ...) so
-  RTL works without a separate build.
-- **Native behavior.** The default UI adapter from ADR-001 uses platform
-  features: `<dialog>` for modals, a small toast region with
-  `aria-live`, the Popover API / `title` for tooltips. No framework JS.
-- **Block-rich templates.** Layouts, partials and components expose
-  `{% block %}`s at every point a child theme is likely to change (wrapper,
-  header, body, actions, footer of each component), so child themes override
-  blocks, not whole files.
+- **No CSS framework.** Semantic HTML, `default`'s own classes and each
+  module's own classes. No `btn`, `card`, `d-flex`, `data-bs-*`.
+- **Own CSS** (`/assets/css/base.css`): custom properties for colors,
+  spacing and typography; light/dark through `data-color-mode`; logical
+  properties, so RTL needs no separate build.
+- **Native behavior.** The native UI adapter (ADR-001): `<dialog>` for
+  modals, a toast region, `title` tooltips, `<details>` for dropdowns, and
+  declarative `data-ui-*` toggles. No framework JS.
+- **Block-rich templates.** Layouts, partials, components and module
+  templates expose `{% block %}`s (including class blocks such as
+  `main_class`) wherever a theme is likely to change something, so a theme
+  overrides blocks, not whole files.
 - Stays the hard fallback: if the active theme fails, the site is plain but
   fully usable.
 
 ### 2. `bootstrap` — the reference extended theme
 
-A theme that looks like today's site and shows theme developers how
-extending works.
+The site's Bootstrap look, and the example theme authors copy from.
 
-- `theme.json` declares `"parent": "default"` and loads Bootstrap CSS/JS and
-  its own `site.css`.
-- **Templates extend the base, not copy it:**
+- `theme.json`: `"parent": "default"`, `"inheritAssets": false` and an
+  explicit asset order: `base.css` → `bootstrap.css` (Bootstrap's prebuilt
+  CSS, RTL build in `assets.rtl`) → `bootstrap-skin.css` (site colors,
+  navbar/footer tweaks) → `site.css`. Scripts: `site.js` and
+  `ui-bootstrap.js` (the Bootstrap UI adapter, ADR-001).
+- **Overrides only where it wants Bootstrap markup**, extending the original
+  and overriding blocks:
 
   ```twig
-  {# views/themes/bootstrap/layouts/base.twig #}
-  {% extends '@default/layouts/base.twig' %}
+  {# views/themes/bootstrap/layouts/with-sidebar.twig #}
+  {% extends '@default/layouts/with-sidebar.twig' %}
 
-  {% block layout_header %}
-      {% include 'partials/navbar.twig' %}
+  {% block layout_container_class %}container{% endblock %}
+  {% block layout_row_class %}row{% endblock %}
+  ```
+
+  The same for module templates, through the module's namespace:
+
+  ```twig
+  {# views/themes/bootstrap/modules/users/register1.twig #}
+  {% extends '@Users/modules/users/register1.twig' %}
+
+  {% block register_header %}
+      <h1>{{ trans('user.registration') }} <small class="text-muted">{{ trans('view.users.register1.01') }}</small></h1>
+      <hr>
   {% endblock %}
   ```
 
-  It overrides only layouts, chrome and platform components where the
-  structure differs (navbar, modal, toast, tabs).
-- **Module markup is restyled, not overridden.** Module templates stay owned
-  by modules (`THEME_CONTRACT.md`). The theme maps the UI vocabulary onto
-  Bootstrap in Sass (`.ui-button { @extend .btn; }`, ...), so 40 module
-  templates do not need per-theme copies.
-- Registers the Bootstrap UI adapter (ADR-001) from its own script entry.
-- Handles its own RTL (`bootstrap.rtl.css`), the job `ThemeCatalog` does for
-  everyone today.
+  Components whose structure is framework-specific (navbar, dropdowns,
+  modals, toast, tabs) are its own files at the same path.
+- **Everything it does not override renders `default`'s markup.** That is
+  why it loads `base.css` first: Bootstrap wins for plain elements (`body`,
+  `h1`, `a`, ...), while `default`'s classes keep styling the markup the
+  theme left alone.
 
-### 3. UI vocabulary
+### 3. Theme inheritance
 
-A short, stable set of classes that both module templates and JS-produced
-markup are allowed to use. It is the contract between modules and themes:
-modules describe *what* something is, themes decide *how* it looks.
+- `theme.json` has an optional `"parent"` (default: `"default"`); templates
+  resolve *active → parent → … → default → module views*.
+- Every theme is a Twig namespace (`@default`, `@bootstrap`, `@<id>`) and
+  every module's views too (`@Users/...`), so an override extends the file
+  it replaces instead of copying it.
+- A child inherits its parent's assets, deduplicated by path, unless it sets
+  `"inheritAssets": false` to control the order itself.
 
-| Class | Meaning |
-|---|---|
-| `ui-button`, `ui-button--primary`, `--secondary`, `--danger`, `--link`, `--sm` | Buttons and button-like links |
-| `ui-card`, `ui-card__body`, `ui-card__title` | Boxed content |
-| `ui-badge` | Small label / counter |
-| `ui-alert`, `ui-alert--error`, `--success`, `--info` | Inline messages |
-| `ui-field`, `ui-input`, `ui-label`, `ui-help` | Form controls |
-| `ui-stack`, `ui-cluster`, `ui-grid` | Layout primitives (vertical, wrapping row, grid) |
-| `ui-muted`, `ui-small`, `ui-visually-hidden` | Text utilities |
-| `ui-spinner` | Loading indicator |
+### 4. Markup built by scripts
 
-The list is deliberately small. Anything more specific uses the module's own
-classes (`msgr-*`, `comment-*`), which are styled by the theme like any
-other selector.
-
-### 4. Theme inheritance
-
-- `theme.json` gets an optional `"parent"` (default: `"default"`). The loader
-  builds the chain *active → parent → … → default → module views* instead of
-  the fixed *active → default → modules*.
-- Every theme in the chain is registered as a Twig namespace (`@default`
-  already exists; add `@bootstrap`, `@<id>`), so a child can
-  `{% extends '@<parent>/...' %}` the file it overrides.
-- Module views get namespaces too (`@Article/...`), so a theme that does
-  override a module component can extend the original instead of copying it.
-- Assets: a child lists its own `styles`/`scripts`; parent assets are
-  included unless the child sets `"inheritAssets": false` (the `bootstrap`
-  theme keeps `base.css` for custom properties and drops nothing else).
+API responses stay JSON and become markup through `<template>`: the Twig
+component that renders an item on the server is rendered once more inside
+`<template data-ui="...">`, and the script clones and fills it. A theme that
+overrides the component restyles the script-added items too. Details and
+limits in ADR-001 and `THEME_CONTRACT.md` ("JS surface").
 
 ## Options considered
 
-| | A. Keep Bootstrap in `default` (today) | B. Bare `default` + `bootstrap` child (this ADR) | C. Bare `default`, no reference theme |
+| | A. Bootstrap in `default` (before) | B. Shared `ui-*` vocabulary mapped by each theme | C. Theme overrides markup (this ADR) |
 |---|---|---|---|
+| How a theme restyles a module | Override nearly everything | Map `ui-*` classes onto its framework (Sass `@extend`) | Override the module's blocks/templates it cares about |
 | Fallback after an error | Bootstrap | Plain, fully working | Plain, fully working |
-| Cost of a non-Bootstrap theme | Override nearly everything | Override blocks + map UI vocabulary | Same as B |
-| Example for theme authors | None (default *is* the theme) | `bootstrap` shows parent/blocks/adapter | None |
-| Look of existing sites | Unchanged | Unchanged after migration to `bootstrap` | Plain |
-| Effort | — | High: rewrite markup of ~65 templates + JS | Same as B minus one theme |
+| Build | Prebuilt Bootstrap | Bootstrap from Sass sources + `rtlcss` | Prebuilt Bootstrap |
+| Cost per module | — | Rewrite to the vocabulary; vocabulary grows | Write it for `default`; theme overrides only what it wants |
+
+B was implemented for Feedback, Search, Article and Profile and then
+reverted: the vocabulary grew to ~60 classes (a home-made mini-framework),
+needed a Sass build with `rtlcss`, and a simple change of one class turned
+into a mapping exercise. Overriding a block is plain Twig every theme author
+already knows.
 
 ## Trade-offs
 
-- **Two themes to maintain.** Every feature now lands in `default` first and
-  is checked in `bootstrap`. That is the price of having a real proof that
-  the base is framework-free; without a second theme it would quietly drift
-  back to Bootstrap.
-- **Sass `@extend` vs template overrides in `bootstrap`.** `@extend` keeps
-  module templates untouched but produces heavier selectors, and some
-  Bootstrap components need structure the vocabulary does not have (e.g.
-  `input-group`). Those cases go through block overrides or extra vocabulary
-  classes, decided case by case.
-- **Plain fallback.** If `bootstrap` breaks, users briefly see the plain
-  base. Acceptable: it is a failure mode, and the site keeps working.
+- **Theme files per module.** `bootstrap` carries its own copies of the
+  blocks it restyles; when a module changes those blocks, the theme can lag
+  behind. Mitigated by small, well-named blocks in module templates and by
+  keeping behavior hooks (`data-*`, ids, `<template>` fill points) outside
+  what a theme is expected to change.
+- **Two stylesheets on one page.** Under `bootstrap`, markup the theme did
+  not override is styled by `base.css` next to Bootstrap. They do not share
+  class names, and Bootstrap loads later, so it wins for elements; a visual
+  check per migrated module catches the rest.
+- **Two themes to maintain.** Every feature lands in `default` first and is
+  checked in `bootstrap` - the price of a real proof that the base is
+  framework-free.
 
 ## Consequences
 
-- **Easier:** a theme on Tailwind or anything else starts from a neutral
-  base; the default bundle gets lighter (no Bootstrap CSS/JS); theme authors
-  have a working example of `parent`, `@extends` and block overrides.
-- **Harder:** every module template must be rewritten to the UI vocabulary;
-  new markup must be reviewed against it; two themes are tested.
+- **Easier:** a theme on any framework starts from a neutral base; theme
+  authors work with ordinary Twig overrides; no CSS build beyond Vite.
+- **Harder:** module templates must be rewritten for `default`, with blocks
+  where a theme will want its own markup; the `bootstrap` theme grows a
+  file per restyled module template.
 - **Switching installs (done in code, not a DB migration):** a site with no
   saved `theme.active` uses `bootstrap` (`ThemeCatalog::PREFERRED_ID`), and a
   child theme reads its parent's saved value for a same-named setting until
-  it has its own, so `color_mode` carries over without copying rows. A data
-  migration was avoided because it would require rebuilding the install
-  schema snapshot.
-- **Before Phase 2:** sites that explicitly saved `default` still need moving
-  to `bootstrap`, otherwise they turn plain when `default` drops Bootstrap.
-  Either a migration in the Phase 2 release (with the snapshot rebuilt) or a
-  release note asking administrators to pick `bootstrap`.
-- **Revisit:** whether the UI vocabulary needs a CI check.
+  it has its own, so `color_mode` carries over. A data migration would have
+  required rebuilding the install schema snapshot.
+- **Release note:** sites that explicitly saved `default` should switch to
+  `bootstrap` to keep their look.
 
 ## Plan
 
-Phases are ordered so the site works and looks the same after each one.
+### Done
 
-### Phase 0 — groundwork
+1. [x] Theme inheritance: `parent`, loader chain, Twig namespaces for themes
+   and modules, `assets.rtl`, no implicit Bootstrap in `ThemeCatalog`.
+2. [x] `CMS.ui` adapter (native + Bootstrap), `ui-bootstrap.js` as its own
+   entry; `site.js` contains no Bootstrap.
+3. [x] `views/themes/bootstrap` with `"parent": "default"`; sites that never
+   chose a theme use it; settings inherit from the parent.
+4. [x] `default`'s platform layer (layouts, partials, `components/*`) is
+   framework-free with `base.css`; `bootstrap` overrides it (class blocks,
+   `block()` reuse, own framework-specific components).
+5. [x] `<template>` rendering for comments (`partials/js-templates.twig`,
+   `ui.clone()` / `ui.fill()`).
+6. [x] Bootstrap skin as its own entry (`bootstrap-skin.css`); `bootstrap`
+   loads `base.css` first so non-overridden markup stays styled.
 
-1. [x] `theme.json` `parent` + loader chain + Twig namespaces for every theme
-   and module (`StreamEngine::createTwigEnvironment`, `ThemeCatalog`).
-2. [x] Remove the automatic `bootstrap.css` prepend and the hard-coded RTL
-   swap from `ThemeCatalog`; RTL builds are declared in the manifest
-   (`assets.rtl`). For now `default` declares Bootstrap and its mapping; they
-   move to the `bootstrap` manifest in Phase 1.
-3. [x] `CMS.ui` adapter interface with a native implementation and a
-   Bootstrap implementation (ADR-001, item 1). The Bootstrap adapter is still
-   imported by `site/main.ts`; it becomes a separate entry for the
-   `bootstrap` theme in Phase 1.
+### Next: modules, one at a time
 
-### Phase 1 — create `bootstrap` on top of `default`
+For each module (Feedback, Search, Article, Profile, Users, Forums;
+Messages is already framework-free; the admin interface is out of scope, it
+is a separate Mantine app):
 
-4. [x] Create `views/themes/bootstrap` with `"parent": "default"`,
-   `bootstrap.css` + its RTL mapping and `/assets/js/ui-bootstrap.js` (a
-   separate Vite entry; `site.js` no longer contains Bootstrap). No
-   templates yet: everything is inherited, so nothing looks different.
-   `default` lists the same three assets until Phase 2; deduplication by path
-   loads each once.
-5. [x] Sites that never chose a theme use `bootstrap`; settings inherit from
-   the parent (see Consequences).
+7. [ ] Rewrite its templates for `default`: semantic markup, module classes
+   in its own stylesheet, `default`'s classes, `hidden` instead of `d-none`,
+   `data-ui-*` instead of `data-bs-*`, blocks where a theme will want its
+   own markup.
+8. [ ] Move its script-built item markup to `<template>` rendered by the
+   module's page template, next to the list it feeds.
+9. [ ] In `bootstrap`, override the module's blocks/templates that should
+   keep the Bootstrap look.
+10. [ ] Check the module under both themes.
 
-### Phase 2 — strip `default`
+### Verify
 
-6. [x] Define the UI vocabulary and write `base.css` (tokens, light/dark,
-   logical properties, a temporary `--bs-*` bridge for `site.css`). The
-   Bootstrap skin moved from `site.css` into `bootstrap.css`.
-7. [x] Rewrite `default` layouts, partials and platform components
-   (`components/*` in the theme) to the vocabulary, with class blocks and
-   native behavior (`<dialog>`, `<details>`, `data-ui-*` toggles). In
-   `bootstrap`: layouts, 404/error, header, footer and the comments partial
-   extend `@default` and override blocks; framework-specific components
-   (navbar, dropdowns, modals, toast, tabs, cards) are its own files with
-   the previous markup. `bootstrap` lists its assets itself
-   (`inheritAssets: false`) so Bootstrap loads before `site.css`.
-8. [ ] Rewrite module templates to the vocabulary, module by module; add
-   the Sass mapping in `bootstrap` alongside the first module (adds `sass`
-   to devDependencies), and split module styles out of `site.css`.
-9. [ ] Replace `data-bs-*` with `data-ui-*` in module templates and
-   scripts (done for the platform layer).
-10. [ ] Finish ADR-001 item 4 with the modules.
-
-### Phase 3 — verify
-
-11. [ ] Visual regression: screenshots of key pages in `bootstrap` before vs
-    after each phase.
-12. [ ] Functional pass on `default`: every page, form, modal, toast,
+11. [ ] Functional pass on `default`: every page, form, modal, toast,
     comments, pagination, messenger.
-13. [ ] Grep checks from `THEME_CONTRACT.md` return nothing for `default`,
+12. [ ] Grep checks from `THEME_CONTRACT.md` return nothing for `default`,
     module views and `assets-src`.
-14. [ ] Update `THEME_CONTRACT.md` and `INSTALLATION.md`.
+13. [ ] Update `INSTALLATION.md`.

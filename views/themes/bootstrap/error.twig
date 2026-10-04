@@ -1,6 +1,6 @@
 {% extends '@default/error.twig' %}
 
-{% block html_attributes %}data-bs-theme="{{ theme.values.color_mode|default('dark') }}"{% endblock %}
+{% block html_attributes %}{{ parent() }} data-bs-theme="{{ theme.values.color_mode|default('dark') }}"{% endblock %}
 
 {% block error_body %}
 <main class="container py-5 text-center">

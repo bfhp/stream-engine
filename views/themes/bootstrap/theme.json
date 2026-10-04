@@ -18,7 +18,9 @@
   },
   "assets": {
     "styles": [
+      "/assets/css/base.css",
       "/assets/css/bootstrap.css",
+      "/assets/css/bootstrap-skin.css",
       "/assets/css/site.css",
       "/assets/css/custom-content.css"
     ],

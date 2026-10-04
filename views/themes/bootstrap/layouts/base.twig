@@ -1,4 +1,5 @@
 {% extends '@default/layouts/base.twig' %}
 
-{# Bootstrap reads the color mode from data-bs-theme. #}
-{% block html_attributes %}data-bs-theme="{{ theme.values.color_mode|default('dark') }}"{% endblock %}
+{# Bootstrap reads the color mode from data-bs-theme; default's data-color-mode
+   stays for the parts of the page still rendered by default's markup. #}
+{% block html_attributes %}{{ parent() }} data-bs-theme="{{ theme.values.color_mode|default('dark') }}"{% endblock %}

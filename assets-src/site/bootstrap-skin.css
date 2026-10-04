@@ -1,8 +1,8 @@
 /* ==========================================================================
    Bootstrap theme skin: the site's colors and the Bootstrap navbar/footer
-   tweaks. Bundled into bootstrap.css / bootstrap-rtl.css (see
-   bootstrap-ltr.ts), so only the `bootstrap` theme loads it; the `default`
-   theme's look lives in base.css.
+   tweaks. Built as css/bootstrap-skin.css (bootstrap-skin.ts) and listed
+   only in the `bootstrap` theme manifest; the `default` theme's look lives
+   in base.css. Logical properties only, so it serves both directions.
    ========================================================================== */
 
 /* Main Colors */
