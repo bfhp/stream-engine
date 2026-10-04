@@ -1,28 +1,32 @@
 {% extends "layouts/single.twig" %}
 
+{# The *_class blocks and the content blocks are what a theme overrides to
+   restyle this page (see views/themes/bootstrap/modules/feedback/page.twig);
+   the form's ids and names belong to assets-src/pages/feedback.ts. #}
+
 {% block content %}
 
     <h1>{{ trans('view.feedback.page.01') }}</h1>
 
-    <div class="row mt-3 mt-lg-5">
+    <div class="{% block feedback_layout_class %}feedback-layout{% endblock %}">
 
-        {% block feedback_hint %}
-        <div class="col-lg-6 order-lg-last feedback-hint">
-            {{ hintText|raw }}
+        <div class="{% block feedback_hint_class %}feedback-hint{% endblock %}">
+            {% block feedback_hint %}
+                {{ hintText|raw }}
+            {% endblock %}
         </div>
-        {% endblock %}
 
-        <div class="col-lg-6">
+        <div class="{% block feedback_main_class %}feedback-main{% endblock %}">
 
             {% block feedback_title %}
-            <h2 id="feedbackFormHeader" class="mb-lg-5">{{ trans('view.feedback.page.02') }}</h2>
+                <h2 id="feedbackFormHeader" class="feedback-title">{{ trans('view.feedback.page.02') }}</h2>
             {% endblock %}
 
             {% block feedback_success %}
                 {% if success %}
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ trans('view.feedback.page.03') }}
-                </div>
+                    <div class="ui-alert ui-alert--success" role="alert">
+                        {{ trans('view.feedback.page.03') }}
+                    </div>
                 {% endif %}
             {% endblock %}
 

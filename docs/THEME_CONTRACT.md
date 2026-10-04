@@ -194,7 +194,9 @@ resolving from `default` or from the module that owns it.
 > framework-free and `bootstrap` keeps the previous look. Module templates
 > still use Bootstrap classes; they move to framework-free markup module by
 > module, with `bootstrap` overriding them (see "Module templates in
-> themes"). Under `default`, module pages are only partly styled until then.
+> themes"). Done: Feedback. Under `default`, the other module pages are only
+> partly styled until then. A module's own styles live in
+> `assets-src/site/modules/<module>.css` (bundled into `site.css`).
 
 ### `default` is the base, not a design
 

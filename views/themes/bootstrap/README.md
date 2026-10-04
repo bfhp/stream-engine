@@ -58,6 +58,7 @@ Always extend through a namespace (`@default/...`, `@Users/...`); a plain
 
 ## Status
 
-The platform layer is done. Module templates still use Bootstrap classes
-directly; as each module is rewritten for `default`, the blocks that should
-keep the Bootstrap look are overridden here.
+The platform layer is done. Modules rewritten for `default` so far, with
+their Bootstrap overrides here: Feedback (`modules/feedback/page.twig`,
+`components/feedback/form.twig`). The other modules' templates still use
+Bootstrap classes directly.

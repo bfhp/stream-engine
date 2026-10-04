@@ -182,6 +182,10 @@ is a separate Mantine app):
    keep the Bootstrap look.
 10. [ ] Check the module under both themes.
 
+Progress: Feedback (templates for `default`, styles in
+`assets-src/site/modules/feedback.css`; `bootstrap` overrides the page's
+class blocks, title and success alert, and has its own form component).
+
 ### Verify
 
 11. [ ] Functional pass on `default`: every page, form, modal, toast,

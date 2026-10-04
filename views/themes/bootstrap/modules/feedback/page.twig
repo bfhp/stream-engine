@@ -1,0 +1,20 @@
+{% extends '@Feedback/modules/feedback/page.twig' %}
+
+{# Bootstrap grid and alert for the feedback page; the form itself is
+   components/feedback/form.twig in this theme. #}
+
+{% block feedback_layout_class %}row mt-3 mt-lg-5{% endblock %}
+{% block feedback_hint_class %}col-lg-6 order-lg-last feedback-hint{% endblock %}
+{% block feedback_main_class %}col-lg-6{% endblock %}
+
+{% block feedback_title %}
+    <h2 id="feedbackFormHeader" class="mb-lg-5">{{ trans('view.feedback.page.02') }}</h2>
+{% endblock %}
+
+{% block feedback_success %}
+    {% if success %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ trans('view.feedback.page.03') }}
+        </div>
+    {% endif %}
+{% endblock %}
