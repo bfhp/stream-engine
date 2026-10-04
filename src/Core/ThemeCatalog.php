@@ -427,9 +427,9 @@ final class ThemeCatalog
                 ],
             ],
             'assets' => [
-                'styles' => ['/assets/css/bootstrap.css', '/assets/css/site.css', '/assets/css/custom-content.css'],
-                'scripts' => ['/assets/js/site.js', '/assets/js/ui-bootstrap.js'],
-                'rtl' => ['/assets/css/bootstrap.css' => '/assets/css/bootstrap-rtl.css'],
+                'styles' => ['/assets/css/base.css', '/assets/css/site.css', '/assets/css/custom-content.css'],
+                'scripts' => ['/assets/js/site.js'],
+                'rtl' => [],
             ],
         ];
     }

@@ -1,23 +1,19 @@
 {% set level = level|default(0) %}
-{% set itemClass = itemClass|default(null) %}
+{% set itemClass = itemClass|default('site-nav__link') %}
 
 {# --- DIVIDER --- #}
 {% if item.isDivider %}
-    <li><hr class="dropdown-divider"></li>
+    <li class="site-nav__divider" role="separator"></li>
 
 {# --- LINK / ACTION --- #}
 {% else %}
 
     {% set hasChildren = item.children is not empty %}
 
-    <li class="{% if level == 0 %}nav-item{% if hasChildren %} dropdown{% endif %}{% endif %}">
+    <li class="site-nav__item">
 
-        {# --- LINK / BUTTON --- #}
         <a
-                class="
-{% if level == 0 %}{{ itemClass }}{% else %}dropdown-item{% endif %}
-{% if hasChildren %} dropdown-toggle{% endif %}
-{{ item.active ? ' active' : '' }}"
+                class="{{ level == 0 ? itemClass : 'site-nav__link' }}{{ item.active ? ' active' : '' }}"
                 href="{{ item.isLink ? item.url : '#'}}"
 
                 {% if item.type == 'action' %}
@@ -30,16 +26,15 @@
 
                 {% if hasChildren %}
                     id="menu-{{ item.id }}"
-                    role="button"
-                    aria-expanded="false"
+                    aria-haspopup="true"
                 {% endif %}
         >
             {{ item.label }}
         </a>
 
-        {# --- CHILDREN --- #}
+        {# --- CHILDREN: shown on hover/focus by CSS, no script needed --- #}
         {% if hasChildren %}
-            <ul class="dropdown-menu" aria-labelledby="menu-{{ item.id }}">
+            <ul class="site-nav__submenu" aria-labelledby="menu-{{ item.id }}">
                 {% for child in item.children %}
                     {% include 'components/nav/menu-item.twig' with {
                         item: child,

@@ -2,20 +2,20 @@
 
 {% block layout_main %}
 
-<main class="{% block main_class %}my-4{% endblock %}">
+<main class="{% block main_class %}layout-main{% endblock %}">
     {% block layout_wrapper %}
     <div class="layout-wrapper">
-        <div class="container">
+        <div class="{% block layout_container_class %}ui-container{% endblock %}">
             {% block layout_row %}
-                <div class="row">
+                <div class="{% block layout_row_class %}layout-sidebar{% endblock %}">
 
-                    <div class="col-lg-8">
+                    <div class="{% block layout_content_class %}layout-sidebar__content{% endblock %}">
                         {% include 'components/widgets/block.twig' with { placement: 'before_content' } %}
                         {% block content %}{% endblock %}
                         {% include 'components/widgets/block.twig' with { placement: 'after_content' } %}
                     </div>
 
-                    <aside class="col-lg-4 mt-4 mt-lg-0">
+                    <aside class="{% block layout_aside_class %}layout-sidebar__aside{% endblock %}">
                         {% block sidebar_inner %}
                             <div class="sidebar-sticky">
                                 {% include 'components/widgets/block.twig' with { placement: 'sidebar_top' } %}

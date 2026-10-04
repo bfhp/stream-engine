@@ -1,0 +1,23 @@
+{# Generic statistics-style key/value card - shared by the profile
+   page's profile_stats block (posts/comments/registered-since) and the
+   community sidebar's community_stats block (posts/members/created)
+   instead of two copies of the same list markup.
+
+   Included with `only` from every caller - expected variables: title
+   (string, defaults to the translated statistics label), rows (list of {label: string,
+   value: string|int} - each caller decides which rows to include and in
+   what order, e.g. omitting a "registered since"/"created" row entirely
+   when that date isn't known, rather than this partial guessing). #}
+<div class="card mb-3">
+    <div class="card-body">
+        <h2 class="h6 card-title mb-3">{{ title|default(trans('view.common.statistics')) }}</h2>
+        <div class="d-flex flex-column gap-2">
+            {% for row in rows %}
+                <div class="d-flex justify-content-between align-items-baseline">
+                    <span class="text-body-secondary small">{{ row.label }}</span>
+                    <span class="fw-semibold">{{ row.value }}</span>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>

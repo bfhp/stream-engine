@@ -174,6 +174,7 @@ return [
     'view.ui.confirmation' => '確認',
     'view.ui.are_you_sure' => 'よろしいですか？',
     'view.ui.confirm' => '確認',
+    'view.ui.close' => '閉じる',
     'view.nav.open_menu' => 'メニューを開く',
     'view.nav.search' => '検索',
     'view.nav.messages' => 'メッセージ',

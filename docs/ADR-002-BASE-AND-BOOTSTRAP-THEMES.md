@@ -182,15 +182,23 @@ Phases are ordered so the site works and looks the same after each one.
 
 ### Phase 2 — strip `default`
 
-6. [ ] Define the UI vocabulary and write `base.css`.
-7. [ ] Rewrite `default` layouts, partials and platform components to the
-   vocabulary, adding blocks; move Bootstrap-specific structure into
-   `bootstrap` overrides that `{% extends '@default/...' %}`.
+6. [x] Define the UI vocabulary and write `base.css` (tokens, light/dark,
+   logical properties, a temporary `--bs-*` bridge for `site.css`). The
+   Bootstrap skin moved from `site.css` into `bootstrap.css`.
+7. [x] Rewrite `default` layouts, partials and platform components
+   (`components/*` in the theme) to the vocabulary, with class blocks and
+   native behavior (`<dialog>`, `<details>`, `data-ui-*` toggles). In
+   `bootstrap`: layouts, 404/error, header, footer and the comments partial
+   extend `@default` and override blocks; framework-specific components
+   (navbar, dropdowns, modals, toast, tabs, cards) are its own files with
+   the previous markup. `bootstrap` lists its assets itself
+   (`inheritAssets: false`) so Bootstrap loads before `site.css`.
 8. [ ] Rewrite module templates to the vocabulary, module by module; add
-   the Sass mapping in `bootstrap` alongside each module.
-9. [ ] Replace `data-bs-*` with `data-ui-*` handled by the adapter.
-10. [ ] Finish ADR-001 items 2–4 (fragments and `<template>`s now come out
-   framework-free from `default`).
+   the Sass mapping in `bootstrap` alongside the first module (adds `sass`
+   to devDependencies), and split module styles out of `site.css`.
+9. [ ] Replace `data-bs-*` with `data-ui-*` in module templates and
+   scripts (done for the platform layer).
+10. [ ] Finish ADR-001 item 4 with the modules.
 
 ### Phase 3 — verify
 

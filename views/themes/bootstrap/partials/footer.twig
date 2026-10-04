@@ -1,0 +1,30 @@
+{% extends '@default/partials/footer.twig' %}
+
+{% block footer_class %}text-light py-5 mt-auto{% endblock %}
+
+{% block footer_inner %}
+<div class="pb-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                {{ block('footer_about') }}
+            </div>
+            <div class="col-md-3 footer-quick-links">
+                {% block footer_menu %}
+                <h2>{{ trans('view.footer.quick_links') }}</h2>
+                    {% if bottomMenu %}
+                        {% include 'components/nav/menu.twig' with {
+                            items: bottomMenu,
+                            menuClass: 'list-group',
+                            itemClass: 'list-group-item list-group-item-action'
+                        } %}
+                    {% endif %}
+                {% endblock %}
+            </div>
+            <div class="col-md-3">
+                {{ block('footer_contacts') }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

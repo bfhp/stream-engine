@@ -1,0 +1,54 @@
+{% set level = level|default(0) %}
+{% set itemClass = itemClass|default(null) %}
+
+{# --- DIVIDER --- #}
+{% if item.isDivider %}
+    <li><hr class="dropdown-divider"></li>
+
+{# --- LINK / ACTION --- #}
+{% else %}
+
+    {% set hasChildren = item.children is not empty %}
+
+    <li class="{% if level == 0 %}nav-item{% if hasChildren %} dropdown{% endif %}{% endif %}">
+
+        {# --- LINK / BUTTON --- #}
+        <a
+                class="
+{% if level == 0 %}{{ itemClass }}{% else %}dropdown-item{% endif %}
+{% if hasChildren %} dropdown-toggle{% endif %}
+{{ item.active ? ' active' : '' }}"
+                href="{{ item.isLink ? item.url : '#'}}"
+
+                {% if item.type == 'action' %}
+                    data-{{ item.action }}
+                {% endif %}
+
+                {% if item.isExternal %}
+                    target="_blank" rel="noopener noreferrer"
+                {% endif %}
+
+                {% if hasChildren %}
+                    id="menu-{{ item.id }}"
+                    role="button"
+                    aria-expanded="false"
+                {% endif %}
+        >
+            {{ item.label }}
+        </a>
+
+        {# --- CHILDREN --- #}
+        {% if hasChildren %}
+            <ul class="dropdown-menu" aria-labelledby="menu-{{ item.id }}">
+                {% for child in item.children %}
+                    {% include 'components/nav/menu-item.twig' with {
+                        item: child,
+                        level: level + 1
+                    } %}
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+    </li>
+
+{% endif %}

@@ -1,0 +1,4 @@
+{% extends '@default/layouts/base.twig' %}
+
+{# Bootstrap reads the color mode from data-bs-theme. #}
+{% block html_attributes %}data-bs-theme="{{ theme.values.color_mode|default('dark') }}"{% endblock %}

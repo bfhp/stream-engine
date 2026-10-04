@@ -1,23 +1,23 @@
 {% block navbar_burger %}
-    {# BURGER #}
-    <button class="navbar-toggler order-3 order-lg-2"
+    {# BURGER: shown below the desktop breakpoint only (base.css) #}
+    <button class="ui-button ui-button--secondary site-nav__burger"
             type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#mainNavbar"
+            data-ui-toggle="collapse"
+            data-ui-target="#mainNavbar"
             aria-controls="mainNavbar"
             aria-expanded="false"
             aria-label="{{ trans('view.nav.open_menu') }}">
-        <span class="navbar-toggler-icon"></span>
+        <i class="bi bi-list" aria-hidden="true"></i>
     </button>
 {% endblock %}
 
 {# Menu #}
-<div class="collapse navbar-collapse order-4 order-lg-4" id="mainNavbar">
+<div class="site-nav__collapse" id="mainNavbar" hidden>
     {% block navbar_menu %}
         {% include 'components/nav/menu.twig' with {
             items: topMenu,
-            menuClass: 'navbar-nav me-auto',
-            itemClass: 'nav-link'
+            menuClass: 'site-nav__menu',
+            itemClass: 'site-nav__link'
         } %}
     {% endblock %}
 

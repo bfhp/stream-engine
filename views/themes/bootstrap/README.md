@@ -6,32 +6,31 @@ See `docs/THEME_CONTRACT.md` and `docs/ADR-002-BASE-AND-BOOTSTRAP-THEMES.md`.
 
 ## How it builds on `default`
 
-- **`theme.json`** declares `"parent": "default"`. Templates resolve here
-  first, then in `default`, then in module views. Parent assets load before
-  this theme's own.
-- **Assets.** Bootstrap's stylesheet with its RTL build (`assets.rtl`) and
-  `/assets/js/ui-bootstrap.js`, which registers the Bootstrap UI adapter
-  (`assets-src/site/ui-bootstrap.ts`) for modals, toasts and tooltips.
-- **Templates.** Only files whose structure differs from `default` live
-  here, and they extend the base instead of copying it:
+- **`theme.json`** declares `"parent": "default"`: templates resolve here
+  first, then in `default`, then in module views. It sets
+  `"inheritAssets": false` and lists its assets itself, because Bootstrap
+  (`bootstrap.css`, with the theme skin and an RTL build in `assets.rtl`)
+  must load before `site.css`, and `default`'s `base.css` is not needed.
+  `/assets/js/ui-bootstrap.js` registers the Bootstrap UI adapter.
+- **Class blocks** where only classes differ: `layouts/*.twig`, `404.twig`.
+- **Block overrides that reuse the rest** with `block()`:
+  `partials/header.twig`, `partials/footer.twig`, `partials/comments.twig`,
+  `error.twig`.
+- **Own components** where the markup is Bootstrap-specific:
+  `components/nav/*`, `components/ui/*`, `components/auth/form.twig`,
+  `components/comments/*`, `components/common/*`,
+  `components/users/profile-sidebar.twig`. They keep the data-* hooks the
+  scripts use (`data-slot*`, `data-comment-form`, `data-reply-toggle`, ids
+  such as `authFormModal`).
 
-  ```twig
-  {# layouts/base.twig #}
-  {% extends '@default/layouts/base.twig' %}
+Always extend through the namespace (`@default/...`); a plain
+`'layouts/base.twig'` resolves to this same file.
 
-  {% block layout_header %}
-      {% include 'partials/navbar.twig' %}
-  {% endblock %}
-  ```
-
-  Always extend through the namespace (`@default/...`); a plain
-  `'layouts/base.twig'` would resolve to this same file.
-- **Settings.** `color_mode` has the same name as in `default`, so a value
-  saved for `default` carries over until one is saved here.
+`color_mode` has the same name as in `default`, so a value saved for
+`default` carries over until one is saved here.
 
 ## Status
 
-Phase 1 of ADR-002: `default` is still the Bootstrap design and lists the same
-assets, so this theme has no templates of its own yet and looks identical.
-In Phase 2 `default` drops Bootstrap, and the Bootstrap-specific structure
-moves here as block overrides.
+ADR-002 Phase 2: the platform layer is done. Module templates still use
+Bootstrap classes directly; when they move to the UI vocabulary, this theme
+maps `ui-*` onto Bootstrap with Sass instead of copying module templates.

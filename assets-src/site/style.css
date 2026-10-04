@@ -8,23 +8,6 @@ main {
     flex: 1;
 }
 
-/* Main Colors */
-header {
-    background-color: #070614 !important;
-}
-
-ol.breadcrumb, .breadcrumb-item+.breadcrumb-item::before {
-    color:#4F5B62;
-}
-
-body {
-    color:#ffffff;
-}
-
-footer,body {
-    background-color: #0F172A !important;
-}
-
 /* Scrollspy fix */
 h1, h2, h3, h4 {
     scroll-margin-top: 160px;
@@ -115,77 +98,6 @@ h1, h2, h3, h4 {
 
 .audio-player-track.is-active::before {
     background: var(--bs-primary);
-}
-
-/* Navbar */
-.navbar .dropdown-menu {
-    position: absolute;
-}
-.navbar .dropdown-menu .dropdown-item {
-    color:var(--bs-nav-link-color);
-}
-
-.navbar .dropdown-menu .dropdown-item:hover {
-    color:var(--bs-nav-link-hover-color);
-    background-color: var(--bs-dark-bg-subtle);
-}
-
-.navbar .dropdown-menu .dropdown-item.active {
-    color:var(--bs-navbar-active-color);
-    background: none;
-}
-
-/* Navbar dropdown open on hover */
-.navbar .dropdown:hover .dropdown-menu {
-    display: block;
-    margin-top: 0;
-}
-
-/* Navbar user's menu */
-#menu-user > img.rounded-circle {
-    height:36px;
-}
-
-/* Desktop: keep the search form at a fixed min-width and let the nav
-   links wrap onto a second line instead of squeezing the search box */
-@media (min-width: 992px) {
-    #mainNavbar {
-        align-items: center;
-    }
-
-    #mainNavbar .navbar-nav {
-        flex-wrap: wrap;
-        flex: 1 1 auto;
-        row-gap: .25rem;
-    }
-
-    #mainNavbar form[role="search"] {
-        flex: 0 0 auto;
-        min-width: 240px;
-    }
-}
-
-/* Footer quick links */
-.footer-quick-links .list-group-item {
-    background: none;
-    border: none;
-    color: #ffffff;
-    padding-inline-start: 0;
-}
-
-.footer-quick-links .list-group-item:focus {
-    color: #ffffff;
-    background: none;
-}
-
-.footer-quick-links .list-group-item:hover{
-    color: var(--bs-link-color);
-    background: none;
-}
-
-.footer-quick-links .list-group-item.active {
-    color: var(--bs-link-color);
-    background: none;
 }
 
 /* Feedback */
@@ -338,7 +250,7 @@ div.feedback-hint > .list-group-flush > .list-group-item {
     min-height: 4.5rem;
 }
 
-.comment-form-error:not(.d-none) {
+.comment-form-error:not([hidden]) {
     display: block;
     margin-bottom: 0.5rem;
 }

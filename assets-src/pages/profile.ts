@@ -1,6 +1,7 @@
 import { uploadFile } from "../shared/uploads";
 import { getApiErrorMessage } from "../shared/api-errors";
 import { trans, transChoice, transChoiceWithCount } from "../shared/i18n";
+import { TAB_SHOWN, ui } from "../shared/ui";
 
 const cms = window.CMS;
 
@@ -307,21 +308,23 @@ function initListTab<T extends ListTabItem>(config: ListTabConfig<T>): void {
     // reason to spend the query on a list nobody has looked at yet. Loads
     // immediately if this pane happens to be the active one, otherwise on the
     // first switch to it, once.
-    const pane = root.closest<HTMLElement>(".tab-pane");
+    const pane = root.closest<HTMLElement>(".tab-pane, .ui-tab-pane");
 
-    if (!pane || pane.classList.contains("active")) {
+    if (!pane || ui.tabs.isActive(pane)) {
         void load();
         return;
     }
 
+    // ui:tab-shown is the theme-neutral switch event (shared/ui.ts; the
+    // Bootstrap adapter re-emits shown.bs.tab as it).
     const onShown = () => {
-        if (!pane.classList.contains("active")) return;
+        if (!ui.tabs.isActive(pane)) return;
 
-        document.removeEventListener("shown.bs.tab", onShown);
+        document.removeEventListener(TAB_SHOWN, onShown);
         void load();
     };
 
-    document.addEventListener("shown.bs.tab", onShown);
+    document.addEventListener(TAB_SHOWN, onShown);
 }
 
 /**

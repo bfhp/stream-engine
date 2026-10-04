@@ -8,14 +8,14 @@
    value: string|int} - each caller decides which rows to include and in
    what order, e.g. omitting a "registered since"/"created" row entirely
    when that date isn't known, rather than this partial guessing). #}
-<div class="card mb-3">
-    <div class="card-body">
-        <h2 class="h6 card-title mb-3">{{ title|default(trans('view.common.statistics')) }}</h2>
-        <div class="d-flex flex-column gap-2">
+<div class="ui-card stats-card">
+    <div class="ui-card__body">
+        <h2 class="ui-card__title">{{ title|default(trans('view.common.statistics')) }}</h2>
+        <div class="ui-stack stats-card__rows">
             {% for row in rows %}
-                <div class="d-flex justify-content-between align-items-baseline">
-                    <span class="text-body-secondary small">{{ row.label }}</span>
-                    <span class="fw-semibold">{{ row.value }}</span>
+                <div class="stats-card__row">
+                    <span class="ui-muted ui-small">{{ row.label }}</span>
+                    <strong>{{ row.value }}</strong>
                 </div>
             {% endfor %}
         </div>

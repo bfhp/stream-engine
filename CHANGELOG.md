@@ -26,6 +26,10 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 - Bootstrap is no longer added implicitly: themes declare it, including its
   RTL build (`assets.rtl`), and its JS ships as `/assets/js/ui-bootstrap.js`.
   Themes with `"inheritAssets": false` must list these themselves.
+- The `default` theme's layouts and shared components no longer use
+  Bootstrap (own `base.css`, native dialogs and toggles); module pages
+  follow in later releases. **Sites that explicitly selected `default`
+  should switch to `bootstrap` to keep their current look.**
 
 ## [0.3.0] - 2026-10-03
 

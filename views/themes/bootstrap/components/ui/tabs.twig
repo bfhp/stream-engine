@@ -1,0 +1,20 @@
+<div class="nav nav-tabs mb-3" role="tablist">
+
+    {% for tab in tabs %}
+        {# role="tab" spelled out rather than left to Bootstrap's Tab
+           constructor to back-fill on init: it's what makes this a real tab
+           for assistive tech next to the tablist/tabpanel roles already here,
+           and it's also the attribute Bootstrap gates shown.bs.tab on - which
+           assets-src/pages/profile.ts listens for to load the friends list on
+           first switch to that tab. That event fired before this change too
+           (the constructor back-fill runs first), so this is belt-and-braces
+           for the listener and a real fix for the missing role. #}
+        <button class="nav-link {{ loop.first ? 'active' }}"
+                role="tab"
+                data-bs-toggle="pill"
+                data-bs-target="#{{ tab.id }}">
+            {{ tab.label }}
+        </button>
+    {% endfor %}
+
+</div>

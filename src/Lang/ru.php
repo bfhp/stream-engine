@@ -189,6 +189,7 @@ return [
     'view.ui.confirmation' => 'Подтверждение',
     'view.ui.are_you_sure' => 'Вы уверены?',
     'view.ui.confirm' => 'Подтвердить',
+    'view.ui.close' => 'Закрыть',
     'view.nav.open_menu' => 'Открыть меню',
     'view.nav.search' => 'Поиск',
     'view.nav.messages' => 'Сообщения',

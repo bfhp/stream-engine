@@ -1,71 +1,67 @@
-<div class="modal fade" id="authFormModal" tabindex="-1" aria-hidden="true">
+<dialog class="ui-modal" id="authFormModal" aria-labelledby="authFormTitle">
 
     {% block auth_modal_dialog %}
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
 
-                {% block auth_header %}
-                    <div class="modal-header">
-                        <h5 class="modal-title">{% block auth_title %}{{ trans('view.auth.title') }}{% endblock %}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                {% endblock %}
+        {% block auth_header %}
+            <div class="ui-modal__header">
+                <h2 class="ui-modal__title" id="authFormTitle">{% block auth_title %}{{ trans('view.auth.title') }}{% endblock %}</h2>
+                <button type="button" class="ui-close" data-ui-dismiss="modal" aria-label="{{ trans('view.ui.close') }}">&times;</button>
+            </div>
+        {% endblock %}
 
-                {% block auth_body %}
-                    <div class="modal-body">
+        {% block auth_body %}
+            <div class="ui-modal__body">
 
-                        {% block auth_form %}
-                            <form id="authForm" method="post">
+                {% block auth_form %}
+                    <form id="authForm" method="post">
 
-                                {% block auth_fields %}
+                        {% block auth_fields %}
 
-                                    {% block auth_field_email %}
-                                        <div class="mb-3">
-                                            <label for="authEmail" class="form-label">Email</label>
-                                            <input autocomplete="yes" type="email" class="form-control" id="authEmail" name="email" required>
-                                        </div>
-                                    {% endblock %}
+                            {% block auth_field_email %}
+                                <div class="ui-field">
+                                    <label for="authEmail" class="ui-label">Email</label>
+                                    <input autocomplete="yes" type="email" class="ui-input" id="authEmail" name="email" required>
+                                </div>
+                            {% endblock %}
 
-                                    {% block auth_field_password %}
-                                        <div class="mb-3">
-                                            <label for="authPassword" class="form-label">{{ trans('view.auth.password') }}</label>
-                                            <input autocomplete="yes" type="password" class="form-control" id="authPassword" name="password" required>
-                                        </div>
-                                    {% endblock %}
+                            {% block auth_field_password %}
+                                <div class="ui-field">
+                                    <label for="authPassword" class="ui-label">{{ trans('view.auth.password') }}</label>
+                                    <input autocomplete="yes" type="password" class="ui-input" id="authPassword" name="password" required>
+                                </div>
+                            {% endblock %}
 
-                                {% endblock %}
-
-                                {% block auth_forgot %}
-                                    {% set passwordRecoveryUrl = action_url('user.retrieve') %}
-                                    {% if passwordRecoveryUrl %}
-                                    <div class="mb-3 text-end">
-                                        <a href="{{ passwordRecoveryUrl }}" class="small">{{ trans('view.auth.forgot_password') }}</a>
-                                    </div>
-                                    {% endif %}
-                                {% endblock %}
-
-                                {% block auth_submit %}
-                                    <button type="submit" class="btn btn-primary w-100">
-                                        {{ trans('view.auth.sign_in') }}
-                                    </button>
-                                {% endblock %}
-
-                            </form>
                         {% endblock %}
 
-                        {% block auth_footer %}
-                            {% set registerUrl = action_url('user.register') %}
-                            {% if registerUrl %}
-                            <div class="text-center mt-3">
-                                {{ trans('view.auth.no_account') }}
-                                <a href="{{ registerUrl }}">{{ trans('view.auth.register') }}</a>
-                            </div>
+                        {% block auth_forgot %}
+                            {% set passwordRecoveryUrl = action_url('user.retrieve') %}
+                            {% if passwordRecoveryUrl %}
+                            <p class="ui-field ui-small auth-forgot">
+                                <a href="{{ passwordRecoveryUrl }}">{{ trans('view.auth.forgot_password') }}</a>
+                            </p>
                             {% endif %}
                         {% endblock %}
-                    </div>
+
+                        {% block auth_submit %}
+                            <button type="submit" class="ui-button ui-button--primary ui-button--block">
+                                {{ trans('view.auth.sign_in') }}
+                            </button>
+                        {% endblock %}
+
+                    </form>
                 {% endblock %}
 
+                {% block auth_footer %}
+                    {% set registerUrl = action_url('user.register') %}
+                    {% if registerUrl %}
+                    <p class="auth-footer">
+                        {{ trans('view.auth.no_account') }}
+                        <a href="{{ registerUrl }}">{{ trans('view.auth.register') }}</a>
+                    </p>
+                    {% endif %}
+                {% endblock %}
             </div>
-        </div>
+        {% endblock %}
+
     {% endblock %}
-</div>
+</dialog>

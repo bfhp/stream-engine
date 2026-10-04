@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ locale }}" dir="{{ dir|default('ltr') }}" data-date-format="{{ dateFormat|default('auto') }}" data-time-format="{{ timeFormat|default('auto') }}" data-bs-theme="{{ theme.values.color_mode|default('dark') }}">
+<html lang="{{ locale }}" dir="{{ dir|default('ltr') }}" data-date-format="{{ dateFormat|default('auto') }}" data-time-format="{{ timeFormat|default('auto') }}" {% block html_attributes %}data-color-mode="{{ theme.values.color_mode|default('dark') }}"{% endblock %}>
 {% block layout_head %}
 <head>
     <meta charset="utf-8">
@@ -85,6 +85,10 @@
 
     {% block ui_modal_confirm %}
         {% include 'components/ui/modal_confirm.twig' %}
+    {% endblock %}
+
+    {% block ui_templates %}
+        {% include 'partials/js-templates.twig' %}
     {% endblock %}
 {% endblock %}
 {% block body_end %}{% endblock %}

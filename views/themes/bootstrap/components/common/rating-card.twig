@@ -1,0 +1,36 @@
+{# Generic read-only aggregate rating card (average + stars + hint) -
+   shared by profile-sidebar.twig's profile_rating (a user's aggregate
+   rating across their own blog posts) and community-sidebar.twig's
+   community_rating (a community's aggregate rating across its own
+   posts) - same presentation, only the numbers differ, so both include
+   this instead of keeping two copies of the same markup that can drift.
+
+   Included with `only` from every caller - expected variables: title
+   (string, defaults to the translated rating label), count (int), average (float|null),
+   fullStars (int), hasHalfStar (bool), hint (string|null), emptyText
+   (string, shown when count is 0 - each caller phrases this for its own
+   subject, such as a user or community). #}
+<div class="card mb-3">
+    <div class="card-body">
+        <h2 class="h6 card-title">{{ title|default(trans('view.common.rating')) }}</h2>
+        {% if count is defined and count > 0 %}
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="fs-3 fw-semibold lh-1">{{ average|number_format(1) }}</span>
+                <span class="d-flex text-warning" style="gap:.15rem; font-size:1.15rem; line-height:1;">
+                    {% for i in 1..5 %}
+                        {% if i <= fullStars %}
+                            <i class="bi bi-star-fill"></i>
+                        {% elseif i == fullStars + 1 and hasHalfStar %}
+                            <i class="bi bi-star-half"></i>
+                        {% else %}
+                            <i class="bi bi-star"></i>
+                        {% endif %}
+                    {% endfor %}
+                </span>
+            </div>
+            <p class="card-text text-body-secondary small mb-0">{{ hint }}</p>
+        {% else %}
+            <p class="card-text text-body-secondary small mb-0">{{ emptyText }}</p>
+        {% endif %}
+    </div>
+</div>

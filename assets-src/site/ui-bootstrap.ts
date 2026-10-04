@@ -6,10 +6,9 @@
    data-bs-dismiss, ...), which the current templates still rely on.
 
    Built as its own entry (/assets/js/ui-bootstrap.js) and listed in the
-   `bootstrap` theme's manifest. `default` lists it too until ADR-002 Phase 2
-   strips Bootstrap from the base; after that `default` uses the native
-   adapter. Never import this file from another bundle: loading Bootstrap
-   twice installs its data API twice.
+   `bootstrap` theme's manifest; `default` uses the native adapter. Never
+   import this file from another bundle: loading Bootstrap twice installs
+   its data API twice.
 
    Uses Bootstrap's package ESM entry: bootstrap/dist/js/bootstrap.bundle is
    UMD/CJS and makes Rolldown emit a _commonjsHelpers chunk once more than
@@ -17,7 +16,7 @@
    ========================================================================== */
 
 import { Modal, Toast, Tooltip } from "bootstrap";
-import { MODAL_CLOSED, ui, type UiAdapter } from "../shared/ui";
+import { MODAL_CLOSED, TAB_SHOWN, ui, type UiAdapter } from "../shared/ui";
 
 const bound = new WeakSet<HTMLElement>();
 
@@ -59,3 +58,12 @@ export const bootstrapAdapter: UiAdapter = {
 };
 
 ui.register(bootstrapAdapter);
+
+// Bootstrap tabs report a switch as shown.bs.tab; re-emit it as the
+// framework-neutral event scripts listen for (see TAB_SHOWN in shared/ui.ts).
+document.addEventListener("shown.bs.tab", (event) => {
+    const tab = event.target as HTMLElement;
+    const selector = tab.dataset.bsTarget;
+    const pane = selector ? document.querySelector(selector) : null;
+    tab.dispatchEvent(new CustomEvent(TAB_SHOWN, { bubbles: true, detail: { pane } }));
+});

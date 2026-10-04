@@ -1,0 +1,25 @@
+{# Markup the browser clones instead of building its own (ADR-001).
+
+   Each <template data-ui="..."> renders the active theme's own component
+   with placeholder data, so a comment loaded without a page reload looks
+   exactly like a server-rendered one in every theme. shared/ui.ts clone()
+   and fill() put real values into the data-slot* hooks.
+
+   A theme normally has nothing to override here: the includes resolve to
+   its own components. Add templates of its own in js_templates_extra. #}
+{% if comments is defined %}
+    {% set uiPlaceholder = {
+        id: '',
+        authorDisplayName: '',
+        authorAvatarUrl: '',
+        createdAt: null,
+        createdAtLabel: ' ',
+        createdAtTitle: '',
+        content: '',
+        children: null
+    } %}
+    <template data-ui="comment">{% include 'components/comments/comment.twig' with { comment: uiPlaceholder } %}</template>
+    <template data-ui="reply">{% include 'components/comments/reply.twig' with { reply: uiPlaceholder } %}</template>
+    <template data-ui="load-replies">{% include 'components/comments/load-replies.twig' with { parentId: '', nextCursor: '', label: '' } %}</template>
+{% endif %}
+{% block js_templates_extra %}{% endblock %}

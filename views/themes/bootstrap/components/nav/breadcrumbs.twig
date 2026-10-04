@@ -1,0 +1,28 @@
+{% block breadcrumbs_wrapper %}
+<div class="pb-2 container">
+    {% block breadcrumbs_nav %}
+    <nav style="--bs-breadcrumb-divider: '/';" aria-label="breadcrumb">
+        {% block breadcrumbs_list %}
+        <ol class="breadcrumb mb-0">
+            {% for breadcrumb in breadcrumbs %}
+                {% block breadcrumbs_item %}
+                <li class="breadcrumb-item {{ loop.last ? 'active' : '' }}"
+                    {% if loop.last %}aria-current="page"{% endif %}>
+
+                    {% if not loop.last and breadcrumb.url %}
+                        <a href="{{ breadcrumb.url }}"
+                           class="text-light text-decoration-none">
+                            {{ breadcrumb.title }}
+                        </a>
+                    {% else %}
+                        {{ breadcrumb.title }}
+                    {% endif %}
+                </li>
+                {% endblock %}
+            {% endfor %}
+        </ol>
+        {% endblock %}
+    </nav>
+    {% endblock %}
+</div>
+{% endblock %}

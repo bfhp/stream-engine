@@ -1,38 +1,36 @@
-<footer class="text-light py-5 mt-auto">
+<footer class="{% block footer_class %}site-footer{% endblock %}">
     {% block footer_inner %}
-    <div class="pb-5">
-        <div class="container">
-            <div class="row">
+    <div class="ui-container">
+        <div class="site-footer__grid">
 
-                {# --- LEFT --- #}
-                <div class="col-md-6">
-                    {% block footer_about %}
-                        {% include 'components/widgets/block.twig' with { placement: 'footer_legal' } %}
-                        <p>
-                        {{ trans('view.footer.copyright', {year: "now"|date("Y"), site: siteName}) }}
-                        </p>
-                        {% block footer_runtime %}
-                            {{ runtime }}
-                        {% endblock %}
+            {# --- LEFT --- #}
+            <div class="site-footer__about">
+                {% block footer_about %}
+                    {% include 'components/widgets/block.twig' with { placement: 'footer_legal' } %}
+                    <p>
+                    {{ trans('view.footer.copyright', {year: "now"|date("Y"), site: siteName}) }}
+                    </p>
+                    {% block footer_runtime %}
+                        {{ runtime }}
                     {% endblock %}
-                </div>
-                <div class="col-md-3 footer-quick-links">
-                    {% block footer_menu %}
-                    <h2>{{ trans('view.footer.quick_links') }}</h2>
-                        {% if bottomMenu %}
-                            {% include 'components/nav/menu.twig' with {
-                                items: bottomMenu,
-                                menuClass: 'list-group',
-                                itemClass: 'list-group-item list-group-item-action'
-                            } %}
-                        {% endif %}
-                    {% endblock %}
-                </div>
-                <div class="col-md-3">
-                    {% block footer_contacts %}
-                        {% include 'components/widgets/block.twig' with { placement: 'footer_contacts' } %}
-                    {% endblock %}
-                </div>
+                {% endblock %}
+            </div>
+            <div class="footer-quick-links">
+                {% block footer_menu %}
+                <h2 class="site-footer__title">{{ trans('view.footer.quick_links') }}</h2>
+                    {% if bottomMenu %}
+                        {% include 'components/nav/menu.twig' with {
+                            items: bottomMenu,
+                            menuClass: 'site-footer__links',
+                            itemClass: 'site-footer__link'
+                        } %}
+                    {% endif %}
+                {% endblock %}
+            </div>
+            <div class="site-footer__contacts">
+                {% block footer_contacts %}
+                    {% include 'components/widgets/block.twig' with { placement: 'footer_contacts' } %}
+                {% endblock %}
             </div>
         </div>
     </div>

@@ -174,6 +174,7 @@ return [
     'view.ui.confirmation' => '确认',
     'view.ui.are_you_sure' => '确定吗？',
     'view.ui.confirm' => '确认',
+    'view.ui.close' => '关闭',
     'view.nav.open_menu' => '打开菜单',
     'view.nav.search' => '搜索',
     'view.nav.messages' => '消息',

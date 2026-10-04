@@ -174,6 +174,7 @@ return [
     'view.ui.confirmation' => 'Confirmation',
     'view.ui.are_you_sure' => 'Êtes-vous sûr ?',
     'view.ui.confirm' => 'Confirmer',
+    'view.ui.close' => 'Fermer',
     'view.nav.open_menu' => 'Ouvrir le menu',
     'view.nav.search' => 'Recherche',
     'view.nav.messages' => 'Messages',

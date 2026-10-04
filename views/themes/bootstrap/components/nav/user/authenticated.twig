@@ -1,0 +1,48 @@
+{% set messagesUrl = action_url('messages.inbox') %}
+{% set profileUrl = action_url('profile.show') %}
+<div class="d-flex ms-auto order-2 order-lg-4">
+
+    {% block user_messages %}
+        {% if messagesUrl %}
+            <a class="btn btn-outline-secondary me-2" href="{{ messagesUrl }}" data-messages-link role="button" title="{{ trans('view.nav.messages') }}">
+                <i class="bi bi-envelope"></i>
+                <span class="d-md-none">{{ trans('view.nav.messages') }}</span>
+            </a>
+        {% endif %}
+    {% endblock %}
+
+    {% block user_dropdown %}
+    <div class="btn-group">
+
+        {% if profileUrl %}
+            <a class="btn p-0"
+               id="menu-user"
+               href="{{ profileUrl }}"
+               role="button">
+                <img alt="{{ user.nick }}"
+                     src="{{ user.avatarUrl }}"
+                     class="rounded-circle" />
+                <span class="d-lg-none d-md-none">{{ trans('view.nav.profile') }}</span>
+            </a>
+        {% endif %}
+
+        <button type="button"
+                id="menu-user-toggle"
+                class="btn dropdown-toggle dropdown-toggle-split"
+                data-bs-toggle="dropdown"
+                aria-expanded="false">
+            <span class="visually-hidden">Toggle Dropdown</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="menu-user-toggle">
+            {% block navbar_user_menu %}
+                {% for item in userMenu %}
+                    {% include 'components/nav/menu-item.twig' with {
+                        item: item,
+                        level: 1
+                    } %}
+                {% endfor %}
+            {% endblock %}
+        </ul>
+    </div>
+    {% endblock %}
+</div>

@@ -29,7 +29,7 @@ function moduleAssetEntries(): Record<string, string> {
 }
 
 const moduleEntries = moduleAssetEntries();
-const builtInEntryNames = ["admin", "site", "register", "search", "feedback", "messages", "retrieve", "profile", "users", "forums", "blog-post-form", "bootstrap", "bootstrap-rtl", "ui-bootstrap"];
+const builtInEntryNames = ["admin", "site", "register", "search", "feedback", "messages", "retrieve", "profile", "users", "forums", "blog-post-form", "bootstrap", "bootstrap-rtl", "ui-bootstrap", "base"];
 for (const name of Object.keys(moduleEntries)) {
     if (builtInEntryNames.includes(name)) throw new Error(`Reserved module asset entry: ${name}`);
 }
@@ -62,8 +62,9 @@ export default defineConfig({
                 site: "assets-src/site/main.ts",
                 bootstrap: "assets-src/site/bootstrap-ltr.ts",
                 "bootstrap-rtl": "assets-src/site/bootstrap-rtl.ts",
+                base: "assets-src/site/base.ts",
                 // The Bootstrap UI adapter + Bootstrap's JS, loaded by the
-                // `bootstrap` theme (and by `default` until ADR-002 Phase 2).
+                // `bootstrap` theme only.
                 "ui-bootstrap": "assets-src/site/ui-bootstrap.ts",
                 register: path.join(engineAssets, "pages/register.ts"),
                 search: path.join(engineAssets, "pages/search.ts"),

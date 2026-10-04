@@ -1,9 +1,7 @@
 {% set searchUrl = action_url('search.results') %}
 {% if searchUrl %}
-    <form class="d-flex me-2 mt-3 mt-lg-0" role="search" method="get" action="{{ searchUrl }}">
-        <div class="input-group">
-            <input class="form-control" required name="q" minlength="3" type="search" placeholder="{{ trans('view.nav.search') }}" aria-label="Search"/>
-            <button class="btn btn-outline-secondary input-group-text" type="submit"><i class="bi bi-search"></i></button>
-        </div>
+    <form class="site-nav__search" role="search" method="get" action="{{ searchUrl }}">
+        <input class="ui-input" required name="q" minlength="3" type="search" placeholder="{{ trans('view.nav.search') }}" aria-label="{{ trans('view.nav.search') }}"/>
+        <button class="ui-button ui-button--secondary" type="submit" aria-label="{{ trans('view.nav.search') }}"><i class="bi bi-search" aria-hidden="true"></i></button>
     </form>
 {% endif %}

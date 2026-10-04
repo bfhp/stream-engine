@@ -189,10 +189,11 @@ resolving from `default` or from the module that owns it.
 
 ## Theme layers: a bare base and themes built on it
 
-> Status: see `docs/ADR-002-BASE-AND-BOOTSTRAP-THEMES.md`. Inheritance,
-> namespaces and the UI adapter are implemented. `default` is still the
-> Bootstrap design and lists the same assets as `bootstrap`; the `bootstrap`
-> theme exists but has no templates of its own yet (Phase 1).
+> Status: see `docs/ADR-002-BASE-AND-BOOTSTRAP-THEMES.md`. The platform layer
+> (layouts, partials, `components/*` in the theme) is done: `default` is
+> framework-free and `bootstrap` keeps the previous look. Module templates
+> still use Bootstrap classes and are migrated module by module, so under
+> `default` module pages are only partly styled until then.
 
 ### `default` is the base, not a design
 
@@ -201,36 +202,50 @@ forms, modals, toasts, comments, pagination, messenger. It is what every
 other theme inherits from and what the site falls back to after an error.
 So it:
 
-- loads no CSS framework, only `/assets/css/base.css` (custom properties for
-  color, spacing and type; light/dark; logical properties for RTL);
-- uses semantic HTML and the UI vocabulary below, never framework classes
-  or `data-bs-*`;
-- uses the native UI adapter (`<dialog>`, an `aria-live` toast region,
-  Popover API);
-- exposes `{% block %}`s at every point a child is likely to change, so
-  children override blocks instead of copying files.
+- loads no CSS framework: `/assets/css/base.css` (custom properties for
+  color, spacing and type; light/dark through `data-color-mode`; logical
+  properties for RTL) plus the shared `site.css`;
+- uses semantic HTML, the UI vocabulary below and its own component classes
+  (`site-nav__*`, `ui-modal`, `comment-*`, ...), never framework classes or
+  `data-bs-*`;
+- uses the native UI adapter (`<dialog>`, a toast region, `title`
+  tooltips), `<details>` for dropdowns and the declarative `data-ui-*`
+  toggles (see "JS surface");
+- exposes `{% block %}`s at every point a child is likely to change,
+  including class blocks (`main_class`, `layout_container_class`,
+  `header_class`, ...), so children override blocks instead of copying
+  files.
 
 ### `bootstrap` is the reference extended theme
 
-`views/themes/bootstrap` reproduces the current look and is the example
-theme authors copy from. It shows the three ways to build on `default`:
+`views/themes/bootstrap` keeps the site's Bootstrap look and is the example
+theme authors copy from. It shows the ways to build on `default`:
 
-1. **Extend and override blocks** where structure differs (layouts, navbar,
-   modal, toast, tabs):
+1. **Override class blocks** where only classes differ:
 
    ```twig
-   {# views/themes/bootstrap/layouts/base.twig #}
-   {% extends '@default/layouts/base.twig' %}
+   {# views/themes/bootstrap/layouts/with-sidebar.twig #}
+   {% extends '@default/layouts/with-sidebar.twig' %}
 
-   {% block layout_header %}
-       {% include 'partials/navbar.twig' %}
-   {% endblock %}
+   {% block layout_container_class %}container{% endblock %}
+   {% block layout_row_class %}row{% endblock %}
+   {% block layout_content_class %}col-lg-8{% endblock %}
    ```
 
-2. **Restyle the UI vocabulary** in CSS instead of overriding module
-   templates (`.ui-button { @extend .btn; }` in Sass).
-3. **Register its own UI adapter** (Bootstrap's `Modal`, `Toast`,
-   `Tooltip`) and its own RTL stylesheet in `theme.json`.
+2. **Override structural blocks and reuse the rest** with `block()`
+   (`partials/header.twig`, `partials/footer.twig`, `partials/comments.twig`).
+3. **Replace a component** whose structure is framework-specific (navbar,
+   dropdowns, modals, toast, tabs, cards): same path, own markup. Keep the
+   data-* hooks scripts rely on (`data-slot*`, `data-comment-form`,
+   `data-reply-toggle`, ids such as `authFormModal`).
+4. **Bring its own assets and adapter**: Bootstrap with the theme skin
+   (`bootstrap.css`, RTL build in `assets.rtl`) and `ui-bootstrap.js`. It
+   sets `"inheritAssets": false` because Bootstrap must load before
+   `site.css`.
+
+Module templates are not copied into `bootstrap`: once they are migrated to
+the UI vocabulary, the theme maps `ui-*` onto Bootstrap with Sass
+(`.ui-button { @extend .btn; }`).
 
 ### Inheritance
 
@@ -263,23 +278,27 @@ uses the module's own classes (`msgr-*`, `comment-*`).
 
 | Class | Meaning |
 |---|---|
-| `ui-button`, `ui-button--primary`, `--secondary`, `--danger`, `--link`, `--sm` | Buttons and button-like links |
+| `ui-container` | Centered page-width wrapper |
+| `ui-button`, `ui-button--primary`, `--secondary`, `--success`, `--danger`, `--link`, `--sm`, `--block` | Buttons and button-like links |
 | `ui-card`, `ui-card__body`, `ui-card__title` | Boxed content |
-| `ui-badge` | Small label / counter |
+| `ui-badge`, `ui-badge--success` | Small label / counter |
 | `ui-alert`, `ui-alert--error`, `--success`, `--info` | Inline messages |
-| `ui-field`, `ui-input`, `ui-label`, `ui-help` | Form controls |
+| `ui-field`, `ui-input`, `ui-label`, `ui-help`, `ui-error` | Form controls |
 | `ui-stack`, `ui-cluster`, `ui-grid` | Layout primitives |
 | `ui-muted`, `ui-small`, `ui-visually-hidden` | Text utilities |
 | `ui-spinner` | Loading indicator |
 
-Adding a class here is a contract change: `default` must style it and
-`bootstrap` must map it in the same PR.
+Visibility is the `hidden` attribute, not a class (`d-none` and the like).
+
+Adding a class here is a contract change: `default` must style it in
+`base.css`, and `bootstrap` must map it.
 
 ## JS surface: client-side markup belongs to the theme too
 
-> Status: target state, see `docs/ADR-001-JS-THEME-MARKUP.md`. Existing code
-> in `assets-src` still builds Bootstrap markup in template strings and is
-> being migrated.
+> Status: see `docs/ADR-001-JS-THEME-MARKUP.md`. The UI adapter, the
+> declarative toggles and theme templates are implemented, and comments use
+> them. Module scripts (users, profile, search, forums, ...) still build
+> Bootstrap markup in template strings and are migrated with their modules.
 
 The ownership rule above applies to markup created in the browser as well.
 If JS inserts HTML with framework classes baked in (`btn`, `card`, `badge`,
@@ -289,37 +308,48 @@ A theme on a different CSS framework then breaks outright.
 
 The rule: **JS owns data and behavior; the theme owns markup and the UI
 framework.** Scripts in `assets-src` must not hard-code a CSS framework's
-markup or import its JS directly. They get markup and behavior through one of
-three channels, all resolved through the same theme → `default` → module
+markup or import its JS directly. They get markup and behavior through these
+channels, all resolved through the same theme → parents → `default` → module
 cascade described above:
 
-1. **Server-rendered fragments** — for content that already has a Twig
-   component (comments and replies, user and post cards, pagination, search
-   results). The endpoint renders the same `.twig` the full page uses and
-   returns `{ "html": "...", "meta": { ... } }` when asked with
-   `?render=html`. The client inserts `html` as-is. This is the default
-   choice: one template, no drift between SSR and AJAX, escaping done by
-   Twig autoescape.
-2. **`<template>` elements** — for small client-only atoms that should not
-   cost a request (spinner, empty state, error block, reply form, a
-   messenger row). The theme provides them in
-   `partials/js-templates.twig`, included by `layouts/base.twig`:
+1. **Theme templates** (`<template data-ui="...">`) — the active theme's
+   own components rendered with placeholder data by
+   `partials/js-templates.twig` (included by `layouts/base.twig`). Comments
+   use this: `comment`, `reply` and `load-replies` are `comment.twig`,
+   `reply.twig` and `load-replies.twig` themselves, so a theme that restyles
+   those files restyles AJAX comments too, with nothing to override in
+   `js-templates.twig`. A theme adds its own templates in the
+   `js_templates_extra` block.
 
-   ```twig
-   <template data-ui="spinner">
-       <span class="ui-spinner" aria-hidden="true"></span>
-   </template>
-   <template data-ui="empty">
-       <p class="ui-muted" data-slot="message"></p>
-   </template>
-   ```
+   JS does `ui.clone('<name>')` (null if the theme has no such template)
+   and `ui.fill(el, data)`. Fill points in the markup:
 
-   JS clones them with `CMS.ui.clone('<id>')` / `CMS.ui.fill('<id>', data)`.
-   `data-slot="<name>"` receives text; `data-slot-attr="<attr>:<name>"`
-   receives an attribute value. Slots never receive raw HTML.
-3. **UI adapter** (`assets-src/shared/ui.ts`, implemented) — for behavior
-   that comes from a framework's JS (modals, toasts, tooltips). Bundled code
-   imports `ui` from `shared/ui`; theme scripts use `window.CMS.ui`. Never
+   | Attribute | Receives |
+   |---|---|
+   | `data-slot="key"` | Text content |
+   | `data-slot-html="key"` | Inner HTML; server-sanitized values only (comment bodies) |
+   | `data-slot-attr="attr:key attr2:key2"` | Attribute values; an empty value removes the attribute |
+   | `data-slot-optional="key"` | The element is removed when the value is empty |
+
+2. **Server-rendered fragments** — for lists that already have a Twig
+   component and come from an endpoint (user and post cards, pagination,
+   search results). The endpoint renders the same `.twig` the full page uses
+   and returns `{ "html": "...", "meta": { ... } }` when asked with
+   `?render=html`. Not implemented yet; planned with the module migrations.
+3. **Declarative toggles** (`shared/ui.ts`, any theme):
+
+   | Markup | Does |
+   |---|---|
+   | `data-ui-toggle="modal" data-ui-target="#id"` | Opens the modal through the adapter |
+   | `data-ui-dismiss="modal"` | Closes the open modal it is in |
+   | `data-ui-toggle="collapse" data-ui-target="#id"` | Toggles `hidden` on the target and `aria-expanded` on the trigger |
+   | `data-ui-toggle="tab" data-ui-target="#pane"` | Shows the pane (`data-ui-active`), hides its siblings' panes, dispatches `ui:tab-shown` |
+
+   Listen for `ui:tab-shown` (`TAB_SHOWN`) and use `ui.tabs.isActive(pane)`;
+   the Bootstrap adapter re-emits `shown.bs.tab` as `ui:tab-shown`.
+4. **UI adapter** (`assets-src/shared/ui.ts`) — for behavior that comes
+   from a framework's JS (modals, toasts, tooltips). Bundled code imports
+   `ui` from `shared/ui`; theme scripts use `window.CMS.ui`. Never
    `import … from "bootstrap"` outside the adapter.
 
    | Call | Does |
@@ -333,40 +363,41 @@ cascade described above:
    An adapter implements `modalOpen`, `modalClose`, `toastShow`,
    `tooltipInit`, and must dispatch `ui:modal-closed` on the modal element
    on every close. The native adapter (`<dialog>` or `hidden`, a timed
-   toast, `title` tooltips) is the fallback; `site/ui-bootstrap.ts` is the
-   Bootstrap one. The higher-level `CMS.toast({ message, type })` and
-   `CMS.confirm({ ... })` fill the theme's markup and then go through the
-   adapter. The Bootstrap adapter is its own bundle,
-   `/assets/js/ui-bootstrap.js`, listed in the `bootstrap` manifest (and in
-   `default`'s until ADR-002 Phase 2). Never import it from another bundle:
-   Bootstrap loaded twice installs its data API twice.
+   toast, `title` tooltips) is what `default` uses; `site/ui-bootstrap.ts`,
+   built as `/assets/js/ui-bootstrap.js` and listed only in the `bootstrap`
+   manifest, is the Bootstrap one. Never import it from another bundle:
+   Bootstrap loaded twice installs its data API twice. The higher-level
+   `CMS.toast({ message, type })` and `CMS.confirm({ ... })` fill the
+   theme's markup (`#globalToast`, `#globalConfirmModal`) and then go
+   through the adapter.
 
 What a theme gets for free: anything it does not override is inherited from
-its parent chain down to `default` (fragments, `js-templates.twig`, the
+its parent chain down to `default` (templates, `js-templates.twig`, the
 adapter), exactly as for page templates. Because `default` is
-framework-free, an inherited fragment never brings a foreign framework with
-it; a theme only overrides what it wants to look different.
+framework-free, an inherited component never brings a foreign framework
+with it; a theme only overrides what it wants to look different.
 
 ### Catalog of the JS surface
 
 This list is the contract a theme author reads. Any PR that adds a new
-fragment, template ID, slot, or adapter method must update it.
+template, slot, toggle or adapter method must update it.
 
 | Kind | Name | Source | Slots / API |
 |---|---|---|---|
-| Fragment | comment | `components/comments/comment.twig` | — |
-| Fragment | comment reply | `components/comments/reply.twig` | — |
-| Template | `spinner` | `partials/js-templates.twig` | — |
-| Template | `empty` | `partials/js-templates.twig` | `message` |
-| Template | `error` | `partials/js-templates.twig` | `message` |
-| Template | `reply-form` | `partials/js-templates.twig` | `parent-id`, `submit-label`, `cancel-label` |
+| Template | `comment` | `components/comments/comment.twig` (+ `form.twig` inside) | `id`, `author`, `avatar`, `date`, `dateTitle`, `datetime`, `content` (html), `inputId` |
+| Template | `reply` | `components/comments/reply.twig` | `id`, `author`, `avatar`, `date`, `dateTitle`, `datetime`, `content` (html) |
+| Template | `load-replies` | `components/comments/load-replies.twig` | `parentId`, `nextCursor`, `label` |
+| Markup | toast | `components/ui/toast.twig` | `#globalToast`, `#globalToastBody` |
+| Markup | confirm | `components/ui/modal_confirm.twig` | `#globalConfirmModal`, `#globalConfirmTitle`, `#globalConfirmBody`, `#globalConfirmOk` |
+| Markup | sign-in | `components/auth/form.twig` | `#authFormModal`, `#authForm` |
 | Adapter | `modal` | theme script | `open(el)`, `close(el)`, `onClosed(el, fn)` |
 | Adapter | `toast` | theme script | `show(el, type)` |
 | Adapter | `tooltip` | theme script | `init(root)` |
 
-Module-owned fragments (user cards, profile cards, search results) follow the
-ownership rule: they live in `src/Modules/<Name>/views/components/` and are
-listed in that module's docs, not here.
+Module-owned templates and fragments (user cards, profile cards, search
+results) follow the ownership rule: they live in
+`src/Modules/<Name>/views/components/` and are listed in that module's docs,
+not here.
 
 ### What JS must never do
 
@@ -380,17 +411,18 @@ listed in that module's docs, not here.
 
 ```bash
 # Framework classes inside client-side template strings:
-grep -rnE 'class="[^"]*\b(btn|card|badge|alert|list-group|form-control|spinner-border|d-flex)\b' assets-src
+grep -rnE 'class="([^"]* )?(btn|card|badge|alert|list-group|form-control|spinner-border|d-flex|d-none)\b' assets-src
 
 # Framework classes and data-bs-* in the base theme and module views (ADR-002):
-grep -rnE 'class="[^"]*\b(btn|card|badge|alert|list-group|form-control|spinner-border|d-flex)\b|data-bs-' \
+grep -rnE 'class="([^"]* )?(btn|card|badge|alert|list-group|form-control|spinner-border|d-flex|d-none)\b|data-bs-' \
   views/themes/default src/Modules --include="*.twig"
 
 # Direct framework imports outside the adapter:
 grep -rn 'from "bootstrap"' assets-src | grep -v ui-bootstrap.ts
 ```
 
-Both should come back empty once the migration in ADR-001 is done.
+All three should come back empty once the module migrations are done; for
+`views/themes/default` the second one already does.
 
 ## Where this applies
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ locale }}" dir="{{ dir|default('ltr') }}" data-bs-theme="{{ theme.values.color_mode|default('dark') }}">
+<html lang="{{ locale }}" dir="{{ dir|default('ltr') }}" {% block html_attributes %}data-color-mode="{{ theme.values.color_mode|default('dark') }}"{% endblock %}>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,16 +9,18 @@
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
     <meta name="theme-color" content="{{ theme.themeColor|default('#0F172A') }}">
-    {% for asset in theme.assets.styles|default(['/assets/css/bootstrap.css', '/assets/css/site.css']) %}
+    {% for asset in theme.assets.styles|default(['/assets/css/base.css', '/assets/css/site.css']) %}
         <link rel="stylesheet" href="{{ asset }}">
     {% endfor %}
 </head>
 <body>
-<main class="container py-5 text-center">
-    <h1 class="display-3">{{ status }}</h1>
+{% block error_body %}
+<main class="ui-container status-page">
+    <h1 class="status-page__title">{{ status }}</h1>
     <h2>{{ title }}</h2>
-    <p class="lead">{{ message }}</p>
-    <a href="/" class="btn btn-dark">{{ trans('error.home') }}</a>
+    <p class="status-page__lead">{{ message }}</p>
+    <a href="/" class="ui-button ui-button--primary">{{ trans('error.home') }}</a>
 </main>
+{% endblock %}
 </body>
 </html>

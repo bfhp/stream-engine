@@ -84,8 +84,8 @@ The messenger (`msgr-*`) already uses its own classes. It stays on JSON + B, bec
 ## Action items
 
 1. [x] Build `CMS.ui` (adapter + `clone/fill`) with a native adapter for `default` and `bootstrap-adapter.ts` for the `bootstrap` theme; remove direct `import … from "bootstrap"` from `app.ts` and `forums.ts`.
-2. [ ] Add `partials/js-templates.twig` (spinner, empty, error, reply-form) and move spinners to it.
-3. [ ] Implement `render=html` for comments and switch `app.ts` to `comment.twig`. This is the pilot.
+2. [x] Add `partials/js-templates.twig`. It renders the theme's own `comment.twig`, `reply.twig` and `load-replies.twig` as templates; spinners move to it with their modules.
+3. [x] Comments use the theme's `comment.twig` through `<template>` (option B) rather than `render=html`: the same file renders on the server and in the browser, with no API change.
 4. [ ] Switch `user-cards`, `user-pagination`, `profile`, `search` and `initOffsetLoadMore` to `res.html`.
 5. [x] Add a "JS surface" section to `THEME_CONTRACT.md`.
 6. [ ] Test: with the `default` theme active (framework-free per ADR-002), check that the DOM has no `btn`/`card` classes after AJAX loads.

@@ -1,0 +1,12 @@
+{% extends '@default/error.twig' %}
+
+{% block html_attributes %}data-bs-theme="{{ theme.values.color_mode|default('dark') }}"{% endblock %}
+
+{% block error_body %}
+<main class="container py-5 text-center">
+    <h1 class="display-3">{{ status }}</h1>
+    <h2>{{ title }}</h2>
+    <p class="lead">{{ message }}</p>
+    <a href="/" class="btn btn-dark">{{ trans('error.home') }}</a>
+</main>
+{% endblock %}

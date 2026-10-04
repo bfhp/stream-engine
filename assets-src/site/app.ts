@@ -15,7 +15,7 @@ import { getApiErrorMessage } from "../shared/api-errors";
 import { resolveSameOriginUrl } from "../shared/navigation-url";
 import { escapeHtml } from "../shared/escape";
 import { trans, transChoice, transChoiceWithCount } from "../shared/i18n";
-import { ui } from "../shared/ui";
+import { ui, type SlotData } from "../shared/ui";
 
 const CMS = (() => {
 
@@ -218,9 +218,7 @@ const CMS = (() => {
            target="_blank"
            rel="noopener"
            class="share-btn ${name}"
-           data-bs-toggle="tooltip"
-           data-bs-placement="top"
-           data-bs-title="${name.toUpperCase()}">
+           data-ui-tooltip="${name.toUpperCase()}">
             ${getShareIcon(name)}
         </a>
     `)
@@ -279,148 +277,110 @@ const CMS = (() => {
      * round-trip covers &, < and > but not quotes: those are only special
      * inside attribute values, and a text node doesn't know it's about to be
      * pasted into one. Callers interpolate into quoted attributes as much as
-     * into text - renderCommentMeta() below puts a comment author's own nick
-     * straight into alt="..." - and nicks are stored exactly as typed, so a
+     * into text - an author's nick going into alt="...", say - and nicks are
+     * stored exactly as typed, so a
      * nick containing `"` would otherwise close the attribute and get the rest
      * parsed as markup.
      *
      * Takes unknown rather than string because most callers hand it optional
      * fields straight off an API payload; null/undefined become "".
      */
-    function renderCommentMeta(item: any, avatarSize = 40): string {
-        const authorName = escapeHtml(item.authorDisplayName ?? `#${item.ownerId}`);
-        const avatarUrl = escapeHtml(item.authorAvatarUrl);
-        const safeDate = escapeHtml(item.createdAtLabel ?? "");
-        const safeDateTitle = escapeHtml(item.createdAtTitle ?? "");
-
-        return `
-            <div class="comment-meta d-flex align-items-center gap-3 mb-3">
-                <img
-                    src="${avatarUrl}"
-                    alt="${authorName}"
-                    class="comment-avatar rounded-2"
-                    width="${avatarSize}"
-                    height="${avatarSize}"
-                >
-                <div class="comment-meta-text min-w-0">
-                    <div class="comment-author fw-semibold lh-sm">${authorName}</div>
-                    ${safeDate ? `<time class="comment-date small text-secondary"${safeDateTitle ? ` title="${safeDateTitle}"` : ""}>${safeDate}</time>` : ""}
-                </div>
-            </div>
-        `;
+    /*
+     * Comments added without a page reload are cloned from the active theme's
+     * own templates (partials/js-templates.twig renders comment.twig,
+     * reply.twig and load-replies.twig as <template data-ui="...">), so they
+     * look exactly like the server-rendered ones in every theme. Nothing here
+     * knows the markup; it only fills the data-slot* hooks (shared/ui.ts).
+     * `content` is server-sanitized HTML, as it was when this file built the
+     * markup itself.
+     */
+    function commentSlots(item: any): SlotData {
+        return {
+            id: String(item.id ?? ""),
+            author: item.authorDisplayName ?? `#${item.ownerId}`,
+            avatar: item.authorAvatarUrl ?? "",
+            date: item.createdAtLabel ?? "",
+            dateTitle: item.createdAtTitle ?? "",
+            // The API sends display labels, not an ISO timestamp.
+            datetime: "",
+            content: item.content ?? "",
+            inputId: `comment-content-reply-${item.id ?? ""}`,
+        };
     }
 
-    function createRepliesButton(parentId: string, nextCount: number, nextCursor?: string | null): string {
+    function createRepliesButton(parentId: string, nextCount: number, nextCursor?: string | null): HTMLElement | null {
         if (nextCount <= 0 || !nextCursor) {
-            return "";
+            return null;
         }
 
-        return `<button class="load-replies btn btn-sm btn-outline-secondary mt-2"
-                    data-parent-id="${escapeHtml(parentId)}"
-                    data-next-cursor="${escapeHtml(nextCursor ?? "")}">
-                ${trans("js.comments.load_more", { count: nextCount })}
-            </button>`;
+        const button = ui.clone("load-replies");
+        return button && ui.fill(button, {
+            parentId,
+            nextCursor: nextCursor ?? "",
+            label: trans("js.comments.load_more", { count: nextCount }),
+        });
     }
 
-    function renderReply(reply: any): string {
-        return `
-            <article class="reply border-top pt-3 mt-3" data-id="${reply.id}">
-                ${renderCommentMeta(reply, 32)}
-                <div class="reply-content">${reply.content ?? ""}</div>
-            </article>
-        `;
+    function renderReply(reply: any): HTMLElement | null {
+        const el = ui.clone("reply");
+        return el && ui.fill(el, commentSlots(reply));
     }
 
-    function renderReplyForm(parentId: string): string {
-        return `
-            <form class="comment-form comment-form-reply"
-                  data-comment-form
-                  data-parent-id="${escapeHtml(parentId)}"
-                  data-comment-mode="reply">
-                <div class="mb-2">
-                    <label class="visually-hidden" for="comment-content-reply-${escapeHtml(parentId)}">${trans("js.comments.label")}</label>
-                    <textarea
-                        id="comment-content-reply-${escapeHtml(parentId)}"
-                        class="form-control"
-                        name="content"
-                        rows="2"
-                        placeholder="${trans("js.comments.reply_placeholder")}"
-                        maxlength="5000"
-                        required
-                    ></textarea>
-                </div>
-                <div class="comment-form-error invalid-feedback d-none" data-comment-form-error></div>
-                <div class="comment-form-actions d-flex flex-wrap align-items-center gap-2">
-                    <button type="submit" class="btn btn-sm btn-primary">${trans("js.common.reply")}</button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" data-comment-cancel>${trans("js.common.cancel")}</button>
-                </div>
-            </form>
-        `;
-    }
+    function renderComment(comment: any): HTMLElement | null {
+        const el = ui.clone("comment");
+        if (!el) {
+            return null;
+        }
+        ui.fill(el, commentSlots(comment));
 
-    function renderComment(comment: any): HTMLElement {
-        const children = comment.children?.items ?? [];
+        const repliesEl = el.querySelector(".replies");
         const childrenMeta = comment.children?.meta;
-        const repliesHtml = children.map(renderReply).join("");
+        (comment.children?.items ?? []).forEach((reply: any) => {
+            const replyEl = renderReply(reply);
+            if (replyEl) repliesEl?.append(replyEl);
+        });
         const repliesButton = createRepliesButton(
             String(comment.id),
             Number(childrenMeta?.next_count ?? 0),
             childrenMeta?.next_cursor
         );
-
-        const el = document.createElement('article');
-        el.className = 'comment card border-0 shadow-sm';
-        el.dataset.id = String(comment.id);
-        const replyActions = isAuthenticated()
-            ? `<button type="button" class="btn btn-sm btn-link px-0" data-reply-toggle>${trans("js.common.reply")}</button>`
-            : `<button type="button"
-                       class="btn btn-sm btn-link px-0"
-                       data-bs-toggle="modal"
-                       data-bs-target="#authFormModal">${trans("js.common.reply")}</button>`;
-        const replyForm = isAuthenticated()
-            ? `<div class="comment-reply-form-wrapper d-none mt-3">${renderReplyForm(String(comment.id))}</div>`
-            : "";
-
-        el.innerHTML = `
-            <div class="card-body">
-                ${renderCommentMeta(comment, 44)}
-                <div class="comment-content content">${comment.content ?? ""}</div>
-                <div class="comment-actions d-flex align-items-center gap-2 mt-2">${replyActions}</div>
-                ${replyForm}
-                <div class="replies mt-3">${repliesHtml}${repliesButton}</div>
-            </div>
-        `;
+        if (repliesButton) repliesEl?.append(repliesButton);
 
         return el;
     }
 
     function appendComments(target: HTMLElement, comments: any[]) {
         comments.forEach(comment => {
-            target.appendChild(renderComment(comment));
+            const el = renderComment(comment);
+            if (el) target.appendChild(el);
         });
     }
 
-    function insertReplyHtml(repliesEl: HTMLElement, replyHtml: string, position: "start" | "end" = "end") {
+    function insertReply(repliesEl: HTMLElement, replyEl: HTMLElement | null, position: "start" | "end" = "end") {
+        if (!replyEl) {
+            return;
+        }
+
         const loadMoreButton = repliesEl.querySelector(".load-replies");
 
         if (position === "start") {
             const firstReply = repliesEl.querySelector(".reply");
             if (firstReply) {
-                firstReply.insertAdjacentHTML("beforebegin", replyHtml);
+                firstReply.before(replyEl);
             } else if (loadMoreButton) {
-                loadMoreButton.insertAdjacentHTML("beforebegin", replyHtml);
+                loadMoreButton.before(replyEl);
             } else {
-                repliesEl.insertAdjacentHTML("afterbegin", replyHtml);
+                repliesEl.prepend(replyEl);
             }
             return;
         }
 
         if (loadMoreButton) {
-            loadMoreButton.insertAdjacentHTML("beforebegin", replyHtml);
+            loadMoreButton.before(replyEl);
             return;
         }
 
-        repliesEl.insertAdjacentHTML("beforeend", replyHtml);
+        repliesEl.append(replyEl);
     }
 
     function updateLoadButton(button: HTMLButtonElement, meta: any) {
@@ -444,12 +404,12 @@ const CMS = (() => {
 
         if (message.trim() === "") {
             errorEl.textContent = "";
-            errorEl.classList.add("d-none");
+            errorEl.hidden = true;
             return;
         }
 
         errorEl.textContent = message;
-        errorEl.classList.remove("d-none");
+        errorEl.hidden = false;
     }
 
     function toggleCommentForm(form: HTMLFormElement, visible: boolean) {
@@ -458,7 +418,7 @@ const CMS = (() => {
             return;
         }
 
-        wrapper.classList.toggle("d-none", !visible);
+        wrapper.hidden = !visible;
 
         if (visible) {
             const textarea = form.elements.namedItem("content") as HTMLTextAreaElement | null;
@@ -500,15 +460,16 @@ const CMS = (() => {
                 const repliesEl = commentEl?.querySelector(".replies") as HTMLElement | null;
 
                 if (repliesEl) {
-                    insertReplyHtml(repliesEl, renderReply(comment), "start");
+                    insertReply(repliesEl, renderReply(comment), "start");
                 }
 
                 form.reset();
                 toggleCommentForm(form, false);
             } else {
                 const list = document.getElementById("comments-list");
-                if (list) {
-                    list.prepend(renderComment(comment));
+                const commentEl = renderComment(comment);
+                if (list && commentEl) {
+                    list.prepend(commentEl);
                 }
                 form.reset();
             }
@@ -559,7 +520,7 @@ const CMS = (() => {
         try {
             const res = await api(buildCommentsApiUrl(parentId, cursor));
             (res.items ?? []).forEach((reply: any) => {
-                insertReplyHtml(repliesEl, renderReply(reply));
+                insertReply(repliesEl, renderReply(reply));
             });
             updateLoadButton(button, res.meta);
         } finally {

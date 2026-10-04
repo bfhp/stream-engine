@@ -174,6 +174,7 @@ return [
     'view.ui.confirmation' => '확인',
     'view.ui.are_you_sure' => '계속하시겠습니까?',
     'view.ui.confirm' => '확인',
+    'view.ui.close' => '닫기',
     'view.nav.open_menu' => '메뉴 열기',
     'view.nav.search' => '검색',
     'view.nav.messages' => '메시지',
