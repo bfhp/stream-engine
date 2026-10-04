@@ -5,6 +5,7 @@ import "../shared/custom-content.css";
 import "./modules/feedback.css";
 import "./modules/search.css";
 import "./modules/article.css";
+import "./modules/profile.css";
 import "./img/default-avatar.svg?no-inline";
 import "./img/default-community.svg?no-inline";
 

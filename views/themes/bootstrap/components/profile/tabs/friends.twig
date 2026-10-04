@@ -1,13 +1,15 @@
 {% extends 'components/ui/tab-pane.twig' %}
 
+{# Bootstrap markup of the Profile module's friends.twig; same hooks (data-*, names, ids). #}
+
 {#
    The friends tab is rendered entirely client-side by initProfileFriends()
    in assets-src/pages/profile.ts, from GET /api/v1/my/friends (this module's
    own endpoint, see ProfileController::handleFriendsRequest()) - this
-   template lays out the shell, and each card is a copy of
-   components/profile/friend-card.twig (the <template> below). Filled
-   client-side because the list is also filtered, re-sorted and mutated in
-   place there; the card markup itself lives only in that Twig file.
+   template only lays out the shell it fills in. Rendered client-side rather
+   than server-side because the list is also filtered, re-sorted and mutated
+   in place there, and rendering the same row twice in two languages is how
+   the two drift apart.
 
    One list, not one per state: friends and both kinds of pending request
    (someone asked you; you asked and are still waiting) sit together, each
@@ -28,18 +30,18 @@
          data-connections-url="/api/v1/my/friends"
          data-messages-url="{{ action_url('messages.inbox') }}">
 
-        <div class="profile-list-header">
-            <h2 class="profile-list-title">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+            <h2 class="h6 mb-0">
                 {{ trans('view.profile.tabs.friends.01') }}
-                <span class="ui-muted profile-list-count" data-friends-count hidden></span>
+                <span class="text-body-secondary fw-normal" data-friends-count hidden></span>
             </h2>
 
             {# Filters the already-loaded list in place - see the tab's own
                "whole list in hand" note in FriendListService::getConnections(). #}
-            <div class="profile-list-search">
-                <label class="ui-visually-hidden" for="profile-friends-search">{{ trans('view.profile.tabs.friends.02') }}</label>
+            <div class="ms-auto" style="max-width: 16rem;">
+                <label class="visually-hidden" for="profile-friends-search">{{ trans('view.profile.tabs.friends.02') }}</label>
                 <input type="search"
-                       class="ui-input ui-input--sm"
+                       class="form-control form-control-sm"
                        id="profile-friends-search"
                        data-friends-search
                        placeholder="{{ trans('view.profile.tabs.friends.02') }}"
@@ -48,27 +50,30 @@
             </div>
         </div>
 
-        <p class="ui-muted ui-small" data-friends-loading>
-            <span class="ui-spinner" role="status" aria-hidden="true"></span>
+        <p class="text-body-secondary small" data-friends-loading>
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
             {{ trans('view.profile.tabs.friends.03') }}
         </p>
 
-        <p class="ui-error profile-note" data-friends-error hidden></p>
+        <p class="text-danger small mb-0" data-friends-error hidden></p>
 
-        <p class="ui-muted ui-small profile-note" data-friends-empty hidden>
+        <p class="text-body-secondary small mb-0" data-friends-empty hidden>
             {{ trans('view.profile.tabs.friends.04') }}
         </p>
 
-        <p class="ui-muted ui-small profile-note" data-friends-no-matches hidden>
+        <p class="text-body-secondary small mb-0" data-friends-no-matches hidden>
             {{ trans('view.profile.tabs.friends.05') }}
         </p>
 
-        <div class="profile-list" data-friends-list></div>
+        {# Card grid, filled by renderCard() - each item is a .col, so the
+           breakpoints live here and the renderer stays layout-agnostic. Same
+           three-up-on-wide grid the public users list uses, one step narrower
+           (md instead of sm for the second column) because these cards carry
+           action buttons and need the room. #}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3" data-friends-list></div>
 
-        <p class="ui-muted ui-small profile-note profile-note--after" data-friends-truncated hidden></p>
+        <p class="text-body-secondary small mt-3 mb-0" data-friends-truncated hidden></p>
 
-        {# One card per row, filled by assets-src/pages/profile.ts from the API -
-           components/profile/friend-card.twig, overridable by a theme. #}
         <template data-ui="profile-friend-card">
             {%- include 'components/profile/friend-card.twig' -%}
         </template>

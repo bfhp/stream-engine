@@ -1,8 +1,8 @@
 {% extends "layouts/simple.twig" %}
 
 {% block content %}
-    <div class="container">
-        <h1 class="display-3">{{ trans('profile.email_unsubscribe') }}</h1>
+    <div class="{% block unsubscribe_container_class %}ui-container{% endblock %}">
+        <h1 class="{% block unsubscribe_title_class %}profile-unsubscribe-title{% endblock %}">{{ trans('profile.email_unsubscribe') }}</h1>
 
         {% if unsubscribed %}
             <p>{{ trans('view.profile.email.unsubscribe.01') }}</p>

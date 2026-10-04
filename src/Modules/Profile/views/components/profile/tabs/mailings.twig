@@ -2,22 +2,22 @@
 
 {% block tab_content %}
     <form method="post" action="/api/v1/my/mailings" data-profile-form>
-        <p class="text-body-secondary">
+        <p class="ui-muted">
             {{ trans('view.profile.tabs.mailings.01') }}
         </p>
 
-        <div class="card border-primary-subtle mb-4">
-            <div class="card-body d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+        <div class="ui-card profile-digest">
+            <div class="ui-card__body profile-digest__body">
                 <div>
-                    <h2 class="h5 mb-1">{{ trans('view.profile.tabs.mailings.02') }}</h2>
-                    <p class="text-body-secondary small mb-0">
+                    <h2 class="profile-section-title">{{ trans('view.profile.tabs.mailings.02') }}</h2>
+                    <p class="ui-muted ui-small profile-note">
                         {{ trans('view.profile.tabs.mailings.03') }}
                     </p>
                 </div>
-                <div class="flex-shrink-0">
-                    <label class="form-label" for="notification-digest-time">{{ trans('view.profile.tabs.mailings.04') }}</label>
+                <div class="profile-digest__time">
+                    <label class="ui-label" for="notification-digest-time">{{ trans('view.profile.tabs.mailings.04') }}</label>
                     <input
-                        class="form-control"
+                        class="ui-input"
                         type="time"
                         id="notification-digest-time"
                         name="digest_delivery_time"
@@ -28,50 +28,50 @@
             </div>
         </div>
 
-        <div class="card mb-3">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+        <div class="ui-card profile-mailings">
+            <div class="ui-table-scroll">
+                <table class="ui-table">
                     <thead>
                         <tr>
                             <th scope="col">{{ trans('view.profile.tabs.mailings.05') }}</th>
-                            <th scope="col" class="text-center">{{ trans('view.profile.tabs.mailings.06') }}</th>
-                            <th scope="col" class="text-center">Email</th>
+                            <th scope="col" class="profile-mailings__center">{{ trans('view.profile.tabs.mailings.06') }}</th>
+                            <th scope="col" class="profile-mailings__center">Email</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for preference in notificationPreferences %}
                             <tr title="{{ preference.description }}">
-                                <th scope="row" class="fw-medium text-nowrap">{{ preference.label }}</th>
-                                <td class="text-nowrap">
+                                <th scope="row" class="profile-mailings__label">{{ preference.label }}</th>
+                                <td class="profile-mailings__cell">
                                     {% if preference.digestOnly|default(false) %}
-                                        <span class="text-body-secondary">—</span>
+                                        <span class="ui-muted">—</span>
                                     {% else %}
                                     <fieldset>
-                                        <legend class="visually-hidden">{{ trans('view.profile.tabs.mailings.07') }} {{ preference.label }}</legend>
-                                        <div class="btn-group btn-group-sm" role="group" aria-label="{{ trans('view.profile.messenger_aria', {label: preference.label}) }}">
-                                            <input class="btn-check" type="radio" id="{{ preference.key }}-messenger-instant" name="{{ preference.key }}_messenger" value="instant" {% if preference.messenger == 'instant' %}checked{% endif %}>
-                                            <label class="btn btn-outline-primary" for="{{ preference.key }}-messenger-instant">{{ trans('view.profile.tabs.mailings.08') }}</label>
+                                        <legend class="ui-visually-hidden">{{ trans('view.profile.tabs.mailings.07') }} {{ preference.label }}</legend>
+                                        <div class="ui-segmented" role="group" aria-label="{{ trans('view.profile.messenger_aria', {label: preference.label}) }}">
+                                            <input class="ui-segmented__input" type="radio" id="{{ preference.key }}-messenger-instant" name="{{ preference.key }}_messenger" value="instant" {% if preference.messenger == 'instant' %}checked{% endif %}>
+                                            <label class="ui-segmented__option" for="{{ preference.key }}-messenger-instant">{{ trans('view.profile.tabs.mailings.08') }}</label>
 
-                                            <input class="btn-check" type="radio" id="{{ preference.key }}-messenger-off" name="{{ preference.key }}_messenger" value="off" {% if preference.messenger == 'off' %}checked{% endif %}>
-                                            <label class="btn btn-outline-primary" for="{{ preference.key }}-messenger-off">{{ trans('view.profile.tabs.mailings.09') }}</label>
+                                            <input class="ui-segmented__input" type="radio" id="{{ preference.key }}-messenger-off" name="{{ preference.key }}_messenger" value="off" {% if preference.messenger == 'off' %}checked{% endif %}>
+                                            <label class="ui-segmented__option" for="{{ preference.key }}-messenger-off">{{ trans('view.profile.tabs.mailings.09') }}</label>
                                         </div>
                                     </fieldset>
                                     {% endif %}
                                 </td>
-                                <td class="text-nowrap">
+                                <td class="profile-mailings__cell">
                                     <fieldset>
-                                        <legend class="visually-hidden">Email: {{ preference.label }}</legend>
-                                        <div class="btn-group btn-group-sm" role="group" aria-label="Email: {{ preference.label }}">
-                                            <input class="btn-check" type="radio" id="{{ preference.key }}-email-off" name="{{ preference.key }}_email" value="off" {% if preference.email == 'off' %}checked{% endif %}>
-                                            <label class="btn btn-outline-primary" for="{{ preference.key }}-email-off">{{ trans('view.profile.tabs.mailings.09') }}</label>
+                                        <legend class="ui-visually-hidden">Email: {{ preference.label }}</legend>
+                                        <div class="ui-segmented" role="group" aria-label="Email: {{ preference.label }}">
+                                            <input class="ui-segmented__input" type="radio" id="{{ preference.key }}-email-off" name="{{ preference.key }}_email" value="off" {% if preference.email == 'off' %}checked{% endif %}>
+                                            <label class="ui-segmented__option" for="{{ preference.key }}-email-off">{{ trans('view.profile.tabs.mailings.09') }}</label>
 
                                             {% if not preference.digestOnly|default(false) %}
-                                            <input class="btn-check" type="radio" id="{{ preference.key }}-email-instant" name="{{ preference.key }}_email" value="instant" {% if preference.email == 'instant' %}checked{% endif %}>
-                                            <label class="btn btn-outline-primary" for="{{ preference.key }}-email-instant">{{ trans('view.profile.tabs.mailings.08') }}</label>
+                                            <input class="ui-segmented__input" type="radio" id="{{ preference.key }}-email-instant" name="{{ preference.key }}_email" value="instant" {% if preference.email == 'instant' %}checked{% endif %}>
+                                            <label class="ui-segmented__option" for="{{ preference.key }}-email-instant">{{ trans('view.profile.tabs.mailings.08') }}</label>
                                             {% endif %}
 
-                                            <input class="btn-check" type="radio" id="{{ preference.key }}-email-daily" name="{{ preference.key }}_email" value="daily" {% if preference.email == 'daily' %}checked{% endif %}>
-                                            <label class="btn btn-outline-primary" for="{{ preference.key }}-email-daily">{{ trans('view.profile.tabs.mailings.10') }}</label>
+                                            <input class="ui-segmented__input" type="radio" id="{{ preference.key }}-email-daily" name="{{ preference.key }}_email" value="daily" {% if preference.email == 'daily' %}checked{% endif %}>
+                                            <label class="ui-segmented__option" for="{{ preference.key }}-email-daily">{{ trans('view.profile.tabs.mailings.10') }}</label>
                                         </div>
                                     </fieldset>
                                 </td>
@@ -82,9 +82,9 @@
             </div>
         </div>
 
-        <div class="d-flex flex-wrap gap-2 align-items-center">
-            <button class="btn btn-primary" type="submit">{{ trans('view.forums.topic.form.41') }}</button>
-            <span class="text-body-secondary small" data-profile-status></span>
+        <div class="profile-actions">
+            <button class="ui-button ui-button--primary" type="submit">{{ trans('view.forums.topic.form.41') }}</button>
+            <span class="profile-status" data-profile-status></span>
         </div>
     </form>
 {% endblock %}

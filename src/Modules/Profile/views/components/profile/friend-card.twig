@@ -1,0 +1,49 @@
+{# One row of the profile's friends tab, rendered as <template data-ui="profile-friend-card">
+   and filled by assets-src/pages/profile.ts initProfileFriends(). Fill points
+   (keep them in a theme override):
+     id, avatar, url + name (linked name) | nameText (no link), username,
+     isFriends | isIncoming | isSubscribed (one badge),
+     acceptUrl, rejectUrl, removeUrl, cancelUrl (one action each, optional),
+     displayName (for confirmations). Each optional piece is removed when its
+     value is empty. The data-friend-* attributes are the script's hooks. #}
+<div class="ui-card profile-item" data-list-row data-item-id="" data-slot-attr="data-item-id:id">
+    <div class="profile-item__head">
+        <img src="" alt="" class="profile-item__image profile-item__image--round"
+             width="56" height="56" loading="lazy" data-slot-attr="src:avatar">
+        <div class="profile-item__text">
+            <div class="profile-item__title">
+                <a href="#" class="profile-item__link" data-slot="name" data-slot-attr="href:url" data-slot-optional="url"></a>
+                <span data-slot="nameText" data-slot-optional="nameText"></span>
+            </div>
+            <div class="ui-muted ui-small profile-item__sub" data-slot-optional="username">@<bdi data-slot="username"></bdi></div>
+            <div class="profile-item__badge">
+                <span class="profile-tag profile-tag--success" data-slot-optional="isFriends">{{ trans('js.profile.friends_badge') }}</span>
+                <span class="profile-tag profile-tag--warning" data-slot-optional="isIncoming">{{ trans('js.profile.incoming_request_badge') }}</span>
+                <span class="profile-tag" data-slot-optional="isSubscribed">{{ trans('js.profile.request_sent_badge') }}</span>
+            </div>
+        </div>
+    </div>
+    <div class="profile-item__actions">
+        <button type="button" class="ui-button ui-button--primary ui-button--sm" data-friend-accept
+                data-slot-optional="acceptUrl" data-slot-attr="data-action-url:acceptUrl">
+            <i class="bi bi-person-check"></i> {{ trans('js.profile.accept') }}
+        </button>
+        <button type="button" class="ui-button ui-button--secondary ui-button--sm"
+                data-message-user="" data-messages-url="{{ action_url('messages.inbox') }}"
+                data-slot-attr="data-message-user:id">
+            <i class="bi bi-chat-dots"></i> {{ trans('js.profile.write_message') }}
+        </button>
+        <button type="button" class="ui-button ui-button--danger ui-button--sm" data-friend-reject
+                data-slot-optional="rejectUrl" data-slot-attr="data-action-url:rejectUrl data-display-name:displayName">
+            <i class="bi bi-person-x"></i> {{ trans('js.profile.reject') }}
+        </button>
+        <button type="button" class="ui-button ui-button--danger ui-button--sm" data-friend-remove data-status="friends"
+                data-slot-optional="removeUrl" data-slot-attr="data-action-url:removeUrl data-display-name:displayName">
+            <i class="bi bi-person-dash"></i> {{ trans('js.users.remove_friend') }}
+        </button>
+        <button type="button" class="ui-button ui-button--danger ui-button--sm" data-friend-remove data-status="subscribed"
+                data-slot-optional="cancelUrl" data-slot-attr="data-action-url:cancelUrl data-display-name:displayName">
+            <i class="bi bi-person-dash"></i> {{ trans('js.profile.cancel_request') }}
+        </button>
+    </div>
+</div>

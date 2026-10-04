@@ -1,0 +1,41 @@
+{# One row of the profile's subscriptions tab, rendered as <template data-ui="profile-community-card">
+   and filled by assets-src/pages/profile.ts initProfileSubscriptions(). Fill
+   points (keep them in a theme override):
+     id, image, url + name (linked title) | nameText (no link), members,
+     isOwner | isModerator | isMember | isPending (one badge),
+     manageUrl, leaveUrl, cancelUrl (optional actions), title and status
+     (for confirmations). Each optional piece is removed when its value is
+     empty. data-community-leave is the script's hook. #}
+<div class="ui-card profile-item" data-list-row data-item-id="" data-slot-attr="data-item-id:id">
+    <div class="profile-item__head">
+        <img src="" alt="" class="profile-item__image profile-item__image--square"
+             width="56" height="56" loading="lazy" data-slot-attr="src:image">
+        <div class="profile-item__text">
+            <div class="profile-item__title">
+                <a href="#" class="profile-item__link" data-slot="name" data-slot-attr="href:url" data-slot-optional="url"></a>
+                <span data-slot="nameText" data-slot-optional="nameText"></span>
+            </div>
+            <div class="ui-muted ui-small" data-slot="members"></div>
+            <div class="profile-item__badge">
+                <span class="profile-tag profile-tag--primary" data-slot-optional="isOwner">{{ trans('js.profile.role_owner') }}</span>
+                <span class="profile-tag profile-tag--info" data-slot-optional="isModerator">{{ trans('js.profile.role_moderator') }}</span>
+                <span class="profile-tag profile-tag--success" data-slot-optional="isMember">{{ trans('js.profile.role_member') }}</span>
+                <span class="profile-tag" data-slot-optional="isPending">{{ trans('js.profile.request_sent_badge') }}</span>
+            </div>
+        </div>
+    </div>
+    <div class="profile-item__actions">
+        <a href="#" class="ui-button ui-button--secondary ui-button--sm"
+           data-slot-optional="manageUrl" data-slot-attr="href:manageUrl">
+            <i class="bi bi-gear"></i> {{ trans('js.profile.manage') }}
+        </a>
+        <button type="button" class="ui-button ui-button--danger ui-button--sm" data-community-leave
+                data-slot-optional="leaveUrl" data-slot-attr="data-action-url:leaveUrl data-title:title data-status:status">
+            <i class="bi bi-box-arrow-left"></i> {{ trans('js.users.unsubscribe') }}
+        </button>
+        <button type="button" class="ui-button ui-button--danger ui-button--sm" data-community-leave
+                data-slot-optional="cancelUrl" data-slot-attr="data-action-url:cancelUrl data-title:title data-status:status">
+            <i class="bi bi-box-arrow-left"></i> {{ trans('js.profile.cancel_request') }}
+        </button>
+    </div>
+</div>

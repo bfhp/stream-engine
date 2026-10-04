@@ -2,10 +2,10 @@
 
 {% block tab_content %}
     <form method="post" enctype="multipart/form-data" action="/profile/avatar">
-        <div class="mb-3">
-            <img src="{{ user.avatar_url }}" class="img-thumbnail mb-3" width="150">
-            <input type="file" name="avatar" class="form-control">
+        <div class="ui-field">
+            <img src="{{ user.avatar_url }}" class="profile-avatar-thumb" width="150" alt="">
+            <input type="file" name="avatar" class="ui-input">
         </div>
-        <button class="btn btn-primary">{{ trans('view.profile.tabs.avatars.01') }}</button>
+        <button class="ui-button ui-button--primary">{{ trans('view.profile.tabs.avatars.01') }}</button>
     </form>
 {% endblock %}

@@ -1,0 +1,39 @@
+{# Bootstrap markup of the Profile module's components/profile/community-card.twig;
+   same data-slot* fill points and data-community-leave hook. #}
+<div class="col" data-list-row data-item-id="" data-slot-attr="data-item-id:id">
+    <div class="card h-100 shadow-sm">
+        <div class="card-body d-flex flex-column gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <img src="" alt="" class="rounded-3 bg-body-secondary object-fit-cover flex-shrink-0"
+                     width="56" height="56" loading="lazy" data-slot-attr="src:image">
+                <div class="min-w-0">
+                    <div class="fw-semibold text-truncate">
+                        <a href="#" class="text-body text-decoration-none" data-slot="name" data-slot-attr="href:url" data-slot-optional="url"></a>
+                        <span data-slot="nameText" data-slot-optional="nameText"></span>
+                    </div>
+                    <div class="text-body-secondary small" data-slot="members"></div>
+                    <div class="mt-1">
+                        <span class="badge text-primary-emphasis fw-normal" data-slot-optional="isOwner">{{ trans('js.profile.role_owner') }}</span>
+                        <span class="badge text-info-emphasis fw-normal" data-slot-optional="isModerator">{{ trans('js.profile.role_moderator') }}</span>
+                        <span class="badge text-success-emphasis fw-normal" data-slot-optional="isMember">{{ trans('js.profile.role_member') }}</span>
+                        <span class="badge text-secondary-emphasis fw-normal" data-slot-optional="isPending">{{ trans('js.profile.request_sent_badge') }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex flex-wrap gap-2 mt-auto">
+                <a href="#" class="btn btn-sm btn-outline-secondary"
+                   data-slot-optional="manageUrl" data-slot-attr="href:manageUrl">
+                    <i class="bi bi-gear"></i> {{ trans('js.profile.manage') }}
+                </a>
+                <button type="button" class="btn btn-sm btn-outline-danger" data-community-leave
+                        data-slot-optional="leaveUrl" data-slot-attr="data-action-url:leaveUrl data-title:title data-status:status">
+                    <i class="bi bi-box-arrow-left"></i> {{ trans('js.users.unsubscribe') }}
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-danger" data-community-leave
+                        data-slot-optional="cancelUrl" data-slot-attr="data-action-url:cancelUrl data-title:title data-status:status">
+                    <i class="bi bi-box-arrow-left"></i> {{ trans('js.profile.cancel_request') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

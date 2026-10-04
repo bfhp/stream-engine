@@ -5,7 +5,7 @@
     <h1>{{ trans('profile.title') }}</h1>
     {% include 'components/ui/tabs.twig' with { tabs: tabs } %}
 
-    <div class="tab-content">
+    <div class="{% block profile_tabs_class %}profile-tabs{% endblock %}">
 
         {% for tab in tabs %}
             {% include tab.template with {

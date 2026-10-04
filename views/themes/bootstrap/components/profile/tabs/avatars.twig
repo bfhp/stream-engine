@@ -1,0 +1,13 @@
+{% extends 'components/ui/tab-pane.twig' %}
+
+{# Bootstrap markup of the Profile module's avatars.twig; same hooks (data-*, names, ids). #}
+
+{% block tab_content %}
+    <form method="post" enctype="multipart/form-data" action="/profile/avatar">
+        <div class="mb-3">
+            <img src="{{ user.avatar_url }}" class="img-thumbnail mb-3" width="150">
+            <input type="file" name="avatar" class="form-control">
+        </div>
+        <button class="btn btn-primary">{{ trans('view.profile.tabs.avatars.01') }}</button>
+    </form>
+{% endblock %}

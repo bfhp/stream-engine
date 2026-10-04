@@ -1,0 +1,47 @@
+{# Bootstrap markup of the Profile module's components/profile/friend-card.twig;
+   same data-slot* fill points and data-friend-* hooks. #}
+<div class="col" data-list-row data-item-id="" data-slot-attr="data-item-id:id">
+    <div class="card h-100 shadow-sm">
+        <div class="card-body d-flex flex-column gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <img src="" alt="" class="rounded-circle bg-body-secondary object-fit-cover flex-shrink-0"
+                     width="56" height="56" loading="lazy" data-slot-attr="src:avatar">
+                <div class="min-w-0">
+                    <div class="fw-semibold text-truncate">
+                        <a href="#" class="text-body text-decoration-none" data-slot="name" data-slot-attr="href:url" data-slot-optional="url"></a>
+                        <span data-slot="nameText" data-slot-optional="nameText"></span>
+                    </div>
+                    <div class="text-body-secondary small text-truncate" data-slot-optional="username">@<bdi data-slot="username"></bdi></div>
+                    <div class="mt-1">
+                        <span class="badge text-success-emphasis fw-normal" data-slot-optional="isFriends">{{ trans('js.profile.friends_badge') }}</span>
+                        <span class="badge text-warning-emphasis fw-normal" data-slot-optional="isIncoming">{{ trans('js.profile.incoming_request_badge') }}</span>
+                        <span class="badge text-secondary-emphasis fw-normal" data-slot-optional="isSubscribed">{{ trans('js.profile.request_sent_badge') }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex flex-wrap gap-2 mt-auto">
+                <button type="button" class="btn btn-sm btn-primary" data-friend-accept
+                        data-slot-optional="acceptUrl" data-slot-attr="data-action-url:acceptUrl">
+                    <i class="bi bi-person-check"></i> {{ trans('js.profile.accept') }}
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary"
+                        data-message-user="" data-messages-url="{{ action_url('messages.inbox') }}"
+                        data-slot-attr="data-message-user:id">
+                    <i class="bi bi-chat-dots"></i> {{ trans('js.profile.write_message') }}
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-danger" data-friend-reject
+                        data-slot-optional="rejectUrl" data-slot-attr="data-action-url:rejectUrl data-display-name:displayName">
+                    <i class="bi bi-person-x"></i> {{ trans('js.profile.reject') }}
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-danger" data-friend-remove data-status="friends"
+                        data-slot-optional="removeUrl" data-slot-attr="data-action-url:removeUrl data-display-name:displayName">
+                    <i class="bi bi-person-dash"></i> {{ trans('js.users.remove_friend') }}
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-danger" data-friend-remove data-status="subscribed"
+                        data-slot-optional="cancelUrl" data-slot-attr="data-action-url:cancelUrl data-display-name:displayName">
+                    <i class="bi bi-person-dash"></i> {{ trans('js.profile.cancel_request') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

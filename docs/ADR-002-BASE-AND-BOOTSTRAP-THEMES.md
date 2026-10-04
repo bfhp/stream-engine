@@ -194,6 +194,14 @@ Progress:
 - Article: components for `default` (grids, card, sections, sibling
   navigation), styles in `modules/article.css`; `bootstrap` has its own
   `components/article/*.twig` and overrides `article_comments_class`.
+- Profile: tabs for `default` (form controls added to `base.css`), styles in
+  `modules/profile.css`; friend and community cards are
+  `components/profile/{friend,community}-card.twig`, rendered as
+  `<template>` by their tabs and filled by `profile.ts` (badges and actions
+  are optional fill points); the save status tone is a `data-tone`
+  attribute, not classes. `bootstrap` has its own tab and card components
+  and overrides `profile_tabs_class` and the unsubscribe page's class
+  blocks.
 
 ### Verify
 

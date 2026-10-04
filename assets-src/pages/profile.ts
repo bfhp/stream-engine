@@ -1,7 +1,7 @@
 import { uploadFile } from "../shared/uploads";
 import { getApiErrorMessage } from "../shared/api-errors";
 import { trans, transChoice, transChoiceWithCount } from "../shared/i18n";
-import { TAB_SHOWN, ui } from "../shared/ui";
+import { TAB_SHOWN, ui, type SlotData } from "../shared/ui";
 
 const cms = window.CMS;
 
@@ -15,7 +15,8 @@ function bindProfileForm(form: HTMLFormElement) {
     const setStatus = (message = "", type: "muted" | "success" | "danger" = "muted") => {
         if (!status) return;
 
-        status.className = `small ${type === "muted" ? "text-body-secondary" : type === "success" ? "text-success" : "text-danger"}`;
+        // The theme styles the tone (data-tone="muted|success|danger").
+        status.dataset.tone = type;
         status.textContent = message;
     };
 
@@ -162,7 +163,8 @@ interface ListTabConfig<T extends ListTabItem> {
     rank(item: T): number;
     /** The text the search box matches against. */
     searchText(item: T): string;
-    renderCard(item: T): string;
+    /** A filled copy of the tab's card <template>, or null without one. */
+    renderCard(item: T): HTMLElement | null;
     /** e.g. (5) => a localized count - the noun has to decline as rows disappear. */
     truncatedCount(count: number): string;
     loadErrorMessage: string;
@@ -221,7 +223,9 @@ function initListTab<T extends ListTabItem>(config: ListTabConfig<T>): void {
     const render = () => {
         const visible = visibleItems();
 
-        list.innerHTML = visible.map(config.renderCard).join("");
+        list.replaceChildren(...visible
+            .map(config.renderCard)
+            .filter((card): card is HTMLElement => card !== null));
         config.afterRender?.();
 
         if (counter) {
@@ -328,44 +332,17 @@ function initListTab<T extends ListTabItem>(config: ListTabConfig<T>): void {
 }
 
 /**
- * The card shell both tabs share: a `.col` holding an `h-100` card whose body
- * is a flex column with the actions pinned to `mt-auto`, so cards in a row
- * line their buttons up even when one title wraps and its neighbour's doesn't.
- *
- * Same card idiom as the public users list (users.ts's userItem()), with one
- * deliberate departure: no `stretched-link` on the title. Over there the whole
- * card is one big link; here it holds buttons, and a stretched link would sit
- * on top of them and swallow the clicks.
+ * A card for one list row: a copy of the tab's <template> (rendered from
+ * components/profile/*-card.twig, so the theme owns the markup) with the
+ * row's values filled in. Optional pieces - a badge per status, an action per
+ * button - are removed when their value is empty.
  */
-function renderListCard(options: {
-    id: number;
-    imageUrl: string;
-    imageClass: string;
-    title: string;
-    subtitle: string;
-    badge: string;
-    actions: string;
-}): string {
-    return `
-        <div class="col" data-list-row data-item-id="${options.id}">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body d-flex flex-column gap-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <img src="${cms.escapeHtml(options.imageUrl)}" alt=""
-                             class="${options.imageClass} bg-body-secondary object-fit-cover flex-shrink-0"
-                             width="56" height="56" loading="lazy">
-                        <div class="min-w-0">
-                            <div class="fw-semibold text-truncate">${options.title}</div>
-                            ${options.subtitle}
-                            <div class="mt-1">${options.badge}</div>
-                        </div>
-                    </div>
-                    <div class="d-flex flex-wrap gap-2 mt-auto">${options.actions}</div>
-                </div>
-            </div>
-        </div>
-    `;
+function renderCard(templateName: string, data: SlotData): HTMLElement | null {
+    const card = ui.clone(templateName);
+    return card && ui.fill(card, data);
 }
+
+const flag = (on: boolean): string => (on ? "1" : "");
 
 /* ===============================
    Friends tab (components/profile/tabs/friends.twig)
@@ -396,23 +373,6 @@ interface ConnectionCard {
  * with by hand - this is the only renderer.
  */
 function initProfileFriends(): void {
-    const messagesUrl = document.getElementById("profile-friends")?.dataset.messagesUrl ?? "";
-
-    // Same vocabulary the sidebar button uses (users.ts's applyStatus), so a
-    // status means the same thing to the user wherever they meet it.
-    const badge = (status: ConnectionStatus): string => {
-        switch (status) {
-            case "friends":
-                return `<span class="badge text-bg-success-subtle text-success-emphasis fw-normal">${trans("js.profile.friends_badge")}</span>`;
-            case "incoming":
-                return `<span class="badge text-bg-warning-subtle text-warning-emphasis fw-normal">${trans("js.profile.incoming_request_badge")}</span>`;
-            case "subscribed":
-                return `<span class="badge text-bg-secondary-subtle text-secondary-emphasis fw-normal">${trans("js.profile.request_sent_badge")}</span>`;
-            default:
-                return "";
-        }
-    };
-
     /**
      * Which buttons a row gets is entirely a function of its status, and each
      * maps onto exactly one server call:
@@ -435,48 +395,29 @@ function initProfileFriends(): void {
      * first is addressed by user id, the second by conversation. Accept and
      * remove go to a username-addressed endpoint, so actionUrl is null there
      * and they're simply not rendered.
+     *
+     * The badge vocabulary is the sidebar button's (users.ts's applyStatus),
+     * so a status means the same thing wherever the user meets it.
      */
-    const actions = (item: ConnectionCard): string => {
-        const parts: string[] = [];
+    const cardData = (item: ConnectionCard): SlotData => {
+        const incoming = item.status === "incoming";
 
-        if (item.actionUrl && item.status === "incoming") {
-            parts.push(`
-                <button type="button" class="btn btn-sm btn-primary" data-friend-accept
-                        data-action-url="${cms.escapeHtml(item.actionUrl)}">
-                    <i class="bi bi-person-check"></i> ${trans("js.profile.accept")}
-                </button>
-            `);
-        }
-
-        parts.push(`
-            <button type="button" class="btn btn-sm btn-outline-secondary"
-                    data-message-user="${item.id}"
-                    data-messages-url="${cms.escapeHtml(messagesUrl)}">
-                <i class="bi bi-chat-dots"></i> ${trans("js.profile.write_message")}
-            </button>
-        `);
-
-        if (item.status === "incoming") {
-            parts.push(`
-                <button type="button" class="btn btn-sm btn-outline-danger" data-friend-reject
-                        data-action-url="${cms.escapeHtml(item.rejectUrl)}"
-                        data-display-name="${cms.escapeHtml(item.displayName)}">
-                    <i class="bi bi-person-x"></i> ${trans("js.profile.reject")}
-                </button>
-            `);
-        } else if (item.actionUrl) {
-            const removeLabel = trans(item.status === "subscribed" ? "js.profile.cancel_request" : "js.users.remove_friend");
-            parts.push(`
-                <button type="button" class="btn btn-sm btn-outline-danger" data-friend-remove
-                        data-action-url="${cms.escapeHtml(item.actionUrl)}"
-                        data-display-name="${cms.escapeHtml(item.displayName)}"
-                        data-status="${cms.escapeHtml(item.status)}">
-                    <i class="bi bi-person-dash"></i> ${removeLabel}
-                </button>
-            `);
-        }
-
-        return parts.join("");
+        return {
+            id: item.id,
+            avatar: item.avatarUrl,
+            url: item.url ?? "",
+            name: item.url ? item.displayName : "",
+            nameText: item.url ? "" : item.displayName,
+            username: item.username ?? "",
+            displayName: item.displayName,
+            isFriends: flag(item.status === "friends"),
+            isIncoming: flag(incoming),
+            isSubscribed: flag(item.status === "subscribed"),
+            acceptUrl: incoming ? (item.actionUrl ?? "") : "",
+            rejectUrl: incoming ? item.rejectUrl : "",
+            removeUrl: item.status === "friends" ? (item.actionUrl ?? "") : "",
+            cancelUrl: item.status === "subscribed" ? (item.actionUrl ?? "") : "",
+        };
     };
 
     initListTab<ConnectionCard>({
@@ -494,19 +435,7 @@ function initProfileFriends(): void {
         // The avatar needs no letter-placeholder fallback (unlike users.ts):
         // avatarUrl arrives already resolved through
         // UserService::resolveAvatarUrl(), so it's never empty.
-        renderCard: (item) => renderListCard({
-            id: item.id,
-            imageUrl: item.avatarUrl,
-            imageClass: "rounded-circle",
-            title: item.url
-                ? `<a href="${cms.escapeHtml(item.url)}" class="text-body text-decoration-none">${cms.escapeHtml(item.displayName)}</a>`
-                : cms.escapeHtml(item.displayName),
-            subtitle: item.username
-                ? `<div class="text-body-secondary small text-truncate">@<bdi>${cms.escapeHtml(item.username)}</bdi></div>`
-                : "",
-            badge: badge(item.status),
-            actions: actions(item),
-        }),
+        renderCard: (item) => renderCard("profile-friend-card", cardData(item)),
 
         // Cards are added after site.js already ran its own pass, so the DM
         // buttons this just created still need binding; initDirectMessage()
@@ -585,23 +514,6 @@ interface CommunityCard {
  * for why listing lives in this module while leaving stays with Users.
  */
 function initProfileSubscriptions(): void {
-    // Same vocabulary CommunityService::getRelationshipStatus() answers in, so
-    // a status reads the same here as on the community page itself.
-    const badge = (status: CommunityStatus): string => {
-        switch (status) {
-            case "owner":
-                return `<span class="badge text-bg-primary-subtle text-primary-emphasis fw-normal">${trans("js.profile.role_owner")}</span>`;
-            case "moderator":
-                return `<span class="badge text-bg-info-subtle text-info-emphasis fw-normal">${trans("js.profile.role_moderator")}</span>`;
-            case "member":
-                return `<span class="badge text-bg-success-subtle text-success-emphasis fw-normal">${trans("js.profile.role_member")}</span>`;
-            case "pending":
-                return `<span class="badge text-bg-secondary-subtle text-secondary-emphasis fw-normal">${trans("js.profile.request_sent_badge")}</span>`;
-            default:
-                return "";
-        }
-    };
-
     /**
      * An owner gets a manage action instead of a leave button: CommunityService::
      * leave() refuses to let them out (there's no ownership transfer, so an
@@ -611,30 +523,31 @@ function initProfileSubscriptions(): void {
      * Everyone else gets one DELETE - the same call whether they're a member
      * or still waiting on approval, since a pending row is just a membership
      * with a lower role. Only the label changes.
+     *
+     * Badges use CommunityService::getRelationshipStatus()'s vocabulary, so a
+     * status reads the same here as on the community page itself.
      */
-    const actions = (item: CommunityCard): string => {
-        if (item.status === "owner") {
-            return item.manageUrl
-                ? `<a href="${cms.escapeHtml(item.manageUrl)}" class="btn btn-sm btn-outline-secondary">
-                       <i class="bi bi-gear"></i> ${trans("js.profile.manage")}
-                   </a>`
-                : "";
-        }
+    const cardData = (item: CommunityCard): SlotData => {
+        const owner = item.status === "owner";
+        const pending = item.status === "pending";
 
-        if (!item.leaveUrl) {
-            return "";
-        }
-
-        const label = trans(item.status === "pending" ? "js.profile.cancel_request" : "js.users.unsubscribe");
-
-        return `
-            <button type="button" class="btn btn-sm btn-outline-danger" data-community-leave
-                    data-action-url="${cms.escapeHtml(item.leaveUrl)}"
-                    data-title="${cms.escapeHtml(item.title)}"
-                    data-status="${cms.escapeHtml(item.status)}">
-                <i class="bi bi-box-arrow-left"></i> ${label}
-            </button>
-        `;
+        return {
+            id: item.id,
+            image: item.imageUrl,
+            url: item.url ?? "",
+            name: item.url ? item.title : "",
+            nameText: item.url ? "" : item.title,
+            title: item.title,
+            status: item.status,
+            members: `${item.memberCount} ${transChoice("js.common.participant", item.memberCount)}`,
+            isOwner: flag(owner),
+            isModerator: flag(item.status === "moderator"),
+            isMember: flag(item.status === "member"),
+            isPending: flag(pending),
+            manageUrl: owner ? (item.manageUrl ?? "") : "",
+            leaveUrl: !owner && !pending ? (item.leaveUrl ?? "") : "",
+            cancelUrl: pending ? (item.leaveUrl ?? "") : "",
+        };
     };
 
     initListTab<CommunityCard>({
@@ -648,20 +561,9 @@ function initProfileSubscriptions(): void {
         truncatedCount: (count) => transChoiceWithCount("js.common.community_unit", count),
         loadErrorMessage: trans("js.profile.communities_list_failed"),
 
-        // rounded-3, not rounded-circle: a community's image is a banner-ish
-        // picture rather than a face, and cropping it to a circle loses more
-        // of it than it gains.
-        renderCard: (item) => renderListCard({
-            id: item.id,
-            imageUrl: item.imageUrl,
-            imageClass: "rounded-3",
-            title: item.url
-                ? `<a href="${cms.escapeHtml(item.url)}" class="text-body text-decoration-none">${cms.escapeHtml(item.title)}</a>`
-                : cms.escapeHtml(item.title),
-            subtitle: `<div class="text-body-secondary small">${item.memberCount} ${transChoice("js.common.participant", item.memberCount)}</div>`,
-            badge: badge(item.status),
-            actions: actions(item),
-        }),
+        // The card template uses a rounded square, not a circle: a
+        // community's image is a banner-ish picture rather than a face.
+        renderCard: (item) => renderCard("profile-community-card", cardData(item)),
 
         bindActions: (list, ctx) => {
             list.addEventListener("click", (event) => {

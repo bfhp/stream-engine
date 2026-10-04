@@ -228,6 +228,73 @@ hr {
     font: inherit;
 }
 
+.ui-input--sm { padding: .25rem .5rem; font-size: .875rem; }
+
+.ui-select {
+    display: block;
+    inline-size: 100%;
+    padding: .5rem .75rem;
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius);
+    background: var(--ui-bg);
+    color: var(--ui-text);
+    font: inherit;
+}
+
+.ui-check {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--ui-space-2);
+    margin-block-end: var(--ui-space-2);
+}
+
+.ui-check__input { accent-color: var(--ui-primary); }
+.ui-check__label { flex: 1; }
+.ui-check > .ui-help { flex-basis: 100%; }
+
+/* Radio inputs shown as one segmented control. */
+.ui-segmented {
+    display: inline-flex;
+    border: 1px solid var(--ui-primary);
+    border-radius: var(--ui-radius);
+    overflow: hidden;
+}
+
+.ui-segmented__input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.ui-segmented__option {
+    padding: .25rem .625rem;
+    font-size: .875rem;
+    color: var(--ui-primary);
+    cursor: pointer;
+}
+
+.ui-segmented__option:not(:first-of-type) { border-inline-start: 1px solid var(--ui-primary); }
+.ui-segmented__input:checked + .ui-segmented__option { background: var(--ui-primary); color: var(--ui-primary-contrast); }
+.ui-segmented__input:focus-visible + .ui-segmented__option { outline: 2px solid var(--ui-primary); outline-offset: -2px; }
+
+.ui-table-scroll { overflow-x: auto; }
+
+.ui-table {
+    inline-size: 100%;
+    border-collapse: collapse;
+}
+
+.ui-table th,
+.ui-table td {
+    padding: var(--ui-space-2);
+    border-block-end: 1px solid var(--ui-border);
+    text-align: start;
+    vertical-align: middle;
+}
+
+.ui-table tbody tr:hover { background: var(--ui-surface-2); }
+
 .ui-input:focus {
     outline: 2px solid var(--ui-primary);
     outline-offset: 1px;
@@ -706,6 +773,7 @@ body {
     --bs-primary-bg-subtle: var(--ui-surface-2);
     --bs-primary-text-emphasis: var(--ui-primary);
     --bs-danger: var(--ui-danger);
+    --bs-success: var(--ui-success);
     --bs-link-color: var(--ui-primary);
     --bs-link-hover-color: var(--ui-primary);
     --bs-box-shadow-lg: var(--ui-shadow);
