@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace StreamEngine\Core;
 
+use Composer\InstalledVersions;
 use JsonException;
 
 /**
@@ -31,19 +32,30 @@ final class ThemeCatalog
     /** @var array<string, array<string, mixed>>|null */
     private ?array $themes = null;
 
+    /** @param list<string> $additionalThemeDirs */
     public function __construct(
         private readonly string $themesDir,
         private readonly string $publicDir,
         private readonly ?string $legacyThemeDir = null,
+        private readonly array $additionalThemeDirs = [],
     ) {
     }
 
     public static function forApplication(Config $config): self
     {
+        $rootPackage = InstalledVersions::getRootPackage();
+        $applicationRoot = realpath((string) ($rootPackage['install_path'] ?? ''));
+        if ($applicationRoot === false) {
+            $applicationRoot = dirname(__DIR__, 2);
+        }
+
+        $engineRoot = dirname(__DIR__, 2);
+
         return new self(
-            dirname(__DIR__, 2).'/views/themes',
-            dirname(__DIR__, 2).'/public',
+            $engineRoot.'/views/themes',
+            $applicationRoot.'/public',
             $config->themeDir(),
+            $applicationRoot !== $engineRoot ? [$applicationRoot.'/views/themes'] : [],
         );
     }
 
@@ -140,6 +152,11 @@ final class ThemeCatalog
         }
 
         $directories = glob(rtrim($this->themesDir, '/').'/*', GLOB_ONLYDIR) ?: [];
+        foreach ($this->additionalThemeDirs as $themesDir) {
+            if (is_string($themesDir)) {
+                array_push($directories, ...(glob(rtrim($themesDir, '/').'/*', GLOB_ONLYDIR) ?: []));
+            }
+        }
         if ($this->legacyThemeDir !== null && is_dir($this->legacyThemeDir)) {
             $directories[] = $this->legacyThemeDir;
         }
