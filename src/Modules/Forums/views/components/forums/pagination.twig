@@ -1,0 +1,33 @@
+{# "Page N of M" + page links under a forum's topic list or a topic's posts.
+   Expects (with `only`): pagination {current, total, baseUrl}, label (aria). #}
+<div class="forums-pagination">
+    <div class="forums-pagination__position">
+        <i class="bi bi-chat-square-text"></i>
+        {{ trans('view.forums.topic.list.07') }}
+        <strong class="forums-pagination__number">{{ pagination.current }}</strong>
+        {{ trans('view.forums.topic.list.08') }} <span class="forums-pagination__number">{{ pagination.total }}</span>
+    </div>
+    <nav aria-label="{{ label }}">
+        <ul class="forums-pages">
+            <li>
+                {% if pagination.current > 1 %}
+                    <a class="forums-pages__link" href="{{ pagination.baseUrl }}{{ pagination.current > 2 ? '?page=' ~ (pagination.current - 1) : '' }}"><i class="bi bi-chevron-left"></i></a>
+                {% else %}
+                    <span class="forums-pages__link" aria-disabled="true"><i class="bi bi-chevron-left"></i></span>
+                {% endif %}
+            </li>
+            {% for p in 1..pagination.total %}
+                <li>
+                    <a class="forums-pages__link" href="{{ pagination.baseUrl }}{{ p > 1 ? '?page=' ~ p : '' }}"{% if p == pagination.current %} aria-current="page"{% endif %}>{{ p }}</a>
+                </li>
+            {% endfor %}
+            <li>
+                {% if pagination.current < pagination.total %}
+                    <a class="forums-pages__link" href="{{ pagination.baseUrl }}?page={{ pagination.current + 1 }}"><i class="bi bi-chevron-right"></i></a>
+                {% else %}
+                    <span class="forums-pages__link" aria-disabled="true"><i class="bi bi-chevron-right"></i></span>
+                {% endif %}
+            </li>
+        </ul>
+    </nav>
+</div>

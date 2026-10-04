@@ -166,21 +166,21 @@ already knows.
 6. [x] Bootstrap skin as its own entry (`bootstrap-skin.css`); `bootstrap`
    loads `base.css` first so non-overridden markup stays styled.
 
-### Next: modules, one at a time
+### Modules, one at a time
 
 For each module (Feedback, Search, Article, Profile, Users, Forums;
 Messages is already framework-free; the admin interface is out of scope, it
 is a separate Mantine app):
 
-7. [ ] Rewrite its templates for `default`: semantic markup, module classes
+7. [x] Rewrite its templates for `default`: semantic markup, module classes
    in its own stylesheet, `default`'s classes, `hidden` instead of `d-none`,
    `data-ui-*` instead of `data-bs-*`, blocks where a theme will want its
    own markup.
-8. [ ] Move its script-built item markup to `<template>` rendered by the
+8. [x] Move its script-built item markup to `<template>` rendered by the
    module's page template, next to the list it feeds.
-9. [ ] In `bootstrap`, override the module's blocks/templates that should
+9. [x] In `bootstrap`, override the module's blocks/templates that should
    keep the Bootstrap look.
-10. [ ] Check the module under both themes.
+10. [ ] Check each module under both themes (visual pass).
 
 Progress:
 - Feedback: templates for `default`, styles in `modules/feedback.css`;
@@ -210,6 +210,15 @@ Progress:
   render one button per state and the script only toggles `hidden`.
   `UsersController` passes a role tone (`statusTone`), not a CSS class.
   `bootstrap` has its own copy of every Users template.
+- Forums: pages for `default`, styles in `modules/forums.css` (its
+  "any theme" part colors poll icons and bars by state, so
+  `forum-poll.ts` only swaps glyphs and toggles `is-chosen`/`is-leading`);
+  pagination is `components/forums/pagination.twig`. The topic form's poll
+  option rows, upload rows and preview come from `<template>`s rendered by
+  `forums.topic-form.twig`; the preview modal is a `<dialog>`. Toggles use
+  `hidden`, invalid fields `aria-invalid`. `bootstrap` has its own copy of
+  the four pages; its skin keeps `[hidden]` stronger than display
+  utilities.
 
 ### Verify
 

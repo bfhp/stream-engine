@@ -3,8 +3,8 @@
 
    Everything that turns a poll API response into what the card shows. All of
    it takes `(card, form, poll)` explicitly and holds no closure state, which
-   is what made it extractable at all - `forums.ts` itself imports Bootstrap
-   and Trix at module scope, so testing four DOM functions in place would
+   is what made it extractable at all - `forums.ts` itself imports Trix at
+   module scope, so testing four DOM functions in place would
    mean importing an editor.
 
    These rules are duplicated from `ForumsController::buildPollViewModel()`,
@@ -33,18 +33,22 @@ export type PollApiResponse = {
     options: PollApiOption[];
 };
 
+// Glyphs only: the theme colors them (forums.css colors a checked glyph like
+// bi-check-square-fill as primary, an unchecked one as muted), so no
+// framework class ever comes out of this file.
 export function pollOptionIconClass(isMultiple: boolean, checked: boolean): string {
-    if (isMultiple) return checked ? "bi-check-square-fill text-primary" : "bi-square text-body-secondary";
-    return checked ? "bi-record-circle text-primary" : "bi-circle text-body-secondary";
+    if (isMultiple) return checked ? "bi-check-square-fill" : "bi-square";
+    return checked ? "bi-record-circle" : "bi-circle";
 }
 
 export function pollResultIconClass(chosen: boolean): string {
-    return chosen ? "bi-check-circle-fill text-primary" : "bi-dot text-body-secondary";
+    return chosen ? "bi-check-circle-fill" : "bi-dot";
 }
 
-export function pollBarColor(chosen: boolean, isLeading: boolean): string {
-    if (chosen) return "var(--bs-primary)";
-    return isLeading ? "rgba(255,255,255,.42)" : "rgba(255,255,255,.22)";
+/** State of a result bar - the theme styles .is-chosen / .is-leading. */
+export function pollBarState(chosen: boolean, isLeading: boolean): "chosen" | "leading" | "" {
+    if (chosen) return "chosen";
+    return isLeading ? "leading" : "";
 }
 
 // Sets every option row's checked/selected/icon state from a given list of
@@ -112,7 +116,7 @@ export function updatePollSelectionUi(form: HTMLElement) {
 // votersCount are null when the viewer isn't allowed to see them yet
 // (PollService::canSeeResults() said no), same "null means hidden, not
 // zero" contract APIController::pollToArray() documents, so this treats a
-// null as 0 for the arithmetic but the results block itself stays d-none
+// null as 0 for the arithmetic but the results block itself stays hidden
 // in that case (applyPollResponse() below), so these numbers never actually
 // render unseen.
 export function renderPollResults(card: HTMLElement, poll: PollApiResponse) {
@@ -134,15 +138,17 @@ export function renderPollResults(card: HTMLElement, poll: PollApiResponse) {
         if (icon) icon.className = "bi " + pollResultIconClass(chosen);
         if (stat) stat.textContent = `${pct}% · ${transChoiceWithCount("js.common.vote", votes)}`;
         if (bar) {
+            const state = pollBarState(chosen, leader > 0 && votes === leader);
             bar.style.width = pct + "%";
-            bar.style.backgroundColor = pollBarColor(chosen, leader > 0 && votes === leader);
+            bar.classList.toggle("is-chosen", state === "chosen");
+            bar.classList.toggle("is-leading", state === "leading");
         }
     });
 
-    const totalEl = card.querySelector<HTMLElement>("[data-poll-total-votes] .font-monospace");
+    const totalEl = card.querySelector<HTMLElement>("[data-poll-total-votes] [data-poll-count]");
     if (totalEl) totalEl.textContent = transChoiceWithCount("js.common.vote", total);
 
-    const votersEl = card.querySelector<HTMLElement>("[data-poll-voters] .font-monospace");
+    const votersEl = card.querySelector<HTMLElement>("[data-poll-voters] [data-poll-count]");
     if (votersEl && poll.votersCount !== null) {
         votersEl.textContent = transChoiceWithCount("js.common.participant", poll.votersCount);
     }
@@ -176,18 +182,18 @@ export function applyPollResponse(card: HTMLElement, form: HTMLElement, poll: Po
 
     form.dataset.pollCurrentVotes = poll.userVotes.join(",");
     syncPollOptionInputs(card, form, poll.userVotes);
-    form.classList.toggle("d-none", !showVoteForm);
+    form.hidden = !showVoteForm;
 
     if (results) {
         renderPollResults(card, poll);
-        results.classList.toggle("d-none", !showResults);
+        results.hidden = !showResults;
     }
-    hiddenNote?.classList.toggle("d-none", !showHiddenNote);
-    cancelButton?.classList.add("d-none");
-    changeButton?.classList.toggle("d-none", !canChangeVote);
-    votedNote?.classList.toggle("d-none", !hasVoted);
-    totalVotesEl?.classList.toggle("d-none", !showResults);
-    votersEl?.classList.toggle("d-none", !showResults);
+    if (hiddenNote) hiddenNote.hidden = !showHiddenNote;
+    if (cancelButton) cancelButton.hidden = true;
+    if (changeButton) changeButton.hidden = !canChangeVote;
+    if (votedNote) votedNote.hidden = !hasVoted;
+    if (totalVotesEl) totalVotesEl.hidden = !showResults;
+    if (votersEl) votersEl.hidden = !showResults;
 
     updatePollSelectionUi(form);
 }

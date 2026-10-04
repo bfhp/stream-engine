@@ -189,13 +189,11 @@ resolving from `default` or from the module that owns it.
 
 ## Theme layers: a bare base and themes built on it
 
-> Status: see `docs/ADR-002-BASE-AND-BOOTSTRAP-THEMES.md`. The platform layer
-> (layouts, partials, `components/*` in the theme) is done: `default` is
-> framework-free and `bootstrap` keeps the previous look. Module templates
-> still use Bootstrap classes; they move to framework-free markup module by
-> module, with `bootstrap` overriding them (see "Module templates in
-> themes"). Done: Feedback, Search, Article, Profile, Users. Under `default`, the other module pages are only
-> partly styled until then. A module's own styles live in
+> Status: see `docs/ADR-002-BASE-AND-BOOTSTRAP-THEMES.md`. Done: `default`
+> is framework-free - platform layer and module templates (Feedback, Search,
+> Article, Profile, Users, Forums; Messages already was; the admin is a
+> separate app) - and `bootstrap` keeps the previous look by overriding them
+> (see "Module templates in themes"). A module's own styles live in
 > `assets-src/site/modules/<module>.css` (bundled into `site.css`).
 
 ### `default` is the base, not a design

@@ -64,5 +64,5 @@ their Bootstrap overrides here: Feedback (`modules/feedback/page.twig`,
 `components/search/result.twig`), Article (`components/article/*.twig`,
 `modules/article/article.show.twig`), Profile (`components/profile/**`,
 `modules/profile/*.twig`), Users (`components/users/**`,
-`modules/users/*.twig`). The other modules' templates still use
-Bootstrap classes directly.
+`modules/users/*.twig`), Forums (`modules/forums/*.twig`). Messages was
+already framework-free.

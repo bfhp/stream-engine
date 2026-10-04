@@ -36,12 +36,16 @@ const cms = window.CMS;
 function showFieldError(el: HTMLElement | null, message: string) {
     if (!el) return;
     el.textContent = message;
-    el.classList.remove("d-none");
+    el.hidden = false;
+}
+
+function setHidden(el: Element | null | undefined, hidden: boolean) {
+    if (el instanceof HTMLElement) el.hidden = hidden;
 }
 
 function hideFieldError(el: HTMLElement | null | undefined) {
     if (!el) return;
-    el.classList.add("d-none");
+    el.hidden = true;
 }
 
 // forum-quick-reply-form's own preview toggle: swaps the textarea for
@@ -58,15 +62,15 @@ function initQuickReplyPreview(form: HTMLFormElement): () => void {
 
     const showEditor = () => {
         if (!button || !textarea || !previewEl) return;
-        previewEl.classList.add("d-none");
-        textarea.classList.remove("d-none");
+        previewEl.hidden = true;
+        textarea.hidden = false;
         button.innerHTML = `<i class="bi bi-eye"></i><span>${trans("js.forums.preview")}</span>`;
     };
 
     if (!button || !textarea || !previewEl) return showEditor;
 
     button.addEventListener("click", () => {
-        const isPreviewing = !previewEl.classList.contains("d-none");
+        const isPreviewing = !previewEl.hidden;
 
         if (isPreviewing) {
             showEditor();
@@ -74,11 +78,15 @@ function initQuickReplyPreview(form: HTMLFormElement): () => void {
         }
 
         const content = textarea.value.trim();
-        previewEl.innerHTML = content
-            ? renderCommentPreviewHtml(content)
-            : `<span class="text-body-secondary">${trans("js.forums.content_empty")}</span>`;
-        textarea.classList.add("d-none");
-        previewEl.classList.remove("d-none");
+        if (content) {
+            previewEl.innerHTML = renderCommentPreviewHtml(content);
+            delete previewEl.dataset.empty;
+        } else {
+            previewEl.textContent = trans("js.forums.content_empty");
+            previewEl.dataset.empty = "1";
+        }
+        textarea.hidden = true;
+        previewEl.hidden = false;
         button.innerHTML = `<i class="bi bi-pencil"></i><span>${trans("js.common.edit")}</span>`;
     });
 
@@ -200,8 +208,8 @@ function initPostActions() {
             const id = editToggle.dataset.commentId;
             const editWrapper = postsContainer.querySelector(`[data-comment-edit-wrapper="${id}"]`);
             const contentWrapper = postsContainer.querySelector(`[data-comment-content-wrapper="${id}"]`);
-            editWrapper?.classList.remove("d-none");
-            contentWrapper?.classList.add("d-none");
+            if (editWrapper) (editWrapper as HTMLElement).hidden = false;
+            if (contentWrapper) (contentWrapper as HTMLElement).hidden = true;
             return;
         }
 
@@ -210,9 +218,9 @@ function initPostActions() {
             const id = editCancel.dataset.commentId;
             const editWrapper = postsContainer.querySelector(`[data-comment-edit-wrapper="${id}"]`);
             const contentWrapper = postsContainer.querySelector(`[data-comment-content-wrapper="${id}"]`);
-            editWrapper?.classList.add("d-none");
+            if (editWrapper) (editWrapper as HTMLElement).hidden = true;
             hideFieldError(editWrapper?.querySelector("[data-comment-edit-error]") as HTMLElement | null);
-            contentWrapper?.classList.remove("d-none");
+            if (contentWrapper) (contentWrapper as HTMLElement).hidden = false;
             return;
         }
 
@@ -346,7 +354,7 @@ function initMarkAllRead() {
 // feed-attached poll would use, nothing here is Forums-specific except
 // which feed id it's rendered under.
 //
-// Both the vote-form and results blocks are always in the DOM (one d-none
+// Both the vote-form and results blocks are always in the DOM (one hidden
 // per whichever the initial state isn't) - same pattern initPostActions()'s
 // comment edit/view toggle and initQuickReplyPreview() above already use -
 // so changing a vote just reveals the already-correctly-pre-checked
@@ -390,11 +398,11 @@ function initPoll() {
     // rendered but hidden) in place of the results block - no server call,
     // same as opening any other already-rendered edit view on this page.
     card.querySelector("[data-poll-change-vote]")?.addEventListener("click", () => {
-        card.querySelector("[data-poll-results]")?.classList.add("d-none");
-        card.querySelector("[data-poll-hidden-note]")?.classList.add("d-none");
-        card.querySelector("[data-poll-change-vote]")?.classList.add("d-none");
-        form.classList.remove("d-none");
-        form.querySelector("[data-poll-cancel-change]")?.classList.remove("d-none");
+        setHidden(card.querySelector("[data-poll-results]"), true);
+        setHidden(card.querySelector("[data-poll-hidden-note]"), true);
+        setHidden(card.querySelector("[data-poll-change-vote]"), true);
+        form.hidden = false;
+        setHidden(form.querySelector("[data-poll-cancel-change]"), false);
         updatePollSelectionUi(form);
     });
 
@@ -409,10 +417,10 @@ function initPoll() {
             .map(Number);
 
         syncPollOptionInputs(card, form, currentVotes);
-        form.classList.add("d-none");
-        form.querySelector("[data-poll-cancel-change]")?.classList.add("d-none");
-        card.querySelector("[data-poll-results]")?.classList.remove("d-none");
-        card.querySelector("[data-poll-change-vote]")?.classList.remove("d-none");
+        form.hidden = true;
+        setHidden(form.querySelector("[data-poll-cancel-change]"), true);
+        setHidden(card.querySelector("[data-poll-results]"), false);
+        setHidden(card.querySelector("[data-poll-change-vote]"), false);
         updatePollSelectionUi(form);
     });
 }
@@ -485,8 +493,8 @@ function initAttachments(
     const items: AttachmentItem[] = [];
 
     function sync() {
-        if (emptyNote) emptyNote.classList.toggle("d-none", items.length > 0);
-        drop!.classList.toggle("d-none", items.length >= MAX_FILES);
+        if (emptyNote) emptyNote.hidden = items.length > 0;
+        drop!.hidden = items.length >= MAX_FILES;
     }
 
     function removeItem(key: number) {
@@ -506,17 +514,19 @@ function initAttachments(
                 ? trans("js.forums.upload_failed_status")
                 : trans("js.forums.uploaded_status", { size: item.sizeLabel });
 
-        item.row.innerHTML = `
-            <div style="width:40px;height:40px;flex:0 0 auto;border-radius:6px;background-color:var(--bs-secondary-bg);display:inline-flex;align-items:center;justify-content:center;color:#8ea3c0"><i class="bi ${item.icon}"></i></div>
-            <div style="flex:1;min-width:0">
-                <div style="font-size:.86rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><bdi>${cms.escapeHtml(item.name)}</bdi></div>
-                <div class="text-body-secondary" style="font-size:.78rem">${statusText}</div>
-                ${item.status === "uploading" ? '<div class="progress mt-1" style="height:4px"><div class="progress-bar" data-attachment-progress style="width:0%"></div></div>' : ""}
-            </div>
-            <button type="button" class="btn btn-sm btn-link px-0 text-body-secondary" aria-label="${trans(item.status === "uploading" ? "js.forums.upload_cancel" : "js.forums.attachment_remove")}" data-attachment-remove>
-                <i class="bi bi-x-lg"></i>
-            </button>
-        `;
+        // A fresh copy of the theme's row per state change, swapped in for
+        // the previous one (the progress bar exists only while uploading).
+        const row = ui.clone("forum-attachment-upload");
+        if (!row) return;
+        ui.fill(row, {
+            iconClass: `bi ${item.icon}`,
+            name: item.name,
+            status: statusText,
+            uploading: item.status === "uploading" ? "1" : "",
+            removeLabel: trans(item.status === "uploading" ? "js.forums.upload_cancel" : "js.forums.attachment_remove"),
+        });
+        item.row.replaceWith(row);
+        item.row = row;
         item.row.querySelector("[data-attachment-remove]")?.addEventListener("click", () => removeItem(item.key));
     }
 
@@ -610,12 +620,9 @@ function initAttachments(
         });
     }
 
+    // A placeholder renderRow() replaces with the theme's row.
     function makeRow(): HTMLElement {
-        const row = document.createElement("div");
-        row.className = "d-flex align-items-center gap-3 p-2";
-        row.style.cssText = "border:1px solid var(--bs-border-color); border-radius:.5rem";
-
-        return row;
+        return document.createElement("div");
     }
 
     // Already-stored attachments (forums.topic-edit only) - "done" from the
@@ -643,12 +650,12 @@ function initAttachments(
     drop.addEventListener("click", () => input.click());
     drop.addEventListener("dragover", (event) => {
         event.preventDefault();
-        drop.classList.add("border-primary");
+        drop.classList.add("is-dragover");
     });
-    drop.addEventListener("dragleave", () => drop.classList.remove("border-primary"));
+    drop.addEventListener("dragleave", () => drop.classList.remove("is-dragover"));
     drop.addEventListener("drop", (event) => {
         event.preventDefault();
-        drop.classList.remove("border-primary");
+        drop.classList.remove("is-dragover");
         if (event.dataTransfer?.files?.length) addFiles(event.dataTransfer.files);
     });
     input.addEventListener("change", () => {
@@ -737,51 +744,38 @@ function initTopicPreview(form: HTMLFormElement, source: TopicPreviewSource) {
         const poll = source.getPoll();
         const attachmentRows = source.getAttachments();
 
-        const attachmentsHtml = attachmentRows.length
-            ? `<div class="d-flex flex-column gap-2 mt-3" style="max-width:28rem">${attachmentRows.map((row) => `
-                <div class="d-flex align-items-center gap-2 p-2" style="border:1px solid var(--bs-border-color);border-radius:.5rem">
-                    <i class="bi ${row.icon} fs-5 text-body-secondary"></i>
-                    <div style="min-width:0">
-                        <div class="text-truncate" style="font-size:.85rem"><bdi>${cms.escapeHtml(row.name)}</bdi></div>
-                        <div class="text-body-secondary" style="font-size:.76rem">${row.sizeLabel}</div>
-                    </div>
-                </div>
-            `).join("")}</div>`
-            : "";
+        const preview = ui.clone("forum-topic-preview");
+        if (!preview) return;
 
-        const pollHtml = poll && poll.question
-            ? `<div class="card mt-3 bg-body-tertiary border-secondary-subtle">
-                <div class="card-body">
-                    <h2 class="h6 card-title mb-2"><i class="bi bi-bar-chart me-1"></i>${cms.escapeHtml(poll.question)}</h2>
-                    <div class="d-flex flex-column gap-2">
-                        ${poll.options.length
-                            ? poll.options.map((option) => `<div class="p-2" style="border:1px solid var(--bs-border-color);border-radius:.5rem">${cms.escapeHtml(option)}</div>`).join("")
-                            : `<div class="text-body-secondary" style="font-size:.85rem">${trans("js.forums.poll_options_empty")}</div>`}
-                    </div>
-                    <div class="text-body-secondary mt-2" style="font-size:.78rem">${pollDurationLabel(poll.durationDays)}</div>
-                </div>
-            </div>`
-            : "";
+        ui.fill(preview, {
+            avatar: authorAvatar,
+            authorName,
+            title: title || trans("js.forums.title_empty"),
+            titleEmpty: title ? "" : "1",
+            contentHtml: contentHtml || cms.escapeHtml(trans("js.forums.content_empty")),
+            contentEmpty: contentHtml ? "" : "1",
+            hasAttachments: attachmentRows.length ? "1" : "",
+            hasPoll: poll && poll.question ? "1" : "",
+            pollQuestion: poll?.question ?? "",
+            pollOptionsEmpty: poll && !poll.options.length ? trans("js.forums.poll_options_empty") : "",
+            pollDuration: poll ? pollDurationLabel(poll.durationDays) : "",
+        });
 
-        body.innerHTML = `
-            <div class="d-flex flex-column flex-md-row gap-3">
-                <div class="flex-shrink-0 d-flex flex-row flex-md-column align-items-center align-items-md-start gap-3 gap-md-2" style="width:100%;max-width:11.5rem">
-                    <img src="${authorAvatar}" alt="${cms.escapeHtml(authorName)}" class="rounded-circle object-fit-cover flex-shrink-0" width="56" height="56">
-                    <div style="min-width:0">
-                        <span class="d-block fw-semibold text-truncate" style="font-size:.95rem">${cms.escapeHtml(authorName)}</span>
-                        <span class="badge text-bg-primary mt-1" style="font-size:.66rem">${trans("js.forums.topic_author")}</span>
-                    </div>
-                </div>
-                <div class="flex-grow-1" style="min-width:0">
-                    <h1 class="h4 mb-2">${title ? cms.escapeHtml(title) : `<span class="text-body-secondary">${trans("js.forums.title_empty")}</span>`}</h1>
-                    <div class="content" style="font-size:.95rem;line-height:1.7;overflow-wrap:anywhere">
-                        ${contentHtml || `<span class="text-body-secondary">${trans("js.forums.content_empty")}</span>`}
-                    </div>
-                    ${attachmentsHtml}
-                    ${pollHtml}
-                </div>
-            </div>
-        `;
+        const attachmentsWrap = preview.querySelector("[data-preview-attachments]");
+        attachmentRows.forEach((row) => {
+            const el = ui.clone("forum-preview-attachment");
+            if (el && attachmentsWrap) {
+                attachmentsWrap.appendChild(ui.fill(el, { iconClass: `bi ${row.icon}`, name: row.name, size: row.sizeLabel }));
+            }
+        });
+
+        const optionsWrap = preview.querySelector("[data-preview-poll-options]");
+        (poll?.options ?? []).forEach((option) => {
+            const el = ui.clone("forum-preview-poll-option");
+            if (el && optionsWrap) optionsWrap.appendChild(ui.fill(el, { text: option }));
+        });
+
+        body.replaceChildren(preview);
 
         ui.modal.open(modalEl);
     });
@@ -842,7 +836,7 @@ function initTopicForm() {
 
     const titleInput = document.getElementById("topicTitle") as HTMLInputElement | null;
     const titleCountEl = document.getElementById("topicTitleCount");
-    const titleErrorEl = form.querySelector("[data-topic-title-error]");
+    const titleErrorEl = form.querySelector<HTMLElement>("[data-topic-title-error]");
     const contentInput = document.getElementById("topicBody") as HTMLInputElement | null;
     const contentEditor = document.getElementById("topicBodyEditor") as (HTMLElement & { editor?: any }) | null;
     const wordCountEl = document.getElementById("topicWordCount");
@@ -894,8 +888,9 @@ function initTopicForm() {
     function setTitleError(message = "") {
         if (!titleErrorEl) return;
         titleErrorEl.textContent = message;
-        titleErrorEl.classList.toggle("d-none", message === "");
-        titleInput!.classList.toggle("is-invalid", message !== "");
+        titleErrorEl.hidden = message === "";
+        if (message === "") titleInput!.removeAttribute("aria-invalid");
+        else titleInput!.setAttribute("aria-invalid", "true");
     }
 
     /* ---------- poll card ---------- */
@@ -913,7 +908,7 @@ function initTopicForm() {
     let pollOpen = false;
 
     function pollOptionInputs(): HTMLInputElement[] {
-        return pollOptionsWrap ? Array.from(pollOptionsWrap.querySelectorAll("input[type=text]")) : [];
+        return pollOptionsWrap ? Array.from(pollOptionsWrap.querySelectorAll("[data-poll-option-text]")) : [];
     }
 
     // Mirrors initAttachments()'s own dropzone-hides-itself-at-the-cap
@@ -928,42 +923,32 @@ function initTopicForm() {
     function addPollOption(prefill = "") {
         if (!pollOptionsWrap || pollOptionInputs().length >= MAX_POLL_OPTIONS) return;
 
-        const num = pollOptionInputs().length + 1;
-        const row = document.createElement("div");
-        row.className = "input-group";
-        row.innerHTML = `
-            <span class="input-group-text font-monospace text-body-secondary">${num}</span>
-            <input type="text" class="form-control" maxlength="255" placeholder="${trans("js.forums.poll_option_placeholder")}">
-            <button type="button" class="btn btn-outline-secondary" aria-label="${trans("js.forums.poll_option_remove")}"><i class="bi bi-x-lg"></i></button>
-        `;
-        // Assigned rather than interpolated into the value="" above: escaping
-        // only `"` (as this used to) leaves `&` alone, so an option whose text
-        // contains "&quot;" or "&amp;" would come back through innerHTML
-        // decoded - and then get saved that way on the next submit. Setting
-        // .value skips HTML parsing entirely.
+        const row = ui.clone("forum-poll-option");
+        if (!row) return;
+        // Assigned rather than put into the markup: .value skips HTML
+        // parsing, so "&quot;" or "&amp;" in an option round-trips as typed.
         if (prefill !== "") {
-            const input = row.querySelector<HTMLInputElement>("input");
+            const input = row.querySelector<HTMLInputElement>("[data-poll-option-text]");
             if (input) input.value = prefill;
         }
-        row.querySelector("button")?.addEventListener("click", () => {
+        row.querySelector("[data-poll-option-remove]")?.addEventListener("click", () => {
             row.remove();
             renumberPollOptions();
         });
         pollOptionsWrap.appendChild(row);
-        renderPollOptionCount();
+        renumberPollOptions();
     }
 
     function renumberPollOptions() {
-        pollOptionInputs().forEach((input, index) => {
-            const badge = input.previousElementSibling;
-            if (badge) badge.textContent = String(index + 1);
+        pollOptionsWrap?.querySelectorAll<HTMLElement>("[data-poll-option-number]").forEach((badge, index) => {
+            badge.textContent = String(index + 1);
         });
         renderPollOptionCount();
     }
 
     function setPollOpen(open: boolean) {
         pollOpen = open;
-        pollBody?.classList.toggle("d-none", !open);
+        if (pollBody) pollBody.hidden = !open;
         pollToggles.forEach((btn) => {
             const icon = btn.querySelector("i");
             if (icon) icon.className = open ? "bi bi-chevron-down" : "bi bi-chevron-right";

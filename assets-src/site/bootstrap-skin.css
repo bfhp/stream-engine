@@ -5,6 +5,17 @@
    in base.css. Logical properties only, so it serves both directions.
    ========================================================================== */
 
+/* Scripts toggle the `hidden` attribute; keep it stronger than Bootstrap's
+   display utilities (d-flex, d-inline-flex, ...), which load after base.css. */
+[hidden] {
+    display: none !important;
+}
+
+/* Form fields marked invalid by scripts (aria-invalid, not .is-invalid). */
+.form-control[aria-invalid="true"] {
+    border-color: var(--bs-form-invalid-border-color);
+}
+
 /* Main Colors */
 header {
     background-color: #070614 !important;

@@ -7,6 +7,7 @@ import "./modules/search.css";
 import "./modules/article.css";
 import "./modules/profile.css";
 import "./modules/users.css";
+import "./modules/forums.css";
 import "./img/default-avatar.svg?no-inline";
 import "./img/default-community.svg?no-inline";
 

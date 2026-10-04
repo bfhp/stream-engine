@@ -34,10 +34,10 @@ function buildCard(optionIds: number[], { multiple = false, max = 1 } = {}): voi
                 `).join("")}
                 <span data-poll-selection-hint></span>
                 <button type="submit" data-poll-submit></button>
-                <button type="button" data-poll-cancel-change class="d-none"></button>
+                <button type="button" data-poll-cancel-change hidden></button>
             </form>
 
-            <div data-poll-results class="d-none">
+            <div data-poll-results hidden>
                 ${optionIds.map(id => `
                     <div>
                         <i data-poll-option-result-icon data-option-id="${id}" class="bi"></i>
@@ -47,11 +47,11 @@ function buildCard(optionIds: number[], { multiple = false, max = 1 } = {}): voi
                 `).join("")}
             </div>
 
-            <div data-poll-hidden-note class="d-none"></div>
-            <div data-poll-voted-note class="d-none"></div>
-            <a data-poll-change-vote class="d-none"></a>
-            <div data-poll-total-votes class="d-none"><span class="font-monospace"></span></div>
-            <div data-poll-voters class="d-none"><span class="font-monospace"></span></div>
+            <div data-poll-hidden-note hidden></div>
+            <div data-poll-voted-note hidden></div>
+            <a data-poll-change-vote hidden></a>
+            <div data-poll-total-votes hidden><span data-poll-count></span></div>
+            <div data-poll-voters hidden><span data-poll-count></span></div>
         </div>`;
 
     card = document.querySelector("[data-poll-card]")!;
@@ -75,7 +75,7 @@ function poll(overrides: Partial<PollApiResponse> = {}): PollApiResponse {
 }
 
 const hidden = (selector: string) =>
-    card.querySelector(selector)!.classList.contains("d-none");
+    (card.querySelector(selector) as HTMLElement).hidden;
 
 const inputs = () =>
     Array.from(form.querySelectorAll<HTMLInputElement>("[data-poll-option-input]"));
@@ -98,7 +98,7 @@ describe("applyPollResponse()", () => {
     it("shows the vote form to someone who has not voted in an open poll", () => {
         applyPollResponse(card, form, poll());
 
-        expect(form.classList.contains("d-none")).toBe(false);
+        expect(form.hidden).toBe(false);
     });
 
     /**
@@ -109,21 +109,21 @@ describe("applyPollResponse()", () => {
     it("never shows the vote form and the results together", () => {
         applyPollResponse(card, form, poll({ canSeeResults: true, userVotes: [] }));
 
-        expect(form.classList.contains("d-none")).toBe(false);
+        expect(form.hidden).toBe(false);
         expect(hidden("[data-poll-results]")).toBe(true);
     });
 
     it("swaps the form for the results once you have voted", () => {
         applyPollResponse(card, form, poll({ userVotes: [1] }));
 
-        expect(form.classList.contains("d-none")).toBe(true);
+        expect(form.hidden).toBe(true);
         expect(hidden("[data-poll-results]")).toBe(false);
     });
 
     it("shows the results of a closed poll even to someone who never voted", () => {
         applyPollResponse(card, form, poll({ isClosed: true, userVotes: [] }));
 
-        expect(form.classList.contains("d-none")).toBe(true);
+        expect(form.hidden).toBe(true);
         expect(hidden("[data-poll-results]")).toBe(false);
     });
 
@@ -131,7 +131,7 @@ describe("applyPollResponse()", () => {
         // Voted, but not allowed to see the tally yet.
         applyPollResponse(card, form, poll({ userVotes: [1], canSeeResults: false }));
 
-        expect(form.classList.contains("d-none")).toBe(true);
+        expect(form.hidden).toBe(true);
         expect(hidden("[data-poll-results]")).toBe(true);
         expect(hidden("[data-poll-hidden-note]")).toBe(false);
     });
@@ -152,7 +152,7 @@ describe("applyPollResponse()", () => {
             applyPollResponse(card, form, poll(state));
 
             const visible = [
-                !form.classList.contains("d-none"),
+                !form.hidden,
                 !hidden("[data-poll-results]"),
                 !hidden("[data-poll-hidden-note]"),
             ].filter(Boolean);
@@ -183,11 +183,11 @@ describe("applyPollResponse()", () => {
     it("hides the cancel button, whatever it was", () => {
         // "Отмена" only belongs to an in-progress change; a fresh response
         // ends that.
-        card.querySelector("[data-poll-cancel-change]")!.classList.remove("d-none");
+        (card.querySelector("[data-poll-cancel-change]") as HTMLElement).hidden = false;
 
         applyPollResponse(card, form, poll({ userVotes: [1] }));
 
-        expect(form.querySelector("[data-poll-cancel-change]")!.classList.contains("d-none")).toBe(true);
+        expect((form.querySelector("[data-poll-cancel-change]") as HTMLElement).hidden).toBe(true);
     });
 
     it("shows the voted note whenever there is a vote, results or not", () => {
@@ -420,11 +420,11 @@ describe("renderPollResults()", () => {
         // makes every option the winner.
         renderPollResults(card, poll({ votersCount: 0 }));
 
-        const colours = [1, 2].map(id =>
-            card.querySelector<HTMLElement>(`[data-poll-option-bar][data-option-id="${id}"]`)!.style.backgroundColor);
+        const bars = [1, 2].map(id =>
+            card.querySelector<HTMLElement>(`[data-poll-option-bar][data-option-id="${id}"]`)!);
 
-        expect(new Set(colours).size).toBe(1);
-        expect(colours[0]).not.toBe("var(--bs-primary)");
+        expect(bars.some(bar => bar.classList.contains("is-leading"))).toBe(false);
+        expect(bars.some(bar => bar.classList.contains("is-chosen"))).toBe(false);
     });
 
     it("treats a null vote count as zero for the arithmetic", () => {
@@ -450,15 +450,15 @@ describe("renderPollResults()", () => {
             votersCount: 22,
         }));
 
-        expect(card.querySelector("[data-poll-total-votes] .font-monospace")!.textContent)
+        expect(card.querySelector("[data-poll-total-votes] [data-poll-count]")!.textContent)
             .toBe("22 votes");
-        expect(card.querySelector("[data-poll-voters] .font-monospace")!.textContent)
+        expect(card.querySelector("[data-poll-voters] [data-poll-count]")!.textContent)
             .toBe("22 participants");
     });
 
     it("leaves the voters line alone when the count is withheld", () => {
         renderPollResults(card, poll({ votersCount: null }));
 
-        expect(card.querySelector("[data-poll-voters] .font-monospace")!.textContent).toBe("");
+        expect(card.querySelector("[data-poll-voters] [data-poll-count]")!.textContent).toBe("");
     });
 });

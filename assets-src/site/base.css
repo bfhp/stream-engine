@@ -300,6 +300,8 @@ hr {
     outline-offset: 1px;
 }
 
+.ui-input[aria-invalid="true"] { border-color: var(--ui-danger); }
+
 .ui-help { font-size: .875rem; color: var(--ui-muted); }
 .ui-error { font-size: .875rem; color: var(--ui-danger); }
 

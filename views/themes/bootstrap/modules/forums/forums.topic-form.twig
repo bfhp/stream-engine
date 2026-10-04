@@ -1,0 +1,320 @@
+{# One template for both forums.topic-new and forums.topic-edit (see
+   ForumsController::buildTopicFormViewModel()) - `topic` is null when
+   creating and the existing Feed when editing, and every other difference
+   below is derived from that rather than from a separate mode flag, the same
+   way Modules\Users's blog-post-form.twig serves its own new/edit pair.
+
+   The form's own data-* attributes are the whole contract with forums.ts's
+   initTopicForm(): data-api-method picks POST vs PATCH, data-poll /
+   data-attachments-existing carry the prefilled state as JSON (the poll card
+   and the "Attachments" list are both built client-side, so there's no
+   server-rendered markup for either to hydrate), and data-poll-locked is the
+   "someone already voted" freeze.
+
+   Bootstrap copy of src/Modules/Forums/views/modules/forums/
+   forums.topic-form.twig: same ids, data-* hooks and <template> fill
+   points. #}
+{% extends "layouts/with-sidebar.twig" %}
+
+{% set isEdit = topic is not null %}
+
+{% block main_class %}my-4{% endblock %}
+
+{% block content %}
+    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+        <h1 class="h3 mb-0">{{ isEdit ? trans('forums.topic_edit') : trans('forums.topic_new') }}</h1>
+        <span class="text-body-secondary" style="font-size: .82rem"><i class="bi bi-folder2-open me-1"></i><bdi>{{ feed.title }}</bdi></span>
+    </div>
+
+    <div class="alert alert-secondary d-flex align-items-start gap-2 mb-3" style="border-color: var(--bs-border-color-translucent); font-size: .85rem">
+        <i class="bi bi-info-circle mt-1"></i>
+        {% if isEdit %}
+            <span>{{ trans('view.forums.topic.form.01') }}</span>
+        {% else %}
+            <span>{{ trans('view.forums.topic.form.02') }}</span>
+        {% endif %}
+    </div>
+
+    <form id="topicForm" data-forum-topic-form data-api-url="{{ apiUrl }}" data-api-method="{{ apiMethod }}"
+          data-uploads-api-url="{{ uploadsApiUrl }}" data-forum-id="{{ feed.id }}"
+          data-poll-locked="{{ pollLocked ? '1' : '0' }}"
+          {# Only when the card is actually editable - a locked poll is rendered
+             read-only from `poll` directly below, so shipping it here as well
+             would just send the same data twice. #}
+          {% if poll and not pollLocked %}data-poll="{{ poll|json_encode|e('html_attr') }}"{% endif %}
+          {% if attachments %}data-attachments-existing="{{ attachments|json_encode|e('html_attr') }}"{% endif %}
+          data-author-name="{{ user.displayName }}" data-author-avatar="{{ authorAvatarUrl }}">
+        <div class="card mb-3">
+            <div class="card-body">
+                <label class="form-label small text-uppercase text-body-secondary fw-semibold" for="topicTitle">{{ trans('view.forums.topic.form.03') }}</label>
+                <input type="text" class="form-control form-control-lg mb-1" id="topicTitle" name="title"
+                       maxlength="200" placeholder="{{ trans('view.forums.topic.form.04') }}" style="font-size: 1.4rem; font-weight: 600"
+                       value="{{ isEdit ? topic.title : '' }}">
+                <div class="invalid-feedback d-block mb-3" hidden data-topic-title-error></div>
+                <div class="d-flex justify-content-between mt-2 mb-3">
+                    <span class="text-body-secondary" style="font-size: .78rem">{{ trans('view.forums.topic.form.05') }}</span>
+                    <span class="text-body-secondary font-monospace" id="topicTitleCount" style="font-size: .78rem">0 / 200</span>
+                </div>
+
+                <label class="form-label small text-uppercase text-body-secondary fw-semibold" for="topicBodyEditor">{{ trans('view.forums.topic.form.06') }}</label>
+                {# Trix initializes its own document from this input's value, so
+                   prefilling it is the whole "load the existing post into the
+                   editor" step. The value is the stored, already-purified HTML
+                   as-is - deliberately *not* run through
+                   ForumsController::contentToEditableText(), which exists for
+                   the plain-text quick-reply textarea and would mangle rich
+                   text (see buildTopicFormViewModel()'s own note). #}
+                <input id="topicBody" type="hidden" name="content" value="{{ isEdit ? topic.content : '' }}">
+                <trix-editor id="topicBodyEditor" input="topicBody" class="trix-content"
+                             placeholder="{{ trans('view.forums.topic.form.07') }}" data-forum-topic-editor></trix-editor>
+                <div class="d-flex justify-content-between mt-2">
+                    <span class="small text-body-secondary" data-topic-form-error></span>
+                    <span class="text-body-secondary" id="topicWordCount" style="font-size: .78rem">{{ trans('view.forums.topic.form.08') }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header d-flex align-items-center gap-2 bg-body-secondary border-secondary-subtle">
+                <button type="button" class="btn btn-sm btn-link p-0 text-body-secondary text-decoration-none lh-1"
+                        title="{{ trans('view.forums.topic.form.09') }}" data-poll-toggle {{ pollLocked ? 'disabled' : '' }}>
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+                <div class="flex-grow-1" style="min-width: 0">
+                    <h2 class="h6 mb-0 fw-semibold">{{ trans('view.forums.topic.form.10') }}</h2>
+                    <div class="text-body-secondary" style="font-size: .78rem" data-poll-hint>
+                        {%- if pollLocked -%}
+                            {{ trans('view.forums.topic.form.11') }}
+                        {%- else -%}
+                            {{ trans('view.forums.topic.form.12') }}
+                        {%- endif -%}
+                    </div>
+                </div>
+                {% if not pollLocked %}
+                    <button type="button" class="btn btn-sm btn-link px-0 d-inline-flex align-items-center gap-1 text-decoration-none" data-poll-toggle>
+                        <i class="bi bi-plus-lg"></i><span>{{ trans('view.forums.topic.form.13') }}</span>
+                    </button>
+                {% else %}
+                    <span class="badge text-bg-secondary" style="font-size: .66rem"><i class="bi bi-lock me-1"></i>{{ trans('view.forums.topic.form.14') }}</span>
+                {% endif %}
+            </div>
+            {# The locked case renders the poll read-only rather than hiding the
+               card, so an author can see *what* they can't change and why -
+               forums.ts skips collecting this card entirely when
+               data-poll-locked is set, and ForumsController::
+               replaceTopicPoll() ignores the field server-side regardless. #}
+            {% if pollLocked %}
+                <div class="card-body">
+                    <div class="fw-semibold mb-2">{{ poll.question }}</div>
+                    <ul class="mb-0 text-body-secondary" style="font-size: .85rem; padding-inline-start: 1.1rem; line-height: 1.8">
+                        {% for option in poll.options %}
+                            <li>{{ option }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% else %}
+                <div class="card-body" hidden data-poll-body>
+                    <label class="form-label small text-uppercase text-body-secondary fw-semibold" for="pollQuestion">{{ trans('view.forums.topic.form.15') }}</label>
+                    <input type="text" class="form-control mb-3" id="pollQuestion" maxlength="200" placeholder="{{ trans('view.forums.topic.form.16') }}">
+
+                    <label class="form-label small text-uppercase text-body-secondary fw-semibold">{{ trans('view.forums.topic.form.17') }}</label>
+                    <div class="d-flex flex-column gap-2" data-poll-options></div>
+                    <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
+                        <button type="button" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2" data-poll-add-option>
+                            <i class="bi bi-plus-lg"></i><span>{{ trans('view.forums.topic.form.18') }}</span>
+                        </button>
+                        <span class="text-body-secondary font-monospace" style="font-size: .78rem" data-poll-option-count></span>
+                    </div>
+
+                    <hr class="border-secondary-subtle my-3">
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="pollMultiple">
+                                <label class="form-check-label" for="pollMultiple">{{ trans('view.forums.topic.form.19') }}</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small text-uppercase text-body-secondary fw-semibold" for="pollDuration">{{ trans('view.forums.topic.form.20') }}</label>
+                            <select class="form-select" id="pollDuration">
+                                <option value="0" selected>{{ trans('view.forums.topic.form.21') }}</option>
+                                <option value="7">{{ trans('view.forums.topic.form.22') }}</option>
+                                <option value="14">{{ trans('view.forums.topic.form.23') }}</option>
+                                <option value="30">{{ trans('view.forums.topic.form.24') }}</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <h2 class="h6 card-title mb-2"><i class="bi bi-paperclip me-1"></i>{{ trans('view.forums.topic.form.25') }}</h2>
+                <div class="d-flex align-items-center gap-3 p-3 mb-3" style="border: 1.5px dashed var(--bs-border-color); border-radius: .5rem; cursor: pointer"
+                     data-attachments-drop>
+                    <i class="bi bi-cloud-arrow-up fs-4"></i>
+                    <div>
+                        <div>{{ trans('view.forums.topic.form.26') }}</div>
+                        <div class="small text-body-secondary">{{ trans('view.forums.topic.form.27') }}</div>
+                    </div>
+                </div>
+                <input type="file" hidden accept="image/jpeg,image/png,image/webp,application/pdf" multiple data-attachments-input>
+                <div class="d-flex flex-column gap-2" data-attachments-list></div>
+                <p class="small text-body-secondary mt-2 mb-0" hidden data-attachments-empty>{{ trans('view.forums.topic.form.28') }}</p>
+            </div>
+        </div>
+    </form>
+
+    {# Populated client-side from the form's own current state (forums.ts's
+       own initTopicPreview()) - no server round trip, so nothing here is
+       real yet (no ownerId/createdAt/etc.) and it isn't a byte-identical
+       preview: content is whatever Trix's editor serialized, not the
+       HTMLPurifier-cleaned HTML that will actually be stored (see
+       ForumsController::handleTopicCreateRequest()'s own purify() call) -
+       close enough for "does this look right before I publish", not a
+       guarantee. Mirrors forums.topic-view.twig's own post markup (avatar/
+       name column, .content div, attachment rows) so the preview isn't
+       misleading about the real layout. #}
+    <div class="modal fade" id="topicPreviewModal" tabindex="-1" aria-labelledby="topicPreviewModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="topicPreviewModalLabel"><i class="bi bi-eye me-1"></i>{{ trans('view.forums.topic.form.29') }}</h5>
+                    <button type="button" class="btn-close" data-ui-dismiss="modal" aria-label="{{ trans('view.forums.topic.form.30') }}"></button>
+                </div>
+                <div class="modal-body" id="topicPreviewBody"></div>
+            </div>
+        </div>
+    </div>
+
+    <template data-ui="forum-poll-option">
+        <div class="input-group">
+            <span class="input-group-text font-monospace text-body-secondary" data-poll-option-number>1</span>
+            <input type="text" class="form-control" maxlength="255" placeholder="{{ trans('js.forums.poll_option_placeholder') }}" data-poll-option-text>
+            <button type="button" class="btn btn-outline-secondary" aria-label="{{ trans('js.forums.poll_option_remove') }}" data-poll-option-remove><i class="bi bi-x-lg"></i></button>
+        </div>
+    </template>
+
+    <template data-ui="forum-attachment-upload">
+        <div class="d-flex align-items-center gap-3 p-2" style="border: 1px solid var(--bs-border-color); border-radius: .5rem">
+            <div style="width: 40px; height: 40px; flex: 0 0 auto; border-radius: 6px; background-color: var(--bs-secondary-bg); display: inline-flex; align-items: center; justify-content: center; color: #8ea3c0"><i data-slot-attr="class:iconClass"></i></div>
+            <div style="flex: 1; min-width: 0">
+                <div class="text-truncate" style="font-size: .86rem; font-weight: 600"><bdi data-slot="name"></bdi></div>
+                <div class="text-body-secondary" style="font-size: .78rem" data-slot="status"></div>
+                <div class="progress mt-1" style="height: 4px" data-slot-optional="uploading"><div class="progress-bar" style="width: 0%" data-attachment-progress></div></div>
+            </div>
+            <button type="button" class="btn btn-sm btn-link px-0 text-body-secondary" data-slot-attr="aria-label:removeLabel" data-attachment-remove>
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+    </template>
+
+    <template data-ui="forum-topic-preview">
+        <div class="d-flex flex-column flex-md-row gap-3">
+            <div class="flex-shrink-0 d-flex flex-row flex-md-column align-items-center align-items-md-start gap-3 gap-md-2" style="width: 100%; max-width: 11.5rem">
+                <img class="rounded-circle object-fit-cover flex-shrink-0" width="56" height="56" alt="" data-slot-attr="src:avatar alt:authorName">
+                <div style="min-width: 0">
+                    <span class="d-block fw-semibold text-truncate" style="font-size: .95rem"><bdi data-slot="authorName"></bdi></span>
+                    <span class="badge text-bg-primary mt-1" style="font-size: .66rem">{{ trans('js.forums.topic_author') }}</span>
+                </div>
+            </div>
+            <div class="flex-grow-1" style="min-width: 0">
+                <h1 class="h4 mb-2 forums-preview__title" data-slot="title" data-slot-attr="data-empty:titleEmpty"></h1>
+                <div class="content" style="font-size: .95rem; line-height: 1.7; overflow-wrap: anywhere" data-slot-html="contentHtml" data-slot-attr="data-empty:contentEmpty"></div>
+                <div class="d-flex flex-column gap-2 mt-3" style="max-width: 28rem" data-slot-optional="hasAttachments" data-preview-attachments></div>
+                <div class="card mt-3 bg-body-tertiary border-secondary-subtle" data-slot-optional="hasPoll">
+                    <div class="card-body">
+                        <h2 class="h6 card-title mb-2"><i class="bi bi-bar-chart me-1"></i><span data-slot="pollQuestion"></span></h2>
+                        <div class="d-flex flex-column gap-2" data-preview-poll-options></div>
+                        <div class="text-body-secondary" style="font-size: .85rem" data-slot="pollOptionsEmpty" data-slot-optional="pollOptionsEmpty"></div>
+                        <div class="text-body-secondary mt-2" style="font-size: .78rem" data-slot="pollDuration"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template data-ui="forum-preview-attachment">
+        <div class="d-flex align-items-center gap-2 p-2" style="border: 1px solid var(--bs-border-color); border-radius: .5rem">
+            <span class="fs-5 text-body-secondary"><i data-slot-attr="class:iconClass"></i></span>
+            <div style="min-width: 0">
+                <div class="text-truncate" style="font-size: .85rem"><bdi data-slot="name"></bdi></div>
+                <div class="text-body-secondary" style="font-size: .76rem" data-slot="size"></div>
+            </div>
+        </div>
+    </template>
+
+    <template data-ui="forum-preview-poll-option">
+        <div class="p-2" style="border: 1px solid var(--bs-border-color); border-radius: .5rem" data-slot="text"></div>
+    </template>
+{% endblock %}
+
+{% block sidebar_widgets %}
+    <div style="position: sticky; top: 1rem">
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <h2 class="h6 card-title mb-3">
+                    {%- if isEdit -%}
+                        <i class="bi bi-pencil-square me-1"></i>{{ trans('view.forums.topic.form.31') }}
+                    {%- else -%}
+                        <i class="bi bi-send me-1"></i>{{ trans('view.forums.topic.form.32') }}
+                    {%- endif -%}
+                </h2>
+                {% if isEdit %}
+                    <p class="small text-body-secondary mb-3">
+                        <i class="bi bi-clock-history me-1"></i>{{ trans('view.forums.topic.form.33') }}
+                    </p>
+                {% else %}
+                    <p class="small text-body-secondary mb-3">
+                        <i class="bi bi-people me-1"></i>{{ trans('view.forums.topic.form.34') }} {{ forumTotals.topics }} {{ trans_choice('forums.topic_unit', forumTotals.topics) }} {{ trans('view.forums.topic.form.36') }} {{ forumTotals.posts }} {{ trans_choice('forums.post_unit', forumTotals.posts) }}.
+                    </p>
+                {% endif %}
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary" type="button" id="btnCreateTopic">
+                        <i class="bi {{ isEdit ? 'bi-check2' : 'bi-pencil-square' }} me-1"></i><span id="btnCreateTopicLabel">{{ isEdit ? trans('view.forums.topic.form.41') : trans('view.forums.topic.form.42') }}</span>
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" type="button" id="btnPreviewTopic">
+                        <i class="bi bi-eye me-1"></i>{{ trans('view.forums.topic.form.43') }}
+                    </button>
+                    {% if cancelUrl %}
+                        <a href="{{ cancelUrl }}" class="btn btn-link text-body-secondary">
+                            <i class="bi bi-x-lg me-1"></i>{{ trans('view.comments.cancel') }}
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {# Create-only: by edit time the author already has forums.topic-view's
+           own "Follow" toggle, and a save button that silently re-subscribed
+           them would be a surprise - the PATCH endpoint ignores `subscribe`
+           for the same reason (see handleTopicUpdateRequest()). #}
+        {% if not isEdit %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h2 class="h6 card-title mb-3"><i class="bi bi-bell me-1"></i>{{ trans('view.forums.topic.form.44') }}</h2>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="topicSubscribe" checked>
+                        <label class="form-check-label" for="topicSubscribe">{{ trans('view.forums.topic.form.45') }}</label>
+                    </div>
+                    <p class="small text-body-secondary mt-2 mb-0">{{ trans('view.forums.topic.form.46') }}</p>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="card bg-body-tertiary border-secondary-subtle">
+            <div class="card-body">
+                <h2 class="h6 card-title mb-2"><i class="bi bi-info-circle me-1"></i>{{ trans('view.forums.topic.form.47') }}</h2>
+                <ul class="mb-0 text-body-secondary" style="font-size: .82rem; padding-inline-start: 1.1rem; line-height: 1.7">
+                    <li>{{ trans('view.forums.topic.form.48') }}</li>
+                    <li>{{ trans('view.forums.topic.form.49') }}</li>
+                    <li>{{ trans('view.forums.topic.form.50') }}</li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+{% endblock %}
