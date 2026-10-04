@@ -1,0 +1,14 @@
+{# One search result. Rendered by results.twig as <template data-ui="search-result">
+   and filled by assets-src/pages/search.ts from the feeds API; a theme that
+   overrides this file must keep the data-slot* fill points:
+     kind, author (optional), date (optional, title: dateTitle),
+     title (href: url), snippet (optional). #}
+<div class="search-result">
+    <div class="search-result-meta">
+        <span class="search-result-kind" data-slot="kind">{{ result.kind }}</span>
+        <span data-slot="author" data-slot-optional="author">{{ result.author }}</span>
+        <span data-slot="date" data-slot-attr="title:dateTitle" data-slot-optional="date">{{ result.date }}</span>
+    </div>
+    <a href="{{ result.url }}" class="search-result-title" data-slot="title" data-slot-attr="href:url">{{ result.title }}</a>
+    <div class="search-result-snippet" data-slot="snippet" data-slot-optional="snippet">{{ result.snippet }}</div>
+</div>

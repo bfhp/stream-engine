@@ -1,9 +1,33 @@
-<div id="searchResults"
+{# Search results, filled by assets-src/pages/search.ts. The script owns the
+   contents of #searchResults; the loading line, the "load more" button and the
+   result template below are rendered here so a theme can restyle them (see
+   views/themes/bootstrap/components/search/). Keep the data-search* hooks. #}
+<div class="search-results"
+     id="searchResults"
      data-search="{{ query|e }}">
 
     {% block search_loader %}
-        <div class="spinner-border ms-auto" aria-hidden="true"></div>
-        <strong role="status">{{ trans('view.search.results.01') }}</strong>
+        <p class="search-placeholder">
+            <span class="ui-spinner" aria-hidden="true"></span>
+            <strong role="status">{{ trans('view.search.results.01') }}</strong>
+        </p>
     {% endblock %}
 
 </div>
+
+{% block search_status %}
+    <div class="search-loading" role="status" aria-live="polite" data-search-status hidden>
+        <span class="ui-spinner" aria-hidden="true"></span>
+        <span data-search-status-text></span>
+    </div>
+{% endblock %}
+
+{% block search_more %}
+    <button type="button" class="ui-button search-more" data-search-more aria-controls="searchResults" hidden></button>
+{% endblock %}
+
+<template data-ui="search-result">
+    {%- include 'components/search/result.twig' with {
+        result: {kind: ' ', author: ' ', date: ' ', title: '', url: '#', snippet: ' '}
+    } only -%}
+</template>

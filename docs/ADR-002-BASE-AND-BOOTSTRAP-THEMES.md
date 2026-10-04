@@ -182,9 +182,15 @@ is a separate Mantine app):
    keep the Bootstrap look.
 10. [ ] Check the module under both themes.
 
-Progress: Feedback (templates for `default`, styles in
-`assets-src/site/modules/feedback.css`; `bootstrap` overrides the page's
-class blocks, title and success alert, and has its own form component).
+Progress:
+- Feedback: templates for `default`, styles in `modules/feedback.css`;
+  `bootstrap` overrides the page's class blocks, title and success alert,
+  and has its own form component.
+- Search: results come from `<template data-ui="search-result">`
+  (`components/search/result.twig`), the loading line and "load more"
+  button are rendered by `results.twig`, `search.ts` builds no item markup;
+  styles in `modules/search.css`; `bootstrap` overrides `results.twig`'s
+  blocks and has its own `result.twig` with the same fill points.
 
 ### Verify
 

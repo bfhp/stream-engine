@@ -1,6 +1,6 @@
-import { escapeHtml } from "../shared/escape";
 import { FEED_TYPE_LABELS } from "../shared/feed-types";
 import { trans } from "../shared/i18n";
+import { ui } from "../shared/ui";
 
 const cms = window.CMS;
 
@@ -22,12 +22,15 @@ type FeedSearchResponse = {
     meta?: { has_more?: boolean; next_cursor?: string | null };
 };
 
+/** Values for the data-slot* points of components/search/result.twig. */
 type SearchPresentation = {
-    label: string;
-    kindLabel: string;
+    kind: string;
+    author: string;
+    date: string;
+    dateTitle: string;
+    title: string;
     url: string;
     snippet: string;
-    meta: Array<{ label: string; title?: string }>;
 };
 
 const PREVIEW_LENGTH = 180;
@@ -41,27 +44,44 @@ const CONTENT_PARSE_LIMIT = 5000;
     let currentController: AbortController | null = null;
     let nextCursor: string | null = null;
     let loading = false;
-    const moreButton = document.createElement('button');
-    moreButton.type = 'button';
-    moreButton.className = 'btn btn-outline-primary my-3';
+    // The loading line and the "load more" button are the theme's markup
+    // (components/search/results.twig); only plain fallbacks are built here,
+    // for a theme that dropped them.
+    const loadingStatus = document.querySelector<HTMLElement>('[data-search-status]')
+        ?? fallbackStatus();
+    const loadingMessage = loadingStatus.querySelector<HTMLElement>('[data-search-status-text]') ?? loadingStatus;
+    const moreButton = document.querySelector<HTMLButtonElement>('[data-search-more]')
+        ?? fallbackMoreButton();
     moreButton.textContent = trans('js.common.load_more');
-    moreButton.hidden = true;
-    moreButton.setAttribute('aria-controls', 'searchResults');
-    const loadingStatus = document.createElement('div');
-    loadingStatus.className = 'search-loading py-4 text-body-secondary';
-    loadingStatus.setAttribute('role', 'status');
-    loadingStatus.setAttribute('aria-live', 'polite');
-    loadingStatus.hidden = true;
-    loadingStatus.innerHTML = `
-        <div class="d-flex align-items-center gap-2">
-            <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
-            <span class="search-loading-message"></span>
-        </div>`;
-    const loadingMessage = loadingStatus.querySelector('.search-loading-message')!;
-    resultsContainer.after(loadingStatus, moreButton);
     moreButton.addEventListener('click', () => {
         void performSearch(resultsContainer.dataset.search || '', nextCursor);
     });
+
+    function fallbackStatus(): HTMLElement {
+        const status = document.createElement('div');
+        status.setAttribute('role', 'status');
+        status.setAttribute('aria-live', 'polite');
+        status.hidden = true;
+        resultsContainer!.after(status);
+        return status;
+    }
+
+    function fallbackMoreButton(): HTMLButtonElement {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.hidden = true;
+        button.setAttribute('aria-controls', 'searchResults');
+        loadingStatus.after(button);
+        return button;
+    }
+
+    /** A one-line notice in place of the results (too short, nothing found, failed). */
+    function showMessage(text: string): void {
+        const message = document.createElement('div');
+        message.className = 'search-message';
+        message.textContent = text;
+        resultsContainer!.replaceChildren(message);
+    }
 
     async function performSearch(raw: string, cursor: string | null = null): Promise<void> {
         if (loading) return;
@@ -69,8 +89,7 @@ const CONTENT_PARSE_LIMIT = 5000;
         const query = (raw || '').trim();
 
         if (query.length < 3) {
-            resultsContainer.innerHTML =
-                `<div class="text-muted">${trans('js.search.query_too_short')}</div>`;
+            showMessage(trans('js.search.query_too_short'));
             return;
         }
 
@@ -151,7 +170,7 @@ const CONTENT_PARSE_LIMIT = 5000;
             if (failed) {
                 moreButton.hidden = false;
                 if (!cursor) {
-                    resultsContainer.innerHTML = `<div class="text-muted">${trans('js.search.results_failed')}</div>`;
+                    showMessage(trans('js.search.results_failed'));
                 }
             }
         }
@@ -163,58 +182,37 @@ const CONTENT_PARSE_LIMIT = 5000;
 
         if (!items?.length) {
             if (append) return;
-            resultsContainer.innerHTML =
-                `<div class="text-muted">${trans('js.search.empty')}</div>`;
+            showMessage(trans('js.search.empty'));
             return;
         }
 
-        const html = items.map(item => {
-            const result = presentSearchItem(item);
+        // Each row is a copy of the theme's components/search/result.twig;
+        // values go in as text and attributes, never as markup.
+        const rows = items
+            .map(item => {
+                const row = ui.clone('search-result');
+                return row && ui.fill(row, presentSearchItem(item));
+            })
+            .filter((row): row is HTMLElement => row !== null);
 
-            return `
-            <div class="search-item search-result py-3 border-bottom">
-                <div class="search-result-meta small text-muted mb-1">
-                    <span class="search-result-kind">${escapeHtml(result.kindLabel)}</span>
-                    ${result.meta.map(meta => `
-                        <span${meta.title ? ` title="${escapeHtml(meta.title)}"` : ''}>${escapeHtml(meta.label)}</span>
-                    `).join('')}
-                </div>
-                <a href="${escapeHtml(result.url)}" class="search-result-title text-decoration-none fw-semibold">
-                    ${escapeHtml(result.label)}
-                </a>
-                ${result.snippet
-                    ? `<div class="search-result-snippet text-body-secondary mt-1">${escapeHtml(result.snippet)}</div>`
-                    : ''}
-            </div>
-        `;
-        }).join('');
         if (append) {
-            resultsContainer.insertAdjacentHTML('beforeend', html);
+            resultsContainer.append(...rows);
         } else {
-            resultsContainer.innerHTML = html;
+            resultsContainer.replaceChildren(...rows);
         }
     }
 
     function presentSearchItem(item: FeedSearchItem): SearchPresentation {
-        const label = makeLabel(item);
-        const author = normalizeText(item.authorDisplayName || "");
-        const createdAt = normalizeText(item.createdAtLabel || "");
-        const meta: SearchPresentation["meta"] = [];
-
-        if (author !== "") {
-            meta.push({ label: author });
-        }
-
-        if (createdAt !== "") {
-            meta.push({ label: createdAt, title: item.createdAtTitle || undefined });
-        }
+        const title = makeLabel(item);
 
         return {
-            label,
-            kindLabel: typeLabel(item),
+            kind: typeLabel(item),
+            author: normalizeText(item.authorDisplayName || ""),
+            date: normalizeText(item.createdAtLabel || ""),
+            dateTitle: item.createdAtTitle || "",
+            title,
             url: item.canonicalUrl || '#',
-            snippet: makeSnippet(item, label),
-            meta,
+            snippet: makeSnippet(item, title),
         };
     }
 

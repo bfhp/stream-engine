@@ -3,6 +3,7 @@ import "./vendor";
 import "./style.css";
 import "../shared/custom-content.css";
 import "./modules/feedback.css";
+import "./modules/search.css";
 import "./img/default-avatar.svg?no-inline";
 import "./img/default-community.svg?no-inline";
 

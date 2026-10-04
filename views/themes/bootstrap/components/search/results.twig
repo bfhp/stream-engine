@@ -1,0 +1,22 @@
+{% extends '@Search/components/search/results.twig' %}
+
+{# Bootstrap markup for the search page's loader, loading line and "load
+   more" button; the result itself is components/search/result.twig here. #}
+
+{% block search_loader %}
+    <div class="spinner-border ms-auto" aria-hidden="true"></div>
+    <strong role="status">{{ trans('view.search.results.01') }}</strong>
+{% endblock %}
+
+{% block search_status %}
+    <div class="search-loading py-4 text-body-secondary" role="status" aria-live="polite" data-search-status hidden>
+        <div class="d-flex align-items-center gap-2">
+            <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+            <span data-search-status-text></span>
+        </div>
+    </div>
+{% endblock %}
+
+{% block search_more %}
+    <button type="button" class="btn btn-outline-primary my-3" data-search-more aria-controls="searchResults" hidden></button>
+{% endblock %}

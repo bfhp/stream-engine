@@ -1,0 +1,46 @@
+/* ==========================================================================
+   Search module - styles for its own (framework-free) markup:
+   components/search/results.twig and result.twig. Part of site.css; the
+   colors of .search-result-* live with the shared rules in style.css.
+   ========================================================================== */
+
+.search-placeholder,
+.search-loading {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-space-2);
+}
+
+.search-loading {
+    padding-block: var(--ui-space-4);
+    color: var(--ui-muted);
+}
+
+.search-more {
+    margin-block: var(--ui-space-3);
+}
+
+.search-message {
+    color: var(--ui-muted);
+}
+
+.search-result {
+    padding-block: var(--ui-space-3);
+    border-block-end: 1px solid var(--ui-border);
+}
+
+.search-result-meta {
+    margin-block-end: var(--ui-space-1);
+    font-size: .875rem;
+    color: var(--ui-muted);
+}
+
+.search-result-title {
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.search-result-snippet {
+    margin-block-start: var(--ui-space-1);
+    color: var(--ui-muted);
+}

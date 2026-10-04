@@ -7,12 +7,32 @@ function results(): HTMLElement {
     return document.getElementById("searchResults")!;
 }
 
-/** Renders the server's markup and runs the module over it. */
+/**
+ * The server's markup - components/search/results.twig and result.twig of
+ * the default theme, kept in step by hand - and the module run over it.
+ */
+const RESULT_TEMPLATE = `
+    <template data-ui="search-result"><div class="search-result">
+        <div class="search-result-meta">
+            <span class="search-result-kind" data-slot="kind"> </span>
+            <span data-slot="author" data-slot-optional="author"> </span>
+            <span data-slot="date" data-slot-attr="title:dateTitle" data-slot-optional="date"> </span>
+        </div>
+        <a href="#" class="search-result-title" data-slot="title" data-slot-attr="href:url"></a>
+        <div class="search-result-snippet" data-slot="snippet" data-slot-optional="snippet"> </div>
+    </div></template>`;
+
 async function load(query: string | null): Promise<void> {
     const search = query === null
         ? '<div id="searchResults"></div>'
-        : `<div id="searchResults" data-search="${query}"></div>`;
-    document.body.innerHTML = search;
+        : `<div id="searchResults" data-search="${query}"><p><strong role="status">Идет поиск</strong></p></div>`;
+    document.body.innerHTML = search + `
+        <div class="search-loading" role="status" aria-live="polite" data-search-status hidden>
+            <span class="ui-spinner" aria-hidden="true"></span>
+            <span data-search-status-text></span>
+        </div>
+        <button type="button" class="ui-button search-more" data-search-more aria-controls="searchResults" hidden></button>
+    ` + RESULT_TEMPLATE;
 
     vi.resetModules();
     await import("../../assets-src/pages/search");
@@ -399,9 +419,9 @@ describe("loading indicator", () => {
         try {
             fetchMock.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
             await load("магия");
-            const status = document.querySelector<HTMLElement>('[role="status"]')!;
+            const status = document.querySelector<HTMLElement>('[data-search-status]')!;
             expect(status.hidden).toBe(false);
-            expect(status.querySelector('.spinner-border')).not.toBeNull();
+            expect(status.querySelector('.ui-spinner')).not.toBeNull();
             expect(status.textContent).toContain('Looking for materials');
             const timerIndex = timer.mock.calls.findIndex(call => call[1] === 3000);
             expect(timerIndex).toBeGreaterThanOrEqual(0);
