@@ -258,6 +258,7 @@ return [
     'feed.blog_title_too_long' => '标题过长。',
     'feed.blog_content_required' => '请输入文章内容',
     'feed.blog_visibility_invalid' => '文章可见性取值不被允许',
+    'feed.position_invalid' => '信息流位置必须是非负整数',
     'feed.blog_tags_too_many' => '最多可指定8个标签',
     'feed.blog_tag_too_long' => '标签过长',
     'feed.blog_track_invalid' => '音频文件不正确',

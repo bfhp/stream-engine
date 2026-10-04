@@ -258,6 +258,7 @@ E-mail: {email}
     'feed.blog_title_too_long' => 'O título é muito longo.',
     'feed.blog_content_required' => 'Digite o texto do post',
     'feed.blog_visibility_invalid' => 'Valor de visibilidade do post não permitido',
+    'feed.position_invalid' => 'A posição do feed deve ser um número inteiro não negativo',
     'feed.blog_tags_too_many' => 'Você pode indicar no máximo 8 tags',
     'feed.blog_tag_too_long' => 'Tag muito longa',
     'feed.blog_track_invalid' => 'Arquivo de áudio incorreto',

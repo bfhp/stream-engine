@@ -1307,12 +1307,13 @@ final class FeedRepository implements FeedRepositoryInterface
         string $visibility = 'public',
         ?int $containerId = null,
         ?string $containerType = null,
+        int $position = 0,
     ): int {
 
         $sql = '
         INSERT INTO feeds
-        (parent_id, owner_id, title, type, slug, content, description, image_url, visibility, container_id, container_type, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+        (parent_id, owner_id, title, type, slug, content, description, image_url, visibility, container_id, container_type, position, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
     ';
 
         $this->db->execute($sql, [
@@ -1327,18 +1328,17 @@ final class FeedRepository implements FeedRepositoryInterface
             $visibility,
             $containerId,
             $containerType,
+            $position,
         ]);
 
         return $this->db->lastInsertId();
     }
 
     /**
-     * $visibility is optional (unlike insert()'s always-set column) because
-     * the admin feed.show PATCH never sends it and shouldn't silently reset an
-     * article back to 'public'. Passing a value (as BlogPostService::
-     * updateBlogPost() does, to support publish/draft from the edit form) adds
-     * `visibility = ?` to the SET clause instead of leaving the column
-     * untouched.
+     * $visibility and $position are optional so partial updates preserve both
+     * columns. Passing either value adds its assignment to the SET clause;
+     * BlogPostService uses the visibility branch for publish/draft changes,
+     * while the generic admin editor can update both fields.
      *
      * $containerId/$containerType are guarded by $updateContainer so callers
      * can deliberately clear them to NULL without every existing update path
@@ -1357,6 +1357,7 @@ final class FeedRepository implements FeedRepositoryInterface
         ?string $imageUrl,
         ?string $content,
         ?string $visibility = null,
+        ?int $position = null,
         ?int $containerId = null,
         ?string $containerType = null,
         bool $updateContainer = false,
@@ -1374,6 +1375,8 @@ final class FeedRepository implements FeedRepositoryInterface
             content = ?'
             .($visibility !== null ? ',
             visibility = ?' : '')
+            .($position !== null ? ',
+            position = ?' : '')
             .($updateContainer ? ',
             container_id = ?,
             container_type = ?' : '').',
@@ -1393,6 +1396,10 @@ final class FeedRepository implements FeedRepositoryInterface
 
         if ($visibility !== null) {
             $params[] = $visibility;
+        }
+
+        if ($position !== null) {
+            $params[] = $position;
         }
 
         if ($updateContainer) {

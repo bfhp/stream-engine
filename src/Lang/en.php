@@ -258,6 +258,7 @@ Email: {email}
     'feed.blog_title_too_long' => 'Too long a headline.',
     'feed.blog_content_required' => 'Enter the text of the post',
     'feed.blog_visibility_invalid' => 'Inadmissible Significance of Recording Visibility',
+    'feed.position_invalid' => 'Feed position must be a non-negative integer',
     'feed.blog_tags_too_many' => 'You can specify no more than 8 tags',
     'feed.blog_tag_too_long' => 'Too long tag',
     'feed.blog_track_invalid' => 'Incorrect track file',

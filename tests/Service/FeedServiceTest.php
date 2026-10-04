@@ -2365,6 +2365,97 @@ final class FeedServiceTest extends TestCase
         $this->assertSame('<p>Old</p>', $result->content);
     }
 
+    public function testUpdateFeedChangesVisibilityAndPosition(): void
+    {
+        $user = new User(id: 7, email: 'user@example.com', role: AccessService::ROLE_USER);
+        $db = $this->createMock(PdoDatabase::class);
+        $repository = new FeedRepository($db);
+        $accessService = $this->createMock(AccessService::class);
+        $existingRow = [
+            'id' => 42,
+            'parent_id' => null,
+            'owner_id' => 7,
+            'type' => 'article',
+            'slug' => 'article',
+            'title' => 'Article',
+            'content' => '<p>Body</p>',
+            'description' => null,
+            'image_url' => null,
+            'container_id' => null,
+            'container_type' => null,
+            'visibility' => 'public',
+            'position' => 1,
+            'created_at' => time(),
+            'nick' => 'Author',
+            'avatar_url' => '',
+        ];
+        $updatedRow = array_merge($existingRow, ['visibility' => 'private', 'position' => 12]);
+
+        $db->expects($this->exactly(2))->method('fetchOne')->willReturnOnConsecutiveCalls($existingRow, $updatedRow);
+        $db->expects($this->once())->method('execute')->with(
+            $this->logicalAnd(
+                $this->stringContains('visibility = ?'),
+                $this->stringContains('position = ?'),
+            ),
+            ['Article', 'article', null, 'article', null, null, '<p>Body</p>', 'private', 12, 42],
+        );
+        $accessService->expects($this->exactly(2))->method('canAccessFeed')->willReturn(true);
+        $accessService->expects($this->once())->method('canEditFeed')->willReturn(true);
+
+        $service = $this->makeService(
+            $repository,
+            $this->makeUrlGenerator([42 => $this->makeFeed(id: 42, type: 'article')]),
+            $accessService,
+        );
+
+        $result = $service->updateFeed(42, ['visibility' => 'private', 'position' => 12], $user);
+
+        $this->assertSame('private', $result->visibility);
+        $this->assertSame(12, $result->position);
+    }
+
+    #[DataProvider('invalidPositionProvider')]
+    public function testUpdateFeedRejectsInvalidPosition(mixed $position): void
+    {
+        $user = new User(id: 7, email: 'user@example.com', role: AccessService::ROLE_USER);
+        $db = $this->createMock(PdoDatabase::class);
+        $repository = new FeedRepository($db);
+        $accessService = $this->createMock(AccessService::class);
+        $row = [
+            'id' => 42, 'parent_id' => null, 'owner_id' => 7, 'type' => 'article',
+            'slug' => null, 'title' => 'Article', 'content' => '', 'description' => null,
+            'image_url' => null, 'container_id' => null, 'container_type' => null,
+            'visibility' => 'public', 'position' => 0, 'created_at' => time(),
+            'nick' => 'Author', 'avatar_url' => '',
+        ];
+
+        $db->expects($this->once())->method('fetchOne')->willReturn($row);
+        $db->expects($this->never())->method('execute');
+        $accessService->expects($this->once())->method('canAccessFeed')->willReturn(true);
+        $accessService->expects($this->once())->method('canEditFeed')->willReturn(true);
+        $service = $this->makeService(
+            $repository,
+            $this->makeUrlGenerator([42 => $this->makeFeed(id: 42, type: 'article')]),
+            $accessService,
+        );
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage($this->trans('feed.position_invalid'));
+
+        $service->updateFeed(42, ['position' => $position], $user);
+    }
+
+    public static function invalidPositionProvider(): array
+    {
+        return [
+            'negative' => [-1],
+            'fraction' => [1.5],
+            'string' => ['10'],
+            'above unsigned integer' => [4294967296],
+            'null' => [null],
+        ];
+    }
+
     public function testUpdateFeedThrowsNotFoundExceptionWhenFeedDoesNotExist(): void
     {
         $user = new User(id: 7, email: 'user@example.com', role: AccessService::ROLE_USER);

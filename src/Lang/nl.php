@@ -258,6 +258,7 @@ E-mail: {email}
     'feed.blog_title_too_long' => 'De titel is te lang.',
     'feed.blog_content_required' => 'Voer de tekst van het bericht in',
     'feed.blog_visibility_invalid' => 'Ongeldige waarde voor de zichtbaarheid van het bericht',
+    'feed.position_invalid' => 'De feedpositie moet een niet-negatief geheel getal zijn',
     'feed.blog_tags_too_many' => 'Je kunt maximaal 8 tags opgeven',
     'feed.blog_tag_too_long' => 'De tag is te lang',
     'feed.blog_track_invalid' => 'Ongeldig nummerbestand',

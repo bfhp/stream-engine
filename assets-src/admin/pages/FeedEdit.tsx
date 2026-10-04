@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 
 import Editor from "@monaco-editor/react";
 
-import { TextInput, Button, Stack, Group, ActionIcon, Text, Select, useComputedColorScheme } from "@mantine/core";
+import { TextInput, Button, Stack, Group, Grid, ActionIcon, Text, Select, NumberInput, useComputedColorScheme } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 
 import { IconFileUpload } from "@tabler/icons-react";
@@ -35,6 +35,8 @@ export default function FeedEdit() {
                 title: "",
                 slug: "",
                 type: "article",
+                visibility: "public",
+                position: 0,
                 description: "",
                 imageUrl: "",
                 content: ""
@@ -140,56 +142,99 @@ export default function FeedEdit() {
                 </Button>
             </Group>
 
-            <TextInput
-                label={trans("js.admin.title")}
-                value={feed.title || ""}
-                onChange={(e) =>
-                    setFeed({ ...feed, title: e.currentTarget.value })
-                }
-            />
+            <Grid gutter="md">
+                <Grid.Col span={{ base: 12, md: 8 }}>
+                    <TextInput
+                        label={trans("js.admin.title")}
+                        value={feed.title || ""}
+                        onChange={(e) =>
+                            setFeed({ ...feed, title: e.currentTarget.value })
+                        }
+                    />
+                </Grid.Col>
 
-            <TextInput
-                label={trans("js.admin.slug")}
-                value={feed.slug || ""}
-                onChange={(e) =>
-                    setFeed({ ...feed, slug: e.currentTarget.value })
-                }
-            />
+                <Grid.Col span={{ base: 12, sm: 6, md: 4 }}>
+                    <Select
+                        label={trans("js.admin.type")}
+                        data={FEED_TYPES}
+                        value={feed.type || ""}
+                        onChange={(value) =>
+                            setFeed({ ...feed, type: value || "" })
+                        }
+                        searchable
+                        allowDeselect={false}
+                    />
+                </Grid.Col>
 
-            <Select
-                label={trans("js.admin.type")}
-                data={FEED_TYPES}
-                value={feed.type || ""}
-                onChange={(value) =>
-                    setFeed({ ...feed, type: value || "" })
-                }
-                searchable
-                allowDeselect={false}
-            />
+                <Grid.Col span={{ base: 12, sm: 6, md: 5 }}>
+                    <TextInput
+                        label={trans("js.admin.slug")}
+                        value={feed.slug || ""}
+                        onChange={(e) =>
+                            setFeed({ ...feed, slug: e.currentTarget.value })
+                        }
+                    />
+                </Grid.Col>
 
-            <TextInput
-                label={trans("js.admin.parent_id")}
-                value={feed.parentId || ""}
-                onChange={(e) =>
-                    setFeed({ ...feed, parentId: e.currentTarget.value })
-                }
-            />
+                <Grid.Col span={{ base: 12, sm: 6, md: 2 }}>
+                    <NumberInput
+                        label={trans("js.admin.parent_id")}
+                        min={1}
+                        allowDecimal={false}
+                        allowNegative={false}
+                        value={feed.parentId ?? ""}
+                        onChange={(value) =>
+                            setFeed({ ...feed, parentId: value })
+                        }
+                    />
+                </Grid.Col>
 
-            <TextInput
-                label={trans("js.admin.description")}
-                value={feed.description || ""}
-                onChange={(e) =>
-                    setFeed({ ...feed, description: e.currentTarget.value })
-                }
-            />
+                <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
+                    <Select
+                        label={trans("js.admin.visibility")}
+                        data={["public", "members", "private"]}
+                        value={feed.visibility || "public"}
+                        onChange={(value) =>
+                            setFeed({ ...feed, visibility: value || "public" })
+                        }
+                        allowDeselect={false}
+                    />
+                </Grid.Col>
 
-            <TextInput
-                label={trans("js.admin.image_url")}
-                value={feed.imageUrl || ""}
-                onChange={(e) =>
-                    setFeed({ ...feed, imageUrl: e.currentTarget.value })
-                }
-            />
+                <Grid.Col span={{ base: 12, sm: 6, md: 2 }}>
+                    <NumberInput
+                        label={trans("js.admin.position")}
+                        min={0}
+                        max={4294967295}
+                        allowDecimal={false}
+                        allowNegative={false}
+                        value={feed.position ?? 0}
+                        onChange={(value) =>
+                            setFeed({ ...feed, position: typeof value === "number" ? value : 0 })
+                        }
+                    />
+                </Grid.Col>
+
+                <Grid.Col span={{ base: 12, md: 6 }}>
+                    <TextInput
+                        label={trans("js.admin.description")}
+                        value={feed.description || ""}
+                        onChange={(e) =>
+                            setFeed({ ...feed, description: e.currentTarget.value })
+                        }
+                    />
+                </Grid.Col>
+
+                <Grid.Col span={{ base: 12, md: 6 }}>
+                    <TextInput
+                        label={trans("js.admin.image_url")}
+                        value={feed.imageUrl || ""}
+                        onChange={(e) =>
+                            setFeed({ ...feed, imageUrl: e.currentTarget.value })
+                        }
+                    />
+                </Grid.Col>
+            </Grid>
 
             <Group justify="space-between">
                 <Text fw={500}>{trans("js.admin.content")}</Text>

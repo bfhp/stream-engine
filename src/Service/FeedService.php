@@ -49,6 +49,8 @@ class FeedService
 
     private const int MAX_RATING_VALUE = 5;
 
+    private const int MAX_POSITION = 4294967295;
+
     public const int COMMENT_EDIT_WINDOW_SECONDS = 86400;
 
     private const array ALLOWED_VISIBILITY = ['public', 'members', 'private'];
@@ -337,6 +339,7 @@ class FeedService
         string $visibility = 'public',
         ?int $containerId = null,
         ?string $containerType = null,
+        mixed $position = 0,
     ): Feed {
 
         $slug = $this->normalizeOptionalSlug($slug);
@@ -345,6 +348,7 @@ class FeedService
         $imageUrl = $this->validateFeedImage($imageUrl ?? null);
         $metadata = $metadata !== null ? $this->normalizeMetadataInput($metadata) : null;
         $visibility = $this->normalizeVisibility($visibility);
+        $position = $this->normalizePosition($position);
 
         if ($parentId) {
             $parent = $this->repository->findById($parentId, $user);
@@ -365,6 +369,7 @@ class FeedService
             visibility: $visibility,
             containerId: $containerId,
             containerType: $containerType,
+            position: $position,
         );
 
         if ($metadata !== null) {
@@ -387,8 +392,12 @@ class FeedService
      *
      * @throws ValidationException
      */
-    public function normalizeVisibility(string $visibility): string
+    public function normalizeVisibility(mixed $visibility): string
     {
+        if (! is_string($visibility)) {
+            throw new ValidationException($this->tm->trans('feed.blog_visibility_invalid'));
+        }
+
         $visibility = trim($visibility);
 
         if (! in_array($visibility, self::ALLOWED_VISIBILITY, true)) {
@@ -396,6 +405,16 @@ class FeedService
         }
 
         return $visibility;
+    }
+
+    /** @throws ValidationException */
+    private function normalizePosition(mixed $position): int
+    {
+        if (! is_int($position) || $position < 0 || $position > self::MAX_POSITION) {
+            throw new ValidationException($this->tm->trans('feed.position_invalid'));
+        }
+
+        return $position;
     }
 
     /**
@@ -987,8 +1006,8 @@ class FeedService
 
     /**
      * Partially updates a feed. Missing keys preserve the stored value;
-     * explicit null clears nullable fields. Metadata, visibility and container
-     * columns keep their own opt-in update rules below.
+     * explicit null clears nullable fields. Metadata, visibility, position and
+     * container columns keep their own opt-in update rules below.
      *
      * @param array<string, mixed> $data
      * @throws ForbiddenException
@@ -1052,7 +1071,10 @@ class FeedService
         // FeedRepository::update()'s own doc comment for why null means
         // "leave it alone" rather than "reset to public".
         $visibility = array_key_exists('visibility', $data) && $data['visibility'] !== null
-            ? $this->normalizeVisibility((string) $data['visibility'])
+            ? $this->normalizeVisibility($data['visibility'])
+            : null;
+        $position = array_key_exists('position', $data)
+            ? $this->normalizePosition($data['position'])
             : null;
         $updateContainer = array_key_exists('containerId', $data) || array_key_exists('containerType', $data);
         $containerId = array_key_exists('containerId', $data)
@@ -1072,6 +1094,7 @@ class FeedService
             imageUrl: $imageUrl,
             content: $content,
             visibility: $visibility,
+            position: $position,
             containerId: $containerId,
             containerType: $containerType,
             updateContainer: $updateContainer,

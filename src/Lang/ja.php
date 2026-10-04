@@ -258,6 +258,7 @@ return [
     'feed.blog_title_too_long' => 'タイトルが長すぎます。',
     'feed.blog_content_required' => '記事の本文を入力してください',
     'feed.blog_visibility_invalid' => '記事の公開範囲の値が許可されていません',
+    'feed.position_invalid' => 'フィードの位置は0以上の整数である必要があります',
     'feed.blog_tags_too_many' => 'タグは最大8個まで指定できます',
     'feed.blog_tag_too_long' => 'タグが長すぎます',
     'feed.blog_track_invalid' => '音声ファイルが正しくありません',

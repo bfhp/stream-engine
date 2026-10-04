@@ -116,7 +116,7 @@ class APIController extends AbstractController
             }
 
             $data = [];
-            foreach (['title', 'slug', 'parentId', 'type', 'description', 'imageUrl', 'content', 'metadata'] as $field) {
+            foreach (['title', 'slug', 'parentId', 'type', 'description', 'imageUrl', 'content', 'metadata', 'visibility', 'position'] as $field) {
                 if (array_key_exists($field, $input)) {
                     $data[$field] = $input[$field];
                 }
@@ -157,7 +157,9 @@ class APIController extends AbstractController
                 imageUrl: $input['imageUrl'] ?? null,
                 content: $input['content'] ?? '',
                 user: $this->context->user,
-                metadata: array_key_exists('metadata', $input) ? $input['metadata'] : []
+                metadata: array_key_exists('metadata', $input) ? $input['metadata'] : [],
+                visibility: $input['visibility'] ?? 'public',
+                position: $input['position'] ?? 0,
             );
             echo Formatter::json($feed);
         } elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {

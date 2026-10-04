@@ -258,6 +258,7 @@ return [
     'feed.blog_title_too_long' => '제목이 너무 깁니다.',
     'feed.blog_content_required' => '게시물 본문을 입력해 주세요',
     'feed.blog_visibility_invalid' => '허용되지 않는 게시물 공개 범위 값입니다',
+    'feed.position_invalid' => '피드 위치는 0 이상의 정수여야 합니다',
     'feed.blog_tags_too_many' => '태그는 최대 8개까지 지정할 수 있습니다',
     'feed.blog_tag_too_long' => '태그가 너무 깁니다',
     'feed.blog_track_invalid' => '오디오 파일이 올바르지 않습니다',

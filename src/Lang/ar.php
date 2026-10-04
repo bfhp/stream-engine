@@ -258,6 +258,7 @@ return [
     'feed.blog_title_too_long' => 'العنوان طويل جدًا.',
     'feed.blog_content_required' => 'أدخل نص المنشور',
     'feed.blog_visibility_invalid' => 'قيمة ظهور المنشور غير مسموح بها',
+    'feed.position_invalid' => 'يجب أن يكون موضع الخلاصة عدداً صحيحاً غير سالب',
     'feed.blog_tags_too_many' => 'يمكنك تحديد 8 وسوم كحد أقصى',
     'feed.blog_tag_too_long' => 'الوسم طويل جدًا',
     'feed.blog_track_invalid' => 'ملف المسار غير صحيح',

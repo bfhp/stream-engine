@@ -275,6 +275,7 @@ return [
     'feed.blog_title_too_long' => 'Слишком длинный заголовок',
     'feed.blog_content_required' => 'Введите текст поста',
     'feed.blog_visibility_invalid' => 'Недопустимое значение видимости записи',
+    'feed.position_invalid' => 'Позиция ленты должна быть неотрицательным целым числом',
     'feed.blog_tags_too_many' => 'Можно указать не более 8 тегов',
     'feed.blog_tag_too_long' => 'Слишком длинный тег',
     'feed.blog_track_invalid' => 'Некорректный файл трека',

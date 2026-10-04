@@ -321,6 +321,8 @@ final class APIControllerFeedsTest extends TestCase
                     'description' => 'Описание',
                     'imageUrl' => '/uploads/a.jpg',
                     'content' => 'Текст',
+                    'visibility' => 'private',
+                    'position' => 12,
                 ],
                 $this->callback(static fn (User $u): bool => $u->id === 1)
             )
@@ -335,6 +337,8 @@ final class APIControllerFeedsTest extends TestCase
             'description' => 'Описание',
             'imageUrl' => '/uploads/a.jpg',
             'content' => 'Текст',
+            'visibility' => 'private',
+            'position' => 12,
         ]));
 
         $decoded = $this->capture(
@@ -344,6 +348,49 @@ final class APIControllerFeedsTest extends TestCase
         );
 
         self::assertSame('Новое имя', $decoded['title']);
+    }
+
+    public function testAnAdminCreatePassesVisibilityAndPositionThrough(): void
+    {
+        $feedService = $this->feedServiceMock(['createFeed']);
+        $feedService->expects($this->once())
+            ->method('createFeed')
+            ->with(
+                'Новая лента',
+                'novaya-lenta',
+                'article',
+                7,
+                'Описание',
+                '/uploads/a.jpg',
+                'Текст',
+                $this->callback(static fn (User $u): bool => $u->id === 1),
+                [],
+                'members',
+                null,
+                null,
+                9,
+            )
+            ->willReturn($this->feed(title: 'Новая лента'));
+
+        $this->withToken('POST');
+        PhpInputStreamMock::register(json_encode([
+            'title' => 'Новая лента',
+            'slug' => 'novaya-lenta',
+            'type' => 'article',
+            'parentId' => 7,
+            'description' => 'Описание',
+            'imageUrl' => '/uploads/a.jpg',
+            'content' => 'Текст',
+            'visibility' => 'members',
+            'position' => 9,
+        ]));
+
+        $decoded = $this->capture(
+            $this->makeModule($feedService, isAdmin: true),
+            $this->feedsPage(),
+        );
+
+        self::assertSame('Новая лента', $decoded['title']);
     }
 
     public function testAPartialPatchForwardsOnlyFieldsPresentInTheBody(): void
