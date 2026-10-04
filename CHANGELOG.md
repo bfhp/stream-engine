@@ -7,6 +7,30 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added a `system` color-mode choice whenever a theme supports both `light`
+  and `dark`. The public layout resolves the operating-system preference
+  before styles load, follows preference changes while the page is open, and
+  keeps the default and Bootstrap themes, browser chrome, and admin previews
+  in sync.
+- Added editable `visibility` and `position` fields to the feed administration
+  form for both new and existing feeds. The API now persists both values,
+  validates visibility against `public`, `members`, and `private`, and limits
+  positions to unsigned integers.
+
+### Changed
+
+- Reworked the feed editor into a responsive grid: long text fields retain
+  more space, compact fields share rows, and parent ID is now a numeric input;
+  narrow screens continue to use a single-column layout.
+
+### Fixed
+
+- Required every stored page except the root page (`id = 1`) to have a parent.
+  The Pages editor no longer allows clearing the parent, and server-side
+  validation rejects creating or detaching non-root pages without one.
+
 ## [0.4.1] - 2026-10-04
 
 ### Added
