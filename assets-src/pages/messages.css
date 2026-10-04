@@ -63,6 +63,24 @@
     font-size: 14px;
 }
 
+/* Keep the messenger palette in step with the site theme. */
+[data-color-mode="light"] .messenger-page {
+    --msgr-bg-canvas: #f8fafc;
+    --msgr-bg-surface: #ffffff;
+    --msgr-bg-elevated: #f1f5f9;
+    --msgr-border: #cbd5e1;
+    --msgr-border-soft: #e2e8f0;
+    --msgr-text: #0f172a;
+    --msgr-text-muted: #64748b;
+    --msgr-text-faint: #94a3b8;
+    --msgr-accent: #2563eb;
+    --msgr-accent-strong: #1d4ed8;
+    --msgr-accent-soft: rgba(37, 99, 235, 0.12);
+    --msgr-accent-soft-text: #1d4ed8;
+    --msgr-danger: #dc2626;
+    --msgr-danger-soft: rgba(220, 38, 38, 0.1);
+}
+
 .messenger-page * {
     box-sizing: border-box;
 }
@@ -1597,4 +1615,3 @@
         width: 100%;
     }
 }
-

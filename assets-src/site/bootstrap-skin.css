@@ -18,19 +18,19 @@
 
 /* Main Colors */
 header {
-    background-color: #070614 !important;
+    background-color: var(--ui-header-bg) !important;
 }
 
 ol.breadcrumb, .breadcrumb-item+.breadcrumb-item::before {
-    color:#4F5B62;
+    color: var(--bs-secondary-color);
 }
 
 body {
-    color:#ffffff;
+    color: var(--bs-body-color);
 }
 
 footer,body {
-    background-color: #0F172A !important;
+    background-color: var(--bs-body-bg) !important;
 }
 
 /* Navbar */
@@ -43,7 +43,7 @@ footer,body {
 
 .navbar .dropdown-menu .dropdown-item:hover {
     color:var(--bs-nav-link-hover-color);
-    background-color: var(--bs-dark-bg-subtle);
+    background-color: var(--bs-tertiary-bg);
 }
 
 .navbar .dropdown-menu .dropdown-item.active {
@@ -85,12 +85,12 @@ footer,body {
 .footer-quick-links .list-group-item {
     background: none;
     border: none;
-    color: #ffffff;
+    color: var(--bs-body-color);
     padding-inline-start: 0;
 }
 
 .footer-quick-links .list-group-item:focus {
-    color: #ffffff;
+    color: var(--bs-body-color);
     background: none;
 }
 
@@ -103,4 +103,3 @@ footer,body {
     color: var(--bs-link-color);
     background: none;
 }
-

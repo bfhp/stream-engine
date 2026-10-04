@@ -41,14 +41,14 @@ img.mw-300 {
     font-size: 0.72rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: #8ea3c0;
+    color: var(--bs-secondary-color);
     font-weight: 600;
 }
 
 .se-empty {
-    border: 1px dashed rgba(255, 255, 255, 0.14);
+    border: 1px dashed var(--bs-border-color);
     border-radius: 14px;
     padding: 2.5rem 1rem;
     text-align: center;
-    color: #8ea3c0;
+    color: var(--bs-secondary-color);
 }

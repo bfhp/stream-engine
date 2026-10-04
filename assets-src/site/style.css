@@ -107,13 +107,13 @@ div.feedback-hint > .list-group-flush > .list-group-item {
 
 /* Quiet secondary links */
 .link-quiet {
-    color: #8ea3c0;
+    color: var(--bs-secondary-color);
     text-decoration: none;
     font-size: 0.9rem;
 }
 
 .link-quiet:hover {
-    color: #cdd6e4;
+    color: var(--bs-body-color);
 }
 
 /* Search page */
@@ -209,7 +209,7 @@ div.feedback-hint > .list-group-flush > .list-group-item {
    inserts - see assets-src/pages/forums.ts's insertQuote()) into this markup. */
 .comment-quote {
     border-inline-start: 3px solid var(--bs-border-color);
-    background-color: rgba(255, 255, 255, .03);
+    background-color: var(--bs-tertiary-bg);
 }
 
 .comment-quote-author {
@@ -305,7 +305,7 @@ div.feedback-hint > .list-group-flush > .list-group-item {
     padding: 0.6rem 0.75rem;
     border-radius: 0.5rem;
     border: 1px solid var(--bs-border-color);
-    background-color: rgba(255, 255, 255, 0.02);
+    background-color: var(--bs-body-bg);
     color: var(--bs-body-color);
     cursor: pointer;
 }
@@ -315,7 +315,7 @@ div.feedback-hint > .list-group-flush > .list-group-item {
 }
 
 .poll-option.is-selected {
-    background-color: rgba(13, 110, 253, 0.1);
+    background-color: var(--bs-primary-bg-subtle);
     border-color: var(--bs-primary);
 }
 
