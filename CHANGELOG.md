@@ -7,6 +7,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-10-04
+
 ### Added
 
 - Added a `system` color-mode choice whenever a theme supports both `light`
