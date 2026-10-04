@@ -7,6 +7,22 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-10-04
+
+### Added
+
+- Added a localized page setting for `article.show-id` and
+  `article.show-slug` that lets administrators render article content inside
+  the active theme's container or at full width. Contained content is the
+  default, including for the welcome page created during installation.
+
+### Fixed
+
+- Fixed light mode in the `default` and `bootstrap` themes by replacing
+  unconditional dark backgrounds and text colors with active-theme tokens,
+  removing forced light text from Bootstrap chrome, and applying light-aware
+  colors to shared content, browser chrome, and the messenger.
+
 ## [0.4.0] - 2026-10-04
 
 ### Added
