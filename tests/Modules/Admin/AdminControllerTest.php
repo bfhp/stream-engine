@@ -385,6 +385,48 @@ final class AdminControllerTest extends TestCase
         ];
     }
 
+    public function testCreatingANonRootPageRequiresAParent(): void
+    {
+        $module = $this->makeModule(feedTypes: [42 => 'article']);
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode([
+            'action' => 'article.show-id',
+            'feedId' => 42,
+            'accessRule' => 'public',
+        ]));
+
+        try {
+            $module->callApi($this->makeApiPage('admin.pages', ['GET', 'POST']));
+            $this->fail('A non-root page without a parent was saved.');
+        } catch (ValidationException $e) {
+            $this->assertSame('A parent page is required', $e->getMessage());
+            $this->assertSame([], $this->writes);
+        }
+    }
+
+    public function testRemovingTheParentFromANonRootPageIsRejected(): void
+    {
+        $current = $this->legacyPageRow();
+        $current['action'] = 'feedback.show';
+        $module = $this->makeModule(row: $current);
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode([
+            'parentId' => null,
+            'action' => 'feedback.show',
+            'accessRule' => 'public',
+        ]));
+
+        try {
+            $module->callApi($this->makeApiPage('admin.page', ['GET', 'PATCH']), ['id' => 9]);
+            $this->fail('A non-root page was detached from its parent.');
+        } catch (ValidationException $e) {
+            $this->assertSame('A parent page is required', $e->getMessage());
+            $this->assertSame([], $this->writes);
+        }
+    }
+
     public function testPageCreateRejectsAnUnknownAction(): void
     {
         $module = $this->makeModule();
@@ -481,10 +523,14 @@ final class AdminControllerTest extends TestCase
     public function testUnknownLegacyActionCanBePreservedWithoutChangingItsConfiguration(): void
     {
         $row = $this->legacyPageRow();
-        $module = $this->makeModule(fetchOneRows: [$row, $row]);
+        $parent = $this->legacyPageRow();
+        $parent['id'] = 1;
+        $parent['parent'] = null;
+        $module = $this->makeModule(rows: [$parent], fetchOneRows: [$row, $row]);
         $_SERVER['REQUEST_METHOD'] = 'PATCH';
         $this->withValidCsrf();
         PhpInputStreamMock::register(json_encode([
+            'parentId' => 1,
             'pattern' => 'legacy-new-path',
             'action' => 'removed.show',
             'pageName' => 'Legacy page',
@@ -540,11 +586,15 @@ final class AdminControllerTest extends TestCase
 
     public function testAValidPageUpdateIsSaved(): void
     {
-        $module = $this->makeModule();
+        $parent = $this->legacyPageRow();
+        $parent['id'] = 1;
+        $parent['parent'] = null;
+        $module = $this->makeModule(rows: [$parent]);
 
         $_SERVER['REQUEST_METHOD'] = 'PATCH';
         $this->withValidCsrf();
         PhpInputStreamMock::register(json_encode([
+            'parentId' => 1,
             'pattern' => 'contacts',
             'action' => 'feedback.show',
             'updated' => 987,

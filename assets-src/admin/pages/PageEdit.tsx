@@ -298,9 +298,11 @@ export default function PageEdit() {
         () => forbiddenPageParentIds(parentPages, page?.id),
         [page?.id, parentPages]
     );
-    const parentError = page?.parentId !== "" && forbiddenParentIds.has(Number(page?.parentId))
-        ? trans("js.admin.pages.parent_error")
-        : undefined;
+    const parentError = page?.id !== 1 && page?.parentId === ""
+        ? trans("js.admin.pages.parent_required")
+        : page?.parentId !== "" && forbiddenParentIds.has(Number(page?.parentId))
+            ? trans("js.admin.pages.parent_error")
+            : undefined;
 
     const parentOptions = useMemo(() => {
         const options = parentPages
@@ -437,13 +439,14 @@ export default function PageEdit() {
                 <Select
                     label={trans("js.admin.parent_id")}
                     error={parentError}
+                    required={page.id !== 1}
                     searchable
-                    clearable
                     data={parentOptions}
                     value={page.parentId === "" ? null : String(page.parentId)}
                     onChange={value => update("parentId", value === null ? "" : Number(value))}
                     disabled={parentPagesLoading || page.id === 1}
                     nothingFoundMessage={trans("js.admin.pages.no_parents")}
+                    allowDeselect={false}
                 />
                 <Select
                     label={trans("js.admin.feed_type")}

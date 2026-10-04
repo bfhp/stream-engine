@@ -1016,6 +1016,10 @@ class AdminController extends AbstractController implements DashboardCardProvide
 
         $this->validatePageActionContract($data, $existing);
 
+        if ($currentId !== 1 && $parentId === null) {
+            throw new ValidationException($this->tm->trans('admin.error.parent_page_required'));
+        }
+
         return $data;
     }
 
