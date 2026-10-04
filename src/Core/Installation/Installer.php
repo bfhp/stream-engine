@@ -20,18 +20,17 @@ final readonly class Installer
     private const string WELCOME_SLUG = 'welcome-to-stream-engine';
     private const string WELCOME_TITLE = 'Welcome to Stream Engine';
     private const string WELCOME_DESCRIPTION = 'Your new Stream Engine website is ready.';
+    private const string WELCOME_PAGE_SETTINGS = '{"feedContentWidth":"contained"}';
     private const string WELCOME_CONTENT = <<<'HTML'
-        <div class="container">
-            <h1>Welcome to Stream Engine</h1>
-            <p>Your new website is installed and ready to use.</p>
-            <h2>What to do next</h2>
-            <ul>
-                <li>Sign in with the administrator account you created during installation.</li>
-                <li>Review the site settings and customize the website for your project.</li>
-                <li>Edit or replace this welcome article with your own home page content.</li>
-            </ul>
-            <p>Enjoy building with Stream Engine.</p>
-        </div>
+        <h1>Welcome to Stream Engine</h1>
+        <p>Your new website is installed and ready to use.</p>
+        <h2>What to do next</h2>
+        <ul>
+            <li>Sign in with the administrator account you created during installation.</li>
+            <li>Review the site settings and customize the website for your project.</li>
+            <li>Edit or replace this welcome article with your own home page content.</li>
+        </ul>
+        <p>Enjoy building with Stream Engine.</p>
         HTML;
 
     private const array REQUIRED_TABLES = [
@@ -347,11 +346,11 @@ final readonly class Installer
             if ($existing['action'] === 'users.list' && $existing['feed_id'] === null) {
                 $update = $pdo->prepare(
                     "UPDATE pages SET
-                        action = 'article.show-id', page_name = ?, settings = '{}',
+                        action = 'article.show-id', page_name = ?, settings = ?,
                         feed_type = NULL, feed_id = ?, changefreq = 'monthly', updated = UNIX_TIMESTAMP()
                      WHERE id = 1"
                 );
-                $update->execute([self::WELCOME_TITLE, $welcomeFeedId]);
+                $update->execute([self::WELCOME_TITLE, self::WELCOME_PAGE_SETTINGS, $welcomeFeedId]);
 
                 return;
             }
@@ -363,9 +362,9 @@ final readonly class Installer
             "INSERT INTO pages (
                 id, parent, pattern, action, page_name, settings,
                 feed_id, changefreq, updated, access_rule
-             ) VALUES (1, NULL, '', 'article.show-id', ?, '{}', ?, 'monthly', UNIX_TIMESTAMP(), 'public')"
+             ) VALUES (1, NULL, '', 'article.show-id', ?, ?, ?, 'monthly', UNIX_TIMESTAMP(), 'public')"
         );
-        $statement->execute([self::WELCOME_TITLE, $welcomeFeedId]);
+        $statement->execute([self::WELCOME_TITLE, self::WELCOME_PAGE_SETTINGS, $welcomeFeedId]);
     }
 
     private function seedUserMenu(PDO $pdo, string $locale): void

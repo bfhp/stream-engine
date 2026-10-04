@@ -59,13 +59,14 @@ final class ArticleControllerTest extends TestCase
         ?int $parentId = null,
         ?string $feedType = 'article',
         array $params = [],
+        ?object $settings = null,
     ): Page {
         $page = new Page(
             id: $id,
             parentId: $parentId,
             pattern: $pattern,
             pageName: 'Статьи',
-            settings: null,
+            settings: $settings,
             feedType: $feedType,
             listFeedType: $listFeedType,
             feedId: $feedId,
@@ -152,6 +153,7 @@ final class ArticleControllerTest extends TestCase
 
         $this->assertNotNull($view);
         $this->assertSame('privet', $view->data['feed']->slug);
+        $this->assertSame('contained', $view->data['feedContentWidth']);
     }
 
     public function testAnIdPageWithoutAFeedIdIsRefused(): void
@@ -183,6 +185,34 @@ final class ArticleControllerTest extends TestCase
         $this->assertSame('Описание 12', $view->data['description']);
         $this->assertSame('/img/12.jpg', $view->data['image']);
         $this->assertSame('/articles/about/', $view->data['canonical']);
+    }
+
+    public function testArticleContentIsContainedByDefaultAndCanBeFullWidth(): void
+    {
+        $feedService = $this->createStub(FeedService::class);
+        $feedService->method('getFeedById')->willReturn($this->makeFeed(12, 'about'));
+
+        $contained = $this->makeController($feedService)->show($this->makePage(
+            'article.show-id',
+            feedId: 12,
+            feedType: null,
+        ));
+        $full = $this->makeController($feedService)->show($this->makePage(
+            'article.show-id',
+            feedId: 12,
+            feedType: null,
+            settings: (object) ['feedContentWidth' => 'full'],
+        ));
+        $invalid = $this->makeController($feedService)->show($this->makePage(
+            'article.show-id',
+            feedId: 12,
+            feedType: null,
+            settings: (object) ['feedContentWidth' => 'wide'],
+        ));
+
+        self::assertSame('contained', $contained->data['feedContentWidth']);
+        self::assertSame('full', $full->data['feedContentWidth']);
+        self::assertSame('contained', $invalid->data['feedContentWidth']);
     }
 
     /**

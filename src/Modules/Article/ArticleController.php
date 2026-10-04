@@ -144,6 +144,9 @@ class ArticleController extends AbstractController
                 'image' => $articleFeed->imageUrl,
                 'canonical' => $articleFeed->canonicalUrl,
                 'feed' => $articleFeed,
+                'feedContentWidth' => ($page->settings->feedContentWidth ?? null) === 'full'
+                    ? 'full'
+                    : 'contained',
                 'siblings' => $siblings ?? null,
                 'comments' => $comments ?? null,
             ]

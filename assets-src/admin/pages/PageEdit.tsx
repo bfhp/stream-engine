@@ -12,7 +12,13 @@ import {
     TextInput
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { parsePageSettings, type PageSettings } from "../lib/page-settings";
+import {
+    feedContentWidth,
+    parsePageSettings,
+    supportsFeedContentWidth,
+    type FeedContentWidth,
+    type PageSettings
+} from "../lib/page-settings";
 import { forbiddenPageParentIds } from "../lib/page-hierarchy";
 import {
     buildFeedTypeOptions,
@@ -523,6 +529,22 @@ export default function PageEdit() {
 
             <Stack gap="sm">
                 <Text fw={500}>{trans("js.admin.page_settings")}</Text>
+                {supportsFeedContentWidth(page.action) && (
+                    <Select
+                        label={trans("js.admin.feed_content_width_label")}
+                        description={trans("js.admin.feed_content_width_description")}
+                        data={[
+                            { value: "contained", label: trans("js.admin.feed_content_width_contained") },
+                            { value: "full", label: trans("js.admin.feed_content_width_full") },
+                        ]}
+                        value={feedContentWidth(page.settings)}
+                        onChange={value => update("settings", {
+                            ...page.settings,
+                            feedContentWidth: (value || "contained") as FeedContentWidth
+                        })}
+                        allowDeselect={false}
+                    />
+                )}
                 <Switch
                     label={trans("js.admin.comments_label")}
                     description={trans("js.admin.comments_description")}

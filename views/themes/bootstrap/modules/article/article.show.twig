@@ -1,3 +1,4 @@
 {% extends '@Article/modules/article/article.show.twig' %}
 
+{% block article_content_class %}article-content{% if feedContentWidth != 'full' %} container{% endif %}{% endblock %}
 {% block article_comments_class %}container{% endblock %}

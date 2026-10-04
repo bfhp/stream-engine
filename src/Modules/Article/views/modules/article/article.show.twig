@@ -3,7 +3,9 @@
 {% block content %}
 
     {% block article_content %}
-        {{ feed.content|raw }}
+        <div class="{% block article_content_class %}article-content{% if feedContentWidth != 'full' %} ui-container{% endif %}{% endblock %}">
+            {{ feed.content|raw }}
+        </div>
     {% endblock %}
 
     {% block article_navigation %}

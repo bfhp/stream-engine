@@ -205,6 +205,12 @@ final class InstallationSchemaTest extends TestCase
                         ->fetch(PDO::FETCH_NUM),
                 );
                 self::assertSame(
+                    ['feedContentWidth' => 'contained'],
+                    json_decode((string) $pdo->query(
+                        'SELECT settings FROM pages WHERE id = 1'
+                    )->fetchColumn(), true),
+                );
+                self::assertSame(
                     [1, 'profile', 'profile.show', 'Ваш профиль', 'noindex', 'authenticated'],
                     $pdo->query(
                         "SELECT parent, pattern, action, page_name, changefreq, access_rule
@@ -226,6 +232,12 @@ final class InstallationSchemaTest extends TestCase
                 );
                 self::assertStringContainsString(
                     'Your new website is installed and ready to use.',
+                    (string) $pdo->query(
+                        'SELECT content FROM feeds WHERE id = (SELECT feed_id FROM pages WHERE id = 1)'
+                    )->fetchColumn(),
+                );
+                self::assertStringNotContainsString(
+                    'class="container"',
                     (string) $pdo->query(
                         'SELECT content FROM feeds WHERE id = (SELECT feed_id FROM pages WHERE id = 1)'
                     )->fetchColumn(),
