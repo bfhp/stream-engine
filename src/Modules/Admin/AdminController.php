@@ -1171,11 +1171,6 @@ class AdminController extends AbstractController implements DashboardCardProvide
             throw new ValidationException($this->tm->trans('admin.error.invalid_access'));
         }
 
-        $sortOrder = $input['sortOrder'] ?? null;
-        if (! is_int($sortOrder) || $sortOrder < 0) {
-            throw new ValidationException($this->tm->trans('admin.error.invalid_sort_order'));
-        }
-
         if ($label !== null && strlen($label) > 150) {
             throw new ValidationException($this->tm->trans('admin.error.label_too_long'));
         }
@@ -1215,15 +1210,6 @@ class AdminController extends AbstractController implements DashboardCardProvide
         $byId = [];
         foreach ($items as $item) {
             $byId[$item['id']] = $item;
-
-            if (
-                $item['id'] !== $currentId
-                && $item['menuGroup'] === $menuGroup
-                && $item['parentId'] === $parentId
-                && $item['sortOrder'] === $sortOrder
-            ) {
-                throw new ValidationException($this->tm->trans('admin.error.duplicate_sort_order'));
-            }
         }
 
         if (! is_bool($enabled)) {
@@ -1268,6 +1254,13 @@ class AdminController extends AbstractController implements DashboardCardProvide
             $label = null;
         }
 
+        $current = $currentId !== null ? ($byId[$currentId] ?? null) : null;
+        $sortOrder = $current !== null
+            && $current['menuGroup'] === $menuGroup
+            && $current['parentId'] === $parentId
+                ? $current['sortOrder']
+                : $this->nextMenuSortOrder($items, $menuGroup, $parentId, $currentId);
+
         return [
             'parentId' => $parentId,
             'menuGroup' => $menuGroup,
@@ -1281,6 +1274,21 @@ class AdminController extends AbstractController implements DashboardCardProvide
             'groupOrder' => $this->menuGroupOrder($menuGroup, $items),
             'enabled' => $enabled,
         ];
+    }
+
+    /** @param list<array<string, mixed>> $items */
+    private function nextMenuSortOrder(array $items, string $menuGroup, ?int $parentId, ?int $excludedId): int
+    {
+        $maximum = 0;
+        foreach ($items as $item) {
+            if ($item['id'] !== $excludedId
+                && $item['menuGroup'] === $menuGroup
+                && $item['parentId'] === $parentId) {
+                $maximum = max($maximum, $item['sortOrder']);
+            }
+        }
+
+        return $maximum + 10;
     }
 
     /**

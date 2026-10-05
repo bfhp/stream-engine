@@ -682,6 +682,79 @@ final class AdminControllerTest extends TestCase
         $this->assertSame('https://example.com/help', $this->writes[0][1][4]);
     }
 
+    public function testNewMenuItemIsAppendedWithinItsGroupAndParent(): void
+    {
+        $root = [
+            'id' => 1, 'parent' => null, 'menu_group' => 'main', 'type' => 'divider',
+            'page_id' => null, 'url' => null, 'action' => null, 'label' => null,
+            'access_rule' => 'public', 'sort_order' => 30, 'group_order' => 10, 'enabled' => 1,
+        ];
+        $child = $root;
+        $child['id'] = 2;
+        $child['parent'] = 1;
+        $child['sort_order'] = 100;
+        $otherGroup = $root;
+        $otherGroup['id'] = 3;
+        $otherGroup['menu_group'] = 'bottom';
+        $otherGroup['sort_order'] = 200;
+
+        $module = $this->makeModule(rows: [$root, $child, $otherGroup]);
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode([
+            'menuGroup' => 'main',
+            'type' => 'external',
+            'url' => 'https://example.com/new',
+            'label' => 'New',
+            'accessRule' => 'public',
+            'sortOrder' => 30,
+        ]));
+
+        $this->callAndDecode($module, $this->makeApiPage('admin.menus', ['GET', 'POST']));
+
+        $this->assertSame(40, $this->writes[0][1][8]);
+    }
+
+    public function testMovingMenuItemAppendsItToTheDestinationLevel(): void
+    {
+        $current = [
+            'id' => 7, 'parent' => null, 'menu_group' => 'main', 'type' => 'external',
+            'page_id' => null, 'url' => 'https://example.com/old', 'action' => null, 'label' => 'Old',
+            'access_rule' => 'public', 'sort_order' => 10, 'group_order' => 10, 'enabled' => 1,
+        ];
+        $parent = $current;
+        $parent['id'] = 5;
+        $parent['type'] = 'divider';
+        $parent['url'] = null;
+        $parent['label'] = null;
+        $parent['sort_order'] = 20;
+        $sibling = $current;
+        $sibling['id'] = 8;
+        $sibling['parent'] = 5;
+        $sibling['sort_order'] = 40;
+
+        $module = $this->makeModule(rows: [$current, $parent, $sibling], row: $current);
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode([
+            'parentId' => 5,
+            'menuGroup' => 'main',
+            'type' => 'external',
+            'url' => 'https://example.com/old',
+            'label' => 'Old',
+            'accessRule' => 'public',
+            'sortOrder' => 10,
+        ]));
+
+        $this->callAndDecode(
+            $module,
+            $this->makeApiPage('admin.menu', ['GET', 'PATCH', 'DELETE']),
+            ['id' => 7]
+        );
+
+        $this->assertSame(50, $this->writes[0][1][8]);
+    }
+
     public function testMenuPageReferenceMustExist(): void
     {
         $module = $this->makeModule();

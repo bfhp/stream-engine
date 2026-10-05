@@ -21,10 +21,6 @@ import { trans } from "../../shared/i18n";
 type PageOption = { id: number; pattern?: string; action?: string; pageName?: string };
 
 function blankItem(items: MenuItemRecord[]): MenuItemRecord {
-    const rootOrders = items
-        .filter(item => item.menuGroup === "main" && item.parentId === null)
-        .map(item => item.sortOrder);
-
     return {
         parentId: null,
         menuGroup: "main",
@@ -34,7 +30,7 @@ function blankItem(items: MenuItemRecord[]): MenuItemRecord {
         action: null,
         label: "",
         accessRule: "public",
-        sortOrder: (rootOrders.length > 0 ? Math.max(...rootOrders) : 0) + 10,
+        sortOrder: 0,
         groupOrder: items.find(item => item.menuGroup === "main")?.groupOrder ?? 10,
         enabled: true
     };
