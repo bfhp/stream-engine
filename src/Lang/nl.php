@@ -1153,7 +1153,7 @@ E-mail: {email}
     'js.admin.menu.item_saved' => 'Menu-item opgeslagen',
     'js.admin.menu.item_deleted' => 'Menu-item verwijderd',
     'js.admin.menu.edit_help' => 'Kies waar en hoe dit item in de sitenavigatie verschijnt',
-    'js.admin.menu.group_help' => 'Bijvoorbeeld main of bottom',
+    'js.admin.menu.group_help' => 'Kies top, bottom of user, of voer een andere groepsnaam in',
     'js.admin.menu.type_internal' => 'Interne pagina',
     'js.admin.menu.type_dynamic' => 'Dynamische pagina',
     'js.admin.menu.type_external' => 'Externe link',

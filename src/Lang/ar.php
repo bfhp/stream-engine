@@ -1153,7 +1153,7 @@ return [
     'js.admin.menu.item_saved' => 'تم حفظ عنصر القائمة',
     'js.admin.menu.item_deleted' => 'تم حذف عنصر القائمة',
     'js.admin.menu.edit_help' => 'اختر مكان ظهور هذا العنصر في تنقل الموقع وكيفيته',
-    'js.admin.menu.group_help' => 'على سبيل المثال: main أو bottom',
+    'js.admin.menu.group_help' => 'اختر top أو bottom أو user، أو أدخل اسم مجموعة آخر',
     'js.admin.menu.type_internal' => 'صفحة داخلية',
     'js.admin.menu.type_dynamic' => 'صفحة ديناميكية',
     'js.admin.menu.type_external' => 'رابط خارجي',

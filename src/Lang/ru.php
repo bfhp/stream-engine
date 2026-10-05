@@ -1190,7 +1190,7 @@ return [
     'js.admin.menu.item_saved' => 'Пункт меню сохранён',
     'js.admin.menu.item_deleted' => 'Пункт меню удалён',
     'js.admin.menu.edit_help' => 'Выберите, где и как этот пункт появится в навигации сайта',
-    'js.admin.menu.group_help' => 'Например: main или bottom',
+    'js.admin.menu.group_help' => 'Выберите top, bottom или user либо введите другое имя группы',
     'js.admin.menu.type_internal' => 'Внутренняя страница',
     'js.admin.menu.type_dynamic' => 'Динамическая страница',
     'js.admin.menu.type_external' => 'Внешняя ссылка',

@@ -1153,7 +1153,7 @@ Correo: {email}
     'js.admin.menu.item_saved' => 'Elemento de menú guardado',
     'js.admin.menu.item_deleted' => 'Elemento de menú eliminado',
     'js.admin.menu.edit_help' => 'Elige dónde y cómo aparece este elemento en la navegación del sitio',
-    'js.admin.menu.group_help' => 'Por ejemplo: main o bottom',
+    'js.admin.menu.group_help' => 'Elige top, bottom o user, o introduce otro nombre de grupo',
     'js.admin.menu.type_internal' => 'Página interna',
     'js.admin.menu.type_dynamic' => 'Página dinámica',
     'js.admin.menu.type_external' => 'Enlace externo',

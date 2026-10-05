@@ -1153,7 +1153,7 @@ return [
     'js.admin.menu.item_saved' => '菜单项已保存',
     'js.admin.menu.item_deleted' => '菜单项已删除',
     'js.admin.menu.edit_help' => '选择此项目在站点导航中的显示位置和方式',
-    'js.admin.menu.group_help' => '例如：main或bottom',
+    'js.admin.menu.group_help' => '选择top、bottom或user，或输入其他组名',
     'js.admin.menu.type_internal' => '内部页面',
     'js.admin.menu.type_dynamic' => '动态页面',
     'js.admin.menu.type_external' => '外部链接',

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
+    Autocomplete,
     Button,
     Group,
     Modal,
@@ -20,10 +21,12 @@ import { trans } from "../../shared/i18n";
 
 type PageOption = { id: number; pattern?: string; action?: string; pageName?: string };
 
+const MENU_GROUP_OPTIONS = ["top", "bottom", "user"];
+
 function blankItem(items: MenuItemRecord[]): MenuItemRecord {
     return {
         parentId: null,
-        menuGroup: "main",
+        menuGroup: "top",
         type: "internal",
         pageId: null,
         url: null,
@@ -31,7 +34,7 @@ function blankItem(items: MenuItemRecord[]): MenuItemRecord {
         label: "",
         accessRule: "public",
         sortOrder: 0,
-        groupOrder: items.find(item => item.menuGroup === "main")?.groupOrder ?? 10,
+        groupOrder: items.find(item => item.menuGroup === "top")?.groupOrder ?? 10,
         enabled: true
     };
 }
@@ -185,13 +188,13 @@ export default function MenuEdit() {
             </div>
 
             <SimpleGrid cols={{ base: 1, md: 2 }}>
-                <TextInput
+                <Autocomplete
                     label={trans("js.admin.menu.group")}
                     description={trans("js.admin.menu.group_help")}
                     required
+                    data={MENU_GROUP_OPTIONS}
                     value={item.menuGroup}
-                    onChange={event => {
-                        const menuGroup = event.currentTarget.value;
+                    onChange={menuGroup => {
                         setItem(current => current ? {
                             ...current,
                             menuGroup,

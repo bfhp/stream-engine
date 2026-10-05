@@ -1153,7 +1153,7 @@ E-Mail: {email}
     'js.admin.menu.item_saved' => 'Menüeintrag gespeichert',
     'js.admin.menu.item_deleted' => 'Menüeintrag gelöscht',
     'js.admin.menu.edit_help' => 'Legen Sie fest, wo und wie dieser Eintrag in der Website-Navigation erscheint',
-    'js.admin.menu.group_help' => 'Zum Beispiel: main oder bottom',
+    'js.admin.menu.group_help' => 'top, bottom oder user auswählen oder einen anderen Gruppennamen eingeben',
     'js.admin.menu.type_internal' => 'Interne Seite',
     'js.admin.menu.type_dynamic' => 'Dynamische Seite',
     'js.admin.menu.type_external' => 'Externer Link',

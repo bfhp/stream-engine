@@ -1153,7 +1153,7 @@ return [
     'js.admin.menu.item_saved' => '메뉴 항목이 저장되었습니다',
     'js.admin.menu.item_deleted' => '메뉴 항목이 삭제되었습니다',
     'js.admin.menu.edit_help' => '이 항목이 사이트 탐색에서 어디에 어떻게 표시될지 선택하세요',
-    'js.admin.menu.group_help' => '예: main 또는 bottom',
+    'js.admin.menu.group_help' => 'top, bottom, user 중에서 선택하거나 다른 그룹 이름을 입력하세요',
     'js.admin.menu.type_internal' => '내부 페이지',
     'js.admin.menu.type_dynamic' => '동적 페이지',
     'js.admin.menu.type_external' => '외부 링크',

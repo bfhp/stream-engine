@@ -1153,7 +1153,7 @@ E-mail: {email}
     'js.admin.menu.item_saved' => 'Voce di menu salvata',
     'js.admin.menu.item_deleted' => 'Voce di menu eliminata',
     'js.admin.menu.edit_help' => 'Scegli dove e come questa voce appare nella navigazione del sito',
-    'js.admin.menu.group_help' => 'Ad esempio: main o bottom',
+    'js.admin.menu.group_help' => 'Scegli top, bottom o user oppure inserisci un altro nome di gruppo',
     'js.admin.menu.type_internal' => 'Pagina interna',
     'js.admin.menu.type_dynamic' => 'Pagina dinamica',
     'js.admin.menu.type_external' => 'Link esterno',

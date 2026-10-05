@@ -1153,7 +1153,7 @@ return [
     'js.admin.menu.item_saved' => 'メニュー項目を保存しました',
     'js.admin.menu.item_deleted' => 'メニュー項目を削除しました',
     'js.admin.menu.edit_help' => 'この項目をサイトのナビゲーションのどこに、どのように表示するかを選択します',
-    'js.admin.menu.group_help' => '例: main または bottom',
+    'js.admin.menu.group_help' => 'top、bottom、userから選択するか、別のグループ名を入力してください',
     'js.admin.menu.type_internal' => '内部ページ',
     'js.admin.menu.type_dynamic' => '動的ページ',
     'js.admin.menu.type_external' => '外部リンク',

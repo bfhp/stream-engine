@@ -1154,7 +1154,7 @@ Email: {email}
     'js.admin.menu.item_saved' => 'Menu item saved',
     'js.admin.menu.item_deleted' => 'Menu item deleted',
     'js.admin.menu.edit_help' => 'Choose where and how this item appears in site navigation',
-    'js.admin.menu.group_help' => 'For example: main or bottom',
+    'js.admin.menu.group_help' => 'Choose top, bottom, or user, or enter another group name',
     'js.admin.menu.type_internal' => 'Internal page',
     'js.admin.menu.type_dynamic' => 'Dynamic page',
     'js.admin.menu.type_external' => 'External link',
