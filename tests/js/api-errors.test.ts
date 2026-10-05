@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { getApiErrorMessage } from "../../assets-src/shared/api-errors";
+import { getApiErrorMessage, getApiResponseError } from "../../assets-src/shared/api-errors";
 
 const FALLBACK = "Что-то пошло не так";
 
@@ -64,5 +64,27 @@ describe("getApiErrorMessage()", () => {
     it("skips a blank level instead of stopping at it", () => {
         // A whitespace-only error.error must not shadow a usable error.message.
         expect(getApiErrorMessage({ error: "  ", message: "Годное" }, FALLBACK)).toBe("Годное");
+    });
+});
+
+describe("getApiResponseError()", () => {
+    function failedResponse(body: string): Response {
+        return { text: async () => body } as Response;
+    }
+
+    it("extracts a human-readable API error instead of displaying the JSON payload", async () => {
+        const error = await getApiResponseError(
+            failedResponse('{"error":"Лента с ID 6 не существует","code":"bad_request"}'),
+            FALLBACK
+        );
+
+        expect(error.message).toBe("Лента с ID 6 не существует");
+    });
+
+    it("keeps plain-text server errors and falls back for an empty response", async () => {
+        await expect(getApiResponseError(failedResponse("Service unavailable"), FALLBACK))
+            .resolves.toMatchObject({ message: "Service unavailable" });
+        await expect(getApiResponseError(failedResponse(""), FALLBACK))
+            .resolves.toMatchObject({ message: FALLBACK });
     });
 });

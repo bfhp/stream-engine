@@ -31,6 +31,7 @@ import {
     validatePageActionConfiguration
 } from "../lib/page-action-contract";
 import { csrfHeaders } from "../../shared/csrf";
+import { getApiResponseError } from "../../shared/api-errors";
 import { FEED_TYPE_LABELS } from "../../shared/feed-types";
 import { trans } from "../../shared/i18n";
 
@@ -130,7 +131,7 @@ export default function PageEdit() {
         fetch(`/api/v1/admin/pages/${id}`)
             .then(async response => {
                 if (!response.ok) {
-                    throw new Error(await response.text() || trans("js.admin.pages.load_one_failed"));
+                    throw await getApiResponseError(response, trans("js.admin.pages.load_one_failed"));
                 }
 
                 return response.json();
@@ -153,7 +154,7 @@ export default function PageEdit() {
         fetch("/api/v1/admin/page-actions", { signal: controller.signal })
             .then(async response => {
                 if (!response.ok) {
-                    throw new Error(await response.text() || trans("js.admin.pages.actions_load_failed"));
+                    throw await getApiResponseError(response, trans("js.admin.pages.actions_load_failed"));
                 }
 
                 return response.json();
@@ -184,7 +185,7 @@ export default function PageEdit() {
         fetch("/api/v1/admin/pages", { signal: controller.signal })
             .then(async response => {
                 if (!response.ok) {
-                    throw new Error(await response.text() || trans("js.admin.pages.parents_load_failed"));
+                    throw await getApiResponseError(response, trans("js.admin.pages.parents_load_failed"));
                 }
 
                 return response.json();
@@ -368,7 +369,7 @@ export default function PageEdit() {
         })
             .then(async response => {
                 if (!response.ok) {
-                    throw new Error(await response.text() || trans("js.admin.save_failed"));
+                    throw await getApiResponseError(response, trans("js.admin.pages.save_failed"));
                 }
 
                 return response.json();

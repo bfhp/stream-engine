@@ -52,6 +52,21 @@ export function getApiErrorMessage(error: unknown, fallback: string): string {
     return fallback;
 }
 
+/** Converts a failed fetch response into an Error suitable for display. */
+export async function getApiResponseError(response: Response, fallback: string): Promise<Error> {
+    const text = await response.text();
+
+    if (!text) {
+        return new Error(fallback);
+    }
+
+    try {
+        return new Error(getApiErrorMessage(JSON.parse(text), fallback));
+    } catch (_error) {
+        return new Error(text);
+    }
+}
+
 function isNonBlankString(value: unknown): value is string {
     return typeof value === 'string' && value.trim() !== '';
 }

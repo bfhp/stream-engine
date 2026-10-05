@@ -1,2 +1,2 @@
 /*! Third-party licenses: /assets/THIRD_PARTY_LICENSES.md */
-function e(e,r){return t(e)?e:n(e)?t(e.error)?e.error:n(e.error)&&t(e.error.message)?e.error.message:t(e.message)?e.message:r:r}function t(e){return typeof e==`string`&&e.trim()!==``}function n(e){return typeof e==`object`&&!!e}export{e as t};
+function e(e,t){return n(e)?e:r(e)?n(e.error)?e.error:r(e.error)&&n(e.error.message)?e.error.message:n(e.message)?e.message:t:t}async function t(t,n){let r=await t.text();if(!r)return Error(n);try{return Error(e(JSON.parse(r),n))}catch{return Error(r)}}function n(e){return typeof e==`string`&&e.trim()!==``}function r(e){return typeof e==`object`&&!!e}export{t as n,e as t};
