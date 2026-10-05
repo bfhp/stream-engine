@@ -7,6 +7,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.3] - 2026-10-05
+
 ### Added
 
 - Modules can declare validated action-specific select fields stored in page
