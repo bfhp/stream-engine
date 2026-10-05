@@ -194,11 +194,14 @@ export default function MenuEdit() {
                     description={trans("js.admin.menu.group_help")}
                     required
                     value={item.menuGroup}
-                    onChange={event => setItem(current => current ? {
-                        ...current,
-                        menuGroup: event.currentTarget.value,
-                        parentId: null
-                    } : current)}
+                    onChange={event => {
+                        const menuGroup = event.currentTarget.value;
+                        setItem(current => current ? {
+                            ...current,
+                            menuGroup,
+                            parentId: null
+                        } : current);
+                    }}
                 />
                 <Select
                     label={trans("js.admin.type")}
