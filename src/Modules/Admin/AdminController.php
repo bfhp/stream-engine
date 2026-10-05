@@ -1129,6 +1129,62 @@ class AdminController extends AbstractController implements DashboardCardProvide
                 );
             }
         }
+
+        $this->validatePageActionSettings($descriptor, $data['settings']);
+    }
+
+    /**
+     * @param array<string, mixed> $descriptor
+     * @throws ValidationException
+     */
+    private function validatePageActionSettings(array $descriptor, ?string $settingsJson): void
+    {
+        if ($descriptor['settings'] === []) {
+            return;
+        }
+
+        $settings = $settingsJson === null ? null : json_decode($settingsJson);
+        if (! is_object($settings)) {
+            throw new ValidationException($this->tm->trans('admin.error.action_settings_object'));
+        }
+
+        $values = get_object_vars($settings);
+        foreach ($descriptor['settings'] as $key => $setting) {
+            $exists = array_key_exists($key, $values);
+            $value = $exists ? $values[$key] : null;
+            $label = $this->tm->trans($setting['label']);
+
+            if (! $exists) {
+                if ($setting['required']) {
+                    throw new ValidationException($this->tm->trans(
+                        'admin.error.action_setting_required',
+                        ['label' => $label],
+                    ));
+                }
+
+                continue;
+            }
+            if (! is_string($value)) {
+                throw new ValidationException($this->tm->trans(
+                    'admin.error.action_setting_type',
+                    ['label' => $label],
+                ));
+            }
+            if ($setting['required'] && trim($value) === '') {
+                throw new ValidationException($this->tm->trans(
+                    'admin.error.action_setting_required',
+                    ['label' => $label],
+                ));
+            }
+
+            $allowed = array_column($setting['options'], 'value');
+            if (! in_array($value, $allowed, true)) {
+                throw new ValidationException($this->tm->trans(
+                    'admin.error.action_setting_invalid',
+                    ['label' => $label],
+                ));
+            }
+        }
     }
 
     private function pageActionFieldLabel(string $field): string

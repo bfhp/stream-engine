@@ -21,6 +21,7 @@ import {
 } from "../lib/page-settings";
 import { forbiddenPageParentIds } from "../lib/page-hierarchy";
 import {
+    buildPageActionSettingOptions,
     buildFeedTypeOptions,
     fieldDescription,
     fixedPageActionValue,
@@ -28,7 +29,9 @@ import {
     type PageAction,
     type PageActionFieldName,
     routeConfigurationWarnings,
-    validatePageActionConfiguration
+    updatePageActionSetting,
+    validatePageActionConfiguration,
+    validatePageActionSettings
 } from "../lib/page-action-contract";
 import { csrfHeaders } from "../../shared/csrf";
 import { getApiResponseError } from "../../shared/api-errors";
@@ -280,6 +283,14 @@ export default function PageEdit() {
         });
     }, [page, selectedAction]);
 
+    const actionSettingErrors = useMemo(() => {
+        if (!page || !selectedAction) {
+            return {};
+        }
+
+        return validatePageActionSettings(selectedAction, page.settings);
+    }, [page, selectedAction]);
+
     const routeWarnings = useMemo(
         () => page ? routeConfigurationWarnings(page) : [],
         [page]
@@ -348,7 +359,7 @@ export default function PageEdit() {
             return;
         }
 
-        if (Object.keys(actionErrors).length > 0) {
+        if (Object.keys(actionErrors).length > 0 || Object.keys(actionSettingErrors).length > 0) {
             notifications.show({
                 color: "red",
                 title: trans("js.admin.pages.invalid_action"),
@@ -533,6 +544,27 @@ export default function PageEdit() {
 
             <Stack gap="sm">
                 <Text fw={500}>{trans("js.admin.page_settings")}</Text>
+                {selectedAction && Object.entries(selectedAction.settings).map(([key, descriptor]) => {
+                    const currentValue = page.settings[key];
+
+                    return (
+                        <Select
+                            key={key}
+                            label={trans(descriptor.label)}
+                            required={descriptor.required}
+                            searchable
+                            data={buildPageActionSettingOptions(descriptor, currentValue)}
+                            value={typeof currentValue === "string" && currentValue !== "" ? currentValue : null}
+                            error={actionSettingErrors[key]}
+                            onChange={value => update("settings", updatePageActionSetting(
+                                page.settings,
+                                key,
+                                value || ""
+                            ))}
+                            clearable={!descriptor.required}
+                        />
+                    );
+                })}
                 {supportsFeedContentWidth(page.action) && (
                     <Select
                         label={trans("js.admin.feed_content_width_label")}

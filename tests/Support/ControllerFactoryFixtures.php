@@ -222,6 +222,36 @@ final class InvalidActionContractController extends AbstractController
     }
 }
 
+final class SettingsActionProbeController extends AbstractController
+{
+    public static function pageActions(): array
+    {
+        return [
+            'settings.show' => [
+                'label' => 'Settings page',
+                'settings' => [
+                    'type' => [
+                        'control' => 'select',
+                        'label' => 'Page type',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'first', 'label' => 'First'],
+                            ['value' => 'second', 'label' => 'Second'],
+                        ],
+                    ],
+                    'style' => [
+                        'control' => 'select',
+                        'label' => 'Page style',
+                        'required' => false,
+                        'options' => [['value' => 'compact', 'label' => 'Compact']],
+                    ],
+                ],
+            ],
+            'settings.none' => 'Settings-free page',
+        ];
+    }
+}
+
 final class DashboardProbeController extends AbstractController implements DashboardCardProviderInterface
 {
     public static function dashboardCards(): array

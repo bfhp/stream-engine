@@ -25,6 +25,8 @@ use StreamEngine\Service\SettingsService;
 use StreamEngine\Service\ThemeService;
 use Tests\Support\PhpInputStreamMock;
 
+require_once __DIR__.'/../../Support/ControllerFactoryFixtures.php';
+
 final class AdminControllerTest extends TestCase
 {
     private array $writes = [];
@@ -57,6 +59,7 @@ final class AdminControllerTest extends TestCase
         ?array $fetchOneRows = null,
         array $feedTypes = [],
         int $currentUserId = 1,
+        ?ModuleRegistry $modules = null,
     ): AdminController {
         $db = $this->createStub(PdoDatabase::class);
 
@@ -122,7 +125,7 @@ final class AdminControllerTest extends TestCase
             ),
             $accessService,
             new TranslationManager('en', 'en'),
-            new ModuleRegistry(),
+            $modules ?? new ModuleRegistry(),
             $themeService,
         );
     }
@@ -225,12 +228,126 @@ final class AdminControllerTest extends TestCase
         $this->assertSame('Administrator interface', $adminAction[0]['label']);
         $this->assertSame('Admin', $adminAction[0]['module']);
         $this->assertSame([], $adminAction[0]['requirements']);
+        $this->assertSame([], $adminAction[0]['settings']);
         $this->assertSame([
             'feedId' => ['status' => 'unsupported'],
             'feedType' => ['status' => 'unsupported'],
             'listFeedType' => ['status' => 'unsupported'],
             'termVocabulary' => ['status' => 'unsupported'],
         ], $adminAction[0]['fields']);
+    }
+
+    public function testPageActionsReturnsNormalizedSettingsSchema(): void
+    {
+        $module = $this->makeModule(modules: $this->settingsActionRegistry());
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+
+        $response = $this->callAndDecode($module, $this->makeApiPage('admin.page-actions', ['GET']));
+        $action = array_values(array_filter(
+            $response['data'],
+            static fn (array $item): bool => $item['action'] === 'settings.show',
+        ))[0];
+
+        $this->assertSame('select', $action['settings']['type']['control']);
+        $this->assertTrue($action['settings']['type']['required']);
+        $this->assertSame('first', $action['settings']['type']['options'][0]['value']);
+        $this->assertSame([], array_values(array_filter(
+            $response['data'],
+            static fn (array $item): bool => $item['action'] === 'settings.none',
+        ))[0]['settings']);
+    }
+
+    public function testPageCreateAndUpdateAcceptDeclaredAndUnknownSettings(): void
+    {
+        $parent = $this->legacyPageRow();
+        $parent['id'] = 1;
+        $parent['parent'] = null;
+        $registry = $this->settingsActionRegistry();
+        $module = $this->makeModule(rows: [$parent], modules: $registry);
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode([
+            'parentId' => 1,
+            'action' => 'settings.show',
+            'accessRule' => 'public',
+            'settings' => '{"type":"first","shareButtons":true,"unknown":42}',
+        ]));
+
+        $this->callAndDecode($module, $this->makeApiPage('admin.pages', ['GET', 'POST']));
+        $this->assertSame('{"type":"first","shareButtons":true,"unknown":42}', $this->writes[0][1][4]);
+
+        $current = $this->legacyPageRow();
+        $current['action'] = 'settings.show';
+        $module = $this->makeModule(rows: [$parent, $current], row: $current, modules: $registry);
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        PhpInputStreamMock::register(json_encode([
+            'parentId' => 1,
+            'action' => 'settings.show',
+            'accessRule' => 'public',
+            'settings' => '{"type":"second","commentsEnabled":true}',
+        ]));
+
+        $this->callAndDecode($module, $this->makeApiPage('admin.page', ['GET', 'PATCH']), ['id' => 9]);
+        $this->assertSame('{"type":"second","commentsEnabled":true}', $this->writes[1][1][4]);
+    }
+
+    #[DataProvider('invalidActionSettings')]
+    public function testPageCreateRejectsInvalidActionSettings(string $settings, string $message): void
+    {
+        $parent = $this->legacyPageRow();
+        $parent['id'] = 1;
+        $parent['parent'] = null;
+        $module = $this->makeModule(rows: [$parent], modules: $this->settingsActionRegistry());
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode([
+            'parentId' => 1,
+            'action' => 'settings.show',
+            'accessRule' => 'public',
+            'settings' => $settings,
+        ]));
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage($message);
+
+        $module->callApi($this->makeApiPage('admin.pages', ['GET', 'POST']));
+    }
+
+    public static function invalidActionSettings(): array
+    {
+        return [
+            'not an object' => ['[]', 'JSON object'],
+            'missing required' => ['{}', 'Page type is required'],
+            'empty required' => ['{"type":""}', 'Page type is required'],
+            'invalid option' => ['{"type":"legacy"}', 'Invalid value for Page type'],
+            'non-string select' => ['{"type":1}', 'Page type must be a string'],
+        ];
+    }
+
+    public function testActionWithoutSettingsKeepsLegacySettingsBehavior(): void
+    {
+        $parent = $this->legacyPageRow();
+        $parent['id'] = 1;
+        $parent['parent'] = null;
+        $module = $this->makeModule(rows: [$parent], modules: $this->settingsActionRegistry());
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode([
+            'parentId' => 1,
+            'action' => 'settings.none',
+            'accessRule' => 'public',
+            'settings' => '[]',
+        ]));
+
+        $this->callAndDecode($module, $this->makeApiPage('admin.pages', ['GET', 'POST']));
+        $this->assertSame('[]', $this->writes[0][1][4]);
+    }
+
+    private function settingsActionRegistry(): ModuleRegistry
+    {
+        return \StreamEngine\Controllers\registryWithFixtures([
+            \StreamEngine\Controllers\SettingsActionProbeController::class,
+        ]);
     }
 
     public function testCreatingAPageRequiresCsrfBeforeValidation(): void

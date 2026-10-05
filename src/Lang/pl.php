@@ -1329,4 +1329,9 @@ E-mail: {email}
     'admin.page_action.forums.topic-new' => 'Tworzenie nowego tematu w sekcji forum',
     'admin.page_action.forums.topic-edit' => 'Edycja istniejącego tematu forum',
 
+    'js.admin.page_action.setting_type_error' => 'Pole {label} musi być tekstem.',
+    'admin.error.action_settings_object' => 'Ustawienia tej akcji strony muszą być obiektem JSON',
+    'admin.error.action_setting_required' => 'Pole {label} jest wymagane',
+    'admin.error.action_setting_type' => 'Pole {label} musi być ciągiem znaków',
+    'admin.error.action_setting_invalid' => 'Nieprawidłowa wartość pola {label}',
 ];

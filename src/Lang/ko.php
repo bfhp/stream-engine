@@ -1329,4 +1329,9 @@ return [
     'admin.page_action.forums.topic-new' => '포럼 섹션에 새 주제 만들기',
     'admin.page_action.forums.topic-edit' => '기존 포럼 주제 수정',
 
+    'js.admin.page_action.setting_type_error' => '{label}은(는) 텍스트 값이어야 합니다.',
+    'admin.error.action_settings_object' => '이 페이지 액션의 설정은 JSON 객체여야 합니다',
+    'admin.error.action_setting_required' => '{label}은(는) 필수입니다',
+    'admin.error.action_setting_type' => '{label}은(는) 문자열이어야 합니다',
+    'admin.error.action_setting_invalid' => '{label} 값이 올바르지 않습니다',
 ];

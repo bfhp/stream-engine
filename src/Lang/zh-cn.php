@@ -1329,4 +1329,9 @@ return [
     'admin.page_action.forums.topic-new' => '在论坛版块中创建新主题',
     'admin.page_action.forums.topic-edit' => '编辑现有论坛主题',
 
+    'js.admin.page_action.setting_type_error' => '{label}必须是文本值。',
+    'admin.error.action_settings_object' => '此页面动作的设置必须是JSON对象',
+    'admin.error.action_setting_required' => '{label}为必填项',
+    'admin.error.action_setting_type' => '{label}必须是字符串',
+    'admin.error.action_setting_invalid' => '{label}的值无效',
 ];

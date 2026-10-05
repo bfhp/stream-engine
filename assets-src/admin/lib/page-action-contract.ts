@@ -20,12 +20,25 @@ export type PageActionRequirement = {
     oneOf: PageActionFieldName[];
 };
 
+export type PageActionSettingOption = {
+    value: string;
+    label: string;
+};
+
+export type PageActionSetting = {
+    control: "select";
+    label: string;
+    required: boolean;
+    options: PageActionSettingOption[];
+};
+
 export type PageAction = {
     action: string;
     label: string;
     module: string;
     fields: Record<PageActionFieldName, PageActionFieldContract>;
     requirements: PageActionRequirement[];
+    settings: Record<string, PageActionSetting>;
 };
 
 export type PageActionConfiguration = Record<PageActionFieldName, string | number | "">;
@@ -75,6 +88,67 @@ export function validatePageActionConfiguration(
     });
 
     return errors;
+}
+
+export function validatePageActionSettings(
+    action: PageAction,
+    settings: Record<string, unknown>
+): Record<string, string> {
+    const errors: Record<string, string> = {};
+
+    Object.entries(action.settings).forEach(([key, descriptor]) => {
+        const exists = Object.prototype.hasOwnProperty.call(settings, key);
+        const value = settings[key];
+        const label = trans(descriptor.label);
+
+        if (!exists) {
+            if (descriptor.required) {
+                errors[key] = trans("js.admin.page_action.required_error", { label, action: action.action });
+            }
+            return;
+        }
+        if (typeof value !== "string") {
+            errors[key] = trans("js.admin.page_action.setting_type_error", { label });
+        } else if (descriptor.required && value.trim() === "") {
+            errors[key] = trans("js.admin.page_action.required_error", { label, action: action.action });
+        } else if (!descriptor.options.some(option => option.value === value)) {
+            errors[key] = trans("js.admin.page_action.allowed_error", {
+                label,
+                values: descriptor.options.map(option => option.value).join(", ")
+            });
+        }
+    });
+
+    return errors;
+}
+
+export function buildPageActionSettingOptions(
+    descriptor: PageActionSetting,
+    currentValue: unknown
+): PageActionSettingOption[] {
+    const options = descriptor.options.map(option => ({
+        value: option.value,
+        label: trans(option.label)
+    }));
+
+    if (typeof currentValue === "string"
+        && currentValue !== ""
+        && !descriptor.options.some(option => option.value === currentValue)) {
+        options.unshift({
+            value: currentValue,
+            label: `${currentValue} (${trans("js.admin.not_allowed")})`
+        });
+    }
+
+    return options;
+}
+
+export function updatePageActionSetting(
+    settings: Record<string, unknown>,
+    key: string,
+    value: string
+): Record<string, unknown> {
+    return { ...settings, [key]: value };
 }
 
 export function fieldDescription(action: PageAction | undefined, field: PageActionFieldName): string {

@@ -68,7 +68,80 @@ final class ModuleRegistryTest extends TestCase
         self::assertSame(['status' => 'optional'], $action['fields']['feedId']);
         self::assertSame(['status' => 'unsupported'], $action['fields']['termVocabulary']);
         self::assertSame([['oneOf' => ['feedType', 'feedId']]], $action['requirements']);
+        self::assertSame([], $action['settings']);
         self::assertNull($registry->pageAction('missing'));
+    }
+
+    public function testSelectSettingsSchemaIsNormalized(): void
+    {
+        $action = $this->normalizePageAction([
+            'label' => 'Configurable page',
+            'settings' => [
+                'type' => [
+                    'control' => 'select',
+                    'label' => 'module.page_setting.type',
+                    'required' => true,
+                    'options' => [
+                        ['value' => 'first', 'label' => 'module.type.first'],
+                        ['value' => 'second', 'label' => 'module.type.second'],
+                    ],
+                ],
+            ],
+        ]);
+
+        self::assertSame([
+            'type' => [
+                'control' => 'select',
+                'label' => 'module.page_setting.type',
+                'required' => true,
+                'options' => [
+                    ['value' => 'first', 'label' => 'module.type.first'],
+                    ['value' => 'second', 'label' => 'module.type.second'],
+                ],
+            ],
+        ], $action['settings']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('invalidSettingsSchemas')]
+    public function testInvalidSettingsSchemaIsRejected(array $descriptor, string $message): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage($message);
+
+        $this->normalizePageAction($descriptor);
+    }
+
+    public static function invalidSettingsSchemas(): array
+    {
+        $valid = [
+            'control' => 'select',
+            'label' => 'Type',
+            'required' => true,
+            'options' => [['value' => 'first', 'label' => 'First']],
+        ];
+
+        return [
+            'unknown action property' => [['label' => 'Page', 'mystery' => true], 'Unknown page action descriptor property'],
+            'empty setting key' => [['label' => 'Page', 'settings' => ['' => $valid]], 'Invalid page action setting key'],
+            'unknown setting property' => [['label' => 'Page', 'settings' => ['type' => $valid + ['mystery' => true]]], 'Unknown descriptor property'],
+            'unsupported control' => [['label' => 'Page', 'settings' => ['type' => [...$valid, 'control' => 'text']]], 'Unsupported control'],
+            'empty options' => [['label' => 'Page', 'settings' => ['type' => [...$valid, 'options' => []]]], 'must have options'],
+            'empty option value' => [['label' => 'Page', 'settings' => ['type' => [...$valid, 'options' => [['value' => '', 'label' => 'First']]]]], 'Invalid option'],
+            'empty option label' => [['label' => 'Page', 'settings' => ['type' => [...$valid, 'options' => [['value' => 'first', 'label' => '']]]]], 'Invalid option'],
+            'duplicate option values' => [['label' => 'Page', 'settings' => ['type' => [...$valid, 'options' => [
+                ['value' => 'first', 'label' => 'First'],
+                ['value' => 'first', 'label' => 'Again'],
+            ]]]], 'Duplicate option value'],
+            'non-boolean required' => [['label' => 'Page', 'settings' => ['type' => [...$valid, 'required' => 1]]], 'required must be boolean'],
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function normalizePageAction(array $descriptor): array
+    {
+        $method = new \ReflectionMethod(ModuleRegistry::class, 'normalizePageAction');
+
+        return $method->invoke(new ModuleRegistry(), 'settings.test', $descriptor);
     }
 
     public function testStandaloneControllerRetainsItsShortName(): void
@@ -112,6 +185,7 @@ final class ModuleRegistryTest extends TestCase
 
         foreach ($registry->pageActions() as $action) {
             self::assertSame(ModuleRegistry::PAGE_ACTION_FIELDS, array_keys($action['fields']), $action['action']);
+            self::assertArrayHasKey('settings', $action, $action['action']);
 
             foreach ($action['fields'] as $field => $descriptor) {
                 self::assertContains($descriptor['status'], ['unsupported', 'optional', 'required']);

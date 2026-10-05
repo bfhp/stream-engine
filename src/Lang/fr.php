@@ -1329,4 +1329,9 @@ E-mail : {email}
     'admin.page_action.forums.topic-new' => 'Créer un nouveau sujet dans une section de forum',
     'admin.page_action.forums.topic-edit' => 'Modifier un sujet de forum existant',
 
+    'js.admin.page_action.setting_type_error' => '{label} doit être une valeur texte.',
+    'admin.error.action_settings_object' => 'Les paramètres de cette action de page doivent être un objet JSON',
+    'admin.error.action_setting_required' => '{label} est obligatoire',
+    'admin.error.action_setting_type' => '{label} doit être une chaîne',
+    'admin.error.action_setting_invalid' => 'Valeur invalide pour {label}',
 ];

@@ -1329,4 +1329,9 @@ E-mail: {email}
     'admin.page_action.forums.topic-new' => 'Criar um novo tópico em uma seção do fórum',
     'admin.page_action.forums.topic-edit' => 'Editar um tópico existente do fórum',
 
+    'js.admin.page_action.setting_type_error' => '{label} deve ser um valor de texto.',
+    'admin.error.action_settings_object' => 'As configurações desta ação de página devem ser um objeto JSON',
+    'admin.error.action_setting_required' => '{label} é obrigatório',
+    'admin.error.action_setting_type' => '{label} deve ser uma string',
+    'admin.error.action_setting_invalid' => 'Valor inválido para {label}',
 ];

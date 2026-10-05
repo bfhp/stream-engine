@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
+    buildPageActionSettingOptions,
     buildFeedTypeOptions,
     fieldDescription,
     fixedPageActionValue,
     isPageActionFieldDisabled,
     routeConfigurationWarnings,
     type PageAction,
-    validatePageActionConfiguration
+    updatePageActionSetting,
+    validatePageActionConfiguration,
+    validatePageActionSettings
 } from "../../assets-src/admin/lib/page-action-contract";
 
 function action(overrides: Partial<PageAction> = {}): PageAction {
@@ -21,6 +24,7 @@ function action(overrides: Partial<PageAction> = {}): PageAction {
             termVocabulary: { status: "unsupported" }
         },
         requirements: [],
+        settings: {},
         ...overrides
     };
 }
@@ -107,6 +111,58 @@ describe("page action configuration contracts", () => {
         expect(isPageActionFieldDisabled(undefined, "feedType", "legacy")).toBe(true);
         expect(isPageActionFieldDisabled(action(), "termVocabulary", "")).toBe(true);
         expect(isPageActionFieldDisabled(action(), "termVocabulary", "tag")).toBe(false);
+    });
+
+    it("validates required, invalid, valid and optional action settings", () => {
+        const configured = action({
+            settings: {
+                type: {
+                    control: "select",
+                    label: "Type",
+                    required: true,
+                    options: [
+                        { value: "first", label: "First" },
+                        { value: "second", label: "Second" }
+                    ]
+                },
+                style: {
+                    control: "select",
+                    label: "Style",
+                    required: false,
+                    options: [{ value: "compact", label: "Compact" }]
+                }
+            }
+        });
+
+        expect(validatePageActionSettings(configured, {})).toEqual({
+            type: "Type is required by article.show-slug."
+        });
+        expect(validatePageActionSettings(configured, { type: "legacy" })).toEqual({
+            type: "Type must be one of: first, second."
+        });
+        expect(validatePageActionSettings(configured, { type: 1 })).toEqual({
+            type: "Type must be a text value."
+        });
+        expect(validatePageActionSettings(configured, { type: "first" })).toEqual({});
+    });
+
+    it("retains legacy setting values and preserves unrelated settings on update", () => {
+        const descriptor = {
+            control: "select" as const,
+            label: "Type",
+            required: true,
+            options: [{ value: "first", label: "First" }]
+        };
+
+        expect(buildPageActionSettingOptions(descriptor, "legacy")).toEqual([
+            { value: "legacy", label: "legacy (not allowed)" },
+            { value: "first", label: "First" }
+        ]);
+        expect(updatePageActionSetting(
+            { shareButtons: true, commentsEnabled: false, unknown: 42 },
+            "type",
+            "first"
+        )).toEqual({ shareButtons: true, commentsEnabled: false, unknown: 42, type: "first" });
     });
 
     it("recognizes any named route placeholder, not only slug", () => {

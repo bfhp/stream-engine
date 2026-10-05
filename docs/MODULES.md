@@ -51,6 +51,47 @@ controller factory. Page actions still require pages configured in the CMS;
 discovery does not create pages. See [the module contract](MODULE_CONTRACT.md)
 for dependency rules.
 
+### Action-specific page settings
+
+An action may declare select fields stored inside the page's JSON `settings`.
+The standard page editor renders these fields and both the browser and server
+validate them. This is intentionally a small contract: only string-valued
+`select` controls are supported.
+
+```php
+public static function pageActions(): array
+{
+    return [
+        'notes.list' => [
+            'label' => 'notes.page_action.list',
+            'settings' => [
+                'layout' => [
+                    'control' => 'select',
+                    'label' => 'notes.page_setting.layout',
+                    'required' => true,
+                    'options' => [
+                        ['value' => 'cards', 'label' => 'notes.layout.cards'],
+                        ['value' => 'compact', 'label' => 'notes.layout.compact'],
+                    ],
+                ],
+            ],
+        ],
+    ];
+}
+```
+
+Setting keys and labels must be non-empty. Each descriptor accepts only
+`control`, `label`, `required`, and `options`; option values must be unique,
+non-empty strings. `required` defaults to `false` when omitted. Invalid schemas
+fail module registry construction. Actions without `settings` receive an empty
+normalized schema.
+
+For an action that declares settings, the saved JSON must be an object. The
+server validates only the declared keys: required values must be non-empty
+strings and every present value must match an option. Other keys, including
+global page settings and settings belonging to older module versions, remain
+allowed and are preserved by the editor.
+
 The engine discovers modules internally:
 
 ```php

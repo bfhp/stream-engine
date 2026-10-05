@@ -1329,4 +1329,9 @@ return [
     'admin.page_action.forums.topic-new' => 'フォーラムセクションに新しいトピックを作成',
     'admin.page_action.forums.topic-edit' => '既存のフォーラムトピックを編集',
 
+    'js.admin.page_action.setting_type_error' => '{label}はテキスト値である必要があります。',
+    'admin.error.action_settings_object' => 'このページアクションの設定はJSONオブジェクトである必要があります',
+    'admin.error.action_setting_required' => '{label}は必須です',
+    'admin.error.action_setting_type' => '{label}は文字列である必要があります',
+    'admin.error.action_setting_invalid' => '{label}の値が無効です',
 ];

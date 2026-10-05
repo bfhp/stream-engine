@@ -1329,4 +1329,9 @@ E-Mail: {email}
     'admin.page_action.forums.topic-new' => 'Ein neues Thema in einem Forenbereich erstellen',
     'admin.page_action.forums.topic-edit' => 'Ein bestehendes Forenthema bearbeiten',
 
+    'js.admin.page_action.setting_type_error' => '{label} muss ein Textwert sein.',
+    'admin.error.action_settings_object' => 'Einstellungen für diese Seitenaktion müssen ein JSON-Objekt sein',
+    'admin.error.action_setting_required' => '{label} ist erforderlich',
+    'admin.error.action_setting_type' => '{label} muss eine Zeichenfolge sein',
+    'admin.error.action_setting_invalid' => 'Ungültiger Wert für {label}',
 ];

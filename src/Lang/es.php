@@ -1329,4 +1329,9 @@ Correo: {email}
     'admin.page_action.forums.topic-new' => 'Crear un nuevo tema en una sección del foro',
     'admin.page_action.forums.topic-edit' => 'Editar un tema existente del foro',
 
+    'js.admin.page_action.setting_type_error' => '{label} debe ser un valor de texto.',
+    'admin.error.action_settings_object' => 'Los ajustes de esta acción de página deben ser un objeto JSON',
+    'admin.error.action_setting_required' => '{label} es obligatorio',
+    'admin.error.action_setting_type' => '{label} debe ser una cadena',
+    'admin.error.action_setting_invalid' => 'Valor no válido para {label}',
 ];

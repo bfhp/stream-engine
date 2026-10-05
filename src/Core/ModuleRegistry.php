@@ -37,7 +37,8 @@ final class ModuleRegistry
      *     label: string,
      *     module: string,
      *     fields: array<string, array{status: string, values?: list<string>, feedTypes?: list<string>}>,
-     *     requirements: list<array{oneOf: list<string>}>
+     *     requirements: list<array{oneOf: list<string>}>,
+     *     settings: array<string, array{control: 'select', label: string, required: bool, options: list<array{value: string, label: string}>}>
      * }>
      */
     private array $pageActions = [];
@@ -249,7 +250,8 @@ final class ModuleRegistry
      * @return array{
      *     label: string,
      *     fields: array<string, array{status: string, values?: list<string>, feedTypes?: list<string>}>,
-     *     requirements: list<array{oneOf: list<string>}>
+     *     requirements: list<array{oneOf: list<string>}>,
+     *     settings: array<string, array{control: 'select', label: string, required: bool, options: list<array{value: string, label: string}>}>
      * }
      */
     private function normalizePageAction(string $action, mixed $descriptor): array
@@ -264,7 +266,7 @@ final class ModuleRegistry
         if (! is_array($descriptor)) {
             throw new RuntimeException("Invalid page action descriptor for '$action'");
         }
-        if (array_diff(array_keys($descriptor), ['label', 'fields', 'requirements']) !== []) {
+        if (array_diff(array_keys($descriptor), ['label', 'fields', 'requirements', 'settings']) !== []) {
             throw new RuntimeException("Unknown page action descriptor property in '$action'");
         }
 
@@ -349,11 +351,88 @@ final class ModuleRegistry
             $normalizedRequirements[] = ['oneOf' => $oneOf];
         }
 
+        $settings = $this->normalizePageActionSettings($action, $descriptor['settings'] ?? []);
+
         return [
             'label' => trim($label),
             'fields' => $fields,
             'requirements' => $normalizedRequirements,
+            'settings' => $settings,
         ];
+    }
+
+    /**
+     * @return array<string, array{control: 'select', label: string, required: bool, options: list<array{value: string, label: string}>}>
+     */
+    private function normalizePageActionSettings(string $action, mixed $settings): array
+    {
+        if (! is_array($settings)) {
+            throw new RuntimeException("Page action '$action' settings must be an array");
+        }
+
+        $normalized = [];
+        foreach ($settings as $key => $setting) {
+            if (! is_string($key) || trim($key) === '' || preg_match('/[\x00-\x1f\x7f]/', $key) === 1) {
+                throw new RuntimeException("Invalid page action setting key in '$action'");
+            }
+            if (! is_array($setting)) {
+                throw new RuntimeException("Invalid descriptor for page action setting '$key' in '$action'");
+            }
+            if (array_diff(array_keys($setting), ['control', 'label', 'required', 'options']) !== []) {
+                throw new RuntimeException("Unknown descriptor property for page action setting '$key' in '$action'");
+            }
+
+            $control = $setting['control'] ?? null;
+            $label = $setting['label'] ?? null;
+            $required = $setting['required'] ?? false;
+            $options = $setting['options'] ?? null;
+
+            if ($control !== 'select') {
+                throw new RuntimeException("Unsupported control for page action setting '$key' in '$action'");
+            }
+            if (! is_string($label) || trim($label) === '') {
+                throw new RuntimeException("Page action setting '$key' in '$action' must have a label");
+            }
+            if (! is_bool($required)) {
+                throw new RuntimeException("Page action setting '$key' in '$action' required must be boolean");
+            }
+            if (! is_array($options) || ! array_is_list($options) || $options === []) {
+                throw new RuntimeException("Page action setting '$key' in '$action' must have options");
+            }
+
+            $normalizedOptions = [];
+            $values = [];
+            foreach ($options as $option) {
+                if (! is_array($option)
+                    || array_diff(array_keys($option), ['value', 'label']) !== []
+                    || ! array_key_exists('value', $option)
+                    || ! array_key_exists('label', $option)
+                    || ! is_string($option['value'])
+                    || trim($option['value']) === ''
+                    || ! is_string($option['label'])
+                    || trim($option['label']) === '') {
+                    throw new RuntimeException("Invalid option for page action setting '$key' in '$action'");
+                }
+                if (isset($values[$option['value']])) {
+                    throw new RuntimeException("Duplicate option value for page action setting '$key' in '$action'");
+                }
+
+                $values[$option['value']] = true;
+                $normalizedOptions[] = [
+                    'value' => $option['value'],
+                    'label' => trim($option['label']),
+                ];
+            }
+
+            $normalized[$key] = [
+                'control' => 'select',
+                'label' => trim($label),
+                'required' => $required,
+                'options' => $normalizedOptions,
+            ];
+        }
+
+        return $normalized;
     }
 
     private function validatePageActionFeedTypes(): void

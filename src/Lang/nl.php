@@ -1329,4 +1329,9 @@ E-mail: {email}
     'admin.page_action.forums.topic-new' => 'Een nieuw onderwerp in een forumsectie aanmaken',
     'admin.page_action.forums.topic-edit' => 'Een bestaand forumonderwerp bewerken',
 
+    'js.admin.page_action.setting_type_error' => '{label} moet een tekstwaarde zijn.',
+    'admin.error.action_settings_object' => 'Instellingen voor deze pagina-actie moeten een JSON-object zijn',
+    'admin.error.action_setting_required' => '{label} is verplicht',
+    'admin.error.action_setting_type' => '{label} moet een tekenreeks zijn',
+    'admin.error.action_setting_invalid' => 'Ongeldige waarde voor {label}',
 ];

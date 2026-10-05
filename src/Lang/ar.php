@@ -1329,4 +1329,9 @@ return [
     'admin.page_action.forums.topic-new' => 'إنشاء موضوع جديد في قسم من المنتدى',
     'admin.page_action.forums.topic-edit' => 'تعديل موضوع موجود في المنتدى',
 
+    'js.admin.page_action.setting_type_error' => 'يجب أن تكون قيمة {label} نصية.',
+    'admin.error.action_settings_object' => 'يجب أن تكون إعدادات إجراء الصفحة هذا كائن JSON',
+    'admin.error.action_setting_required' => '{label} مطلوب',
+    'admin.error.action_setting_type' => 'يجب أن تكون قيمة {label} سلسلة نصية',
+    'admin.error.action_setting_invalid' => 'قيمة غير صالحة لـ {label}',
 ];
