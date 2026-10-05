@@ -7,6 +7,24 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Modules can declare validated action-specific select fields stored in page
+  settings; the standard page editor renders them automatically.
+- Themes can be discovered from the root application's `views/themes`
+  directory in addition to the engine themes.
+
+### Changed
+
+- New menu items default to the `top` group, with an editable group selector
+  offering `top`, `bottom`, and `user`.
+
+### Fixed
+
+- Menu item ordering is now assigned server-side when items are created or
+  moved, avoiding duplicate or stale sort positions.
+- The page editor now displays structured API validation errors correctly.
+
 ## [0.4.2] - 2026-10-04
 
 ### Added
