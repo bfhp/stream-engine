@@ -1,7 +1,44 @@
 import { describe, expect, it } from "vitest";
-import { forbiddenPageParentIds } from "../../assets-src/admin/lib/page-hierarchy";
+import {
+    forbiddenPageParentIds,
+    orderPagesByHierarchy
+} from "../../assets-src/admin/lib/page-hierarchy";
 
 describe("page hierarchy", () => {
+    it("puts descendants directly below their parents and reports their depth", () => {
+        const pages = [
+            { id: 1, parentId: null },
+            { id: 4, parentId: 1 },
+            { id: 2, parentId: 1 },
+            { id: 5, parentId: 2 },
+            { id: 3, parentId: 2 }
+        ];
+
+        expect(orderPagesByHierarchy(pages).map(({ page, depth }) => [page.id, depth])).toEqual([
+            [1, 0],
+            [4, 1],
+            [2, 1],
+            [5, 2],
+            [3, 2]
+        ]);
+    });
+
+    it("keeps orphaned and cyclic pages visible", () => {
+        const pages = [
+            { id: 1, parentId: null },
+            { id: 2, parentId: 99 },
+            { id: 3, parentId: 4 },
+            { id: 4, parentId: 3 }
+        ];
+
+        expect(orderPagesByHierarchy(pages).map(({ page, depth }) => [page.id, depth])).toEqual([
+            [1, 0],
+            [2, 0],
+            [3, 0],
+            [4, 1]
+        ]);
+    });
+
     it("forbids the current page and all of its descendants as parents", () => {
         const pages = [
             { id: 1, parentId: null },

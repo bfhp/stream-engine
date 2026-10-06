@@ -7,6 +7,10 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- The admin page list now displays pages as an indented hierarchy.
+
 ## [0.4.3] - 2026-10-05
 
 ### Added

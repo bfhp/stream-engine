@@ -13,6 +13,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { IconEdit, IconPlus, IconRefresh } from "@tabler/icons-react";
 import { trans } from "../../shared/i18n";
+import { orderPagesByHierarchy } from "../lib/page-hierarchy";
 
 type PageListItem = {
     id: number;
@@ -64,12 +65,13 @@ export default function Pages() {
 
     const filteredPages = useMemo(() => {
         const needle = query.trim().toLowerCase();
+        const hierarchicalPages = orderPagesByHierarchy(pages);
 
         if (!needle) {
-            return pages;
+            return hierarchicalPages;
         }
 
-        return pages.filter(page => [
+        return hierarchicalPages.filter(({ page }) => [
             page.id,
             page.parentId,
             page.pattern,
@@ -132,7 +134,7 @@ export default function Pages() {
                     </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
-                    {filteredPages.map(page => (
+                    {filteredPages.map(({ page, depth }) => (
                         <Table.Tr
                             key={page.id}
                             style={{ cursor: "pointer" }}
@@ -140,7 +142,11 @@ export default function Pages() {
                         >
                             <Table.Td>{page.id}</Table.Td>
                             <Table.Td>{page.parentId ?? "-"}</Table.Td>
-                            <Table.Td>{page.pattern || <Text c="dimmed">{trans("js.admin.root")}</Text>}</Table.Td>
+                            <Table.Td>
+                                <div style={{ paddingInlineStart: `${depth * 20}px` }}>
+                                    {page.pattern || <Text c="dimmed">{trans("js.admin.root")}</Text>}
+                                </div>
+                            </Table.Td>
                             <Table.Td><Badge variant="light">{page.action || "-"}</Badge></Table.Td>
                             <Table.Td>{page.pageName || "-"}</Table.Td>
                             <Table.Td>
