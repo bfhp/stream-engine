@@ -1562,7 +1562,7 @@ final class AdminControllerTest extends TestCase
         $this->assertSame('modules/admin/page.twig', $view->template);
     }
 
-    public function testUploadsEndpointBrowsesTheConfiguredDirectory(): void
+    public function testFileBrowserEndpointBrowsesTheConfiguredDirectory(): void
     {
         $uploadsDir = sys_get_temp_dir().'/admin-uploads-'.bin2hex(random_bytes(8));
         self::assertTrue(mkdir($uploadsDir.'/2', 0700, true));
@@ -1573,7 +1573,7 @@ final class AdminControllerTest extends TestCase
         try {
             $response = $this->callAndDecode(
                 $this->makeModule(uploadsDir: $uploadsDir),
-                $this->makeApiPage('admin.uploads', ['GET'])
+                $this->makeApiPage('admin.file-browser', ['GET'])
             );
         } finally {
             unlink($uploadsDir.'/2/photo.webp');
@@ -1605,7 +1605,7 @@ final class AdminControllerTest extends TestCase
             'admin.user' => ['GET', 'PATCH'],
             'admin.dashboard' => ['GET', 'PATCH', 'DELETE'],
             'admin.dashboard-card' => ['GET'],
-            'admin.uploads' => ['GET'],
+            'admin.file-browser' => ['GET'],
         ] as $action => $methods) {
             $page = $tree->findByAction($action);
 
@@ -1651,7 +1651,7 @@ final class AdminControllerTest extends TestCase
         $user = (new Router($tree))->resolve('/api/v1/admin/users/42');
         $dashboard = (new Router($tree))->resolve('/api/v1/admin/dashboard');
         $dashboardCard = (new Router($tree))->resolve('/api/v1/admin/dashboard/cards/admin.system-health');
-        $uploads = (new Router($tree))->resolve('/api/v1/admin/uploads');
+        $fileBrowser = (new Router($tree))->resolve('/api/v1/admin/file-browser');
 
         $this->assertSame('admin.pages', $list['page']->action ?? null);
         $this->assertSame('admin.page', $item['page']->action ?? null);
@@ -1671,6 +1671,6 @@ final class AdminControllerTest extends TestCase
         $this->assertSame('admin.dashboard', $dashboard['page']->action ?? null);
         $this->assertSame('admin.dashboard-card', $dashboardCard['page']->action ?? null);
         $this->assertSame(['id' => 'admin.system-health'], $dashboardCard['params']);
-        $this->assertSame('admin.uploads', $uploads['page']->action ?? null);
+        $this->assertSame('admin.file-browser', $fileBrowser['page']->action ?? null);
     }
 }

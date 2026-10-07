@@ -350,8 +350,8 @@ class AdminController extends AbstractController implements DashboardCardProvide
             case 'admin.dashboard-card':
                 $this->handleDashboardCardRequest((string) ($args['id'] ?? ''));
                 break;
-            case 'admin.uploads':
-                $this->handleUploadsRequest();
+            case 'admin.file-browser':
+                $this->handleFileBrowserRequest();
                 break;
             default:
                 parent::callApi($page, $args);
@@ -406,14 +406,14 @@ class AdminController extends AbstractController implements DashboardCardProvide
             )
         );
 
-        $uploadsPageId = $pageTree->getMaxPageId();
+        $fileBrowserPageId = $pageTree->getMaxPageId();
         $pageTree->add(
             Page::api(
-                id: $uploadsPageId,
+                id: $fileBrowserPageId,
                 parentId: $adminApiPageId,
-                pattern: 'uploads',
+                pattern: 'file-browser',
                 requestMethods: ['GET'],
-                action: 'admin.uploads',
+                action: 'admin.file-browser',
                 accessRule: AccessService::ACCESS_ADMIN,
             )
         );
@@ -576,7 +576,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
      * @throws NotFoundException
      * @throws ValidationException
      */
-    private function handleUploadsRequest(): void
+    private function handleFileBrowserRequest(): void
     {
         try {
             $payload = (new UploadDirectoryBrowser($this->config->uploadsPath(dirname(__DIR__, 3))))

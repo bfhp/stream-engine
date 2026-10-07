@@ -38,7 +38,7 @@ export default function FileBrowser() {
         setLoading(true);
         setError(null);
 
-        fetch(`/api/v1/admin/uploads${query}`, { signal: controller.signal })
+        fetch(`/api/v1/admin/file-browser${query}`, { signal: controller.signal })
             .then(responseJson)
             .then(setPayload)
             .catch(err => {
