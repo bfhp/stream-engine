@@ -156,4 +156,53 @@ final class CronStatusServiceTest extends TestCase
         self::assertSame('disabled', $payload['data'][0]['status']);
         self::assertNull($payload['data'][0]['nextRunAt']);
     }
+
+    public function testPendingManualRunIsVisibleBeforeWorkerTakesTheLock(): void
+    {
+        $now = 1_800_000_000;
+        $registry = new CronRegistry();
+        $registry->add('probe:task', 'Probe', 60);
+        $db = $this->createStub(PdoDatabase::class);
+        $db->method('fetchAll')->willReturn([[
+            'task' => 'probe:task',
+            'is_enabled' => 1,
+            'last_run' => 0,
+            'manual_requested_at' => $now - 1,
+        ]]);
+
+        $payload = (new CronStatusService(
+            $registry,
+            new CronRepository($db),
+            $this->settings('off'),
+        ))->payload($now);
+
+        // Global off pauses automatic scheduling but not an explicitly
+        // requested manual run.
+        self::assertSame('queued', $payload['data'][0]['status']);
+
+        $activePayload = (new CronStatusService(
+            $registry,
+            new CronRepository($db),
+            $this->settings('os'),
+        ))->payload($now);
+        self::assertSame('queued', $activePayload['data'][0]['status']);
+        self::assertNull($activePayload['data'][0]['nextRunAt']);
+    }
+
+    public function testNeverRunTaskDoesNotInventANextRunAtTheUnixEpoch(): void
+    {
+        $registry = new CronRegistry();
+        $registry->add('probe:task', 'Probe', 60);
+        $db = $this->createStub(PdoDatabase::class);
+        $db->method('fetchAll')->willReturn([]);
+
+        $payload = (new CronStatusService(
+            $registry,
+            new CronRepository($db),
+            $this->settings('os'),
+        ))->payload(1_800_000_000);
+
+        self::assertSame('never', $payload['data'][0]['status']);
+        self::assertNull($payload['data'][0]['nextRunAt']);
+    }
 }

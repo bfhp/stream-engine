@@ -26,6 +26,7 @@ type CronTask = {
     lockedAt: number | null;
     consecutiveFailures: number;
     lastTrigger: "scheduled" | "manual" | null;
+    manualRequestedAt: number | null;
     lastError: string | null;
 };
 
@@ -42,7 +43,7 @@ type CronPayload = {
     data: CronTask[];
 };
 
-const statusOptions: CronStatus[] = ["scheduled", "running", "due", "overdue", "failed", "never", "stale", "disabled"];
+const statusOptions: CronStatus[] = ["scheduled", "queued", "running", "due", "overdue", "failed", "never", "stale", "disabled"];
 
 function statusLabel(status: CronStatus | SchedulerStatus): string {
     return trans(`js.admin.cron.status.${status}`);
@@ -93,7 +94,7 @@ export default function Cron() {
     }, [refreshKey]);
 
     useEffect(() => {
-        const refreshEvery = payload?.data.some(task => task.status === "running") ? 2_000 : 30_000;
+        const refreshEvery = payload?.data.some(task => task.status === "queued" || task.status === "running") ? 2_000 : 30_000;
         const timer = window.setInterval(() => setRefreshKey(key => key + 1), refreshEvery);
         return () => window.clearInterval(timer);
     }, [payload]);
@@ -167,10 +168,8 @@ export default function Cron() {
             if (!response.ok) throw new Error(await errorMessage(response, trans("js.admin.cron.run_failed")));
             accepted = true;
             notifications.show({ color: "green", message: trans("js.admin.cron.run_accepted", { task: task.task }), autoClose: 2500 });
-            window.setTimeout(() => {
-                setTaskPending(task.task, false);
-                setRefreshKey(key => key + 1);
-            }, 750);
+            setRefreshKey(key => key + 1);
+            window.setTimeout(() => setTaskPending(task.task, false), 500);
         } catch (runError) {
             const message = runError instanceof Error ? runError.message : trans("js.admin.cron.run_failed");
             notifications.show({ color: "red", title: trans("js.admin.error"), message });
@@ -279,12 +278,9 @@ export default function Cron() {
                             <Table.Td>{formatCronInterval(task.interval)}</Table.Td>
                             <Table.Td>
                                 <StatusBadge status={task.status} />
-                                {task.lastTrigger && <Text c="dimmed" size="xs" mt={4}>{trans(`js.admin.cron.trigger.${task.lastTrigger}`)}</Text>}
                             </Table.Td>
                             <Table.Td>{formatTimestamp(task.lastSucceededAt)}</Table.Td>
-                            <Table.Td>{task.status === "due" || task.status === "overdue" || task.status === "failed" || task.status === "never"
-                                ? trans("js.admin.cron.now")
-                                : formatTimestamp(task.nextRunAt)}</Table.Td>
+                            <Table.Td>{formatTimestamp(task.nextRunAt)}</Table.Td>
                             <Table.Td>{formatDuration(task.durationMs)}</Table.Td>
                             <Table.Td>
                                 <Switch
@@ -300,7 +296,7 @@ export default function Cron() {
                                     variant="light"
                                     leftSection={<IconPlayerPlay size={15} />}
                                     loading={Boolean(pendingTasks[task.task])}
-                                    disabled={!task.enabled || task.status === "running"}
+                                    disabled={!task.enabled || task.status === "queued" || task.status === "running"}
                                     onClick={() => setConfirmRun(task)}
                                 >
                                     {trans("js.admin.cron.run_now")}

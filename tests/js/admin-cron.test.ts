@@ -24,4 +24,9 @@ describe("admin cron formatting", () => {
     it("renders disabled scheduling as a neutral state", () => {
         expect(cronStatusColors.disabled).toBe("gray");
     });
+
+    it("distinguishes a queued manual run from a running task", () => {
+        expect(cronStatusColors.queued).toBe("cyan");
+        expect(cronStatusColors.running).toBe("blue");
+    });
 });

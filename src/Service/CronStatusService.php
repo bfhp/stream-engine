@@ -71,16 +71,23 @@ final readonly class CronStatusService
         $lastStartedAt = self::nullableTimestamp($state['last_started_at'] ?? null);
         $lastFinishedAt = self::nullableTimestamp($state['last_finished_at'] ?? null);
         $lockedAt = self::nullableTimestamp($state['locked_at'] ?? null);
+        $manualRequestedAt = self::nullableTimestamp($state['manual_requested_at'] ?? null);
         $enabled = ! array_key_exists('is_enabled', $state) || (int) $state['is_enabled'] === 1;
-        $nextRunAt = ($lastSucceededAt ?? 0) + $interval;
-        $status = $disabled || ! $enabled ? 'disabled' : $this->taskStatus(
+        $nextRunAt = $lastSucceededAt === null ? null : $lastSucceededAt + $interval;
+        $runtimeStatus = $this->taskStatus(
             $state,
             $lockedAt,
+            $manualRequestedAt,
             $lastStartedAt,
             $lastSucceededAt,
             $nextRunAt,
             $now,
         );
+        $status = match (true) {
+            ! $enabled => 'disabled',
+            $disabled && ! in_array($runtimeStatus, ['queued', 'running', 'stale'], true) => 'disabled',
+            default => $runtimeStatus,
+        };
 
         return [
             'task' => (string) $definition['task'],
@@ -91,13 +98,14 @@ final readonly class CronStatusService
             'lastStartedAt' => $lastStartedAt,
             'lastFinishedAt' => $lastFinishedAt,
             'lastSucceededAt' => $lastSucceededAt,
-            'nextRunAt' => in_array($status, ['disabled', 'running', 'never'], true) ? null : $nextRunAt,
+            'nextRunAt' => in_array($status, ['disabled', 'queued', 'running', 'never'], true) ? null : $nextRunAt,
             'durationMs' => self::nullableNonNegativeInt($state['last_duration_ms'] ?? null),
             'lockedAt' => $lockedAt,
             'consecutiveFailures' => max(0, (int) ($state['consecutive_failures'] ?? 0)),
             'lastTrigger' => in_array($state['last_trigger'] ?? null, ['scheduled', 'manual'], true)
                 ? $state['last_trigger']
                 : null,
+            'manualRequestedAt' => $manualRequestedAt,
             'lastError' => is_string($state['last_error'] ?? null) && $state['last_error'] !== ''
                 ? $state['last_error']
                 : null,
@@ -108,13 +116,17 @@ final readonly class CronStatusService
     private function taskStatus(
         array $state,
         ?int $lockedAt,
+        ?int $manualRequestedAt,
         ?int $lastStartedAt,
         ?int $lastSucceededAt,
-        int $nextRunAt,
+        ?int $nextRunAt,
         int $now,
     ): string {
         if ($lockedAt !== null) {
             return $now - $lockedAt > CronRepository::LOCK_STALE_AFTER_SECONDS ? 'stale' : 'running';
+        }
+        if ($manualRequestedAt !== null) {
+            return $now - $manualRequestedAt > CronRepository::MANUAL_REQUEST_STALE_AFTER_SECONDS ? 'stale' : 'queued';
         }
         if (($state['last_status'] ?? null) === 'failed') {
             return 'failed';
@@ -122,11 +134,11 @@ final readonly class CronStatusService
         if ($lastStartedAt === null && $lastSucceededAt === null) {
             return 'never';
         }
-        if ($now < $nextRunAt) {
+        if ($nextRunAt !== null && $now < $nextRunAt) {
             return 'scheduled';
         }
 
-        return $now <= $nextRunAt + self::DUE_GRACE_SECONDS ? 'due' : 'overdue';
+        return $nextRunAt !== null && $now <= $nextRunAt + self::DUE_GRACE_SECONDS ? 'due' : 'overdue';
     }
 
     /** @param array<string, mixed>|null $state */

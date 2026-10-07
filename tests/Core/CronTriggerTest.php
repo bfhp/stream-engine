@@ -192,4 +192,25 @@ final class CronTriggerTest extends TestCase
             'the guard has to come before the exec, or it guards nothing'
         );
     }
+
+    public function testSpawnTaskUsesTheCliBinaryAndReturnsTheWorkerResult(): void
+    {
+        $command = null;
+        $trigger = new CronTrigger(PHP_BINARY, static function (string $spawnedCommand) use (&$command): int {
+            $command = $spawnedCommand;
+
+            return 0;
+        });
+
+        $this->assertTrue($trigger->spawnTask('notifications:deliveries'));
+        $this->assertStringStartsWith(escapeshellarg(PHP_BINARY).' ', (string) $command);
+        $this->assertStringContainsString("--task='notifications:deliveries'", (string) $command);
+    }
+
+    public function testSpawnReportsAWorkerLaunchFailure(): void
+    {
+        $trigger = new CronTrigger(PHP_BINARY, static fn (string $command): int => 1);
+
+        $this->assertFalse($trigger->spawn());
+    }
 }

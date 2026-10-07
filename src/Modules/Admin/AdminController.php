@@ -647,11 +647,14 @@ class AdminController extends AbstractController implements DashboardCardProvide
         $this->requireRegisteredCronTask($task);
         Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
 
-        if (! $this->cronRepository->isEnabled($task)) {
-            throw new ValidationException('Cron task is disabled.', 409, 'conflict');
+        if (! $this->cronRepository->queueManualRun($task)) {
+            throw new ValidationException('Cron task is disabled, running, or already queued.', 409, 'conflict');
         }
 
-        $this->cronTrigger->spawnTask($task);
+        if (! $this->cronTrigger->spawnTask($task)) {
+            $this->cronRepository->clearManualRequest($task);
+            throw new ValidationException('Could not start the cron worker.', 503, 'unavailable');
+        }
         http_response_code(202);
         echo Formatter::json(['task' => $task, 'accepted' => true]);
     }

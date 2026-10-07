@@ -72,6 +72,7 @@ final class AdminControllerTest extends TestCase
         ?UploadService $uploadService = null,
         ?CronRegistry $cronRegistry = null,
         ?CronTrigger $cronTrigger = null,
+        array $executeResults = [],
     ): AdminController {
         $db = $this->createStub(PdoDatabase::class);
 
@@ -109,11 +110,12 @@ final class AdminControllerTest extends TestCase
             }
         );
         $db->method('lastInsertId')->willReturn($lastInsertId);
+        $executeIndex = 0;
         $db->method('execute')->willReturnCallback(
-            function (string $sql, array $params = []): int {
+            function (string $sql, array $params = []) use ($executeResults, &$executeIndex): int {
                 $this->writes[] = [$sql, $params];
 
-                return 1;
+                return $executeResults[$executeIndex++] ?? 1;
             }
         );
 
@@ -1921,7 +1923,7 @@ final class AdminControllerTest extends TestCase
         $registry = new CronRegistry();
         $registry->add('notifications:deliveries', 'Profile', 60);
         $trigger = $this->createMock(CronTrigger::class);
-        $trigger->expects($this->once())->method('spawnTask')->with('notifications:deliveries');
+        $trigger->expects($this->once())->method('spawnTask')->with('notifications:deliveries')->willReturn(true);
         $this->withValidCsrf();
         $_SERVER['REQUEST_METHOD'] = 'POST';
 
@@ -1945,7 +1947,7 @@ final class AdminControllerTest extends TestCase
         $this->expectException(ValidationException::class);
         $this->expectExceptionMessage('disabled');
 
-        $this->makeModule(row: ['is_enabled' => 0], cronRegistry: $registry)->callApi(
+        $this->makeModule(cronRegistry: $registry, executeResults: [1, 0])->callApi(
             $this->makeApiPage('admin.cron-task-run', ['POST']),
             ['task' => 'notifications:deliveries'],
         );

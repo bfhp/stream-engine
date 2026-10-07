@@ -19,6 +19,12 @@ namespace StreamEngine\Core\Cron;
  */
 class CronTrigger
 {
+    public function __construct(
+        private readonly ?string $phpBinary = null,
+        private readonly ?\Closure $commandRunner = null,
+    ) {
+    }
+
     /**
      * How often a production request should fork the cron process: one in
      * this many.
@@ -64,30 +70,55 @@ class CronTrigger
      * another one: bin/cron.php defines it, so a task that happens to render a
      * page cannot start a fork bomb.
      */
-    public function spawn(): void
+    public function spawn(): bool
     {
-        $this->spawnCommand();
+        return $this->spawnCommand();
     }
 
     /** Fork a worker for one registered task, bypassing its interval. */
-    public function spawnTask(string $task): void
+    public function spawnTask(string $task): bool
     {
-        $this->spawnCommand($task);
+        return $this->spawnCommand($task);
     }
 
-    private function spawnCommand(?string $task = null): void
+    private function spawnCommand(?string $task = null): bool
     {
         if (defined('CRON_PROCESS')) {
-            return;
+            return false;
+        }
+
+        $phpBinary = $this->phpBinary ?? $this->cliBinary();
+        if ($phpBinary === null || ! is_file($phpBinary) || ! is_executable($phpBinary)) {
+            return false;
         }
 
         $vendor = dirname((new \ReflectionClass(\Composer\Autoload\ClassLoader::class))->getFileName(), 2);
         $script = $vendor.'/bin/cron.php';
-        if (!is_file($script)) {
+        if (! is_file($script)) {
             $script = realpath(__DIR__.'/../../../bin/cron.php');
+        }
+        if ($script === false || ! is_file($script)) {
+            return false;
         }
 
         $argument = $task === null ? '' : ' --task='.escapeshellarg($task);
-        exec(escapeshellarg(PHP_BINARY).' '.escapeshellarg($script).$argument.' > /dev/null 2>&1 &');
+        $command = escapeshellarg($phpBinary).' '.escapeshellarg($script).$argument.' > /dev/null 2>&1 &';
+        if ($this->commandRunner !== null) {
+            return ($this->commandRunner)($command) === 0;
+        }
+
+        $exitCode = 1;
+        exec($command, result_code: $exitCode);
+
+        return $exitCode === 0;
+    }
+
+    /** PHP_BINARY points to php-fpm in web requests; cron needs the CLI SAPI. */
+    private function cliBinary(): ?string
+    {
+        $suffix = PHP_OS_FAMILY === 'Windows' ? '.exe' : '';
+        $binary = PHP_BINDIR.DIRECTORY_SEPARATOR.'php'.$suffix;
+
+        return is_file($binary) ? $binary : null;
     }
 }

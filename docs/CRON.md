@@ -81,7 +81,10 @@ The Scheduler page lets an administrator disable individual registered tasks
 and start enabled tasks manually. Disabling a task prevents future scheduled
 and manual starts; it does not terminate an invocation that is already running.
 Manual starts ignore the task interval but use the same database lock as normal
-runs, so the same task cannot execute twice concurrently.
+runs, so the same task cannot execute twice concurrently. A manual request is
+stored before the background worker is started and appears as **Queued** in the
+UI; this makes a failed or delayed worker launch observable instead of leaving
+the table unchanged.
 
 The UI starts a dedicated background worker equivalent to:
 

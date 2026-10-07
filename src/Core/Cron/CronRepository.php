@@ -9,6 +9,7 @@ use StreamEngine\Core\PdoDatabase;
 final readonly class CronRepository
 {
     public const int LOCK_STALE_AFTER_SECONDS = 3600;
+    public const int MANUAL_REQUEST_STALE_AFTER_SECONDS = 180;
 
     public function __construct(
         private PdoDatabase $db
@@ -95,7 +96,8 @@ final readonly class CronRepository
             "UPDATE cron_runs
                 SET locked_at = UNIX_TIMESTAMP(),
                     last_started_at = UNIX_TIMESTAMP(),
-                    last_trigger = ?
+                    last_trigger = ?,
+                    manual_requested_at = NULL
               WHERE task = ?
                 AND is_enabled = 1
                 AND (locked_at IS NULL OR locked_at < UNIX_TIMESTAMP() - ?)",
@@ -118,8 +120,42 @@ final readonly class CronRepository
         $this->db->execute(
             'INSERT INTO cron_runs (task, is_enabled, last_run, locked_at)
              VALUES (?, ?, 0, NULL)
-             ON DUPLICATE KEY UPDATE is_enabled = VALUES(is_enabled)',
+             ON DUPLICATE KEY UPDATE
+                 is_enabled = VALUES(is_enabled),
+                 manual_requested_at = IF(VALUES(is_enabled) = 0, NULL, manual_requested_at)',
             [$task, $enabled ? 1 : 0]
+        );
+    }
+
+    /**
+     * Persist the request before forking a worker so the UI can observe it.
+     * Returns false when the task is disabled, running, or already queued.
+     */
+    public function queueManualRun(string $task): bool
+    {
+        $this->db->execute(
+            'INSERT INTO cron_runs (task, last_run, locked_at)
+             VALUES (?, 0, NULL)
+             ON DUPLICATE KEY UPDATE task = task',
+            [$task]
+        );
+
+        return $this->db->execute(
+            'UPDATE cron_runs
+             SET manual_requested_at = UNIX_TIMESTAMP()
+             WHERE task = ?
+               AND is_enabled = 1
+               AND (locked_at IS NULL OR locked_at < UNIX_TIMESTAMP() - ?)
+               AND (manual_requested_at IS NULL OR manual_requested_at < UNIX_TIMESTAMP() - ?)',
+            [$task, self::LOCK_STALE_AFTER_SECONDS, self::MANUAL_REQUEST_STALE_AFTER_SECONDS]
+        ) === 1;
+    }
+
+    public function clearManualRequest(string $task): void
+    {
+        $this->db->execute(
+            'UPDATE cron_runs SET manual_requested_at = NULL WHERE task = ?',
+            [$task]
         );
     }
 
@@ -156,6 +192,7 @@ final readonly class CronRepository
                  last_duration_ms = ?,
                  last_error = NULL,
                  consecutive_failures = 0,
+                 manual_requested_at = NULL,
                  locked_at = NULL
              WHERE task = ?",
             [max(0, $durationMs), $task]
@@ -172,6 +209,7 @@ final readonly class CronRepository
                  last_duration_ms = ?,
                  last_error = ?,
                  consecutive_failures = consecutive_failures + 1,
+                 manual_requested_at = NULL,
                  locked_at = NULL
              WHERE task = ?",
             [max(0, $durationMs), self::truncateError($error), $task]
@@ -183,7 +221,8 @@ final readonly class CronRepository
     {
         return $this->db->fetchAll(
             'SELECT task, is_enabled, last_run, locked_at, last_started_at, last_finished_at,
-                    last_status, last_trigger, last_duration_ms, last_error, consecutive_failures
+                    last_status, last_trigger, manual_requested_at, last_duration_ms, last_error,
+                    consecutive_failures
              FROM cron_runs'
         );
     }

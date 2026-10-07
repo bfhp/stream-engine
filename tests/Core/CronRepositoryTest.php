@@ -112,6 +112,46 @@ final class CronRepositoryTest extends TestCase
         $repository->setEnabled('cron:probe', true);
     }
 
+    public function testManualRunIsPersistedBeforeWorkerStarts(): void
+    {
+        $db = $this->createMock(PdoDatabase::class);
+        $calls = [];
+        $db->expects($this->exactly(2))->method('execute')
+            ->willReturnCallback(function (string $sql, array $params) use (&$calls): int {
+                $calls[] = [$sql, $params];
+
+                return 1;
+            });
+
+        self::assertTrue((new CronRepository($db))->queueManualRun('cron:probe'));
+        self::assertStringContainsString('INSERT INTO cron_runs', $calls[0][0]);
+        self::assertStringContainsString('manual_requested_at = UNIX_TIMESTAMP()', $calls[1][0]);
+        self::assertSame('cron:probe', $calls[1][1][0]);
+    }
+
+    public function testManualRunIsRefusedWhenConditionalQueueUpdateDoesNotMatch(): void
+    {
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects($this->exactly(2))->method('execute')->willReturnOnConsecutiveCalls(1, 0);
+
+        self::assertFalse((new CronRepository($db))->queueManualRun('cron:probe'));
+    }
+
+    public function testTakingLockConsumesManualRequest(): void
+    {
+        $db = $this->createMock(PdoDatabase::class);
+        $calls = [];
+        $db->expects($this->exactly(2))->method('execute')
+            ->willReturnCallback(function (string $sql, array $params) use (&$calls): int {
+                $calls[] = [$sql, $params];
+
+                return 1;
+            });
+
+        self::assertTrue((new CronRepository($db))->lock('cron:probe', 'manual'));
+        self::assertStringContainsString('manual_requested_at = NULL', $calls[1][0]);
+    }
+
     public function testReleaseClearsTheLockWithoutRecordingARun(): void
     {
         $db = $this->createMock(PdoDatabase::class);

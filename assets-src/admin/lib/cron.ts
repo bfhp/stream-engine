@@ -1,12 +1,13 @@
 import { formatNumber } from "./format";
 import { trans } from "../../shared/i18n";
 
-export type CronStatus = "scheduled" | "running" | "due" | "overdue" | "failed" | "never" | "stale" | "disabled";
+export type CronStatus = "scheduled" | "queued" | "running" | "due" | "overdue" | "failed" | "never" | "stale" | "disabled";
 export type SchedulerStatus = "healthy" | "running" | "stale" | "failed" | "never" | "disabled";
 
 export const cronStatusColors: Record<CronStatus | SchedulerStatus, string> = {
     healthy: "green",
     scheduled: "green",
+    queued: "cyan",
     running: "blue",
     due: "yellow",
     overdue: "orange",
