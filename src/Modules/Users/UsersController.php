@@ -29,6 +29,7 @@ use StreamEngine\Repository\UploadRepository;
 use StreamEngine\Service\AuthService;
 use StreamEngine\Service\FeedService;
 use StreamEngine\Service\NotificationService;
+use StreamEngine\Service\SettingsService;
 use StreamEngine\Service\UploadService;
 use StreamEngine\Service\UserService;
 use StreamEngine\View\Breadcrumb;
@@ -166,6 +167,7 @@ class UsersController extends AbstractController
         private readonly Formatter $formatter,
         private readonly NotificationService $notificationService,
         private readonly Config $config,
+        private readonly SettingsService $settings,
     ) {
         parent::__construct($db, $context);
 
@@ -3316,6 +3318,7 @@ class UsersController extends AbstractController
                 ],
                 'title' => $this->tm->trans('user.registration'),
                 'successUrl' => $this->urlGenerator->page($page, query: ['success' => 1]),
+                'honeypotField' => $this->settings->registrationHoneypotField(),
             ]
         );
     }
@@ -3411,10 +3414,11 @@ class UsersController extends AbstractController
 
         // Honeypot :) A real browser leaves the hidden field empty; a bot
         // fills every field it finds. Absent means the form was not ours.
-        $login = $data['login'] ?? null;
+        $honeypotField = $this->settings->registrationHoneypotField();
+        $honeypot = $data[$honeypotField] ?? null;
 
-        if (! is_string($login) || $login !== '') {
-            throw new ValidationException('Login must be a valid username');
+        if (! is_string($honeypot) || $honeypot !== '') {
+            throw new ValidationException('Invalid registration form');
         }
 
         $email = is_string($data['email'] ?? null) ? trim($data['email']) : '';

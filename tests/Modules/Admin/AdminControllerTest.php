@@ -1200,6 +1200,21 @@ final class AdminControllerTest extends TestCase
         );
     }
 
+    public function testAnUnsafeRegistrationHoneypotFieldIsRefused(): void
+    {
+        $module = $this->makeModule();
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode(['value' => 'email']));
+
+        $this->expectException(ValidationException::class);
+
+        $module->callApi(
+            $this->makeApiPage('admin.setting', ['GET', 'PATCH']),
+            ['key' => SettingsService::REGISTRATION_HONEYPOT_FIELD_KEY],
+        );
+    }
+
     #[DataProvider('invalidDisplayFormatProvider')]
     public function testAnUnsupportedDisplayFormatIsRefused(string $key, string $message): void
     {

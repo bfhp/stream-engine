@@ -1240,6 +1240,10 @@ Email: {email}
     'js.admin.menu.children_delete' => 'Delete the complete subtree',
 
     'js.admin.settings.title' => 'Settings',
+    'js.admin.registration.title' => 'Registration',
+    'js.admin.registration.honeypot_field' => 'Honeypot field name',
+    'js.admin.registration.honeypot_description' => 'Hidden registration field used to catch automated submissions.',
+    'js.admin.registration.honeypot_invalid' => 'Use 3–64 Latin letters, digits, or underscores, starting with a letter.',
     'js.admin.settings.site_name' => 'Site name',
     'js.admin.settings.locale' => 'Interface locale',
     'js.admin.settings.date_format' => 'Date format',
@@ -1339,6 +1343,7 @@ Email: {email}
     'admin.error.invalid_date_format' => 'Unsupported date format',
     'admin.error.invalid_time_format' => 'Unsupported time format',
     'admin.error.invalid_cron_mode' => 'Unsupported cron mode',
+    'admin.error.invalid_honeypot_field' => 'Invalid registration honeypot field name',
     'admin.error.invalid_theme' => 'Invalid theme selection',
     'admin.error.invalid_child_strategy' => 'Invalid child deletion strategy',
     'admin.error.choose_child_strategy' => 'Choose whether to promote or delete child menu items',

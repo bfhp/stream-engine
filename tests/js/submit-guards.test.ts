@@ -38,8 +38,8 @@ const api = vi.fn<(url: string, options?: unknown) => Promise<unknown>>();
 const toast = vi.fn();
 
 const FORMS = `
-    <form id="registerForm" action="/api/v1/auth/register" data-success-url="#registration-complete">
-        <input name="login" value="nicky">
+    <form id="registerForm" action="/api/v1/auth/register" data-success-url="#registration-complete" data-honeypot-field="contact_reference">
+        <input name="contact_reference" value="">
         <input name="email" value="nicky@example.com">
         <input name="password" value="0123456789">
         <button type="submit">Зарегистрироваться</button>
@@ -109,7 +109,7 @@ beforeAll(async () => {
     document.documentElement.lang = "ru";
     document.body.innerHTML = FORMS;
 
-    assertFields("registerForm", ["login", "email", "password"]);
+    assertFields("registerForm", ["contact_reference", "email", "password"]);
     assertFields("feedbackForm", [
         "form_time",
         "form_hash",
@@ -225,6 +225,16 @@ describe("register.ts", () => {
         // out (a broken CMS stub, say).
         expect(button("registerForm").disabled).toBe(true);
         expect(api).toHaveBeenCalledTimes(1);
+        expect(api).toHaveBeenCalledWith(
+            "http://localhost:3000/api/v1/auth/register",
+            expect.objectContaining({
+                data: {
+                    contact_reference: "",
+                    email: "nicky@example.com",
+                    password: "0123456789",
+                },
+            })
+        );
 
         // Still disabled with the redirect 800ms out - this is the regression.
         await submit("registerForm");

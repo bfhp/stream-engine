@@ -1238,6 +1238,10 @@ Correo: {email}
     'js.admin.menu.children_delete' => 'Eliminar todo el subárbol',
 
     'js.admin.settings.title' => 'Ajustes',
+    'js.admin.registration.title' => 'Registro',
+    'js.admin.registration.honeypot_field' => 'Nombre del campo honeypot',
+    'js.admin.registration.honeypot_description' => 'Campo de registro oculto utilizado para detectar envíos automatizados.',
+    'js.admin.registration.honeypot_invalid' => 'Use entre 3 y 64 letras latinas, números o guiones bajos, empezando por una letra.',
     'js.admin.settings.site_name' => 'Nombre del sitio',
     'js.admin.settings.locale' => 'Idioma de la interfaz',
     'js.admin.settings.date_format' => 'Formato de fecha',
@@ -1337,6 +1341,7 @@ Correo: {email}
     'admin.error.invalid_date_format' => 'Formato de fecha no admitido',
    'admin.error.invalid_time_format' => 'Formato de hora no admitido',
     'admin.error.invalid_cron_mode' => 'Unsupported cron mode',
+    'admin.error.invalid_honeypot_field' => 'El nombre del campo honeypot de registro no es válido',
     'admin.error.invalid_theme' => 'Selección de tema no válida',
     'admin.error.invalid_child_strategy' => 'Estrategia de eliminación de secundarios no válida',
     'admin.error.choose_child_strategy' => 'Elige si mover o eliminar los elementos de menú secundarios',

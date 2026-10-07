@@ -1238,6 +1238,10 @@ E-mail: {email}
     'js.admin.menu.children_delete' => 'Excluir toda a subárvore',
 
     'js.admin.settings.title' => 'Configurações',
+    'js.admin.registration.title' => 'Cadastro',
+    'js.admin.registration.honeypot_field' => 'Nome do campo honeypot',
+    'js.admin.registration.honeypot_description' => 'Campo de cadastro oculto usado para detectar envios automatizados.',
+    'js.admin.registration.honeypot_invalid' => 'Use de 3 a 64 letras latinas, números ou sublinhados, começando por uma letra.',
     'js.admin.settings.site_name' => 'Nome do site',
     'js.admin.settings.locale' => 'Idioma da interface',
     'js.admin.settings.date_format' => 'Formato de data',
@@ -1337,6 +1341,7 @@ E-mail: {email}
     'admin.error.invalid_date_format' => 'Formato de data não compatível',
    'admin.error.invalid_time_format' => 'Formato de hora não compatível',
     'admin.error.invalid_cron_mode' => 'Unsupported cron mode',
+    'admin.error.invalid_honeypot_field' => 'Nome inválido para o campo honeypot de cadastro',
     'admin.error.invalid_theme' => 'Seleção de tema inválida',
     'admin.error.invalid_child_strategy' => 'Estratégia de exclusão de filhos inválida',
     'admin.error.choose_child_strategy' => 'Escolha se os itens de menu filhos serão movidos ou excluídos',

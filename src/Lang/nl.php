@@ -1238,6 +1238,10 @@ E-mail: {email}
     'js.admin.menu.children_delete' => 'De hele onderliggende boomstructuur verwijderen',
 
     'js.admin.settings.title' => 'Instellingen',
+    'js.admin.registration.title' => 'Registratie',
+    'js.admin.registration.honeypot_field' => 'Naam van honeypotveld',
+    'js.admin.registration.honeypot_description' => 'Verborgen registratieveld om geautomatiseerde inzendingen te detecteren.',
+    'js.admin.registration.honeypot_invalid' => 'Gebruik 3–64 Latijnse letters, cijfers of onderstrepingstekens en begin met een letter.',
     'js.admin.settings.site_name' => 'Sitenaam',
     'js.admin.settings.locale' => 'Interfacetaal',
     'js.admin.settings.date_format' => 'Datumnotatie',
@@ -1337,6 +1341,7 @@ E-mail: {email}
     'admin.error.invalid_date_format' => 'Niet-ondersteunde datumnotatie',
    'admin.error.invalid_time_format' => 'Niet-ondersteunde tijdnotatie',
     'admin.error.invalid_cron_mode' => 'Unsupported cron mode',
+    'admin.error.invalid_honeypot_field' => 'Ongeldige naam voor het registratie-honeypotveld',
     'admin.error.invalid_theme' => 'Ongeldige themakeuze',
     'admin.error.invalid_child_strategy' => 'Ongeldige strategie voor het verwijderen van onderliggende items',
     'admin.error.choose_child_strategy' => 'Kies of onderliggende menu-items worden verplaatst of verwijderd',

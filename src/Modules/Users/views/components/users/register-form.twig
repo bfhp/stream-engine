@@ -1,8 +1,13 @@
-<form id="registerForm" method="post" action="/api/v1/users" data-success-url="{{ successUrl }}">
+<form id="registerForm" method="post" action="/api/v1/users" data-success-url="{{ successUrl }}" data-honeypot-field="{{ honeypotField }}">
     {% block register_hidden %}
-    <div class="ui-visually-hidden">
-        <label for="registerInputLogin" class="ui-label">{{ trans('view.users.register.form.01') }}</label>
-        <input name="login" type="text" class="ui-input" id="registerInputLogin">
+    <div class="ui-visually-hidden" aria-hidden="true">
+        <input
+                name="{{ honeypotField }}"
+                type="text"
+                class="ui-input"
+                id="registerInputHoneypot"
+                autocomplete="off"
+                tabindex="-1">
     </div>
     {% endblock %}
 

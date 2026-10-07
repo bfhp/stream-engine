@@ -34,6 +34,17 @@ final class SettingsServiceTest extends TestCase
         self::assertSame('off', $this->makeService(['cron.mode' => ['invalid', 1]])->cronMode());
     }
 
+    public function testRegistrationHoneypotFieldUsesSafeDefaultAndStoredValue(): void
+    {
+        self::assertSame('contact_reference', $this->makeService()->registrationHoneypotField());
+        self::assertSame('visitor_note', $this->makeService([
+            SettingsService::REGISTRATION_HONEYPOT_FIELD_KEY => ['visitor_note', 1],
+        ])->registrationHoneypotField());
+        self::assertSame('contact_reference', $this->makeService([
+            SettingsService::REGISTRATION_HONEYPOT_FIELD_KEY => ['email', 1],
+        ])->registrationHoneypotField());
+    }
+
     public function testSiteIconsUseBuiltInDefaultsWithoutAValidCustomBase(): void
     {
         $expected = [

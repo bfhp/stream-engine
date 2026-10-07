@@ -1238,6 +1238,10 @@ E-mail : {email}
     'js.admin.menu.children_delete' => 'Supprimer toute la sous-arborescence',
 
     'js.admin.settings.title' => 'Paramètres',
+    'js.admin.registration.title' => 'Inscription',
+    'js.admin.registration.honeypot_field' => 'Nom du champ honeypot',
+    'js.admin.registration.honeypot_description' => 'Champ d’inscription masqué utilisé pour détecter les envois automatisés.',
+    'js.admin.registration.honeypot_invalid' => 'Utilisez 3 à 64 lettres latines, chiffres ou traits de soulignement, en commençant par une lettre.',
     'js.admin.settings.site_name' => 'Nom du site',
     'js.admin.settings.locale' => 'Langue de l’interface',
     'js.admin.settings.date_format' => 'Format de date',
@@ -1337,6 +1341,7 @@ E-mail : {email}
     'admin.error.invalid_date_format' => 'Format de date non pris en charge',
    'admin.error.invalid_time_format' => 'Format d’heure non pris en charge',
     'admin.error.invalid_cron_mode' => 'Unsupported cron mode',
+    'admin.error.invalid_honeypot_field' => 'Nom de champ honeypot d’inscription non valide',
     'admin.error.invalid_theme' => 'Sélection de thème invalide',
     'admin.error.invalid_child_strategy' => 'Stratégie de suppression des enfants invalide',
     'admin.error.choose_child_strategy' => 'Choisissez s’il faut déplacer ou supprimer les éléments de menu enfants',

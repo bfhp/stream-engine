@@ -11,6 +11,8 @@ const cms = window.CMS;
 
     const submitBtn = form.querySelector<HTMLButtonElement>('button[type="submit"]');
     if (!submitBtn) return;
+    const honeypotField = form.dataset.honeypotField;
+    if (!honeypotField) return;
 
     /**
      * Reads a field through form.elements instead of the form's own named
@@ -36,8 +38,8 @@ const cms = window.CMS;
         // holding Enter.
         if (submitBtn.disabled) return;
 
-        const payload = {
-            login: value('login').trim(),
+        const payload: Record<string, string> = {
+            [honeypotField]: value(honeypotField).trim(),
             email: value('email').trim(),
             password: value('password')
         };

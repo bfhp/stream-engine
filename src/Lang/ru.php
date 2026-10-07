@@ -1276,6 +1276,10 @@ return [
     'js.admin.menu.children_delete' => 'Удалить всё поддерево',
 
     'js.admin.settings.title' => 'Настройки',
+    'js.admin.registration.title' => 'Регистрация',
+    'js.admin.registration.honeypot_field' => 'Имя поля honeypot',
+    'js.admin.registration.honeypot_description' => 'Скрытое поле регистрации для отсеивания автоматических отправок.',
+    'js.admin.registration.honeypot_invalid' => 'Используйте от 3 до 64 латинских букв, цифр или подчёркиваний; первый символ — буква.',
     'js.admin.settings.site_name' => 'Название сайта',
     'js.admin.settings.locale' => 'Язык интерфейса',
     'js.admin.settings.date_format' => 'Формат даты',
@@ -1375,6 +1379,7 @@ return [
     'admin.error.invalid_date_format' => 'Неподдерживаемый формат даты',
     'admin.error.invalid_time_format' => 'Неподдерживаемый формат времени',
     'admin.error.invalid_cron_mode' => 'Неподдерживаемый режим cron',
+    'admin.error.invalid_honeypot_field' => 'Недопустимое имя поля honeypot для регистрации',
     'admin.error.invalid_theme' => 'Некорректный выбор темы',
     'admin.error.invalid_child_strategy' => 'Некорректное действие с дочерними пунктами',
     'admin.error.choose_child_strategy' => 'Выберите перенос или удаление дочерних пунктов',

@@ -11,6 +11,8 @@ final class SettingsService
     public const array CRON_MODES = ['os', 'web', 'off'];
     public const string SITE_ICON_KEY = 'site_icon';
     public const string SITE_ICON_SVG_KEY = 'site_icon_svg';
+    public const string REGISTRATION_HONEYPOT_FIELD_KEY = 'registration.honeypot_field';
+    public const string DEFAULT_REGISTRATION_HONEYPOT_FIELD = 'contact_reference';
 
     /**
      * @var array<string, string>
@@ -59,6 +61,24 @@ final class SettingsService
         $mode = $this->getString('cron.mode', 'os');
 
         return in_array($mode, self::CRON_MODES, true) ? $mode : 'off';
+    }
+
+    public function registrationHoneypotField(): string
+    {
+        $field = $this->getString(
+            self::REGISTRATION_HONEYPOT_FIELD_KEY,
+            self::DEFAULT_REGISTRATION_HONEYPOT_FIELD,
+        );
+
+        return self::isValidRegistrationHoneypotField($field)
+            ? $field
+            : self::DEFAULT_REGISTRATION_HONEYPOT_FIELD;
+    }
+
+    public static function isValidRegistrationHoneypotField(string $field): bool
+    {
+        return preg_match('/\A[A-Za-z][A-Za-z0-9_]{2,63}\z/', $field) === 1
+            && ! in_array($field, ['email', 'password'], true);
     }
 
     /**

@@ -1238,6 +1238,10 @@ return [
     'js.admin.menu.children_delete' => 'حذف الشجرة الفرعية بالكامل',
 
     'js.admin.settings.title' => 'الإعدادات',
+    'js.admin.registration.title' => 'التسجيل',
+    'js.admin.registration.honeypot_field' => 'اسم حقل المصيدة',
+    'js.admin.registration.honeypot_description' => 'حقل تسجيل مخفي يُستخدم لاكتشاف عمليات الإرسال الآلية.',
+    'js.admin.registration.honeypot_invalid' => 'استخدم من 3 إلى 64 حرفًا لاتينيًا أو رقمًا أو شرطة سفلية، بدءًا بحرف.',
     'js.admin.settings.site_name' => 'اسم الموقع',
     'js.admin.settings.locale' => 'لغة الواجهة',
     'js.admin.settings.date_format' => 'تنسيق التاريخ',
@@ -1337,6 +1341,7 @@ return [
     'admin.error.invalid_date_format' => 'تنسيق التاريخ غير مدعوم',
    'admin.error.invalid_time_format' => 'تنسيق الوقت غير مدعوم',
     'admin.error.invalid_cron_mode' => 'Unsupported cron mode',
+    'admin.error.invalid_honeypot_field' => 'اسم حقل مصيدة التسجيل غير صالح',
     'admin.error.invalid_theme' => 'اختيار السمة غير صالح',
     'admin.error.invalid_child_strategy' => 'استراتيجية حذف العناصر الفرعية غير صالحة',
     'admin.error.choose_child_strategy' => 'اختر ما إذا كنت تريد ترقية عناصر القائمة الفرعية أو حذفها',

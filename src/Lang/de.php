@@ -1238,6 +1238,10 @@ E-Mail: {email}
     'js.admin.menu.children_delete' => 'Den gesamten Teilbaum löschen',
 
     'js.admin.settings.title' => 'Einstellungen',
+    'js.admin.registration.title' => 'Registrierung',
+    'js.admin.registration.honeypot_field' => 'Name des Honeypot-Feldes',
+    'js.admin.registration.honeypot_description' => 'Verstecktes Registrierungsfeld zum Erkennen automatisierter Eingaben.',
+    'js.admin.registration.honeypot_invalid' => 'Verwenden Sie 3–64 lateinische Buchstaben, Ziffern oder Unterstriche, beginnend mit einem Buchstaben.',
     'js.admin.settings.site_name' => 'Website-Name',
     'js.admin.settings.locale' => 'Oberflächensprache',
     'js.admin.settings.date_format' => 'Datumsformat',
@@ -1337,6 +1341,7 @@ E-Mail: {email}
     'admin.error.invalid_date_format' => 'Nicht unterstütztes Datumsformat',
    'admin.error.invalid_time_format' => 'Nicht unterstütztes Zeitformat',
     'admin.error.invalid_cron_mode' => 'Unsupported cron mode',
+    'admin.error.invalid_honeypot_field' => 'Ungültiger Name für das Registrierungs-Honeypot-Feld',
     'admin.error.invalid_theme' => 'Ungültige Theme-Auswahl',
     'admin.error.invalid_child_strategy' => 'Ungültige Strategie zum Löschen untergeordneter Einträge',
     'admin.error.choose_child_strategy' => 'Wählen Sie, ob untergeordnete Menüeinträge verschoben oder gelöscht werden sollen',

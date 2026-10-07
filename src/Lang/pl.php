@@ -1238,6 +1238,10 @@ E-mail: {email}
     'js.admin.menu.children_delete' => 'Usuń całe poddrzewo',
 
     'js.admin.settings.title' => 'Ustawienia',
+    'js.admin.registration.title' => 'Rejestracja',
+    'js.admin.registration.honeypot_field' => 'Nazwa pola honeypot',
+    'js.admin.registration.honeypot_description' => 'Ukryte pole rejestracji służące do wykrywania automatycznych zgłoszeń.',
+    'js.admin.registration.honeypot_invalid' => 'Użyj od 3 do 64 liter łacińskich, cyfr lub podkreśleń, zaczynając od litery.',
     'js.admin.settings.site_name' => 'Nazwa strony',
     'js.admin.settings.locale' => 'Język interfejsu',
     'js.admin.settings.date_format' => 'Format daty',
@@ -1337,6 +1341,7 @@ E-mail: {email}
     'admin.error.invalid_date_format' => 'Nieobsługiwany format daty',
    'admin.error.invalid_time_format' => 'Nieobsługiwany format czasu',
     'admin.error.invalid_cron_mode' => 'Unsupported cron mode',
+    'admin.error.invalid_honeypot_field' => 'Nieprawidłowa nazwa pola honeypot rejestracji',
     'admin.error.invalid_theme' => 'Nieprawidłowy wybór motywu',
     'admin.error.invalid_child_strategy' => 'Nieprawidłowa strategia usuwania elementów podrzędnych',
     'admin.error.choose_child_strategy' => 'Wybierz, czy podrzędne elementy menu mają zostać przeniesione, czy usunięte',

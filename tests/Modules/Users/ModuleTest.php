@@ -20,6 +20,7 @@ use StreamEngine\Domain\User;
 use StreamEngine\Modules\Users\UsersController;
 use StreamEngine\Repository\NotificationDeliveryRepository;
 use StreamEngine\Repository\NotificationPreferenceRepository;
+use StreamEngine\Repository\SettingsRepository;
 use StreamEngine\Repository\UserRepository;
 use StreamEngine\Repository\UserSessionRepository;
 use StreamEngine\Service\AccessService;
@@ -28,6 +29,7 @@ use StreamEngine\Service\FeedService;
 use StreamEngine\Service\MailService;
 use StreamEngine\Service\MessageService;
 use StreamEngine\Service\NotificationService;
+use StreamEngine\Service\SettingsService;
 use StreamEngine\Service\UploadService;
 use StreamEngine\Service\UserService;
 use Tests\Support\ArrayCache;
@@ -110,6 +112,7 @@ final class ModuleTest extends TestCase
             ),
             new Formatter($tm, 'ru'),
             $config,
+            new SettingsService(new SettingsRepository($db)),
         ];
 
         $modules = new ModuleRegistry();

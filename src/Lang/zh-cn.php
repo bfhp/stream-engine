@@ -1238,6 +1238,10 @@ return [
     'js.admin.menu.children_delete' => '删除整个子树',
 
     'js.admin.settings.title' => '设置',
+    'js.admin.registration.title' => '注册',
+    'js.admin.registration.honeypot_field' => '蜜罐字段名称',
+    'js.admin.registration.honeypot_description' => '用于检测自动提交的隐藏注册字段。',
+    'js.admin.registration.honeypot_invalid' => '请使用 3–64 个拉丁字母、数字或下划线，并以字母开头。',
     'js.admin.settings.site_name' => '站点名称',
     'js.admin.settings.locale' => '界面语言',
     'js.admin.settings.date_format' => '日期格式',
@@ -1337,6 +1341,7 @@ return [
     'admin.error.invalid_date_format' => '不支持的日期格式',
    'admin.error.invalid_time_format' => '不支持的时间格式',
     'admin.error.invalid_cron_mode' => 'Unsupported cron mode',
+    'admin.error.invalid_honeypot_field' => '注册蜜罐字段名称无效',
     'admin.error.invalid_theme' => '主题选择无效',
     'admin.error.invalid_child_strategy' => '子项目删除策略无效',
     'admin.error.choose_child_strategy' => '请选择子菜单项是移动还是删除',

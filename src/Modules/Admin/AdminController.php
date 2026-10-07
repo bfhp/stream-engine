@@ -1987,5 +1987,9 @@ class AdminController extends AbstractController implements DashboardCardProvide
         if ($key === 'cron.mode' && ! in_array($value, SettingsService::CRON_MODES, true)) {
             throw new ValidationException($this->tm->trans('admin.error.invalid_cron_mode'));
         }
+        if ($key === SettingsService::REGISTRATION_HONEYPOT_FIELD_KEY
+            && ! SettingsService::isValidRegistrationHoneypotField($value)) {
+            throw new ValidationException($this->tm->trans('admin.error.invalid_honeypot_field'));
+        }
     }
 }

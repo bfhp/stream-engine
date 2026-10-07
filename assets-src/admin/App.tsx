@@ -10,6 +10,7 @@ import { lazy, Suspense } from "react";
 import Pages from "./pages/Pages";
 import PageEdit from "./pages/PageEdit";
 import Settings from "./pages/Settings";
+import Registration from "./pages/Registration";
 import Themes from "./pages/Themes";
 import Widgets from "./pages/Widgets";
 import Menus from "./pages/Menus";
@@ -40,6 +41,7 @@ export default function App({ moduleAdminPages }: AppProps) {
                 <Route path="/pages" element={<Pages />} />
                 <Route path="/menus" element={<Menus />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/registration" element={<Registration />} />
                 <Route path="/themes" element={<Themes />} />
                 <Route path="/widgets" element={<Widgets />} />
                 <Route path="/file-browser" element={

@@ -24,12 +24,14 @@ use StreamEngine\Domain\User;
 use StreamEngine\Modules\Users\UsersController;
 use StreamEngine\Repository\NotificationDeliveryRepository;
 use StreamEngine\Repository\NotificationPreferenceRepository;
+use StreamEngine\Repository\SettingsRepository;
 use StreamEngine\Repository\UserRepository;
 use StreamEngine\Repository\UserSessionRepository;
 use StreamEngine\Service\AccessService;
 use StreamEngine\Service\MailService;
 use StreamEngine\Service\MessageService;
 use StreamEngine\Service\NotificationService;
+use StreamEngine\Service\SettingsService;
 use StreamEngine\Service\UserService;
 use Tests\Support\PhpInputStreamMock;
 use Tests\Support\ArrayCache;
@@ -75,7 +77,7 @@ final class UsersControllerAuthPagesTest extends TestCase
      * `$_GET` has to be set *before* this: RequestContext snapshots the query
      * string, which is the whole point of it.
      */
-    private function makeModule(?PdoDatabase $db = null, ?User $user = null): UsersController
+    private function makeModule(?PdoDatabase $db = null, ?User $user = null, array $settings = []): UsersController
     {
         $db ??= $this->createStub(PdoDatabase::class);
 
@@ -116,6 +118,20 @@ final class UsersControllerAuthPagesTest extends TestCase
         );
         $reflection->getProperty('tm')->setValue($module, $tm);
         $reflection->getProperty('formatter')->setValue($module, new Formatter($tm, 'ru'));
+        $settingsDb = $this->createStub(PdoDatabase::class);
+        $settingsDb->method('fetchAll')->willReturn(array_map(
+            static fn (string $value, string $key): array => [
+                'setting_key' => $key,
+                'setting_value' => $value,
+                'updated_at' => 1,
+            ],
+            $settings,
+            array_keys($settings),
+        ));
+        $reflection->getProperty('settings')->setValue(
+            $module,
+            new SettingsService(new SettingsRepository($settingsDb)),
+        );
         $reflection->getProperty('urlGenerator')->setValue(
             $module,
             new UrlGenerator(
@@ -182,6 +198,18 @@ final class UsersControllerAuthPagesTest extends TestCase
 
         $this->assertSame('modules/users/register1.twig', $view->template);
         $this->assertSame('/register/?success=1', $view->data['successUrl']);
+        $this->assertSame('contact_reference', $view->data['honeypotField']);
+    }
+
+    public function testRegistrationFormUsesConfiguredHoneypotField(): void
+    {
+        $module = $this->makeModule(settings: [
+            SettingsService::REGISTRATION_HONEYPOT_FIELD_KEY => 'visitor_note',
+        ]);
+
+        $view = $module->show($this->page('user.register'));
+
+        $this->assertSame('visitor_note', $view->data['honeypotField']);
     }
 
     public function testRegistrationSuccessUrlFollowsTheConfiguredPagePattern(): void
@@ -431,10 +459,9 @@ final class UsersControllerAuthPagesTest extends TestCase
     }
 
     /**
-     * The bug this file's source change was for. `array_key_exists('login',
-     * null)` is a TypeError, so a non-JSON body on the account-creation
-     * endpoint was a 500 - logged as a bug, answered as one - rather than the
-     * 400 it is.
+     * An earlier implementation read the honeypot before checking that the
+     * decoded body was an object. A non-JSON body therefore produced a 500
+     * rather than the expected validation error.
      */
     #[DataProvider('malformedBodyProvider')]
     public function testAMalformedBodyIsRefusedRatherThanFatal(string $body): void
@@ -457,13 +484,13 @@ final class UsersControllerAuthPagesTest extends TestCase
     {
         return [
             // A bot that fills every field it can see.
-            'filled in' => ['{"login":"admin","email":"a@b.co","password":"longenough1"}'],
+            'filled in' => ['{"contact_reference":"spam","email":"a@b.co","password":"longenough1"}'],
             // Absent means the submission did not come from our form.
             'absent' => ['{"email":"a@b.co","password":"longenough1"}'],
-            'null' => ['{"login":null,"email":"a@b.co","password":"longenough1"}'],
+            'null' => ['{"contact_reference":null,"email":"a@b.co","password":"longenough1"}'],
             // An array used to reach mb_strlen() and be a fatal.
-            'an array' => ['{"login":[],"email":"a@b.co","password":"longenough1"}'],
-            'a number' => ['{"login":0,"email":"a@b.co","password":"longenough1"}'],
+            'an array' => ['{"contact_reference":[],"email":"a@b.co","password":"longenough1"}'],
+            'a number' => ['{"contact_reference":0,"email":"a@b.co","password":"longenough1"}'],
         ];
     }
 
@@ -477,7 +504,7 @@ final class UsersControllerAuthPagesTest extends TestCase
         PhpInputStreamMock::register($body);
 
         $this->expectException(ValidationException::class);
-        $this->expectExceptionMessage('Login must be a valid username');
+        $this->expectExceptionMessage('Invalid registration form');
 
         $module->callApi($this->registerPage());
     }
@@ -488,13 +515,13 @@ final class UsersControllerAuthPagesTest extends TestCase
     public static function badCredentialsProvider(): array
     {
         return [
-            'no email' => ['{"login":"","password":"longenough1"}'],
-            'not an email' => ['{"login":"","email":"nonsense","password":"longenough1"}'],
+            'no email' => ['{"contact_reference":"","password":"longenough1"}'],
+            'not an email' => ['{"contact_reference":"","email":"nonsense","password":"longenough1"}'],
             // Arrays again: these reached trim() and register() as arrays.
-            'email as an array' => ['{"login":"","email":[],"password":"longenough1"}'],
-            'password as an array' => ['{"login":"","email":"a@b.co","password":[]}'],
-            'no password' => ['{"login":"","email":"a@b.co"}'],
-            'password too short' => ['{"login":"","email":"a@b.co","password":"short"}'],
+            'email as an array' => ['{"contact_reference":"","email":[],"password":"longenough1"}'],
+            'password as an array' => ['{"contact_reference":"","email":"a@b.co","password":[]}'],
+            'no password' => ['{"contact_reference":"","email":"a@b.co"}'],
+            'password too short' => ['{"contact_reference":"","email":"a@b.co","password":"short"}'],
         ];
     }
 

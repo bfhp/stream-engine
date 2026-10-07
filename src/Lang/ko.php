@@ -1238,6 +1238,10 @@ return [
     'js.admin.menu.children_delete' => '전체 하위 트리 삭제',
 
     'js.admin.settings.title' => '설정',
+    'js.admin.registration.title' => '가입',
+    'js.admin.registration.honeypot_field' => '허니팟 필드 이름',
+    'js.admin.registration.honeypot_description' => '자동 제출을 감지하는 숨겨진 가입 필드입니다.',
+    'js.admin.registration.honeypot_invalid' => '문자로 시작하는 3~64자의 영문자, 숫자 또는 밑줄을 사용하세요.',
     'js.admin.settings.site_name' => '사이트 이름',
     'js.admin.settings.locale' => '인터페이스 언어',
     'js.admin.settings.date_format' => '날짜 형식',
@@ -1337,6 +1341,7 @@ return [
     'admin.error.invalid_date_format' => '지원되지 않는 날짜 형식입니다',
    'admin.error.invalid_time_format' => '지원되지 않는 시간 형식입니다',
     'admin.error.invalid_cron_mode' => 'Unsupported cron mode',
+    'admin.error.invalid_honeypot_field' => '가입 허니팟 필드 이름이 올바르지 않습니다',
     'admin.error.invalid_theme' => '유효하지 않은 테마 선택입니다',
     'admin.error.invalid_child_strategy' => '유효하지 않은 하위 항목 삭제 방식입니다',
     'admin.error.choose_child_strategy' => '하위 메뉴 항목을 이동할지 삭제할지 선택하세요',

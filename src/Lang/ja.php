@@ -1238,6 +1238,10 @@ return [
     'js.admin.menu.children_delete' => 'サブツリー全体を削除する',
 
     'js.admin.settings.title' => '設定',
+    'js.admin.registration.title' => '登録',
+    'js.admin.registration.honeypot_field' => 'ハニーポットフィールド名',
+    'js.admin.registration.honeypot_description' => '自動送信を検出するための非表示の登録フィールドです。',
+    'js.admin.registration.honeypot_invalid' => '先頭を英字にして、3～64文字の英字、数字、またはアンダースコアを使用してください。',
     'js.admin.settings.site_name' => 'サイト名',
     'js.admin.settings.locale' => '表示言語',
     'js.admin.settings.date_format' => '日付形式',
@@ -1337,6 +1341,7 @@ return [
     'admin.error.invalid_date_format' => '未対応の日付形式です',
    'admin.error.invalid_time_format' => '未対応の時刻形式です',
     'admin.error.invalid_cron_mode' => 'Unsupported cron mode',
+    'admin.error.invalid_honeypot_field' => '登録用ハニーポットフィールド名が無効です',
     'admin.error.invalid_theme' => '無効なテーマの選択です',
     'admin.error.invalid_child_strategy' => '無効な子項目の削除方法です',
     'admin.error.choose_child_strategy' => '子メニュー項目を移動するか削除するかを選択してください',
