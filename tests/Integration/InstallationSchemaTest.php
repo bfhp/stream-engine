@@ -70,6 +70,24 @@ final class InstallationSchemaTest extends TestCase
         });
     }
 
+    public function testCronObservabilityMigrationAddsTaskDiagnosticsAndSchedulerHeartbeat(): void
+    {
+        $root = dirname(__DIR__, 2);
+        $this->withEmptyDatabase(function (PDO $pdo) use ($root): void {
+            $this->executeScript($pdo, $root.'/migrations/20260912000000_initial.sql');
+            $this->executeScript($pdo, $root.'/migrations/20261007000000_add_cron_observability.sql');
+
+            $columns = $pdo->query('SHOW COLUMNS FROM cron_runs')->fetchAll(PDO::FETCH_COLUMN);
+            self::assertContains('last_started_at', $columns);
+            self::assertContains('last_finished_at', $columns);
+            self::assertContains('last_status', $columns);
+            self::assertContains('last_duration_ms', $columns);
+            self::assertContains('last_error', $columns);
+            self::assertContains('consecutive_failures', $columns);
+            self::assertContains('cron_scheduler_state', $this->tables($pdo));
+        });
+    }
+
     public function testFeedSlugScopeMigrationResolvesCollisionsAndEnforcesScopes(): void
     {
         $root = dirname(__DIR__, 2);

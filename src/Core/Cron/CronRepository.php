@@ -8,6 +8,8 @@ use StreamEngine\Core\PdoDatabase;
 
 final readonly class CronRepository
 {
+    public const int LOCK_STALE_AFTER_SECONDS = 3600;
+
     public function __construct(
         private PdoDatabase $db
     ) {
@@ -48,8 +50,6 @@ final readonly class CronRepository
      * either a bigger window or a heartbeat that refreshes locked_at as it
      * works.
      */
-    private const int LOCK_STALE_AFTER_SECONDS = 3600;
-
     /**
      * Takes the lock for a task, reporting whether *this* call got it.
      *
@@ -89,7 +89,8 @@ final readonly class CronRepository
         // stale, so the WHERE excludes it.
         return $this->db->execute(
             "UPDATE cron_runs
-                SET locked_at = UNIX_TIMESTAMP()
+                SET locked_at = UNIX_TIMESTAMP(),
+                    last_started_at = UNIX_TIMESTAMP()
               WHERE task = ?
                 AND (locked_at IS NULL OR locked_at < UNIX_TIMESTAMP() - ?)",
             [$task, self::LOCK_STALE_AFTER_SECONDS]
@@ -119,14 +120,92 @@ final readonly class CronRepository
     /**
      * Uses index: PRIMARY(task)
      */
-    public function markDone(string $task): void
+    public function markDone(string $task, int $durationMs = 0): void
     {
         $this->db->execute(
             "UPDATE cron_runs
              SET last_run = UNIX_TIMESTAMP(),
+                 last_finished_at = UNIX_TIMESTAMP(),
+                 last_status = 'success',
+                 last_duration_ms = ?,
+                 last_error = NULL,
+                 consecutive_failures = 0,
                  locked_at = NULL
              WHERE task = ?",
-            [$task]
+            [max(0, $durationMs), $task]
         );
+    }
+
+    /** Records a failed attempt without moving last_run, so it remains due. */
+    public function markFailed(string $task, int $durationMs, string $error): void
+    {
+        $this->db->execute(
+            "UPDATE cron_runs
+             SET last_finished_at = UNIX_TIMESTAMP(),
+                 last_status = 'failed',
+                 last_duration_ms = ?,
+                 last_error = ?,
+                 consecutive_failures = consecutive_failures + 1,
+                 locked_at = NULL
+             WHERE task = ?",
+            [max(0, $durationMs), self::truncateError($error), $task]
+        );
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function states(): array
+    {
+        return $this->db->fetchAll(
+            'SELECT task, last_run, locked_at, last_started_at, last_finished_at,
+                    last_status, last_duration_ms, last_error, consecutive_failures
+             FROM cron_runs'
+        );
+    }
+
+    /** @return array<string, mixed>|null */
+    public function schedulerState(): ?array
+    {
+        return $this->db->fetchOne(
+            'SELECT last_started_at, last_finished_at, last_status
+             FROM cron_scheduler_state
+             WHERE id = 1'
+        );
+    }
+
+    public function markSchedulerStarted(): void
+    {
+        $this->db->execute(
+            "INSERT INTO cron_scheduler_state (id, last_started_at, last_finished_at, last_status)
+             VALUES (1, UNIX_TIMESTAMP(), NULL, NULL)
+             ON DUPLICATE KEY UPDATE
+                 last_started_at = VALUES(last_started_at),
+                 last_finished_at = NULL,
+                 last_status = NULL"
+        );
+    }
+
+    public function markSchedulerFinished(bool $successful): void
+    {
+        $this->db->execute(
+            'UPDATE cron_scheduler_state
+             SET last_finished_at = UNIX_TIMESTAMP(), last_status = ?
+             WHERE id = 1',
+            [$successful ? 'success' : 'failed']
+        );
+    }
+
+    private static function truncateError(string $error): string
+    {
+        $error = trim($error);
+        if (strlen($error) <= 2000) {
+            return $error;
+        }
+
+        $error = substr($error, 0, 2000);
+        while ($error !== '' && preg_match('//u', $error) !== 1) {
+            $error = substr($error, 0, -1);
+        }
+
+        return $error;
     }
 }

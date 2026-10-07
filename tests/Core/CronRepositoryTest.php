@@ -99,11 +99,30 @@ final class CronRepositoryTest extends TestCase
                     $this->stringContains('UPDATE cron_runs'),
                     $this->stringContains('locked_at = NULL')
                 ),
-                ['cron:probe']
+                [0, 'cron:probe']
             );
 
         $repository = new CronRepository($db);
         $repository->markDone('cron:probe');
+    }
+
+    public function testMarkFailedRecordsDiagnosticsWithoutMovingLastRun(): void
+    {
+        $db = $this->createMock(PdoDatabase::class);
+        $db
+            ->expects($this->once())
+            ->method('execute')
+            ->with(
+                $this->logicalAnd(
+                    $this->stringContains("last_status = 'failed'"),
+                    $this->stringContains('locked_at = NULL'),
+                    $this->logicalNot($this->stringContains('last_run ='))
+                ),
+                [125, 'probe failure', 'cron:probe']
+            );
+
+        $repository = new CronRepository($db);
+        $repository->markFailed('cron:probe', 125, 'probe failure');
     }
 
     public function testGetLastRunReturnsZeroWhenNoRowExists(): void

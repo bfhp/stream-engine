@@ -294,6 +294,7 @@ class StreamEngine
             $this->notificationService,
             $this->pollService,
             $this->themeService,
+            $this->cronRegistry,
         );
 
         $this->initCronAndApi();
@@ -790,6 +791,15 @@ class StreamEngine
             $this->controllerFactory,
             $context
         );
-        $cronRunner->run();
+        $cronRepository->markSchedulerStarted();
+
+        try {
+            $cronRunner->run();
+            $cronRepository->markSchedulerFinished(true);
+        } catch (Throwable $e) {
+            $cronRepository->markSchedulerFinished(false);
+
+            throw $e;
+        }
     }
 }

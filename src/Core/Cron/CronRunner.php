@@ -40,9 +40,10 @@ readonly class CronRunner
                 continue;
             }
 
-            $controller = $this->controllerFactory->create($task['controller'], $this->context);
+            $startedAt = hrtime(true);
 
             try {
+                $controller = $this->controllerFactory->create($task['controller'], $this->context);
                 $controller->runCron($task['task']);
             } catch (Throwable $e) {
                 // One task's failure used to take the whole tick with it:
@@ -59,18 +60,26 @@ readonly class CronRunner
                     $e->getMessage()
                 ));
 
-                // Hand the lock back, though - without this the "retry on the
-                // next tick" above wouldn't happen: locked_at would stay set
-                // and lock() would refuse the task until the stale window
-                // expired. Not markDone(), which would also move last_run and
-                // claim the work was finished.
-                $this->cronRepository->release($task['task']);
+                // Record the failure and hand the lock back. Without clearing
+                // locked_at the retry above would wait for the stale window;
+                // last_run deliberately stays unchanged so the task remains
+                // due on the next tick.
+                $this->cronRepository->markFailed(
+                    $task['task'],
+                    self::elapsedMilliseconds($startedAt),
+                    $e->getMessage(),
+                );
 
                 continue;
             }
 
-            $this->cronRepository->markDone($task['task']);
+            $this->cronRepository->markDone($task['task'], self::elapsedMilliseconds($startedAt));
         }
+    }
+
+    private static function elapsedMilliseconds(int $startedAt): int
+    {
+        return max(0, (int) round((hrtime(true) - $startedAt) / 1_000_000));
     }
 
 }

@@ -6,6 +6,8 @@ namespace StreamEngine\Modules\Admin;
 
 use StreamEngine\Core\AbstractController;
 use StreamEngine\Core\Config;
+use StreamEngine\Core\Cron\CronRegistry;
+use StreamEngine\Core\Cron\CronRepository;
 use StreamEngine\Core\DashboardCardProviderInterface;
 use StreamEngine\Core\Exceptions\ForbiddenException;
 use StreamEngine\Core\Exceptions\NotFoundException;
@@ -27,6 +29,7 @@ use StreamEngine\Repository\SettingsRepository;
 use StreamEngine\Repository\UserRepository;
 use StreamEngine\Service\AccessService;
 use StreamEngine\Service\AdminDashboardService;
+use StreamEngine\Service\CronStatusService;
 use StreamEngine\Service\ThemeService;
 use StreamEngine\Service\UploadService;
 use StreamEngine\Repository\DashboardLayoutRepository;
@@ -221,13 +224,14 @@ class AdminController extends AbstractController implements DashboardCardProvide
         return [
             'status' => 'ready',
             'data' => [
-                ['label' => 'js.admin.dashboard.cron_tasks', 'value' => (int) ($cron['tasks'] ?? 0)],
+                ['label' => 'js.admin.dashboard.cron_tasks', 'value' => (int) ($cron['tasks'] ?? 0), 'href' => '#/cron'],
                 [
                     'label' => 'js.admin.dashboard.last_cron',
                     'value' => (int) ($cron['last_run'] ?? 0),
                     'format' => 'timestamp',
+                    'href' => '#/cron',
                 ],
-                ['label' => 'js.admin.dashboard.stale_locks', 'value' => (int) ($cron['stale_locks'] ?? 0)],
+                ['label' => 'js.admin.dashboard.stale_locks', 'value' => (int) ($cron['stale_locks'] ?? 0), 'href' => '#/cron'],
                 ['label' => 'js.admin.dashboard.pending_deliveries', 'value' => (int) ($deliveries['pending'] ?? 0)],
                 ['label' => 'js.admin.dashboard.failed_deliveries', 'value' => (int) ($deliveries['failed'] ?? 0)],
             ],
@@ -261,6 +265,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
     private readonly SettingsRepository $settingsRepository;
     private readonly UserRepository $userRepository;
     private readonly AdminDashboardService $dashboardService;
+    private readonly CronStatusService $cronStatusService;
 
     public function __construct(
         PdoDatabase $db,
@@ -271,6 +276,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
         private readonly ThemeService $themeService,
         private readonly UploadService $uploadService,
         private readonly Config $config,
+        ?CronRegistry $cronRegistry = null,
     ) {
         parent::__construct($db, $context);
         $this->pageRepository = new PageRepository($db);
@@ -282,6 +288,11 @@ class AdminController extends AbstractController implements DashboardCardProvide
             $modules,
             $db,
             $tm,
+        );
+        $this->cronStatusService = new CronStatusService(
+            $cronRegistry ?? new CronRegistry(),
+            new CronRepository($db),
+            $config,
         );
     }
 
@@ -356,6 +367,9 @@ class AdminController extends AbstractController implements DashboardCardProvide
             case 'admin.file-browser':
                 $this->handleFileBrowserRequest();
                 break;
+            case 'admin.cron':
+                $this->handleCronRequest();
+                break;
             default:
                 parent::callApi($page, $args);
         }
@@ -417,6 +431,18 @@ class AdminController extends AbstractController implements DashboardCardProvide
                 pattern: 'file-browser',
                 requestMethods: ['GET', 'POST'],
                 action: 'admin.file-browser',
+                accessRule: AccessService::ACCESS_ADMIN,
+            )
+        );
+
+        $cronPageId = $pageTree->getMaxPageId();
+        $pageTree->add(
+            Page::api(
+                id: $cronPageId,
+                parentId: $adminApiPageId,
+                pattern: 'cron',
+                requestMethods: ['GET'],
+                action: 'admin.cron',
                 accessRule: AccessService::ACCESS_ADMIN,
             )
         );
@@ -553,6 +579,11 @@ class AdminController extends AbstractController implements DashboardCardProvide
             )
         );
 
+    }
+
+    private function handleCronRequest(): void
+    {
+        echo Formatter::json($this->cronStatusService->payload());
     }
 
     /** @throws ValidationException */

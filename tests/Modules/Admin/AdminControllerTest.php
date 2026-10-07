@@ -1777,6 +1777,7 @@ final class AdminControllerTest extends TestCase
             'admin.dashboard' => ['GET', 'PATCH', 'DELETE'],
             'admin.dashboard-card' => ['GET'],
             'admin.file-browser' => ['GET', 'POST'],
+            'admin.cron' => ['GET'],
         ] as $action => $methods) {
             $page = $tree->findByAction($action);
 
@@ -1823,6 +1824,7 @@ final class AdminControllerTest extends TestCase
         $dashboard = (new Router($tree))->resolve('/api/v1/admin/dashboard');
         $dashboardCard = (new Router($tree))->resolve('/api/v1/admin/dashboard/cards/admin.system-health');
         $fileBrowser = (new Router($tree))->resolve('/api/v1/admin/file-browser');
+        $cron = (new Router($tree))->resolve('/api/v1/admin/cron');
 
         $this->assertSame('admin.pages', $list['page']->action ?? null);
         $this->assertSame('admin.page', $item['page']->action ?? null);
@@ -1843,5 +1845,6 @@ final class AdminControllerTest extends TestCase
         $this->assertSame('admin.dashboard-card', $dashboardCard['page']->action ?? null);
         $this->assertSame(['id' => 'admin.system-health'], $dashboardCard['params']);
         $this->assertSame('admin.file-browser', $fileBrowser['page']->action ?? null);
+        $this->assertSame('admin.cron', $cron['page']->action ?? null);
     }
 }

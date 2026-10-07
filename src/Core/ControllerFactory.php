@@ -117,6 +117,7 @@ final readonly class ControllerFactory
                 $typeName === RequestContext::class => $context,
                 $typeName === ModuleRegistry::class => $this->modules,
                 isset($this->services[$typeName]) => $this->services[$typeName],
+                $param->isDefaultValueAvailable() => $param->getDefaultValue(),
                 default => throw new Exception("Unknown dependency: $typeName"),
             };
         }

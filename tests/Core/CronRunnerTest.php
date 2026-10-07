@@ -172,10 +172,9 @@ final class CronRunnerTest extends TestCase
             ->willReturn(['last_run' => time() - 3600]);
 
         // Three writes each: lock() is two statements, then markDone() for the
-        // task that succeeded and release() for the one that threw. release()
-        // rather than markDone() is what lets the failure retry on the next tick
-        // - it hands the lock back without moving last_run, where leaving
-        // locked_at set would block the retry for the whole stale window.
+        // task that succeeded and markFailed() for the one that threw. The
+        // failure write hands the lock back without moving last_run, so the
+        // task retries on the next tick.
         $db
             ->expects($this->exactly(6))
             ->method('execute')
@@ -198,12 +197,11 @@ final class CronRunnerTest extends TestCase
 
     /**
      * The counts in the test above prove there is a third statement per task,
-     * not what it is. This pins it: a task that threw must be *released*, not
-     * marked done. Without the release the lock would outlive the failure and
-     * block the retry until the stale window expired; with a markDone the
-     * failure would be recorded as a successful run.
+     * not what it is. This pins it: a task that threw must be recorded as
+     * failed and released, not marked done. Otherwise the lock would block the
+     * retry until the stale window expired or last_run would falsely move.
      */
-    public function testRunReleasesTheLockWhenATaskThrowsRatherThanMarkingItDone(): void
+    public function testRunRecordsFailureAndReleasesTheLockWhenATaskThrows(): void
     {
         CronProbeController::reset();
         CronProbeController::$failingTasks = ['cron:probe-failing'];
@@ -237,7 +235,7 @@ final class CronRunnerTest extends TestCase
 
         $runner->run();
 
-        $this->assertCount(3, $statements, 'expected the two lock statements plus a release');
+        $this->assertCount(3, $statements, 'expected the two lock statements plus a failure update');
 
         $release = $statements[2];
         $this->assertStringContainsString('locked_at = NULL', $release);
