@@ -1,16 +1,16 @@
-import { ActionIcon, Button, Group, Stack, Text, TextInput, Tooltip } from "@mantine/core";
+import { ActionIcon, Button, Group, Select, Stack, Text, TextInput, Tooltip } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { IconDeviceFloppy, IconRefresh } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { csrfHeaders } from "../../shared/csrf";
 import { trans } from "../../shared/i18n";
 
-const SETTING_KEY = "registration.honeypot_field";
 const DEFAULT_FIELD = "contact_reference";
+const DEFAULT_MODE = "email";
 
-type Setting = {
-    key: string;
-    value: string;
+type RegistrationSettings = {
+    mode: string;
+    honeypotField: string;
 };
 
 function isValidField(value: string): boolean {
@@ -20,8 +20,10 @@ function isValidField(value: string): boolean {
 }
 
 export default function Registration() {
-    const [savedValue, setSavedValue] = useState(DEFAULT_FIELD);
-    const [value, setValue] = useState(DEFAULT_FIELD);
+    const [savedField, setSavedField] = useState(DEFAULT_FIELD);
+    const [field, setField] = useState(DEFAULT_FIELD);
+    const [savedMode, setSavedMode] = useState(DEFAULT_MODE);
+    const [mode, setMode] = useState(DEFAULT_MODE);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
@@ -30,7 +32,7 @@ export default function Registration() {
         const controller = new AbortController();
         setLoading(true);
 
-        fetch("/api/v1/admin/settings", { signal: controller.signal })
+        fetch("/api/v1/admin/registration", { signal: controller.signal })
             .then(async response => {
                 if (!response.ok) {
                     throw new Error(await response.text() || trans("js.admin.settings.load_failed"));
@@ -39,10 +41,14 @@ export default function Registration() {
                 return response.json();
             })
             .then(data => {
-                const settings: Setting[] = Array.isArray(data.data) ? data.data : [];
-                const field = settings.find(setting => setting.key === SETTING_KEY)?.value || DEFAULT_FIELD;
-                setSavedValue(field);
-                setValue(field);
+                const settings = data as RegistrationSettings;
+                const nextField = settings.honeypotField || DEFAULT_FIELD;
+                const storedMode = settings.mode || DEFAULT_MODE;
+                const nextMode = ["closed", "email", "open"].includes(storedMode) ? storedMode : "closed";
+                setSavedField(nextField);
+                setField(nextField);
+                setSavedMode(nextMode);
+                setMode(nextMode);
             })
             .catch(error => {
                 if (error.name !== "AbortError") {
@@ -60,31 +66,34 @@ export default function Registration() {
         return () => controller.abort();
     }, [refreshKey]);
 
-    const trimmedValue = value.trim();
-    const valid = isValidField(trimmedValue);
+    const trimmedField = field.trim();
+    const valid = isValidField(trimmedField);
+    const dirty = trimmedField !== savedField || mode !== savedMode;
 
     function save() {
-        if (!valid || trimmedValue === savedValue) return;
+        if (!valid || !dirty) return;
 
         setSaving(true);
-        fetch(`/api/v1/admin/settings/${SETTING_KEY}`, {
+        fetch("/api/v1/admin/registration", {
             method: "PATCH",
             headers: {
                 "Content-Type": "application/json",
                 ...csrfHeaders(),
             },
-            body: JSON.stringify({ value: trimmedValue }),
+            body: JSON.stringify({ mode, honeypotField: trimmedField }),
         })
             .then(async response => {
                 if (!response.ok) {
                     throw new Error(await response.text() || trans("js.admin.settings.save_failed"));
                 }
 
-                return response.json();
+                return response.json() as Promise<RegistrationSettings>;
             })
-            .then(() => {
-                setSavedValue(trimmedValue);
-                setValue(trimmedValue);
+            .then(settings => {
+                setMode(settings.mode);
+                setSavedMode(settings.mode);
+                setField(settings.honeypotField);
+                setSavedField(settings.honeypotField);
                 notifications.show({
                     color: "green",
                     message: trans("js.admin.settings.saved"),
@@ -115,7 +124,7 @@ export default function Registration() {
                     </Tooltip>
                     <Button
                         loading={saving}
-                        disabled={!valid || trimmedValue === savedValue}
+                        disabled={!valid || !dirty}
                         leftSection={<IconDeviceFloppy size={16} />}
                         onClick={save}
                     >
@@ -124,13 +133,26 @@ export default function Registration() {
                 </Group>
             </Group>
 
+            <Select
+                label={trans("js.admin.registration.mode")}
+                description={trans("js.admin.registration.mode_description")}
+                data={[
+                    { value: "closed", label: trans("js.admin.registration.mode_closed") },
+                    { value: "email", label: trans("js.admin.registration.mode_email") },
+                    { value: "open", label: trans("js.admin.registration.mode_open") },
+                ]}
+                value={mode}
+                onChange={nextMode => setMode(nextMode || DEFAULT_MODE)}
+                allowDeselect={false}
+            />
+
             <TextInput
                 label={trans("js.admin.registration.honeypot_field")}
                 description={trans("js.admin.registration.honeypot_description")}
-                value={value}
-                error={value !== "" && !valid ? trans("js.admin.registration.honeypot_invalid") : undefined}
+                value={field}
+                error={field !== "" && !valid ? trans("js.admin.registration.honeypot_invalid") : undefined}
                 maxLength={64}
-                onChange={event => setValue(event.currentTarget.value)}
+                onChange={event => setField(event.currentTarget.value)}
             />
         </Stack>
     );

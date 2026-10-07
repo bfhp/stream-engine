@@ -334,10 +334,11 @@ final class UserServiceTest extends TestCase
                     $this->stringContains('UPDATE users SET username = ?')
                 ),
                 $this->callback(static function (array $params) use ($plainPassword): bool {
-                    if (count($params) === 3) {
+                    if (count($params) === 4) {
                         return $params[0] === 'user@example.com'
                             && password_verify($plainPassword, $params[1])
-                            && $params[2] === 'user';
+                            && $params[2] === 'user'
+                            && $params[3] === 0;
                     }
 
                     return $params === ['user42', 42];
@@ -375,6 +376,37 @@ final class UserServiceTest extends TestCase
         $userId = $service->register(' USER@Example.com ', $plainPassword);
 
         $this->assertSame(42, $userId);
+    }
+
+    public function testRegisterCanActivateImmediatelyWithoutEmailVerification(): void
+    {
+        $userDb = $this->createMock(PdoDatabase::class);
+        $db = $this->createMock(PdoDatabase::class);
+        $mailService = $this->createMock(MailService::class);
+        $service = $this->makeService($userDb, $db, $mailService);
+
+        $userDb->expects($this->once())->method('fetchOne')->willReturn(null);
+        $userDb
+            ->expects($this->exactly(2))
+            ->method('execute')
+            ->with(
+                $this->anything(),
+                $this->callback(static function (array $params): bool {
+                    if (count($params) === 4) {
+                        return $params[0] === 'user@example.com'
+                            && password_verify('very-secure-password', $params[1])
+                            && $params[2] === 'user'
+                            && $params[3] === 1;
+                    }
+
+                    return $params === ['user42', 42];
+                }),
+            );
+        $userDb->expects($this->once())->method('lastInsertId')->willReturn(42);
+        $db->expects($this->never())->method('execute');
+        $mailService->expects($this->never())->method('send');
+
+        self::assertSame(42, $service->register('user@example.com', 'very-secure-password', false));
     }
 
     public function testRegisterFailsBeforeCreatingUserWhenCanonicalUrlIsMissing(): void

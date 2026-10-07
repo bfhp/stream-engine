@@ -13,6 +13,8 @@ final class SettingsService
     public const string SITE_ICON_SVG_KEY = 'site_icon_svg';
     public const string REGISTRATION_HONEYPOT_FIELD_KEY = 'registration.honeypot_field';
     public const string DEFAULT_REGISTRATION_HONEYPOT_FIELD = 'contact_reference';
+    public const string REGISTRATION_MODE_KEY = 'registration.mode';
+    public const array REGISTRATION_MODES = ['closed', 'email', 'open'];
 
     /**
      * @var array<string, string>
@@ -75,6 +77,13 @@ final class SettingsService
             : self::DEFAULT_REGISTRATION_HONEYPOT_FIELD;
     }
 
+    public function registrationMode(): string
+    {
+        $mode = $this->getString(self::REGISTRATION_MODE_KEY, 'email');
+
+        return in_array($mode, self::REGISTRATION_MODES, true) ? $mode : 'closed';
+    }
+
     public static function isValidRegistrationHoneypotField(string $field): bool
     {
         return preg_match('/\A[A-Za-z][A-Za-z0-9_]{2,63}\z/', $field) === 1
@@ -110,6 +119,13 @@ final class SettingsService
     public function set(string $key, string $value): void
     {
         $this->repository->set($key, $value);
+        $this->reload();
+    }
+
+    /** @param array<string, string> $settings */
+    public function setMany(array $settings): void
+    {
+        $this->repository->setMany($settings);
         $this->reload();
     }
 

@@ -23,7 +23,7 @@
     {% block verify_actions %}
     {% set registerUrl = action_url('user.register') %}
     {% set feedbackUrl = action_url('feedback.show') %}
-    {% if registerUrl %}
+    {% if registerUrl and registrationOpen|default(true) %}
     <p>{{ trans('view.users.verify.04') }} <a href="{{ registerUrl }}">{{ trans('view.users.verify.05') }}</a> {{ trans('view.users.verify.06') }}</p>
     {% endif %}
     {% if feedbackUrl %}

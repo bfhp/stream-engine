@@ -38,7 +38,7 @@ const api = vi.fn<(url: string, options?: unknown) => Promise<unknown>>();
 const toast = vi.fn();
 
 const FORMS = `
-    <form id="registerForm" action="/api/v1/auth/register" data-success-url="#registration-complete" data-honeypot-field="contact_reference">
+    <form id="registerForm" action="/api/v1/auth/register" data-success-url="#registration-complete" data-honeypot-field="contact_reference" data-registration-mode="email">
         <input name="contact_reference" value="">
         <input name="email" value="nicky@example.com">
         <input name="password" value="0123456789">
@@ -186,6 +186,7 @@ beforeEach(() => {
     (form("resetPasswordForm").elements.namedItem("password2") as HTMLInputElement).value = "0123456789";
     (form("forgotPasswordForm").elements.namedItem("email") as HTMLInputElement).value = "anya@example.com";
     form("registerForm").dataset.successUrl = "#registration-complete";
+    form("registerForm").dataset.registrationMode = "email";
     form("feedbackForm").dataset.successUrl = "#feedback-complete";
 
     ["registerForm", "feedbackForm", "resetPasswordForm", "forgotPasswordForm"]
@@ -213,6 +214,18 @@ describe("register.ts", () => {
         await vi.advanceTimersByTimeAsync(800);
 
         expect(window.location.hash).toBe("#registration-complete");
+    });
+
+    it("does not tell immediately activated users to check their email", async () => {
+        api.mockResolvedValue({});
+        form("registerForm").dataset.registrationMode = "open";
+
+        await submit("registerForm");
+
+        expect(toast).toHaveBeenCalledWith(expect.objectContaining({
+            message: "Регистрация успешно завершена.",
+            type: "success",
+        }));
     });
 
     it("keeps the button disabled after a successful submit", async () => {

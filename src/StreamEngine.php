@@ -417,6 +417,7 @@ class StreamEngine
         $twig->addGlobal('dateFormat', $this->settings->getString('date_format', 'auto'));
         $twig->addGlobal('timeFormat', $this->settings->getString('time_format', 'auto'));
         $twig->addGlobal('siteIcons', $this->settings->siteIcons());
+        $twig->addGlobal('registrationOpen', $this->settings->registrationMode() !== 'closed');
         $twig->addFunction(new TwigFunction('trans', [$this->tm, 'trans']));
         $twig->addFunction(new TwigFunction('trans_choice', [$this->fmt, 'transChoice']));
         $twig->addFunction(new TwigFunction('action_url', [$this->urlGenerator, 'action']));

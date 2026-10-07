@@ -3309,6 +3309,23 @@ class UsersController extends AbstractController
             );
         }
 
+        $registrationMode = $this->settings->registrationMode();
+        if ($registrationMode === 'closed') {
+            return ViewModel::fromPage(
+                $page,
+                'modules/users/register-closed.twig',
+                ['title' => $this->tm->trans('user.registration')],
+            );
+        }
+
+        $successUrl = $registrationMode === 'open'
+            ? $this->urlGenerator->action('profile.show', query: ['registered' => 1])
+            : $this->urlGenerator->page($page, query: ['success' => 1]);
+
+        if ($successUrl === null) {
+            throw new RuntimeException('Registration success URL is not configured');
+        }
+
         return ViewModel::fromPage(
             $page,
             'modules/users/register1.twig',
@@ -3317,8 +3334,9 @@ class UsersController extends AbstractController
                     '<script type="module" src="/assets/js/register.js" defer></script>',
                 ],
                 'title' => $this->tm->trans('user.registration'),
-                'successUrl' => $this->urlGenerator->page($page, query: ['success' => 1]),
+                'successUrl' => $successUrl,
                 'honeypotField' => $this->settings->registrationHoneypotField(),
+                'registrationMode' => $registrationMode,
             ]
         );
     }
@@ -3403,6 +3421,11 @@ class UsersController extends AbstractController
             throw new ForbiddenException($this->tm->trans('user.already_authenticated'));
         }
 
+        $registrationMode = $this->settings->registrationMode();
+        if ($registrationMode === 'closed') {
+            throw new ForbiddenException($this->tm->trans('user.registration_closed'));
+        }
+
         Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
 
         $raw = file_get_contents('php://input');
@@ -3424,7 +3447,15 @@ class UsersController extends AbstractController
         $email = is_string($data['email'] ?? null) ? trim($data['email']) : '';
         $password = is_string($data['password'] ?? null) ? $data['password'] : '';
 
-        $this->userService->register($email, $password);
+        $userId = $this->userService->register(
+            $email,
+            $password,
+            requireEmailVerification: $registrationMode === 'email',
+        );
+
+        if ($registrationMode === 'open') {
+            $this->authService->loginByUserId($userId);
+        }
 
         http_response_code(201);
         echo Formatter::json(['success' => true]);

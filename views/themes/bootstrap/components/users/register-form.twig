@@ -1,5 +1,5 @@
 {# Bootstrap markup of the Users module's components/users/register-form.twig; keeps its hooks. #}
-<form id="registerForm" method="post" action="/api/v1/users" data-success-url="{{ successUrl }}" data-honeypot-field="{{ honeypotField }}">
+<form id="registerForm" method="post" action="/api/v1/users" data-success-url="{{ successUrl }}" data-honeypot-field="{{ honeypotField }}" data-registration-mode="{{ registrationMode }}">
     {% block register_hidden %}
     <div class="mb-3 visually-hidden" aria-hidden="true">
         <input

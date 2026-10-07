@@ -363,6 +363,9 @@ class AdminController extends AbstractController implements DashboardCardProvide
             case 'admin.settings':
                 $this->handleSettingsRequest();
                 break;
+            case 'admin.registration':
+                $this->handleRegistrationSettingsRequest();
+                break;
             case 'admin.site-icon':
                 $this->handleSiteIconRequest();
                 break;
@@ -577,6 +580,18 @@ class AdminController extends AbstractController implements DashboardCardProvide
                 pattern: 'settings',
                 requestMethods: ['GET', 'POST'],
                 action: 'admin.settings',
+                accessRule: AccessService::ACCESS_ADMIN,
+            )
+        );
+
+        $registrationPageId = $pageTree->getMaxPageId();
+        $pageTree->add(
+            Page::api(
+                id: $registrationPageId,
+                parentId: $adminApiPageId,
+                pattern: 'registration',
+                requestMethods: ['GET', 'PATCH'],
+                action: 'admin.registration',
                 accessRule: AccessService::ACCESS_ADMIN,
             )
         );
@@ -1228,6 +1243,36 @@ class AdminController extends AbstractController implements DashboardCardProvide
         echo Formatter::json([
             'data' => $this->settingsRepository->findAllForAdmin(),
             'siteIcon' => $this->siteIconPayload(),
+        ]);
+    }
+
+    /** @throws ValidationException */
+    private function handleRegistrationSettingsRequest(): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
+            Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
+            $input = $this->jsonBody();
+            $mode = is_string($input['mode'] ?? null) ? $input['mode'] : '';
+            $honeypotField = is_string($input['honeypotField'] ?? null) ? trim($input['honeypotField']) : '';
+
+            $this->validateSettingValue(SettingsService::REGISTRATION_MODE_KEY, $mode);
+            $this->validateSettingValue(SettingsService::REGISTRATION_HONEYPOT_FIELD_KEY, $honeypotField);
+            $this->settingsService->setMany([
+                SettingsService::REGISTRATION_MODE_KEY => $mode,
+                SettingsService::REGISTRATION_HONEYPOT_FIELD_KEY => $honeypotField,
+            ]);
+
+            echo Formatter::json([
+                'mode' => $mode,
+                'honeypotField' => $honeypotField,
+            ]);
+
+            return;
+        }
+
+        echo Formatter::json([
+            'mode' => $this->settingsService->registrationMode(),
+            'honeypotField' => $this->settingsService->registrationHoneypotField(),
         ]);
     }
 
@@ -1990,6 +2035,10 @@ class AdminController extends AbstractController implements DashboardCardProvide
         if ($key === SettingsService::REGISTRATION_HONEYPOT_FIELD_KEY
             && ! SettingsService::isValidRegistrationHoneypotField($value)) {
             throw new ValidationException($this->tm->trans('admin.error.invalid_honeypot_field'));
+        }
+        if ($key === SettingsService::REGISTRATION_MODE_KEY
+            && ! in_array($value, SettingsService::REGISTRATION_MODES, true)) {
+            throw new ValidationException($this->tm->trans('admin.error.invalid_registration_mode'));
         }
     }
 }

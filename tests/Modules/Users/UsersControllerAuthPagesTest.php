@@ -28,6 +28,7 @@ use StreamEngine\Repository\SettingsRepository;
 use StreamEngine\Repository\UserRepository;
 use StreamEngine\Repository\UserSessionRepository;
 use StreamEngine\Service\AccessService;
+use StreamEngine\Service\AuthService;
 use StreamEngine\Service\MailService;
 use StreamEngine\Service\MessageService;
 use StreamEngine\Service\NotificationService;
@@ -132,10 +133,14 @@ final class UsersControllerAuthPagesTest extends TestCase
             $module,
             new SettingsService(new SettingsRepository($settingsDb)),
         );
+        $reflection->getProperty('authService')->setValue(
+            $module,
+            new AuthService(new UserRepository($db), new UserSessionRepository($db)),
+        );
         $reflection->getProperty('urlGenerator')->setValue(
             $module,
             new UrlGenerator(
-                new PageTree([$this->pageRoot()]),
+                new PageTree([$this->pageRoot(), $this->profilePage()]),
                 new FakeFeedRepository([]),
                 new ArrayCache(),
             )
@@ -159,6 +164,25 @@ final class UsersControllerAuthPagesTest extends TestCase
             requestMethods: ['GET'],
             responseType: 'html',
             accessRule: AccessService::ACCESS_PUBLIC,
+        );
+    }
+
+    private function profilePage(): Page
+    {
+        return new Page(
+            id: 2,
+            parentId: 1,
+            pattern: 'profile',
+            pageName: 'Profile',
+            settings: null,
+            feedType: null,
+            listFeedType: null,
+            feedId: null,
+            commentsEnabled: false,
+            requestMethods: ['GET'],
+            responseType: 'html',
+            accessRule: AccessService::ACCESS_AUTHENTICATED,
+            action: 'profile.show',
         );
     }
 
@@ -210,6 +234,25 @@ final class UsersControllerAuthPagesTest extends TestCase
         $view = $module->show($this->page('user.register'));
 
         $this->assertSame('visitor_note', $view->data['honeypotField']);
+    }
+
+    public function testClosedRegistrationShowsMessageInsteadOfForm(): void
+    {
+        $view = $this->makeModule(settings: [
+            SettingsService::REGISTRATION_MODE_KEY => 'closed',
+        ])->show($this->page('user.register'));
+
+        $this->assertSame('modules/users/register-closed.twig', $view->template);
+    }
+
+    public function testOpenRegistrationRedirectsToProfileAfterSubmission(): void
+    {
+        $view = $this->makeModule(settings: [
+            SettingsService::REGISTRATION_MODE_KEY => 'open',
+        ])->show($this->page('user.register'));
+
+        $this->assertSame('open', $view->data['registrationMode']);
+        $this->assertSame('/profile/?registered=1', $view->data['successUrl']);
     }
 
     public function testRegistrationSuccessUrlFollowsTheConfiguredPagePattern(): void
@@ -439,6 +482,18 @@ final class UsersControllerAuthPagesTest extends TestCase
 
         // Before the CSRF check, so somebody already signed in gets told the
         // truth rather than a token error.
+        $this->expectException(ForbiddenException::class);
+
+        $module->callApi($this->registerPage());
+    }
+
+    public function testClosedRegistrationIsAlsoRejectedByTheApi(): void
+    {
+        $module = $this->makeModule(settings: [
+            SettingsService::REGISTRATION_MODE_KEY => 'closed',
+        ]);
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+
         $this->expectException(ForbiddenException::class);
 
         $module->callApi($this->registerPage());

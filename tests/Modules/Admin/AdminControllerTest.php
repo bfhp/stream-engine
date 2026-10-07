@@ -1092,6 +1092,45 @@ final class AdminControllerTest extends TestCase
         $this->assertSame('site_name', $response['data'][1]['key']);
     }
 
+    public function testRegistrationSettingsReturnDefaults(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+
+        $response = $this->callAndDecode(
+            $this->makeModule(),
+            $this->makeApiPage('admin.registration', ['GET', 'PATCH']),
+        );
+
+        $this->assertSame('email', $response['mode']);
+        $this->assertSame('contact_reference', $response['honeypotField']);
+    }
+
+    public function testRegistrationSettingsAreSavedTogether(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode([
+            'mode' => 'open',
+            'honeypotField' => 'visitor_note',
+        ]));
+
+        $response = $this->callAndDecode(
+            $this->makeModule(),
+            $this->makeApiPage('admin.registration', ['GET', 'PATCH']),
+        );
+
+        $this->assertSame(['mode' => 'open', 'honeypotField' => 'visitor_note'], $response);
+        $this->assertCount(2, $this->writes);
+        $this->assertSame(
+            [SettingsService::REGISTRATION_MODE_KEY, 'open', 'open'],
+            $this->writes[0][1],
+        );
+        $this->assertSame(
+            [SettingsService::REGISTRATION_HONEYPOT_FIELD_KEY, 'visitor_note', 'visitor_note'],
+            $this->writes[1][1],
+        );
+    }
+
     public function testCreatingASettingRequiresCsrfBeforeValidation(): void
     {
         $module = $this->makeModule();
@@ -1212,6 +1251,21 @@ final class AdminControllerTest extends TestCase
         $module->callApi(
             $this->makeApiPage('admin.setting', ['GET', 'PATCH']),
             ['key' => SettingsService::REGISTRATION_HONEYPOT_FIELD_KEY],
+        );
+    }
+
+    public function testAnUnsupportedRegistrationModeIsRefused(): void
+    {
+        $module = $this->makeModule();
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode(['value' => 'invite-only']));
+
+        $this->expectException(ValidationException::class);
+
+        $module->callApi(
+            $this->makeApiPage('admin.setting', ['GET', 'PATCH']),
+            ['key' => SettingsService::REGISTRATION_MODE_KEY],
         );
     }
 
@@ -1901,6 +1955,7 @@ final class AdminControllerTest extends TestCase
             'admin.menu' => ['GET', 'PATCH', 'DELETE'],
             'admin.menu-preview' => ['GET'],
             'admin.settings' => ['GET', 'POST'],
+            'admin.registration' => ['GET', 'PATCH'],
             'admin.site-icon' => ['POST', 'DELETE'],
             'admin.setting' => ['GET', 'PATCH'],
             'admin.themes' => ['GET', 'PATCH'],
@@ -1951,6 +2006,7 @@ final class AdminControllerTest extends TestCase
         $menu = (new Router($tree))->resolve('/api/v1/admin/menus/8');
         $menuPreview = (new Router($tree))->resolve('/api/v1/admin/menus/preview');
         $settings = (new Router($tree))->resolve('/api/v1/admin/settings');
+        $registration = (new Router($tree))->resolve('/api/v1/admin/registration');
         $siteIcon = (new Router($tree))->resolve('/api/v1/admin/settings/site-icon');
         $setting = (new Router($tree))->resolve('/api/v1/admin/settings/site_name');
         $themes = (new Router($tree))->resolve('/api/v1/admin/themes');
@@ -1972,6 +2028,7 @@ final class AdminControllerTest extends TestCase
         $this->assertSame(['id' => '8'], $menu['params']);
         $this->assertSame('admin.menu-preview', $menuPreview['page']->action ?? null);
         $this->assertSame('admin.settings', $settings['page']->action ?? null);
+        $this->assertSame('admin.registration', $registration['page']->action ?? null);
         $this->assertSame('admin.site-icon', $siteIcon['page']->action ?? null);
         $this->assertSame('admin.setting', $setting['page']->action ?? null);
         $this->assertSame(['key' => 'site_name'], $setting['params']);

@@ -45,6 +45,17 @@ final class SettingsServiceTest extends TestCase
         ])->registrationHoneypotField());
     }
 
+    public function testRegistrationModeDefaultsToEmailAndFailsClosed(): void
+    {
+        self::assertSame('email', $this->makeService()->registrationMode());
+        self::assertSame('open', $this->makeService([
+            SettingsService::REGISTRATION_MODE_KEY => ['open', 1],
+        ])->registrationMode());
+        self::assertSame('closed', $this->makeService([
+            SettingsService::REGISTRATION_MODE_KEY => ['invalid', 1],
+        ])->registrationMode());
+    }
+
     public function testSiteIconsUseBuiltInDefaultsWithoutAValidCustomBase(): void
     {
         $expected = [
@@ -201,6 +212,21 @@ final class SettingsServiceTest extends TestCase
         // a third, because the reload also marks it loaded.
         $this->assertCount(2, $this->queries);
         $this->assertCount(1, $this->writes);
+    }
+
+    public function testSetManyWritesAllValuesAndReloadsOnce(): void
+    {
+        $service = $this->makeService([]);
+
+        $service->setMany([
+            SettingsService::REGISTRATION_MODE_KEY => 'open',
+            SettingsService::REGISTRATION_HONEYPOT_FIELD_KEY => 'visitor_note',
+        ]);
+
+        $this->assertSame('open', $service->registrationMode());
+        $this->assertSame('visitor_note', $service->registrationHoneypotField());
+        $this->assertCount(2, $this->writes);
+        $this->assertCount(1, $this->queries);
     }
 
     /**

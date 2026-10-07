@@ -273,13 +273,13 @@ final class UserRepositoryTest extends TestCase
             ->with(
                 $this->logicalOr(
                     $this->logicalAnd(
-                        $this->stringContains('INSERT INTO users (email, password_hash, role, created_at)'),
-                        $this->stringContains('VALUES (?, ?, ?, UNIX_TIMESTAMP())')
+                        $this->stringContains('INSERT INTO users (email, password_hash, role, is_active, created_at)'),
+                        $this->stringContains('VALUES (?, ?, ?, ?, UNIX_TIMESTAMP())')
                     ),
                     $this->stringContains('UPDATE users SET username = ?')
                 ),
                 $this->callback(static function (array $params): bool {
-                    return $params === ['user@example.com', 'hashed-password', 'admin']
+                    return $params === ['user@example.com', 'hashed-password', 'admin', 0]
                         || $params === ['user99', 99];
                 })
             )
@@ -303,7 +303,7 @@ final class UserRepositoryTest extends TestCase
             ->with(
                 $this->anything(),
                 $this->callback(static function (array $params): bool {
-                    return $params === ['user@example.com', 'hashed-password', 'user']
+                    return $params === ['user@example.com', 'hashed-password', 'user', 0]
                         || $params === ['user1', 1];
                 })
             )

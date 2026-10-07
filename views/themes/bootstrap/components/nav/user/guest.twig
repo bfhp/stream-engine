@@ -3,6 +3,9 @@
             class="btn btn-outline-success"
             data-bs-toggle="modal"
             data-bs-target="#authFormModal">
-        {{ trans('view.auth.sign_in') }} <span class="d-sm-none">{{ trans('view.auth.sign_in_or_register') }}</span>
+        {{ trans('view.auth.sign_in') }}
+        {% if registrationOpen|default(true) %}
+            <span class="d-sm-none">{{ trans('view.auth.sign_in_or_register') }}</span>
+        {% endif %}
     </button>
 </div>

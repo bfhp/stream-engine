@@ -373,7 +373,7 @@ final class UserService
      * @return int
      * @throws ValidationException
      */
-    public function register(string $email, string $password): int
+    public function register(string $email, string $password, bool $requireEmailVerification = true): int
     {
         $email = trim(mb_strtolower($email));
 
@@ -384,30 +384,33 @@ final class UserService
             throw new ValidationException($this->tm->trans('user.email_already_used'));
         }
 
-        $siteUrl = $this->requireSiteUrl();
+        $siteUrl = $requireEmailVerification ? $this->requireSiteUrl() : null;
 
         $hash = password_hash($password, PASSWORD_DEFAULT);
 
         $newUserId = $this->userRepository->create(
             $email,
-            $hash
+            $hash,
+            isActive: ! $requireEmailVerification,
         );
 
-        $verificationToken = $this->createEmailVerification($newUserId);
+        if ($requireEmailVerification) {
+            $verificationToken = $this->createEmailVerification($newUserId);
 
-        $activationLink = $siteUrl.'/register/?token='.rawurlencode($verificationToken);
+            $activationLink = $siteUrl.'/register/?token='.rawurlencode($verificationToken);
 
-        try {
-            $this->mailService->send(
-                to: $email,
-                subject: $this->tm->trans('user.mail.registration_subject'),
-                template: 'users/welcome',
-                context: [
-                    'activationLink' => $activationLink,
-                ]
-            );
-        } catch (Exception|LoaderError|RuntimeError|SyntaxError $e) {
-            throw new RuntimeException("Unable to send mail: {$e->getMessage()}");
+            try {
+                $this->mailService->send(
+                    to: $email,
+                    subject: $this->tm->trans('user.mail.registration_subject'),
+                    template: 'users/welcome',
+                    context: [
+                        'activationLink' => $activationLink,
+                    ]
+                );
+            } catch (Exception|LoaderError|RuntimeError|SyntaxError $e) {
+                throw new RuntimeException("Unable to send mail: {$e->getMessage()}");
+            }
         }
 
         $this->notifications->notify(new Notification(

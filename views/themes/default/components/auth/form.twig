@@ -53,7 +53,7 @@
 
                 {% block auth_footer %}
                     {% set registerUrl = action_url('user.register') %}
-                    {% if registerUrl %}
+                    {% if registerUrl and registrationOpen|default(true) %}
                     <p class="auth-footer">
                         {{ trans('view.auth.no_account') }}
                         <a href="{{ registerUrl }}">{{ trans('view.auth.register') }}</a>

@@ -63,7 +63,9 @@ const cms = window.CMS;
             });
 
             cms.toast({
-                message: trans("js.auth.registration_success"),
+                message: trans(form.dataset.registrationMode === "open"
+                    ? "js.auth.registration_success_open"
+                    : "js.auth.registration_success"),
                 type: "success"
             });
 

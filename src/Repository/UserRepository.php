@@ -426,14 +426,15 @@ final readonly class UserRepository
     public function create(
         string $email,
         string $passwordHash,
-        string $role = AccessService::ROLE_USER
+        string $role = AccessService::ROLE_USER,
+        bool $isActive = false,
     ): int {
         $this->db->execute(
             "
-            INSERT INTO users (email, password_hash, role, created_at)
-            VALUES (?, ?, ?, UNIX_TIMESTAMP())
+            INSERT INTO users (email, password_hash, role, is_active, created_at)
+            VALUES (?, ?, ?, ?, UNIX_TIMESTAMP())
             ",
-            [$email, $passwordHash, $role]
+            [$email, $passwordHash, $role, $isActive ? 1 : 0]
         );
 
         $id = $this->db->lastInsertId();
