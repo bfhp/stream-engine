@@ -19,6 +19,7 @@ use StreamEngine\Repository\SettingsRepository;
 use StreamEngine\Service\AccessService;
 use StreamEngine\Service\SettingsService;
 use StreamEngine\Service\ThemeService;
+use StreamEngine\Service\UploadService;
 
 final class ModuleTest extends TestCase
 {
@@ -31,6 +32,7 @@ final class ModuleTest extends TestCase
         $services = [
             $db,
             $this->createStub(AccessService::class),
+            $this->createStub(UploadService::class),
             $settingsService,
             new ThemeService(
                 new ThemeCatalog(dirname(__DIR__, 3).'/views/themes', dirname(__DIR__, 3).'/public'),

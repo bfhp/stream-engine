@@ -1223,6 +1223,7 @@ E-mail : {email}
     'js.admin.file_browser.title' => 'Gestionnaire de fichiers',
     'js.admin.file_browser.help' => 'Parcourez les fichiers du répertoire uploads configuré. Double-cliquez sur un fichier pour l’ouvrir.',
     'js.admin.file_browser.load_failed' => 'Impossible de charger les fichiers',
+    'js.admin.file_browser.upload_failed' => 'Impossible de téléverser le fichier',
 
     'admin.error.forbidden' => 'Interdit',
     'admin.error.invalid_role_filter' => 'Filtre de rôle invalide',

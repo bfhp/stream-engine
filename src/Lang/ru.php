@@ -1260,6 +1260,7 @@ return [
     'js.admin.file_browser.title' => 'Файловый менеджер',
     'js.admin.file_browser.help' => 'Просмотр файлов в настроенной директории uploads. Двойной клик открывает файл.',
     'js.admin.file_browser.load_failed' => 'Не удалось загрузить список файлов',
+    'js.admin.file_browser.upload_failed' => 'Не удалось загрузить файл',
 
     'admin.error.forbidden' => 'Доступ запрещён',
     'admin.error.invalid_role_filter' => 'Некорректный фильтр роли',

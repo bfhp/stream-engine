@@ -1223,6 +1223,7 @@ E-Mail: {email}
     'js.admin.file_browser.title' => 'Dateimanager',
     'js.admin.file_browser.help' => 'Dateien im konfigurierten Upload-Verzeichnis durchsuchen. Ein Doppelklick öffnet eine Datei.',
     'js.admin.file_browser.load_failed' => 'Dateien konnten nicht geladen werden',
+    'js.admin.file_browser.upload_failed' => 'Datei konnte nicht hochgeladen werden',
 
     'admin.error.forbidden' => 'Verboten',
     'admin.error.invalid_role_filter' => 'Ungültiger Rollenfilter',

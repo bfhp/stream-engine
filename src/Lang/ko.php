@@ -1223,6 +1223,7 @@ return [
     'js.admin.file_browser.title' => '파일 관리자',
     'js.admin.file_browser.help' => '설정된 uploads 디렉터리의 파일을 탐색합니다. 파일을 두 번 클릭하면 열립니다.',
     'js.admin.file_browser.load_failed' => '파일을 불러오지 못했습니다',
+    'js.admin.file_browser.upload_failed' => '파일을 업로드하지 못했습니다',
 
     'admin.error.forbidden' => '금지됨',
     'admin.error.invalid_role_filter' => '유효하지 않은 역할 필터입니다',

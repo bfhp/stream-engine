@@ -1223,6 +1223,7 @@ return [
     'js.admin.file_browser.title' => '文件管理器',
     'js.admin.file_browser.help' => '浏览已配置 uploads 目录中的文件。双击可打开文件。',
     'js.admin.file_browser.load_failed' => '无法加载文件',
+    'js.admin.file_browser.upload_failed' => '无法上传文件',
 
     'admin.error.forbidden' => '禁止访问',
     'admin.error.invalid_role_filter' => '角色筛选无效',

@@ -9,7 +9,7 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- Added an admin file browser for the configured uploads directory.
+- Added an admin file browser for browsing and uploading files.
 
 ### Changed
 

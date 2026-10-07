@@ -68,6 +68,56 @@ final class FileStorageTest extends TestCase
         }
     }
 
+    public function testStoreNamedFileUsesTheRequestedDirectoryAndCanonicalExtension(): void
+    {
+        self::assertTrue(mkdir($this->baseDir.'/gallery', 0700, true));
+        $tmpFile = tempnam(sys_get_temp_dir(), 'upload-');
+        file_put_contents($tmpFile, 'image-data');
+
+        $result = (new FileStorage($this->baseDir))
+            ->storeNamedFile('gallery', $tmpFile, 'image/webp', 'Summer photo.JPG');
+
+        $this->assertSame('gallery/Summer photo.webp', $result['path']);
+        $this->assertSame(10, $result['size']);
+        $this->assertSame('image-data', file_get_contents($this->baseDir.'/'.$result['path']));
+        $this->assertFileDoesNotExist($tmpFile);
+    }
+
+    public function testStoreNamedFileRefusesToOverwriteAnExistingFile(): void
+    {
+        self::assertTrue(mkdir($this->baseDir, 0700, true));
+        self::assertNotFalse(file_put_contents($this->baseDir.'/photo.png', 'existing'));
+        $tmpFile = tempnam(sys_get_temp_dir(), 'upload-');
+        file_put_contents($tmpFile, 'replacement');
+
+        try {
+            $this->expectException(ValidationException::class);
+            $this->expectExceptionMessage('File already exists');
+            (new FileStorage($this->baseDir))->storeNamedFile('', $tmpFile, 'image/png', 'photo.png');
+        } finally {
+            if (is_file($tmpFile)) {
+                unlink($tmpFile);
+            }
+        }
+    }
+
+    public function testStoreNamedFileRejectsPathTraversal(): void
+    {
+        self::assertTrue(mkdir($this->baseDir, 0700, true));
+        $tmpFile = tempnam(sys_get_temp_dir(), 'upload-');
+        file_put_contents($tmpFile, 'payload');
+
+        try {
+            $this->expectException(ValidationException::class);
+            $this->expectExceptionMessage('Invalid destination directory');
+            (new FileStorage($this->baseDir))->storeNamedFile('../outside', $tmpFile, 'image/png', 'photo.png');
+        } finally {
+            if (is_file($tmpFile)) {
+                unlink($tmpFile);
+            }
+        }
+    }
+
     private function removeDirectory(string $path): void
     {
         if (!is_dir($path)) {

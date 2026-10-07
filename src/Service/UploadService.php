@@ -74,6 +74,34 @@ class UploadService
     }
 
     /**
+     * Upload from the administrator file browser into its currently open
+     * directory. Unlike regular user uploads, the visible filename and the
+     * original bytes are kept; images are deliberately not re-encoded.
+     *
+     * @throws ValidationException
+     */
+    public function uploadForAdmin(User $user, array $file, string $directory): Upload
+    {
+        $mime = $this->mime->detect($file['tmp_name']);
+        $this->validateFile((int) $file['size'], $mime);
+
+        $result = $this->storage->storeNamedFile(
+            $directory,
+            $file['tmp_name'],
+            $mime,
+            (string) $file['name'],
+        );
+
+        return $this->uploads->create([
+            'user_id' => $user->id,
+            'path' => $result['path'],
+            'mime' => $mime,
+            'size' => $result['size'],
+            'original_name' => $file['name'],
+        ]);
+    }
+
+    /**
      * @throws RandomException
      * @throws ValidationException
      */

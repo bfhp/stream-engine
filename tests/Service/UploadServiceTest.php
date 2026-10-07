@@ -108,6 +108,45 @@ class UploadServiceTest extends TestCase
         $this->assertSame($expectedUpload, $result);
     }
 
+    public function testAdminUploadKeepsTheVisibleNameInTheRequestedDirectory(): void
+    {
+        $user = new User(id: 7, email: '', role: AccessService::ROLE_ADMIN);
+        $file = ['tmp_name' => '/tmp/file', 'size' => 1000, 'name' => 'Photo.JPG'];
+        $uploads = $this->createMock(UploadRepository::class);
+        $mime = $this->createStub(MimeDetector::class);
+        $storage = $this->createMock(FileStorage::class);
+        $images = $this->createMock(ImageProcessor::class);
+        $service = $this->makeService(
+            $uploads,
+            $mime,
+            $storage,
+            $images,
+            $this->createStub(AccessService::class),
+        );
+
+        $mime->method('detect')->willReturn('image/jpeg');
+        $images->expects($this->never())->method('isImage');
+        $images->expects($this->never())->method('process');
+        $storage->expects($this->once())
+            ->method('storeNamedFile')
+            ->with('gallery', '/tmp/file', 'image/jpeg', 'Photo.JPG')
+            ->willReturn(['path' => 'gallery/Photo.jpg', 'size' => 900]);
+
+        $created = new Upload(11, 7, 'gallery/Photo.jpg', 'image/jpeg', 900, 'Photo.JPG', 1);
+        $uploads->expects($this->once())
+            ->method('create')
+            ->with([
+                'user_id' => 7,
+                'path' => 'gallery/Photo.jpg',
+                'mime' => 'image/jpeg',
+                'size' => 900,
+                'original_name' => 'Photo.JPG',
+            ])
+            ->willReturn($created);
+
+        $this->assertSame($created, $service->uploadForAdmin($user, $file, 'gallery'));
+    }
+
     public function testReportsUserStorageUsage(): void
     {
         $user = new User(id: 7, email: '', role: AccessService::ROLE_USER);

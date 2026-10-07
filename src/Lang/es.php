@@ -1223,6 +1223,7 @@ Correo: {email}
     'js.admin.file_browser.title' => 'Administrador de archivos',
     'js.admin.file_browser.help' => 'Explora los archivos del directorio uploads configurado. Haz doble clic para abrir un archivo.',
     'js.admin.file_browser.load_failed' => 'No se pudieron cargar los archivos',
+    'js.admin.file_browser.upload_failed' => 'No se pudo subir el archivo',
 
     'admin.error.forbidden' => 'Prohibido',
     'admin.error.invalid_role_filter' => 'Filtro de rol no válido',

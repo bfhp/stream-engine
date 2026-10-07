@@ -1223,6 +1223,7 @@ return [
     'js.admin.file_browser.title' => 'ファイルブラウザー',
     'js.admin.file_browser.help' => '設定された uploads ディレクトリ内のファイルを参照します。ダブルクリックでファイルを開きます。',
     'js.admin.file_browser.load_failed' => 'ファイルを読み込めませんでした',
+    'js.admin.file_browser.upload_failed' => 'ファイルをアップロードできませんでした',
 
     'admin.error.forbidden' => '禁止されています',
     'admin.error.invalid_role_filter' => '無効なロールフィルターです',

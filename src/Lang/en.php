@@ -1224,6 +1224,7 @@ Email: {email}
     'js.admin.file_browser.title' => 'File Browser',
     'js.admin.file_browser.help' => 'Browse files in the configured uploads directory. Double-click a file to open it.',
     'js.admin.file_browser.load_failed' => 'Failed to load files',
+    'js.admin.file_browser.upload_failed' => 'Failed to upload file',
 
     'admin.error.forbidden' => 'Forbidden',
     'admin.error.invalid_role_filter' => 'Invalid role filter',

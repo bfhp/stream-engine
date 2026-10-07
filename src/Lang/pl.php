@@ -1223,6 +1223,7 @@ E-mail: {email}
     'js.admin.file_browser.title' => 'Menedżer plików',
     'js.admin.file_browser.help' => 'Przeglądaj pliki w skonfigurowanym katalogu uploads. Kliknij dwukrotnie, aby otworzyć plik.',
     'js.admin.file_browser.load_failed' => 'Nie udało się wczytać plików',
+    'js.admin.file_browser.upload_failed' => 'Nie udało się przesłać pliku',
 
     'admin.error.forbidden' => 'Zabronione',
     'admin.error.invalid_role_filter' => 'Nieprawidłowy filtr roli',

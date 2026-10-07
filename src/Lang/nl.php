@@ -1223,6 +1223,7 @@ E-mail: {email}
     'js.admin.file_browser.title' => 'Bestandsbeheer',
     'js.admin.file_browser.help' => 'Blader door bestanden in de ingestelde uploads-map. Dubbelklik om een bestand te openen.',
     'js.admin.file_browser.load_failed' => 'Bestanden konden niet worden geladen',
+    'js.admin.file_browser.upload_failed' => 'Bestand kon niet worden geüpload',
 
     'admin.error.forbidden' => 'Verboden',
     'admin.error.invalid_role_filter' => 'Ongeldig rolfilter',

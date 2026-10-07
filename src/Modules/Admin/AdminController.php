@@ -27,6 +27,7 @@ use StreamEngine\Repository\UserRepository;
 use StreamEngine\Service\AccessService;
 use StreamEngine\Service\AdminDashboardService;
 use StreamEngine\Service\ThemeService;
+use StreamEngine\Service\UploadService;
 use StreamEngine\Repository\DashboardLayoutRepository;
 use StreamEngine\View\ViewModel;
 
@@ -267,6 +268,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
         private readonly TranslationManager $tm,
         private readonly ModuleRegistry $modules,
         private readonly ThemeService $themeService,
+        private readonly UploadService $uploadService,
         private readonly Config $config,
     ) {
         parent::__construct($db, $context);
@@ -412,7 +414,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
                 id: $fileBrowserPageId,
                 parentId: $adminApiPageId,
                 pattern: 'file-browser',
-                requestMethods: ['GET'],
+                requestMethods: ['GET', 'POST'],
                 action: 'admin.file-browser',
                 accessRule: AccessService::ACCESS_ADMIN,
             )
@@ -578,6 +580,30 @@ class AdminController extends AbstractController implements DashboardCardProvide
      */
     private function handleFileBrowserRequest(): void
     {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
+
+            if (! isset($_FILES['file']) || ! is_array($_FILES['file'])) {
+                throw new ValidationException('No file');
+            }
+            if (($_FILES['file']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+                throw new ValidationException('Upload failed');
+            }
+
+            $directory = isset($_POST['path']) && is_string($_POST['path']) ? $_POST['path'] : '';
+            $upload = $this->uploadService->uploadForAdmin($this->context->user, $_FILES['file'], $directory);
+            echo Formatter::json([
+                'id' => $upload->id,
+                'path' => $upload->path,
+                'url' => '/uploads/'.$upload->path,
+                'mime' => $upload->mime,
+                'size' => $upload->size,
+                'originalName' => $upload->originalName,
+            ]);
+
+            return;
+        }
+
         try {
             $payload = (new UploadDirectoryBrowser($this->config->uploadsPath(dirname(__DIR__, 3))))
                 ->browse(QueryParams::fromGlobals()->string('path'));

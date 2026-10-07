@@ -1223,6 +1223,7 @@ return [
     'js.admin.file_browser.title' => 'مدير الملفات',
     'js.admin.file_browser.help' => 'تصفح الملفات في دليل uploads المُعدّ. انقر نقرًا مزدوجًا لفتح ملف.',
     'js.admin.file_browser.load_failed' => 'تعذر تحميل الملفات',
+    'js.admin.file_browser.upload_failed' => 'تعذر رفع الملف',
 
     'admin.error.forbidden' => 'محظور',
     'admin.error.invalid_role_filter' => 'مرشح الدور غير صالح',

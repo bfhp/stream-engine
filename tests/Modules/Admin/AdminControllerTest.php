@@ -18,12 +18,14 @@ use StreamEngine\Core\Router;
 use StreamEngine\Core\TranslationManager;
 use StreamEngine\Core\ThemeCatalog;
 use StreamEngine\Domain\Page;
+use StreamEngine\Domain\Upload;
 use StreamEngine\Domain\User;
 use StreamEngine\Modules\Admin\AdminController;
 use StreamEngine\Service\AccessService;
 use StreamEngine\Repository\SettingsRepository;
 use StreamEngine\Service\SettingsService;
 use StreamEngine\Service\ThemeService;
+use StreamEngine\Service\UploadService;
 use Tests\Support\PhpInputStreamMock;
 
 require_once __DIR__.'/../../Support/ControllerFactoryFixtures.php';
@@ -42,6 +44,8 @@ final class AdminControllerTest extends TestCase
 
         PhpInputStreamMock::restore();
         $_GET = [];
+        $_POST = [];
+        $_FILES = [];
 
         $this->writes = [];
     }
@@ -62,6 +66,7 @@ final class AdminControllerTest extends TestCase
         int $currentUserId = 1,
         ?ModuleRegistry $modules = null,
         ?string $uploadsDir = null,
+        ?UploadService $uploadService = null,
     ): AdminController {
         $db = $this->createStub(PdoDatabase::class);
 
@@ -129,6 +134,7 @@ final class AdminControllerTest extends TestCase
             new TranslationManager('en', 'en'),
             $modules ?? new ModuleRegistry(),
             $themeService,
+            $uploadService ?? $this->createStub(UploadService::class),
             new Config($uploadsDir === null ? [] : ['UPLOADS_DIR' => $uploadsDir]),
         );
     }
@@ -1586,6 +1592,49 @@ final class AdminControllerTest extends TestCase
         $this->assertSame(['uploads', '2'], array_column($response['folderChain'], 'name'));
     }
 
+    public function testFileBrowserEndpointUploadsIntoTheRequestedDirectory(): void
+    {
+        $this->withValidCsrf();
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_POST['path'] = '2/nested';
+        $_FILES['file'] = [
+            'name' => 'photo.jpg',
+            'tmp_name' => '/tmp/upload',
+            'size' => 123,
+            'error' => UPLOAD_ERR_OK,
+        ];
+
+        $uploadService = $this->createMock(UploadService::class);
+        $uploadService->expects($this->once())
+            ->method('uploadForAdmin')
+            ->with(
+                $this->callback(static fn (User $user): bool => $user->id === 1),
+                $_FILES['file'],
+                '2/nested',
+            )
+            ->willReturn(new Upload(9, 1, '2/nested/photo.jpg', 'image/jpeg', 123, 'photo.jpg', 1));
+
+        $response = $this->callAndDecode(
+            $this->makeModule(uploadService: $uploadService),
+            $this->makeApiPage('admin.file-browser', ['GET', 'POST']),
+        );
+
+        $this->assertSame(9, $response['id']);
+        $this->assertSame('2/nested/photo.jpg', $response['path']);
+        $this->assertSame('/uploads/2/nested/photo.jpg', $response['url']);
+    }
+
+    public function testFileBrowserUploadRequiresCsrf(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_FILES['file'] = ['error' => UPLOAD_ERR_OK];
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('CSRF missing');
+
+        $this->makeModule()->callApi($this->makeApiPage('admin.file-browser', ['GET', 'POST']));
+    }
+
     public function testEveryPagesEditorEndpointIsRegisteredAsAdminOnly(): void
     {
         $tree = new PageTree([]);
@@ -1605,7 +1654,7 @@ final class AdminControllerTest extends TestCase
             'admin.user' => ['GET', 'PATCH'],
             'admin.dashboard' => ['GET', 'PATCH', 'DELETE'],
             'admin.dashboard-card' => ['GET'],
-            'admin.file-browser' => ['GET'],
+            'admin.file-browser' => ['GET', 'POST'],
         ] as $action => $methods) {
             $page = $tree->findByAction($action);
 
