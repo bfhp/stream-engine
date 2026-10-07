@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActionIcon, Alert, Box, Group, Loader, Stack, Text, Tooltip, useComputedColorScheme } from "@mantine/core";
+import {
+    ActionIcon, Alert, Box, Button, Group, Loader, Modal, Stack, Text, TextInput, Tooltip,
+    useComputedColorScheme,
+} from "@mantine/core";
 import { IconRefresh } from "@tabler/icons-react";
 import {
     ChonkyActions,
@@ -17,7 +20,7 @@ import {
     type UploadBrowserPayload,
 } from "../lib/uploads-browser";
 
-const FILE_ACTIONS = [ChonkyActions.UploadFiles];
+const FILE_ACTIONS = [ChonkyActions.CreateFolder, ChonkyActions.UploadFiles];
 const FILE_ACCEPT = ".jpg,.jpeg,.png,.webp,.gif,.mp3,.ogg,.pdf";
 
 async function responseJson(response: Response): Promise<UploadBrowserPayload> {
@@ -36,6 +39,10 @@ export default function FileBrowser() {
     const [payload, setPayload] = useState<UploadBrowserPayload | null>(null);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
+    const [folderDialogOpened, setFolderDialogOpened] = useState(false);
+    const [folderName, setFolderName] = useState("");
+    const [creatingFolder, setCreatingFolder] = useState(false);
+    const [folderError, setFolderError] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
 
@@ -101,7 +108,44 @@ export default function FileBrowser() {
         setUploading(false);
     }, [path]);
 
+    const createDirectory = useCallback(async () => {
+        const name = folderName.trim();
+        if (name === "") return;
+
+        setCreatingFolder(true);
+        setFolderError(null);
+        try {
+            const response = await fetch("/api/v1/admin/file-browser", {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json", ...csrfHeaders() },
+                body: JSON.stringify({ operation: "create-directory", path, name }),
+            });
+            if (!response.ok) {
+                throw await getApiResponseError(response, trans("js.admin.file_browser.create_directory_failed"));
+            }
+
+            setPayload(await response.json() as UploadBrowserPayload);
+            setFolderName("");
+            setFolderDialogOpened(false);
+        } catch (error) {
+            setFolderError(error instanceof Error
+                ? error.message
+                : trans("js.admin.file_browser.create_directory_failed"));
+        } finally {
+            setCreatingFolder(false);
+        }
+    }, [folderName, path]);
+
     const handleFileAction = useCallback<FileActionHandler>(data => {
+        if (data.id === ChonkyActions.CreateFolder.id) {
+            if (!creatingFolder && !uploading) {
+                setFolderError(null);
+                setFolderDialogOpened(true);
+            }
+            return;
+        }
+
         if (data.id === ChonkyActions.UploadFiles.id) {
             if (!uploading) fileInput.current?.click();
             return;
@@ -126,10 +170,42 @@ export default function FileBrowser() {
         } else if (target.publicUrl) {
             window.open(target.publicUrl, "_blank", "noopener,noreferrer");
         }
-    }, [uploading]);
+    }, [creatingFolder, uploading]);
 
     return (
         <Stack h="calc(100vh - 92px)" mih={480} gap="sm">
+            <Modal
+                opened={folderDialogOpened}
+                onClose={() => !creatingFolder && setFolderDialogOpened(false)}
+                title={trans("js.admin.file_browser.new_folder")}
+                centered
+            >
+                <form onSubmit={event => { event.preventDefault(); void createDirectory(); }}>
+                    <Stack>
+                        {folderError && <Alert color="red">{folderError}</Alert>}
+                        <TextInput
+                            label={trans("js.admin.file_browser.folder_name")}
+                            value={folderName}
+                            onChange={event => setFolderName(event.currentTarget.value)}
+                            maxLength={255}
+                            autoFocus
+                            required
+                        />
+                        <Group justify="flex-end">
+                            <Button
+                                variant="default"
+                                disabled={creatingFolder}
+                                onClick={() => setFolderDialogOpened(false)}
+                            >
+                                {trans("js.admin.cancel")}
+                            </Button>
+                            <Button type="submit" loading={creatingFolder} disabled={folderName.trim() === ""}>
+                                {trans("js.admin.save")}
+                            </Button>
+                        </Group>
+                    </Stack>
+                </form>
+            </Modal>
             <input
                 ref={fileInput}
                 type="file"

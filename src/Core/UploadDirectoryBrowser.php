@@ -9,7 +9,7 @@ use InvalidArgumentException;
 use UnexpectedValueException;
 
 /**
- * Read-only, directory-at-a-time view of the local uploads storage.
+ * Filesystem operations backing the administrator file browser.
  *
  * Paths in the public contract are always relative to the configured uploads
  * root. Symlinks are deliberately omitted: following them would make the
@@ -17,6 +17,11 @@ use UnexpectedValueException;
  */
 final readonly class UploadDirectoryBrowser
 {
+    public const string INVALID_PATH = 'admin.error.invalid_uploads_path';
+    public const string INVALID_DIRECTORY_NAME = 'admin.error.invalid_directory_name';
+    public const string DIRECTORY_EXISTS = 'admin.error.directory_exists';
+    public const string DIRECTORY_CREATE_FAILED = 'admin.error.directory_create_failed';
+
     public function __construct(private string $basePath)
     {
     }
@@ -86,6 +91,35 @@ final readonly class UploadDirectoryBrowser
         return $this->payload($path, $files, explode('/', $path));
     }
 
+    /**
+     * @return array{path: string, files: list<array<string, mixed>>, folderChain: list<array<string, mixed>>}|null
+     */
+    public function createDirectory(string $path, string $name): ?array
+    {
+        $path = $this->normalizePath($path);
+        $name = $this->normalizeDirectoryName($name, $path);
+        $root = realpath($this->basePath);
+
+        if ($root === false) {
+            return null;
+        }
+
+        $directory = realpath($path === '' ? $root : $root.'/'.$path);
+        if ($directory === false || ! is_dir($directory) || ! $this->isInsideRoot($directory, $root)) {
+            return null;
+        }
+
+        $target = $directory.'/'.$name;
+        if (file_exists($target) || is_link($target)) {
+            throw new InvalidArgumentException(self::DIRECTORY_EXISTS);
+        }
+        if (! @mkdir($target, 0755)) {
+            throw new InvalidArgumentException(self::DIRECTORY_CREATE_FAILED);
+        }
+
+        return $this->browse($path);
+    }
+
     private function normalizePath(string $path): string
     {
         if ($path === '') {
@@ -93,17 +127,31 @@ final readonly class UploadDirectoryBrowser
         }
 
         if (str_contains($path, "\0") || str_contains($path, '\\') || str_starts_with($path, '/')) {
-            throw new InvalidArgumentException('Invalid uploads path');
+            throw new InvalidArgumentException(self::INVALID_PATH);
         }
 
         $segments = explode('/', $path);
         foreach ($segments as $segment) {
             if ($segment === '' || $segment === '.' || $segment === '..') {
-                throw new InvalidArgumentException('Invalid uploads path');
+                throw new InvalidArgumentException(self::INVALID_PATH);
             }
         }
 
         return implode('/', $segments);
+    }
+
+    private function normalizeDirectoryName(string $name, string $path): string
+    {
+        $name = trim($name);
+        $relativePath = ltrim($path.'/'.$name, '/');
+        if ($name === '' || $name === '.' || $name === '..' || ! mb_check_encoding($name, 'UTF-8')
+            || str_contains($name, "\0") || str_contains($name, '/') || str_contains($name, '\\')
+            || preg_match('/[\x00-\x1F\x7F]/u', $name) === 1
+            || strlen($name) > 255 || strlen($relativePath) > 255) {
+            throw new InvalidArgumentException(self::INVALID_DIRECTORY_NAME);
+        }
+
+        return $name;
     }
 
     private function isInsideRoot(string $path, string $root): bool
