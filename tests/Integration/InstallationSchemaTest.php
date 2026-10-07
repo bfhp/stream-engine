@@ -8,7 +8,9 @@ use PDO;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use ReflectionProperty;
+use StreamEngine\Core\Config;
 use StreamEngine\Core\Installation\ConfiguredInstaller;
+use StreamEngine\Core\Installation\DisposableDatabase;
 use StreamEngine\Core\Installation\InstallationConfig;
 use StreamEngine\Core\Installation\InstallationEnvironment;
 use StreamEngine\Core\Installation\InstallationPreflightException;
@@ -455,31 +457,32 @@ final class InstallationSchemaTest extends TestCase
 
         $user = (string) (getenv('INSTALL_TEST_DB_USERNAME') ?: 'root');
         $password = (string) (getenv('INSTALL_TEST_DB_PASSWORD') ?: '');
-        $server = new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-        $database = 'stream_engine_install_test_'.bin2hex(random_bytes(6));
-        $quotedDatabase = '`'.$database.'`';
-        $server->exec("CREATE DATABASE {$quotedDatabase} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+        preg_match('/(?:^|[;:])host=([^;]+)/', $dsn, $hostMatch);
+        preg_match('/(?:^|;)port=([0-9]+)/', $dsn, $portMatch);
+        $host = $hostMatch[1] ?? '127.0.0.1';
+        $port = isset($portMatch[1]) ? (int) $portMatch[1] : 3306;
+        $temporaryDatabase = DisposableDatabase::create(new Config([
+            'APP_ENV' => 'test',
+            'DB_HOST' => $host,
+            'DB_PORT' => $port,
+            'DB_USERNAME' => $user,
+            'DB_PASSWORD' => $password,
+        ]));
 
         try {
-            preg_match('/(?:^|[;:])host=([^;]+)/', $dsn, $hostMatch);
-            preg_match('/(?:^|;)port=([0-9]+)/', $dsn, $portMatch);
+            $database = $temporaryDatabase->connect();
             $test(
-                new PDO(
-                    $dsn.';dbname='.$database,
-                    $user,
-                    $password,
-                    [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION],
-                ),
+                $database->getPdo(),
                 [
-                    'host' => $hostMatch[1] ?? '127.0.0.1',
-                    'port' => isset($portMatch[1]) ? (int) $portMatch[1] : 3306,
-                    'database' => $database,
+                    'host' => $host,
+                    'port' => $port,
+                    'database' => $temporaryDatabase->name(),
                     'username' => $user,
                     'password' => $password,
                 ],
             );
         } finally {
-            $server->exec("DROP DATABASE {$quotedDatabase}");
+            $temporaryDatabase->drop();
         }
     }
 

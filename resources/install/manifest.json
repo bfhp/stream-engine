@@ -2,7 +2,7 @@
     "format": 1,
     "release": "0.4.3",
     "schema": "schema.sql",
-    "schema_checksum": "59eab305919ce881cacb8b9929d49cce1f833912d02729efdce9882c73e297f5",
+    "schema_checksum": "4639a7e011382cb3b6cc204fa59a83a33ca14126baae8d1470e384b543dfc7e5",
     "migrations": [
         {
             "version": "20260912000000_initial",
@@ -38,6 +38,31 @@
             "version": "20261002020000_assign_group_conversation_admins",
             "file": "20261002020000_assign_group_conversation_admins.sql",
             "checksum": "4a1c0198806867ad2eb9bae6a04c5eec713bce7d1cd0f82c9e61ea014a297be4"
+        },
+        {
+            "version": "20261007000000_add_cron_observability",
+            "file": "20261007000000_add_cron_observability.sql",
+            "checksum": "1c8f1e226a49e61d3cb0c1e33cc38f6039fcb9826f4ada592f0d5fd9c122bddd"
+        },
+        {
+            "version": "20261007010000_move_cron_mode_to_settings",
+            "file": "20261007010000_move_cron_mode_to_settings.sql",
+            "checksum": "6de64b1b615735ea76e089abc2efa41afaacedc298deac110ab01a14fdd53fbe"
+        },
+        {
+            "version": "20261007020000_add_cron_task_controls",
+            "file": "20261007020000_add_cron_task_controls.sql",
+            "checksum": "a8c48a2eabc1217c431b1f0d9f49d6bf93b1f659ca176fa416820f3ca58d3c31"
+        },
+        {
+            "version": "20261007030000_add_cron_manual_request_state",
+            "file": "20261007030000_add_cron_manual_request_state.sql",
+            "checksum": "76814fd3831a757a4447c1e41359d027e53730bebfca24a7fb90d7cf91d96bf6"
+        },
+        {
+            "version": "20261007040000_split_cron_tasks_and_run_history",
+            "file": "20261007040000_split_cron_tasks_and_run_history.sql",
+            "checksum": "70eba01457f5802a5d8d2fa0cd71a7aabeecf744d40baf18e0e60d4ddfdd4dfc"
         }
     ]
 }

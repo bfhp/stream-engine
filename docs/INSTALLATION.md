@@ -116,8 +116,8 @@ state file.
 
 ## Building a release snapshot
 
-Point the normal `DB_*` configuration at an empty, disposable database, then
-run:
+Run the snapshot builder with a database user that can create and drop
+databases named `stream_engine_schema_build_%`:
 
 ```bash
 composer install-schema:build -- --release=1.0.0
@@ -126,11 +126,17 @@ composer install-schema:build -- --release=1.0.0
 The release defaults to the root `package.json` version. `--release` is kept
 as an explicit override for preparing a prerelease artifact.
 
-The command refuses a non-empty database, applies all migrations to it, then
-writes `schema.sql` and `manifest.json` atomically under
-`resources/install/`. The database is a build input and may be discarded after
-the command. Table data and current `AUTO_INCREMENT` counters are not included.
-Deployment-specific view definers are removed.
+The command creates a randomly named disposable database, applies all
+migrations to it, writes `schema.sql` and `manifest.json` atomically under
+`resources/install/`, and drops the database even when the build fails. The
+configured application database is never used as a snapshot source. Table data
+and current `AUTO_INCREMENT` counters are not included. Deployment-specific
+view definers are removed.
+
+The Docker development database grants its application user access to this
+restricted database-name pattern when its data volume is initialized. For an
+existing Docker volume, apply `docker/mariadb/init/01-schema-builder.sql` once
+as the MariaDB root user.
 
 Triggers, stored routines and database events currently make the build fail;
 silently omitting them would produce an incomplete installer.

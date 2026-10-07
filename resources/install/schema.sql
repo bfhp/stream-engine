@@ -37,9 +37,43 @@ CREATE TABLE `conversation_participants` (
   CONSTRAINT `fk_cp_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
-CREATE TABLE `cron_runs` (
+CREATE TABLE `cron_run_history` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `task` varchar(128) NOT NULL,
+  `trigger` enum('scheduled','manual') NOT NULL,
+  `status` enum('queued','running','success','failed','start_failed','timed_out') NOT NULL,
+  `requested_at` int(10) unsigned NOT NULL,
+  `started_at` int(10) unsigned DEFAULT NULL,
+  `finished_at` int(10) unsigned DEFAULT NULL,
+  `duration_ms` int(10) unsigned DEFAULT NULL,
+  `error` varchar(2000) DEFAULT NULL,
+  `requested_by_user_id` int(10) unsigned DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_cron_run_history_task_id` (`task`,`id`),
+  KEY `idx_cron_run_history_status_started` (`status`,`started_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+CREATE TABLE `cron_scheduler_state` (
+  `id` tinyint(3) unsigned NOT NULL,
+  `last_started_at` int(10) unsigned DEFAULT NULL,
+  `last_finished_at` int(10) unsigned DEFAULT NULL,
+  `last_status` enum('success','failed') DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+CREATE TABLE `cron_tasks` (
+  `task` varchar(128) NOT NULL,
+  `is_enabled` tinyint(1) NOT NULL DEFAULT 1,
   `last_run` int(11) NOT NULL,
+  `last_started_at` int(10) unsigned DEFAULT NULL,
+  `last_finished_at` int(10) unsigned DEFAULT NULL,
+  `last_status` enum('success','failed') DEFAULT NULL,
+  `last_trigger` enum('scheduled','manual') DEFAULT NULL,
+  `manual_requested_at` int(10) unsigned DEFAULT NULL,
+  `active_run_id` bigint(20) unsigned DEFAULT NULL,
+  `last_duration_ms` int(10) unsigned DEFAULT NULL,
+  `last_error` varchar(2000) DEFAULT NULL,
+  `consecutive_failures` int(10) unsigned NOT NULL DEFAULT 0,
   `locked_at` int(11) DEFAULT NULL,
   PRIMARY KEY (`task`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;

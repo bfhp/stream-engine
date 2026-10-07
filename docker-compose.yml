@@ -48,6 +48,7 @@ services:
       - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
+      - ./docker/mariadb/init:/docker-entrypoint-initdb.d:ro
 
   composer:
     image: composer:latest
