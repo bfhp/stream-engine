@@ -16,6 +16,7 @@ import CMS from "./app";
 import "./auth";
 
 import { initMessengerGlobal } from "./messenger-global";
+import { initMentionAutocomplete } from "../shared/mentions-autocomplete";
 
 // Before DOMContentLoaded: the router has to be listening for popstate /
 // hashchange from the moment the page starts running, not from whenever the
@@ -23,6 +24,7 @@ import { initMessengerGlobal } from "./messenger-global";
 CMS.hashRoute.init();
 
 document.addEventListener("DOMContentLoaded", () => {
+    initMentionAutocomplete();
     initMessengerGlobal(); // Always (nearly)
     CMS.checkAndSetTimezoneCookie();
     CMS.initShare();

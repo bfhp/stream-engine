@@ -504,6 +504,11 @@
     margin-top: 2px;
 }
 
+.msgr-msg-group.is-mentioned-target .msgr-bubble {
+    outline: 2px solid var(--bs-primary);
+    outline-offset: 2px;
+}
+
 .msgr-msg-group.is-grouped {
     margin-top: 10px;
 }

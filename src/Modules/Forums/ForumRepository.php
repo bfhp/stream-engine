@@ -482,6 +482,32 @@ final class ForumRepository
     }
 
     /**
+     * Stable deep-link lookup: translates a feed id into its one-based post
+     * number without loading every preceding reply.
+     */
+    public function findTopicPostNumber(int $topicId, int $postId): ?int
+    {
+        if ($postId === $topicId) {
+            return 1;
+        }
+
+        $row = $this->db->fetchOne(
+            "SELECT 1 + COUNT(older.id) AS post_number
+             FROM feeds target
+             LEFT JOIN feeds older
+               ON older.parent_id = target.parent_id
+              AND older.type = 'comment'
+              AND (older.created_at < target.created_at
+                   OR (older.created_at = target.created_at AND older.id <= target.id))
+             WHERE target.id = ? AND target.parent_id = ? AND target.type = 'comment'
+             GROUP BY target.id",
+            [$postId, $topicId],
+        );
+
+        return $row !== null ? (int) $row['post_number'] : null;
+    }
+
+    /**
      * Uses index: feeds_parent_id_type_position_index (parent_id, type, position) on feeds - both the topic-owner literal row (PRIMARY(id) actually, see below) and the reply half's parent_id = ? AND type = 'comment' filter.
      * Uses index: PRIMARY(id) on feeds for the topic-owner half's WHERE id = ?.
      * Warning: no index for the outer GROUP BY owner_id / ORDER BY first_at / COUNT(*) OVER() - it aggregates an already-small derived set (one row per topic + one per reply, at most the topic's own reply count), not a base-table scan.

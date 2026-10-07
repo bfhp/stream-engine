@@ -216,7 +216,7 @@
                 <ul class="forums-rows">
                     {% for post in posts %}
                         {% set postFeed = post.feed %}
-                        <li class="forums-post" id="post-{{ post.number }}">
+                        <li class="forums-post" id="post-{{ postFeed.id }}">
                             <div class="forums-post__author">
                                 <img src="{{ post.authorAvatarUrl }}" alt="{{ postFeed.authorDisplayName }}" class="forums-avatar" width="56" height="56">
                                 <div class="forums-post__who">
@@ -285,7 +285,7 @@
                                             <time title="{{ postFeed.createdAtTitle }}">{{ postFeed.createdAtLabel }}</time>
                                         {% endif %}
                                     </div>
-                                    <a href="#post-{{ post.number }}" class="forums-post__number" title="{{ trans('view.forums.topic.view.28') }}">#{{ post.number }}</a>
+                                    <a href="#post-{{ postFeed.id }}" class="forums-post__number" title="{{ trans('view.forums.topic.view.28') }}">#{{ post.number }}</a>
                                 </div>
                                 <div class="content forums-post__content" dir="auto" data-comment-content-wrapper="{{ postFeed.id }}">
                                     {{ postFeed.content|raw }}

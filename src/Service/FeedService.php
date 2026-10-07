@@ -68,6 +68,7 @@ class FeedService
         private readonly ?FeedFavoriteRepository $favoriteRepository = null,
         private readonly ?FeedReadRepository $readRepository = null,
         private readonly ?GuestFeedReadStore $guestReadStore = null,
+        private readonly ?MentionService $mentionService = null,
     ) {
         $config = HTMLPurifier_Config::createDefault();
 
@@ -350,6 +351,10 @@ class FeedService
         $visibility = $this->normalizeVisibility($visibility);
         $position = $this->normalizePosition($position);
 
+        if ($type === 'forum-post') {
+            $this->mentionService?->validate($content);
+        }
+
         if ($parentId) {
             $parent = $this->repository->findById($parentId, $user);
             if (! $parent) {
@@ -371,6 +376,10 @@ class FeedService
             containerType: $containerType,
             position: $position,
         );
+
+        if ($type === 'forum-post' && $this->mentionService !== null) {
+            $this->mentionService->synchronizeFeed($id, $content, $user->id);
+        }
 
         if ($metadata !== null) {
             $this->replaceMetadataForFeed($id, $metadata);
@@ -433,6 +442,7 @@ class FeedService
         }
 
         $normalizedContent = $this->normalizeCommentContent($content);
+        $this->mentionService?->validate($normalizedContent);
 
         $id = $this->repository->insert(
             ownerId: $user->id,
@@ -444,6 +454,8 @@ class FeedService
             imageUrl: null,
             content: $normalizedContent
         );
+
+        $this->mentionService?->synchronizeFeed($id, $normalizedContent, $user->id);
 
         $comment = $this->repository->findById($id, $user);
         if (! $comment) {
@@ -499,6 +511,7 @@ class FeedService
         }
 
         $normalizedContent = $this->normalizeCommentContent($content);
+        $this->mentionService?->validate($normalizedContent);
 
         $this->repository->update(
             id: $comment->id,
@@ -510,6 +523,8 @@ class FeedService
             imageUrl: $comment->imageUrl,
             content: $normalizedContent,
         );
+
+        $this->mentionService?->synchronizeFeed($comment->id, $normalizedContent, $user->id);
 
         $updated = $this->repository->findById($commentId, $user);
         if (! $updated) {
@@ -1854,6 +1869,13 @@ class FeedService
 
     private function decorateFeed(Feed $feed): void
     {
+        if ($this->mentionService !== null
+            && $feed->content !== null
+            && in_array($feed->type, ['comment', 'forum-post'], true)
+        ) {
+            $feed->content = $this->mentionService->renderFeed($feed->id, $feed->content);
+        }
+
         if ($feed->createdAt === null) {
             return;
         }

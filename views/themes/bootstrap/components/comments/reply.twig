@@ -1,4 +1,4 @@
-<article class="reply border-top pt-3 mt-3" data-id="{{ reply.id }}" data-slot-attr="data-id:id">
+<article class="reply border-top pt-3 mt-3" id="comment-{{ reply.id }}" data-id="{{ reply.id }}" data-slot-attr="data-id:id id:anchor">
     {% block reply_header %}
         <div class="comment-meta d-flex align-items-center gap-2 mb-2">
             {% block reply_avatar %}

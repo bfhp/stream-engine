@@ -15,7 +15,7 @@ final class Feed
         public readonly ?string $title,
         public readonly ?string $description,
         public readonly ?string $imageUrl,
-        public readonly ?string $content,
+        public ?string $content,
         public readonly ?int $containerId,
         public readonly ?string $visibility,
         public readonly ?int $position,

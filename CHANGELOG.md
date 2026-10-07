@@ -16,6 +16,13 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
   verification.
 - Added automatic removal of registrations left unconfirmed for more than 24
   hours.
+- Added `@username` mentions to comments, forum posts, and private messages,
+  with username autocomplete, safe profile links, escaping, and support for
+  username changes.
+- Added configurable mention notifications with deduplication, access checks
+  before delivery, and deep links to the referenced comment, forum post, or
+  message. Mention resolution uses one bounded batch lookup when content is
+  saved.
 
 ## [0.4.4] - 2026-10-07
 

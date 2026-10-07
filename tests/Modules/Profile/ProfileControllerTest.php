@@ -171,7 +171,7 @@ final class ProfileControllerTest extends TestCase
         self::assertSame('modules/profile/page.twig', $view->template);
         self::assertSame('Ваш профиль', $view->data['title']);
         self::assertCount(7, $view->data['tabs']);
-        self::assertCount(11, $view->data['notificationPreferences']);
+        self::assertCount(12, $view->data['notificationPreferences']);
         self::assertSame('09:00', $view->data['notificationDigestTime']);
     }
 
@@ -386,6 +386,8 @@ final class ProfileControllerTest extends TestCase
         $this->post([
             'digest_delivery_time' => '08:30',
             'message_unread_digest_email' => 'daily',
+            'user_mention_messenger' => 'instant',
+            'user_mention_email' => 'daily',
             'friend_request_messenger' => 'instant',
             'friend_request_email' => 'daily',
             'friend_mutual_messenger' => 'off',
@@ -408,9 +410,11 @@ final class ProfileControllerTest extends TestCase
             'community_post_email' => 'daily',
         ], $writes, 'profile.mailings.update');
 
-        self::assertCount(24, $writes);
+        self::assertCount(26, $writes);
         self::assertSame([7, 'message.unread_digest', 'email', 'daily'], $writes[22][1]);
-        self::assertSame(['08:30', 7], $writes[23][1]);
+        self::assertSame([7, 'user.mention', 'messenger', 'instant'], $writes[23][1]);
+        self::assertSame([7, 'user.mention', 'email', 'daily'], $writes[24][1]);
+        self::assertSame(['08:30', 7], $writes[25][1]);
         self::assertStringContainsString('DELETE FROM notification_preferences', $writes[0][0]);
         self::assertSame([7], $writes[0][1]);
         self::assertSame([7, 'friend.request', 'messenger', 'instant'], $writes[1][1]);

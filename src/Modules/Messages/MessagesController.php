@@ -225,9 +225,15 @@ class MessagesController extends AbstractController
 
         if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $afterId = $this->context->query->int('after_id');
+            $aroundMessageId = $this->context->query->int('around_id');
 
             echo Formatter::json(
-                $this->messageService->getMessagesWithMeta($conversationId, $userId, $afterId)
+                $this->messageService->getMessagesWithMeta(
+                    $conversationId,
+                    $userId,
+                    $afterId,
+                    $aroundMessageId > 0 ? $aroundMessageId : null,
+                )
             );
 
             return;

@@ -63,6 +63,22 @@ final readonly class MessageRepository
         );
     }
 
+    /** Messages ending at a deep-linked id, returned oldest first. */
+    public function getAtOrBefore(int $conversationId, int $messageId, int $limit): array
+    {
+        $rows = $this->db->fetchAll(
+            self::SELECT_WITH_JOINS."
+             WHERE m.conversation_id = ?
+               AND m.id <= ?
+               AND m.deleted_at IS NULL
+             ORDER BY m.id DESC
+             LIMIT ?",
+            [$conversationId, $messageId, $limit],
+        );
+
+        return array_reverse($rows);
+    }
+
     /**
      * Messages in this conversation edited or (soft-)deleted within the
      * last $lookbackSeconds - the poll's mechanism for propagating an edit

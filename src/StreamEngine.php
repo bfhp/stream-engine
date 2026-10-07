@@ -43,6 +43,7 @@ use StreamEngine\Repository\FeedReadRepository;
 use StreamEngine\Repository\FeedRepository;
 use StreamEngine\Repository\FeedTermRepository;
 use StreamEngine\Repository\MembershipRepository;
+use StreamEngine\Repository\MentionRepository;
 use StreamEngine\Repository\MenuRepository;
 use StreamEngine\Repository\MessageRepository;
 use StreamEngine\Repository\NotificationDeliveryRepository;
@@ -59,6 +60,7 @@ use StreamEngine\Service\AuthService;
 use StreamEngine\Service\BreadcrumbsService;
 use StreamEngine\Service\FeedService;
 use StreamEngine\Service\MailService;
+use StreamEngine\Service\MentionService;
 use StreamEngine\Service\MenuService;
 use StreamEngine\Service\MessageService;
 use StreamEngine\Service\NotificationService;
@@ -188,6 +190,12 @@ class StreamEngine
             $this->cache
         );
 
+        $mentionRepository = new MentionRepository($this->db);
+        $mentionService = new MentionService(
+            $mentionRepository,
+            $this->urlGenerator,
+        );
+
         $this->feedService = new FeedService(
             $feedRepository,
             $this->urlGenerator,
@@ -199,6 +207,7 @@ class StreamEngine
             $feedFavoriteRepository,
             $feedReadRepository,
             $guestFeedReadStore,
+            $mentionService,
         );
 
         $this->termService = new TermService(
@@ -227,15 +236,18 @@ class StreamEngine
             __DIR__.'/../views/email'
         );
 
+        $messageRepository = new MessageRepository($this->db);
+        $participantRepository = new ParticipantRepository($this->db);
         $this->messageService = new MessageService(
             $this->db,
-            new MessageRepository($this->db),
-            new ParticipantRepository($this->db),
+            $messageRepository,
+            $participantRepository,
             new ConversationRepository($this->db),
             $userRepository,
             $sessionRepository,
             new UploadRepository($this->db),
             $this->tm,
+            $mentionService,
         );
 
         $this->notificationService = new NotificationService(
@@ -246,7 +258,18 @@ class StreamEngine
             $this->mailService,
             $this->tm,
             $this->config,
+            $mentionService,
         );
+
+        $mentionService->configureAccess(
+            $this->feedService,
+            $messageRepository,
+            $participantRepository,
+            $userRepository,
+            $this->tm,
+            $this->config,
+        );
+        $mentionService->setNotificationService($this->notificationService);
 
         $this->userService = new UserService(
             $userRepository,
@@ -295,6 +318,7 @@ class StreamEngine
             $this->pollService,
             $this->themeService,
             $this->cronRegistry,
+            $mentionService,
         );
 
         $this->initCronAndApi();

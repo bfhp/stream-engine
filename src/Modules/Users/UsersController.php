@@ -3261,6 +3261,14 @@ class UsersController extends AbstractController
     private function handleUsersCollectionRequest(): void
     {
         if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            if ($this->context->query->has('username')) {
+                $users = $this->userService->findMentionSuggestions(
+                    $this->context->query->trimmed('username'),
+                );
+                echo Formatter::json(['data' => $this->buildPublicUserCards($users)]);
+                return;
+            }
+
             echo Formatter::json($this->getUsersListPayload());
             return;
         }

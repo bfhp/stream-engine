@@ -1,7 +1,7 @@
 {# data-slot* attributes are fill points for the browser: partials/js-templates.twig
    renders this same file as a <template>, and site/app.ts fills it for comments
    loaded or posted without a page reload (see shared/ui.ts fill()). #}
-<article class="comment ui-card" data-id="{{ comment.id }}" data-slot-attr="data-id:id">
+<article class="comment ui-card" id="comment-{{ comment.id }}" data-id="{{ comment.id }}" data-slot-attr="data-id:id id:anchor">
     <div class="ui-card__body">
 
         {% block comment_header %}

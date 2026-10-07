@@ -42,21 +42,6 @@ generator, hosted site, or build step.
   installation and a new developer can run, change, test, and extend it using
   only the repository documentation, with every internal link checked.
 
-### User mentions in comments, forums, and messages
-
-- Define a single `@username` syntax, escaping rules, and username boundaries;
-  parse mentions on the server rather than trusting client HTML.
-- Add context- and visibility-aware autocomplete for participants in the
-  discussion, forum, or group conversation without leaking private profiles.
-- Render a mention as a safe profile link and create a notification with a
-  canonical link to the specific comment/post/message.
-- Do not notify authors when they mention themselves, deduplicate repeated
-  mentions, and define behavior for text edits, user deletion, and username
-  changes.
-- Verify that the recipient may view the object before delivering a
-  notification; cover the parser, XSS, ACL, edits, and notification
-  deduplication with tests.
-
 ### Blog: friends-only posts via container_id/container_type
 
 `FriendService` already stores relationships in the personal blog feed's

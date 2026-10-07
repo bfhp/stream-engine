@@ -55,6 +55,7 @@ final readonly class MessageService
         private UserSessionRepository $sessions,
         private UploadRepository $uploads,
         ?TranslationManager $translationManager = null,
+        private ?MentionService $mentionService = null,
     ) {
         $this->tm = $translationManager ?? new TranslationManager('ru', 'ru');
 
@@ -412,6 +413,8 @@ final readonly class MessageService
             throw new ValidationException('Empty message');
         }
 
+        $this->mentionService?->validate($text);
+
         // Access check
         if (!$this->participants->isParticipant($conversationId, $userId)) {
             throw new ForbiddenException('Access denied');
@@ -448,6 +451,8 @@ final readonly class MessageService
             // 1. insert message
             $messageId = $this->messages->insert($conversationId, $userId, $text, $replyToMessageId, $attachmentUploadId);
 
+            $this->mentionService?->synchronizeMessage($messageId, $text, $userId);
+
             // 2. update conversation cache
             $this->conversations->updateCache($conversationId, $messageId);
 
@@ -474,7 +479,7 @@ final readonly class MessageService
         return [
             'id' => (int)$m['id'],
             'user_id' => (int)$m['user_id'],
-            'text' => $m['text'],
+            'text' => $this->mentionService?->renderMessage((int) $m['id'], $m['text']) ?? $m['text'],
             'created_at' => (int)$m['created_at'],
             'edited' => $m['updated_at'] !== null,
             'reply' => $replyToId !== null ? [
@@ -495,16 +500,23 @@ final readonly class MessageService
     /**
      * @throws ForbiddenException
      */
-    public function getMessagesWithMeta(int $conversationId, int $userId, int $afterId): array
-    {
+    public function getMessagesWithMeta(
+        int $conversationId,
+        int $userId,
+        int $afterId,
+        ?int $aroundMessageId = null,
+    ): array {
         if (!$this->participants->isParticipant($conversationId, $userId)) {
             throw new ForbiddenException('Access denied');
         }
 
-        $messages = array_map(
-            fn (array $m) => $this->mapMessage($m),
-            $this->messages->getAfter($conversationId, $afterId, 50)
-        );
+        $messageRows = $aroundMessageId !== null && $aroundMessageId > 0
+            ? [
+                ...$this->messages->getAtOrBefore($conversationId, $aroundMessageId, 25),
+                ...$this->messages->getAfter($conversationId, $aroundMessageId, 25),
+            ]
+            : $this->messages->getAfter($conversationId, $afterId, 50);
+        $messages = array_map(fn (array $m) => $this->mapMessage($m), $messageRows);
 
         // Messages the client may already have rendered (so getAfter() above
         // won't return them again) but that were edited or deleted since -
@@ -574,6 +586,7 @@ final readonly class MessageService
 
         try {
             $this->messages->delete($messageId);
+            $this->mentionService?->deactivateMessage($messageId);
 
             // The deleted message might have been the conversation's cached
             // "last message" - recompute it so the conversation list doesn't
@@ -600,6 +613,8 @@ final readonly class MessageService
         if ($text === '') {
             throw new ValidationException('Empty message');
         }
+
+        $this->mentionService?->validate($text);
 
         $message = $this->messages->findById($messageId);
 
@@ -628,6 +643,7 @@ final readonly class MessageService
         }
 
         $this->messages->updateText($messageId, $text);
+        $this->mentionService?->synchronizeMessage($messageId, $text, $userId);
     }
 
     /**

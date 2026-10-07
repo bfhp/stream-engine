@@ -12,6 +12,35 @@ use StreamEngine\Service\AccessService;
 
 final class UserRepositoryTest extends TestCase
 {
+    public function testUsernameAutocompleteUsesOneBoundedPrefixQuery(): void
+    {
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects($this->once())
+            ->method('fetchAll')
+            ->with(
+                $this->logicalAnd(
+                    $this->stringContains('u.username LIKE ?'),
+                    $this->stringContains('LIMIT 8'),
+                ),
+                ['ali%'],
+            )
+            ->willReturn([[
+                'id' => 42,
+                'nick' => 'Alice',
+                'username' => 'alice',
+                'avatar_url' => '/alice.webp',
+                'created_at' => 123,
+            ]]);
+
+        self::assertSame([[
+            'id' => 42,
+            'displayName' => 'Alice',
+            'username' => 'alice',
+            'avatarUrl' => '/alice.webp',
+            'createdAt' => 123,
+        ]], (new UserRepository($db))->findActiveByUsernamePrefix('ali'));
+    }
+
     public function testFindAdministratorIdsUsesAdminRole(): void
     {
         $db = $this->createMock(PdoDatabase::class);

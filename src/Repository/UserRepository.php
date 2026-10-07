@@ -391,6 +391,43 @@ final readonly class UserRepository
     }
 
     /**
+     * Prefix lookup for @mention autocomplete. The username unique index is
+     * usable for `prefix%`; all matches are fetched in one bounded query.
+     *
+     * @return list<array{id:int, displayName:string, username:string, avatarUrl:string, createdAt:int}>
+     */
+    public function findActiveByUsernamePrefix(string $prefix, int $limit = 8): array
+    {
+        $prefix = trim($prefix);
+        if ($prefix === '') {
+            return [];
+        }
+
+        $limit = max(1, min($limit, 20));
+        $rows = $this->db->fetchAll(
+            "SELECT u.id, u.nick, u.username, u.avatar_url, u.created_at
+             FROM users u
+             WHERE u.is_active = 1 AND u.username LIKE ?
+             ORDER BY u.username, u.id
+             LIMIT {$limit}",
+            [$prefix.'%'],
+        );
+
+        return array_map(
+            static fn (array $row): array => [
+                'id' => (int) $row['id'],
+                'displayName' => trim((string) ($row['nick'] ?? '')) !== ''
+                    ? trim((string) $row['nick'])
+                    : '#'.(int) $row['id'],
+                'username' => (string) $row['username'],
+                'avatarUrl' => (string) ($row['avatar_url'] ?? ''),
+                'createdAt' => (int) $row['created_at'],
+            ],
+            $rows,
+        );
+    }
+
+    /**
      * @return array{string, list<string>}
      */
     private function publicUsersWhere(string $query): array

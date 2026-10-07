@@ -56,7 +56,12 @@ final class NotificationDeliveryRepositoryTest extends TestCase
         $db->expects($this->never())->method('lastInsertId');
 
         $id = (new NotificationDeliveryRepository($db))->create(
-            new Notification(7, 'forum.reply', 'Новый ответ', deduplicationKey: 'same-key'),
+            new Notification(
+                7,
+                'user.mention',
+                'Вас упомянули',
+                deduplicationKey: 'user.mention:message:55:7',
+            ),
             'messenger',
             'instant',
             1700000000,

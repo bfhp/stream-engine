@@ -137,6 +137,7 @@ const EDIT_WINDOW_SECONDS = 900;
 // (#c=Xk3f9) - see site/hash-route.ts. The value is the conversation id run
 // through CMS.encodeId(), so the URL doesn't spell out row numbers.
 const HASH_CONVERSATION_KEY = 'c';
+const HASH_MESSAGE_KEY = 'm';
 
 export function initMessages() {
     const cms = window.CMS;
@@ -391,11 +392,14 @@ export function initMessages() {
      * Points #c= at a conversation, adding a history entry so Back/Forward
      * step through the chats that were opened.
      */
-    function writeConversationHash(id: number) {
+    function writeConversationHash(id: number, messageId: number | null = null) {
         const code = cms.encodeId(id);
         if (!code) return;
 
-        cms.hashRoute.set(HASH_CONVERSATION_KEY, code);
+        cms.hashRoute.patch({
+            [HASH_CONVERSATION_KEY]: code,
+            [HASH_MESSAGE_KEY]: messageId !== null ? cms.encodeId(messageId) : null,
+        });
     }
 
     /**
@@ -408,6 +412,10 @@ export function initMessages() {
 
     function conversationIdFromHash(params: Record<string, string>): number | null {
         return cms.decodeId(params[HASH_CONVERSATION_KEY] ?? null);
+    }
+
+    function messageIdFromHash(params: Record<string, string>): number | null {
+        return cms.decodeId(params[HASH_MESSAGE_KEY] ?? null);
     }
 
     /**
@@ -423,6 +431,7 @@ export function initMessages() {
      */
     async function applyHash(params: Record<string, string>) {
         const id = conversationIdFromHash(params);
+        const messageId = messageIdFromHash(params);
 
         if (id === null) {
             // No (or unreadable) code: the state being navigated back to is
@@ -433,9 +442,12 @@ export function initMessages() {
 
         // Already showing it - re-opening would needlessly re-fetch the
         // whole thread and scroll it back to the unread line.
-        if (id === activeId && panel === 'chat') return;
+        if (id === activeId && panel === 'chat') {
+            focusMessage(messageId);
+            return;
+        }
 
-        await openConversation(id);
+        await openConversation(id, messageId);
     }
 
     cms.hashRoute.onChange(({ source, params }) => {
@@ -447,7 +459,7 @@ export function initMessages() {
        Open conversation / chat header
     =============================== */
 
-    async function openConversation(id: number) {
+    async function openConversation(id: number, focusedMessageId: number | null = null) {
         activeId = id;
         panel = 'chat';
         setMobileContentVisible(true);
@@ -494,7 +506,7 @@ export function initMessages() {
         // Only once the conversation is known to exist and be ours - a
         // failed fetch above leaves the URL on whatever was open before
         // rather than pointing at a chat that never opened.
-        writeConversationHash(id);
+        writeConversationHash(id, focusedMessageId);
 
         activeDetail = detail;
         activeParticipants = {};
@@ -504,7 +516,8 @@ export function initMessages() {
 
         const unreadFromId = detail.last_read_message_id;
 
-        await loadMessages(unreadFromId);
+        await loadMessages(unreadFromId, focusedMessageId);
+        focusMessage(focusedMessageId);
         startMessagesPoll();
 
         if (lastMessageId > 0) {
@@ -605,12 +618,13 @@ export function initMessages() {
        Messages
     =============================== */
 
-    async function loadMessages(unreadFromId: number) {
+    async function loadMessages(unreadFromId: number, aroundMessageId: number | null = null) {
         if (!activeId) return;
 
         let data: ApiMessagesResponse;
         try {
-            data = await cms.api<ApiMessagesResponse>(`${API}/${activeId}/messages?after_id=0`);
+            const around = aroundMessageId !== null ? `&around_id=${aroundMessageId}` : '';
+            data = await cms.api<ApiMessagesResponse>(`${API}/${activeId}/messages?after_id=0${around}`);
         } catch (e) {
             return;
         }
@@ -628,6 +642,15 @@ export function initMessages() {
 
         renderTyping(data.typing);
         scrollMessagesToBottom();
+    }
+
+    function focusMessage(messageId: number | null) {
+        if (messageId === null) return;
+        const message = messagesListEl.querySelector<HTMLElement>(`[data-message-id="${messageId}"]`);
+        if (!message) return;
+        message.scrollIntoView({ block: 'center' });
+        message.classList.add('is-mentioned-target');
+        window.setTimeout(() => message.classList.remove('is-mentioned-target'), 2500);
     }
 
     async function pollMessages() {

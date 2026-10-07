@@ -207,6 +207,12 @@ final class UserService
         return max(1, (int) ceil($this->userRepository->countPublicUsers($query) / self::PUBLIC_USERS_PER_PAGE));
     }
 
+    /** @return list<array{id:int, displayName:string, username:string, avatarUrl:string, createdAt:int}> */
+    public function findMentionSuggestions(string $usernamePrefix, int $limit = 8): array
+    {
+        return $this->userRepository->findActiveByUsernamePrefix($usernamePrefix, $limit);
+    }
+
     /**
      * Looks up a user by their public username (the URL-safe handle, not the
      * free-text `nick`) for the public profile page. Only active accounts

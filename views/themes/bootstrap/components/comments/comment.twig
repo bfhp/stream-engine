@@ -1,6 +1,6 @@
 {# Same data-slot* fill points as the default theme's comment.twig - see
    partials/js-templates.twig. #}
-<article class="comment card border-0 shadow-sm" data-id="{{ comment.id }}" data-slot-attr="data-id:id">
+<article class="comment card border-0 shadow-sm" id="comment-{{ comment.id }}" data-id="{{ comment.id }}" data-slot-attr="data-id:id id:anchor">
     <div class="card-body">
 
         {% block comment_header %}

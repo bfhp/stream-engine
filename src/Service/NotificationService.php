@@ -82,6 +82,10 @@ final readonly class NotificationService
             'translationKey' => 'message_unread_digest',
             'digestOnly' => true,
         ],
+        'user.mention' => [
+            'key' => 'user_mention',
+            'translationKey' => 'user_mention',
+        ],
     ];
 
     public function __construct(
@@ -92,6 +96,7 @@ final readonly class NotificationService
         private MailService $mail,
         TranslationManager $translationManager,
         Config $config,
+        private ?MentionService $mentionService = null,
     ) {
         $this->tm = $translationManager;
         $this->config = $config;
@@ -142,15 +147,27 @@ final readonly class NotificationService
         $this->queueUnreadMessageDigests();
 
         foreach ($this->deliveries->claimDue('messenger', 'instant', self::MESSENGER_BATCH_SIZE) as $delivery) {
+            if (! $this->deliveryIsStillVisible($delivery)) {
+                $this->deliveries->cancel($delivery['id']);
+                continue;
+            }
             $this->sendMessenger($delivery);
         }
 
         foreach ($this->deliveries->claimDue('email', 'instant', self::INSTANT_EMAIL_BATCH_SIZE) as $delivery) {
+            if (! $this->deliveryIsStillVisible($delivery)) {
+                $this->deliveries->cancel($delivery['id']);
+                continue;
+            }
             $this->sendEmail([$delivery], $this->instantEmail($delivery));
         }
 
         $dailyByRecipient = [];
         foreach ($this->deliveries->claimDue('email', 'daily', self::DAILY_EMAIL_BATCH_SIZE) as $delivery) {
+            if (! $this->deliveryIsStillVisible($delivery)) {
+                $this->deliveries->cancel($delivery['id']);
+                continue;
+            }
             if ($delivery['notificationType'] === 'message.unread_digest') {
                 $preference = $this->preferences->findForUserAndType($delivery['recipientUserId'], 'message.unread_digest');
                 $count = $this->deliveries->unreadPersonalMessageCount($delivery['recipientUserId']);
@@ -536,6 +553,7 @@ final readonly class NotificationService
                 'community.join_request' => $this->tm->trans('notification.subject.community_join_request'),
                 'community.join_approved' => $this->tm->trans('notification.subject.community_join_approved'),
                 'community.membership_changed' => $this->tm->trans('notification.subject.community_membership_changed'),
+                'user.mention' => $this->tm->trans('notification.subject.user_mention'),
                 default => $this->tm->trans('notification.subject.default'),
             },
             'template' => 'notifications/instant',
@@ -582,6 +600,24 @@ final readonly class NotificationService
         }
 
         return in_array(parse_url($url, PHP_URL_SCHEME), ['http', 'https'], true) ? $url : null;
+    }
+
+    /** @param array{recipientUserId:int, notificationType:string, payload:array} $delivery */
+    private function deliveryIsStillVisible(array $delivery): bool
+    {
+        if ($delivery['notificationType'] !== 'user.mention' || $this->mentionService === null) {
+            return true;
+        }
+
+        $feedId = (int) ($delivery['payload']['mentionFeedId'] ?? 0);
+        $messageId = (int) ($delivery['payload']['mentionMessageId'] ?? 0);
+        if (($feedId > 0) === ($messageId > 0)) {
+            return false;
+        }
+
+        return $feedId > 0
+            ? $this->mentionService->canDeliverFeed($feedId, $delivery['recipientUserId'])
+            : $this->mentionService->canDeliverMessage($messageId, $delivery['recipientUserId']);
     }
 
     private function emailUnsubscribePath(int $userId): string

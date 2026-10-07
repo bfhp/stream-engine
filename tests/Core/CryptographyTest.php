@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Core;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use StreamEngine\Core\Cryptography;
 
@@ -57,5 +58,22 @@ final class CryptographyTest extends TestCase
         foreach (str_split($combined) as $char) {
             $this->assertStringContainsString($char, Cryptography::B62_DICTIONARY);
         }
+    }
+
+    #[DataProvider('opaqueIdVectors')]
+    public function testOpaqueIdEncodingMatchesBrowserImplementation(int $id, string $expected): void
+    {
+        self::assertSame($expected, Cryptography::encodeOpaqueId($id));
+    }
+
+    public static function opaqueIdVectors(): array
+    {
+        return [
+            [1, '0284irx'],
+            [2, '1osjujt'],
+            [42, '13bsff9'],
+            [123456, '0ahmqpq'],
+            [0xffffffff, '1s2roan'],
+        ];
     }
 }

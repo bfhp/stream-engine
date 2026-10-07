@@ -1118,7 +1118,16 @@ class ForumsController extends AbstractController
         $totalPosts = 1 + $replyCount;
         $totalPages = max(1, (int) ceil($totalPosts / self::POSTS_PER_PAGE));
 
-        $currentPage = $this->urlGenerator->pageNumber($this->context->query);
+        $linkedPostId = $this->context->query->int('post');
+        if ($linkedPostId > 0) {
+            $postNumber = $this->forumRepository->findTopicPostNumber($topicFeed->id, $linkedPostId);
+            if ($postNumber === null) {
+                throw new NotFoundException('Post not found');
+            }
+            $currentPage = (int) ceil($postNumber / self::POSTS_PER_PAGE);
+        } else {
+            $currentPage = $this->urlGenerator->pageNumber($this->context->query);
+        }
         if ($currentPage > $totalPages) {
             throw new NotFoundException('Page not found');
         }

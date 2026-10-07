@@ -297,6 +297,7 @@ const CMS = (() => {
     function commentSlots(item: any): SlotData {
         return {
             id: String(item.id ?? ""),
+            anchor: `comment-${item.id ?? ""}`,
             author: item.authorDisplayName ?? `#${item.ownerId}`,
             avatar: item.authorAvatarUrl ?? "",
             date: item.createdAtLabel ?? "",
