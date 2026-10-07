@@ -26,6 +26,8 @@ final readonly class UploadDirectoryBrowser
     public const string INVALID_MOVE = 'admin.error.invalid_file_browser_move';
     public const string MOVE_FAILED = 'admin.error.file_browser_move_failed';
     public const string DELETE_FAILED = 'admin.error.file_browser_delete_failed';
+    public const string INVALID_COPY = 'admin.error.invalid_file_browser_copy';
+    public const string COPY_FAILED = 'admin.error.file_browser_copy_failed';
 
     public function __construct(private string $basePath)
     {
@@ -267,6 +269,114 @@ final readonly class UploadDirectoryBrowser
         ];
     }
 
+    /**
+     * @param list<string> $paths
+     * @return array{
+     *     payload: array{path: string, files: list<array<string, mixed>>, folderChain: list<array<string, mixed>>},
+     *     entries: list<array{from: string, to: string, isDir: bool}>
+     * }|null
+     */
+    public function copy(array $paths, string $destinationPath): ?array
+    {
+        $paths = array_values(array_unique(array_map($this->normalizePath(...), $paths)));
+        $destinationPath = $this->normalizePath($destinationPath);
+        if ($paths === [] || in_array('', $paths, true)) {
+            throw new InvalidArgumentException(self::INVALID_PATH);
+        }
+
+        $root = realpath($this->basePath);
+        if ($root === false) {
+            return null;
+        }
+        $destinationCandidate = $destinationPath === '' ? $root : $root.'/'.$destinationPath;
+        $destination = realpath($destinationCandidate);
+        if ($destination === false || is_link($destinationCandidate)
+            || ! is_dir($destination) || ! $this->isInsideRoot($destination, $root)) {
+            return null;
+        }
+
+        $sources = [];
+        foreach ($paths as $path) {
+            $candidate = $root.'/'.$path;
+            $resolved = realpath($candidate);
+            if ($resolved === false || is_link($candidate) || ! $this->isInsideRoot($resolved, $root)) {
+                throw new InvalidArgumentException(self::ENTRY_NOT_FOUND);
+            }
+            $isDirectory = is_dir($resolved);
+            if (! $isDirectory && ! is_file($resolved)) {
+                throw new InvalidArgumentException(self::ENTRY_NOT_FOUND);
+            }
+            if ($isDirectory && $this->isInsideRoot($destination, $resolved)) {
+                throw new InvalidArgumentException(self::INVALID_COPY);
+            }
+            $sources[] = ['path' => $path, 'isDir' => $isDirectory, 'resolved' => $resolved];
+        }
+
+        usort($sources, static fn (array $left, array $right): int => strlen($left['path']) <=> strlen($right['path']));
+        $topLevelSources = [];
+        foreach ($sources as $source) {
+            $covered = false;
+            foreach ($topLevelSources as $parent) {
+                if ($parent['isDir'] && str_starts_with($source['path'], $parent['path'].'/')) {
+                    $covered = true;
+                    break;
+                }
+            }
+            if (! $covered) {
+                $topLevelSources[] = $source;
+            }
+        }
+
+        $copied = [];
+        try {
+            foreach ($topLevelSources as $source) {
+                $name = $this->availableCopyName(
+                    $destination,
+                    $destinationPath,
+                    basename($source['path']),
+                    $source['isDir'],
+                );
+                $target = $destination.'/'.$name;
+                if (! $this->copyTree($source['resolved'], $target)) {
+                    $this->removeTree($target);
+                    throw new InvalidArgumentException(self::COPY_FAILED);
+                }
+                $copied[] = [
+                    'from' => $source['path'],
+                    'to' => ltrim($destinationPath.'/'.$name, '/'),
+                    'isDir' => $source['isDir'],
+                    'resolved' => $target,
+                ];
+            }
+        } catch (\Throwable $exception) {
+            foreach (array_reverse($copied) as $entry) {
+                $this->removeTree($entry['resolved']);
+            }
+            throw $exception;
+        }
+
+        $payload = $this->browse($destinationPath);
+        if ($payload === null) {
+            foreach (array_reverse($copied) as $entry) {
+                $this->removeTree($entry['resolved']);
+            }
+
+            return null;
+        }
+
+        return [
+            'payload' => $payload,
+            'entries' => array_map(
+                static fn (array $entry): array => [
+                    'from' => $entry['from'],
+                    'to' => $entry['to'],
+                    'isDir' => $entry['isDir'],
+                ],
+                $copied,
+            ),
+        ];
+    }
+
     private function normalizePath(string $path): string
     {
         if ($path === '') {
@@ -364,6 +474,61 @@ final readonly class UploadDirectoryBrowser
         }
 
         return @rmdir($path);
+    }
+
+    private function copyTree(string $source, string $target): bool
+    {
+        if (is_link($source)) {
+            return true;
+        }
+        if (is_file($source)) {
+            return @copy($source, $target);
+        }
+        if (! is_dir($source) || ! @mkdir($target, 0755)) {
+            return false;
+        }
+
+        try {
+            foreach (new FilesystemIterator($source, FilesystemIterator::SKIP_DOTS) as $entry) {
+                if (! $this->copyTree($entry->getPathname(), $target.'/'.$entry->getFilename())) {
+                    return false;
+                }
+            }
+        } catch (UnexpectedValueException) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private function availableCopyName(
+        string $destination,
+        string $destinationPath,
+        string $name,
+        bool $directory,
+    ): string {
+        $this->normalizeEntryName($name, $destinationPath);
+        if (! file_exists($destination.'/'.$name) && ! is_link($destination.'/'.$name)) {
+            return $name;
+        }
+
+        $dot = $directory ? false : strrpos($name, '.');
+        $stem = $dot === false || $dot === 0 ? $name : substr($name, 0, $dot);
+        $extension = $dot === false || $dot === 0 ? '' : substr($name, $dot);
+        $maxBytes = 255 - ($destinationPath === '' ? 0 : strlen($destinationPath) + 1);
+        for ($number = 1; $number <= 10_000; $number++) {
+            $suffix = $number === 1 ? ' copy' : ' copy '.$number;
+            $stemBytes = $maxBytes - strlen($suffix) - strlen($extension);
+            if ($stemBytes < 1) {
+                break;
+            }
+            $candidate = mb_strcut($stem, 0, $stemBytes, 'UTF-8').$suffix.$extension;
+            if (! file_exists($destination.'/'.$candidate) && ! is_link($destination.'/'.$candidate)) {
+                return $candidate;
+            }
+        }
+
+        throw new InvalidArgumentException(self::COPY_FAILED);
     }
 
     /**

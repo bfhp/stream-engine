@@ -1234,6 +1234,8 @@ Correo: {email}
     'js.admin.file_browser.delete' => 'Eliminar',
     'js.admin.file_browser.delete_confirmation' => '¿Eliminar los archivos y carpetas seleccionados? Esta acción no se puede deshacer.',
     'js.admin.file_browser.delete_failed' => 'No se pudieron eliminar los elementos seleccionados',
+    'js.admin.file_browser.paste' => 'Pegar',
+    'js.admin.file_browser.copy_failed' => 'No se pudieron copiar los elementos seleccionados',
 
     'admin.error.forbidden' => 'Prohibido',
     'admin.error.invalid_role_filter' => 'Filtro de rol no válido',
@@ -1322,6 +1324,8 @@ Correo: {email}
     'admin.error.invalid_file_browser_move' => 'El archivo o carpeta no se puede mover allí',
     'admin.error.file_browser_move_failed' => 'No se pudo mover el archivo o carpeta',
     'admin.error.file_browser_delete_failed' => 'No se pudo eliminar el archivo o carpeta',
+    'admin.error.invalid_file_browser_copy' => 'Una carpeta no se puede copiar dentro de sí misma',
+    'admin.error.file_browser_copy_failed' => 'No se pudo copiar el archivo o carpeta',
     'admin.error.uploads_directory_not_found' => 'No se encontró el directorio uploads',
     'admin.page_action.admin.index' => 'Interfaz de administrador',
     'admin.page_action.search.results' => 'Resultados de búsqueda',

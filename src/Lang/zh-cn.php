@@ -1234,6 +1234,8 @@ return [
     'js.admin.file_browser.delete' => '删除',
     'js.admin.file_browser.delete_confirmation' => '删除所选文件和文件夹？此操作无法撤销。',
     'js.admin.file_browser.delete_failed' => '无法删除所选项目',
+    'js.admin.file_browser.paste' => '粘贴',
+    'js.admin.file_browser.copy_failed' => '无法复制所选项目',
 
     'admin.error.forbidden' => '禁止访问',
     'admin.error.invalid_role_filter' => '角色筛选无效',
@@ -1322,6 +1324,8 @@ return [
     'admin.error.invalid_file_browser_move' => '无法将文件或文件夹移动到该位置',
     'admin.error.file_browser_move_failed' => '无法移动文件或文件夹',
     'admin.error.file_browser_delete_failed' => '无法删除文件或文件夹',
+    'admin.error.invalid_file_browser_copy' => '文件夹不能复制到自身内部',
+    'admin.error.file_browser_copy_failed' => '无法复制文件或文件夹',
     'admin.error.uploads_directory_not_found' => '未找到 uploads 目录',
     'admin.page_action.admin.index' => '管理界面',
     'admin.page_action.search.results' => '搜索结果',

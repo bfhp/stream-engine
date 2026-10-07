@@ -146,4 +146,26 @@ readonly class UploadRepository
             [$path, strlen($path) + 1, $path]
         );
     }
+
+    public function copyPath(string $from, string $to, bool $directory): void
+    {
+        if (! $directory) {
+            $this->db->execute(
+                "INSERT INTO uploads (user_id, path, mime, size, original_name, created_at)
+                 SELECT user_id, ?, mime, size, original_name, UNIX_TIMESTAMP()
+                 FROM uploads WHERE path = ?",
+                [$to, $from]
+            );
+
+            return;
+        }
+
+        $this->db->execute(
+            "INSERT INTO uploads (user_id, path, mime, size, original_name, created_at)
+             SELECT user_id, CONCAT(?, SUBSTRING(path, ?)), mime, size, original_name, UNIX_TIMESTAMP()
+             FROM uploads
+             WHERE path = ? OR LEFT(path, ?) = CONCAT(?, '/')",
+            [$to, strlen($from) + 1, $from, strlen($from) + 1, $from]
+        );
+    }
 }

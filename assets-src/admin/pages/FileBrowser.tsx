@@ -26,6 +26,7 @@ import {
 
 const FILE_ACCEPT = ".jpg,.jpeg,.png,.webp,.gif,.mp3,.ogg,.pdf";
 const RENAME_ACTION_ID = "rename_file_browser_entry";
+const PASTE_ACTION_ID = "paste_file_browser_entries";
 
 async function responseJson(response: Response): Promise<UploadBrowserPayload> {
     const body = await response.json().catch(() => null);
@@ -54,12 +55,28 @@ export default function FileBrowser() {
     const [deleteFiles, setDeleteFiles] = useState<UploadBrowserFile[]>([]);
     const [deleteError, setDeleteError] = useState<string | null>(null);
     const [deleting, setDeleting] = useState(false);
+    const [clipboardFiles, setClipboardFiles] = useState<UploadBrowserFile[]>([]);
+    const [copying, setCopying] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
 
     const fileActions = useMemo(() => [
         ChonkyActions.CreateFolder,
         ChonkyActions.UploadFiles,
+        ChonkyActions.CopyFiles,
+        defineFileAction({
+            id: PASTE_ACTION_ID,
+            button: {
+                name: trans("js.admin.file_browser.paste"),
+                toolbar: true,
+                contextMenu: true,
+                group: "Actions",
+                icon: ChonkyIconName.paste,
+            },
+            customVisibility: () => clipboardFiles.length > 0
+                ? CustomVisibilityState.Default
+                : CustomVisibilityState.Disabled,
+        }),
         ChonkyActions.DeleteFiles,
         defineFileAction({
             id: RENAME_ACTION_ID,
@@ -75,7 +92,7 @@ export default function FileBrowser() {
                 ? CustomVisibilityState.Default
                 : CustomVisibilityState.Disabled,
         }),
-    ], []);
+    ], [clipboardFiles.length]);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -238,9 +255,39 @@ export default function FileBrowser() {
         }
     }, [deleteFiles]);
 
+    const pasteEntries = useCallback(async () => {
+        if (clipboardFiles.length === 0) return;
+
+        setCopying(true);
+        setError(null);
+        try {
+            const response = await fetch("/api/v1/admin/file-browser", {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json", ...csrfHeaders() },
+                body: JSON.stringify({
+                    operation: "copy",
+                    paths: clipboardFiles.map(file => file.path),
+                    destination: path,
+                }),
+            });
+            if (!response.ok) {
+                throw await getApiResponseError(response, trans("js.admin.file_browser.copy_failed"));
+            }
+
+            setPayload(await response.json() as UploadBrowserPayload);
+        } catch (error) {
+            setError(error instanceof Error
+                ? error.message
+                : trans("js.admin.file_browser.copy_failed"));
+        } finally {
+            setCopying(false);
+        }
+    }, [clipboardFiles, path]);
+
     const handleFileAction = useCallback((data: FileActionData<FileAction>) => {
         if (data.id === ChonkyActions.CreateFolder.id) {
-            if (!creatingFolder && !uploading && !relocating && !deleting) {
+            if (!creatingFolder && !uploading && !relocating && !deleting && !copying) {
                 setFolderError(null);
                 setFolderDialogOpened(true);
             }
@@ -248,13 +295,30 @@ export default function FileBrowser() {
         }
 
         if (data.id === ChonkyActions.UploadFiles.id) {
-            if (!uploading && !relocating && !deleting) fileInput.current?.click();
+            if (!uploading && !relocating && !deleting && !copying) fileInput.current?.click();
+            return;
+        }
+
+        if (data.id === ChonkyActions.CopyFiles.id) {
+            const selected = data.state.selectedFilesForAction as UploadBrowserFile[];
+            if (selected.length > 0 && !uploading && !creatingFolder
+                && !relocating && !deleting && !copying) {
+                setClipboardFiles(selected);
+            }
+            return;
+        }
+
+        if (data.id === PASTE_ACTION_ID) {
+            if (!uploading && !creatingFolder && !relocating && !deleting && !copying) {
+                void pasteEntries();
+            }
             return;
         }
 
         if (data.id === ChonkyActions.DeleteFiles.id) {
             const selected = data.state.selectedFilesForAction as UploadBrowserFile[];
-            if (selected.length > 0 && !uploading && !creatingFolder && !relocating && !deleting) {
+            if (selected.length > 0 && !uploading && !creatingFolder
+                && !relocating && !deleting && !copying) {
                 setDeleteError(null);
                 setDeleteFiles(selected);
             }
@@ -265,7 +329,7 @@ export default function FileBrowser() {
             const target = (data.state.contextMenuTriggerFile
                 ?? data.state.selectedFilesForAction[0]) as UploadBrowserFile | undefined;
             if (target && data.state.selectedFilesForAction.length === 1
-                && !uploading && !creatingFolder && !relocating && !deleting) {
+                && !uploading && !creatingFolder && !relocating && !deleting && !copying) {
                 setRenameError(null);
                 setRenameFile(target);
                 setRenameName(target.name);
@@ -274,7 +338,7 @@ export default function FileBrowser() {
         }
 
         if (data.id === ChonkyActions.MoveFiles.id) {
-            if (uploading || creatingFolder || relocating || deleting) return;
+            if (uploading || creatingFolder || relocating || deleting || copying) return;
             const move = data.payload as unknown as {
                 files: UploadBrowserFile[];
                 destination: UploadBrowserFile;
@@ -326,7 +390,7 @@ export default function FileBrowser() {
         } else if (target.publicUrl) {
             window.open(target.publicUrl, "_blank", "noopener,noreferrer");
         }
-    }, [creatingFolder, deleting, relocateEntry, relocating, uploading]);
+    }, [copying, creatingFolder, deleting, pasteEntries, relocateEntry, relocating, uploading]);
 
     return (
         <Stack h="calc(100vh - 92px)" mih={480} gap="sm">
@@ -444,7 +508,7 @@ export default function FileBrowser() {
                         aria-label={trans("js.admin.refresh")}
                         onClick={() => setRefreshKey(key => key + 1)}
                     >
-                        {loading || uploading || relocating || deleting
+                        {loading || uploading || relocating || deleting || copying
                             ? <Loader size={16} />
                             : <IconRefresh size={18} />}
                     </ActionIcon>
@@ -460,7 +524,7 @@ export default function FileBrowser() {
                     fileActions={fileActions}
                     onFileAction={handleFileAction}
                     iconComponent={ChonkyIconFA}
-                    disableDragAndDrop={uploading || creatingFolder || relocating || deleting}
+                    disableDragAndDrop={uploading || creatingFolder || relocating || deleting || copying}
                     darkMode={colorScheme === "dark"}
                     i18n={{ locale: getLocale() }}
                 />

@@ -660,6 +660,36 @@ class AdminController extends AbstractController implements DashboardCardProvide
                         }
                         $payload = $deleted['payload'];
                     }
+                } elseif ($operation === 'copy'
+                    && is_array($input['paths'] ?? null)
+                    && array_is_list($input['paths'])
+                    && array_filter(
+                        $input['paths'],
+                        static fn (mixed $path): bool => ! is_string($path),
+                    ) === []
+                    && is_string($input['destination'] ?? null)) {
+                    $copied = $browser->copy($input['paths'], $input['destination']);
+                    if ($copied === null) {
+                        $payload = null;
+                    } else {
+                        try {
+                            $this->db->begin();
+                            $uploads = new UploadRepository($this->db);
+                            foreach ($copied['entries'] as $entry) {
+                                $uploads->copyPath($entry['from'], $entry['to'], $entry['isDir']);
+                            }
+                            $this->db->commit();
+                        } catch (\Throwable $exception) {
+                            $this->db->rollback();
+                            try {
+                                $browser->delete(array_column($copied['entries'], 'to'));
+                            } catch (\Throwable) {
+                                // Preserve the database error if filesystem cleanup also fails.
+                            }
+                            throw $exception;
+                        }
+                        $payload = $copied['payload'];
+                    }
                 } else {
                     throw new \InvalidArgumentException(UploadDirectoryBrowser::INVALID_PATH);
                 }

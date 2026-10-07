@@ -1234,6 +1234,8 @@ E-mail: {email}
     'js.admin.file_browser.delete' => 'Excluir',
     'js.admin.file_browser.delete_confirmation' => 'Excluir os arquivos e pastas selecionados? Esta ação não pode ser desfeita.',
     'js.admin.file_browser.delete_failed' => 'Não foi possível excluir os itens selecionados',
+    'js.admin.file_browser.paste' => 'Colar',
+    'js.admin.file_browser.copy_failed' => 'Não foi possível copiar os itens selecionados',
 
     'admin.error.forbidden' => 'Proibido',
     'admin.error.invalid_role_filter' => 'Filtro de papel inválido',
@@ -1322,6 +1324,8 @@ E-mail: {email}
     'admin.error.invalid_file_browser_move' => 'O arquivo ou pasta não pode ser movido para lá',
     'admin.error.file_browser_move_failed' => 'Não foi possível mover o arquivo ou pasta',
     'admin.error.file_browser_delete_failed' => 'Não foi possível excluir o arquivo ou pasta',
+    'admin.error.invalid_file_browser_copy' => 'Uma pasta não pode ser copiada para dentro de si mesma',
+    'admin.error.file_browser_copy_failed' => 'Não foi possível copiar o arquivo ou pasta',
     'admin.error.uploads_directory_not_found' => 'Diretório uploads não encontrado',
     'admin.page_action.admin.index' => 'Interface do administrador',
     'admin.page_action.search.results' => 'Resultados da busca',

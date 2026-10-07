@@ -1271,6 +1271,8 @@ return [
     'js.admin.file_browser.delete' => 'Удалить',
     'js.admin.file_browser.delete_confirmation' => 'Удалить выбранные файлы и папки? Это действие нельзя отменить.',
     'js.admin.file_browser.delete_failed' => 'Не удалось удалить выбранные объекты',
+    'js.admin.file_browser.paste' => 'Вставить',
+    'js.admin.file_browser.copy_failed' => 'Не удалось скопировать выбранные объекты',
 
     'admin.error.forbidden' => 'Доступ запрещён',
     'admin.error.invalid_role_filter' => 'Некорректный фильтр роли',
@@ -1363,6 +1365,8 @@ return [
     'admin.error.invalid_file_browser_move' => 'Файл или папку нельзя переместить сюда',
     'admin.error.file_browser_move_failed' => 'Не удалось переместить файл или папку',
     'admin.error.file_browser_delete_failed' => 'Не удалось удалить файл или папку',
+    'admin.error.invalid_file_browser_copy' => 'Папку нельзя скопировать внутрь самой себя',
+    'admin.error.file_browser_copy_failed' => 'Не удалось скопировать файл или папку',
     'admin.error.uploads_directory_not_found' => 'Директория uploads не найдена',
     'admin.page_action.admin.index' => 'Интерфейс администратора',
     'admin.page_action.search.results' => 'Результаты поиска',

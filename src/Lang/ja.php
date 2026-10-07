@@ -1234,6 +1234,8 @@ return [
     'js.admin.file_browser.delete' => '削除',
     'js.admin.file_browser.delete_confirmation' => '選択したファイルとフォルダーを削除しますか？この操作は元に戻せません。',
     'js.admin.file_browser.delete_failed' => '選択した項目を削除できませんでした',
+    'js.admin.file_browser.paste' => '貼り付け',
+    'js.admin.file_browser.copy_failed' => '選択した項目をコピーできませんでした',
 
     'admin.error.forbidden' => '禁止されています',
     'admin.error.invalid_role_filter' => '無効なロールフィルターです',
@@ -1322,6 +1324,8 @@ return [
     'admin.error.invalid_file_browser_move' => 'ファイルまたはフォルダーをそこへ移動できません',
     'admin.error.file_browser_move_failed' => 'ファイルまたはフォルダーを移動できませんでした',
     'admin.error.file_browser_delete_failed' => 'ファイルまたはフォルダーを削除できませんでした',
+    'admin.error.invalid_file_browser_copy' => 'フォルダーをその内部へコピーすることはできません',
+    'admin.error.file_browser_copy_failed' => 'ファイルまたはフォルダーをコピーできませんでした',
     'admin.error.uploads_directory_not_found' => 'uploads ディレクトリが見つかりません',
     'admin.page_action.admin.index' => '管理者インターフェース',
     'admin.page_action.search.results' => '検索結果',

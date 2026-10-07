@@ -1234,6 +1234,8 @@ E-mail: {email}
     'js.admin.file_browser.delete' => 'Verwijderen',
     'js.admin.file_browser.delete_confirmation' => 'Geselecteerde bestanden en mappen verwijderen? Dit kan niet ongedaan worden gemaakt.',
     'js.admin.file_browser.delete_failed' => 'Geselecteerde items verwijderen mislukt',
+    'js.admin.file_browser.paste' => 'Plakken',
+    'js.admin.file_browser.copy_failed' => 'Geselecteerde items kopiëren mislukt',
 
     'admin.error.forbidden' => 'Verboden',
     'admin.error.invalid_role_filter' => 'Ongeldig rolfilter',
@@ -1322,6 +1324,8 @@ E-mail: {email}
     'admin.error.invalid_file_browser_move' => 'Bestand of map kan daar niet heen worden verplaatst',
     'admin.error.file_browser_move_failed' => 'Bestand of map verplaatsen mislukt',
     'admin.error.file_browser_delete_failed' => 'Bestand of map verwijderen mislukt',
+    'admin.error.invalid_file_browser_copy' => 'Een map kan niet naar zichzelf worden gekopieerd',
+    'admin.error.file_browser_copy_failed' => 'Bestand of map kopiëren mislukt',
     'admin.error.uploads_directory_not_found' => 'Uploads-map niet gevonden',
     'admin.page_action.admin.index' => 'Beheerinterface',
     'admin.page_action.search.results' => 'Zoekresultaten',

@@ -92,4 +92,28 @@ final class UploadRepositoryTest extends TestCase
         $repository->deletePath('old.jpg', false);
         $repository->deletePath('gallery', true);
     }
+
+    public function testCopyPathDuplicatesOneFileOrADirectoryTree(): void
+    {
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects($this->exactly(2))
+            ->method('execute')
+            ->willReturnCallback(function (string $sql, array $params): int {
+                static $call = 0;
+                $call++;
+                $this->assertStringContainsString('INSERT INTO uploads', $sql);
+                if ($call === 1) {
+                    $this->assertSame(['new.jpg', 'old.jpg'], $params);
+                } else {
+                    $this->assertStringContainsString('CONCAT(?, SUBSTRING(path, ?))', $sql);
+                    $this->assertSame(['archive', 8, 'gallery', 8, 'gallery'], $params);
+                }
+
+                return 1;
+            });
+
+        $repository = new UploadRepository($db);
+        $repository->copyPath('old.jpg', 'new.jpg', false);
+        $repository->copyPath('gallery', 'archive', true);
+    }
 }

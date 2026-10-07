@@ -1234,6 +1234,8 @@ return [
     'js.admin.file_browser.delete' => 'حذف',
     'js.admin.file_browser.delete_confirmation' => 'هل تريد حذف الملفات والمجلدات المحددة؟ لا يمكن التراجع عن هذا الإجراء.',
     'js.admin.file_browser.delete_failed' => 'تعذر حذف العناصر المحددة',
+    'js.admin.file_browser.paste' => 'لصق',
+    'js.admin.file_browser.copy_failed' => 'تعذر نسخ العناصر المحددة',
 
     'admin.error.forbidden' => 'محظور',
     'admin.error.invalid_role_filter' => 'مرشح الدور غير صالح',
@@ -1322,6 +1324,8 @@ return [
     'admin.error.invalid_file_browser_move' => 'لا يمكن نقل الملف أو المجلد إلى هناك',
     'admin.error.file_browser_move_failed' => 'تعذر نقل الملف أو المجلد',
     'admin.error.file_browser_delete_failed' => 'تعذر حذف الملف أو المجلد',
+    'admin.error.invalid_file_browser_copy' => 'لا يمكن نسخ المجلد إلى داخل نفسه',
+    'admin.error.file_browser_copy_failed' => 'تعذر نسخ الملف أو المجلد',
     'admin.error.uploads_directory_not_found' => 'تعذر العثور على دليل uploads',
     'admin.page_action.admin.index' => 'واجهة الإدارة',
     'admin.page_action.search.results' => 'نتائج البحث',

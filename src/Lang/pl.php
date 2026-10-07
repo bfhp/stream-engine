@@ -1234,6 +1234,8 @@ E-mail: {email}
     'js.admin.file_browser.delete' => 'Usuń',
     'js.admin.file_browser.delete_confirmation' => 'Usunąć wybrane pliki i foldery? Tej operacji nie można cofnąć.',
     'js.admin.file_browser.delete_failed' => 'Nie udało się usunąć wybranych elementów',
+    'js.admin.file_browser.paste' => 'Wklej',
+    'js.admin.file_browser.copy_failed' => 'Nie udało się skopiować wybranych elementów',
 
     'admin.error.forbidden' => 'Zabronione',
     'admin.error.invalid_role_filter' => 'Nieprawidłowy filtr roli',
@@ -1322,6 +1324,8 @@ E-mail: {email}
     'admin.error.invalid_file_browser_move' => 'Nie można przenieść pliku lub folderu w to miejsce',
     'admin.error.file_browser_move_failed' => 'Nie udało się przenieść pliku lub folderu',
     'admin.error.file_browser_delete_failed' => 'Nie udało się usunąć pliku lub folderu',
+    'admin.error.invalid_file_browser_copy' => 'Nie można skopiować folderu do niego samego',
+    'admin.error.file_browser_copy_failed' => 'Nie udało się skopiować pliku lub folderu',
     'admin.error.uploads_directory_not_found' => 'Nie znaleziono katalogu uploads',
     'admin.page_action.admin.index' => 'Interfejs administracyjny',
     'admin.page_action.search.results' => 'Wyniki wyszukiwania',

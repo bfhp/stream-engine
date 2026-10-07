@@ -1235,6 +1235,8 @@ Email: {email}
     'js.admin.file_browser.delete' => 'Delete',
     'js.admin.file_browser.delete_confirmation' => 'Delete the selected files and folders? This cannot be undone.',
     'js.admin.file_browser.delete_failed' => 'Failed to delete selected items',
+    'js.admin.file_browser.paste' => 'Paste',
+    'js.admin.file_browser.copy_failed' => 'Failed to copy selected items',
 
     'admin.error.forbidden' => 'Forbidden',
     'admin.error.invalid_role_filter' => 'Invalid role filter',
@@ -1327,6 +1329,8 @@ Email: {email}
     'admin.error.invalid_file_browser_move' => 'This file or folder cannot be moved there',
     'admin.error.file_browser_move_failed' => 'Failed to move file or folder',
     'admin.error.file_browser_delete_failed' => 'Failed to delete file or folder',
+    'admin.error.invalid_file_browser_copy' => 'A folder cannot be copied into itself',
+    'admin.error.file_browser_copy_failed' => 'Failed to copy file or folder',
     'admin.error.uploads_directory_not_found' => 'Uploads directory not found',
     'admin.page_action.admin.index' => 'Administrator interface',
     'admin.page_action.search.results' => 'Search results',

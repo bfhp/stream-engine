@@ -1713,6 +1713,39 @@ final class AdminControllerTest extends TestCase
         $this->assertSame(['gallery/photo.jpg'], $this->writes[0][1]);
     }
 
+    public function testFileBrowserEndpointCopiesEntriesAndUploadRows(): void
+    {
+        $uploadsDir = sys_get_temp_dir().'/admin-file-browser-'.bin2hex(random_bytes(8));
+        self::assertTrue(mkdir($uploadsDir.'/gallery', 0700, true));
+        self::assertNotFalse(file_put_contents($uploadsDir.'/photo.jpg', 'image'));
+        $this->withValidCsrf();
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        PhpInputStreamMock::register(json_encode([
+            'operation' => 'copy',
+            'paths' => ['photo.jpg'],
+            'destination' => 'gallery',
+        ], JSON_THROW_ON_ERROR));
+
+        try {
+            $response = $this->callAndDecode(
+                $this->makeModule(uploadsDir: $uploadsDir),
+                $this->makeApiPage('admin.file-browser', ['GET', 'POST']),
+            );
+            $this->assertFileExists($uploadsDir.'/gallery/photo.jpg');
+            $this->assertSame('image', file_get_contents($uploadsDir.'/gallery/photo.jpg'));
+        } finally {
+            unlink($uploadsDir.'/gallery/photo.jpg');
+            unlink($uploadsDir.'/photo.jpg');
+            rmdir($uploadsDir.'/gallery');
+            rmdir($uploadsDir);
+        }
+
+        $this->assertContains('photo.jpg', array_column($response['files'], 'name'));
+        $this->assertCount(1, $this->writes);
+        $this->assertStringContainsString('INSERT INTO uploads', $this->writes[0][0]);
+        $this->assertSame(['gallery/photo.jpg', 'photo.jpg'], $this->writes[0][1]);
+    }
+
     public function testFileBrowserUploadRequiresCsrf(): void
     {
         $_SERVER['REQUEST_METHOD'] = 'POST';

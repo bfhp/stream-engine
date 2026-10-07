@@ -172,6 +172,30 @@ final class UploadDirectoryBrowserTest extends TestCase
         (new UploadDirectoryBrowser($this->root))->delete(['']);
     }
 
+    public function testCopiesFilesAndDirectoryTreesWithoutOverwriting(): void
+    {
+        $browser = new UploadDirectoryBrowser($this->root);
+
+        $fileCopy = $browser->copy(['2.txt'], '');
+        self::assertFileExists($this->root.'/2 copy.txt');
+        self::assertSame('two', file_get_contents($this->root.'/2 copy.txt'));
+        self::assertSame('2 copy.txt', $fileCopy['entries'][0]['to'] ?? null);
+
+        $directoryCopy = $browser->copy(['2'], '');
+        self::assertDirectoryExists($this->root.'/2 copy/nested');
+        self::assertSame('image', file_get_contents($this->root.'/2 copy/photo one.webp'));
+        self::assertSame('2 copy', $directoryCopy['entries'][0]['to'] ?? null);
+        self::assertContains('2 copy', array_column($directoryCopy['payload']['files'] ?? [], 'name'));
+    }
+
+    public function testRefusesToCopyADirectoryIntoItself(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(UploadDirectoryBrowser::INVALID_COPY);
+
+        (new UploadDirectoryBrowser($this->root))->copy(['2'], '2/nested');
+    }
+
     public function testSymlinksAreNotExposed(): void
     {
         $outside = sys_get_temp_dir().'/uploads-outside-'.bin2hex(random_bytes(8));

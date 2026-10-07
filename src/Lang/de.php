@@ -1234,6 +1234,8 @@ E-Mail: {email}
     'js.admin.file_browser.delete' => 'Löschen',
     'js.admin.file_browser.delete_confirmation' => 'Ausgewählte Dateien und Ordner löschen? Dies kann nicht rückgängig gemacht werden.',
     'js.admin.file_browser.delete_failed' => 'Ausgewählte Elemente konnten nicht gelöscht werden',
+    'js.admin.file_browser.paste' => 'Einfügen',
+    'js.admin.file_browser.copy_failed' => 'Ausgewählte Elemente konnten nicht kopiert werden',
 
     'admin.error.forbidden' => 'Verboten',
     'admin.error.invalid_role_filter' => 'Ungültiger Rollenfilter',
@@ -1322,6 +1324,8 @@ E-Mail: {email}
     'admin.error.invalid_file_browser_move' => 'Datei oder Ordner kann nicht dorthin verschoben werden',
     'admin.error.file_browser_move_failed' => 'Datei oder Ordner konnte nicht verschoben werden',
     'admin.error.file_browser_delete_failed' => 'Datei oder Ordner konnte nicht gelöscht werden',
+    'admin.error.invalid_file_browser_copy' => 'Ein Ordner kann nicht in sich selbst kopiert werden',
+    'admin.error.file_browser_copy_failed' => 'Datei oder Ordner konnte nicht kopiert werden',
     'admin.error.uploads_directory_not_found' => 'Upload-Verzeichnis nicht gefunden',
     'admin.page_action.admin.index' => 'Administratoroberfläche',
     'admin.page_action.search.results' => 'Suchergebnisse',
