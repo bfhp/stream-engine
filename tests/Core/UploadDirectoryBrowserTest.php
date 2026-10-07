@@ -78,6 +78,33 @@ final class UploadDirectoryBrowserTest extends TestCase
         self::assertNull($browser->browse('child'));
     }
 
+    public function testCreatesADirectoryAndReturnsTheUpdatedListing(): void
+    {
+        $payload = (new UploadDirectoryBrowser($this->root))->createDirectory('2', 'New folder');
+
+        self::assertDirectoryExists($this->root.'/2/New folder');
+        self::assertNotNull($payload);
+        self::assertContains('New folder', array_column($payload['files'], 'name'));
+    }
+
+    public function testRejectsInvalidOrDuplicateDirectoryNames(): void
+    {
+        $browser = new UploadDirectoryBrowser($this->root);
+
+        foreach (['', '.', '..', 'nested/name', 'nested\\name', "bad\0name"] as $name) {
+            try {
+                $browser->createDirectory('2', $name);
+                self::fail('Expected an invalid directory name to be rejected');
+            } catch (InvalidArgumentException $exception) {
+                self::assertSame(UploadDirectoryBrowser::INVALID_DIRECTORY_NAME, $exception->getMessage());
+            }
+        }
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(UploadDirectoryBrowser::DIRECTORY_EXISTS);
+        $browser->createDirectory('2', 'nested');
+    }
+
     public function testSymlinksAreNotExposed(): void
     {
         $outside = sys_get_temp_dir().'/uploads-outside-'.bin2hex(random_bytes(8));

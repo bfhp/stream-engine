@@ -1624,6 +1624,34 @@ final class AdminControllerTest extends TestCase
         $this->assertSame('/uploads/2/nested/photo.jpg', $response['url']);
     }
 
+    public function testFileBrowserEndpointCreatesADirectory(): void
+    {
+        $uploadsDir = sys_get_temp_dir().'/admin-file-browser-'.bin2hex(random_bytes(8));
+        self::assertTrue(mkdir($uploadsDir.'/gallery', 0700, true));
+        $this->withValidCsrf();
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        PhpInputStreamMock::register(json_encode([
+            'operation' => 'create-directory',
+            'path' => 'gallery',
+            'name' => 'Summer',
+        ], JSON_THROW_ON_ERROR));
+
+        try {
+            $response = $this->callAndDecode(
+                $this->makeModule(uploadsDir: $uploadsDir),
+                $this->makeApiPage('admin.file-browser', ['GET', 'POST']),
+            );
+            $this->assertDirectoryExists($uploadsDir.'/gallery/Summer');
+        } finally {
+            rmdir($uploadsDir.'/gallery/Summer');
+            rmdir($uploadsDir.'/gallery');
+            rmdir($uploadsDir);
+        }
+
+        $this->assertSame('gallery', $response['path']);
+        $this->assertContains('Summer', array_column($response['files'], 'name'));
+    }
+
     public function testFileBrowserUploadRequiresCsrf(): void
     {
         $_SERVER['REQUEST_METHOD'] = 'POST';

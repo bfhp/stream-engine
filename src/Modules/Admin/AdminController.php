@@ -607,7 +607,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
             $input = $this->jsonBody();
             if (($input['operation'] ?? null) !== 'create-directory'
                 || ! is_string($input['path'] ?? null) || ! is_string($input['name'] ?? null)) {
-                throw new ValidationException($this->tm->trans('admin.error.invalid_file_browser_operation'));
+                throw new ValidationException($this->tm->trans(UploadDirectoryBrowser::INVALID_PATH));
             }
 
             try {
