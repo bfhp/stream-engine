@@ -7,7 +7,6 @@ namespace Tests\Modules\API;
 use DateTimeZone;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use StreamEngine\Core\Config;
 use StreamEngine\Core\Exceptions\ForbiddenException;
 use StreamEngine\Core\Exceptions\ValidationException;
 use StreamEngine\Core\FileProcessing\FileStorage;
@@ -53,7 +52,6 @@ final class APIControllerTest extends TestCase
         ?PageTree $pageTree = null,
         ?FeedService $feedService = null,
         ?PollService $pollService = null,
-        ?Config $config = null,
         ?User $user = null,
     ): APIController {
         $db = $this->createStub(PdoDatabase::class);
@@ -86,7 +84,6 @@ final class APIControllerTest extends TestCase
             $feedService ?? $this->createStub(FeedService::class),
             $pollService ?? $this->createStub(PollService::class),
             $pageTree ?? new PageTree([]),
-            $config ?? new Config([]),
             new TranslationManager('ru', 'en'),
             $this->silentNotificationService(),
         );
@@ -175,7 +172,7 @@ final class APIControllerTest extends TestCase
         $this->assertSame('auth.session', $actionsByPattern['auth']);
         $this->assertSame('uploads.create', $actionsByPattern['uploads']);
         $this->assertSame('comments.root', $actionsByPattern['comments']);
-        $this->assertSame('cron.trigger', $actionsByPattern['cron']);
+        $this->assertArrayNotHasKey('cron', $actionsByPattern);
 
         $feedsPage = array_values(array_filter($children, static fn (Page $page): bool => $page->pattern === 'feeds'))[0];
         $commentsPage = array_values(array_filter($children, static fn (Page $page): bool => $page->pattern === 'comments'))[0];
@@ -1066,95 +1063,6 @@ final class APIControllerTest extends TestCase
         $this->assertSame(3, $payload['votersCount']);
         $this->assertSame(2, $payload['options'][0]['votesCount']);
         $this->assertSame(1, $payload['options'][1]['votesCount']);
-    }
-
-    private function makeCronPage(): Page
-    {
-        return Page::api(
-            id: 60,
-            parentId: 10,
-            pattern: 'cron',
-            requestMethods: ['GET'],
-            action: 'cron.trigger',
-        );
-    }
-
-    /**
-     * Only the refusals are covered: the accepting path ends in
-     * StreamEngine::triggerCronProcess(), a static that spawns a real process.
-     * Injecting a CronTrigger is the seam that would make it testable - see
-     * docs/TODO.md.
-     *
-     * These became testable at all only because the guards now throw instead of
-     * `http_response_code(400); exit;`, which took the PHPUnit process with it.
-     */
-    public function testCallApiCronRefusesWhenNoKeyIsConfigured(): void
-    {
-        $page = $this->makeCronPage();
-        // Config::cronKey() returns '' for an unset CRON_KEY, and the old
-        // `$_GET['key'] !== $this->config->cronKey()` then let `?key=` through -
-        // the two empty strings matched, so an unconfigured deployment had a
-        // cron endpoint anyone could trigger.
-        $_GET['key'] = '';
-
-        $module = $this->makeModule(new PageTree([$page]), config: new Config([]));
-
-        $this->expectException(ValidationException::class);
-
-        $module->callApi($page, []);
-    }
-
-    public function testCallApiCronRefusesAMissingKey(): void
-    {
-        $page = $this->makeCronPage();
-        unset($_GET['key']);
-
-        $module = $this->makeModule(
-            new PageTree([$page]),
-            config: new Config(['CRON_KEY' => str_repeat('k', 32)])
-        );
-
-        $this->expectException(ValidationException::class);
-
-        $module->callApi($page, []);
-    }
-
-    public function testCallApiCronRefusesAWrongKey(): void
-    {
-        $page = $this->makeCronPage();
-        // Same length, so this is decided by the comparison rather than by any
-        // shape check in front of it.
-        $_GET['key'] = str_repeat('k', 31).'x';
-
-        $module = $this->makeModule(
-            new PageTree([$page]),
-            config: new Config(['CRON_KEY' => str_repeat('k', 32)])
-        );
-
-        $this->expectException(ValidationException::class);
-
-        $module->callApi($page, []);
-    }
-
-    /**
-     * `?key[]=x` makes $_GET['key'] an array, and hash_equals() is typed
-     * `string, string` - a TypeError, i.e. a 500, if the array ever reached
-     * it. QueryParams::string() answers '' for a non-string, so it never
-     * does, and the request is refused like any other wrong key.
-     */
-    public function testCallApiCronRefusesANonStringKeyInsteadOfCrashing(): void
-    {
-        $page = $this->makeCronPage();
-        $_GET['key'] = [str_repeat('k', 32)];
-
-        $module = $this->makeModule(
-            new PageTree([$page]),
-            config: new Config(['CRON_KEY' => str_repeat('k', 32)])
-        );
-
-        $this->expectException(ValidationException::class);
-
-        $module->callApi($page, []);
     }
 
     private function makeFeedsPage(): Page

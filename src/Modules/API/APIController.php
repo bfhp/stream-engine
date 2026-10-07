@@ -7,7 +7,6 @@ namespace StreamEngine\Modules\API;
 use Exception;
 use Random\RandomException;
 use StreamEngine\Core\AbstractController;
-use StreamEngine\Core\Config;
 use StreamEngine\Core\Exceptions\ForbiddenException;
 use StreamEngine\Core\Exceptions\NotFoundException;
 use StreamEngine\Core\Exceptions\ValidationException;
@@ -28,7 +27,6 @@ use StreamEngine\Service\FeedService;
 use StreamEngine\Service\NotificationService;
 use StreamEngine\Service\PollService;
 use StreamEngine\Service\UploadService;
-use StreamEngine\StreamEngine;
 use StreamEngine\View\Breadcrumb;
 use Throwable;
 
@@ -50,7 +48,6 @@ class APIController extends AbstractController
         private readonly FeedService $feedService,
         private readonly PollService $pollService,
         private readonly PageTree $pageTree,
-        private readonly Config $config,
         private readonly TranslationManager $tm,
         private readonly NotificationService $notifications,
     ) {
@@ -90,7 +87,6 @@ class APIController extends AbstractController
             'feed.poll.vote' => $this->handlePollVoteRequest((int) ($args['slug'] ?? 0)),
             'feed.readingProgress' => $this->handleReadingProgressRequest((int) ($args['slug'] ?? 0)),
             'auth.session' => $this->handleApiAuthRequest(),
-            'cron.trigger' => $this->handleCronRequest(),
             default => throw new NotFoundException('Unknown API action'),
         };
     }
@@ -576,29 +572,6 @@ class APIController extends AbstractController
         ]);
     }
 
-    private function handleCronRequest(): void
-    {
-        $expected = $this->config->cronKey();
-        // string() is total, so `?key[]=x` - which used to make this an array
-        // and hash_equals() a TypeError - arrives as '' and is refused below
-        // like any other wrong key.
-        $received = $this->context->query->string('key');
-
-        if ($expected === '') {
-            throw new ValidationException('Cron is not configured', 400);
-        }
-
-        // hash_equals rather than !==: the comparison is against a secret, and
-        // !== short-circuits on the first differing byte. Guessing a key over
-        // the network through timing is a stretch, but this costs one function
-        // call and the same reasoning already applies in verifyCsrf().
-        if (! hash_equals($expected, $received)) {
-            throw new ValidationException('Bad cron key', 400);
-        }
-        StreamEngine::triggerCronProcess();
-        print Formatter::json([]);
-    }
-
     public static function registerApi(int $apiPageId, PageTree $pageTree): void
     {
         $feedsPageId = $pageTree->getMaxPageId();
@@ -740,16 +713,6 @@ class APIController extends AbstractController
                 pattern: '{commentId}',
                 requestMethods: ['PATCH', 'DELETE'],
                 action: 'comments.item',
-            )
-        );
-        $cronPageId = $pageTree->getMaxPageId();
-        $pageTree->add(
-            Page::api(
-                id: $cronPageId,
-                parentId: $apiPageId,
-                pattern: 'cron',
-                requestMethods: ['GET'],
-                action: 'cron.trigger',
             )
         );
     }

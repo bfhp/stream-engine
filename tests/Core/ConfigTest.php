@@ -41,32 +41,19 @@ final class ConfigTest extends TestCase
     }
 
     /* ===============================
-       Secrets and cron
+       Secrets
     =============================== */
 
     /**
-     * An unset cron key must be empty rather than anything guessable, and the
-     * cron endpoint has to treat empty as "refuse everything" - which it now
-     * does (APIController::handleCronRequest). Both halves are needed: an empty
-     * key with a `hash_equals($configured, $given)` check and no emptiness
-     * guard would open cron to anyone sending `?key=`.
-     */
-    public function testAnUnsetCronKeyIsEmpty(): void
-    {
-        $this->assertSame('', (new Config([]))->cronKey());
-    }
-
-    /**
-     * appSecret() falls back to CRON_KEY so a fresh deployment signs *something*
-     * without a second variable to set - and to the empty string if neither is
-     * present, at which point anything it signs is effectively unsigned.
+     * appSecret() is explicit and returns the empty string when APP_SECRET is
+     * absent, at which point anything it signs is effectively unsigned.
      *
      * Pinned so nobody starts treating the signature as an authentication
      * boundary: today its only user is the anonymous visit cookie, where it is
      * an abuse speed bump.
      */
     #[DataProvider('appSecretProvider')]
-    public function testAppSecretFallsBackThroughCronKeyToEmpty(array $env, string $expected): void
+    public function testAppSecretIsExplicitAndDefaultsToEmpty(array $env, string $expected): void
     {
         $this->assertSame($expected, (new Config($env))->appSecret());
     }
@@ -76,28 +63,8 @@ final class ConfigTest extends TestCase
     {
         return [
             'explicit' => [['APP_SECRET' => 'a-real-secret'], 'a-real-secret'],
-            'falls back to the cron key' => [['CRON_KEY' => 'cron-secret'], 'cron-secret'],
-            // Explicit wins, which is what "set APP_SECRET to keep the two
-            // apart" depends on.
-            'explicit beats the fallback' => [
-                ['APP_SECRET' => 'a-real-secret', 'CRON_KEY' => 'cron-secret'],
-                'a-real-secret',
-            ],
-            'neither' => [[], ''],
+            'missing' => [[], ''],
         ];
-    }
-
-    /**
-     * `??` only skips *missing* keys, so an empty string in the environment is
-     * a configured value and passes straight through - `CRON_KEY=` in a .env is
-     * indistinguishable from not setting it at all. Written down because it is
-     * the shape a half-finished deployment actually has.
-     */
-    public function testAnEmptyCronKeyIsNotTreatedAsUnset(): void
-    {
-        $config = new Config(['CRON_KEY' => '']);
-
-        $this->assertSame('', $config->cronKey());
     }
 
     public function testSiteUrlIsNormalizedAndMissingValueIsExplicit(): void

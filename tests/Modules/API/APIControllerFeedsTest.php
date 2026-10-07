@@ -7,7 +7,6 @@ namespace Tests\Modules\API;
 use DateTimeZone;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use StreamEngine\Core\Config;
 use StreamEngine\Core\Exceptions\ForbiddenException;
 use StreamEngine\Core\Exceptions\ValidationException;
 use StreamEngine\Core\PageTree;
@@ -94,7 +93,6 @@ final class APIControllerFeedsTest extends TestCase
             $feedService ?? $this->createStub(FeedService::class),
             $this->createStub(PollService::class),
             $pageTree ?? new PageTree([]),
-            new Config([]),
             new TranslationManager('ru', 'en'),
             (new \ReflectionClass(NotificationService::class))->newInstanceWithoutConstructor(),
         );
@@ -1076,7 +1074,7 @@ final class APIControllerFeedsTest extends TestCase
         self::assertSame('/api/v1/feeds', $decoded['resources']['feeds']);
         self::assertSame('/api/v1/auth', $decoded['resources']['auth']);
         self::assertSame('/api/v1/uploads', $decoded['resources']['uploads']);
-        self::assertSame('/api/v1/cron', $decoded['resources']['cron']);
+        self::assertArrayNotHasKey('cron', $decoded['resources']);
         // Nested ones are not flattened into it: {slug} lives under feeds.
         self::assertArrayNotHasKey('{slug}', $decoded['resources']);
     }

@@ -96,7 +96,7 @@ locations, snapshot and migration checksums, database connectivity, and whether
 the current database is empty or can be safely adopted. The web wizard shows
 system checks when it opens and a complete report after submission; CLI
 failures print the same failed-check summary. Existing unmanaged keys and
-secrets are preserved; missing `APP_SECRET` and `CRON_KEY` values are generated.
+secrets are preserved; a missing `APP_SECRET` value is generated.
 New `.env` files use owner-only permissions. Database and administrator
 passwords may be passed as CLI arguments for fully automated deployment, but
 password files or deployment secrets are preferable where the process list or

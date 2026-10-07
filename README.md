@@ -139,7 +139,6 @@ The installer-managed core settings are:
 | `DB_HOST`, `DB_PORT` | MariaDB host and port. |
 | `DB_NAME` | Application database name. |
 | `DB_USERNAME`, `DB_PASSWORD` | Application database credentials. |
-| `CRON_KEY` | Random key for the protected web cron endpoint and fallback signing key. The installer generates it separately from `APP_SECRET`. |
 
 `MEMCACHED_HOST` and `MEMCACHED_PORT` select the cache service and default to
 `127.0.0.1:11211`; use `CACHE_PREFIX` to isolate multiple installations that
@@ -147,8 +146,7 @@ share it. The example also lists optional filesystem, SMTP, theme, and
 S3-compatible storage settings together with their expected grouping.
 
 Do not commit `.env`. For a manually managed deployment, replace every
-placeholder and generate independent secrets, for example by running the
-following command twice:
+placeholder and generate `APP_SECRET`, for example with:
 
 ```bash
 php -r 'echo bin2hex(random_bytes(32)), PHP_EOL;'

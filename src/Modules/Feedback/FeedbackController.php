@@ -114,9 +114,8 @@ class FeedbackController extends AbstractController
         $data = is_array($data) ? $data : [];
 
         // Refuse to run with no secret rather than keying an HMAC with '' and
-        // accepting anything a caller invents - same reasoning as
-        // APIController::handleCronRequest()'s empty-key guard. A
-        // misconfiguration, so it says so instead of pretending to have sent.
+        // accepting anything a caller invents. A misconfiguration, so it says
+        // so instead of pretending to have sent.
         $secret = $this->config->appSecret();
 
         if ($secret === '') {

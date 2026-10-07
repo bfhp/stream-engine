@@ -125,7 +125,6 @@ final readonly class InstallationEnvironment
             'DB_NAME' => $this->dbName,
             'DB_USERNAME' => $this->dbUsername,
             'DB_PASSWORD' => $this->dbPassword,
-            'CRON_KEY' => self::existingSecret($current, 'CRON_KEY'),
         ];
     }
 

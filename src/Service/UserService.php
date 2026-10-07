@@ -1002,7 +1002,7 @@ final class UserService
     private function visitTokenSignature(string $random): string
     {
         // Domain-separated so this can never collide with another use of
-        // the same secret (Config::appSecret() may well be CRON_KEY).
+        // the same application secret.
         return hash_hmac('sha256', 'visit:'.$random, $this->config->appSecret());
     }
 

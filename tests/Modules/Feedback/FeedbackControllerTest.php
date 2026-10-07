@@ -345,9 +345,8 @@ final class FeedbackControllerTest extends TestCase
 
     /**
      * An unset secret would key the HMAC with '' and accept whatever a caller
-     * invented, so it refuses to run instead - same reasoning as
-     * APIController::handleCronRequest()'s empty-key guard. Loudly, because it is
-     * a misconfiguration rather than a bot.
+     * invented, so it refuses to run instead. Loudly, because it is a
+     * misconfiguration rather than a bot.
      */
     public function testAnUnconfiguredSecretIsRefusedLoudly(): void
     {

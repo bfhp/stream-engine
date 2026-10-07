@@ -11,7 +11,7 @@ use StreamEngine\Core\Installation\InstallationEnvironment;
 
 final class InstallationEnvironmentTest extends TestCase
 {
-    public function testValuesAreNormalizedAndSecretsAreGenerated(): void
+    public function testValuesAreNormalizedAndAppSecretIsGenerated(): void
     {
         $config = new InstallationEnvironment(
             'PROD',
@@ -33,21 +33,18 @@ final class InstallationEnvironmentTest extends TestCase
         self::assertSame('app', $values['DB_USERNAME']);
         self::assertSame('p@ss $word', $values['DB_PASSWORD']);
         self::assertMatchesRegularExpression('/^[a-f0-9]{64}$/', $values['APP_SECRET']);
-        self::assertMatchesRegularExpression('/^[a-f0-9]{64}$/', $values['CRON_KEY']);
     }
 
-    public function testExistingSecretsArePreservedAndLegacyCronModeIsDropped(): void
+    public function testExistingAppSecretIsPreservedAndLegacyCronModeIsDropped(): void
     {
         $config = new InstallationEnvironment('dev', 'http://localhost:5000', 'db', 3306, 'app', 'user', '');
 
         $values = $config->values([
             'APP_SECRET' => 'existing-app-secret',
-            'CRON_KEY' => 'existing-cron-key',
             'CRON_MODE' => 'os',
         ]);
 
         self::assertSame('existing-app-secret', $values['APP_SECRET']);
-        self::assertSame('existing-cron-key', $values['CRON_KEY']);
         self::assertArrayNotHasKey('CRON_MODE', $values);
     }
 

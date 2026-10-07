@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Modules\API;
 
 use PHPUnit\Framework\TestCase;
-use StreamEngine\Core\Config;
 use StreamEngine\Core\ControllerFactory;
 use StreamEngine\Core\ModuleRegistry;
 use StreamEngine\Core\PageTree;
@@ -44,7 +43,6 @@ final class ModuleTest extends TestCase
             $this->createStub(FeedService::class),
             $this->createStub(PollService::class),
             new PageTree([]),
-            new Config([]),
             new TranslationManager('ru', 'en'),
             (new \ReflectionClass(NotificationService::class))->newInstanceWithoutConstructor(),
         ];

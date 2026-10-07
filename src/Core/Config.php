@@ -153,17 +153,13 @@ final readonly class Config
      * cookie (UserService::recordGuestPresence()), which is signed so a
      * forged one is discarded before it can insert a row.
      *
-     * Falls back to CRON_KEY, which every deployment already sets and keeps
-     * secret, so this doesn't become another thing to configure before the
-     * site works. Set APP_SECRET explicitly to keep the two apart.
-     *
-     * If neither is set the return is empty and anything signed with it is
+     * If APP_SECRET is not set the return is empty and anything signed with it is
      * effectively unsigned - callers should treat the signature as an abuse
      * speed bump, not an authentication boundary.
      */
     public function appSecret(): string
     {
-        return (string) ($this->env['APP_SECRET'] ?? $this->env['CRON_KEY'] ?? '');
+        return (string) ($this->env['APP_SECRET'] ?? '');
     }
 
     public function siteUrl(): ?string
@@ -173,11 +169,6 @@ final readonly class Config
         return $url === '' ? null : rtrim($url, '/');
     }
 
-    // ===== CRON =====
-    public function cronKey(): string
-    {
-        return $this->env['CRON_KEY'] ?? '';
-    }
     // ===== SMTP =====
 
     public function smtpHost(): string
