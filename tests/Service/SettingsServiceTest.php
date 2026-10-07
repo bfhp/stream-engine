@@ -26,6 +26,14 @@ use StreamEngine\Service\SettingsService;
  */
 final class SettingsServiceTest extends TestCase
 {
+    public function testCronModeDefaultsToOsAndRejectsCorruptStoredValues(): void
+    {
+        self::assertSame('os', $this->makeService()->cronMode());
+        self::assertSame('web', $this->makeService(['cron.mode' => ['web', 1]])->cronMode());
+        self::assertSame('off', $this->makeService(['cron.mode' => ['off', 1]])->cronMode());
+        self::assertSame('off', $this->makeService(['cron.mode' => ['invalid', 1]])->cronMode());
+    }
+
     /** @var list<string> every statement the service caused */
     private array $queries = [];
 

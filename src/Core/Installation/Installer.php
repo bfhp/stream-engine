@@ -47,6 +47,7 @@ final readonly class Installer
         private InstallationStateStore $states,
         private SchemaSnapshot $snapshot,
         private string $languagesDirectory,
+        private string $defaultCronMode = 'os',
     ) {
     }
 
@@ -288,6 +289,7 @@ final readonly class Installer
         );
         $statement->execute(['site_name', $config->siteName]);
         $statement->execute(['locale', $config->locale]);
+        $statement->execute(['cron.mode', $this->defaultCronMode]);
     }
 
     private function seedWelcomeArticle(PDO $pdo): int

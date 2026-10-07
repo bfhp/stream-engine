@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace StreamEngine\Service;
 
-use StreamEngine\Core\Config;
 use StreamEngine\Core\Cron\CronRegistry;
 use StreamEngine\Core\Cron\CronRepository;
 
@@ -16,7 +15,7 @@ final readonly class CronStatusService
     public function __construct(
         private CronRegistry $registry,
         private CronRepository $repository,
-        private Config $config,
+        private SettingsService $settings,
     ) {
     }
 
@@ -24,6 +23,7 @@ final readonly class CronStatusService
     public function payload(?int $now = null): array
     {
         $now ??= time();
+        $mode = $this->settings->cronMode();
         $stateByTask = [];
         foreach ($this->repository->states() as $state) {
             $stateByTask[(string) ($state['task'] ?? '')] = $state;
@@ -31,7 +31,12 @@ final readonly class CronStatusService
 
         $tasks = [];
         foreach ($this->registry->all() as $definition) {
-            $tasks[] = $this->taskPayload($definition, $stateByTask[$definition['task']] ?? [], $now);
+            $tasks[] = $this->taskPayload(
+                $definition,
+                $stateByTask[$definition['task']] ?? [],
+                $now,
+                $mode === 'off',
+            );
         }
         usort($tasks, static fn (array $left, array $right): int => $left['task'] <=> $right['task']);
 
@@ -49,15 +54,17 @@ final readonly class CronStatusService
         }
 
         return [
-            'mode' => $this->config->cronMode(),
-            'scheduler' => $this->schedulerPayload($this->repository->schedulerState(), $now),
+            'mode' => $mode,
+            'scheduler' => $mode === 'off'
+                ? ['status' => 'disabled', 'lastStartedAt' => null, 'lastFinishedAt' => null]
+                : $this->schedulerPayload($this->repository->schedulerState(), $now),
             'summary' => $summary,
             'data' => $tasks,
         ];
     }
 
     /** @param array<string, mixed> $definition @param array<string, mixed> $state */
-    private function taskPayload(array $definition, array $state, int $now): array
+    private function taskPayload(array $definition, array $state, int $now, bool $disabled): array
     {
         $interval = max(1, (int) $definition['interval']);
         $lastSucceededAt = self::nullableTimestamp($state['last_run'] ?? null);
@@ -65,7 +72,7 @@ final readonly class CronStatusService
         $lastFinishedAt = self::nullableTimestamp($state['last_finished_at'] ?? null);
         $lockedAt = self::nullableTimestamp($state['locked_at'] ?? null);
         $nextRunAt = ($lastSucceededAt ?? 0) + $interval;
-        $status = $this->taskStatus(
+        $status = $disabled ? 'disabled' : $this->taskStatus(
             $state,
             $lockedAt,
             $lastStartedAt,
@@ -82,7 +89,7 @@ final readonly class CronStatusService
             'lastStartedAt' => $lastStartedAt,
             'lastFinishedAt' => $lastFinishedAt,
             'lastSucceededAt' => $lastSucceededAt,
-            'nextRunAt' => $status === 'running' || $status === 'never' ? null : $nextRunAt,
+            'nextRunAt' => in_array($status, ['disabled', 'running', 'never'], true) ? null : $nextRunAt,
             'durationMs' => self::nullableNonNegativeInt($state['last_duration_ms'] ?? null),
             'lockedAt' => $lockedAt,
             'consecutiveFailures' => max(0, (int) ($state['consecutive_failures'] ?? 0)),

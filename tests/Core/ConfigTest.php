@@ -56,13 +56,6 @@ final class ConfigTest extends TestCase
         $this->assertSame('', (new Config([]))->cronKey());
     }
 
-    public function testCronDefaultsToTheWebFallback(): void
-    {
-        $this->assertSame('web', (new Config([]))->cronMode());
-        $this->assertSame('web', (new Config(['CRON_MODE' => 'web']))->cronMode());
-        $this->assertSame('os', (new Config(['CRON_MODE' => 'os']))->cronMode());
-    }
-
     /**
      * appSecret() falls back to CRON_KEY so a fresh deployment signs *something*
      * without a second variable to set - and to the empty string if neither is

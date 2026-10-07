@@ -5,14 +5,27 @@ declare(strict_types=1);
 namespace Tests\Service;
 
 use PHPUnit\Framework\TestCase;
-use StreamEngine\Core\Config;
 use StreamEngine\Core\Cron\CronRegistry;
 use StreamEngine\Core\Cron\CronRepository;
 use StreamEngine\Core\PdoDatabase;
+use StreamEngine\Repository\SettingsRepository;
 use StreamEngine\Service\CronStatusService;
+use StreamEngine\Service\SettingsService;
 
 final class CronStatusServiceTest extends TestCase
 {
+    private function settings(string $mode): SettingsService
+    {
+        $db = $this->createStub(PdoDatabase::class);
+        $db->method('fetchAll')->willReturn([[
+            'setting_key' => 'cron.mode',
+            'setting_value' => $mode,
+            'updated_at' => 1,
+        ]]);
+
+        return new SettingsService(new SettingsRepository($db));
+    }
+
     public function testPayloadMergesRegisteredTasksWithPersistedState(): void
     {
         $now = 1_800_000_000;
@@ -45,7 +58,7 @@ final class CronStatusServiceTest extends TestCase
         $payload = (new CronStatusService(
             $registry,
             new CronRepository($db),
-            new Config(['CRON_MODE' => 'os']),
+            $this->settings('os'),
         ))->payload($now);
 
         self::assertSame('os', $payload['mode']);
@@ -89,12 +102,32 @@ final class CronStatusServiceTest extends TestCase
         $payload = (new CronStatusService(
             $registry,
             new CronRepository($db),
-            new Config([]),
+            $this->settings('web'),
         ))->payload($now);
 
         self::assertSame('stale', $payload['scheduler']['status']);
         self::assertSame(['failed', 'stale'], array_column($payload['data'], 'status'));
         self::assertSame(1, $payload['summary']['failed']);
         self::assertSame(1, $payload['summary']['overdue']);
+    }
+
+    public function testOffModeDisablesSchedulerAndEveryRegisteredTask(): void
+    {
+        $registry = new CronRegistry();
+        $registry->add('probe:task', 'Probe', 60);
+        $db = $this->createStub(PdoDatabase::class);
+        $db->method('fetchAll')->willReturn([]);
+
+        $payload = (new CronStatusService(
+            $registry,
+            new CronRepository($db),
+            $this->settings('off'),
+        ))->payload(1_800_000_000);
+
+        self::assertSame('off', $payload['mode']);
+        self::assertSame('disabled', $payload['scheduler']['status']);
+        self::assertSame('disabled', $payload['data'][0]['status']);
+        self::assertNull($payload['data'][0]['nextRunAt']);
+        self::assertSame(0, $payload['summary']['overdue']);
     }
 }

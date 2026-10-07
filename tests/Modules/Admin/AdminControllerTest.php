@@ -136,6 +136,7 @@ final class AdminControllerTest extends TestCase
             $themeService,
             $uploadService ?? $this->createStub(UploadService::class),
             new Config($uploadsDir === null ? [] : ['UPLOADS_DIR' => $uploadsDir]),
+            new SettingsService($settingsRepository),
         );
     }
 
@@ -1170,6 +1171,22 @@ final class AdminControllerTest extends TestCase
         $module->callApi(
             $this->makeApiPage('admin.setting', ['GET', 'PATCH']),
             ['key' => 'locale']
+        );
+    }
+
+    public function testAnUnsupportedCronModeIsRefused(): void
+    {
+        $module = $this->makeModule();
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode(['value' => 'sometimes']));
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('Unsupported cron mode');
+
+        $module->callApi(
+            $this->makeApiPage('admin.setting', ['GET', 'PATCH']),
+            ['key' => 'cron.mode'],
         );
     }
 

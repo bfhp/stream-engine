@@ -98,7 +98,7 @@ final class CronRunnerTest extends TestCase
      * The point of the whole exercise. lock() used to return true
      * unconditionally, so this branch in CronRunner::run() was dead and two
      * runners executed the same task at once - and cron is triggered from web
-     * requests in the CRON_MODE=web fallback, so overlapping runners are
+     * requests in the cron.mode=web fallback, so overlapping runners are
      * possible. Behind it sit row deletions (`users:cleanup`) and other
      * non-idempotent work.
      */

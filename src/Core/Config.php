@@ -178,11 +178,6 @@ final readonly class Config
     {
         return $this->env['CRON_KEY'] ?? '';
     }
-    public function cronMode(): string
-    {
-        return $this->env['CRON_MODE'] ?? 'web';
-    }
-
     // ===== SMTP =====
 
     public function smtpHost(): string

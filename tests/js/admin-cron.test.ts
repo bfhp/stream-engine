@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { formatCronInterval, formatDuration } from "../../assets-src/admin/lib/cron";
+import { cronStatusColors, formatCronInterval, formatDuration } from "../../assets-src/admin/lib/cron";
 import { resetTranslations, setTranslationsForTests } from "../../assets-src/shared/i18n";
 
 describe("admin cron formatting", () => {
@@ -19,5 +19,9 @@ describe("admin cron formatting", () => {
         expect(formatDuration(null)).toBe("-");
         expect(formatDuration(250)).toBe("250 ms");
         expect(formatDuration(1250)).toBe("1.25 s");
+    });
+
+    it("renders disabled scheduling as a neutral state", () => {
+        expect(cronStatusColors.disabled).toBe("gray");
     });
 });

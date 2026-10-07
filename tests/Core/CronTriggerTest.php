@@ -47,6 +47,12 @@ final class CronTriggerTest extends TestCase
         ];
     }
 
+    #[DataProvider('anyEnvProvider')]
+    public function testOffModeNeverStartsAWebRunner(string $appEnv, int $roll): void
+    {
+        $this->assertFalse(CronTrigger::shouldTrigger('off', $appEnv, $roll));
+    }
+
     /**
      * @return array<string, array{string}>
      */

@@ -28,6 +28,7 @@ final class InstallerFactory
             states: new InstallationStateStore($projectRoot.'/storage/installation.json'),
             snapshot: SchemaSnapshot::load($engineRoot.'/resources/install/manifest.json'),
             languagesDirectory: $engineRoot.'/src/Lang',
+            defaultCronMode: ($environment['APP_ENV'] ?? 'prod') === 'prod' ? 'os' : 'web',
         );
     }
 

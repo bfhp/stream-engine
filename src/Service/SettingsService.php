@@ -8,6 +8,8 @@ use StreamEngine\Repository\SettingsRepository;
 
 final class SettingsService
 {
+    public const array CRON_MODES = ['os', 'web', 'off'];
+
     /**
      * @var array<string, string>
      */
@@ -48,6 +50,13 @@ final class SettingsService
         $this->ensureLoaded();
 
         return $this->lastModified;
+    }
+
+    public function cronMode(): string
+    {
+        $mode = $this->getString('cron.mode', 'os');
+
+        return in_array($mode, self::CRON_MODES, true) ? $mode : 'off';
     }
 
     public function set(string $key, string $value): void

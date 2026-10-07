@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import {
     ActionIcon, Alert, Badge, Card, Group, Select, SimpleGrid, Skeleton, Stack, Table, Text, Tooltip
 } from "@mantine/core";
-import { IconAlertTriangle, IconRefresh } from "@tabler/icons-react";
+import { notifications } from "@mantine/notifications";
+import { IconAlertTriangle, IconDeviceFloppy, IconRefresh } from "@tabler/icons-react";
+import { csrfHeaders } from "../../shared/csrf";
 import { formatTimestamp } from "../lib/format";
 import {
     cronStatusColors, formatCronInterval, formatDuration, type CronStatus, type SchedulerStatus
@@ -24,8 +26,10 @@ type CronTask = {
     lastError: string | null;
 };
 
+type CronMode = "os" | "web" | "off";
+
 type CronPayload = {
-    mode: string;
+    mode: CronMode;
     scheduler: {
         status: SchedulerStatus;
         lastStartedAt: number | null;
@@ -35,7 +39,7 @@ type CronPayload = {
     data: CronTask[];
 };
 
-const statusOptions: CronStatus[] = ["scheduled", "running", "due", "overdue", "failed", "never", "stale"];
+const statusOptions: CronStatus[] = ["scheduled", "running", "due", "overdue", "failed", "never", "stale", "disabled"];
 
 function statusLabel(status: CronStatus | SchedulerStatus): string {
     return trans(`js.admin.cron.status.${status}`);
@@ -51,6 +55,8 @@ export default function Cron() {
     const [error, setError] = useState<string | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
     const [status, setStatus] = useState<string | null>(null);
+    const [modeDraft, setModeDraft] = useState<CronMode>("os");
+    const [savingMode, setSavingMode] = useState(false);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -62,7 +68,10 @@ export default function Cron() {
                 if (!response.ok) throw new Error(await response.text() || trans("js.admin.cron.load_failed"));
                 return response.json() as Promise<CronPayload>;
             })
-            .then(setPayload)
+            .then(next => {
+                setPayload(next);
+                setModeDraft(next.mode);
+            })
             .catch(fetchError => {
                 if (fetchError.name !== "AbortError") setError(fetchError.message || trans("js.admin.cron.load_failed"));
             })
@@ -82,6 +91,24 @@ export default function Cron() {
         () => (payload?.data || []).filter(task => !status || task.status === status),
         [payload, status]
     );
+
+    function saveMode() {
+        if (!payload || modeDraft === payload.mode) return;
+        setSavingMode(true);
+
+        fetch("/api/v1/admin/settings/cron.mode", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json", ...csrfHeaders() },
+            body: JSON.stringify({ value: modeDraft })
+        })
+            .then(async response => {
+                if (!response.ok) throw new Error(await response.text() || trans("js.admin.save_failed"));
+                setRefreshKey(key => key + 1);
+                notifications.show({ color: "green", message: trans("js.admin.settings.saved"), autoClose: 2000 });
+            })
+            .catch(saveError => notifications.show({ color: "red", title: trans("js.admin.error"), message: saveError.message }))
+            .finally(() => setSavingMode(false));
+    }
 
     return <Stack>
         <Group justify="space-between">
@@ -106,7 +133,29 @@ export default function Cron() {
             <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }}>
                 <Card withBorder>
                     <Text c="dimmed" size="sm">{trans("js.admin.cron.mode")}</Text>
-                    <Text fw={700} size="lg">{payload.mode.toUpperCase()}</Text>
+                    <Group mt="xs" wrap="nowrap" align="end">
+                        <Select
+                            flex={1}
+                            value={modeDraft}
+                            allowDeselect={false}
+                            onChange={value => setModeDraft((value || payload.mode) as CronMode)}
+                            data={(["os", "web", "off"] as CronMode[]).map(value => ({
+                                value,
+                                label: trans(`js.admin.cron.mode.${value}`)
+                            }))}
+                        />
+                        <Tooltip label={trans("js.admin.save")}>
+                            <ActionIcon
+                                variant="filled"
+                                size="lg"
+                                loading={savingMode}
+                                disabled={modeDraft === payload.mode}
+                                onClick={saveMode}
+                            >
+                                <IconDeviceFloppy size={18} />
+                            </ActionIcon>
+                        </Tooltip>
+                    </Group>
                 </Card>
                 <Card withBorder>
                     <Group justify="space-between"><Text c="dimmed" size="sm">{trans("js.admin.cron.scheduler")}</Text><StatusBadge status={payload.scheduler.status} /></Group>

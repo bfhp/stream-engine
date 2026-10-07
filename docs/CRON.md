@@ -5,14 +5,9 @@ minute cadence is required because notification deliveries are due every 60
 seconds; hourly maintenance tasks use their own stored intervals and simply
 skip the other ticks.
 
-Set the production environment to:
-
-```dotenv
-CRON_MODE=os
-```
-
-This prevents page requests from starting PHP processes. The scheduled command
-is:
+Select **OS scheduler** on the Scheduler page in the administration interface.
+This stores `cron.mode=os` in the application settings and prevents page requests
+from starting PHP processes. The scheduled command is:
 
 ```bash
 cd /srv/stream-engine && /usr/bin/php bin/cron.php
@@ -99,11 +94,18 @@ verify its logs and confirm that due rows in `cron_runs` receive a recent
 
 ## Request-driven fallback
 
-`CRON_MODE=web` is intended for development and compatibility deployments that
-cannot run an external scheduler. Development starts a tick on every request.
+The **Web requests** mode is intended for development and compatibility
+deployments that cannot run an external scheduler. Development starts a tick on every request.
 In other environments one request out of 50 starts a tick.
 
 This mode has no wall-clock guarantee: its expected delay is 50 requests, and a
 site with no traffic does no background work at all. It is therefore unsuitable
 for production sites that require timely notifications. Configure new
-installations with `os` or `web`.
+installations with the OS scheduler or web request mode.
+
+## Disabled mode
+
+Selecting **Off** on the admin Scheduler page disables both request-driven
+launches and direct `bin/cron.php` runs. The external crontab or timer may remain
+installed, but each invocation exits without executing registered tasks. Queued
+notifications and maintenance jobs remain pending until scheduling is enabled.

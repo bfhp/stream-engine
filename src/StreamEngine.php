@@ -563,10 +563,10 @@ class StreamEngine
 
         Security::checkAndCreateCsrfToken();
 
-        // In production CRON_MODE=os keeps scheduling out of the request path.
+        // In production cron.mode=os keeps scheduling out of the request path.
         // The web mode is a development/compatibility fallback only.
         if (CronTrigger::shouldTrigger(
-            $this->config->cronMode(),
+            $this->settings->cronMode(),
             $this->config->appEnvironment(),
             CronTrigger::roll(),
         )) {
@@ -779,6 +779,10 @@ class StreamEngine
      */
     public function runCron(): void
     {
+        if ($this->settings->cronMode() === 'off') {
+            return;
+        }
+
         $context = new RequestContext(
             $this->authService->guest(),
             new DateTimeZone('UTC')

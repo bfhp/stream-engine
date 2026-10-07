@@ -82,10 +82,11 @@ mount a secret file. Administrator passwords must contain 10-255 characters.
 Spaces, Unicode and special characters are allowed; there are no mandatory
 character classes.
 
-A fresh production installation writes `CRON_MODE=os`. Configure the required
-once-per-minute scheduler as part of deployment; queued notifications depend on
-it. Development and test installations default to the request-driven `web`
-mode. See [Cron deployment](CRON.md) for commands and verification.
+A fresh production installation stores the OS scheduler mode in the application
+settings. Configure the required once-per-minute scheduler as part of deployment;
+queued notifications depend on it. Development and test installations default to
+the request-driven web mode. Administrators can change or disable scheduling on
+the Scheduler page. See [Cron deployment](CRON.md) for commands and verification.
 
 Both installers validate the environment values, establish the database
 connection, and then atomically create or update the project `.env`. Before

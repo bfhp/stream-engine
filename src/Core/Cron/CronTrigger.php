@@ -12,7 +12,7 @@ namespace StreamEngine\Core\Cron;
  * and is the reason this could not be tested where it lived - it was a static
  * on `StreamEngine`, whose constructor opens a database connection.
  *
- * `CRON_MODE=os` is the production model: an external scheduler invokes
+ * `cron.mode=os` is the production model: an external scheduler invokes
  * `bin/cron.php` every minute, and web requests never start it. `web` is a
  * development and compatibility fallback in which qualifying requests fork
  * the runner. It provides no wall-clock delivery guarantee on a quiet site.
@@ -31,8 +31,8 @@ final class CronTrigger
     public const int PRODUCTION_ONE_IN = 50;
 
     /**
-     * @param string $cronMode  Config::cronMode() - 'os' means a real crontab
-     *                          is doing this and the web request must not.
+     * @param string $cronMode  SettingsService::cronMode(): 'os' means a real
+     *                          crontab is responsible, while 'off' disables it.
      * @param string $appEnv    'dev' triggers on every request, so a developer
      *                          watching a queue does not have to reload fifty
      *                          times.
@@ -41,7 +41,7 @@ final class CronTrigger
      */
     public static function shouldTrigger(string $cronMode, string $appEnv, int $roll): bool
     {
-        if ($cronMode === 'os') {
+        if ($cronMode === 'os' || $cronMode === 'off') {
             return false;
         }
 

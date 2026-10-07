@@ -88,6 +88,19 @@ final class InstallationSchemaTest extends TestCase
         });
     }
 
+    public function testCronModeMigrationSeedsTheDatabaseSetting(): void
+    {
+        $root = dirname(__DIR__, 2);
+        $this->withEmptyDatabase(function (PDO $pdo) use ($root): void {
+            $this->executeScript($pdo, $root.'/migrations/20260912000000_initial.sql');
+            $this->executeScript($pdo, $root.'/migrations/20261007010000_move_cron_mode_to_settings.sql');
+
+            self::assertSame('os', $pdo->query(
+                "SELECT setting_value FROM settings WHERE setting_key = 'cron.mode'"
+            )->fetchColumn());
+        });
+    }
+
     public function testFeedSlugScopeMigrationResolvesCollisionsAndEnforcesScopes(): void
     {
         $root = dirname(__DIR__, 2);
@@ -208,6 +221,9 @@ final class InstallationSchemaTest extends TestCase
                 self::assertContains('site_extension_probe', $this->tables($pdo));
                 self::assertSame('Installed site', $pdo->query(
                     "SELECT setting_value FROM settings WHERE setting_key = 'site_name'"
+                )->fetchColumn());
+                self::assertSame('os', $pdo->query(
+                    "SELECT setting_value FROM settings WHERE setting_key = 'cron.mode'"
                 )->fetchColumn());
                 self::assertSame(['system', 'admin'], $pdo->query(
                     'SELECT username FROM users ORDER BY id'

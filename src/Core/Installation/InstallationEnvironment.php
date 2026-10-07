@@ -126,9 +126,6 @@ final readonly class InstallationEnvironment
             'DB_USERNAME' => $this->dbUsername,
             'DB_PASSWORD' => $this->dbPassword,
             'CRON_KEY' => self::existingSecret($current, 'CRON_KEY'),
-            'CRON_MODE' => is_string($current['CRON_MODE'] ?? null) && $current['CRON_MODE'] !== ''
-                ? $current['CRON_MODE']
-                : ($this->appEnvironment === 'prod' ? 'os' : 'web'),
         ];
     }
 

@@ -140,7 +140,6 @@ The installer-managed core settings are:
 | `DB_NAME` | Application database name. |
 | `DB_USERNAME`, `DB_PASSWORD` | Application database credentials. |
 | `CRON_KEY` | Random key for the protected web cron endpoint and fallback signing key. The installer generates it separately from `APP_SECRET`. |
-| `CRON_MODE` | `os` for a production scheduler or `web` for the request-driven development fallback. |
 
 `MEMCACHED_HOST` and `MEMCACHED_PORT` select the cache service and default to
 `127.0.0.1:11211`; use `CACHE_PREFIX` to isolate multiple installations that
@@ -155,8 +154,9 @@ following command twice:
 php -r 'echo bin2hex(random_bytes(32)), PHP_EOL;'
 ```
 
-Production installations should use `CRON_MODE=os` and invoke `bin/cron.php`
-once per minute as described in [Cron deployment](docs/CRON.md).
+Production installations should select the OS scheduler mode on the admin
+Scheduler page and invoke `bin/cron.php` once per minute as described in
+[Cron deployment](docs/CRON.md).
 
 For CLI installation, unattended deployment, installation security, and schema
 snapshot details, see [docs/INSTALLATION.md](docs/INSTALLATION.md).

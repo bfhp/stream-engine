@@ -30,6 +30,7 @@ use StreamEngine\Repository\UserRepository;
 use StreamEngine\Service\AccessService;
 use StreamEngine\Service\AdminDashboardService;
 use StreamEngine\Service\CronStatusService;
+use StreamEngine\Service\SettingsService;
 use StreamEngine\Service\ThemeService;
 use StreamEngine\Service\UploadService;
 use StreamEngine\Repository\DashboardLayoutRepository;
@@ -276,6 +277,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
         private readonly ThemeService $themeService,
         private readonly UploadService $uploadService,
         private readonly Config $config,
+        ?SettingsService $settings = null,
         ?CronRegistry $cronRegistry = null,
     ) {
         parent::__construct($db, $context);
@@ -292,7 +294,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
         $this->cronStatusService = new CronStatusService(
             $cronRegistry ?? new CronRegistry(),
             new CronRepository($db),
-            $config,
+            $settings ?? new SettingsService($this->settingsRepository),
         );
     }
 
@@ -1720,6 +1722,9 @@ class AdminController extends AbstractController implements DashboardCardProvide
         }
         if ($key === 'time_format' && ! in_array($value, Formatter::TIME_FORMATS, true)) {
             throw new ValidationException($this->tm->trans('admin.error.invalid_time_format'));
+        }
+        if ($key === 'cron.mode' && ! in_array($value, SettingsService::CRON_MODES, true)) {
+            throw new ValidationException($this->tm->trans('admin.error.invalid_cron_mode'));
         }
     }
 }
