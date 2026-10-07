@@ -7,6 +7,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.4] - 2026-10-07
+
 ### Added
 
 - Added an admin file browser for browsing, uploading, and organizing files.
@@ -17,6 +19,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
   with scheduled and manual run history, errors, timings, and distinct queued,
   running, failed-to-start, timed-out, successful, and failed states. History
   is limited to the latest 25 attempts per task.
+- Added a non-blocking `composer update` warning that lists pending database
+  migrations and points operators to `composer migrate`.
 
 ### Changed
 
@@ -25,6 +29,9 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
   interface instead of through `CRON_MODE`.
 - Renamed the current task-state table from `cron_runs` to `cron_tasks` and
   moved individual attempts into the bounded `cron_run_history` table.
+- Installation schema snapshots are now built by creating, migrating, and
+  removing an isolated temporary database automatically instead of requiring
+  a manually prepared empty database.
 
 ### Removed
 
