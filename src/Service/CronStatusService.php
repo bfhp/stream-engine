@@ -45,10 +45,10 @@ final readonly class CronStatusService
             if ($task['status'] === 'running') {
                 $summary['running']++;
             }
-            if (in_array($task['status'], ['overdue', 'stale'], true)) {
+            if (in_array($task['status'], ['overdue', 'timed_out'], true)) {
                 $summary['overdue']++;
             }
-            if ($task['status'] === 'failed') {
+            if (in_array($task['status'], ['failed', 'start_failed'], true)) {
                 $summary['failed']++;
             }
         }
@@ -85,7 +85,7 @@ final readonly class CronStatusService
         );
         $status = match (true) {
             ! $enabled => 'disabled',
-            $disabled && ! in_array($runtimeStatus, ['queued', 'running', 'stale'], true) => 'disabled',
+            $disabled && ! in_array($runtimeStatus, ['queued', 'running', 'start_failed', 'timed_out'], true) => 'disabled',
             default => $runtimeStatus,
         };
 
@@ -98,7 +98,7 @@ final readonly class CronStatusService
             'lastStartedAt' => $lastStartedAt,
             'lastFinishedAt' => $lastFinishedAt,
             'lastSucceededAt' => $lastSucceededAt,
-            'nextRunAt' => in_array($status, ['disabled', 'queued', 'running', 'never'], true) ? null : $nextRunAt,
+            'nextRunAt' => in_array($status, ['disabled', 'queued', 'running', 'timed_out', 'never'], true) ? null : $nextRunAt,
             'durationMs' => self::nullableNonNegativeInt($state['last_duration_ms'] ?? null),
             'lockedAt' => $lockedAt,
             'consecutiveFailures' => max(0, (int) ($state['consecutive_failures'] ?? 0)),
@@ -123,10 +123,10 @@ final readonly class CronStatusService
         int $now,
     ): string {
         if ($lockedAt !== null) {
-            return $now - $lockedAt > CronRepository::LOCK_STALE_AFTER_SECONDS ? 'stale' : 'running';
+            return $now - $lockedAt > CronRepository::LOCK_STALE_AFTER_SECONDS ? 'timed_out' : 'running';
         }
         if ($manualRequestedAt !== null) {
-            return $now - $manualRequestedAt > CronRepository::MANUAL_REQUEST_STALE_AFTER_SECONDS ? 'stale' : 'queued';
+            return $now - $manualRequestedAt > CronRepository::MANUAL_REQUEST_STALE_AFTER_SECONDS ? 'start_failed' : 'queued';
         }
         if (($state['last_status'] ?? null) === 'failed') {
             return 'failed';

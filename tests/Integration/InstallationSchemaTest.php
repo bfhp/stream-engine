@@ -129,6 +129,27 @@ final class InstallationSchemaTest extends TestCase
         });
     }
 
+    public function testCronHistoryMigrationRenamesTaskStateAndCreatesHistorySchema(): void
+    {
+        $root = dirname(__DIR__, 2);
+        $this->withEmptyDatabase(function (PDO $pdo) use ($root): void {
+            $this->executeScript($pdo, $root.'/migrations/20260912000000_initial.sql');
+            $this->executeScript($pdo, $root.'/migrations/20261007000000_add_cron_observability.sql');
+            $this->executeScript($pdo, $root.'/migrations/20261007020000_add_cron_task_controls.sql');
+            $this->executeScript($pdo, $root.'/migrations/20261007030000_add_cron_manual_request_state.sql');
+            $this->executeScript($pdo, $root.'/migrations/20261007040000_split_cron_tasks_and_run_history.sql');
+
+            self::assertNotContains('cron_runs', $this->tables($pdo));
+            self::assertContains('cron_tasks', $this->tables($pdo));
+            self::assertContains('cron_run_history', $this->tables($pdo));
+            $taskColumns = $pdo->query('SHOW COLUMNS FROM cron_tasks')->fetchAll(PDO::FETCH_COLUMN);
+            self::assertContains('active_run_id', $taskColumns);
+            $historyColumns = $pdo->query('SHOW COLUMNS FROM cron_run_history')->fetchAll(PDO::FETCH_COLUMN);
+            self::assertContains('requested_by_user_id', $historyColumns);
+            self::assertContains('duration_ms', $historyColumns);
+        });
+    }
+
     public function testFeedSlugScopeMigrationResolvesCollisionsAndEnforcesScopes(): void
     {
         $root = dirname(__DIR__, 2);

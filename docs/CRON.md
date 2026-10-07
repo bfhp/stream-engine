@@ -110,8 +110,21 @@ echo $?
 An exit status of `0` means the runner completed (or another tick held the
 process lock); a non-zero status means initialization or the runner failed.
 Individual task failures are logged and retried on a later tick. After enabling the schedule,
-verify its logs and confirm that due rows in `cron_runs` receive a recent
+verify its logs and confirm that due rows in `cron_tasks` receive a recent
 `last_run` value.
+
+## Execution history
+
+`cron_tasks` stores one current-state row per registered task so the Scheduler
+page does not need to aggregate an event table. `cron_run_history` stores the
+individual scheduled and manual attempts shown in the task details drawer.
+Some timestamps and the last result intentionally exist in both places: the
+task row is the fast status snapshot, while the history row describes one
+specific attempt.
+
+History is bounded to the latest 25 attempts per task. The runner prunes older
+rows after a run finishes or a manual worker fails to start, so tasks scheduled
+every minute cannot grow the table without limit.
 
 ## Request-driven fallback
 

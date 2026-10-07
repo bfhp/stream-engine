@@ -29,4 +29,9 @@ describe("admin cron formatting", () => {
         expect(cronStatusColors.queued).toBe("cyan");
         expect(cronStatusColors.running).toBe("blue");
     });
+
+    it("distinguishes worker start failures from execution timeouts", () => {
+        expect(cronStatusColors.start_failed).toBe("red");
+        expect(cronStatusColors.timed_out).toBe("orange");
+    });
 });

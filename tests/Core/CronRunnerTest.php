@@ -37,7 +37,7 @@ final class CronRunnerTest extends TestCase
         $db
             ->expects($this->once())
             ->method('fetchOne')
-            ->with('SELECT last_run FROM cron_runs WHERE task = ?', ['cron:probe'])
+            ->with('SELECT last_run FROM cron_tasks WHERE task = ?', ['cron:probe'])
             ->willReturn(['last_run' => time()]);
         $db->expects($this->never())->method('execute');
 
@@ -62,25 +62,25 @@ final class CronRunnerTest extends TestCase
 
         $db = $this->createMock(PdoDatabase::class);
         $db
-            ->expects($this->once())
+            ->expects($this->exactly(2))
             ->method('fetchOne')
-            ->with('SELECT last_run FROM cron_runs WHERE task = ?', ['cron:probe'])
-            ->willReturn(['last_run' => time() - 3600]);
+            ->willReturnCallback(static function (string $sql): ?array {
+                return str_contains($sql, 'last_run')
+                    ? ['last_run' => time() - 3600]
+                    : ['active_run_id' => null];
+            });
 
-        // Three writes: lock() is two statements now (ensure the row, then take
-        // it with a conditional UPDATE whose affected-row count decides the
-        // outcome), plus markDone(). Returning 1 throughout means the lock is
-        // acquired.
         $db
-            ->expects($this->exactly(3))
+            ->expects($this->exactly(7))
             ->method('execute')
             ->with(
                 $this->logicalOr(
-                    $this->stringContains('INSERT INTO cron_runs'),
-                    $this->stringContains('UPDATE cron_runs')
+                    $this->stringContains('cron_tasks'),
+                    $this->stringContains('cron_run_history')
                 )
             )
             ->willReturn(1);
+        $db->method('lastInsertId')->willReturn(41);
 
         $runner = new CronRunner(
             $registry,
@@ -101,14 +101,15 @@ final class CronRunnerTest extends TestCase
         $registry->add('cron:probe', 'CronProbeController', 3600);
 
         $db = $this->createMock(PdoDatabase::class);
-        $db->expects($this->never())->method('fetchOne');
+        $db->expects($this->once())->method('fetchOne')->willReturn(['active_run_id' => null]);
         $calls = [];
-        $db->expects($this->exactly(3))->method('execute')
+        $db->expects($this->exactly(7))->method('execute')
             ->willReturnCallback(function (string $sql, array $params = []) use (&$calls): int {
                 $calls[] = [$sql, $params];
 
                 return 1;
             });
+        $db->method('lastInsertId')->willReturn(41);
 
         $runner = new CronRunner(
             $registry,
@@ -233,14 +234,11 @@ final class CronRunnerTest extends TestCase
             ->method('fetchOne')
             ->willReturn(['last_run' => time() - 3600]);
 
-        // Three writes each: lock() is two statements, then markDone() for the
-        // task that succeeded and markFailed() for the one that threw. The
-        // failure write hands the lock back without moving last_run, so the
-        // task retries on the next tick.
         $db
-            ->expects($this->exactly(6))
+            ->expects($this->exactly(14))
             ->method('execute')
             ->willReturn(1);
+        $db->method('lastInsertId')->willReturnOnConsecutiveCalls(41, 42);
 
         $runner = new CronRunner(
             $registry,
@@ -297,9 +295,9 @@ final class CronRunnerTest extends TestCase
 
         $runner->run();
 
-        $this->assertCount(3, $statements, 'expected the two lock statements plus a failure update');
+        $this->assertCount(7, $statements, 'expected lock, history lifecycle, failure state, and pruning');
 
-        $release = $statements[2];
+        $release = $statements[5];
         $this->assertStringContainsString('locked_at = NULL', $release);
         $this->assertStringNotContainsString('last_run', $release);
     }

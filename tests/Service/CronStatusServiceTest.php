@@ -110,7 +110,7 @@ final class CronStatusServiceTest extends TestCase
         ))->payload($now);
 
         self::assertSame('stale', $payload['scheduler']['status']);
-        self::assertSame(['failed', 'stale'], array_column($payload['data'], 'status'));
+        self::assertSame(['failed', 'timed_out'], array_column($payload['data'], 'status'));
         self::assertSame(1, $payload['summary']['failed']);
         self::assertSame(1, $payload['summary']['overdue']);
     }
@@ -204,5 +204,28 @@ final class CronStatusServiceTest extends TestCase
 
         self::assertSame('never', $payload['data'][0]['status']);
         self::assertNull($payload['data'][0]['nextRunAt']);
+    }
+
+    public function testExpiredManualQueueIsReportedAsStartFailed(): void
+    {
+        $now = 1_800_000_000;
+        $registry = new CronRegistry();
+        $registry->add('probe:task', 'Probe', 60);
+        $db = $this->createStub(PdoDatabase::class);
+        $db->method('fetchAll')->willReturn([[
+            'task' => 'probe:task',
+            'is_enabled' => 1,
+            'last_run' => 0,
+            'manual_requested_at' => $now - CronRepository::MANUAL_REQUEST_STALE_AFTER_SECONDS - 1,
+        ]]);
+
+        $payload = (new CronStatusService(
+            $registry,
+            new CronRepository($db),
+            $this->settings('off'),
+        ))->payload($now);
+
+        self::assertSame('start_failed', $payload['data'][0]['status']);
+        self::assertSame(1, $payload['summary']['failed']);
     }
 }

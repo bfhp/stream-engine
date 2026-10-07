@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-    ActionIcon, Alert, Badge, Button, Card, Group, Modal, Select, SimpleGrid, Skeleton, Stack, Switch,
-    Table, Text, Tooltip
+    ActionIcon, Alert, Badge, Button, Card, Drawer, Group, Modal, Select, SimpleGrid, Skeleton, Stack,
+    Switch, Table, Text, Tooltip, UnstyledButton
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { IconAlertTriangle, IconDeviceFloppy, IconPlayerPlay, IconRefresh } from "@tabler/icons-react";
@@ -32,6 +32,20 @@ type CronTask = {
 
 type CronMode = "os" | "web" | "off";
 
+type CronRunStatus = "queued" | "running" | "success" | "failed" | "start_failed" | "timed_out";
+
+type CronRun = {
+    id: number;
+    trigger: "scheduled" | "manual";
+    status: CronRunStatus;
+    requestedAt: number | null;
+    startedAt: number | null;
+    finishedAt: number | null;
+    durationMs: number | null;
+    error: string | null;
+    requestedByUserId: number | null;
+};
+
 type CronPayload = {
     mode: CronMode;
     scheduler: {
@@ -43,7 +57,10 @@ type CronPayload = {
     data: CronTask[];
 };
 
-const statusOptions: CronStatus[] = ["scheduled", "queued", "running", "due", "overdue", "failed", "never", "stale", "disabled"];
+const statusOptions: CronStatus[] = ["scheduled", "queued", "running", "due", "overdue", "failed", "start_failed", "timed_out", "never", "stale", "disabled"];
+const runStatusColors: Record<CronRunStatus, string> = {
+    queued: "cyan", running: "blue", success: "green", failed: "red", start_failed: "red", timed_out: "orange"
+};
 
 function statusLabel(status: CronStatus | SchedulerStatus): string {
     return trans(`js.admin.cron.status.${status}`);
@@ -51,6 +68,14 @@ function statusLabel(status: CronStatus | SchedulerStatus): string {
 
 function StatusBadge({ status }: { status: CronStatus | SchedulerStatus }) {
     return <Badge color={cronStatusColors[status]} variant="light">{statusLabel(status)}</Badge>;
+}
+
+function runStatusLabel(status: CronRunStatus): string {
+    if (status === "queued" || status === "running" || status === "failed") {
+        return trans(`js.admin.cron.status.${status}`);
+    }
+
+    return trans(`js.admin.cron.run_status.${status}`);
 }
 
 async function errorMessage(response: Response, fallback: string): Promise<string> {
@@ -68,6 +93,11 @@ export default function Cron() {
     const [savingMode, setSavingMode] = useState(false);
     const [pendingTasks, setPendingTasks] = useState<Record<string, boolean>>({});
     const [confirmRun, setConfirmRun] = useState<CronTask | null>(null);
+    const [historyTask, setHistoryTask] = useState<CronTask | null>(null);
+    const [history, setHistory] = useState<CronRun[]>([]);
+    const [historyLimit, setHistoryLimit] = useState(25);
+    const [historyLoading, setHistoryLoading] = useState(false);
+    const [historyError, setHistoryError] = useState<string | null>(null);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -98,6 +128,32 @@ export default function Cron() {
         const timer = window.setInterval(() => setRefreshKey(key => key + 1), refreshEvery);
         return () => window.clearInterval(timer);
     }, [payload]);
+
+    useEffect(() => {
+        if (!historyTask) return undefined;
+        const controller = new AbortController();
+        setHistoryLoading(true);
+        setHistoryError(null);
+        fetch(`/api/v1/admin/cron/${historyTask.task}`, { signal: controller.signal })
+            .then(async response => {
+                if (!response.ok) throw new Error(await response.text() || trans("js.admin.cron.history_load_failed"));
+                return response.json() as Promise<{ data: CronRun[]; limit: number }>;
+            })
+            .then(result => {
+                setHistory(result.data);
+                setHistoryLimit(result.limit);
+            })
+            .catch(historyFetchError => {
+                if (historyFetchError.name !== "AbortError") {
+                    setHistoryError(historyFetchError.message || trans("js.admin.cron.history_load_failed"));
+                }
+            })
+            .finally(() => {
+                if (!controller.signal.aborted) setHistoryLoading(false);
+            });
+
+        return () => controller.abort();
+    }, [historyTask, refreshKey]);
 
     const tasks = useMemo(
         () => (payload?.data || []).filter(task => !status || task.status === status),
@@ -271,7 +327,9 @@ export default function Cron() {
                     <Table.Tbody>
                         {tasks.map(task => <Table.Tr key={task.task}>
                             <Table.Td>
-                                <Text ff="monospace" size="sm">{task.task}</Text>
+                                <UnstyledButton onClick={() => setHistoryTask(task)}>
+                                    <Text ff="monospace" size="sm" c="blue" td="underline">{task.task}</Text>
+                                </UnstyledButton>
                                 {task.lastError && <Text c="red" size="xs" maw={360} lineClamp={2} title={task.lastError}>{task.lastError}</Text>}
                             </Table.Td>
                             <Table.Td>{task.module}</Table.Td>
@@ -323,5 +381,49 @@ export default function Cron() {
                 </Group>
             </Stack>
         </Modal>
+
+        <Drawer
+            opened={historyTask !== null}
+            onClose={() => setHistoryTask(null)}
+            title={historyTask?.task || ""}
+            position="right"
+            size="xl"
+        >
+            <Stack>
+                <Text c="dimmed" size="sm">{trans("js.admin.cron.history_retention", { count: historyLimit })}</Text>
+                {historyError && <Alert color="red">{historyError}</Alert>}
+                {historyLoading && history.length === 0 && <Skeleton height={160} />}
+                {!historyLoading && history.length === 0 && !historyError &&
+                    <Text c="dimmed">{trans("js.admin.cron.history_empty")}</Text>}
+                {history.length > 0 && <Table.ScrollContainer minWidth={720}>
+                    <Table striped withTableBorder>
+                        <Table.Thead><Table.Tr>
+                            <Table.Th>{trans("js.admin.status")}</Table.Th>
+                            <Table.Th>{trans("js.admin.cron.history_trigger")}</Table.Th>
+                            <Table.Th>{trans("js.admin.cron.history_requested")}</Table.Th>
+                            <Table.Th>{trans("js.admin.cron.history_started")}</Table.Th>
+                            <Table.Th>{trans("js.admin.cron.history_finished")}</Table.Th>
+                            <Table.Th>{trans("js.admin.cron.duration")}</Table.Th>
+                        </Table.Tr></Table.Thead>
+                        <Table.Tbody>{history.map(run => <Table.Tr key={run.id}>
+                            <Table.Td>
+                                <Badge color={runStatusColors[run.status]} variant="light">
+                                    {runStatusLabel(run.status)}
+                                </Badge>
+                                {run.error && <Text c="red" size="xs" maw={320} mt={4}>{run.error}</Text>}
+                            </Table.Td>
+                            <Table.Td>
+                                {trans(`js.admin.cron.trigger.${run.trigger}`)}
+                                {run.requestedByUserId && <Text c="dimmed" size="xs">#{run.requestedByUserId}</Text>}
+                            </Table.Td>
+                            <Table.Td>{formatTimestamp(run.requestedAt)}</Table.Td>
+                            <Table.Td>{formatTimestamp(run.startedAt)}</Table.Td>
+                            <Table.Td>{formatTimestamp(run.finishedAt)}</Table.Td>
+                            <Table.Td>{formatDuration(run.durationMs)}</Table.Td>
+                        </Table.Tr>)}</Table.Tbody>
+                    </Table>
+                </Table.ScrollContainer>}
+            </Stack>
+        </Drawer>
     </Stack>;
 }

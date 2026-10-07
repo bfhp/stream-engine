@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use StreamEngine\Core\Config;
 use StreamEngine\Core\Cron\CronRegistry;
+use StreamEngine\Core\Cron\CronRepository;
 use StreamEngine\Core\Cron\CronTrigger;
 use StreamEngine\Core\Exceptions\ForbiddenException;
 use StreamEngine\Core\Exceptions\ValidationException;
@@ -1804,7 +1805,7 @@ final class AdminControllerTest extends TestCase
             'admin.dashboard-card' => ['GET'],
             'admin.file-browser' => ['GET', 'POST'],
             'admin.cron' => ['GET'],
-            'admin.cron-task' => ['PATCH'],
+            'admin.cron-task' => ['GET', 'PATCH'],
             'admin.cron-task-run' => ['POST'],
         ] as $action => $methods) {
             $page = $tree->findByAction($action);
@@ -1897,8 +1898,9 @@ final class AdminControllerTest extends TestCase
         );
 
         self::assertFalse($response['enabled']);
-        self::assertStringContainsString('is_enabled = VALUES(is_enabled)', $this->writes[0][0]);
-        self::assertSame(['notifications:deliveries', 0], $this->writes[0][1]);
+        self::assertStringContainsString("h.status = 'queued'", $this->writes[0][0]);
+        self::assertStringContainsString('is_enabled = VALUES(is_enabled)', $this->writes[1][0]);
+        self::assertSame(['notifications:deliveries', 0], $this->writes[1][1]);
     }
 
     public function testCronTaskUpdateRequiresBooleanEnabledField(): void
@@ -1934,7 +1936,40 @@ final class AdminControllerTest extends TestCase
         );
 
         self::assertTrue($response['accepted']);
+        self::assertSame(77, $response['runId']);
         self::assertSame(202, http_response_code());
+    }
+
+    public function testCronTaskHistoryIsReturnedWithApiFieldNames(): void
+    {
+        $registry = new CronRegistry();
+        $registry->add('notifications:deliveries', 'Profile', 60);
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+
+        $response = $this->callAndDecode(
+            $this->makeModule(
+                rows: [[
+                    'id' => '12',
+                    'task' => 'notifications:deliveries',
+                    'trigger' => 'manual',
+                    'status' => 'success',
+                    'requested_at' => '1700000000',
+                    'started_at' => '1700000001',
+                    'finished_at' => '1700000002',
+                    'duration_ms' => '1000',
+                    'error' => null,
+                    'requested_by_user_id' => '7',
+                ]],
+                cronRegistry: $registry,
+            ),
+            $this->makeApiPage('admin.cron-task', ['GET', 'PATCH']),
+            ['task' => 'notifications:deliveries'],
+        );
+
+        self::assertSame(CronRepository::HISTORY_LIMIT_PER_TASK, $response['limit']);
+        self::assertSame(12, $response['data'][0]['id']);
+        self::assertSame(1700000001, $response['data'][0]['startedAt']);
+        self::assertSame(7, $response['data'][0]['requestedByUserId']);
     }
 
     public function testDisabledCronTaskCannotBeRunManually(): void

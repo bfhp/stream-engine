@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace StreamEngine\Modules\Admin;
 
+use Throwable;
 use StreamEngine\Core\AbstractController;
 use StreamEngine\Core\Config;
 use StreamEngine\Core\Cron\CronRegistry;
@@ -215,7 +216,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
         $cron = $db->fetchOne(
             'SELECT COUNT(*) AS tasks, MAX(last_run) AS last_run,
                     COALESCE(SUM(locked_at IS NOT NULL AND locked_at < UNIX_TIMESTAMP() - 3600), 0) AS stale_locks
-             FROM cron_runs'
+             FROM cron_tasks'
         ) ?? [];
         $deliveries = $db->fetchOne(
             "SELECT COALESCE(SUM(status = 'pending'), 0) AS pending,
@@ -469,7 +470,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
                 id: $cronTaskPageId,
                 parentId: $cronPageId,
                 pattern: '{task:[a-z][a-z0-9:._-]*}',
-                requestMethods: ['PATCH'],
+                requestMethods: ['GET', 'PATCH'],
                 action: 'admin.cron-task',
                 accessRule: AccessService::ACCESS_ADMIN,
             )
@@ -630,6 +631,26 @@ class AdminController extends AbstractController implements DashboardCardProvide
     private function handleCronTaskRequest(string $task): void
     {
         $this->requireRegisteredCronTask($task);
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            echo Formatter::json([
+                'data' => array_map(static fn (array $run): array => [
+                    'id' => (int) ($run['id'] ?? 0),
+                    'trigger' => (string) ($run['trigger'] ?? ''),
+                    'status' => (string) ($run['status'] ?? ''),
+                    'requestedAt' => isset($run['requested_at']) ? (int) $run['requested_at'] : null,
+                    'startedAt' => isset($run['started_at']) ? (int) $run['started_at'] : null,
+                    'finishedAt' => isset($run['finished_at']) ? (int) $run['finished_at'] : null,
+                    'durationMs' => isset($run['duration_ms']) ? (int) $run['duration_ms'] : null,
+                    'error' => is_string($run['error'] ?? null) ? $run['error'] : null,
+                    'requestedByUserId' => isset($run['requested_by_user_id'])
+                        ? (int) $run['requested_by_user_id']
+                        : null,
+                ], $this->cronRepository->history($task)),
+                'limit' => CronRepository::HISTORY_LIMIT_PER_TASK,
+            ]);
+
+            return;
+        }
         Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
 
         $input = $this->jsonBody();
@@ -647,16 +668,23 @@ class AdminController extends AbstractController implements DashboardCardProvide
         $this->requireRegisteredCronTask($task);
         Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
 
-        if (! $this->cronRepository->queueManualRun($task)) {
+        $runId = $this->cronRepository->queueManualRun($task, $this->context->user->id);
+        if ($runId === null) {
             throw new ValidationException('Cron task is disabled, running, or already queued.', 409, 'conflict');
         }
 
-        if (! $this->cronTrigger->spawnTask($task)) {
-            $this->cronRepository->clearManualRequest($task);
+        try {
+            $spawned = $this->cronTrigger->spawnTask($task);
+        } catch (Throwable $e) {
+            $this->cronRepository->markManualStartFailed($task, $runId, $e->getMessage());
+            throw $e;
+        }
+        if (! $spawned) {
+            $this->cronRepository->markManualStartFailed($task, $runId, 'Could not start the cron worker.');
             throw new ValidationException('Could not start the cron worker.', 503, 'unavailable');
         }
         http_response_code(202);
-        echo Formatter::json(['task' => $task, 'accepted' => true]);
+        echo Formatter::json(['task' => $task, 'runId' => $runId, 'accepted' => true]);
     }
 
     /** @throws NotFoundException */

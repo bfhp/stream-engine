@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace StreamEngine\Core\Cron;
 
 use StreamEngine\Core\PdoDatabase;
+use Throwable;
 
 final readonly class CronRepository
 {
     public const int LOCK_STALE_AFTER_SECONDS = 3600;
     public const int MANUAL_REQUEST_STALE_AFTER_SECONDS = 180;
+    public const int HISTORY_LIMIT_PER_TASK = 25;
 
     public function __construct(
         private PdoDatabase $db
@@ -23,7 +25,7 @@ final readonly class CronRepository
     public function getLastRun(string $task): int
     {
         $runData = $this->db->fetchOne(
-            "SELECT last_run FROM cron_runs WHERE task = ?",
+            "SELECT last_run FROM cron_tasks WHERE task = ?",
             [$task]
         );
 
@@ -70,12 +72,33 @@ final readonly class CronRepository
             throw new \InvalidArgumentException('Unsupported cron trigger.');
         }
 
+        $this->db->begin();
+        try {
+            $locked = $this->takeLock($task, $trigger);
+            if (! $locked) {
+                $this->db->rollback();
+
+                return false;
+            }
+
+            $this->db->commit();
+
+            return true;
+        } catch (Throwable $e) {
+            $this->db->rollback();
+            throw $e;
+        }
+    }
+
+    private function takeLock(string $task, string $trigger): bool
+    {
+
         // Make sure the row exists, without touching an existing one - the
         // `task = task` no-op is what keeps a concurrently held locked_at
         // intact. INSERT IGNORE would read as well here but downgrades every
         // error to a warning, not just the duplicate key.
         $this->db->execute(
-            "INSERT INTO cron_runs (task, last_run, locked_at)
+            "INSERT INTO cron_tasks (task, last_run, locked_at)
              VALUES (?, 0, NULL)
              ON DUPLICATE KEY UPDATE task = task",
             [$task]
@@ -92,23 +115,43 @@ final readonly class CronRepository
         // nothing changes would be locked_at already equal to the value being
         // written, and that can't happen - such a row is neither NULL nor
         // stale, so the WHERE excludes it.
-        return $this->db->execute(
-            "UPDATE cron_runs
+        $locked = $this->db->execute(
+            "UPDATE cron_tasks
                 SET locked_at = UNIX_TIMESTAMP(),
                     last_started_at = UNIX_TIMESTAMP(),
                     last_trigger = ?,
                     manual_requested_at = NULL
               WHERE task = ?
                 AND is_enabled = 1
-                AND (locked_at IS NULL OR locked_at < UNIX_TIMESTAMP() - ?)",
-            [$trigger, $task, self::LOCK_STALE_AFTER_SECONDS]
+                AND (locked_at IS NULL OR locked_at < UNIX_TIMESTAMP() - ?)
+                AND (? = 'manual' OR manual_requested_at IS NULL)",
+            [$trigger, $task, self::LOCK_STALE_AFTER_SECONDS, $trigger]
         ) === 1;
+        if (! $locked) {
+            return false;
+        }
+
+        $activeRunId = $this->activeRunId($task);
+        if ($trigger === 'manual' && $activeRunId !== null) {
+            $this->markHistoryRunning($activeRunId);
+        } else {
+            if ($activeRunId !== null) {
+                $this->markHistoryTimedOut($activeRunId);
+            }
+            $activeRunId = $this->createHistory($task, $trigger, 'running', null, true);
+            $this->db->execute(
+                'UPDATE cron_tasks SET active_run_id = ? WHERE task = ?',
+                [$activeRunId, $task]
+            );
+        }
+
+        return true;
     }
 
     public function isEnabled(string $task): bool
     {
         $state = $this->db->fetchOne(
-            'SELECT is_enabled FROM cron_runs WHERE task = ?',
+            'SELECT is_enabled FROM cron_tasks WHERE task = ?',
             [$task]
         );
 
@@ -117,31 +160,62 @@ final readonly class CronRepository
 
     public function setEnabled(string $task, bool $enabled): void
     {
+        if (! $enabled) {
+            $this->db->execute(
+                "UPDATE cron_run_history AS h
+                 INNER JOIN cron_tasks AS task_state ON task_state.active_run_id = h.id
+                 SET h.status = 'start_failed', h.finished_at = UNIX_TIMESTAMP(),
+                     h.error = 'The task was disabled before its worker started.'
+                 WHERE task_state.task = ? AND h.status = 'queued'",
+                [$task]
+            );
+        }
         $this->db->execute(
-            'INSERT INTO cron_runs (task, is_enabled, last_run, locked_at)
+            'INSERT INTO cron_tasks (task, is_enabled, last_run, locked_at)
              VALUES (?, ?, 0, NULL)
              ON DUPLICATE KEY UPDATE
                  is_enabled = VALUES(is_enabled),
-                 manual_requested_at = IF(VALUES(is_enabled) = 0, NULL, manual_requested_at)',
+                 manual_requested_at = IF(VALUES(is_enabled) = 0, NULL, manual_requested_at),
+                 active_run_id = IF(VALUES(is_enabled) = 0 AND locked_at IS NULL, NULL, active_run_id)',
             [$task, $enabled ? 1 : 0]
         );
     }
 
     /**
      * Persist the request before forking a worker so the UI can observe it.
-     * Returns false when the task is disabled, running, or already queued.
+     * Returns null when the task is disabled, running, or already queued.
      */
-    public function queueManualRun(string $task): bool
+    public function queueManualRun(string $task, ?int $requestedByUserId = null): ?int
+    {
+        $this->db->begin();
+        try {
+            $runId = $this->persistManualRun($task, $requestedByUserId);
+            if ($runId === null) {
+                $this->db->rollback();
+
+                return null;
+            }
+
+            $this->db->commit();
+
+            return $runId;
+        } catch (Throwable $e) {
+            $this->db->rollback();
+            throw $e;
+        }
+    }
+
+    private function persistManualRun(string $task, ?int $requestedByUserId): ?int
     {
         $this->db->execute(
-            'INSERT INTO cron_runs (task, last_run, locked_at)
+            'INSERT INTO cron_tasks (task, last_run, locked_at)
              VALUES (?, 0, NULL)
              ON DUPLICATE KEY UPDATE task = task',
             [$task]
         );
 
-        return $this->db->execute(
-            'UPDATE cron_runs
+        $queued = $this->db->execute(
+            'UPDATE cron_tasks
              SET manual_requested_at = UNIX_TIMESTAMP()
              WHERE task = ?
                AND is_enabled = 1
@@ -149,14 +223,39 @@ final readonly class CronRepository
                AND (manual_requested_at IS NULL OR manual_requested_at < UNIX_TIMESTAMP() - ?)',
             [$task, self::LOCK_STALE_AFTER_SECONDS, self::MANUAL_REQUEST_STALE_AFTER_SECONDS]
         ) === 1;
+        if (! $queued) {
+            return null;
+        }
+
+        $previousRunId = $this->activeRunId($task);
+        if ($previousRunId !== null) {
+            $this->expireHistory($previousRunId);
+        }
+        $runId = $this->createHistory($task, 'manual', 'queued', $requestedByUserId);
+        $this->db->execute(
+            'UPDATE cron_tasks SET active_run_id = ? WHERE task = ?',
+            [$runId, $task]
+        );
+        $this->pruneHistory($task);
+
+        return $runId;
     }
 
-    public function clearManualRequest(string $task): void
+    public function markManualStartFailed(string $task, int $runId, string $error): void
     {
         $this->db->execute(
-            'UPDATE cron_runs SET manual_requested_at = NULL WHERE task = ?',
-            [$task]
+            "UPDATE cron_run_history
+             SET status = 'start_failed', finished_at = UNIX_TIMESTAMP(), error = ?
+             WHERE id = ? AND task = ? AND status = 'queued'",
+            [self::truncateError($error), $runId, $task]
         );
+        $this->db->execute(
+            'UPDATE cron_tasks
+             SET manual_requested_at = NULL, active_run_id = NULL
+             WHERE task = ? AND active_run_id = ?',
+            [$task, $runId]
+        );
+        $this->pruneHistory($task);
     }
 
     /**
@@ -172,7 +271,7 @@ final readonly class CronRepository
     public function release(string $task): void
     {
         $this->db->execute(
-            "UPDATE cron_runs
+            "UPDATE cron_tasks
                 SET locked_at = NULL
               WHERE task = ?",
             [$task]
@@ -184,8 +283,10 @@ final readonly class CronRepository
      */
     public function markDone(string $task, int $durationMs = 0): void
     {
+        $durationMs = max(0, $durationMs);
+        $this->finishHistory($task, 'success', $durationMs, null);
         $this->db->execute(
-            "UPDATE cron_runs
+            "UPDATE cron_tasks
              SET last_run = UNIX_TIMESTAMP(),
                  last_finished_at = UNIX_TIMESTAMP(),
                  last_status = 'success',
@@ -193,27 +294,34 @@ final readonly class CronRepository
                  last_error = NULL,
                  consecutive_failures = 0,
                  manual_requested_at = NULL,
+                 active_run_id = NULL,
                  locked_at = NULL
              WHERE task = ?",
-            [max(0, $durationMs), $task]
+            [$durationMs, $task]
         );
+        $this->pruneHistory($task);
     }
 
     /** Records a failed attempt without moving last_run, so it remains due. */
     public function markFailed(string $task, int $durationMs, string $error): void
     {
+        $durationMs = max(0, $durationMs);
+        $error = self::truncateError($error);
+        $this->finishHistory($task, 'failed', $durationMs, $error);
         $this->db->execute(
-            "UPDATE cron_runs
+            "UPDATE cron_tasks
              SET last_finished_at = UNIX_TIMESTAMP(),
                  last_status = 'failed',
                  last_duration_ms = ?,
                  last_error = ?,
                  consecutive_failures = consecutive_failures + 1,
                  manual_requested_at = NULL,
+                 active_run_id = NULL,
                  locked_at = NULL
              WHERE task = ?",
-            [max(0, $durationMs), self::truncateError($error), $task]
+            [$durationMs, $error, $task]
         );
+        $this->pruneHistory($task);
     }
 
     /** @return list<array<string, mixed>> */
@@ -223,7 +331,21 @@ final readonly class CronRepository
             'SELECT task, is_enabled, last_run, locked_at, last_started_at, last_finished_at,
                     last_status, last_trigger, manual_requested_at, last_duration_ms, last_error,
                     consecutive_failures
-             FROM cron_runs'
+             FROM cron_tasks'
+        );
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function history(string $task): array
+    {
+        return $this->db->fetchAll(
+            'SELECT id, task, `trigger`, status, requested_at, started_at, finished_at,
+                    duration_ms, error, requested_by_user_id
+             FROM cron_run_history
+             WHERE task = ?
+             ORDER BY id DESC
+             LIMIT '.self::HISTORY_LIMIT_PER_TASK,
+            [$task]
         );
     }
 
@@ -256,6 +378,100 @@ final readonly class CronRepository
              SET last_finished_at = UNIX_TIMESTAMP(), last_status = ?
              WHERE id = 1',
             [$successful ? 'success' : 'failed']
+        );
+    }
+
+    private function activeRunId(string $task): ?int
+    {
+        $row = $this->db->fetchOne(
+            'SELECT active_run_id FROM cron_tasks WHERE task = ?',
+            [$task]
+        );
+        $runId = $row['active_run_id'] ?? null;
+
+        return is_numeric($runId) && (int) $runId > 0 ? (int) $runId : null;
+    }
+
+    private function createHistory(
+        string $task,
+        string $trigger,
+        string $status,
+        ?int $requestedByUserId = null,
+        bool $started = false,
+    ): int {
+        $this->db->execute(
+            'INSERT INTO cron_run_history
+                (task, `trigger`, status, requested_at, started_at, requested_by_user_id)
+             VALUES (?, ?, ?, UNIX_TIMESTAMP(), '.($started ? 'UNIX_TIMESTAMP()' : 'NULL').', ?)',
+            [$task, $trigger, $status, $requestedByUserId]
+        );
+
+        return $this->db->lastInsertId();
+    }
+
+    private function markHistoryRunning(int $runId): void
+    {
+        $this->db->execute(
+            "UPDATE cron_run_history
+             SET status = 'running', started_at = UNIX_TIMESTAMP()
+             WHERE id = ? AND status = 'queued'",
+            [$runId]
+        );
+    }
+
+    private function markHistoryTimedOut(int $runId): void
+    {
+        $this->db->execute(
+            "UPDATE cron_run_history
+             SET status = 'timed_out', finished_at = UNIX_TIMESTAMP(),
+                 error = 'The previous worker stopped without releasing its lock.'
+             WHERE id = ? AND status IN ('queued', 'running')",
+            [$runId]
+        );
+    }
+
+    private function expireHistory(int $runId): void
+    {
+        $this->db->execute(
+            "UPDATE cron_run_history
+             SET error = IF(
+                     status = 'queued',
+                     'The worker did not start before the queue timeout.',
+                     'The worker stopped without releasing its lock.'
+                 ),
+                 status = IF(status = 'queued', 'start_failed', 'timed_out'),
+                 finished_at = UNIX_TIMESTAMP()
+             WHERE id = ? AND status IN ('queued', 'running')",
+            [$runId]
+        );
+    }
+
+    private function finishHistory(string $task, string $status, int $durationMs, ?string $error): void
+    {
+        $this->db->execute(
+            'UPDATE cron_run_history AS h
+             INNER JOIN cron_tasks AS task_state ON task_state.active_run_id = h.id
+             SET h.status = ?, h.finished_at = UNIX_TIMESTAMP(),
+                 h.duration_ms = ?, h.error = ?
+             WHERE task_state.task = ?',
+            [$status, $durationMs, $error, $task]
+        );
+    }
+
+    private function pruneHistory(string $task): void
+    {
+        $this->db->execute(
+            'DELETE h
+             FROM cron_run_history AS h
+             INNER JOIN (
+                 SELECT id
+                 FROM cron_run_history
+                 WHERE task = ?
+                 ORDER BY id DESC
+                 LIMIT 1 OFFSET '.(self::HISTORY_LIMIT_PER_TASK - 1).'
+             ) AS cutoff ON h.id < cutoff.id
+             WHERE h.task = ?',
+            [$task, $task]
         );
     }
 
