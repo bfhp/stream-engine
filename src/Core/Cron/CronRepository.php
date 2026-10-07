@@ -63,8 +63,12 @@ final readonly class CronRepository
      *
      * Uses index: PRIMARY(task)
      */
-    public function lock(string $task): bool
+    public function lock(string $task, string $trigger = 'scheduled'): bool
     {
+        if (! in_array($trigger, ['scheduled', 'manual'], true)) {
+            throw new \InvalidArgumentException('Unsupported cron trigger.');
+        }
+
         // Make sure the row exists, without touching an existing one - the
         // `task = task` no-op is what keeps a concurrently held locked_at
         // intact. INSERT IGNORE would read as well here but downgrades every
@@ -90,11 +94,33 @@ final readonly class CronRepository
         return $this->db->execute(
             "UPDATE cron_runs
                 SET locked_at = UNIX_TIMESTAMP(),
-                    last_started_at = UNIX_TIMESTAMP()
+                    last_started_at = UNIX_TIMESTAMP(),
+                    last_trigger = ?
               WHERE task = ?
+                AND is_enabled = 1
                 AND (locked_at IS NULL OR locked_at < UNIX_TIMESTAMP() - ?)",
-            [$task, self::LOCK_STALE_AFTER_SECONDS]
+            [$trigger, $task, self::LOCK_STALE_AFTER_SECONDS]
         ) === 1;
+    }
+
+    public function isEnabled(string $task): bool
+    {
+        $state = $this->db->fetchOne(
+            'SELECT is_enabled FROM cron_runs WHERE task = ?',
+            [$task]
+        );
+
+        return $state === null || (int) ($state['is_enabled'] ?? 1) === 1;
+    }
+
+    public function setEnabled(string $task, bool $enabled): void
+    {
+        $this->db->execute(
+            'INSERT INTO cron_runs (task, is_enabled, last_run, locked_at)
+             VALUES (?, ?, 0, NULL)
+             ON DUPLICATE KEY UPDATE is_enabled = VALUES(is_enabled)',
+            [$task, $enabled ? 1 : 0]
+        );
     }
 
     /**
@@ -156,8 +182,8 @@ final readonly class CronRepository
     public function states(): array
     {
         return $this->db->fetchAll(
-            'SELECT task, last_run, locked_at, last_started_at, last_finished_at,
-                    last_status, last_duration_ms, last_error, consecutive_failures
+            'SELECT task, is_enabled, last_run, locked_at, last_started_at, last_finished_at,
+                    last_status, last_trigger, last_duration_ms, last_error, consecutive_failures
              FROM cron_runs'
         );
     }

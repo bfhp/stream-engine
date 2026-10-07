@@ -45,9 +45,10 @@ final class CronRepositoryTest extends TestCase
         $this->assertStringContainsString('UPDATE cron_runs', $calls[1][0]);
         $this->assertStringContainsString('locked_at IS NULL', $calls[1][0]);
         $this->assertStringContainsString('locked_at <', $calls[1][0]);
-        // Task plus the staleness window.
-        $this->assertSame('cron:probe', $calls[1][1][0]);
-        $this->assertGreaterThan(0, $calls[1][1][1]);
+        // Trigger, task, then the staleness window.
+        $this->assertSame(['scheduled', 'cron:probe'], array_slice($calls[1][1], 0, 2));
+        $this->assertGreaterThan(0, $calls[1][1][2]);
+        $this->assertStringContainsString('is_enabled = 1', $calls[1][0]);
     }
 
     public function testLockIsRefusedWhenAnotherRunnerHoldsIt(): void
@@ -64,6 +65,51 @@ final class CronRepositoryTest extends TestCase
         $repository = new CronRepository($db);
 
         $this->assertFalse($repository->lock('cron:probe'));
+    }
+
+    public function testManualLockRecordsItsTrigger(): void
+    {
+        $db = $this->createMock(PdoDatabase::class);
+        $calls = [];
+        $db->expects($this->exactly(2))->method('execute')
+            ->willReturnCallback(function (string $sql, array $params) use (&$calls): int {
+                $calls[] = [$sql, $params];
+
+                return 1;
+            });
+
+        self::assertTrue((new CronRepository($db))->lock('cron:probe', 'manual'));
+        self::assertSame('manual', $calls[1][1][0]);
+    }
+
+    public function testTaskIsEnabledUntilExplicitlyDisabled(): void
+    {
+        $db = $this->createStub(PdoDatabase::class);
+        $db->method('fetchOne')->willReturnOnConsecutiveCalls(null, ['is_enabled' => 0], ['is_enabled' => 1]);
+        $repository = new CronRepository($db);
+
+        self::assertTrue($repository->isEnabled('new:task'));
+        self::assertFalse($repository->isEnabled('disabled:task'));
+        self::assertTrue($repository->isEnabled('enabled:task'));
+    }
+
+    public function testSetEnabledUpsertsTaskState(): void
+    {
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects($this->exactly(2))->method('execute')
+            ->with($this->stringContains('is_enabled = VALUES(is_enabled)'))
+            ->willReturnCallback(static function (string $sql, array $params): int {
+                self::assertContains($params, [
+                    ['cron:probe', 0],
+                    ['cron:probe', 1],
+                ]);
+
+                return 1;
+            });
+
+        $repository = new CronRepository($db);
+        $repository->setEnabled('cron:probe', false);
+        $repository->setEnabled('cron:probe', true);
     }
 
     public function testReleaseClearsTheLockWithoutRecordingARun(): void

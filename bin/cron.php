@@ -16,14 +16,22 @@ require $autoload;
 $root = dirname($autoload, 2);
 Dotenv\Dotenv::createImmutable($root)->load();
 
-$lockFile = $root.'/storage/cron.lock';
-
-$fp = fopen($lockFile, 'c');
-if (!$fp || !flock($fp, LOCK_EX | LOCK_NB)) {
-    exit;
+$options = getopt('', ['task:']);
+$task = $options['task'] ?? null;
+if ($task !== null && (! is_string($task) || $task === '')) {
+    throw new InvalidArgumentException('The --task option requires a task name.');
 }
-ftruncate($fp, 0);
-fwrite($fp, (string) getmypid());
+
+$fp = null;
+if ($task === null) {
+    $lockFile = $root.'/storage/cron.lock';
+    $fp = fopen($lockFile, 'c');
+    if (!$fp || !flock($fp, LOCK_EX | LOCK_NB)) {
+        exit;
+    }
+    ftruncate($fp, 0);
+    fwrite($fp, (string) getmypid());
+}
 
 ini_set('log_errors', '1');
 ini_set('error_log', $root.'/storage/cron-error.log');
@@ -33,8 +41,14 @@ set_time_limit(0);
 
 try {
     $engine = new StreamEngine();
-    $engine->runCron();
+    if ($task === null) {
+        $engine->runCron();
+    } else {
+        $engine->runCronTask($task);
+    }
 } finally {
-    flock($fp, LOCK_UN);
-    fclose($fp);
+    if (is_resource($fp)) {
+        flock($fp, LOCK_UN);
+        fclose($fp);
+    }
 }

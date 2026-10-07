@@ -17,7 +17,7 @@ namespace StreamEngine\Core\Cron;
  * development and compatibility fallback in which qualifying requests fork
  * the runner. It provides no wall-clock delivery guarantee on a quiet site.
  */
-final class CronTrigger
+class CronTrigger
 {
     /**
      * How often a production request should fork the cron process: one in
@@ -66,6 +66,17 @@ final class CronTrigger
      */
     public function spawn(): void
     {
+        $this->spawnCommand();
+    }
+
+    /** Fork a worker for one registered task, bypassing its interval. */
+    public function spawnTask(string $task): void
+    {
+        $this->spawnCommand($task);
+    }
+
+    private function spawnCommand(?string $task = null): void
+    {
         if (defined('CRON_PROCESS')) {
             return;
         }
@@ -76,6 +87,7 @@ final class CronTrigger
             $script = realpath(__DIR__.'/../../../bin/cron.php');
         }
 
-        exec(escapeshellarg(PHP_BINARY).' '.escapeshellarg($script).' > /dev/null 2>&1 &');
+        $argument = $task === null ? '' : ' --task='.escapeshellarg($task);
+        exec(escapeshellarg(PHP_BINARY).' '.escapeshellarg($script).$argument.' > /dev/null 2>&1 &');
     }
 }

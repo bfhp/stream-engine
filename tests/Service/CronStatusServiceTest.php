@@ -36,11 +36,13 @@ final class CronStatusServiceTest extends TestCase
         $db = $this->createStub(PdoDatabase::class);
         $db->method('fetchAll')->willReturn([[
             'task' => 'notifications:deliveries',
+            'is_enabled' => 1,
             'last_run' => $now - 30,
             'locked_at' => null,
             'last_started_at' => $now - 31,
             'last_finished_at' => $now - 30,
             'last_status' => 'success',
+            'last_trigger' => 'manual',
             'last_duration_ms' => 250,
             'last_error' => null,
             'consecutive_failures' => 0,
@@ -66,6 +68,8 @@ final class CronStatusServiceTest extends TestCase
         self::assertSame(2, $payload['summary']['total']);
         self::assertSame(['notifications:deliveries', 'users:cleanup'], array_column($payload['data'], 'task'));
         self::assertSame('scheduled', $payload['data'][0]['status']);
+        self::assertTrue($payload['data'][0]['enabled']);
+        self::assertSame('manual', $payload['data'][0]['lastTrigger']);
         self::assertSame($now + 30, $payload['data'][0]['nextRunAt']);
         self::assertSame('never', $payload['data'][1]['status']);
         self::assertNull($payload['data'][1]['nextRunAt']);
@@ -129,5 +133,27 @@ final class CronStatusServiceTest extends TestCase
         self::assertSame('disabled', $payload['data'][0]['status']);
         self::assertNull($payload['data'][0]['nextRunAt']);
         self::assertSame(0, $payload['summary']['overdue']);
+    }
+
+    public function testIndividuallyDisabledTaskIsReportedSeparatelyFromGlobalMode(): void
+    {
+        $registry = new CronRegistry();
+        $registry->add('probe:task', 'Probe', 60);
+        $db = $this->createStub(PdoDatabase::class);
+        $db->method('fetchAll')->willReturn([[
+            'task' => 'probe:task',
+            'is_enabled' => 0,
+            'last_run' => 1_799_999_000,
+        ]]);
+
+        $payload = (new CronStatusService(
+            $registry,
+            new CronRepository($db),
+            $this->settings('os'),
+        ))->payload(1_800_000_000);
+
+        self::assertFalse($payload['data'][0]['enabled']);
+        self::assertSame('disabled', $payload['data'][0]['status']);
+        self::assertNull($payload['data'][0]['nextRunAt']);
     }
 }

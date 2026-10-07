@@ -8,6 +8,7 @@ use StreamEngine\Core\AbstractController;
 use StreamEngine\Core\Config;
 use StreamEngine\Core\Cron\CronRegistry;
 use StreamEngine\Core\Cron\CronRepository;
+use StreamEngine\Core\Cron\CronTrigger;
 use StreamEngine\Core\DashboardCardProviderInterface;
 use StreamEngine\Core\Exceptions\ForbiddenException;
 use StreamEngine\Core\Exceptions\NotFoundException;
@@ -267,6 +268,9 @@ class AdminController extends AbstractController implements DashboardCardProvide
     private readonly UserRepository $userRepository;
     private readonly AdminDashboardService $dashboardService;
     private readonly CronStatusService $cronStatusService;
+    private readonly CronRegistry $cronRegistry;
+    private readonly CronRepository $cronRepository;
+    private readonly CronTrigger $cronTrigger;
 
     public function __construct(
         PdoDatabase $db,
@@ -279,6 +283,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
         private readonly Config $config,
         ?SettingsService $settings = null,
         ?CronRegistry $cronRegistry = null,
+        ?CronTrigger $cronTrigger = null,
     ) {
         parent::__construct($db, $context);
         $this->pageRepository = new PageRepository($db);
@@ -291,9 +296,12 @@ class AdminController extends AbstractController implements DashboardCardProvide
             $db,
             $tm,
         );
+        $this->cronRegistry = $cronRegistry ?? new CronRegistry();
+        $this->cronRepository = new CronRepository($db);
+        $this->cronTrigger = $cronTrigger ?? new CronTrigger();
         $this->cronStatusService = new CronStatusService(
-            $cronRegistry ?? new CronRegistry(),
-            new CronRepository($db),
+            $this->cronRegistry,
+            $this->cronRepository,
             $settings ?? new SettingsService($this->settingsRepository),
         );
     }
@@ -372,6 +380,12 @@ class AdminController extends AbstractController implements DashboardCardProvide
             case 'admin.cron':
                 $this->handleCronRequest();
                 break;
+            case 'admin.cron-task':
+                $this->handleCronTaskRequest((string) ($args['task'] ?? ''));
+                break;
+            case 'admin.cron-task-run':
+                $this->handleCronTaskRunRequest((string) ($args['task'] ?? ''));
+                break;
             default:
                 parent::callApi($page, $args);
         }
@@ -445,6 +459,30 @@ class AdminController extends AbstractController implements DashboardCardProvide
                 pattern: 'cron',
                 requestMethods: ['GET'],
                 action: 'admin.cron',
+                accessRule: AccessService::ACCESS_ADMIN,
+            )
+        );
+
+        $cronTaskPageId = $pageTree->getMaxPageId();
+        $pageTree->add(
+            Page::api(
+                id: $cronTaskPageId,
+                parentId: $cronPageId,
+                pattern: '{task:[a-z][a-z0-9:._-]*}',
+                requestMethods: ['PATCH'],
+                action: 'admin.cron-task',
+                accessRule: AccessService::ACCESS_ADMIN,
+            )
+        );
+
+        $cronTaskRunPageId = $pageTree->getMaxPageId();
+        $pageTree->add(
+            Page::api(
+                id: $cronTaskRunPageId,
+                parentId: $cronTaskPageId,
+                pattern: 'run',
+                requestMethods: ['POST'],
+                action: 'admin.cron-task-run',
                 accessRule: AccessService::ACCESS_ADMIN,
             )
         );
@@ -586,6 +624,44 @@ class AdminController extends AbstractController implements DashboardCardProvide
     private function handleCronRequest(): void
     {
         echo Formatter::json($this->cronStatusService->payload());
+    }
+
+    /** @throws ValidationException */
+    private function handleCronTaskRequest(string $task): void
+    {
+        $this->requireRegisteredCronTask($task);
+        Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
+
+        $input = $this->jsonBody();
+        if (! array_key_exists('enabled', $input) || ! is_bool($input['enabled'])) {
+            throw new ValidationException('The enabled field must be a boolean.');
+        }
+
+        $this->cronRepository->setEnabled($task, $input['enabled']);
+        echo Formatter::json(['task' => $task, 'enabled' => $input['enabled']]);
+    }
+
+    /** @throws ValidationException */
+    private function handleCronTaskRunRequest(string $task): void
+    {
+        $this->requireRegisteredCronTask($task);
+        Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
+
+        if (! $this->cronRepository->isEnabled($task)) {
+            throw new ValidationException('Cron task is disabled.', 409, 'conflict');
+        }
+
+        $this->cronTrigger->spawnTask($task);
+        http_response_code(202);
+        echo Formatter::json(['task' => $task, 'accepted' => true]);
+    }
+
+    /** @throws NotFoundException */
+    private function requireRegisteredCronTask(string $task): void
+    {
+        if (! $this->cronRegistry->has($task)) {
+            throw new NotFoundException('Cron task not found.');
+        }
     }
 
     /** @throws ValidationException */

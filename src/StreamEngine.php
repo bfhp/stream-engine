@@ -783,27 +783,34 @@ class StreamEngine
             return;
         }
 
-        $context = new RequestContext(
-            $this->authService->guest(),
-            new DateTimeZone('UTC')
-        );
-
         $cronRepository = new CronRepository($this->db);
-        $cronRunner = new CronRunner(
-            $this->cronRegistry,
-            $cronRepository,
-            $this->controllerFactory,
-            $context
-        );
         $cronRepository->markSchedulerStarted();
 
         try {
-            $cronRunner->run();
+            $this->cronRunner($cronRepository)->run();
             $cronRepository->markSchedulerFinished(true);
         } catch (Throwable $e) {
             $cronRepository->markSchedulerFinished(false);
 
             throw $e;
         }
+    }
+
+    /** Manual task execution is available even when automatic cron is off. */
+    public function runCronTask(string $task): bool
+    {
+        $repository = new CronRepository($this->db);
+
+        return $this->cronRunner($repository)->runTask($task);
+    }
+
+    private function cronRunner(CronRepository $repository): CronRunner
+    {
+        return new CronRunner(
+            $this->cronRegistry,
+            $repository,
+            $this->controllerFactory,
+            new RequestContext($this->authService->guest(), new DateTimeZone('UTC')),
+        );
     }
 }

@@ -75,6 +75,24 @@ minute in an application container with the same release, environment, database
 access and writable `storage` volume as the web application. Do not run one
 permanent copy of the script: it performs one tick and exits.
 
+## Task controls
+
+The Scheduler page lets an administrator disable individual registered tasks
+and start enabled tasks manually. Disabling a task prevents future scheduled
+and manual starts; it does not terminate an invocation that is already running.
+Manual starts ignore the task interval but use the same database lock as normal
+runs, so the same task cannot execute twice concurrently.
+
+The UI starts a dedicated background worker equivalent to:
+
+```bash
+php bin/cron.php --task=notifications:deliveries
+```
+
+Task names are validated against the application's cron registry before the
+worker is started. The option is intended for the admin UI and diagnostics, not
+as a replacement for the once-per-minute scheduler command.
+
 ## Verification
 
 Before enabling the schedule, run one tick as the service account and check its
@@ -105,7 +123,9 @@ installations with the OS scheduler or web request mode.
 
 ## Disabled mode
 
-Selecting **Off** on the admin Scheduler page disables both request-driven
-launches and direct `bin/cron.php` runs. The external crontab or timer may remain
-installed, but each invocation exits without executing registered tasks. Queued
-notifications and maintenance jobs remain pending until scheduling is enabled.
+Selecting **Off** on the admin Scheduler page disables request-driven launches
+and normal `bin/cron.php` scheduler ticks. The external crontab or timer may
+remain installed, but each invocation exits without executing registered tasks.
+Enabled tasks can still be started manually from the Scheduler page. Queued
+notifications and maintenance jobs otherwise remain pending until scheduling is
+enabled.

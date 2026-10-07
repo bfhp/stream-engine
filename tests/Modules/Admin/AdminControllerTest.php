@@ -8,6 +8,8 @@ use DateTimeZone;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use StreamEngine\Core\Config;
+use StreamEngine\Core\Cron\CronRegistry;
+use StreamEngine\Core\Cron\CronTrigger;
 use StreamEngine\Core\Exceptions\ForbiddenException;
 use StreamEngine\Core\Exceptions\ValidationException;
 use StreamEngine\Core\ModuleRegistry;
@@ -48,6 +50,7 @@ final class AdminControllerTest extends TestCase
         $_FILES = [];
 
         $this->writes = [];
+        http_response_code(200);
     }
 
     /**
@@ -67,6 +70,8 @@ final class AdminControllerTest extends TestCase
         ?ModuleRegistry $modules = null,
         ?string $uploadsDir = null,
         ?UploadService $uploadService = null,
+        ?CronRegistry $cronRegistry = null,
+        ?CronTrigger $cronTrigger = null,
     ): AdminController {
         $db = $this->createStub(PdoDatabase::class);
 
@@ -137,6 +142,8 @@ final class AdminControllerTest extends TestCase
             $uploadService ?? $this->createStub(UploadService::class),
             new Config($uploadsDir === null ? [] : ['UPLOADS_DIR' => $uploadsDir]),
             new SettingsService($settingsRepository),
+            $cronRegistry,
+            $cronTrigger,
         );
     }
 
@@ -1795,6 +1802,8 @@ final class AdminControllerTest extends TestCase
             'admin.dashboard-card' => ['GET'],
             'admin.file-browser' => ['GET', 'POST'],
             'admin.cron' => ['GET'],
+            'admin.cron-task' => ['PATCH'],
+            'admin.cron-task-run' => ['POST'],
         ] as $action => $methods) {
             $page = $tree->findByAction($action);
 
@@ -1842,6 +1851,8 @@ final class AdminControllerTest extends TestCase
         $dashboardCard = (new Router($tree))->resolve('/api/v1/admin/dashboard/cards/admin.system-health');
         $fileBrowser = (new Router($tree))->resolve('/api/v1/admin/file-browser');
         $cron = (new Router($tree))->resolve('/api/v1/admin/cron');
+        $cronTask = (new Router($tree))->resolve('/api/v1/admin/cron/notifications:deliveries');
+        $cronTaskRun = (new Router($tree))->resolve('/api/v1/admin/cron/notifications:deliveries/run');
 
         $this->assertSame('admin.pages', $list['page']->action ?? null);
         $this->assertSame('admin.page', $item['page']->action ?? null);
@@ -1863,5 +1874,92 @@ final class AdminControllerTest extends TestCase
         $this->assertSame(['id' => 'admin.system-health'], $dashboardCard['params']);
         $this->assertSame('admin.file-browser', $fileBrowser['page']->action ?? null);
         $this->assertSame('admin.cron', $cron['page']->action ?? null);
+        $this->assertSame('admin.cron-task', $cronTask['page']->action ?? null);
+        $this->assertSame(['task' => 'notifications:deliveries'], $cronTask['params']);
+        $this->assertSame('admin.cron-task-run', $cronTaskRun['page']->action ?? null);
+        $this->assertSame(['task' => 'notifications:deliveries'], $cronTaskRun['params']);
+    }
+
+    public function testCronTaskCanBeDisabled(): void
+    {
+        $registry = new CronRegistry();
+        $registry->add('notifications:deliveries', 'Profile', 60);
+        $this->withValidCsrf();
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        PhpInputStreamMock::register('{"enabled":false}');
+
+        $response = $this->callAndDecode(
+            $this->makeModule(cronRegistry: $registry),
+            $this->makeApiPage('admin.cron-task', ['PATCH']),
+            ['task' => 'notifications:deliveries'],
+        );
+
+        self::assertFalse($response['enabled']);
+        self::assertStringContainsString('is_enabled = VALUES(is_enabled)', $this->writes[0][0]);
+        self::assertSame(['notifications:deliveries', 0], $this->writes[0][1]);
+    }
+
+    public function testCronTaskUpdateRequiresBooleanEnabledField(): void
+    {
+        $registry = new CronRegistry();
+        $registry->add('notifications:deliveries', 'Profile', 60);
+        $this->withValidCsrf();
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        PhpInputStreamMock::register('{"enabled":"yes"}');
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('must be a boolean');
+
+        $this->makeModule(cronRegistry: $registry)->callApi(
+            $this->makeApiPage('admin.cron-task', ['PATCH']),
+            ['task' => 'notifications:deliveries'],
+        );
+    }
+
+    public function testCronTaskManualRunIsQueued(): void
+    {
+        $registry = new CronRegistry();
+        $registry->add('notifications:deliveries', 'Profile', 60);
+        $trigger = $this->createMock(CronTrigger::class);
+        $trigger->expects($this->once())->method('spawnTask')->with('notifications:deliveries');
+        $this->withValidCsrf();
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+
+        $response = $this->callAndDecode(
+            $this->makeModule(cronRegistry: $registry, cronTrigger: $trigger),
+            $this->makeApiPage('admin.cron-task-run', ['POST']),
+            ['task' => 'notifications:deliveries'],
+        );
+
+        self::assertTrue($response['accepted']);
+        self::assertSame(202, http_response_code());
+    }
+
+    public function testDisabledCronTaskCannotBeRunManually(): void
+    {
+        $registry = new CronRegistry();
+        $registry->add('notifications:deliveries', 'Profile', 60);
+        $this->withValidCsrf();
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('disabled');
+
+        $this->makeModule(row: ['is_enabled' => 0], cronRegistry: $registry)->callApi(
+            $this->makeApiPage('admin.cron-task-run', ['POST']),
+            ['task' => 'notifications:deliveries'],
+        );
+    }
+
+    public function testUnknownCronTaskCannotBeMutated(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+
+        $this->expectException(\StreamEngine\Core\Exceptions\NotFoundException::class);
+
+        $this->makeModule()->callApi(
+            $this->makeApiPage('admin.cron-task', ['PATCH']),
+            ['task' => 'missing:task'],
+        );
     }
 }

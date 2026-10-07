@@ -24,4 +24,15 @@ class CronRegistry
     {
         return $this->tasks;
     }
+
+    /** @return array{task: string, controller: string, interval: int}|null */
+    public function get(string $task): ?array
+    {
+        return $this->tasks[$task] ?? null;
+    }
+
+    public function has(string $task): bool
+    {
+        return isset($this->tasks[$task]);
+    }
 }

@@ -94,6 +94,68 @@ final class CronRunnerTest extends TestCase
         $this->assertSame(['cron:probe'], CronProbeController::$ranTasks);
     }
 
+    public function testManualRunIgnoresIntervalAndRecordsManualTrigger(): void
+    {
+        CronProbeController::reset();
+        $registry = new CronRegistry();
+        $registry->add('cron:probe', 'CronProbeController', 3600);
+
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects($this->never())->method('fetchOne');
+        $calls = [];
+        $db->expects($this->exactly(3))->method('execute')
+            ->willReturnCallback(function (string $sql, array $params = []) use (&$calls): int {
+                $calls[] = [$sql, $params];
+
+                return 1;
+            });
+
+        $runner = new CronRunner(
+            $registry,
+            new CronRepository($db),
+            $this->makeControllerFactory($db),
+            new RequestContext(new User(1, '', AccessService::ROLE_USER), new \DateTimeZone('UTC'))
+        );
+
+        self::assertTrue($runner->runTask('cron:probe'));
+        self::assertSame(['cron:probe'], CronProbeController::$ranTasks);
+        self::assertSame('manual', $calls[1][1][0]);
+    }
+
+    public function testManualRunDoesNothingWhenTaskCannotTakeTheLock(): void
+    {
+        CronProbeController::reset();
+        $registry = new CronRegistry();
+        $registry->add('cron:probe', 'CronProbeController', 3600);
+
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects($this->exactly(2))->method('execute')->willReturnOnConsecutiveCalls(1, 0);
+
+        $runner = new CronRunner(
+            $registry,
+            new CronRepository($db),
+            $this->makeControllerFactory($db),
+            new RequestContext(new User(1, '', AccessService::ROLE_USER), new \DateTimeZone('UTC'))
+        );
+
+        self::assertFalse($runner->runTask('cron:probe'));
+        self::assertSame([], CronProbeController::$ranTasks);
+    }
+
+    public function testManualRunRejectsUnknownTask(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unknown cron task');
+
+        $db = $this->createStub(PdoDatabase::class);
+        (new CronRunner(
+            new CronRegistry(),
+            new CronRepository($db),
+            $this->makeControllerFactory($db),
+            new RequestContext(new User(1, '', AccessService::ROLE_USER), new \DateTimeZone('UTC'))
+        ))->runTask('missing:task');
+    }
+
     /**
      * The point of the whole exercise. lock() used to return true
      * unconditionally, so this branch in CronRunner::run() was dead and two
