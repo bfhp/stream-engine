@@ -2,7 +2,7 @@
     "format": 1,
     "release": "0.4.4",
     "schema": "schema.sql",
-    "schema_checksum": "4639a7e011382cb3b6cc204fa59a83a33ca14126baae8d1470e384b543dfc7e5",
+    "schema_checksum": "2b40ff49dd48f17753051078c2f3314f20df640541eed38836417d3ddcefa575",
     "migrations": [
         {
             "version": "20260912000000_initial",
@@ -63,6 +63,11 @@
             "version": "20261007040000_split_cron_tasks_and_run_history",
             "file": "20261007040000_split_cron_tasks_and_run_history.sql",
             "checksum": "70eba01457f5802a5d8d2fa0cd71a7aabeecf744d40baf18e0e60d4ddfdd4dfc"
+        },
+        {
+            "version": "20261008000000_add_mentions",
+            "file": "20261008000000_add_mentions.sql",
+            "checksum": "c604f867e5b768fdd8fbcb38efe34093c8ec0a4dae5046f2d7870f429dca4171"
         }
     ]
 }
