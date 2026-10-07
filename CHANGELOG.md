@@ -10,10 +10,32 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 ### Added
 
 - Added an admin file browser for browsing, uploading, and organizing files.
+- Added an admin Scheduler page with task health, intervals, next runs,
+  durations, scheduler heartbeat status, and `os`, `web`, and `off` operating
+  modes.
+- Added per-task enablement, immediate manual execution, and a details drawer
+  with scheduled and manual run history, errors, timings, and distinct queued,
+  running, failed-to-start, timed-out, successful, and failed states. History
+  is limited to the latest 25 attempts per task.
 
 ### Changed
 
 - The admin page list now displays pages as an indented hierarchy.
+- Cron mode is now stored in application settings and managed from the admin
+  interface instead of through `CRON_MODE`.
+- Renamed the current task-state table from `cron_runs` to `cron_tasks` and
+  moved individual attempts into the bounded `cron_run_history` table.
+
+### Removed
+
+- Removed the legacy `CRON_KEY` setting and public cron HTTP endpoint; web mode
+  now starts the internal runner from ordinary application requests.
+
+### Fixed
+
+- Fixed manual cron execution under PHP-FPM by launching the CLI PHP binary,
+  and made queued, running, success, failure, duration, and next-run state
+  update reliably after manual runs.
 
 ## [0.4.3] - 2026-10-05
 
