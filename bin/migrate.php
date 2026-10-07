@@ -10,8 +10,6 @@ use StreamEngine\Core\PdoDatabase;
 
 require __DIR__.'/../vendor/autoload.php';
 
-Dotenv\Dotenv::createImmutable(__DIR__.'/..')->load();
-
 $root = dirname(__DIR__);
 try {
     $arguments = array_slice($argv, 1);
@@ -23,6 +21,7 @@ try {
     $command = array_shift($arguments) ?? 'migrate';
     match ($command) {
         'migrate' => migrate(runner($root, true)),
+        'check' => check(runner($root)),
         'status' => status(runner($root)),
         'make' => make(runner($root), $arguments),
         'baseline' => baseline(runner($root), $arguments),
@@ -37,11 +36,35 @@ function runner(string $root, bool $connect = false): MigrationRunner
 {
     $engineRoot = dirname((new ReflectionClass(StreamEngine::class))->getFileName(), 2);
 
+    if ($connect) {
+        Dotenv\Dotenv::createImmutable($root)->load();
+    }
+
     return new MigrationRunner(
         $connect ? new PdoDatabase(new Config($_ENV)) : null,
         [$root.'/migrations', $engineRoot.'/migrations'],
         $root.'/storage/migrations.json',
     );
+}
+
+function check(MigrationRunner $runner): void
+{
+    $pending = $runner->pending();
+    if ($pending === []) {
+        return;
+    }
+
+    fwrite(STDERR, sprintf(
+        "WARNING: %d pending database migration%s.\n",
+        count($pending),
+        count($pending) === 1 ? '' : 's',
+    ));
+
+    foreach ($pending as $migration) {
+        fwrite(STDERR, '  - '.$migration['file']."\n");
+    }
+
+    fwrite(STDERR, "Run \"composer migrate\" before serving the updated application.\n");
 }
 
 /**
@@ -117,6 +140,7 @@ function usage(int $exitCode = 0): void
 {
     echo "Usage:\n";
     echo "  php bin/migrate.php migrate\n";
+    echo "  php bin/migrate.php check\n";
     echo "  php bin/migrate.php status\n";
     echo "  php bin/migrate.php make <name>\n";
     echo "  php bin/migrate.php baseline <version>\n";

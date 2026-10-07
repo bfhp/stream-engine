@@ -252,8 +252,12 @@ final class ModuleAutoloadTest extends TestCase
             file_put_contents($path.'/2099010100000'.$index.'_probe.sql', 'SELECT 1;');
         }
         $pending = 1 + count(glob(__DIR__.'/../../migrations/*.sql'));
+        $checkOutput = $this->cli(['check']);
+        self::assertStringContainsString('WARNING: '.$pending.' pending database migrations.', $checkOutput);
+        self::assertStringContainsString('Run "composer migrate"', $checkOutput);
         self::assertStringContainsString('Pending: '.$pending, $this->cli(['status']));
         $this->cli(['baseline', '20990101000002_probe']);
+        self::assertSame('', $this->cli(['check']));
         self::assertStringContainsString('Pending: 0', $this->cli(['status']));
         $history = json_decode(file_get_contents($this->root.'/storage/migrations.json'), true);
         self::assertCount($pending, $history['applied']);
