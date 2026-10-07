@@ -105,6 +105,41 @@ final class UploadDirectoryBrowserTest extends TestCase
         $browser->createDirectory('2', 'nested');
     }
 
+    public function testRenamesAFileAndMovesADirectory(): void
+    {
+        $browser = new UploadDirectoryBrowser($this->root);
+
+        $renamed = $browser->relocate('2/photo one.webp', '2', 'cover.webp');
+        self::assertFileDoesNotExist($this->root.'/2/photo one.webp');
+        self::assertFileExists($this->root.'/2/cover.webp');
+        self::assertSame('2/photo one.webp', $renamed['from'] ?? null);
+        self::assertSame('2/cover.webp', $renamed['to'] ?? null);
+        self::assertFalse($renamed['isDir'] ?? true);
+
+        $moved = $browser->relocate('2/nested', '', 'archive');
+        self::assertDirectoryDoesNotExist($this->root.'/2/nested');
+        self::assertDirectoryExists($this->root.'/archive');
+        self::assertTrue($moved['isDir'] ?? false);
+        self::assertNotContains('nested', array_column($moved['payload']['files'] ?? [], 'name'));
+        self::assertContains('archive', array_column($browser->browse('')['files'] ?? [], 'name'));
+    }
+
+    public function testRejectsConflictsAndMovingDirectoryIntoItself(): void
+    {
+        $browser = new UploadDirectoryBrowser($this->root);
+
+        try {
+            $browser->relocate('2/nested', '2/nested', 'child');
+            self::fail('Expected moving a directory into itself to be rejected');
+        } catch (InvalidArgumentException $exception) {
+            self::assertSame(UploadDirectoryBrowser::INVALID_MOVE, $exception->getMessage());
+        }
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(UploadDirectoryBrowser::DIRECTORY_EXISTS);
+        $browser->relocate('2.txt', '', '10.txt');
+    }
+
     public function testSymlinksAreNotExposed(): void
     {
         $outside = sys_get_temp_dir().'/uploads-outside-'.bin2hex(random_bytes(8));

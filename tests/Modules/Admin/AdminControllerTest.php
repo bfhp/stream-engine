@@ -1652,6 +1652,38 @@ final class AdminControllerTest extends TestCase
         $this->assertContains('Summer', array_column($response['files'], 'name'));
     }
 
+    public function testFileBrowserEndpointRelocatesAnEntryAndUpdatesUploadPaths(): void
+    {
+        $uploadsDir = sys_get_temp_dir().'/admin-file-browser-'.bin2hex(random_bytes(8));
+        self::assertTrue(mkdir($uploadsDir.'/gallery', 0700, true));
+        self::assertNotFalse(file_put_contents($uploadsDir.'/gallery/photo.jpg', 'image'));
+        $this->withValidCsrf();
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        PhpInputStreamMock::register(json_encode([
+            'operation' => 'relocate',
+            'source' => 'gallery/photo.jpg',
+            'destination' => 'gallery',
+            'name' => 'cover.jpg',
+        ], JSON_THROW_ON_ERROR));
+
+        try {
+            $response = $this->callAndDecode(
+                $this->makeModule(uploadsDir: $uploadsDir),
+                $this->makeApiPage('admin.file-browser', ['GET', 'POST']),
+            );
+            $this->assertFileExists($uploadsDir.'/gallery/cover.jpg');
+        } finally {
+            unlink($uploadsDir.'/gallery/cover.jpg');
+            rmdir($uploadsDir.'/gallery');
+            rmdir($uploadsDir);
+        }
+
+        $this->assertContains('cover.jpg', array_column($response['files'], 'name'));
+        $this->assertCount(1, $this->writes);
+        $this->assertSame('UPDATE uploads SET path = ? WHERE path = ?', $this->writes[0][0]);
+        $this->assertSame(['gallery/cover.jpg', 'gallery/photo.jpg'], $this->writes[0][1]);
+    }
+
     public function testFileBrowserUploadRequiresCsrf(): void
     {
         $_SERVER['REQUEST_METHOD'] = 'POST';

@@ -115,4 +115,20 @@ readonly class UploadRepository
 
         return (int) ($row['total'] ?? 0);
     }
+
+    public function relocatePath(string $from, string $to, bool $directory): void
+    {
+        if (! $directory) {
+            $this->db->execute('UPDATE uploads SET path = ? WHERE path = ?', [$to, $from]);
+
+            return;
+        }
+
+        $this->db->execute(
+            "UPDATE uploads
+             SET path = CONCAT(?, SUBSTRING(path, ?))
+             WHERE path = ? OR LEFT(path, ?) = CONCAT(?, '/')",
+            [$to, strlen($from) + 1, $from, strlen($from) + 1, $from]
+        );
+    }
 }

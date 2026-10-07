@@ -6,8 +6,12 @@ import {
 import { IconRefresh } from "@tabler/icons-react";
 import {
     ChonkyActions,
+    ChonkyIconName,
+    CustomVisibilityState,
+    defineFileAction,
     FullFileBrowser,
-    type FileActionHandler,
+    type FileAction,
+    type FileActionData,
 } from "@samuelncui/chonky";
 import { ChonkyIconFA } from "@samuelncui/chonky-icon-fontawesome";
 import { getApiResponseError } from "../../shared/api-errors";
@@ -20,8 +24,8 @@ import {
     type UploadBrowserPayload,
 } from "../lib/uploads-browser";
 
-const FILE_ACTIONS = [ChonkyActions.CreateFolder, ChonkyActions.UploadFiles];
 const FILE_ACCEPT = ".jpg,.jpeg,.png,.webp,.gif,.mp3,.ogg,.pdf";
+const RENAME_ACTION_ID = "rename_file_browser_entry";
 
 async function responseJson(response: Response): Promise<UploadBrowserPayload> {
     const body = await response.json().catch(() => null);
@@ -43,8 +47,31 @@ export default function FileBrowser() {
     const [folderName, setFolderName] = useState("");
     const [creatingFolder, setCreatingFolder] = useState(false);
     const [folderError, setFolderError] = useState<string | null>(null);
+    const [renameFile, setRenameFile] = useState<UploadBrowserFile | null>(null);
+    const [renameName, setRenameName] = useState("");
+    const [renameError, setRenameError] = useState<string | null>(null);
+    const [relocating, setRelocating] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
+
+    const fileActions = useMemo(() => [
+        ChonkyActions.CreateFolder,
+        ChonkyActions.UploadFiles,
+        defineFileAction({
+            id: RENAME_ACTION_ID,
+            requiresSelection: true,
+            button: {
+                name: trans("js.admin.file_browser.rename"),
+                toolbar: true,
+                contextMenu: true,
+                group: "Actions",
+                icon: ChonkyIconName.file,
+            },
+            customVisibility: state => state.selectedFilesForAction.length === 1
+                ? CustomVisibilityState.Default
+                : CustomVisibilityState.Disabled,
+        }),
+    ], []);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -137,9 +164,52 @@ export default function FileBrowser() {
         }
     }, [folderName, path]);
 
-    const handleFileAction = useCallback<FileActionHandler>(data => {
+    const relocateEntry = useCallback(async (
+        source: UploadBrowserFile,
+        destination: string,
+        name: string,
+        fallbackError: string,
+    ) => {
+        const response = await fetch("/api/v1/admin/file-browser", {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json", ...csrfHeaders() },
+            body: JSON.stringify({ operation: "relocate", source: source.path, destination, name }),
+        });
+        if (!response.ok) {
+            throw await getApiResponseError(response, fallbackError);
+        }
+
+        return await response.json() as UploadBrowserPayload;
+    }, []);
+
+    const renameEntry = useCallback(async () => {
+        const name = renameName.trim();
+        if (!renameFile || name === "") return;
+
+        setRelocating(true);
+        setRenameError(null);
+        try {
+            setPayload(await relocateEntry(
+                renameFile,
+                parentUploadPath(renameFile.path),
+                name,
+                trans("js.admin.file_browser.rename_failed"),
+            ));
+            setRenameFile(null);
+            setRenameName("");
+        } catch (error) {
+            setRenameError(error instanceof Error
+                ? error.message
+                : trans("js.admin.file_browser.rename_failed"));
+        } finally {
+            setRelocating(false);
+        }
+    }, [relocateEntry, renameFile, renameName]);
+
+    const handleFileAction = useCallback((data: FileActionData<FileAction>) => {
         if (data.id === ChonkyActions.CreateFolder.id) {
-            if (!creatingFolder && !uploading) {
+            if (!creatingFolder && !uploading && !relocating) {
                 setFolderError(null);
                 setFolderDialogOpened(true);
             }
@@ -147,7 +217,52 @@ export default function FileBrowser() {
         }
 
         if (data.id === ChonkyActions.UploadFiles.id) {
-            if (!uploading) fileInput.current?.click();
+            if (!uploading && !relocating) fileInput.current?.click();
+            return;
+        }
+
+        if (data.id === RENAME_ACTION_ID) {
+            const target = (data.state.contextMenuTriggerFile
+                ?? data.state.selectedFilesForAction[0]) as UploadBrowserFile | undefined;
+            if (target && data.state.selectedFilesForAction.length === 1 && !relocating) {
+                setRenameError(null);
+                setRenameFile(target);
+                setRenameName(target.name);
+            }
+            return;
+        }
+
+        if (data.id === ChonkyActions.MoveFiles.id) {
+            if (relocating) return;
+            const move = data.payload as unknown as {
+                files: UploadBrowserFile[];
+                destination: UploadBrowserFile;
+            };
+            const destination = move.destination?.path;
+            if (typeof destination !== "string") return;
+
+            setRelocating(true);
+            setError(null);
+            void (async () => {
+                try {
+                    for (const source of move.files) {
+                        await relocateEntry(
+                            source,
+                            destination,
+                            source.name,
+                            trans("js.admin.file_browser.move_failed"),
+                        );
+                    }
+                    setRefreshKey(key => key + 1);
+                } catch (error) {
+                    setError(error instanceof Error
+                        ? error.message
+                        : trans("js.admin.file_browser.move_failed"));
+                    setRefreshKey(key => key + 1);
+                } finally {
+                    setRelocating(false);
+                }
+            })();
             return;
         }
 
@@ -170,7 +285,7 @@ export default function FileBrowser() {
         } else if (target.publicUrl) {
             window.open(target.publicUrl, "_blank", "noopener,noreferrer");
         }
-    }, [creatingFolder, uploading]);
+    }, [creatingFolder, relocateEntry, relocating, uploading]);
 
     return (
         <Stack h="calc(100vh - 92px)" mih={480} gap="sm">
@@ -206,6 +321,38 @@ export default function FileBrowser() {
                     </Stack>
                 </form>
             </Modal>
+            <Modal
+                opened={renameFile !== null}
+                onClose={() => !relocating && setRenameFile(null)}
+                title={trans("js.admin.file_browser.rename")}
+                centered
+            >
+                <form onSubmit={event => { event.preventDefault(); void renameEntry(); }}>
+                    <Stack>
+                        {renameError && <Alert color="red">{renameError}</Alert>}
+                        <TextInput
+                            label={trans("js.admin.file_browser.name")}
+                            value={renameName}
+                            onChange={event => setRenameName(event.currentTarget.value)}
+                            maxLength={255}
+                            autoFocus
+                            required
+                        />
+                        <Group justify="flex-end">
+                            <Button
+                                variant="default"
+                                disabled={relocating}
+                                onClick={() => setRenameFile(null)}
+                            >
+                                {trans("js.admin.cancel")}
+                            </Button>
+                            <Button type="submit" loading={relocating} disabled={renameName.trim() === ""}>
+                                {trans("js.admin.save")}
+                            </Button>
+                        </Group>
+                    </Stack>
+                </form>
+            </Modal>
             <input
                 ref={fileInput}
                 type="file"
@@ -229,7 +376,7 @@ export default function FileBrowser() {
                         aria-label={trans("js.admin.refresh")}
                         onClick={() => setRefreshKey(key => key + 1)}
                     >
-                        {loading || uploading ? <Loader size={16} /> : <IconRefresh size={18} />}
+                        {loading || uploading || relocating ? <Loader size={16} /> : <IconRefresh size={18} />}
                     </ActionIcon>
                 </Tooltip>
             </Group>
@@ -240,10 +387,10 @@ export default function FileBrowser() {
                 <FullFileBrowser
                     files={files}
                     folderChain={folderChain}
-                    fileActions={FILE_ACTIONS}
+                    fileActions={fileActions}
                     onFileAction={handleFileAction}
                     iconComponent={ChonkyIconFA}
-                    disableDragAndDrop
+                    disableDragAndDrop={uploading || creatingFolder || relocating}
                     darkMode={colorScheme === "dark"}
                     i18n={{ locale: getLocale() }}
                 />

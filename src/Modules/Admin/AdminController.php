@@ -21,6 +21,7 @@ use StreamEngine\Core\TranslationManager;
 use StreamEngine\Core\UploadDirectoryBrowser;
 use StreamEngine\Domain\Page;
 use StreamEngine\Repository\PageRepository;
+use StreamEngine\Repository\UploadRepository;
 use StreamEngine\Repository\MenuRepository;
 use StreamEngine\Repository\SettingsRepository;
 use StreamEngine\Repository\UserRepository;
@@ -605,13 +606,46 @@ class AdminController extends AbstractController implements DashboardCardProvide
             }
 
             $input = $this->jsonBody();
-            if (($input['operation'] ?? null) !== 'create-directory'
-                || ! is_string($input['path'] ?? null) || ! is_string($input['name'] ?? null)) {
+            $operation = $input['operation'] ?? null;
+            if (! is_string($operation)) {
                 throw new ValidationException($this->tm->trans(UploadDirectoryBrowser::INVALID_PATH));
             }
 
             try {
-                $payload = $browser->createDirectory($input['path'], $input['name']);
+                if ($operation === 'create-directory'
+                    && is_string($input['path'] ?? null) && is_string($input['name'] ?? null)) {
+                    $payload = $browser->createDirectory($input['path'], $input['name']);
+                } elseif ($operation === 'relocate'
+                    && is_string($input['source'] ?? null)
+                    && is_string($input['destination'] ?? null)
+                    && is_string($input['name'] ?? null)) {
+                    $move = $browser->relocate($input['source'], $input['destination'], $input['name']);
+                    if ($move === null) {
+                        $payload = null;
+                    } else {
+                        try {
+                            (new UploadRepository($this->db))->relocatePath(
+                                $move['from'],
+                                $move['to'],
+                                $move['isDir'],
+                            );
+                        } catch (\Throwable $exception) {
+                            try {
+                                $browser->relocate(
+                                    $move['to'],
+                                    dirname($move['from']) === '.' ? '' : dirname($move['from']),
+                                    basename($move['from']),
+                                );
+                            } catch (\Throwable) {
+                                // Preserve the database error if the best-effort filesystem rollback also fails.
+                            }
+                            throw $exception;
+                        }
+                        $payload = $move['payload'];
+                    }
+                } else {
+                    throw new \InvalidArgumentException(UploadDirectoryBrowser::INVALID_PATH);
+                }
             } catch (\InvalidArgumentException $exception) {
                 throw new ValidationException($this->tm->trans($exception->getMessage()));
             }

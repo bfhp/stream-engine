@@ -48,8 +48,8 @@ export function toBrowserFile(entry: UploadBrowserEntry): UploadBrowserFile {
         ext: entry.extension,
         openable: true,
         selectable: true,
-        draggable: false,
-        droppable: false,
+        draggable: entry.id !== "__uploads_root__",
+        droppable: entry.isDir,
         publicUrl,
         thumbnailUrl: image ? publicUrl : undefined,
     };

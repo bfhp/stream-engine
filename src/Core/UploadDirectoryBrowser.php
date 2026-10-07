@@ -21,6 +21,10 @@ final readonly class UploadDirectoryBrowser
     public const string INVALID_DIRECTORY_NAME = 'admin.error.invalid_directory_name';
     public const string DIRECTORY_EXISTS = 'admin.error.directory_exists';
     public const string DIRECTORY_CREATE_FAILED = 'admin.error.directory_create_failed';
+    public const string INVALID_ENTRY_NAME = 'admin.error.invalid_file_browser_name';
+    public const string ENTRY_NOT_FOUND = 'admin.error.file_browser_entry_not_found';
+    public const string INVALID_MOVE = 'admin.error.invalid_file_browser_move';
+    public const string MOVE_FAILED = 'admin.error.file_browser_move_failed';
 
     public function __construct(private string $basePath)
     {
@@ -120,6 +124,80 @@ final readonly class UploadDirectoryBrowser
         return $this->browse($path);
     }
 
+    /**
+     * @return array{
+     *     payload: array{path: string, files: list<array<string, mixed>>, folderChain: list<array<string, mixed>>},
+     *     from: string,
+     *     to: string,
+     *     isDir: bool
+     * }|null
+     */
+    public function relocate(string $sourcePath, string $destinationPath, string $name): ?array
+    {
+        $sourcePath = $this->normalizePath($sourcePath);
+        $destinationPath = $this->normalizePath($destinationPath);
+        $name = $this->normalizeEntryName($name, $destinationPath);
+        if ($sourcePath === '') {
+            throw new InvalidArgumentException(self::INVALID_MOVE);
+        }
+
+        $root = realpath($this->basePath);
+        if ($root === false) {
+            return null;
+        }
+
+        $sourceCandidate = $root.'/'.$sourcePath;
+        $source = realpath($sourceCandidate);
+        $destination = realpath($destinationPath === '' ? $root : $root.'/'.$destinationPath);
+        if ($source === false || is_link($sourceCandidate) || ! $this->isInsideRoot($source, $root)) {
+            throw new InvalidArgumentException(self::ENTRY_NOT_FOUND);
+        }
+        if ($destination === false || ! is_dir($destination) || ! $this->isInsideRoot($destination, $root)) {
+            return null;
+        }
+
+        $isDirectory = is_dir($source);
+        if (! $isDirectory && ! is_file($source)) {
+            throw new InvalidArgumentException(self::ENTRY_NOT_FOUND);
+        }
+        if ($isDirectory && $this->isInsideRoot($destination, $source)) {
+            throw new InvalidArgumentException(self::INVALID_MOVE);
+        }
+
+        $target = $destination.'/'.$name;
+        $targetPath = ltrim($destinationPath.'/'.$name, '/');
+        if ($target === $source) {
+            $payload = $this->browse($this->parentPath($sourcePath));
+
+            return $payload === null ? null : [
+                'payload' => $payload,
+                'from' => $sourcePath,
+                'to' => $targetPath,
+                'isDir' => $isDirectory,
+            ];
+        }
+        if (file_exists($target) || is_link($target)) {
+            throw new InvalidArgumentException(self::DIRECTORY_EXISTS);
+        }
+        if (! @rename($source, $target)) {
+            throw new InvalidArgumentException(self::MOVE_FAILED);
+        }
+
+        $payload = $this->browse($this->parentPath($sourcePath));
+        if ($payload === null) {
+            @rename($target, $source);
+
+            return null;
+        }
+
+        return [
+            'payload' => $payload,
+            'from' => $sourcePath,
+            'to' => $targetPath,
+            'isDir' => $isDirectory,
+        ];
+    }
+
     private function normalizePath(string $path): string
     {
         if ($path === '') {
@@ -152,6 +230,27 @@ final readonly class UploadDirectoryBrowser
         }
 
         return $name;
+    }
+
+    private function normalizeEntryName(string $name, string $path): string
+    {
+        $name = trim($name);
+        $relativePath = ltrim($path.'/'.$name, '/');
+        if ($name === '' || $name === '.' || $name === '..' || ! mb_check_encoding($name, 'UTF-8')
+            || str_contains($name, "\0") || str_contains($name, '/') || str_contains($name, '\\')
+            || preg_match('/[\x00-\x1F\x7F]/u', $name) === 1
+            || strlen($name) > 255 || strlen($relativePath) > 255) {
+            throw new InvalidArgumentException(self::INVALID_ENTRY_NAME);
+        }
+
+        return $name;
+    }
+
+    private function parentPath(string $path): string
+    {
+        $parent = dirname($path);
+
+        return $parent === '.' ? '' : $parent;
     }
 
     private function isInsideRoot(string $path, string $root): bool

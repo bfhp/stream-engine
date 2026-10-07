@@ -44,4 +44,28 @@ final class UploadRepositoryTest extends TestCase
 
         $this->assertSame(4096, $repository->getUserUsage(7));
     }
+
+    public function testRelocatePathUpdatesOneFileOrADirectoryTree(): void
+    {
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects($this->exactly(2))
+            ->method('execute')
+            ->willReturnCallback(function (string $sql, array $params): int {
+                static $call = 0;
+                $call++;
+                if ($call === 1) {
+                    $this->assertSame('UPDATE uploads SET path = ? WHERE path = ?', $sql);
+                    $this->assertSame(['new.jpg', 'old.jpg'], $params);
+                } else {
+                    $this->assertStringContainsString('SET path = CONCAT(?, SUBSTRING(path, ?))', $sql);
+                    $this->assertSame(['archive', 8, 'gallery', 8, 'gallery'], $params);
+                }
+
+                return 1;
+            });
+
+        $repository = new UploadRepository($db);
+        $repository->relocatePath('old.jpg', 'new.jpg', false);
+        $repository->relocatePath('gallery', 'archive', true);
+    }
 }
