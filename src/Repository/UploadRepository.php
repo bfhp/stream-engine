@@ -131,4 +131,19 @@ readonly class UploadRepository
             [$to, strlen($from) + 1, $from, strlen($from) + 1, $from]
         );
     }
+
+    public function deletePath(string $path, bool $directory): void
+    {
+        if (! $directory) {
+            $this->db->execute('DELETE FROM uploads WHERE path = ?', [$path]);
+
+            return;
+        }
+
+        $this->db->execute(
+            "DELETE FROM uploads
+             WHERE path = ? OR LEFT(path, ?) = CONCAT(?, '/')",
+            [$path, strlen($path) + 1, $path]
+        );
+    }
 }

@@ -1231,6 +1231,9 @@ return [
     'js.admin.file_browser.name' => '이름',
     'js.admin.file_browser.rename_failed' => '항목 이름을 바꾸지 못했습니다',
     'js.admin.file_browser.move_failed' => '항목을 이동하지 못했습니다',
+    'js.admin.file_browser.delete' => '삭제',
+    'js.admin.file_browser.delete_confirmation' => '선택한 파일과 폴더를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.',
+    'js.admin.file_browser.delete_failed' => '선택한 항목을 삭제하지 못했습니다',
 
     'admin.error.forbidden' => '금지됨',
     'admin.error.invalid_role_filter' => '유효하지 않은 역할 필터입니다',
@@ -1318,6 +1321,7 @@ return [
     'admin.error.file_browser_entry_not_found' => '파일 또는 폴더를 찾을 수 없습니다',
     'admin.error.invalid_file_browser_move' => '파일 또는 폴더를 해당 위치로 이동할 수 없습니다',
     'admin.error.file_browser_move_failed' => '파일 또는 폴더를 이동하지 못했습니다',
+    'admin.error.file_browser_delete_failed' => '파일 또는 폴더를 삭제하지 못했습니다',
     'admin.error.uploads_directory_not_found' => 'uploads 디렉터리를 찾을 수 없습니다',
     'admin.page_action.admin.index' => '관리자 인터페이스',
     'admin.page_action.search.results' => '검색 결과',

@@ -1231,6 +1231,9 @@ E-mail: {email}
     'js.admin.file_browser.name' => 'Naam',
     'js.admin.file_browser.rename_failed' => 'Naam wijzigen mislukt',
     'js.admin.file_browser.move_failed' => 'Verplaatsen mislukt',
+    'js.admin.file_browser.delete' => 'Verwijderen',
+    'js.admin.file_browser.delete_confirmation' => 'Geselecteerde bestanden en mappen verwijderen? Dit kan niet ongedaan worden gemaakt.',
+    'js.admin.file_browser.delete_failed' => 'Geselecteerde items verwijderen mislukt',
 
     'admin.error.forbidden' => 'Verboden',
     'admin.error.invalid_role_filter' => 'Ongeldig rolfilter',
@@ -1318,6 +1321,7 @@ E-mail: {email}
     'admin.error.file_browser_entry_not_found' => 'Bestand of map niet gevonden',
     'admin.error.invalid_file_browser_move' => 'Bestand of map kan daar niet heen worden verplaatst',
     'admin.error.file_browser_move_failed' => 'Bestand of map verplaatsen mislukt',
+    'admin.error.file_browser_delete_failed' => 'Bestand of map verwijderen mislukt',
     'admin.error.uploads_directory_not_found' => 'Uploads-map niet gevonden',
     'admin.page_action.admin.index' => 'Beheerinterface',
     'admin.page_action.search.results' => 'Zoekresultaten',

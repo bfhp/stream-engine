@@ -25,6 +25,7 @@ final readonly class UploadDirectoryBrowser
     public const string ENTRY_NOT_FOUND = 'admin.error.file_browser_entry_not_found';
     public const string INVALID_MOVE = 'admin.error.invalid_file_browser_move';
     public const string MOVE_FAILED = 'admin.error.file_browser_move_failed';
+    public const string DELETE_FAILED = 'admin.error.file_browser_delete_failed';
 
     public function __construct(private string $basePath)
     {
@@ -198,6 +199,74 @@ final readonly class UploadDirectoryBrowser
         ];
     }
 
+    /**
+     * @param list<string> $paths
+     * @return array{
+     *     payload: array{path: string, files: list<array<string, mixed>>, folderChain: list<array<string, mixed>>},
+     *     entries: list<array{path: string, isDir: bool}>
+     * }|null
+     */
+    public function delete(array $paths): ?array
+    {
+        $paths = array_values(array_unique(array_map($this->normalizePath(...), $paths)));
+        if ($paths === [] || in_array('', $paths, true)) {
+            throw new InvalidArgumentException(self::INVALID_PATH);
+        }
+
+        $root = realpath($this->basePath);
+        if ($root === false) {
+            return null;
+        }
+
+        $entries = [];
+        foreach ($paths as $path) {
+            $candidate = $root.'/'.$path;
+            $resolved = realpath($candidate);
+            if ($resolved === false || is_link($candidate) || ! $this->isInsideRoot($resolved, $root)) {
+                throw new InvalidArgumentException(self::ENTRY_NOT_FOUND);
+            }
+            if (! is_dir($resolved) && ! is_file($resolved)) {
+                throw new InvalidArgumentException(self::ENTRY_NOT_FOUND);
+            }
+            $entries[] = ['path' => $path, 'isDir' => is_dir($resolved), 'resolved' => $resolved];
+        }
+
+        usort($entries, static fn (array $left, array $right): int => strlen($left['path']) <=> strlen($right['path']));
+        $topLevelEntries = [];
+        foreach ($entries as $entry) {
+            $covered = false;
+            foreach ($topLevelEntries as $parent) {
+                if ($parent['isDir'] && str_starts_with($entry['path'], $parent['path'].'/')) {
+                    $covered = true;
+                    break;
+                }
+            }
+            if (! $covered) {
+                $topLevelEntries[] = $entry;
+            }
+        }
+
+        foreach ($topLevelEntries as $entry) {
+            if (! $this->removeTree($entry['resolved'])) {
+                throw new InvalidArgumentException(self::DELETE_FAILED);
+            }
+        }
+
+        $parentPath = $this->parentPath($topLevelEntries[0]['path']);
+        $payload = $this->browse($parentPath);
+        if ($payload === null) {
+            return null;
+        }
+
+        return [
+            'payload' => $payload,
+            'entries' => array_map(
+                static fn (array $entry): array => ['path' => $entry['path'], 'isDir' => $entry['isDir']],
+                $topLevelEntries,
+            ),
+        ];
+    }
+
     private function normalizePath(string $path): string
     {
         if ($path === '') {
@@ -273,6 +342,28 @@ final readonly class UploadDirectoryBrowser
         }
 
         return $count;
+    }
+
+    private function removeTree(string $path): bool
+    {
+        if (is_link($path) || is_file($path)) {
+            return @unlink($path);
+        }
+        if (! is_dir($path)) {
+            return false;
+        }
+
+        try {
+            foreach (new FilesystemIterator($path, FilesystemIterator::SKIP_DOTS) as $entry) {
+                if (! $this->removeTree($entry->getPathname())) {
+                    return false;
+                }
+            }
+        } catch (UnexpectedValueException) {
+            return false;
+        }
+
+        return @rmdir($path);
     }
 
     /**

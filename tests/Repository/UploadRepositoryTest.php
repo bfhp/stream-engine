@@ -68,4 +68,28 @@ final class UploadRepositoryTest extends TestCase
         $repository->relocatePath('old.jpg', 'new.jpg', false);
         $repository->relocatePath('gallery', 'archive', true);
     }
+
+    public function testDeletePathRemovesOneFileOrADirectoryTree(): void
+    {
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects($this->exactly(2))
+            ->method('execute')
+            ->willReturnCallback(function (string $sql, array $params): int {
+                static $call = 0;
+                $call++;
+                if ($call === 1) {
+                    $this->assertSame('DELETE FROM uploads WHERE path = ?', $sql);
+                    $this->assertSame(['old.jpg'], $params);
+                } else {
+                    $this->assertStringContainsString('DELETE FROM uploads', $sql);
+                    $this->assertSame(['gallery', 8, 'gallery'], $params);
+                }
+
+                return 1;
+            });
+
+        $repository = new UploadRepository($db);
+        $repository->deletePath('old.jpg', false);
+        $repository->deletePath('gallery', true);
+    }
 }

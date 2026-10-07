@@ -51,12 +51,16 @@ export default function FileBrowser() {
     const [renameName, setRenameName] = useState("");
     const [renameError, setRenameError] = useState<string | null>(null);
     const [relocating, setRelocating] = useState(false);
+    const [deleteFiles, setDeleteFiles] = useState<UploadBrowserFile[]>([]);
+    const [deleteError, setDeleteError] = useState<string | null>(null);
+    const [deleting, setDeleting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
 
     const fileActions = useMemo(() => [
         ChonkyActions.CreateFolder,
         ChonkyActions.UploadFiles,
+        ChonkyActions.DeleteFiles,
         defineFileAction({
             id: RENAME_ACTION_ID,
             requiresSelection: true,
@@ -207,9 +211,36 @@ export default function FileBrowser() {
         }
     }, [relocateEntry, renameFile, renameName]);
 
+    const deleteEntries = useCallback(async () => {
+        if (deleteFiles.length === 0) return;
+
+        setDeleting(true);
+        setDeleteError(null);
+        try {
+            const response = await fetch("/api/v1/admin/file-browser", {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json", ...csrfHeaders() },
+                body: JSON.stringify({ operation: "delete", paths: deleteFiles.map(file => file.path) }),
+            });
+            if (!response.ok) {
+                throw await getApiResponseError(response, trans("js.admin.file_browser.delete_failed"));
+            }
+
+            setPayload(await response.json() as UploadBrowserPayload);
+            setDeleteFiles([]);
+        } catch (error) {
+            setDeleteError(error instanceof Error
+                ? error.message
+                : trans("js.admin.file_browser.delete_failed"));
+        } finally {
+            setDeleting(false);
+        }
+    }, [deleteFiles]);
+
     const handleFileAction = useCallback((data: FileActionData<FileAction>) => {
         if (data.id === ChonkyActions.CreateFolder.id) {
-            if (!creatingFolder && !uploading && !relocating) {
+            if (!creatingFolder && !uploading && !relocating && !deleting) {
                 setFolderError(null);
                 setFolderDialogOpened(true);
             }
@@ -217,14 +248,24 @@ export default function FileBrowser() {
         }
 
         if (data.id === ChonkyActions.UploadFiles.id) {
-            if (!uploading && !relocating) fileInput.current?.click();
+            if (!uploading && !relocating && !deleting) fileInput.current?.click();
+            return;
+        }
+
+        if (data.id === ChonkyActions.DeleteFiles.id) {
+            const selected = data.state.selectedFilesForAction as UploadBrowserFile[];
+            if (selected.length > 0 && !uploading && !creatingFolder && !relocating && !deleting) {
+                setDeleteError(null);
+                setDeleteFiles(selected);
+            }
             return;
         }
 
         if (data.id === RENAME_ACTION_ID) {
             const target = (data.state.contextMenuTriggerFile
                 ?? data.state.selectedFilesForAction[0]) as UploadBrowserFile | undefined;
-            if (target && data.state.selectedFilesForAction.length === 1 && !relocating) {
+            if (target && data.state.selectedFilesForAction.length === 1
+                && !uploading && !creatingFolder && !relocating && !deleting) {
                 setRenameError(null);
                 setRenameFile(target);
                 setRenameName(target.name);
@@ -233,7 +274,7 @@ export default function FileBrowser() {
         }
 
         if (data.id === ChonkyActions.MoveFiles.id) {
-            if (relocating) return;
+            if (uploading || creatingFolder || relocating || deleting) return;
             const move = data.payload as unknown as {
                 files: UploadBrowserFile[];
                 destination: UploadBrowserFile;
@@ -285,7 +326,7 @@ export default function FileBrowser() {
         } else if (target.publicUrl) {
             window.open(target.publicUrl, "_blank", "noopener,noreferrer");
         }
-    }, [creatingFolder, relocateEntry, relocating, uploading]);
+    }, [creatingFolder, deleting, relocateEntry, relocating, uploading]);
 
     return (
         <Stack h="calc(100vh - 92px)" mih={480} gap="sm">
@@ -353,6 +394,33 @@ export default function FileBrowser() {
                     </Stack>
                 </form>
             </Modal>
+            <Modal
+                opened={deleteFiles.length > 0}
+                onClose={() => !deleting && setDeleteFiles([])}
+                title={trans("js.admin.file_browser.delete")}
+                centered
+            >
+                <Stack>
+                    {deleteError && <Alert color="red">{deleteError}</Alert>}
+                    <Text>{trans("js.admin.file_browser.delete_confirmation")}</Text>
+                    <Text size="sm" c="dimmed">
+                        {deleteFiles.slice(0, 5).map(file => file.name).join(", ")}
+                        {deleteFiles.length > 5 ? ` … (+${deleteFiles.length - 5})` : ""}
+                    </Text>
+                    <Group justify="flex-end">
+                        <Button
+                            variant="default"
+                            disabled={deleting}
+                            onClick={() => setDeleteFiles([])}
+                        >
+                            {trans("js.admin.cancel")}
+                        </Button>
+                        <Button color="red" loading={deleting} onClick={() => void deleteEntries()}>
+                            {trans("js.admin.file_browser.delete")}
+                        </Button>
+                    </Group>
+                </Stack>
+            </Modal>
             <input
                 ref={fileInput}
                 type="file"
@@ -376,7 +444,9 @@ export default function FileBrowser() {
                         aria-label={trans("js.admin.refresh")}
                         onClick={() => setRefreshKey(key => key + 1)}
                     >
-                        {loading || uploading || relocating ? <Loader size={16} /> : <IconRefresh size={18} />}
+                        {loading || uploading || relocating || deleting
+                            ? <Loader size={16} />
+                            : <IconRefresh size={18} />}
                     </ActionIcon>
                 </Tooltip>
             </Group>
@@ -390,7 +460,7 @@ export default function FileBrowser() {
                     fileActions={fileActions}
                     onFileAction={handleFileAction}
                     iconComponent={ChonkyIconFA}
-                    disableDragAndDrop={uploading || creatingFolder || relocating}
+                    disableDragAndDrop={uploading || creatingFolder || relocating || deleting}
                     darkMode={colorScheme === "dark"}
                     i18n={{ locale: getLocale() }}
                 />

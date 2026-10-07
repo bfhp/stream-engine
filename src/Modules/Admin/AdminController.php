@@ -643,6 +643,23 @@ class AdminController extends AbstractController implements DashboardCardProvide
                         }
                         $payload = $move['payload'];
                     }
+                } elseif ($operation === 'delete'
+                    && is_array($input['paths'] ?? null)
+                    && array_is_list($input['paths'])
+                    && array_filter(
+                        $input['paths'],
+                        static fn (mixed $path): bool => ! is_string($path),
+                    ) === []) {
+                    $deleted = $browser->delete($input['paths']);
+                    if ($deleted === null) {
+                        $payload = null;
+                    } else {
+                        $uploads = new UploadRepository($this->db);
+                        foreach ($deleted['entries'] as $entry) {
+                            $uploads->deletePath($entry['path'], $entry['isDir']);
+                        }
+                        $payload = $deleted['payload'];
+                    }
                 } else {
                     throw new \InvalidArgumentException(UploadDirectoryBrowser::INVALID_PATH);
                 }

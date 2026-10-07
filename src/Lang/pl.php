@@ -1231,6 +1231,9 @@ E-mail: {email}
     'js.admin.file_browser.name' => 'Nazwa',
     'js.admin.file_browser.rename_failed' => 'Nie udało się zmienić nazwy elementu',
     'js.admin.file_browser.move_failed' => 'Nie udało się przenieść elementu',
+    'js.admin.file_browser.delete' => 'Usuń',
+    'js.admin.file_browser.delete_confirmation' => 'Usunąć wybrane pliki i foldery? Tej operacji nie można cofnąć.',
+    'js.admin.file_browser.delete_failed' => 'Nie udało się usunąć wybranych elementów',
 
     'admin.error.forbidden' => 'Zabronione',
     'admin.error.invalid_role_filter' => 'Nieprawidłowy filtr roli',
@@ -1318,6 +1321,7 @@ E-mail: {email}
     'admin.error.file_browser_entry_not_found' => 'Nie znaleziono pliku lub folderu',
     'admin.error.invalid_file_browser_move' => 'Nie można przenieść pliku lub folderu w to miejsce',
     'admin.error.file_browser_move_failed' => 'Nie udało się przenieść pliku lub folderu',
+    'admin.error.file_browser_delete_failed' => 'Nie udało się usunąć pliku lub folderu',
     'admin.error.uploads_directory_not_found' => 'Nie znaleziono katalogu uploads',
     'admin.page_action.admin.index' => 'Interfejs administracyjny',
     'admin.page_action.search.results' => 'Wyniki wyszukiwania',

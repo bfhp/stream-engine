@@ -140,6 +140,38 @@ final class UploadDirectoryBrowserTest extends TestCase
         $browser->relocate('2.txt', '', '10.txt');
     }
 
+    public function testDeletesFilesAndDirectoryTreesWithoutFollowingSymlinks(): void
+    {
+        $outside = sys_get_temp_dir().'/uploads-delete-outside-'.bin2hex(random_bytes(8));
+        self::assertNotFalse(file_put_contents($outside, 'keep'));
+        self::assertTrue(symlink($outside, $this->root.'/2/nested/outside-link'));
+
+        try {
+            $deleted = (new UploadDirectoryBrowser($this->root))->delete(['2.txt', '2']);
+
+            self::assertFileDoesNotExist($this->root.'/2.txt');
+            self::assertDirectoryDoesNotExist($this->root.'/2');
+            self::assertFileExists($outside);
+            self::assertSame(
+                [['path' => '2', 'isDir' => true], ['path' => '2.txt', 'isDir' => false]],
+                $deleted['entries'] ?? null,
+            );
+            self::assertSame(['10.txt'], array_column($deleted['payload']['files'] ?? [], 'name'));
+        } finally {
+            if (file_exists($outside)) {
+                unlink($outside);
+            }
+        }
+    }
+
+    public function testRefusesToDeleteTheUploadsRoot(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(UploadDirectoryBrowser::INVALID_PATH);
+
+        (new UploadDirectoryBrowser($this->root))->delete(['']);
+    }
+
     public function testSymlinksAreNotExposed(): void
     {
         $outside = sys_get_temp_dir().'/uploads-outside-'.bin2hex(random_bytes(8));

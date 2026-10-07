@@ -1231,6 +1231,9 @@ return [
     'js.admin.file_browser.name' => '名称',
     'js.admin.file_browser.rename_failed' => '无法重命名项目',
     'js.admin.file_browser.move_failed' => '无法移动项目',
+    'js.admin.file_browser.delete' => '删除',
+    'js.admin.file_browser.delete_confirmation' => '删除所选文件和文件夹？此操作无法撤销。',
+    'js.admin.file_browser.delete_failed' => '无法删除所选项目',
 
     'admin.error.forbidden' => '禁止访问',
     'admin.error.invalid_role_filter' => '角色筛选无效',
@@ -1318,6 +1321,7 @@ return [
     'admin.error.file_browser_entry_not_found' => '找不到文件或文件夹',
     'admin.error.invalid_file_browser_move' => '无法将文件或文件夹移动到该位置',
     'admin.error.file_browser_move_failed' => '无法移动文件或文件夹',
+    'admin.error.file_browser_delete_failed' => '无法删除文件或文件夹',
     'admin.error.uploads_directory_not_found' => '未找到 uploads 目录',
     'admin.page_action.admin.index' => '管理界面',
     'admin.page_action.search.results' => '搜索结果',

@@ -1231,6 +1231,9 @@ return [
     'js.admin.file_browser.name' => 'الاسم',
     'js.admin.file_browser.rename_failed' => 'تعذرت إعادة تسمية العنصر',
     'js.admin.file_browser.move_failed' => 'تعذر نقل العنصر',
+    'js.admin.file_browser.delete' => 'حذف',
+    'js.admin.file_browser.delete_confirmation' => 'هل تريد حذف الملفات والمجلدات المحددة؟ لا يمكن التراجع عن هذا الإجراء.',
+    'js.admin.file_browser.delete_failed' => 'تعذر حذف العناصر المحددة',
 
     'admin.error.forbidden' => 'محظور',
     'admin.error.invalid_role_filter' => 'مرشح الدور غير صالح',
@@ -1318,6 +1321,7 @@ return [
     'admin.error.file_browser_entry_not_found' => 'الملف أو المجلد غير موجود',
     'admin.error.invalid_file_browser_move' => 'لا يمكن نقل الملف أو المجلد إلى هناك',
     'admin.error.file_browser_move_failed' => 'تعذر نقل الملف أو المجلد',
+    'admin.error.file_browser_delete_failed' => 'تعذر حذف الملف أو المجلد',
     'admin.error.uploads_directory_not_found' => 'تعذر العثور على دليل uploads',
     'admin.page_action.admin.index' => 'واجهة الإدارة',
     'admin.page_action.search.results' => 'نتائج البحث',

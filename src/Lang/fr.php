@@ -1231,6 +1231,9 @@ E-mail : {email}
     'js.admin.file_browser.name' => 'Nom',
     'js.admin.file_browser.rename_failed' => 'Impossible de renommer l’élément',
     'js.admin.file_browser.move_failed' => 'Impossible de déplacer l’élément',
+    'js.admin.file_browser.delete' => 'Supprimer',
+    'js.admin.file_browser.delete_confirmation' => 'Supprimer les fichiers et dossiers sélectionnés ? Cette action est irréversible.',
+    'js.admin.file_browser.delete_failed' => 'Impossible de supprimer les éléments sélectionnés',
 
     'admin.error.forbidden' => 'Interdit',
     'admin.error.invalid_role_filter' => 'Filtre de rôle invalide',
@@ -1318,6 +1321,7 @@ E-mail : {email}
     'admin.error.file_browser_entry_not_found' => 'Fichier ou dossier introuvable',
     'admin.error.invalid_file_browser_move' => 'Le fichier ou dossier ne peut pas être déplacé ici',
     'admin.error.file_browser_move_failed' => 'Impossible de déplacer le fichier ou dossier',
+    'admin.error.file_browser_delete_failed' => 'Impossible de supprimer le fichier ou dossier',
     'admin.error.uploads_directory_not_found' => 'Répertoire uploads introuvable',
     'admin.page_action.admin.index' => 'Interface d’administration',
     'admin.page_action.search.results' => 'Résultats de recherche',

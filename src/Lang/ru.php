@@ -1268,6 +1268,9 @@ return [
     'js.admin.file_browser.name' => 'Имя',
     'js.admin.file_browser.rename_failed' => 'Не удалось переименовать объект',
     'js.admin.file_browser.move_failed' => 'Не удалось переместить объект',
+    'js.admin.file_browser.delete' => 'Удалить',
+    'js.admin.file_browser.delete_confirmation' => 'Удалить выбранные файлы и папки? Это действие нельзя отменить.',
+    'js.admin.file_browser.delete_failed' => 'Не удалось удалить выбранные объекты',
 
     'admin.error.forbidden' => 'Доступ запрещён',
     'admin.error.invalid_role_filter' => 'Некорректный фильтр роли',
@@ -1359,6 +1362,7 @@ return [
     'admin.error.file_browser_entry_not_found' => 'Файл или папка не найдены',
     'admin.error.invalid_file_browser_move' => 'Файл или папку нельзя переместить сюда',
     'admin.error.file_browser_move_failed' => 'Не удалось переместить файл или папку',
+    'admin.error.file_browser_delete_failed' => 'Не удалось удалить файл или папку',
     'admin.error.uploads_directory_not_found' => 'Директория uploads не найдена',
     'admin.page_action.admin.index' => 'Интерфейс администратора',
     'admin.page_action.search.results' => 'Результаты поиска',
