@@ -14,6 +14,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 - Added registration controls for closed, email-confirmed, and immediately
   active accounts, a configurable honeypot, and optional Turnstile or hCaptcha
   verification.
+- Added automatic removal of registrations left unconfirmed for more than 24
+  hours.
 
 ## [0.4.4] - 2026-10-07
 

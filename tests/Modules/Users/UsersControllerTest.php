@@ -3804,7 +3804,7 @@ final class UsersControllerTest extends TestCase
      * clause. It is a raw `execute()` with no parameters, which is exactly why
      * it is worth pinning: there is no argument to get wrong, only a statement.
      */
-    public function testUsersCleanupOnlyDeletesExpiredPasswordResets(): void
+    public function testUsersCleanupDeletesExpiredPasswordResetsAndUnactivatedRegistrations(): void
     {
         $captured = [];
         $db = $this->createStub(PdoDatabase::class);
@@ -3819,11 +3819,25 @@ final class UsersControllerTest extends TestCase
         $module = $this->makeUsersModule($db);
         $module->runCron('users:cleanup');
 
-        $this->assertCount(1, $captured);
+        $this->assertCount(3, $captured);
         $this->assertStringContainsString('DELETE FROM password_resets', $captured[0]);
         // An hour old, not "all of them" - a reset link that was issued a
         // minute ago must survive the sweep that runs every hour.
         $this->assertStringContainsString('created_at < UNIX_TIMESTAMP() - 60 * 60', $captured[0]);
+
+        $this->assertStringContainsString('DELETE u', $captured[1]);
+        $this->assertStringContainsString('INNER JOIN email_verifications', $captured[1]);
+        $this->assertStringContainsString('u.is_active = 0', $captured[1]);
+        $this->assertStringContainsString(
+            'u.created_at < UNIX_TIMESTAMP() - 24 * 60 * 60',
+            $captured[1],
+        );
+        $this->assertStringContainsString('ev.expires_at <= UNIX_TIMESTAMP()', $captured[1]);
+
+        // Run after the user deletion: that query needs the verification row
+        // to distinguish an unfinished registration from a disabled account.
+        $this->assertStringContainsString('DELETE FROM email_verifications', $captured[2]);
+        $this->assertStringContainsString('expires_at <= UNIX_TIMESTAMP()', $captured[2]);
     }
 
     public function testSessionsCleanupTaskDelegatesToTheService(): void

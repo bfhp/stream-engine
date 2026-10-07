@@ -3769,15 +3769,31 @@ class UsersController extends AbstractController
         // No default arm on purpose - an unregistered task should be a loud
         // UnhandledMatchError, not a silent no-op.
         match ($task) {
-            'users:cleanup' => $this->cleanupRetrieve(),
+            'users:cleanup' => $this->cleanupUsers(),
             'users:sessions-cleanup' => $this->userService->cleanupExpiredSessions(),
         };
     }
 
-    public function cleanupRetrieve(): void
+    public function cleanupUsers(): void
     {
         $this->db->execute(
             "DELETE FROM password_resets WHERE created_at < UNIX_TIMESTAMP() - 60 * 60",
+        );
+
+        // The verification row distinguishes an unfinished registration from
+        // an established account that an administrator deactivated later.
+        // Deleting the user also removes that token and queued notifications
+        // through their ON DELETE CASCADE foreign keys.
+        $this->db->execute(
+            "DELETE u
+             FROM users u
+             INNER JOIN email_verifications ev ON ev.user_id = u.id
+             WHERE u.is_active = 0
+               AND u.created_at < UNIX_TIMESTAMP() - 24 * 60 * 60
+               AND ev.expires_at <= UNIX_TIMESTAMP()",
+        );
+        $this->db->execute(
+            "DELETE FROM email_verifications WHERE expires_at <= UNIX_TIMESTAMP()",
         );
     }
 
