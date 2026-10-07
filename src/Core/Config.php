@@ -78,6 +78,20 @@ final readonly class Config
         return $this->env['UPLOADS_DIR'] ?? 'storage/uploads';
     }
 
+    /**
+     * Resolve a relative uploads setting from the application root rather
+     * than the process working directory, which differs between CLI and FPM.
+     */
+    public function uploadsPath(string $applicationRoot): string
+    {
+        $directory = $this->uploadsDir();
+        if ($directory === '' || str_starts_with($directory, DIRECTORY_SEPARATOR)) {
+            return $directory;
+        }
+
+        return rtrim($applicationRoot, '/\\').DIRECTORY_SEPARATOR.$directory;
+    }
+
     public function tempDir(): string
     {
         $dir = trim((string) ($this->env['TMP_DIR'] ?? ini_get('upload_tmp_dir')));

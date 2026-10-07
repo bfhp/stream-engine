@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace StreamEngine\Modules\Admin;
 
 use StreamEngine\Core\AbstractController;
+use StreamEngine\Core\Config;
 use StreamEngine\Core\DashboardCardProviderInterface;
 use StreamEngine\Core\Exceptions\ForbiddenException;
 use StreamEngine\Core\Exceptions\NotFoundException;
@@ -17,6 +18,7 @@ use StreamEngine\Core\QueryParams;
 use StreamEngine\Core\RequestContext;
 use StreamEngine\Core\Security;
 use StreamEngine\Core\TranslationManager;
+use StreamEngine\Core\UploadDirectoryBrowser;
 use StreamEngine\Domain\Page;
 use StreamEngine\Repository\PageRepository;
 use StreamEngine\Repository\MenuRepository;
@@ -265,6 +267,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
         private readonly TranslationManager $tm,
         private readonly ModuleRegistry $modules,
         private readonly ThemeService $themeService,
+        private readonly Config $config,
     ) {
         parent::__construct($db, $context);
         $this->pageRepository = new PageRepository($db);
@@ -347,6 +350,9 @@ class AdminController extends AbstractController implements DashboardCardProvide
             case 'admin.dashboard-card':
                 $this->handleDashboardCardRequest((string) ($args['id'] ?? ''));
                 break;
+            case 'admin.uploads':
+                $this->handleUploadsRequest();
+                break;
             default:
                 parent::callApi($page, $args);
         }
@@ -396,6 +402,18 @@ class AdminController extends AbstractController implements DashboardCardProvide
                 pattern: '{id:[a-z][a-z0-9.-]*}',
                 requestMethods: ['GET'],
                 action: 'admin.dashboard-card',
+                accessRule: AccessService::ACCESS_ADMIN,
+            )
+        );
+
+        $uploadsPageId = $pageTree->getMaxPageId();
+        $pageTree->add(
+            Page::api(
+                id: $uploadsPageId,
+                parentId: $adminApiPageId,
+                pattern: 'uploads',
+                requestMethods: ['GET'],
+                action: 'admin.uploads',
                 accessRule: AccessService::ACCESS_ADMIN,
             )
         );
@@ -552,6 +570,26 @@ class AdminController extends AbstractController implements DashboardCardProvide
         }
 
         echo Formatter::json($this->dashboardService->payload($this->context));
+    }
+
+    /**
+     * @throws NotFoundException
+     * @throws ValidationException
+     */
+    private function handleUploadsRequest(): void
+    {
+        try {
+            $payload = (new UploadDirectoryBrowser($this->config->uploadsPath(dirname(__DIR__, 3))))
+                ->browse(QueryParams::fromGlobals()->string('path'));
+        } catch (\InvalidArgumentException) {
+            throw new ValidationException($this->tm->trans('admin.error.invalid_uploads_path'));
+        }
+
+        if ($payload === null) {
+            throw new NotFoundException($this->tm->trans('admin.error.uploads_directory_not_found'));
+        }
+
+        echo Formatter::json($payload);
     }
 
     /** @throws NotFoundException */

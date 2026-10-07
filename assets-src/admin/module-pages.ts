@@ -14,7 +14,9 @@ export type AdminRoute = Pick<AdminPage, "path" | "labelKey"> & {
 };
 
 // Reserve whole built-in sections, including their parameterized editor routes.
-const builtInSections = new Set(["feeds", "pages", "menus", "settings", "themes", "widgets", "users"]);
+const builtInSections = new Set([
+    "feeds", "pages", "menus", "settings", "themes", "widgets", "file-browser", "uploads", "users",
+]);
 
 export function collectModulePages(modules: AdminPageModules): AdminPage[] {
     const pages: AdminPage[] = [];

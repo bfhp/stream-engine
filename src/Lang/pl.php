@@ -1006,6 +1006,7 @@ E-mail: {email}
     'js.admin.nav.settings' => 'Ustawienia',
     'js.admin.nav.themes' => 'Motywy',
     'js.admin.nav.widgets' => 'Widżety',
+    'js.admin.nav.file_browser' => 'Menedżer plików',
     'js.admin.nav.users' => 'Użytkownicy',
     'js.admin.page_action.admin' => 'Interfejs administracyjny',
 
@@ -1219,6 +1220,10 @@ E-mail: {email}
     'js.admin.widgets.save_failed' => 'Nie udało się zapisać widżetów',
     'js.admin.widgets.saved' => 'Widżety zapisane',
 
+    'js.admin.file_browser.title' => 'Menedżer plików',
+    'js.admin.file_browser.help' => 'Przeglądaj pliki w skonfigurowanym katalogu uploads. Kliknij dwukrotnie, aby otworzyć plik.',
+    'js.admin.file_browser.load_failed' => 'Nie udało się wczytać plików',
+
     'admin.error.forbidden' => 'Zabronione',
     'admin.error.invalid_role_filter' => 'Nieprawidłowy filtr roli',
     'admin.error.invalid_status_filter' => 'Nieprawidłowy filtr statusu',
@@ -1297,6 +1302,8 @@ E-mail: {email}
     'admin.error.dashboard_unknown_card' => 'Nieznana lub zduplikowana karta pulpitu',
     'admin.error.dashboard_size' => "Nieprawidłowy rozmiar karty pulpitu „{id}”",
     'admin.error.dashboard_positions' => 'Pozycje kart pulpitu muszą być unikalnymi nieujemnymi liczbami całkowitymi',
+    'admin.error.invalid_uploads_path' => 'Nieprawidłowa ścieżka uploads',
+    'admin.error.uploads_directory_not_found' => 'Nie znaleziono katalogu uploads',
     'admin.page_action.admin.index' => 'Interfejs administracyjny',
     'admin.page_action.search.results' => 'Wyniki wyszukiwania',
     'admin.page_action.messages.inbox' => 'Skrzynka wiadomości',

@@ -1006,6 +1006,7 @@ E-mail : {email}
     'js.admin.nav.settings' => 'Paramètres',
     'js.admin.nav.themes' => 'Thèmes',
     'js.admin.nav.widgets' => 'Widgets',
+    'js.admin.nav.file_browser' => 'Gestionnaire de fichiers',
     'js.admin.nav.users' => 'Utilisateurs',
     'js.admin.page_action.admin' => 'Interface d’administration',
 
@@ -1219,6 +1220,10 @@ E-mail : {email}
     'js.admin.widgets.save_failed' => 'Impossible d’enregistrer le widget',
     'js.admin.widgets.saved' => 'Widget enregistré',
 
+    'js.admin.file_browser.title' => 'Gestionnaire de fichiers',
+    'js.admin.file_browser.help' => 'Parcourez les fichiers du répertoire uploads configuré. Double-cliquez sur un fichier pour l’ouvrir.',
+    'js.admin.file_browser.load_failed' => 'Impossible de charger les fichiers',
+
     'admin.error.forbidden' => 'Interdit',
     'admin.error.invalid_role_filter' => 'Filtre de rôle invalide',
     'admin.error.invalid_status_filter' => 'Filtre de statut invalide',
@@ -1297,6 +1302,8 @@ E-mail : {email}
     'admin.error.dashboard_unknown_card' => 'Carte du tableau de bord inconnue ou en double',
     'admin.error.dashboard_size' => "Taille invalide pour la carte du tableau de bord « {id} »",
     'admin.error.dashboard_positions' => 'Les positions des cartes du tableau de bord doivent être des entiers non négatifs uniques',
+    'admin.error.invalid_uploads_path' => 'Chemin uploads invalide',
+    'admin.error.uploads_directory_not_found' => 'Répertoire uploads introuvable',
     'admin.page_action.admin.index' => 'Interface d’administration',
     'admin.page_action.search.results' => 'Résultats de recherche',
     'admin.page_action.messages.inbox' => 'Boîte de réception des messages',

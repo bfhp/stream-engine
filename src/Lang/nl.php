@@ -1006,6 +1006,7 @@ E-mail: {email}
     'js.admin.nav.settings' => 'Instellingen',
     'js.admin.nav.themes' => 'Thema\'s',
     'js.admin.nav.widgets' => 'Widgets',
+    'js.admin.nav.file_browser' => 'Bestandsbeheer',
     'js.admin.nav.users' => 'Gebruikers',
     'js.admin.page_action.admin' => 'Beheerinterface',
 
@@ -1219,6 +1220,10 @@ E-mail: {email}
     'js.admin.widgets.save_failed' => 'De widgets konden niet worden opgeslagen',
     'js.admin.widgets.saved' => 'Widgets opgeslagen',
 
+    'js.admin.file_browser.title' => 'Bestandsbeheer',
+    'js.admin.file_browser.help' => 'Blader door bestanden in de ingestelde uploads-map. Dubbelklik om een bestand te openen.',
+    'js.admin.file_browser.load_failed' => 'Bestanden konden niet worden geladen',
+
     'admin.error.forbidden' => 'Verboden',
     'admin.error.invalid_role_filter' => 'Ongeldig rolfilter',
     'admin.error.invalid_status_filter' => 'Ongeldig statusfilter',
@@ -1297,6 +1302,8 @@ E-mail: {email}
     'admin.error.dashboard_unknown_card' => 'Onbekende of dubbele dashboardkaart',
     'admin.error.dashboard_size' => "Ongeldig formaat voor dashboardkaart '{id}'",
     'admin.error.dashboard_positions' => 'Posities van dashboardkaarten moeten unieke niet-negatieve gehele getallen zijn',
+    'admin.error.invalid_uploads_path' => 'Ongeldig uploads-pad',
+    'admin.error.uploads_directory_not_found' => 'Uploads-map niet gevonden',
     'admin.page_action.admin.index' => 'Beheerinterface',
     'admin.page_action.search.results' => 'Zoekresultaten',
     'admin.page_action.messages.inbox' => 'Berichteninbox',

@@ -1006,6 +1006,7 @@ E-mail: {email}
     'js.admin.nav.settings' => 'Configurações',
     'js.admin.nav.themes' => 'Temas',
     'js.admin.nav.widgets' => 'Widgets',
+    'js.admin.nav.file_browser' => 'Gerenciador de arquivos',
     'js.admin.nav.users' => 'Usuários',
     'js.admin.page_action.admin' => 'Interface do administrador',
 
@@ -1219,6 +1220,10 @@ E-mail: {email}
     'js.admin.widgets.save_failed' => 'Não foi possível salvar o widget',
     'js.admin.widgets.saved' => 'Widget salvo',
 
+    'js.admin.file_browser.title' => 'Gerenciador de arquivos',
+    'js.admin.file_browser.help' => 'Navegue pelos arquivos no diretório uploads configurado. Clique duas vezes para abrir um arquivo.',
+    'js.admin.file_browser.load_failed' => 'Não foi possível carregar os arquivos',
+
     'admin.error.forbidden' => 'Proibido',
     'admin.error.invalid_role_filter' => 'Filtro de papel inválido',
     'admin.error.invalid_status_filter' => 'Filtro de status inválido',
@@ -1297,6 +1302,8 @@ E-mail: {email}
     'admin.error.dashboard_unknown_card' => 'Cartão do painel desconhecido ou duplicado',
     'admin.error.dashboard_size' => "Tamanho inválido para o cartão do painel '{id}'",
     'admin.error.dashboard_positions' => 'As posições dos cartões do painel devem ser inteiros não negativos e únicos',
+    'admin.error.invalid_uploads_path' => 'Caminho de uploads inválido',
+    'admin.error.uploads_directory_not_found' => 'Diretório uploads não encontrado',
     'admin.page_action.admin.index' => 'Interface do administrador',
     'admin.page_action.search.results' => 'Resultados da busca',
     'admin.page_action.messages.inbox' => 'Caixa de entrada de mensagens',

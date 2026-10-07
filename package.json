@@ -16,6 +16,8 @@
     "@mantine/hooks": "^8.3.15",
     "@mantine/notifications": "^8.3.16",
     "@monaco-editor/react": "^4.7.0",
+    "@samuelncui/chonky": "^0.3.6",
+    "@samuelncui/chonky-icon-fontawesome": "^0.3.6",
     "@tabler/icons-react": "^3.40.0",
     "@types/bootstrap": "^5.2.10",
     "@types/jquery": "^4.0.0",

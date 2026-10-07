@@ -1042,6 +1042,7 @@ return [
     'js.admin.nav.settings' => 'Настройки',
     'js.admin.nav.themes' => 'Темы',
     'js.admin.nav.widgets' => 'Виджеты',
+    'js.admin.nav.file_browser' => 'Файловый менеджер',
     'js.admin.nav.users' => 'Пользователи',
     'js.admin.page_action.admin' => 'Интерфейс администратора',
 
@@ -1256,6 +1257,10 @@ return [
     'js.admin.widgets.save_failed' => 'Не удалось сохранить виджет',
     'js.admin.widgets.saved' => 'Виджет сохранён',
 
+    'js.admin.file_browser.title' => 'Файловый менеджер',
+    'js.admin.file_browser.help' => 'Просмотр файлов в настроенной директории uploads. Двойной клик открывает файл.',
+    'js.admin.file_browser.load_failed' => 'Не удалось загрузить список файлов',
+
     'admin.error.forbidden' => 'Доступ запрещён',
     'admin.error.invalid_role_filter' => 'Некорректный фильтр роли',
     'admin.error.invalid_status_filter' => 'Некорректный фильтр статуса',
@@ -1338,6 +1343,8 @@ return [
     'admin.error.dashboard_unknown_card' => 'Неизвестная или повторяющаяся карточка панели управления',
     'admin.error.dashboard_size' => 'Некорректный размер карточки «{id}»',
     'admin.error.dashboard_positions' => 'Позиции карточек должны быть уникальными неотрицательными числами',
+    'admin.error.invalid_uploads_path' => 'Некорректный путь в uploads',
+    'admin.error.uploads_directory_not_found' => 'Директория uploads не найдена',
     'admin.page_action.admin.index' => 'Интерфейс администратора',
     'admin.page_action.search.results' => 'Результаты поиска',
     'admin.page_action.messages.inbox' => 'Входящие сообщения',

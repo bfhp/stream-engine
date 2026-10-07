@@ -1006,6 +1006,7 @@ Correo: {email}
     'js.admin.nav.settings' => 'Ajustes',
     'js.admin.nav.themes' => 'Temas',
     'js.admin.nav.widgets' => 'Widgets',
+    'js.admin.nav.file_browser' => 'Administrador de archivos',
     'js.admin.nav.users' => 'Usuarios',
     'js.admin.page_action.admin' => 'Interfaz de administrador',
 
@@ -1219,6 +1220,10 @@ Correo: {email}
     'js.admin.widgets.save_failed' => 'No se pudo guardar el widget',
     'js.admin.widgets.saved' => 'Widget guardado',
 
+    'js.admin.file_browser.title' => 'Administrador de archivos',
+    'js.admin.file_browser.help' => 'Explora los archivos del directorio uploads configurado. Haz doble clic para abrir un archivo.',
+    'js.admin.file_browser.load_failed' => 'No se pudieron cargar los archivos',
+
     'admin.error.forbidden' => 'Prohibido',
     'admin.error.invalid_role_filter' => 'Filtro de rol no válido',
     'admin.error.invalid_status_filter' => 'Filtro de estado no válido',
@@ -1297,6 +1302,8 @@ Correo: {email}
     'admin.error.dashboard_unknown_card' => 'Tarjeta del panel desconocida o duplicada',
     'admin.error.dashboard_size' => "Tamaño no válido para la tarjeta del panel '{id}'",
     'admin.error.dashboard_positions' => 'Las posiciones de las tarjetas del panel deben ser enteros no negativos únicos',
+    'admin.error.invalid_uploads_path' => 'Ruta de uploads no válida',
+    'admin.error.uploads_directory_not_found' => 'No se encontró el directorio uploads',
     'admin.page_action.admin.index' => 'Interfaz de administrador',
     'admin.page_action.search.results' => 'Resultados de búsqueda',
     'admin.page_action.messages.inbox' => 'Bandeja de entrada de mensajes',

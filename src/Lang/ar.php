@@ -1006,6 +1006,7 @@ return [
     'js.admin.nav.settings' => 'الإعدادات',
     'js.admin.nav.themes' => 'السمات',
     'js.admin.nav.widgets' => 'الأدوات',
+    'js.admin.nav.file_browser' => 'مدير الملفات',
     'js.admin.nav.users' => 'المستخدمون',
     'js.admin.page_action.admin' => 'واجهة الإدارة',
 
@@ -1219,6 +1220,10 @@ return [
     'js.admin.widgets.save_failed' => 'تعذر حفظ الأداة',
     'js.admin.widgets.saved' => 'تم حفظ الأداة',
 
+    'js.admin.file_browser.title' => 'مدير الملفات',
+    'js.admin.file_browser.help' => 'تصفح الملفات في دليل uploads المُعدّ. انقر نقرًا مزدوجًا لفتح ملف.',
+    'js.admin.file_browser.load_failed' => 'تعذر تحميل الملفات',
+
     'admin.error.forbidden' => 'محظور',
     'admin.error.invalid_role_filter' => 'مرشح الدور غير صالح',
     'admin.error.invalid_status_filter' => 'مرشح الحالة غير صالح',
@@ -1297,6 +1302,8 @@ return [
     'admin.error.dashboard_unknown_card' => 'بطاقة لوحة تحكم غير معروفة أو مكررة',
     'admin.error.dashboard_size' => "حجم غير صالح لبطاقة لوحة التحكم '{id}'",
     'admin.error.dashboard_positions' => 'يجب أن تكون مواضع بطاقات لوحة التحكم أعدادًا صحيحة غير سالبة وفريدة',
+    'admin.error.invalid_uploads_path' => 'مسار uploads غير صالح',
+    'admin.error.uploads_directory_not_found' => 'تعذر العثور على دليل uploads',
     'admin.page_action.admin.index' => 'واجهة الإدارة',
     'admin.page_action.search.results' => 'نتائج البحث',
     'admin.page_action.messages.inbox' => 'صندوق الرسائل الوارد',

@@ -1006,6 +1006,7 @@ return [
     'js.admin.nav.settings' => '設定',
     'js.admin.nav.themes' => 'テーマ',
     'js.admin.nav.widgets' => 'ウィジェット',
+    'js.admin.nav.file_browser' => 'ファイルブラウザー',
     'js.admin.nav.users' => 'ユーザー',
     'js.admin.page_action.admin' => '管理者インターフェース',
 
@@ -1219,6 +1220,10 @@ return [
     'js.admin.widgets.save_failed' => 'ウィジェットを保存できませんでした',
     'js.admin.widgets.saved' => 'ウィジェットを保存しました',
 
+    'js.admin.file_browser.title' => 'ファイルブラウザー',
+    'js.admin.file_browser.help' => '設定された uploads ディレクトリ内のファイルを参照します。ダブルクリックでファイルを開きます。',
+    'js.admin.file_browser.load_failed' => 'ファイルを読み込めませんでした',
+
     'admin.error.forbidden' => '禁止されています',
     'admin.error.invalid_role_filter' => '無効なロールフィルターです',
     'admin.error.invalid_status_filter' => '無効なステータスフィルターです',
@@ -1297,6 +1302,8 @@ return [
     'admin.error.dashboard_unknown_card' => '不明または重複したダッシュボードのカードです',
     'admin.error.dashboard_size' => "ダッシュボードのカード '{id}' のサイズが無効です",
     'admin.error.dashboard_positions' => 'ダッシュボードのカードの位置は、重複しない0以上の整数にしてください',
+    'admin.error.invalid_uploads_path' => 'uploads のパスが無効です',
+    'admin.error.uploads_directory_not_found' => 'uploads ディレクトリが見つかりません',
     'admin.page_action.admin.index' => '管理者インターフェース',
     'admin.page_action.search.results' => '検索結果',
     'admin.page_action.messages.inbox' => 'メッセージの受信トレイ',

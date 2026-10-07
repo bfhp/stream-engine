@@ -1006,6 +1006,7 @@ Email: {email}
     'js.admin.nav.settings' => 'Settings',
     'js.admin.nav.themes' => 'Themes',
     'js.admin.nav.widgets' => 'Widgets',
+    'js.admin.nav.file_browser' => 'File Browser',
     'js.admin.nav.users' => 'Users',
     'js.admin.page_action.admin' => 'Administrator interface',
 
@@ -1220,6 +1221,10 @@ Email: {email}
     'js.admin.widgets.save_failed' => 'Failed to save widget',
     'js.admin.widgets.saved' => 'Widget saved',
 
+    'js.admin.file_browser.title' => 'File Browser',
+    'js.admin.file_browser.help' => 'Browse files in the configured uploads directory. Double-click a file to open it.',
+    'js.admin.file_browser.load_failed' => 'Failed to load files',
+
     'admin.error.forbidden' => 'Forbidden',
     'admin.error.invalid_role_filter' => 'Invalid role filter',
     'admin.error.invalid_status_filter' => 'Invalid status filter',
@@ -1302,6 +1307,8 @@ Email: {email}
     'admin.error.dashboard_unknown_card' => 'Unknown or duplicate dashboard card',
     'admin.error.dashboard_size' => "Invalid size for dashboard card '{id}'",
     'admin.error.dashboard_positions' => 'Dashboard card positions must be unique non-negative integers',
+    'admin.error.invalid_uploads_path' => 'Invalid uploads path',
+    'admin.error.uploads_directory_not_found' => 'Uploads directory not found',
     'admin.page_action.admin.index' => 'Administrator interface',
     'admin.page_action.search.results' => 'Search results',
     'admin.page_action.messages.inbox' => 'Messages inbox',

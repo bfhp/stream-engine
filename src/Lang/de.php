@@ -1006,6 +1006,7 @@ E-Mail: {email}
     'js.admin.nav.settings' => 'Einstellungen',
     'js.admin.nav.themes' => 'Themes',
     'js.admin.nav.widgets' => 'Widgets',
+    'js.admin.nav.file_browser' => 'Dateimanager',
     'js.admin.nav.users' => 'Nutzer',
     'js.admin.page_action.admin' => 'Administratoroberfläche',
 
@@ -1219,6 +1220,10 @@ E-Mail: {email}
     'js.admin.widgets.save_failed' => 'Das Widget konnte nicht gespeichert werden',
     'js.admin.widgets.saved' => 'Widget gespeichert',
 
+    'js.admin.file_browser.title' => 'Dateimanager',
+    'js.admin.file_browser.help' => 'Dateien im konfigurierten Upload-Verzeichnis durchsuchen. Ein Doppelklick öffnet eine Datei.',
+    'js.admin.file_browser.load_failed' => 'Dateien konnten nicht geladen werden',
+
     'admin.error.forbidden' => 'Verboten',
     'admin.error.invalid_role_filter' => 'Ungültiger Rollenfilter',
     'admin.error.invalid_status_filter' => 'Ungültiger Statusfilter',
@@ -1297,6 +1302,8 @@ E-Mail: {email}
     'admin.error.dashboard_unknown_card' => 'Unbekannte oder doppelte Dashboard-Karte',
     'admin.error.dashboard_size' => "Ungültige Größe für die Dashboard-Karte '{id}'",
     'admin.error.dashboard_positions' => 'Die Positionen der Dashboard-Karten müssen eindeutige, nicht negative ganze Zahlen sein',
+    'admin.error.invalid_uploads_path' => 'Ungültiger Upload-Pfad',
+    'admin.error.uploads_directory_not_found' => 'Upload-Verzeichnis nicht gefunden',
     'admin.page_action.admin.index' => 'Administratoroberfläche',
     'admin.page_action.search.results' => 'Suchergebnisse',
     'admin.page_action.messages.inbox' => 'Posteingang der Nachrichten',

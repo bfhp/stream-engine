@@ -32,7 +32,7 @@ export function translationsPlugin(languagePath = "src/Lang"): Plugin {
                     "$out = []; foreach (array_slice($argv, 1) as $file) { $out[pathinfo($file, PATHINFO_FILENAME)] = require $file; } echo json_encode($out, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);",
                     ...languageFiles,
                 ],
-                { encoding: "utf8" },
+                { encoding: "utf8", maxBuffer: 10 * 1024 * 1024 },
             )) as Record<string, Record<string, string | string[]>>;
             const browserCatalogs = Object.fromEntries(Object.entries(catalogs).map(([locale, messages]) => [
                 locale,

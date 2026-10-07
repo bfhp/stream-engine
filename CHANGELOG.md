@@ -7,6 +7,10 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added an admin file browser for the configured uploads directory.
+
 ### Changed
 
 - The admin page list now displays pages as an indented hierarchy.

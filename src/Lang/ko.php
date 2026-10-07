@@ -1006,6 +1006,7 @@ return [
     'js.admin.nav.settings' => '설정',
     'js.admin.nav.themes' => '테마',
     'js.admin.nav.widgets' => '위젯',
+    'js.admin.nav.file_browser' => '파일 관리자',
     'js.admin.nav.users' => '사용자',
     'js.admin.page_action.admin' => '관리자 인터페이스',
 
@@ -1219,6 +1220,10 @@ return [
     'js.admin.widgets.save_failed' => '위젯을 저장하지 못했습니다',
     'js.admin.widgets.saved' => '위젯이 저장되었습니다',
 
+    'js.admin.file_browser.title' => '파일 관리자',
+    'js.admin.file_browser.help' => '설정된 uploads 디렉터리의 파일을 탐색합니다. 파일을 두 번 클릭하면 열립니다.',
+    'js.admin.file_browser.load_failed' => '파일을 불러오지 못했습니다',
+
     'admin.error.forbidden' => '금지됨',
     'admin.error.invalid_role_filter' => '유효하지 않은 역할 필터입니다',
     'admin.error.invalid_status_filter' => '유효하지 않은 상태 필터입니다',
@@ -1297,6 +1302,8 @@ return [
     'admin.error.dashboard_unknown_card' => '알 수 없거나 중복된 대시보드 카드입니다',
     'admin.error.dashboard_size' => "대시보드 카드 '{id}'의 크기가 유효하지 않습니다",
     'admin.error.dashboard_positions' => '대시보드 카드 위치는 중복되지 않는 0 이상의 정수여야 합니다',
+    'admin.error.invalid_uploads_path' => '잘못된 uploads 경로입니다',
+    'admin.error.uploads_directory_not_found' => 'uploads 디렉터리를 찾을 수 없습니다',
     'admin.page_action.admin.index' => '관리자 인터페이스',
     'admin.page_action.search.results' => '검색 결과',
     'admin.page_action.messages.inbox' => '메시지 받은편지함',

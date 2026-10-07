@@ -1006,6 +1006,7 @@ return [
     'js.admin.nav.settings' => '设置',
     'js.admin.nav.themes' => '主题',
     'js.admin.nav.widgets' => '小组件',
+    'js.admin.nav.file_browser' => '文件管理器',
     'js.admin.nav.users' => '用户',
     'js.admin.page_action.admin' => '管理界面',
 
@@ -1219,6 +1220,10 @@ return [
     'js.admin.widgets.save_failed' => '无法保存小组件',
     'js.admin.widgets.saved' => '小组件已保存',
 
+    'js.admin.file_browser.title' => '文件管理器',
+    'js.admin.file_browser.help' => '浏览已配置 uploads 目录中的文件。双击可打开文件。',
+    'js.admin.file_browser.load_failed' => '无法加载文件',
+
     'admin.error.forbidden' => '禁止访问',
     'admin.error.invalid_role_filter' => '角色筛选无效',
     'admin.error.invalid_status_filter' => '状态筛选无效',
@@ -1297,6 +1302,8 @@ return [
     'admin.error.dashboard_unknown_card' => '未知或重复的仪表盘卡片',
     'admin.error.dashboard_size' => "仪表盘卡片“{id}”的尺寸无效",
     'admin.error.dashboard_positions' => '仪表盘卡片的位置必须是互不重复的非负整数',
+    'admin.error.invalid_uploads_path' => 'uploads 路径无效',
+    'admin.error.uploads_directory_not_found' => '未找到 uploads 目录',
     'admin.page_action.admin.index' => '管理界面',
     'admin.page_action.search.results' => '搜索结果',
     'admin.page_action.messages.inbox' => '消息收件箱',

@@ -263,7 +263,7 @@ class StreamEngine
         $this->uploadService = new UploadService(
             uploads: $uploadRepository,
             mime: new MimeDetector(),
-            storage: new FileStorage($this->config->uploadsDir()),
+            storage: new FileStorage($this->config->uploadsPath(dirname(__DIR__))),
             images: new ImageProcessor($this->config->tempDir()),
             access: $this->accessService,
             tm: $this->tm,

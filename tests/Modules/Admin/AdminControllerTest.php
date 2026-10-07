@@ -7,6 +7,7 @@ namespace Tests\Modules\Admin;
 use DateTimeZone;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use StreamEngine\Core\Config;
 use StreamEngine\Core\Exceptions\ForbiddenException;
 use StreamEngine\Core\Exceptions\ValidationException;
 use StreamEngine\Core\ModuleRegistry;
@@ -60,6 +61,7 @@ final class AdminControllerTest extends TestCase
         array $feedTypes = [],
         int $currentUserId = 1,
         ?ModuleRegistry $modules = null,
+        ?string $uploadsDir = null,
     ): AdminController {
         $db = $this->createStub(PdoDatabase::class);
 
@@ -127,6 +129,7 @@ final class AdminControllerTest extends TestCase
             new TranslationManager('en', 'en'),
             $modules ?? new ModuleRegistry(),
             $themeService,
+            new Config($uploadsDir === null ? [] : ['UPLOADS_DIR' => $uploadsDir]),
         );
     }
 
@@ -1559,6 +1562,30 @@ final class AdminControllerTest extends TestCase
         $this->assertSame('modules/admin/page.twig', $view->template);
     }
 
+    public function testUploadsEndpointBrowsesTheConfiguredDirectory(): void
+    {
+        $uploadsDir = sys_get_temp_dir().'/admin-uploads-'.bin2hex(random_bytes(8));
+        self::assertTrue(mkdir($uploadsDir.'/2', 0700, true));
+        self::assertNotFalse(file_put_contents($uploadsDir.'/2/photo.webp', 'image'));
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_GET['path'] = '2';
+
+        try {
+            $response = $this->callAndDecode(
+                $this->makeModule(uploadsDir: $uploadsDir),
+                $this->makeApiPage('admin.uploads', ['GET'])
+            );
+        } finally {
+            unlink($uploadsDir.'/2/photo.webp');
+            rmdir($uploadsDir.'/2');
+            rmdir($uploadsDir);
+        }
+
+        $this->assertSame('2', $response['path']);
+        $this->assertSame('photo.webp', $response['files'][0]['name']);
+        $this->assertSame(['uploads', '2'], array_column($response['folderChain'], 'name'));
+    }
+
     public function testEveryPagesEditorEndpointIsRegisteredAsAdminOnly(): void
     {
         $tree = new PageTree([]);
@@ -1578,6 +1605,7 @@ final class AdminControllerTest extends TestCase
             'admin.user' => ['GET', 'PATCH'],
             'admin.dashboard' => ['GET', 'PATCH', 'DELETE'],
             'admin.dashboard-card' => ['GET'],
+            'admin.uploads' => ['GET'],
         ] as $action => $methods) {
             $page = $tree->findByAction($action);
 
@@ -1623,6 +1651,7 @@ final class AdminControllerTest extends TestCase
         $user = (new Router($tree))->resolve('/api/v1/admin/users/42');
         $dashboard = (new Router($tree))->resolve('/api/v1/admin/dashboard');
         $dashboardCard = (new Router($tree))->resolve('/api/v1/admin/dashboard/cards/admin.system-health');
+        $uploads = (new Router($tree))->resolve('/api/v1/admin/uploads');
 
         $this->assertSame('admin.pages', $list['page']->action ?? null);
         $this->assertSame('admin.page', $item['page']->action ?? null);
@@ -1642,5 +1671,6 @@ final class AdminControllerTest extends TestCase
         $this->assertSame('admin.dashboard', $dashboard['page']->action ?? null);
         $this->assertSame('admin.dashboard-card', $dashboardCard['page']->action ?? null);
         $this->assertSame(['id' => 'admin.system-health'], $dashboardCard['params']);
+        $this->assertSame('admin.uploads', $uploads['page']->action ?? null);
     }
 }

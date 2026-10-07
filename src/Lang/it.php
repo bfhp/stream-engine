@@ -1006,6 +1006,7 @@ E-mail: {email}
     'js.admin.nav.settings' => 'Impostazioni',
     'js.admin.nav.themes' => 'Temi',
     'js.admin.nav.widgets' => 'Widget',
+    'js.admin.nav.file_browser' => 'Gestione file',
     'js.admin.nav.users' => 'Utenti',
     'js.admin.page_action.admin' => 'Interfaccia dell’amministratore',
 
@@ -1219,6 +1220,10 @@ E-mail: {email}
     'js.admin.widgets.save_failed' => 'Impossibile salvare il widget',
     'js.admin.widgets.saved' => 'Widget salvato',
 
+    'js.admin.file_browser.title' => 'Gestione file',
+    'js.admin.file_browser.help' => 'Sfoglia i file nella directory uploads configurata. Fai doppio clic per aprire un file.',
+    'js.admin.file_browser.load_failed' => 'Impossibile caricare i file',
+
     'admin.error.forbidden' => 'Vietato',
     'admin.error.invalid_role_filter' => 'Filtro del ruolo non valido',
     'admin.error.invalid_status_filter' => 'Filtro dello stato non valido',
@@ -1297,6 +1302,8 @@ E-mail: {email}
     'admin.error.dashboard_unknown_card' => 'Scheda della dashboard sconosciuta o duplicata',
     'admin.error.dashboard_size' => "Dimensione non valida per la scheda della dashboard '{id}'",
     'admin.error.dashboard_positions' => 'Le posizioni delle schede della dashboard devono essere interi non negativi univoci',
+    'admin.error.invalid_uploads_path' => 'Percorso uploads non valido',
+    'admin.error.uploads_directory_not_found' => 'Directory uploads non trovata',
     'admin.page_action.admin.index' => 'Interfaccia dell’amministratore',
     'admin.page_action.search.results' => 'Risultati di ricerca',
     'admin.page_action.messages.inbox' => 'Posta in arrivo dei messaggi',

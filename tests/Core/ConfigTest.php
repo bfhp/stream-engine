@@ -170,6 +170,18 @@ final class ConfigTest extends TestCase
         $this->assertSame('storage/uploads', (new Config([]))->uploadsDir());
     }
 
+    public function testRelativeUploadsDirectoryIsResolvedFromTheApplicationRoot(): void
+    {
+        $this->assertSame(
+            '/srv/app/storage/uploads',
+            (new Config([]))->uploadsPath('/srv/app/')
+        );
+        $this->assertSame(
+            '/srv/shared/uploads',
+            (new Config(['UPLOADS_DIR' => '/srv/shared/uploads']))->uploadsPath('/srv/app')
+        );
+    }
+
     public function testThemeDirIsOptional(): void
     {
         $this->assertNull((new Config([]))->themeDir());
