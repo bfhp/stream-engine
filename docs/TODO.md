@@ -17,14 +17,6 @@ Priorities:
 
 ## P2
 
-### Administrator-configurable favicon
-
-Allow an administrator to replace the site's favicon from the global settings
-without editing theme files. Validate the uploaded file, keep the current
-favicon as the fallback, and ensure the updated icon is served with cache
-busting. Cover upload, replacement, invalid-file handling, and fallback
-behavior with tests.
-
 ### GitHub-native administrator and developer documentation
 
 Create two maintained documentation entry points inside the repository: an

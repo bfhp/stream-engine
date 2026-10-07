@@ -15,6 +15,8 @@ RUN apt-get update && apt-get install -y \
     libjpeg-dev \
     libwebp-dev \
     libfreetype6-dev \
+    libmagickwand-dev \
+    librsvg2-bin \
     libmemcached-dev \
     zlib1g-dev \
     libcurl4-openssl-dev \
@@ -39,6 +41,11 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
 # ---- memcached ----
 RUN pecl install memcached \
     && docker-php-ext-enable memcached
+
+# ---- optional SVG conversion used by administrator-configurable site icons ----
+RUN pecl install imagick \
+    && docker-php-ext-enable imagick \
+    && php -r '$image = new Imagick(); $image->readImageBlob("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1\" height=\"1\"><rect width=\"1\" height=\"1\"/></svg>"); $image->setImageFormat("png"); exit($image->getImageBlob() === "" ? 1 : 0);'
 
 # ---- xdebug ----
 RUN pecl install xdebug \

@@ -34,6 +34,38 @@ final class SettingsServiceTest extends TestCase
         self::assertSame('off', $this->makeService(['cron.mode' => ['invalid', 1]])->cronMode());
     }
 
+    public function testSiteIconsUseBuiltInDefaultsWithoutAValidCustomBase(): void
+    {
+        $expected = [
+            'svg' => '/favicon.svg',
+            'ico' => '/favicon.ico',
+            'apple' => '/apple-touch-icon.png',
+        ];
+
+        self::assertSame($expected, $this->makeService()->siteIcons());
+        self::assertSame($expected, $this->makeService([
+            SettingsService::SITE_ICON_KEY => ['/uploads/elsewhere/icon', 1],
+        ])->siteIcons());
+    }
+
+    public function testSiteIconsResolveGeneratedFilesAndOptionalSvg(): void
+    {
+        $base = '/uploads/site-icons/favicon-a83f42c1d92e176a';
+        $withSvg = $this->makeService([
+            SettingsService::SITE_ICON_KEY => [$base, 1],
+            SettingsService::SITE_ICON_SVG_KEY => [$base.'.svg', 1],
+        ])->siteIcons();
+        $withoutSvg = $this->makeService([
+            SettingsService::SITE_ICON_KEY => [$base, 1],
+            SettingsService::SITE_ICON_SVG_KEY => ['', 1],
+        ])->siteIcons();
+
+        self::assertSame($base.'.svg', $withSvg['svg']);
+        self::assertSame($base.'.ico', $withSvg['ico']);
+        self::assertSame($base.'.png', $withSvg['apple']);
+        self::assertNull($withoutSvg['svg']);
+    }
+
     /** @var list<string> every statement the service caused */
     private array $queries = [];
 

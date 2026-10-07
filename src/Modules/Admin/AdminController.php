@@ -14,6 +14,8 @@ use StreamEngine\Core\DashboardCardProviderInterface;
 use StreamEngine\Core\Exceptions\ForbiddenException;
 use StreamEngine\Core\Exceptions\NotFoundException;
 use StreamEngine\Core\Exceptions\ValidationException;
+use StreamEngine\Core\FileProcessing\ImageProcessor;
+use StreamEngine\Core\FileProcessing\MimeDetector;
 use StreamEngine\Core\Formatter;
 use StreamEngine\Core\ModuleRegistry;
 use StreamEngine\Core\PageTree;
@@ -40,6 +42,8 @@ use StreamEngine\View\ViewModel;
 
 class AdminController extends AbstractController implements DashboardCardProviderInterface
 {
+    private const int SITE_ICON_MAX_SIZE = 2 * 1024 * 1024;
+
     public static function pageActions(): array
     {
         return [
@@ -272,6 +276,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
     private readonly CronRegistry $cronRegistry;
     private readonly CronRepository $cronRepository;
     private readonly CronTrigger $cronTrigger;
+    private readonly SettingsService $settingsService;
 
     public function __construct(
         PdoDatabase $db,
@@ -300,10 +305,11 @@ class AdminController extends AbstractController implements DashboardCardProvide
         $this->cronRegistry = $cronRegistry ?? new CronRegistry();
         $this->cronRepository = new CronRepository($db);
         $this->cronTrigger = $cronTrigger ?? new CronTrigger();
+        $this->settingsService = $settings ?? new SettingsService($this->settingsRepository);
         $this->cronStatusService = new CronStatusService(
             $this->cronRegistry,
             $this->cronRepository,
-            $settings ?? new SettingsService($this->settingsRepository),
+            $this->settingsService,
         );
     }
 
@@ -356,6 +362,9 @@ class AdminController extends AbstractController implements DashboardCardProvide
                 break;
             case 'admin.settings':
                 $this->handleSettingsRequest();
+                break;
+            case 'admin.site-icon':
+                $this->handleSiteIconRequest();
                 break;
             case 'admin.themes':
                 $this->handleThemesRequest();
@@ -568,6 +577,18 @@ class AdminController extends AbstractController implements DashboardCardProvide
                 pattern: 'settings',
                 requestMethods: ['GET', 'POST'],
                 action: 'admin.settings',
+                accessRule: AccessService::ACCESS_ADMIN,
+            )
+        );
+
+        $siteIconPageId = $pageTree->getMaxPageId();
+        $pageTree->add(
+            Page::api(
+                id: $siteIconPageId,
+                parentId: $settingsPageId,
+                pattern: 'site-icon',
+                requestMethods: ['POST', 'DELETE'],
+                action: 'admin.site-icon',
                 accessRule: AccessService::ACCESS_ADMIN,
             )
         );
@@ -1204,7 +1225,139 @@ class AdminController extends AbstractController implements DashboardCardProvide
             return;
         }
 
-        echo Formatter::json(['data' => $this->settingsRepository->findAllForAdmin()]);
+        echo Formatter::json([
+            'data' => $this->settingsRepository->findAllForAdmin(),
+            'siteIcon' => $this->siteIconPayload(),
+        ]);
+    }
+
+    /** @throws ValidationException */
+    private function handleSiteIconRequest(): void
+    {
+        Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
+        $oldBase = $this->settingsService->getString(SettingsService::SITE_ICON_KEY);
+
+        if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+            $this->settingsRepository->setMany([
+                SettingsService::SITE_ICON_KEY => '',
+                SettingsService::SITE_ICON_SVG_KEY => '',
+            ]);
+            $this->removeSiteIconFiles($oldBase);
+
+            echo Formatter::json([
+                'customized' => false,
+                'converterAvailable' => (new ImageProcessor($this->config->tempDir()))->supportsSvg(),
+                'svg' => '/favicon.svg',
+                'ico' => '/favicon.ico',
+                'apple' => '/apple-touch-icon.png',
+            ]);
+
+            return;
+        }
+
+        $file = $_FILES['file'] ?? null;
+        if (! is_array($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            throw new ValidationException($this->tm->trans('admin.error.site_icon_upload'));
+        }
+        $size = (int) ($file['size'] ?? 0);
+        $tmpFile = is_string($file['tmp_name'] ?? null) ? $file['tmp_name'] : '';
+        if ($size <= 0 || $size > self::SITE_ICON_MAX_SIZE || ! is_file($tmpFile)) {
+            throw new ValidationException($this->tm->trans('admin.error.site_icon_size'));
+        }
+
+        $mime = (new MimeDetector())->detect($tmpFile);
+        $processor = new ImageProcessor($this->config->tempDir());
+        $variants = $processor->processSiteIcon($tmpFile, $mime);
+        $hash = substr(hash_file('sha256', $tmpFile), 0, 16);
+        $baseUrl = '/uploads/site-icons/favicon-'.$hash;
+        $directory = $this->config->uploadsPath(dirname(__DIR__, 3)).'/site-icons';
+        if (! is_dir($directory) && ! mkdir($directory, 0777, true) && ! is_dir($directory)) {
+            throw new ValidationException($this->tm->trans('admin.error.site_icon_store'));
+        }
+
+        $basePath = $directory.'/favicon-'.$hash;
+        $written = [];
+        try {
+            if ($this->writeSiteIconFile($basePath.'.ico', $variants['ico'])) {
+                $written[] = $basePath.'.ico';
+            }
+            if ($this->writeSiteIconFile($basePath.'.png', $variants['png'])) {
+                $written[] = $basePath.'.png';
+            }
+            if ($variants['svg'] !== null) {
+                if ($this->writeSiteIconFile($basePath.'.svg', $variants['svg'])) {
+                    $written[] = $basePath.'.svg';
+                }
+            }
+
+            $this->settingsRepository->setMany([
+                SettingsService::SITE_ICON_KEY => $baseUrl,
+                SettingsService::SITE_ICON_SVG_KEY => $variants['svg'] !== null ? $baseUrl.'.svg' : '',
+            ]);
+        } catch (\Throwable $error) {
+            foreach ($written as $path) {
+                @unlink($path);
+            }
+            throw $error;
+        }
+
+        if ($variants['svg'] === null) {
+            @unlink($basePath.'.svg');
+        }
+        if ($oldBase !== $baseUrl) {
+            $this->removeSiteIconFiles($oldBase);
+        }
+
+        echo Formatter::json([
+            'customized' => true,
+            'converterAvailable' => $processor->supportsSvg(),
+            'svg' => $variants['svg'] !== null ? $baseUrl.'.svg' : null,
+            'ico' => $baseUrl.'.ico',
+            'apple' => $baseUrl.'.png',
+        ]);
+    }
+
+    /** @return array{customized:bool, converterAvailable:bool, svg:?string, ico:string, apple:string} */
+    private function siteIconPayload(): array
+    {
+        $icons = $this->settingsService->siteIcons();
+
+        return [
+            'customized' => $icons['ico'] !== '/favicon.ico',
+            'converterAvailable' => (new ImageProcessor($this->config->tempDir()))->supportsSvg(),
+            ...$icons,
+        ];
+    }
+
+    /** @throws ValidationException */
+    private function writeSiteIconFile(string $path, string $contents): bool
+    {
+        if (is_file($path)) {
+            return false;
+        }
+        $temporary = tempnam(dirname($path), '.site-icon-');
+        if ($temporary === false || file_put_contents($temporary, $contents, LOCK_EX) === false
+            || ! rename($temporary, $path)) {
+            if (is_string($temporary)) {
+                @unlink($temporary);
+            }
+            throw new ValidationException($this->tm->trans('admin.error.site_icon_store'));
+        }
+        chmod($path, 0644);
+
+        return true;
+    }
+
+    private function removeSiteIconFiles(string $baseUrl): void
+    {
+        if (preg_match('~\A/uploads/site-icons/favicon-[a-f0-9]{16}\z~', $baseUrl) !== 1) {
+            return;
+        }
+        $name = basename($baseUrl);
+        $directory = $this->config->uploadsPath(dirname(__DIR__, 3)).'/site-icons';
+        foreach (['ico', 'png', 'svg'] as $extension) {
+            @unlink($directory.'/'.$name.'.'.$extension);
+        }
     }
 
     /**
@@ -1813,6 +1966,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
             || strlen($key) > 100
             || ! preg_match('/\A[A-Za-z0-9_.-]+\z/', $key)
             || $key === ThemeService::ACTIVE_KEY
+            || in_array($key, [SettingsService::SITE_ICON_KEY, SettingsService::SITE_ICON_SVG_KEY], true)
             || str_starts_with($key, 'theme.')) {
             throw new ValidationException($this->tm->trans('admin.error.setting_key'));
         }

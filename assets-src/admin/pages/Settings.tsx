@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import {
     ActionIcon,
+    Alert,
     Button,
+    FileInput,
     Group,
     NumberInput,
     Select,
@@ -12,7 +14,7 @@ import {
     Tooltip
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { IconDeviceFloppy, IconRefresh } from "@tabler/icons-react";
+import { IconDeviceFloppy, IconPhoto, IconRefresh, IconRestore } from "@tabler/icons-react";
 import { csrfHeaders } from "../../shared/csrf";
 import { formatTimestamp } from "../lib/format";
 import { getAvailableLocales, getLocale, trans } from "../../shared/i18n";
@@ -26,6 +28,13 @@ type Setting = {
 type EditableKey = "site_name" | "locale" | "date_format" | "time_format" | "uploads.user_limit_mb";
 type SettingsMap = Partial<Record<EditableKey, Setting>>;
 type Drafts = Record<EditableKey, string>;
+type SiteIcon = {
+    customized: boolean;
+    converterAvailable: boolean;
+    svg: string | null;
+    ico: string;
+    apple: string;
+};
 
 const EDITABLE_KEYS: EditableKey[] = ["site_name", "locale", "date_format", "time_format", "uploads.user_limit_mb"];
 const displayNames = new Intl.DisplayNames([getLocale()], { type: "language" });
@@ -87,6 +96,15 @@ export default function Settings() {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
+    const [siteIcon, setSiteIcon] = useState<SiteIcon>({
+        customized: false,
+        converterAvailable: false,
+        svg: "/favicon.svg",
+        ico: "/favicon.ico",
+        apple: "/apple-touch-icon.png"
+    });
+    const [siteIconFile, setSiteIconFile] = useState<File | null>(null);
+    const [resettingSiteIcon, setResettingSiteIcon] = useState(false);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -105,6 +123,9 @@ export default function Settings() {
             .then(data => {
                 const items = Array.isArray(data.data) ? data.data : [];
                 const nextSettings = indexedSettings(items);
+                if (data.siteIcon) {
+                    setSiteIcon(data.siteIcon);
+                }
 
                 setSettings(nextSettings);
                 setDrafts({
@@ -148,7 +169,7 @@ export default function Settings() {
     }
 
     function saveSettings() {
-        if (dirtyKeys.length === 0) {
+        if (dirtyKeys.length === 0 && siteIconFile === null) {
             return;
         }
 
@@ -157,7 +178,7 @@ export default function Settings() {
             key === "locale" || key === "date_format" || key === "time_format"
         );
 
-        Promise.all(dirtyKeys.map(key =>
+        const settingRequests = dirtyKeys.map(key =>
             fetch(`/api/v1/admin/settings/${encodeURIComponent(key)}`, {
                 method: "PATCH",
                 headers: {
@@ -172,19 +193,43 @@ export default function Settings() {
 
                 return response.json();
             })
-        ))
-            .then(savedItems => {
+        );
+        const iconRequest = siteIconFile === null
+            ? Promise.resolve<SiteIcon | null>(null)
+            : (() => {
+                const body = new FormData();
+                body.append("file", siteIconFile);
+
+                return fetch("/api/v1/admin/settings/site-icon", {
+                    method: "POST",
+                    headers: csrfHeaders(),
+                    body
+                }).then(async response => {
+                    if (!response.ok) {
+                        throw new Error(await response.text() || trans("js.admin.settings.site_icon_save_failed"));
+                    }
+
+                    return response.json() as Promise<SiteIcon>;
+                });
+            })();
+
+        Promise.all([Promise.all(settingRequests), iconRequest])
+            .then(([savedItems, savedIcon]) => {
                 setSettings(current => ({
                     ...current,
                     ...Object.fromEntries(savedItems.map((setting: Setting) => [setting.key, setting]))
                 }));
+                if (savedIcon) {
+                    setSiteIcon(savedIcon);
+                    setSiteIconFile(null);
+                }
 
                 notifications.show({
                     color: "green",
                     message: trans("js.admin.settings.saved"),
                     autoClose: 2000
                 });
-                if (displayFormatChanged) {
+                if (displayFormatChanged || savedIcon) {
                     window.location.reload();
                 }
             })
@@ -197,6 +242,37 @@ export default function Settings() {
             })
             .finally(() => setSaving(false));
 
+    }
+
+    function resetSiteIcon() {
+        setResettingSiteIcon(true);
+        fetch("/api/v1/admin/settings/site-icon", {
+            method: "DELETE",
+            headers: csrfHeaders()
+        })
+            .then(async response => {
+                if (!response.ok) {
+                    throw new Error(await response.text() || trans("js.admin.settings.site_icon_reset_failed"));
+                }
+
+                return response.json();
+            })
+            .then(icon => {
+                setSiteIcon(icon);
+                setSiteIconFile(null);
+                notifications.show({
+                    color: "green",
+                    message: trans("js.admin.settings.site_icon_reset"),
+                    autoClose: 2000
+                });
+                window.location.reload();
+            })
+            .catch(err => notifications.show({
+                color: "red",
+                title: trans("js.admin.error"),
+                message: err.message || trans("js.admin.settings.site_icon_reset_failed")
+            }))
+            .finally(() => setResettingSiteIcon(false));
     }
 
     return (
@@ -222,7 +298,7 @@ export default function Settings() {
 
                     <Button
                         loading={saving}
-                        disabled={dirtyKeys.length === 0}
+                        disabled={dirtyKeys.length === 0 && siteIconFile === null}
                         leftSection={<IconDeviceFloppy size={16} />}
                         onClick={saveSettings}
                     >
@@ -283,6 +359,46 @@ export default function Settings() {
                     )}
                 />
             </SimpleGrid>
+
+            <Stack gap="xs">
+                <Text fw={500}>{trans("js.admin.settings.site_icon")}</Text>
+                {!siteIcon.converterAvailable && (
+                    <Alert color="yellow" icon={<IconPhoto size={18} />}>
+                        {trans("js.admin.settings.site_icon_no_converter")}
+                    </Alert>
+                )}
+                <Group align="end" wrap="wrap">
+                    <img
+                        src={siteIcon.svg || siteIcon.apple}
+                        alt=""
+                        width={48}
+                        height={48}
+                        style={{ objectFit: "contain" }}
+                    />
+                    <FileInput
+                        label={trans("js.admin.settings.site_icon_file")}
+                        description={siteIcon.converterAvailable
+                            ? trans("js.admin.settings.site_icon_formats_svg")
+                            : trans("js.admin.settings.site_icon_formats_raster")}
+                        accept={siteIcon.converterAvailable
+                            ? "image/svg+xml,image/png,image/jpeg,image/webp,image/gif"
+                            : "image/png,image/jpeg,image/webp,image/gif"}
+                        value={siteIconFile}
+                        onChange={setSiteIconFile}
+                        clearable
+                        w={360}
+                    />
+                    <Button
+                        variant="default"
+                        leftSection={<IconRestore size={16} />}
+                        loading={resettingSiteIcon}
+                        disabled={!siteIcon.customized && siteIconFile === null}
+                        onClick={resetSiteIcon}
+                    >
+                        {trans("js.admin.settings.site_icon_default")}
+                    </Button>
+                </Group>
+            </Stack>
 
         </Stack>
     );

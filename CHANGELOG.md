@@ -7,6 +7,11 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added administrator-configurable site icons with automatic favicon and
+  Apple Touch Icon generation, optional SVG support, and default restoration.
+
 ## [0.4.4] - 2026-10-07
 
 ### Added

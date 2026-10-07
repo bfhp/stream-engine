@@ -176,6 +176,31 @@ final class ImageProcessorTest extends TestCase
         $this->assertSame($originalBytes, file_get_contents($output));
     }
 
+    public function testProcessSiteIconBuildsPngAndMultiSizeIcoFromRasterImage(): void
+    {
+        $processor = new ImageProcessor($this->tmpDir);
+        $file = $this->makePngImage(320, 160);
+
+        $variants = $processor->processSiteIcon($file, 'image/png');
+        $pngInfo = getimagesizefromstring($variants['png']);
+
+        $this->assertNotFalse($pngInfo);
+        $this->assertSame([180, 180], [$pngInfo[0], $pngInfo[1]]);
+        $this->assertSame("\x00\x00\x01\x00\x03\x00", substr($variants['ico'], 0, 6));
+        $this->assertSame($processor->supportsSvg(), $variants['svg'] !== null);
+    }
+
+    public function testProcessSiteIconRejectsUnsupportedContent(): void
+    {
+        $processor = new ImageProcessor($this->tmpDir);
+        $file = $this->makeTextFile('not an image');
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('Unsupported image type');
+
+        $processor->processSiteIcon($file, 'text/plain');
+    }
+
     private function assertCenterPixelColor(string $webpFile, int $red, int $green, int $blue): void
     {
         $image = imagecreatefromwebp($webpFile);

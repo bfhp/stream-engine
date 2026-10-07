@@ -12,9 +12,7 @@
     <title>{% block meta_title %}{{ title|default('') }}{% endblock %}</title>
 
     {% block head_icons %}
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-        <link rel="icon" href="/favicon.ico" sizes="any">
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
+        {% include 'partials/site-icons.twig' %}
     {% endblock %}
 
     {% block head_theme %}

@@ -9,6 +9,8 @@ use StreamEngine\Repository\SettingsRepository;
 final class SettingsService
 {
     public const array CRON_MODES = ['os', 'web', 'off'];
+    public const string SITE_ICON_KEY = 'site_icon';
+    public const string SITE_ICON_SVG_KEY = 'site_icon_svg';
 
     /**
      * @var array<string, string>
@@ -57,6 +59,32 @@ final class SettingsService
         $mode = $this->getString('cron.mode', 'os');
 
         return in_array($mode, self::CRON_MODES, true) ? $mode : 'off';
+    }
+
+    /**
+     * @return array{svg:?string, ico:string, apple:string}
+     */
+    public function siteIcons(): array
+    {
+        $base = $this->getString(self::SITE_ICON_KEY);
+        if (preg_match('~\A/uploads/site-icons/favicon-[a-f0-9]{16}\z~', $base) !== 1) {
+            return [
+                'svg' => '/favicon.svg',
+                'ico' => '/favicon.ico',
+                'apple' => '/apple-touch-icon.png',
+            ];
+        }
+
+        $svg = $this->getString(self::SITE_ICON_SVG_KEY);
+        if ($svg !== $base.'.svg') {
+            $svg = null;
+        }
+
+        return [
+            'svg' => $svg,
+            'ico' => $base.'.ico',
+            'apple' => $base.'.png',
+        ];
     }
 
     public function set(string $key, string $value): void

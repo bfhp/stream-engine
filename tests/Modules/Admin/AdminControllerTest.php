@@ -1217,6 +1217,95 @@ final class AdminControllerTest extends TestCase
         );
     }
 
+    public function testRasterSiteIconUploadCreatesIcoAndAppleIconAndSavesBothSettings(): void
+    {
+        $uploads = sys_get_temp_dir().'/site-icons-'.bin2hex(random_bytes(8));
+        mkdir($uploads, 0777, true);
+        $source = tempnam(sys_get_temp_dir(), 'site-icon-source-');
+        $image = imagecreatetruecolor(120, 80);
+        imagefilledrectangle($image, 0, 0, 120, 80, imagecolorallocate($image, 20, 120, 220));
+        imagepng($image, $source);
+        $hash = substr(hash_file('sha256', $source), 0, 16);
+        $base = $uploads.'/site-icons/favicon-'.$hash;
+
+        try {
+            $_SERVER['REQUEST_METHOD'] = 'POST';
+            $this->withValidCsrf();
+            $_FILES['file'] = [
+                'name' => 'brand.png',
+                'type' => 'image/png',
+                'tmp_name' => $source,
+                'error' => UPLOAD_ERR_OK,
+                'size' => filesize($source),
+            ];
+
+            $response = $this->callAndDecode(
+                $this->makeModule(uploadsDir: $uploads),
+                $this->makeApiPage('admin.site-icon', ['POST', 'DELETE']),
+            );
+
+            $this->assertTrue($response['customized']);
+            $this->assertFileExists($base.'.ico');
+            $this->assertFileExists($base.'.png');
+            $this->assertSame("\x00\x00\x01\x00\x03\x00", substr((string) file_get_contents($base.'.ico'), 0, 6));
+            $this->assertSame(
+                [SettingsService::SITE_ICON_KEY, '/uploads/site-icons/favicon-'.$hash, '/uploads/site-icons/favicon-'.$hash],
+                $this->writes[0][1],
+            );
+            $this->assertSame(SettingsService::SITE_ICON_SVG_KEY, $this->writes[1][1][0]);
+        } finally {
+            foreach (['ico', 'png', 'svg'] as $extension) {
+                @unlink($base.'.'.$extension);
+            }
+            @rmdir($uploads.'/site-icons');
+            @rmdir($uploads);
+            @unlink($source);
+        }
+    }
+
+    public function testRestoringDefaultSiteIconClearsBothSettingsAndRemovesGeneratedFiles(): void
+    {
+        $uploads = sys_get_temp_dir().'/site-icons-reset-'.bin2hex(random_bytes(8));
+        $directory = $uploads.'/site-icons';
+        mkdir($directory, 0777, true);
+        $baseUrl = '/uploads/site-icons/favicon-a83f42c1d92e176a';
+        $basePath = $directory.'/favicon-a83f42c1d92e176a';
+        foreach (['ico', 'png', 'svg'] as $extension) {
+            file_put_contents($basePath.'.'.$extension, 'old');
+        }
+
+        try {
+            $_SERVER['REQUEST_METHOD'] = 'DELETE';
+            $this->withValidCsrf();
+            $response = $this->callAndDecode(
+                $this->makeModule(
+                    settings: [
+                        SettingsService::SITE_ICON_KEY => $baseUrl,
+                        SettingsService::SITE_ICON_SVG_KEY => $baseUrl.'.svg',
+                    ],
+                    uploadsDir: $uploads,
+                ),
+                $this->makeApiPage('admin.site-icon', ['POST', 'DELETE']),
+            );
+
+            $this->assertFalse($response['customized']);
+            $this->assertSame('/favicon.svg', $response['svg']);
+            $this->assertSame('/favicon.ico', $response['ico']);
+            $this->assertSame('/apple-touch-icon.png', $response['apple']);
+            $this->assertSame([SettingsService::SITE_ICON_KEY, '', ''], $this->writes[0][1]);
+            $this->assertSame([SettingsService::SITE_ICON_SVG_KEY, '', ''], $this->writes[1][1]);
+            foreach (['ico', 'png', 'svg'] as $extension) {
+                $this->assertFileDoesNotExist($basePath.'.'.$extension);
+            }
+        } finally {
+            foreach (['ico', 'png', 'svg'] as $extension) {
+                @unlink($basePath.'.'.$extension);
+            }
+            @rmdir($directory);
+            @rmdir($uploads);
+        }
+    }
+
     public static function invalidDisplayFormatProvider(): array
     {
         return [
@@ -1797,6 +1886,7 @@ final class AdminControllerTest extends TestCase
             'admin.menu' => ['GET', 'PATCH', 'DELETE'],
             'admin.menu-preview' => ['GET'],
             'admin.settings' => ['GET', 'POST'],
+            'admin.site-icon' => ['POST', 'DELETE'],
             'admin.setting' => ['GET', 'PATCH'],
             'admin.themes' => ['GET', 'PATCH'],
             'admin.users' => ['GET'],
@@ -1846,6 +1936,7 @@ final class AdminControllerTest extends TestCase
         $menu = (new Router($tree))->resolve('/api/v1/admin/menus/8');
         $menuPreview = (new Router($tree))->resolve('/api/v1/admin/menus/preview');
         $settings = (new Router($tree))->resolve('/api/v1/admin/settings');
+        $siteIcon = (new Router($tree))->resolve('/api/v1/admin/settings/site-icon');
         $setting = (new Router($tree))->resolve('/api/v1/admin/settings/site_name');
         $themes = (new Router($tree))->resolve('/api/v1/admin/themes');
         $users = (new Router($tree))->resolve('/api/v1/admin/users');
@@ -1866,6 +1957,7 @@ final class AdminControllerTest extends TestCase
         $this->assertSame(['id' => '8'], $menu['params']);
         $this->assertSame('admin.menu-preview', $menuPreview['page']->action ?? null);
         $this->assertSame('admin.settings', $settings['page']->action ?? null);
+        $this->assertSame('admin.site-icon', $siteIcon['page']->action ?? null);
         $this->assertSame('admin.setting', $setting['page']->action ?? null);
         $this->assertSame(['key' => 'site_name'], $setting['params']);
         $this->assertSame('admin.themes', $themes['page']->action ?? null);

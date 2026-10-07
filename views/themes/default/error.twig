@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex">
     <title>{{ status }} — {{ title }}</title>
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-    <link rel="icon" href="/favicon.ico" sizes="any">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
+    {% include 'partials/site-icons.twig' %}
     <meta name="theme-color" content="{{ theme.values.color_mode|default('dark') == 'light' ? '#F8FAFC' : theme.themeColor|default('#0F172A') }}">
     {% include 'partials/color-mode.twig' %}
     {% for asset in theme.assets.styles|default(['/assets/css/base.css', '/assets/css/site.css']) %}
