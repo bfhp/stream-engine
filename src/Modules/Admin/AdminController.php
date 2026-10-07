@@ -1241,7 +1241,10 @@ class AdminController extends AbstractController implements DashboardCardProvide
         }
 
         echo Formatter::json([
-            'data' => $this->settingsRepository->findAllForAdmin(),
+            'data' => array_values(array_filter(
+                $this->settingsRepository->findAllForAdmin(),
+                static fn (array $setting): bool => ! str_starts_with($setting['key'], 'registration.'),
+            )),
             'siteIcon' => $this->siteIconPayload(),
         ]);
     }
@@ -1254,25 +1257,54 @@ class AdminController extends AbstractController implements DashboardCardProvide
             $input = $this->jsonBody();
             $mode = is_string($input['mode'] ?? null) ? $input['mode'] : '';
             $honeypotField = is_string($input['honeypotField'] ?? null) ? trim($input['honeypotField']) : '';
+            $captchaProvider = is_string($input['captchaProvider'] ?? null) ? $input['captchaProvider'] : '';
+            $captchaSiteKey = is_string($input['captchaSiteKey'] ?? null) ? trim($input['captchaSiteKey']) : '';
+            $captchaSecret = is_string($input['captchaSecret'] ?? null) ? trim($input['captchaSecret']) : '';
 
             $this->validateSettingValue(SettingsService::REGISTRATION_MODE_KEY, $mode);
             $this->validateSettingValue(SettingsService::REGISTRATION_HONEYPOT_FIELD_KEY, $honeypotField);
+            $this->validateSettingValue(SettingsService::REGISTRATION_CAPTCHA_PROVIDER_KEY, $captchaProvider);
+
+            $currentCaptcha = $this->settingsService->registrationCaptcha();
+            if ($captchaProvider === 'none') {
+                $captchaSiteKey = '';
+                $captchaSecret = '';
+            } else {
+                if ($captchaSecret === '' && $captchaProvider === $currentCaptcha['provider']) {
+                    $captchaSecret = $currentCaptcha['secret'];
+                }
+                if ($captchaSiteKey === '' || $captchaSecret === ''
+                    || strlen($captchaSiteKey) > 512 || strlen($captchaSecret) > 2048) {
+                    throw new ValidationException($this->tm->trans('admin.error.invalid_captcha_settings'));
+                }
+            }
+
             $this->settingsService->setMany([
                 SettingsService::REGISTRATION_MODE_KEY => $mode,
                 SettingsService::REGISTRATION_HONEYPOT_FIELD_KEY => $honeypotField,
+                SettingsService::REGISTRATION_CAPTCHA_PROVIDER_KEY => $captchaProvider,
+                SettingsService::REGISTRATION_CAPTCHA_SITE_KEY => $captchaSiteKey,
+                SettingsService::REGISTRATION_CAPTCHA_SECRET_KEY => $captchaSecret,
             ]);
 
             echo Formatter::json([
                 'mode' => $mode,
                 'honeypotField' => $honeypotField,
+                'captchaProvider' => $captchaProvider,
+                'captchaSiteKey' => $captchaSiteKey,
+                'captchaSecretConfigured' => $captchaSecret !== '',
             ]);
 
             return;
         }
 
+        $captcha = $this->settingsService->registrationCaptcha();
         echo Formatter::json([
             'mode' => $this->settingsService->registrationMode(),
             'honeypotField' => $this->settingsService->registrationHoneypotField(),
+            'captchaProvider' => $captcha['provider'],
+            'captchaSiteKey' => $captcha['siteKey'],
+            'captchaSecretConfigured' => $captcha['secret'] !== '',
         ]);
     }
 
@@ -2012,6 +2044,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
             || ! preg_match('/\A[A-Za-z0-9_.-]+\z/', $key)
             || $key === ThemeService::ACTIVE_KEY
             || in_array($key, [SettingsService::SITE_ICON_KEY, SettingsService::SITE_ICON_SVG_KEY], true)
+            || str_starts_with($key, 'registration.')
             || str_starts_with($key, 'theme.')) {
             throw new ValidationException($this->tm->trans('admin.error.setting_key'));
         }
@@ -2039,6 +2072,10 @@ class AdminController extends AbstractController implements DashboardCardProvide
         if ($key === SettingsService::REGISTRATION_MODE_KEY
             && ! in_array($value, SettingsService::REGISTRATION_MODES, true)) {
             throw new ValidationException($this->tm->trans('admin.error.invalid_registration_mode'));
+        }
+        if ($key === SettingsService::REGISTRATION_CAPTCHA_PROVIDER_KEY
+            && ! in_array($value, SettingsService::REGISTRATION_CAPTCHA_PROVIDERS, true)) {
+            throw new ValidationException($this->tm->trans('admin.error.invalid_captcha_provider'));
         }
     }
 }

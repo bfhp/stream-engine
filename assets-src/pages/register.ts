@@ -44,6 +44,17 @@ const cms = window.CMS;
             password: value('password')
         };
 
+        const captchaProvider = form.dataset.captchaProvider || "none";
+        if (captchaProvider !== "none") {
+            const tokenField = captchaProvider === "turnstile" ? "cf-turnstile-response" : "h-captcha-response";
+            const tokenControl = form.elements.namedItem(tokenField) as HTMLInputElement | null;
+            payload.captchaToken = tokenControl?.value || "";
+            if (payload.captchaToken === "") {
+                cms.toast({ message: trans("js.auth.captcha_required"), type: "danger" });
+                return;
+            }
+        }
+
         if (payload.password.length < 10) {
             cms.toast({
                 message: trans("js.auth.password_min"),
@@ -74,6 +85,12 @@ const cms = window.CMS;
             }, 800);
 
         } catch (error) {
+
+            if (captchaProvider === "turnstile") {
+                (window as any).turnstile?.reset();
+            } else if (captchaProvider === "hcaptcha") {
+                (window as any).hcaptcha?.reset();
+            }
 
             cms.toast({
                 message: getApiErrorMessage(error, trans("js.auth.registration_failed")),

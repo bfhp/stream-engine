@@ -154,6 +154,8 @@ class UsersController extends AbstractController
 
     private readonly MembershipRepository $memberships;
 
+    private readonly RegistrationCaptcha $registrationCaptcha;
+
     public function __construct(
         PdoDatabase $db,
         RequestContext $context,
@@ -170,6 +172,7 @@ class UsersController extends AbstractController
         private readonly SettingsService $settings,
     ) {
         parent::__construct($db, $context);
+        $this->registrationCaptcha = new RegistrationCaptcha($this->settings, $this->config);
 
         // FeedRepository/MembershipRepository/FeedTermRepository are
         // stateless query wrappers over PdoDatabase (see Repository/* -
@@ -3326,17 +3329,25 @@ class UsersController extends AbstractController
             throw new RuntimeException('Registration success URL is not configured');
         }
 
+        $captcha = $this->settings->registrationCaptcha();
+        $headExt = ['<script type="module" src="/assets/js/register.js" defer></script>'];
+        if ($captcha['provider'] === 'turnstile') {
+            $headExt[] = '<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>';
+        } elseif ($captcha['provider'] === 'hcaptcha') {
+            $headExt[] = '<script src="https://js.hcaptcha.com/1/api.js" async defer></script>';
+        }
+
         return ViewModel::fromPage(
             $page,
             'modules/users/register1.twig',
             [
-                'head_ext' => [
-                    '<script type="module" src="/assets/js/register.js" defer></script>',
-                ],
+                'head_ext' => $headExt,
                 'title' => $this->tm->trans('user.registration'),
                 'successUrl' => $successUrl,
                 'honeypotField' => $this->settings->registrationHoneypotField(),
                 'registrationMode' => $registrationMode,
+                'captchaProvider' => $captcha['provider'],
+                'captchaSiteKey' => $captcha['siteKey'],
             ]
         );
     }
@@ -3442,6 +3453,15 @@ class UsersController extends AbstractController
 
         if (! is_string($honeypot) || $honeypot !== '') {
             throw new ValidationException('Invalid registration form');
+        }
+
+        $captcha = $this->settings->registrationCaptcha();
+        if ($captcha['provider'] !== 'none') {
+            $captchaToken = is_string($data['captchaToken'] ?? null) ? $data['captchaToken'] : '';
+            $remoteIp = is_string($_SERVER['REMOTE_ADDR'] ?? null) ? $_SERVER['REMOTE_ADDR'] : '';
+            if (! $this->registrationCaptcha->verify($captchaToken, $remoteIp)) {
+                throw new ValidationException($this->tm->trans('user.captcha_failed'));
+            }
         }
 
         $email = is_string($data['email'] ?? null) ? trim($data['email']) : '';

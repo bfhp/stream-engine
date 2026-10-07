@@ -15,6 +15,10 @@ final class SettingsService
     public const string DEFAULT_REGISTRATION_HONEYPOT_FIELD = 'contact_reference';
     public const string REGISTRATION_MODE_KEY = 'registration.mode';
     public const array REGISTRATION_MODES = ['closed', 'email', 'open'];
+    public const string REGISTRATION_CAPTCHA_PROVIDER_KEY = 'registration.captcha.provider';
+    public const string REGISTRATION_CAPTCHA_SITE_KEY = 'registration.captcha.site_key';
+    public const string REGISTRATION_CAPTCHA_SECRET_KEY = 'registration.captcha.secret_key';
+    public const array REGISTRATION_CAPTCHA_PROVIDERS = ['none', 'turnstile', 'hcaptcha'];
 
     /**
      * @var array<string, string>
@@ -82,6 +86,21 @@ final class SettingsService
         $mode = $this->getString(self::REGISTRATION_MODE_KEY, 'email');
 
         return in_array($mode, self::REGISTRATION_MODES, true) ? $mode : 'closed';
+    }
+
+    /** @return array{provider:string, siteKey:string, secret:string} */
+    public function registrationCaptcha(): array
+    {
+        $provider = $this->getString(self::REGISTRATION_CAPTCHA_PROVIDER_KEY, 'none');
+        if (! in_array($provider, self::REGISTRATION_CAPTCHA_PROVIDERS, true)) {
+            $provider = 'none';
+        }
+
+        return [
+            'provider' => $provider,
+            'siteKey' => $this->getString(self::REGISTRATION_CAPTCHA_SITE_KEY),
+            'secret' => $this->getString(self::REGISTRATION_CAPTCHA_SECRET_KEY),
+        ];
     }
 
     public static function isValidRegistrationHoneypotField(string $field): bool

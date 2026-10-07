@@ -1,5 +1,5 @@
 {# Bootstrap markup of the Users module's components/users/register-form.twig; keeps its hooks. #}
-<form id="registerForm" method="post" action="/api/v1/users" data-success-url="{{ successUrl }}" data-honeypot-field="{{ honeypotField }}" data-registration-mode="{{ registrationMode }}">
+<form id="registerForm" method="post" action="/api/v1/users" data-success-url="{{ successUrl }}" data-honeypot-field="{{ honeypotField }}" data-registration-mode="{{ registrationMode }}" data-captcha-provider="{{ captchaProvider }}">
     {% block register_hidden %}
     <div class="mb-3 visually-hidden" aria-hidden="true">
         <input
@@ -45,13 +45,18 @@
     {% endblock %}
 
     {% block register_captcha %}
-    <!-- TODO -->
-    <div class="mb-3 d-none">
+    {% if captchaProvider != 'none' %}
+    <div class="mb-3">
         <label class="form-label">{{ trans('view.users.register.form.05') }}</label>
         <div class="col-sm-10">
-            <div class="g-recaptcha" data-sitekey="{{ hCaptchaPublic }}"></div>
+            {% if captchaProvider == 'turnstile' %}
+                <div class="cf-turnstile" data-sitekey="{{ captchaSiteKey }}" data-action="registration"></div>
+            {% elseif captchaProvider == 'hcaptcha' %}
+                <div class="h-captcha" data-sitekey="{{ captchaSiteKey }}"></div>
+            {% endif %}
         </div>
     </div>
+    {% endif %}
     {% endblock %}
 
     {% block register_submit %}

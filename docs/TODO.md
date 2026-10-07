@@ -42,11 +42,6 @@ generator, hosted site, or build step.
   installation and a new developer can run, change, test, and extend it using
   only the repository documentation, with every internal link checked.
 
-### Registration
-
-- Integrate a real CAPTCHA or remove the hidden, unfinished markup from the
-  registration form.
-
 ### User mentions in comments, forums, and messages
 
 - Define a single `@username` syntax, escaping rules, and username boundaries;

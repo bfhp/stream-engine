@@ -1092,6 +1092,21 @@ final class AdminControllerTest extends TestCase
         $this->assertSame('site_name', $response['data'][1]['key']);
     }
 
+    public function testSettingsListDoesNotExposeCaptchaSecret(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $response = $this->callAndDecode(
+            $this->makeModule(settings: [
+                SettingsService::REGISTRATION_CAPTCHA_SECRET_KEY => 'private-secret',
+                SettingsService::REGISTRATION_MODE_KEY => 'open',
+                'site_name' => 'Stream Engine',
+            ]),
+            $this->makeApiPage('admin.settings', ['GET', 'POST']),
+        );
+
+        $this->assertSame(['site_name'], array_column($response['data'], 'key'));
+    }
+
     public function testRegistrationSettingsReturnDefaults(): void
     {
         $_SERVER['REQUEST_METHOD'] = 'GET';
@@ -1103,6 +1118,9 @@ final class AdminControllerTest extends TestCase
 
         $this->assertSame('email', $response['mode']);
         $this->assertSame('contact_reference', $response['honeypotField']);
+        $this->assertSame('none', $response['captchaProvider']);
+        $this->assertSame('', $response['captchaSiteKey']);
+        $this->assertFalse($response['captchaSecretConfigured']);
     }
 
     public function testRegistrationSettingsAreSavedTogether(): void
@@ -1112,6 +1130,9 @@ final class AdminControllerTest extends TestCase
         PhpInputStreamMock::register(json_encode([
             'mode' => 'open',
             'honeypotField' => 'visitor_note',
+            'captchaProvider' => 'none',
+            'captchaSiteKey' => '',
+            'captchaSecret' => '',
         ]));
 
         $response = $this->callAndDecode(
@@ -1119,8 +1140,14 @@ final class AdminControllerTest extends TestCase
             $this->makeApiPage('admin.registration', ['GET', 'PATCH']),
         );
 
-        $this->assertSame(['mode' => 'open', 'honeypotField' => 'visitor_note'], $response);
-        $this->assertCount(2, $this->writes);
+        $this->assertSame([
+            'mode' => 'open',
+            'honeypotField' => 'visitor_note',
+            'captchaProvider' => 'none',
+            'captchaSiteKey' => '',
+            'captchaSecretConfigured' => false,
+        ], $response);
+        $this->assertCount(5, $this->writes);
         $this->assertSame(
             [SettingsService::REGISTRATION_MODE_KEY, 'open', 'open'],
             $this->writes[0][1],
@@ -1128,6 +1155,35 @@ final class AdminControllerTest extends TestCase
         $this->assertSame(
             [SettingsService::REGISTRATION_HONEYPOT_FIELD_KEY, 'visitor_note', 'visitor_note'],
             $this->writes[1][1],
+        );
+    }
+
+    public function testRegistrationSettingsKeepExistingCaptchaSecretWithoutReturningIt(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode([
+            'mode' => 'email',
+            'honeypotField' => 'contact_reference',
+            'captchaProvider' => 'turnstile',
+            'captchaSiteKey' => 'updated-site-key',
+            'captchaSecret' => '',
+        ]));
+
+        $response = $this->callAndDecode(
+            $this->makeModule(settings: [
+                SettingsService::REGISTRATION_CAPTCHA_PROVIDER_KEY => 'turnstile',
+                SettingsService::REGISTRATION_CAPTCHA_SITE_KEY => 'old-site-key',
+                SettingsService::REGISTRATION_CAPTCHA_SECRET_KEY => 'private-secret',
+            ]),
+            $this->makeApiPage('admin.registration', ['GET', 'PATCH']),
+        );
+
+        $this->assertTrue($response['captchaSecretConfigured']);
+        $this->assertArrayNotHasKey('captchaSecret', $response);
+        $this->assertSame(
+            [SettingsService::REGISTRATION_CAPTCHA_SECRET_KEY, 'private-secret', 'private-secret'],
+            $this->writes[4][1],
         );
     }
 

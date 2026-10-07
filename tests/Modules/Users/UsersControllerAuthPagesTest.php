@@ -22,6 +22,7 @@ use StreamEngine\Core\UrlGenerator;
 use StreamEngine\Domain\Page;
 use StreamEngine\Domain\User;
 use StreamEngine\Modules\Users\UsersController;
+use StreamEngine\Modules\Users\RegistrationCaptcha;
 use StreamEngine\Repository\NotificationDeliveryRepository;
 use StreamEngine\Repository\NotificationPreferenceRepository;
 use StreamEngine\Repository\SettingsRepository;
@@ -129,9 +130,11 @@ final class UsersControllerAuthPagesTest extends TestCase
             $settings,
             array_keys($settings),
         ));
-        $reflection->getProperty('settings')->setValue(
+        $settingsService = new SettingsService(new SettingsRepository($settingsDb));
+        $reflection->getProperty('settings')->setValue($module, $settingsService);
+        $reflection->getProperty('registrationCaptcha')->setValue(
             $module,
-            new SettingsService(new SettingsRepository($settingsDb)),
+            new RegistrationCaptcha($settingsService, new Config(['SITE_URL' => 'https://example.test'])),
         );
         $reflection->getProperty('authService')->setValue(
             $module,
@@ -223,6 +226,7 @@ final class UsersControllerAuthPagesTest extends TestCase
         $this->assertSame('modules/users/register1.twig', $view->template);
         $this->assertSame('/register/?success=1', $view->data['successUrl']);
         $this->assertSame('contact_reference', $view->data['honeypotField']);
+        $this->assertSame('none', $view->data['captchaProvider']);
     }
 
     public function testRegistrationFormUsesConfiguredHoneypotField(): void
@@ -234,6 +238,23 @@ final class UsersControllerAuthPagesTest extends TestCase
         $view = $module->show($this->page('user.register'));
 
         $this->assertSame('visitor_note', $view->data['honeypotField']);
+    }
+
+    public function testRegistrationFormLoadsConfiguredCaptchaWidget(): void
+    {
+        $view = $this->makeModule(settings: [
+            SettingsService::REGISTRATION_CAPTCHA_PROVIDER_KEY => 'turnstile',
+            SettingsService::REGISTRATION_CAPTCHA_SITE_KEY => 'public-site-key',
+            SettingsService::REGISTRATION_CAPTCHA_SECRET_KEY => 'private-secret',
+        ])->show($this->page('user.register'));
+
+        $this->assertSame('turnstile', $view->data['captchaProvider']);
+        $this->assertSame('public-site-key', $view->data['captchaSiteKey']);
+        $this->assertStringContainsString(
+            'challenges.cloudflare.com/turnstile/v0/api.js',
+            implode('', $view->data['head_ext']),
+        );
+        $this->assertStringNotContainsString('private-secret', json_encode($view->data));
     }
 
     public function testClosedRegistrationShowsMessageInsteadOfForm(): void
@@ -560,6 +581,28 @@ final class UsersControllerAuthPagesTest extends TestCase
 
         $this->expectException(ValidationException::class);
         $this->expectExceptionMessage('Invalid registration form');
+
+        $module->callApi($this->registerPage());
+    }
+
+    public function testConfiguredCaptchaIsRequiredByTheRegistrationApi(): void
+    {
+        $module = $this->makeModule(settings: [
+            SettingsService::REGISTRATION_CAPTCHA_PROVIDER_KEY => 'turnstile',
+            SettingsService::REGISTRATION_CAPTCHA_SITE_KEY => 'site-key',
+            SettingsService::REGISTRATION_CAPTCHA_SECRET_KEY => 'secret-key',
+        ]);
+
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $this->withCsrf();
+        PhpInputStreamMock::register(json_encode([
+            'contact_reference' => '',
+            'email' => 'person@example.test',
+            'password' => 'longenough1',
+        ]));
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('CAPTCHA');
 
         $module->callApi($this->registerPage());
     }

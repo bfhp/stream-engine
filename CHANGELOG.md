@@ -11,6 +11,9 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 - Added administrator-configurable site icons with automatic favicon and
   Apple Touch Icon generation, optional SVG support, and default restoration.
+- Added registration controls for closed, email-confirmed, and immediately
+  active accounts, a configurable honeypot, and optional Turnstile or hCaptcha
+  verification.
 
 ## [0.4.4] - 2026-10-07
 

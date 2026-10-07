@@ -1,4 +1,4 @@
-<form id="registerForm" method="post" action="/api/v1/users" data-success-url="{{ successUrl }}" data-honeypot-field="{{ honeypotField }}" data-registration-mode="{{ registrationMode }}">
+<form id="registerForm" method="post" action="/api/v1/users" data-success-url="{{ successUrl }}" data-honeypot-field="{{ honeypotField }}" data-registration-mode="{{ registrationMode }}" data-captcha-provider="{{ captchaProvider }}">
     {% block register_hidden %}
     <div class="ui-visually-hidden" aria-hidden="true">
         <input
@@ -44,11 +44,16 @@
     {% endblock %}
 
     {% block register_captcha %}
-    <!-- TODO -->
-    <div class="ui-field" hidden>
+    {% if captchaProvider != 'none' %}
+    <div class="ui-field">
         <label class="ui-label">{{ trans('view.users.register.form.05') }}</label>
-        <div class="g-recaptcha" data-sitekey="{{ hCaptchaPublic }}"></div>
+        {% if captchaProvider == 'turnstile' %}
+            <div class="cf-turnstile" data-sitekey="{{ captchaSiteKey }}" data-action="registration"></div>
+        {% elseif captchaProvider == 'hcaptcha' %}
+            <div class="h-captcha" data-sitekey="{{ captchaSiteKey }}"></div>
+        {% endif %}
     </div>
+    {% endif %}
     {% endblock %}
 
     {% block register_submit %}

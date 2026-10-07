@@ -56,6 +56,29 @@ final class SettingsServiceTest extends TestCase
         ])->registrationMode());
     }
 
+    public function testRegistrationCaptchaDefaultsToDisabledAndRejectsUnknownProvider(): void
+    {
+        self::assertSame([
+            'provider' => 'none',
+            'siteKey' => '',
+            'secret' => '',
+        ], $this->makeService()->registrationCaptcha());
+
+        self::assertSame([
+            'provider' => 'turnstile',
+            'siteKey' => 'site-key',
+            'secret' => 'secret-key',
+        ], $this->makeService([
+            SettingsService::REGISTRATION_CAPTCHA_PROVIDER_KEY => ['turnstile', 1],
+            SettingsService::REGISTRATION_CAPTCHA_SITE_KEY => ['site-key', 1],
+            SettingsService::REGISTRATION_CAPTCHA_SECRET_KEY => ['secret-key', 1],
+        ])->registrationCaptcha());
+
+        self::assertSame('none', $this->makeService([
+            SettingsService::REGISTRATION_CAPTCHA_PROVIDER_KEY => ['unknown', 1],
+        ])->registrationCaptcha()['provider']);
+    }
+
     public function testSiteIconsUseBuiltInDefaultsWithoutAValidCustomBase(): void
     {
         $expected = [

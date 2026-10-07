@@ -38,7 +38,7 @@ const api = vi.fn<(url: string, options?: unknown) => Promise<unknown>>();
 const toast = vi.fn();
 
 const FORMS = `
-    <form id="registerForm" action="/api/v1/auth/register" data-success-url="#registration-complete" data-honeypot-field="contact_reference" data-registration-mode="email">
+    <form id="registerForm" action="/api/v1/auth/register" data-success-url="#registration-complete" data-honeypot-field="contact_reference" data-registration-mode="email" data-captcha-provider="none">
         <input name="contact_reference" value="">
         <input name="email" value="nicky@example.com">
         <input name="password" value="0123456789">
@@ -187,6 +187,8 @@ beforeEach(() => {
     (form("forgotPasswordForm").elements.namedItem("email") as HTMLInputElement).value = "anya@example.com";
     form("registerForm").dataset.successUrl = "#registration-complete";
     form("registerForm").dataset.registrationMode = "email";
+    form("registerForm").dataset.captchaProvider = "none";
+    form("registerForm").querySelector('[name="cf-turnstile-response"]')?.remove();
     form("feedbackForm").dataset.successUrl = "#feedback-complete";
 
     ["registerForm", "feedbackForm", "resetPasswordForm", "forgotPasswordForm"]
@@ -277,6 +279,36 @@ describe("register.ts", () => {
 
         expect(api).not.toHaveBeenCalled();
         expect(button("registerForm").disabled).toBe(false);
+    });
+
+    it("requires the configured CAPTCHA token before calling the API", async () => {
+        form("registerForm").dataset.captchaProvider = "turnstile";
+
+        await submit("registerForm");
+
+        expect(api).not.toHaveBeenCalled();
+        expect(toast).toHaveBeenCalledWith(expect.objectContaining({
+            message: "Пройдите проверку CAPTCHA.",
+            type: "danger",
+        }));
+    });
+
+    it("sends the CAPTCHA token through the provider-neutral API field", async () => {
+        api.mockResolvedValue({});
+        form("registerForm").dataset.captchaProvider = "turnstile";
+        const token = document.createElement("input");
+        token.name = "cf-turnstile-response";
+        token.value = "captcha-token";
+        form("registerForm").append(token);
+
+        await submit("registerForm");
+
+        expect(api).toHaveBeenCalledWith(
+            "http://localhost:3000/api/v1/auth/register",
+            expect.objectContaining({
+                data: expect.objectContaining({ captchaToken: "captcha-token" }),
+            }),
+        );
     });
 });
 

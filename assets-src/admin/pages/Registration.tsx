@@ -1,4 +1,4 @@
-import { ActionIcon, Button, Group, Select, Stack, Text, TextInput, Tooltip } from "@mantine/core";
+import { ActionIcon, Button, Group, PasswordInput, Select, Stack, Text, TextInput, Tooltip } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { IconDeviceFloppy, IconRefresh } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
@@ -7,10 +7,14 @@ import { trans } from "../../shared/i18n";
 
 const DEFAULT_FIELD = "contact_reference";
 const DEFAULT_MODE = "email";
+const DEFAULT_CAPTCHA_PROVIDER = "none";
 
 type RegistrationSettings = {
     mode: string;
     honeypotField: string;
+    captchaProvider: string;
+    captchaSiteKey: string;
+    captchaSecretConfigured: boolean;
 };
 
 function isValidField(value: string): boolean {
@@ -24,6 +28,12 @@ export default function Registration() {
     const [field, setField] = useState(DEFAULT_FIELD);
     const [savedMode, setSavedMode] = useState(DEFAULT_MODE);
     const [mode, setMode] = useState(DEFAULT_MODE);
+    const [savedCaptchaProvider, setSavedCaptchaProvider] = useState(DEFAULT_CAPTCHA_PROVIDER);
+    const [captchaProvider, setCaptchaProvider] = useState(DEFAULT_CAPTCHA_PROVIDER);
+    const [savedCaptchaSiteKey, setSavedCaptchaSiteKey] = useState("");
+    const [captchaSiteKey, setCaptchaSiteKey] = useState("");
+    const [captchaSecret, setCaptchaSecret] = useState("");
+    const [captchaSecretConfigured, setCaptchaSecretConfigured] = useState(false);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
@@ -45,10 +55,20 @@ export default function Registration() {
                 const nextField = settings.honeypotField || DEFAULT_FIELD;
                 const storedMode = settings.mode || DEFAULT_MODE;
                 const nextMode = ["closed", "email", "open"].includes(storedMode) ? storedMode : "closed";
+                const storedCaptchaProvider = settings.captchaProvider || DEFAULT_CAPTCHA_PROVIDER;
+                const nextCaptchaProvider = ["none", "turnstile", "hcaptcha"].includes(storedCaptchaProvider)
+                    ? storedCaptchaProvider
+                    : DEFAULT_CAPTCHA_PROVIDER;
                 setSavedField(nextField);
                 setField(nextField);
                 setSavedMode(nextMode);
                 setMode(nextMode);
+                setSavedCaptchaProvider(nextCaptchaProvider);
+                setCaptchaProvider(nextCaptchaProvider);
+                setSavedCaptchaSiteKey(settings.captchaSiteKey || "");
+                setCaptchaSiteKey(settings.captchaSiteKey || "");
+                setCaptchaSecret("");
+                setCaptchaSecretConfigured(Boolean(settings.captchaSecretConfigured));
             })
             .catch(error => {
                 if (error.name !== "AbortError") {
@@ -67,8 +87,18 @@ export default function Registration() {
     }, [refreshKey]);
 
     const trimmedField = field.trim();
-    const valid = isValidField(trimmedField);
-    const dirty = trimmedField !== savedField || mode !== savedMode;
+    const trimmedCaptchaSiteKey = captchaSiteKey.trim();
+    const trimmedCaptchaSecret = captchaSecret.trim();
+    const captchaEnabled = captchaProvider !== DEFAULT_CAPTCHA_PROVIDER;
+    const savedSecretCanBeKept = captchaProvider === savedCaptchaProvider && captchaSecretConfigured;
+    const captchaValid = !captchaEnabled
+        || (trimmedCaptchaSiteKey !== "" && (trimmedCaptchaSecret !== "" || savedSecretCanBeKept));
+    const valid = isValidField(trimmedField) && captchaValid;
+    const dirty = trimmedField !== savedField
+        || mode !== savedMode
+        || captchaProvider !== savedCaptchaProvider
+        || trimmedCaptchaSiteKey !== savedCaptchaSiteKey
+        || trimmedCaptchaSecret !== "";
 
     function save() {
         if (!valid || !dirty) return;
@@ -80,7 +110,13 @@ export default function Registration() {
                 "Content-Type": "application/json",
                 ...csrfHeaders(),
             },
-            body: JSON.stringify({ mode, honeypotField: trimmedField }),
+            body: JSON.stringify({
+                mode,
+                honeypotField: trimmedField,
+                captchaProvider,
+                captchaSiteKey: trimmedCaptchaSiteKey,
+                captchaSecret: trimmedCaptchaSecret,
+            }),
         })
             .then(async response => {
                 if (!response.ok) {
@@ -94,6 +130,12 @@ export default function Registration() {
                 setSavedMode(settings.mode);
                 setField(settings.honeypotField);
                 setSavedField(settings.honeypotField);
+                setCaptchaProvider(settings.captchaProvider);
+                setSavedCaptchaProvider(settings.captchaProvider);
+                setCaptchaSiteKey(settings.captchaSiteKey);
+                setSavedCaptchaSiteKey(settings.captchaSiteKey);
+                setCaptchaSecret("");
+                setCaptchaSecretConfigured(settings.captchaSecretConfigured);
                 notifications.show({
                     color: "green",
                     message: trans("js.admin.settings.saved"),
@@ -154,6 +196,45 @@ export default function Registration() {
                 maxLength={64}
                 onChange={event => setField(event.currentTarget.value)}
             />
+
+            <Select
+                label={trans("js.admin.registration.captcha")}
+                description={trans("js.admin.registration.captcha_description")}
+                data={[
+                    { value: "none", label: trans("js.admin.registration.captcha_none") },
+                    { value: "turnstile", label: trans("js.admin.registration.captcha_turnstile") },
+                    { value: "hcaptcha", label: trans("js.admin.registration.captcha_hcaptcha") },
+                ]}
+                value={captchaProvider}
+                onChange={nextProvider => setCaptchaProvider(nextProvider || DEFAULT_CAPTCHA_PROVIDER)}
+                allowDeselect={false}
+            />
+
+            {captchaEnabled && (
+                <>
+                    <TextInput
+                        label={trans("js.admin.registration.captcha_site_key")}
+                        value={captchaSiteKey}
+                        error={trimmedCaptchaSiteKey === ""
+                            ? trans("js.admin.registration.captcha_required")
+                            : undefined}
+                        maxLength={512}
+                        onChange={event => setCaptchaSiteKey(event.currentTarget.value)}
+                    />
+                    <PasswordInput
+                        label={trans("js.admin.registration.captcha_secret")}
+                        description={savedSecretCanBeKept
+                            ? trans("js.admin.registration.captcha_secret_keep")
+                            : undefined}
+                        value={captchaSecret}
+                        error={!savedSecretCanBeKept && trimmedCaptchaSecret === ""
+                            ? trans("js.admin.registration.captcha_required")
+                            : undefined}
+                        maxLength={2048}
+                        onChange={event => setCaptchaSecret(event.currentTarget.value)}
+                    />
+                </>
+            )}
         </Stack>
     );
 }
