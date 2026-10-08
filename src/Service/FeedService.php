@@ -1681,8 +1681,8 @@ class FeedService
             throw new ValidationException($this->tm->trans('feed.comment_too_long'));
         }
 
-        // A reply's own plain-text quoting convention (see
-        // assets-src/pages/forums.ts's insertQuote()/buildQuoteBlock()):
+        // The legacy plain-text quoting convention (see
+        // assets-src/shared/comment-quotes.ts's buildQuoteBlock()):
         // one or more leading "> Author wrote: / > quoted line(s)"
         // blocks get rendered as real <blockquote> markup rather than
         // literal "&gt;" text - same idea as Markdown/email quoting, just

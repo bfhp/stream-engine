@@ -20,7 +20,7 @@ import { ui } from "../shared/ui";
 import { bytesToLabel } from "../shared/bytes";
 import { getApiErrorMessage } from "../shared/api-errors";
 import { trans, transChoiceWithCount } from "../shared/i18n";
-import { renderCommentQuoteBlockHtml } from "../shared/comment-quotes";
+import { buildRichQuoteInsertionHtml } from "../shared/comment-quotes";
 import {
     PollApiResponse,
     applyPollResponse,
@@ -166,7 +166,7 @@ function insertQuote(button: HTMLElement) {
 
     const author = button.dataset.quoteAuthor || "";
     const content = button.dataset.quoteContent || "";
-    const block = renderCommentQuoteBlockHtml(author, content) + "<div><br></div>";
+    const block = buildRichQuoteInsertionHtml(author, content);
     editor.editor.setSelectedRange([0, 0]);
     editor.editor.insertHTML(block);
 

@@ -1,10 +1,8 @@
 /* ==========================================================================
    Comment quotes
 
-   The client-side mirror of `FeedService::extractLeadingQuotes()` +
-   `renderQuoteBlock()` + `normalizeCommentContent()`, used by the forum's
-   quick-reply preview toggle to show what a draft will look like
-   without a server round trip.
+   Quote helpers for both the current rich-text forum editor and the legacy
+   plain-text quote syntax still accepted by FeedService.
 
    Being a mirror is the point and the risk: if the two drift, the preview
    lies about what gets stored. Two things are deliberately *not* mirrored,
@@ -42,9 +40,8 @@ export function escapeCommentText(value: string): string {
 }
 
 /**
- * The plain-text form a quote takes inside the textarea, produced when the
- * visitor presses the quote action. `renderCommentPreviewHtml()` parses exactly
- * this shape back out, and so does the server.
+ * The legacy plain-text form of a quote. `renderCommentPreviewHtml()` parses
+ * exactly this shape back out, and so does the server for plain API clients.
  *
  * The trailing blank line is part of the format: it separates the quote from
  * the reply the visitor is about to type, and the parser consumes it.
@@ -64,6 +61,11 @@ export function renderCommentQuoteBlockHtml(author: string, quotedText: string):
         + `<div class="text-body-secondary mb-1 comment-quote-author"><i class="bi bi-quote me-1"></i>${trans("js.comment.quote_header", { author: safeAuthor })}</div>`
         + `<div class="text-body-secondary comment-quote-text">${safeText}</div>`
         + `</blockquote>`;
+}
+
+/** Complete fragment inserted at the start of a forum's Trix reply editor. */
+export function buildRichQuoteInsertionHtml(author: string, quotedText: string): string {
+    return renderCommentQuoteBlockHtml(author, quotedText) + "<div><br></div>";
 }
 
 /**

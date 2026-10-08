@@ -236,6 +236,20 @@ final class FeedServiceTest extends TestCase
                 responseType: 'raw',
                 accessRule: AccessService::ACCESS_PUBLIC
             ),
+            new Page(
+                id: 11,
+                parentId: 10,
+                pattern: '{slug}',
+                pageName: 'Forum topic',
+                settings: null,
+                feedType: 'forum-post',
+                listFeedType: null,
+                feedId: null,
+                commentsEnabled: false,
+                requestMethods: ['GET'],
+                responseType: 'raw',
+                accessRule: AccessService::ACCESS_PUBLIC
+            ),
         ];
 
         return new UrlGenerator(
@@ -2346,7 +2360,7 @@ final class FeedServiceTest extends TestCase
 
         $existing = [
             'id' => 42,
-            'parent_id' => null,
+            'parent_id' => 41,
             'owner_id' => 7,
             'type' => 'forum-post',
             'slug' => 'topic',
@@ -2387,7 +2401,10 @@ final class FeedServiceTest extends TestCase
         $mentionService = new MentionService(new MentionRepository($db));
         $service = $this->makeService(
             $repository,
-            $this->makeUrlGenerator([42 => $this->makeFeed(id: 42, type: 'forum-post')]),
+            $this->makeUrlGenerator([
+                41 => $this->makeFeed(id: 41, type: 'forum'),
+                42 => $this->makeFeed(id: 42, parentId: 41, type: 'forum-post'),
+            ]),
             $accessService,
             mentionService: $mentionService,
         );

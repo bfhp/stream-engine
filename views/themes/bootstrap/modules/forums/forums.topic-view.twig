@@ -47,8 +47,8 @@
             <div class="d-none d-lg-flex flex-wrap align-items-center gap-2">
                 {# Whole-topic editor (forums.topic-edit: title + rich-text
                    opening post + poll + attachments), as opposed to the
-                   per-post "Edit" further down, which is the generic
-                   plain-text comment editor and can only change content.
+                   per-post "Edit" further down, which can only change the
+                   rich-text content.
                    Visibility comes from ForumsController::canEditTopic() -
                    literally the same assertTopicEditable() the edit page and
                    its PATCH endpoint enforce, so this button can't appear on

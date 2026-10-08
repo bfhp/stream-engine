@@ -204,9 +204,8 @@ div.feedback-hint > .list-group-flush > .list-group-item {
     margin-bottom: 0;
 }
 
-/* A quoted post inside a comment/reply body - FeedService::normalizeCommentContent()
-   turns a leading localized quote-header block (what the quote button
-   inserts - see assets-src/pages/forums.ts's insertQuote()) into this markup. */
+/* A quoted post inside a comment/reply body. Used by both rich-text forum
+   insertion and FeedService's legacy plain-text quote normalization. */
 .comment-quote {
     border-inline-start: 3px solid var(--bs-border-color);
     background-color: var(--bs-tertiary-bg);

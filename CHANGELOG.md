@@ -12,7 +12,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 - Added a cross-platform Docker Compose scheduler that uses Supercronic and the
   shared application image to run `bin/cron.php` once per minute.
 - Added rich-text forum quick replies with an inline preview, safe HTML
-  purification, rich-text editing, and quote insertion into the editor.
+  purification, rich-text editing, and safely escaped quote insertion into
+  the editor.
 
 ### Fixed
 

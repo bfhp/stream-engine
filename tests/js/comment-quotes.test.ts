@@ -2,13 +2,15 @@ import { describe, expect, it } from "vitest";
 
 import {
     buildQuoteBlock,
+    buildRichQuoteInsertionHtml,
     escapeCommentText,
+    renderCommentQuoteBlockHtml,
     renderCommentPreviewHtml,
 } from "../../assets-src/shared/comment-quotes";
 
 /**
- * The quick-reply preview, which is two things at once: an escaping boundary
- * and a parser that mirrors `FeedService::extractLeadingQuotes()`.
+ * Rich-text quote insertion plus the legacy plain-text parser that mirrors
+ * `FeedService::extractLeadingQuotes()`.
  *
  * The parser half is the one that fails quietly - a divergence from the server
  * doesn't throw, it just means the preview shows something other than what
@@ -17,17 +19,38 @@ import {
 describe("comment quotes", () => {
     const quote = (html: string) => (html.match(/<blockquote/g) ?? []).length;
 
+    describe("rich-text forum insertion", () => {
+        it("builds a quote followed by an editable paragraph", () => {
+            const html = buildRichQuoteInsertionHtml("Иван", "первая\nвторая");
+
+            expect(html).toContain('<blockquote class="comment-quote');
+            expect(html).toContain("Иван wrote:");
+            expect(html).toContain("первая<br>вторая");
+            expect(html.endsWith("</blockquote><div><br></div>")).toBe(true);
+        });
+
+        it("escapes both author and quoted content before inserting HTML", () => {
+            const html = renderCommentQuoteBlockHtml(
+                '<img src=x onerror="alert(1)">',
+                '<script>alert(2)</script>',
+            );
+
+            expect(html).toContain('&lt;img src=x onerror=&quot;alert(1)&quot;&gt;');
+            expect(html).toContain("&lt;script&gt;alert(2)&lt;/script&gt;");
+            expect(html).not.toContain("<img");
+            expect(html).not.toContain("<script>");
+        });
+    });
+
     /* ===============================
        The round trip
     =============================== */
 
     /**
-     * The highest-signal assertion available: what "Цитировать" writes into
-     * the textarea is exactly what the preview parses back out. Both sides
-     * are in this file, so a change to either that breaks the pair fails
-     * here rather than in production.
+     * Keeps the legacy plain-text producer and parser compatible for API
+     * clients and already-authored content.
      */
-    it("parses back exactly what the quote button writes", () => {
+    it("round-trips the legacy plain-text quote representation", () => {
         const draft = buildQuoteBlock("Иван", "первая строка\nвторая строка") + "мой ответ";
 
         const html = renderCommentPreviewHtml(draft);
@@ -233,7 +256,8 @@ describe("comment quotes", () => {
         });
 
         it("does not escape - that happens at render time", () => {
-            // It writes into a textarea, where markup is text already.
+            // The legacy representation is plain text; escaping happens when
+            // it is rendered.
             expect(buildQuoteBlock("<b>", "<i>")).toBe("> <b> wrote:\n> <i>\n\n");
         });
     });
