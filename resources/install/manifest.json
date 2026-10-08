@@ -1,6 +1,6 @@
 {
     "format": 1,
-    "release": "0.4.6",
+    "release": "0.5.0",
     "schema": "schema.sql",
     "schema_checksum": "f5e6fbfddf348a5f751df2bbc257db9a81ff51bd952c02a86d1fedcdaed42054",
     "migrations": [
@@ -87,7 +87,7 @@
         {
             "version": "20261009000000_move_internal_pages_to_runtime",
             "file": "20261009000000_move_internal_pages_to_runtime.sql",
-            "checksum": "c644c6179a427e0d14e801ee8696cb325532eb7094370f706cf6f8486d6a92d6"
+            "checksum": "c49164ffaed80139a1cf99483fc59ec313ad3fdcdebcb91e96c4df4ef6eaeea2"
         }
     ]
 }

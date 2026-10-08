@@ -7,6 +7,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-09
+
 ### Changed
 
 - Forum, personal-blog, and community internal routes are now module-owned
