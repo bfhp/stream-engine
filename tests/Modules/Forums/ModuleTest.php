@@ -161,8 +161,16 @@ final class ModuleTest extends TestCase
 
         $router = new Router($pageTree);
         $this->assertSame(
+            'forums.topic-list',
+            $router->resolve('/forums/magiya/')['page']->action,
+        );
+        $this->assertSame(
             'forums.topic-new',
             $router->resolve('/forums/magiya/new/')['page']->action,
+        );
+        $this->assertSame(
+            'forums.topic-view',
+            $router->resolve('/forums/magiya/svecha/')['page']->action,
         );
         $this->assertSame(
             'forums.topic-edit',
@@ -182,6 +190,14 @@ final class ModuleTest extends TestCase
         $this->assertSame(AccessService::ACCESS_AUTHENTICATED, $topicNew?->accessRule);
         $this->assertSame('noindex', $topicNew?->changefreq);
         $this->assertSame('Новая тема', $topicNew?->pageName);
+        $this->assertSame('Новая тема', $controller->getBreadcrumb($topicNew)->title);
+        $this->assertSame('Редактирование темы', $controller->getBreadcrumb($runtimePage)->title);
+        $forumUrl = $urlGenerator->action('forums.topic-list', ['slug' => 'magiya']);
+        $this->assertSame('/forums/magiya/new/', $urlGenerator->childAction('forums.topic-new', $forumUrl));
+        $this->assertSame(
+            '/forums/magiya/svecha/edit/',
+            $urlGenerator->childAction('forums.topic-edit', '/forums/magiya/svecha/'),
+        );
     }
 
     public function testRuntimePagesAreNotRegisteredWithoutForumsMount(): void

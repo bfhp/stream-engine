@@ -10,11 +10,14 @@ use StreamEngine\Core\Config;
 use StreamEngine\Core\PageTree;
 use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Core\RequestContext;
+use StreamEngine\Core\TranslationManager;
 use StreamEngine\Core\UrlGenerator;
 use StreamEngine\Domain\Feed;
 use StreamEngine\Domain\Page;
 use StreamEngine\Domain\User;
+use StreamEngine\Modules\Forums\ForumsController;
 use StreamEngine\Modules\Sitemap\SitemapController;
+use StreamEngine\Modules\Users\UsersController;
 use StreamEngine\Repository\FeedTermRepository;
 use StreamEngine\Service\AccessService;
 use StreamEngine\Service\FeedService;
@@ -182,6 +185,55 @@ final class SitemapControllerTest extends TestCase
         $this->assertStringNotContainsString('api', $output);
         $this->assertStringNotContainsString('search', $output);
         $this->assertStringNotContainsString('{slug}', $output);
+    }
+
+    public function testMigratedRuntimeTreesExposeFeedsButNotPrivateUtilityPages(): void
+    {
+        $pageTree = new PageTree([
+            self::page(1, null, ''),
+            self::page(2, 1, 'forums', action: 'forums.list'),
+            self::page(3, 1, 'users', action: 'users.list'),
+            self::page(4, 3, '{username}', feedType: 'blog', action: 'user.show'),
+            self::page(5, 1, 'communities', action: 'community.main'),
+        ]);
+        $tm = new TranslationManager('en');
+        ForumsController::registerRuntimePages($pageTree, $tm);
+        UsersController::registerRuntimePages($pageTree, $tm);
+        $pageTree->validateDefinitions();
+
+        $module = $this->makeModule($pageTree, $this->createStub(FeedService::class));
+
+        ob_start();
+        $module->callApi(
+            self::page(100, 1, 'sitemap-{slug}.xml', 'raw', action: 'sitemap.sitemap'),
+            ['slug' => 'index'],
+        );
+        $index = ob_get_clean();
+
+        foreach (['blog', 'blog-post', 'community', 'forum', 'forum-post'] as $feedType) {
+            $this->assertStringContainsString("sitemap-$feedType.xml", $index);
+        }
+
+        ob_start();
+        $module->callApi(
+            self::page(101, 1, 'sitemap-{slug}.xml', 'raw', action: 'sitemap.sitemap'),
+            ['slug' => 'pages'],
+        );
+        $pages = ob_get_clean();
+
+        $this->assertStringContainsString('https://example.test/forums/', $pages);
+        $this->assertStringContainsString('https://example.test/communities/', $pages);
+        foreach ([
+            '/new/',
+            '/edit/',
+            '/post/',
+            '/create/',
+            '/manage/',
+            '{slug}',
+            '{username}',
+        ] as $privateOrDynamicPath) {
+            $this->assertStringNotContainsString($privateOrDynamicPath, $pages);
+        }
     }
 
     public function testFeedTypeSitemapUsesGuestFeedsAndCanonicalUrls(): void

@@ -187,7 +187,7 @@ class SitemapController extends AbstractController
         foreach ($this->pageTree->all() as $page) {
             if ($page->accessRule === AccessService::ACCESS_PUBLIC
                 && $page->feedType !== null
-                && str_contains($page->pattern, '{slug}')) {
+                && str_contains($page->pattern, '{')) {
                 $types[] = $page->feedType;
             }
         }

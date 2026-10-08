@@ -535,7 +535,7 @@ Email: {email}
     'view.users.blog.post.show.01' => 'Evaluation of the record',
     'view.users.blog.post.show.02' => 'of 5 · Estimates:',
     'view.users.community.01' => 'Posts',
-    'view.users.community.02' => 'Tag notes. n',
+    'view.users.community.02' => 'Tag notes.',
     'view.users.community.03' => 'Reset the filter',
     'view.users.community.04' => 'No record of this tag yet.',
     'view.users.community.05' => 'My communities.',

@@ -93,7 +93,7 @@ configuration.
   frontend code. Generate them from runtime actions in `PageTree`.
 - [x] Derive reserved content slugs from actual static siblings of a runtime
   route instead of maintaining word-list constants.
-- [ ] Verify URL generation, access control, breadcrumbs, and sitemap output for
+- [x] Verify URL generation, access control, breadcrumbs, and sitemap output for
   every migrated tree.
 
 ### Phase 2 action inventory

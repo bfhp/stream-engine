@@ -145,12 +145,50 @@ final class ModuleTest extends TestCase
         $this->assertSame(AccessService::ACCESS_AUTHENTICATED, $editPage?->accessRule);
         $this->assertSame('noindex', $editPage?->changefreq);
         $this->assertSame('Редактирование записи', $editPage?->pageName);
+        $this->assertSame('Новый пост', $controller->getBreadcrumb($newPage)->title);
+        $this->assertSame('Редактирование записи', $controller->getBreadcrumb($editPage)->title);
+        $this->assertSame(
+            '/users/alice/post/',
+            $urlGenerator->childAction(
+                'user.post-new',
+                $urlGenerator->action('user.show', ['username' => 'alice']),
+            ),
+        );
+        $this->assertSame(
+            '/users/alice/hello/edit/',
+            $urlGenerator->childAction('user.post-edit', '/users/alice/hello/'),
+        );
+        $communityUrl = $urlGenerator->action('community.show-slug', ['slug' => 'devs']);
+        $this->assertSame('/communities/create/', $urlGenerator->childAction(
+            'community.create',
+            $urlGenerator->action('community.main'),
+        ));
+        $this->assertSame('/communities/devs/post/', $urlGenerator->childAction('community.post-new', $communityUrl));
+        $this->assertSame('/communities/devs/manage/', $urlGenerator->childAction('community.manage', $communityUrl));
+        $this->assertSame(
+            '/communities/devs/hello/edit/',
+            $urlGenerator->childAction('community.post-edit', '/communities/devs/hello/'),
+        );
+
+        foreach ([
+            'community.create' => 'Создание сообщества',
+            'community.post-new' => 'Новый пост в сообществе',
+            'community.post-edit' => 'Редактирование записи',
+            'community.manage' => 'Управление',
+        ] as $action => $title) {
+            $runtimePage = $pageTree->findByAction($action);
+            $this->assertNotNull($runtimePage);
+            $this->assertSame($title, $controller->getBreadcrumb($runtimePage)->title);
+        }
 
         $router = new Router($pageTree);
         $this->assertSame('user.post-new', $router->resolve('/users/alice/post/')['page']->action);
+        $this->assertSame('user.post-show-slug', $router->resolve('/users/alice/hello/')['page']->action);
         $this->assertSame('user.post-edit', $router->resolve('/users/alice/hello/edit/')['page']->action);
         $this->assertSame('community.create', $router->resolve('/communities/create/')['page']->action);
+        $this->assertSame('community.show-slug', $router->resolve('/communities/devs/')['page']->action);
         $this->assertSame('community.post-new', $router->resolve('/communities/devs/post/')['page']->action);
+        $this->assertSame('community.post-show-slug', $router->resolve('/communities/devs/hello/')['page']->action);
         $this->assertSame('community.post-edit', $router->resolve('/communities/devs/hello/edit/')['page']->action);
         $this->assertSame('community.manage', $router->resolve('/communities/devs/manage/')['page']->action);
     }
@@ -182,12 +220,16 @@ final class ModuleTest extends TestCase
         $this->assertTrue($post?->commentsEnabled);
         $this->assertSame('noindex', $tree->findByAction('community.create')?->changefreq);
         $this->assertSame('Создание сообщества', $tree->findByAction('community.create')?->pageName);
+        $this->assertSame(AccessService::ACCESS_AUTHENTICATED, $tree->findByAction('community.create')?->accessRule);
         $this->assertSame('noindex', $tree->findByAction('community.post-new')?->changefreq);
         $this->assertSame('Новый пост в сообществе', $tree->findByAction('community.post-new')?->pageName);
+        $this->assertSame(AccessService::ACCESS_AUTHENTICATED, $tree->findByAction('community.post-new')?->accessRule);
         $this->assertSame('noindex', $tree->findByAction('community.post-edit')?->changefreq);
         $this->assertSame('Редактирование записи', $tree->findByAction('community.post-edit')?->pageName);
+        $this->assertSame(AccessService::ACCESS_AUTHENTICATED, $tree->findByAction('community.post-edit')?->accessRule);
         $this->assertSame('noindex', $tree->findByAction('community.manage')?->changefreq);
         $this->assertSame('Управление', $tree->findByAction('community.manage')?->pageName);
+        $this->assertSame(AccessService::ACCESS_AUTHENTICATED, $tree->findByAction('community.manage')?->accessRule);
     }
 
     public function testRuntimePageNamesUseActiveLocale(): void
