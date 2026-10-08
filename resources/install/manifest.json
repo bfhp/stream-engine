@@ -83,6 +83,11 @@
             "version": "20261008030000_add_unique_feed_views",
             "file": "20261008030000_add_unique_feed_views.sql",
             "checksum": "7fc6c97212d3eca58d7c1d23603b3cffba689a79972bbddde6a01aa57d42957c"
+        },
+        {
+            "version": "20261009000000_move_internal_pages_to_runtime",
+            "file": "20261009000000_move_internal_pages_to_runtime.sql",
+            "checksum": "c644c6179a427e0d14e801ee8696cb325532eb7094370f706cf6f8486d6a92d6"
         }
     ]
 }

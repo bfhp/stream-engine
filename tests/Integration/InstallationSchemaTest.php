@@ -332,6 +332,50 @@ final class InstallationSchemaTest extends TestCase
         });
     }
 
+    public function testRuntimePageMigrationRemovesOnlyTheStandardInternalTrees(): void
+    {
+        $root = dirname(__DIR__, 2);
+        $this->withEmptyDatabase(function (PDO $pdo) use ($root): void {
+            $this->executeScript($pdo, $root.'/migrations/20260912000000_initial.sql');
+            $this->insertLegacyRuntimePageTrees($pdo);
+
+            $this->executeScript($pdo, $root.'/migrations/20261009000000_move_internal_pages_to_runtime.sql');
+
+            self::assertSame(
+                ['home.index', 'forums.list', 'users.list', 'user.show', 'community.main', 'feedback.show'],
+                $pdo->query('SELECT action FROM pages ORDER BY id')->fetchAll(PDO::FETCH_COLUMN),
+            );
+        });
+    }
+
+    public function testRuntimePageMigrationRejectsACustomDescendantWithoutChangingPages(): void
+    {
+        $root = dirname(__DIR__, 2);
+        $this->withEmptyDatabase(function (PDO $pdo) use ($root): void {
+            $this->executeScript($pdo, $root.'/migrations/20260912000000_initial.sql');
+            $this->insertLegacyRuntimePageTrees($pdo);
+            $pdo->exec(
+                "INSERT INTO pages (id, parent, pattern, action, updated)
+                 VALUES (41, 11, 'rules', 'feedback.show', 1)"
+            );
+            $before = $pdo->query('SELECT id, parent, pattern, action FROM pages ORDER BY id')
+                ->fetchAll(PDO::FETCH_NUM);
+
+            try {
+                $this->executeScript($pdo, $root.'/migrations/20261009000000_move_internal_pages_to_runtime.sql');
+                self::fail('The migration removed a custom descendant.');
+            } catch (\PDOException $exception) {
+                self::assertStringContainsString('move or delete custom child pages', $exception->getMessage());
+            }
+
+            self::assertSame(
+                $before,
+                $pdo->query('SELECT id, parent, pattern, action FROM pages ORDER BY id')
+                    ->fetchAll(PDO::FETCH_NUM),
+            );
+        });
+    }
+
     public function testInstallerCompletesAUsableInstallationFromTheReleaseSnapshot(): void
     {
         $root = dirname(__DIR__, 2);
@@ -594,6 +638,32 @@ final class InstallationSchemaTest extends TestCase
         foreach (SqlScript::statements((string) file_get_contents($file)) as $statement) {
             $pdo->exec($statement);
         }
+    }
+
+    private function insertLegacyRuntimePageTrees(PDO $pdo): void
+    {
+        $pdo->exec(<<<'SQL'
+            INSERT INTO pages (id, parent, pattern, action, updated) VALUES
+              (1, NULL, '', 'home.index', 1),
+              (10, 1, 'forums', 'forums.list', 1),
+              (11, 10, '{slug}', 'forums.topic-list', 1),
+              (12, 11, 'new', 'forums.topic-new', 1),
+              (13, 11, '{slug}', 'forums.topic-view', 1),
+              (14, 13, 'edit', 'forums.topic-edit', 1),
+              (20, 1, 'users', 'users.list', 1),
+              (21, 20, '{username}', 'user.show', 1),
+              (22, 21, 'post', 'user.post-new', 1),
+              (23, 21, '{slug}', 'user.post-show-slug', 1),
+              (24, 23, 'edit', 'user.post-edit', 1),
+              (30, 1, 'communities', 'community.main', 1),
+              (31, 30, 'create', 'community.create', 1),
+              (32, 30, '{slug}', 'community.show-slug', 1),
+              (33, 32, 'post', 'community.post-new', 1),
+              (34, 32, '{slug}', 'community.post-show-slug', 1),
+              (35, 34, 'edit', 'community.post-edit', 1),
+              (36, 32, 'manage', 'community.manage', 1),
+              (40, 1, 'contact', 'feedback.show', 1)
+            SQL);
     }
 
     private function database(PDO $pdo): PdoDatabase

@@ -111,7 +111,11 @@ final readonly class MigrationRunner
                     try {
                         $result = $this->db->getPdo()->exec($statement);
                     } catch (PDOException $e) {
-                        throw new RuntimeException(sprintf('Could not execute migration "%s".', basename($file)), 0, $e);
+                        throw new RuntimeException(sprintf(
+                            'Could not execute migration "%s": %s',
+                            basename($file),
+                            $e->getMessage(),
+                        ), 0, $e);
                     }
 
                     if ($result === false) {
