@@ -16,6 +16,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
   the editor.
 - Added explicit edit and confirmed-delete controls for a member's own forum
   replies, while keeping topic deletion outside the reply endpoint.
+- Added per-post forum ratings with each topic message and reply retaining its
+  own vote state and aggregate score.
 
 ### Fixed
 

@@ -320,6 +320,78 @@ describe("confirm()", () => {
     });
 });
 
+describe("initRating()", () => {
+    function ratingWidget(feedId: number, value: number | null = null) {
+        const stars = Array.from({ length: 5 }, (_, index) => {
+            const star = index + 1;
+            const icon = value !== null && star <= value ? "bi-star-fill" : "bi-star";
+
+            return `<button class="rating-star" data-value="${star}"><i class="bi ${icon}"></i></button>`;
+        }).join("");
+
+        return `
+            <div data-rate-feed data-feed-id="${feedId}" data-user-rating="${value ?? ""}">
+                <div class="rating-stars">${stars}</div>
+                <span data-rating-summary>No ratings yet</span>
+            </div>
+        `;
+    }
+
+    it("rates only the selected forum post and initializes each widget once", async () => {
+        document.body.innerHTML = ratingWidget(41, 2) + ratingWidget(90);
+        const fetchMock = mockFetch(fakeResponse({
+            json: async () => ({ id: 90, ratingSum: 28, ratingCount: 8, ratingAverage: 3.5 }),
+        }));
+
+        // main.ts may ask again after a fragment initializes its own widgets;
+        // data-rating-ready keeps that from attaching a duplicate listener.
+        CMS.initRating();
+        CMS.initRating();
+
+        const opening = document.querySelector<HTMLElement>('[data-feed-id="41"]')!;
+        const reply = document.querySelector<HTMLElement>('[data-feed-id="90"]')!;
+        reply.querySelector<HTMLElement>('[data-value="4"] i')!.click();
+        await flush();
+
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        const [url, options] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+        expect(url).toBe("/api/v1/feeds/90/rating");
+        expect(options.method).toBe("POST");
+        expect(options.body).toBe(JSON.stringify({ value: 4 }));
+
+        expect(reply.dataset.userRating).toBe("4");
+        expect(reply.querySelectorAll(".bi-star-fill")).toHaveLength(4);
+        expect(reply.querySelectorAll(".bi-star")).toHaveLength(1);
+        expect(reply.querySelector("[data-rating-summary]")?.textContent).toContain("3.5");
+        expect(reply.querySelector("[data-rating-summary]")?.textContent).toContain("8");
+
+        // The opening post has its own feed id and retains its own vote.
+        expect(opening.dataset.userRating).toBe("2");
+        expect(opening.querySelectorAll(".bi-star-fill")).toHaveLength(2);
+    });
+
+    it("keeps the previous stars and reports a rejected vote", async () => {
+        document.body.innerHTML = `
+            <div id="globalToast"><div id="globalToastBody"></div></div>
+            ${ratingWidget(90, 2)}
+        `;
+        mockFetch(fakeResponse({
+            status: 403,
+            json: async () => ({ error: "Оценка недоступна" }),
+        }));
+
+        CMS.initRating();
+        const reply = document.querySelector<HTMLElement>('[data-feed-id="90"]')!;
+        reply.querySelector<HTMLButtonElement>('[data-value="5"]')!.click();
+        await flush();
+
+        expect(reply.dataset.userRating).toBe("2");
+        expect(reply.querySelectorAll(".bi-star-fill")).toHaveLength(2);
+        expect(reply.classList.contains("is-submitting")).toBe(false);
+        expect(document.getElementById("globalToastBody")?.textContent).toBe("Оценка недоступна");
+    });
+});
+
 describe("initFavorite()", () => {
     /**
      * @param favorited what the widget currently is - "1" means a click removes

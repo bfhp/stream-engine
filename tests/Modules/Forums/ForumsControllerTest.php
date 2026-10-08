@@ -1604,7 +1604,12 @@ final class ForumsControllerTest extends TestCase
             ->with($this->callback(static fn (array $feeds): bool => array_column($feeds, 'id') === [910, 911]));
         $feedService->method('isWithinEditWindow')->willReturn(true);
         $feedService->method('canEditFeed')->willReturn(true);
-        $feedService->method('getUserRatingValues')->willReturn([910 => 4]);
+        $feedService->expects($this->once())->method('getUserRatingValues')
+            ->with(
+                [self::TOPIC_ID, 910, 911],
+                $this->callback(static fn (User $user): bool => $user->id === 7)
+            )
+            ->willReturn([910 => 4]);
         $feedService->method('isFeedFavorited')->willReturn(true);
         $this->setProperty($module, 'feedService', $feedService);
 

@@ -46,7 +46,6 @@ generator, hosted site, or build step.
 
 The topic and reply view MVP works. Deferred work:
 
-- ratings for individual posts;
 - real participant/post counters instead of placeholders;
 - garbage collection for orphaned uploads.
 
