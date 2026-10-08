@@ -1399,6 +1399,7 @@ E-mail: {email}
     'admin.error.page_descendant' => 'Strony nie można przenieść pod jej podstronę',
     'admin.error.page_cycle' => 'Hierarchia stron nadrzędnych zawiera cykl',
     'admin.error.unknown_page_action' => "Nieznana akcja strony „{action}”",
+    'admin.error.singleton_page_action' => "Strona z akcją „{action}” już istnieje",
     'admin.error.unknown_action_fields' => "Pól konfiguracji nieznanej akcji strony „{action}” nie można zmieniać",
     'admin.error.action_field_unsupported' => "Pole {label} nie jest obsługiwane przez akcję strony „{action}”",
     'admin.error.action_field_required' => "Pole {label} jest wymagane dla akcji strony „{action}”",

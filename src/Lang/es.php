@@ -1399,6 +1399,7 @@ Correo: {email}
     'admin.error.page_descendant' => 'Una página no puede moverse bajo una de sus descendientes',
     'admin.error.page_cycle' => 'La jerarquía de páginas superiores contiene un ciclo',
     'admin.error.unknown_page_action' => "Acción de página desconocida '{action}'",
+    'admin.error.singleton_page_action' => "Ya existe una página con la acción '{action}'",
     'admin.error.unknown_action_fields' => "No se pueden cambiar los campos de configuración de la acción de página desconocida '{action}'",
     'admin.error.action_field_unsupported' => "{label} no es compatible con la acción de página '{action}'",
     'admin.error.action_field_required' => "{label} es obligatorio para la acción de página '{action}'",

@@ -64,6 +64,7 @@ final class ModuleRegistryTest extends TestCase
         $action = $registry->pageAction('probe.show');
         self::assertNotNull($action);
         self::assertSame('Probe show page', $action['label']);
+        self::assertFalse($action['singleton']);
         self::assertSame(['status' => 'required', 'values' => ['probe']], $action['fields']['feedType']);
         self::assertSame(['status' => 'optional'], $action['fields']['feedId']);
         self::assertSame(['status' => 'unsupported'], $action['fields']['termVocabulary']);
@@ -102,6 +103,16 @@ final class ModuleRegistryTest extends TestCase
         ], $action['settings']);
     }
 
+    public function testSingletonPageActionIsNormalized(): void
+    {
+        $action = $this->normalizePageAction([
+            'label' => 'Mount page',
+            'singleton' => true,
+        ]);
+
+        self::assertTrue($action['singleton']);
+    }
+
     #[\PHPUnit\Framework\Attributes\DataProvider('invalidSettingsSchemas')]
     public function testInvalidSettingsSchemaIsRejected(array $descriptor, string $message): void
     {
@@ -122,6 +133,7 @@ final class ModuleRegistryTest extends TestCase
 
         return [
             'unknown action property' => [['label' => 'Page', 'mystery' => true], 'Unknown page action descriptor property'],
+            'non-boolean singleton' => [['label' => 'Page', 'singleton' => 1], 'singleton must be boolean'],
             'empty setting key' => [['label' => 'Page', 'settings' => ['' => $valid]], 'Invalid page action setting key'],
             'unknown setting property' => [['label' => 'Page', 'settings' => ['type' => $valid + ['mystery' => true]]], 'Unknown descriptor property'],
             'unsupported control' => [['label' => 'Page', 'settings' => ['type' => [...$valid, 'control' => 'text']]], 'Unsupported control'],
@@ -186,6 +198,7 @@ final class ModuleRegistryTest extends TestCase
         foreach ($registry->pageActions() as $action) {
             self::assertSame(ModuleRegistry::PAGE_ACTION_FIELDS, array_keys($action['fields']), $action['action']);
             self::assertArrayHasKey('settings', $action, $action['action']);
+            self::assertIsBool($action['singleton'], $action['action']);
 
             foreach ($action['fields'] as $field => $descriptor) {
                 self::assertContains($descriptor['status'], ['unsupported', 'optional', 'required']);

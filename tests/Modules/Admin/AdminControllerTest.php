@@ -293,6 +293,12 @@ final class AdminControllerTest extends TestCase
         ] as $runtimeAction) {
             $this->assertNotContains($runtimeAction, $actions);
         }
+
+        $byAction = array_column($response['data'], null, 'action');
+        $this->assertTrue($byAction['forums.list']['singleton']);
+        $this->assertTrue($byAction['user.show']['singleton']);
+        $this->assertTrue($byAction['community.main']['singleton']);
+        $this->assertFalse($byAction['users.list']['singleton']);
     }
 
     public function testPagesListContainsOnlyPersistedRowsAndDoesNotExpandMounts(): void
@@ -645,6 +651,68 @@ final class AdminControllerTest extends TestCase
         $this->expectExceptionMessage("Unknown page action 'removed.show'");
 
         $module->callApi($this->makeApiPage('admin.pages', ['GET', 'POST']));
+    }
+
+    #[DataProvider('singletonMountActions')]
+    public function testPageCreateRejectsASecondSingletonMountAction(string $action): void
+    {
+        $parent = $this->legacyPageRow();
+        $parent['id'] = 1;
+        $parent['parent'] = null;
+        $existing = $this->legacyPageRow();
+        $existing['action'] = $action;
+        $module = $this->makeModule(rows: [$parent, $existing]);
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode([
+            'parentId' => 1,
+            'action' => $action,
+            'feedType' => $action === 'user.show' ? 'blog' : null,
+            'accessRule' => 'public',
+        ]));
+
+        try {
+            $module->callApi($this->makeApiPage('admin.pages', ['GET', 'POST']));
+            $this->fail('A second singleton mount page was saved.');
+        } catch (ValidationException $e) {
+            $this->assertSame("A page with action '$action' already exists", $e->getMessage());
+            $this->assertSame([], $this->writes);
+        }
+    }
+
+    public static function singletonMountActions(): array
+    {
+        return [
+            'forums' => ['forums.list'],
+            'profile' => ['user.show'],
+            'communities' => ['community.main'],
+        ];
+    }
+
+    public function testExistingSingletonMountPageCanBeUpdated(): void
+    {
+        $parent = $this->legacyPageRow();
+        $parent['id'] = 1;
+        $parent['parent'] = null;
+        $current = $this->legacyPageRow();
+        $current['action'] = 'forums.list';
+        $module = $this->makeModule(rows: [$parent, $current], row: $current);
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode([
+            'parentId' => 1,
+            'pattern' => 'discussion',
+            'action' => 'forums.list',
+            'accessRule' => 'public',
+        ]));
+
+        $this->callAndDecode(
+            $module,
+            $this->makeApiPage('admin.page', ['GET', 'PATCH']),
+            ['id' => 9],
+        );
+
+        $this->assertStringContainsString('UPDATE pages SET', $this->writes[0][0]);
     }
 
     #[DataProvider('invalidPageActionConfigurations')]

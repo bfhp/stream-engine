@@ -1399,6 +1399,7 @@ E-mail: {email}
     'admin.error.page_descendant' => 'Een pagina kan niet onder een subpagina worden geplaatst',
     'admin.error.page_cycle' => 'De hiërarchie van bovenliggende pagina\'s bevat een lus',
     'admin.error.unknown_page_action' => "Onbekende paginaactie '{action}'",
+    'admin.error.singleton_page_action' => "Er bestaat al een pagina met de actie '{action}'",
     'admin.error.unknown_action_fields' => "Configuratievelden van de onbekende paginaactie '{action}' kunnen niet worden gewijzigd",
     'admin.error.action_field_unsupported' => "{label} wordt niet ondersteund door de paginaactie '{action}'",
     'admin.error.action_field_required' => "{label} is verplicht voor de paginaactie '{action}'",

@@ -1399,6 +1399,7 @@ E-mail: {email}
     'admin.error.page_descendant' => 'Una pagina non può essere spostata sotto una sua discendente',
     'admin.error.page_cycle' => 'La gerarchia delle pagine padre contiene un ciclo',
     'admin.error.unknown_page_action' => "Azione di pagina sconosciuta '{action}'",
+    'admin.error.singleton_page_action' => "Esiste già una pagina con l’azione '{action}'",
     'admin.error.unknown_action_fields' => "I campi di configurazione dell’azione di pagina sconosciuta '{action}' non possono essere modificati",
     'admin.error.action_field_unsupported' => "{label} non è supportato dall’azione di pagina '{action}'",
     'admin.error.action_field_required' => "{label} è obbligatorio per l’azione di pagina '{action}'",

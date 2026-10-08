@@ -1399,6 +1399,7 @@ return [
     'admin.error.page_descendant' => '페이지를 하위 페이지 아래로 이동할 수 없습니다',
     'admin.error.page_cycle' => '상위 페이지 계층에 순환이 있습니다',
     'admin.error.unknown_page_action' => "알 수 없는 페이지 액션 '{action}'",
+    'admin.error.singleton_page_action' => "페이지 액션 '{action}'을(를) 사용하는 페이지가 이미 있습니다",
     'admin.error.unknown_action_fields' => "알 수 없는 페이지 액션 '{action}'의 구성 필드는 변경할 수 없습니다",
     'admin.error.action_field_unsupported' => "{label}은(는) 페이지 액션 '{action}'에서 지원되지 않습니다",
     'admin.error.action_field_required' => "{label}은(는) 페이지 액션 '{action}'에서 필수입니다",

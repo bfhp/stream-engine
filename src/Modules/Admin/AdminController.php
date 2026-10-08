@@ -1745,6 +1745,17 @@ class AdminController extends AbstractController implements DashboardCardProvide
             return;
         }
 
+        if ($descriptor['singleton']) {
+            $currentId = isset($existing['id']) ? (int) $existing['id'] : null;
+            foreach ($this->pageRepository->findAllForAdmin() as $page) {
+                if ($page['action'] === $action && $page['id'] !== $currentId) {
+                    throw new ValidationException(
+                        $this->tm->trans('admin.error.singleton_page_action', ['action' => $action])
+                    );
+                }
+            }
+        }
+
         foreach ($descriptor['fields'] as $field => $fieldDescriptor) {
             $value = $data[$field];
             $hasValue = $value !== null;

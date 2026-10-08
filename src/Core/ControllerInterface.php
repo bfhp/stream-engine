@@ -17,8 +17,10 @@ interface ControllerInterface
      *
      * @return array<string, string|array{
      *     label: string,
+     *     singleton?: bool,
      *     fields?: array<string, string|array{status: string, values?: list<string>, feedTypes?: list<string>}>,
-     *     requirements?: list<array{oneOf: list<string>}>
+     *     requirements?: list<array{oneOf: list<string>}>,
+     *     settings?: array<string, mixed>
      * }>
      */
     public static function pageActions(): array;

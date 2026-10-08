@@ -112,7 +112,10 @@ class ForumsController extends AbstractController
     public static function pageActions(): array
     {
         return [
-            'forums.list' => 'List forums',
+            'forums.list' => [
+                'label' => 'List forums',
+                'singleton' => true,
+            ],
         ];
     }
 

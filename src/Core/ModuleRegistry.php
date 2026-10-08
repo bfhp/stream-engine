@@ -36,6 +36,7 @@ final class ModuleRegistry
      *     action: string,
      *     label: string,
      *     module: string,
+     *     singleton: bool,
      *     fields: array<string, array{status: string, values?: list<string>, feedTypes?: list<string>}>,
      *     requirements: list<array{oneOf: list<string>}>,
      *     settings: array<string, array{control: 'select', label: string, required: bool, options: list<array{value: string, label: string}>}>
@@ -249,6 +250,7 @@ final class ModuleRegistry
     /**
      * @return array{
      *     label: string,
+     *     singleton: bool,
      *     fields: array<string, array{status: string, values?: list<string>, feedTypes?: list<string>}>,
      *     requirements: list<array{oneOf: list<string>}>,
      *     settings: array<string, array{control: 'select', label: string, required: bool, options: list<array{value: string, label: string}>}>
@@ -266,13 +268,18 @@ final class ModuleRegistry
         if (! is_array($descriptor)) {
             throw new RuntimeException("Invalid page action descriptor for '$action'");
         }
-        if (array_diff(array_keys($descriptor), ['label', 'fields', 'requirements', 'settings']) !== []) {
+        if (array_diff(array_keys($descriptor), ['label', 'singleton', 'fields', 'requirements', 'settings']) !== []) {
             throw new RuntimeException("Unknown page action descriptor property in '$action'");
         }
 
         $label = $descriptor['label'] ?? null;
         if (! is_string($label) || trim($label) === '') {
             throw new RuntimeException("Page action '$action' must have a label");
+        }
+
+        $singleton = $descriptor['singleton'] ?? false;
+        if (! is_bool($singleton)) {
+            throw new RuntimeException("Page action '$action' singleton must be boolean");
         }
 
         $declaredFields = $descriptor['fields'] ?? [];
@@ -355,6 +362,7 @@ final class ModuleRegistry
 
         return [
             'label' => trim($label),
+            'singleton' => $singleton,
             'fields' => $fields,
             'requirements' => $normalizedRequirements,
             'settings' => $settings,

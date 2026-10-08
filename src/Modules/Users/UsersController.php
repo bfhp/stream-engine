@@ -223,6 +223,7 @@ class UsersController extends AbstractController
             'users.list' => 'Users list page',
             'user.show' => [
                 'label' => 'User profile page',
+                'singleton' => true,
                 'fields' => [
                     'feedType' => ['status' => 'required', 'values' => ['blog']],
                 ],
@@ -235,7 +236,10 @@ class UsersController extends AbstractController
                     'feedId' => ['status' => 'required', 'feedTypes' => ['blog-post']],
                 ],
             ],
-            'community.main' => 'Community page',
+            'community.main' => [
+                'label' => 'Community page',
+                'singleton' => true,
+            ],
             'community.show-id' => [
                 'label' => 'Fixed community page',
                 'fields' => [
