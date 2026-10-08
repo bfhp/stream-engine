@@ -46,7 +46,6 @@ generator, hosted site, or build step.
 
 The topic and reply view MVP works. Deferred work:
 
-- real participant/post counters instead of placeholders;
 - garbage collection for orphaned uploads.
 
 Deleting an entire topic must remain a separate owner/moderator action and must

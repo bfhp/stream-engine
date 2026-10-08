@@ -394,6 +394,8 @@ final class ForumRepositoryTest extends TestCase
 
         [$sql, $params] = $this->reads[0];
         $this->assertStringContainsString('MIN(created_at) AS first_at', $sql);
+        $this->assertStringContainsString('GROUP BY owner_id', $sql);
+        $this->assertStringContainsString('COUNT(*) OVER () AS total_count', $sql);
         $this->assertStringContainsString('ORDER BY first_at ASC', $sql);
         // The topic id twice: once for the topic row, once for its comments.
         $this->assertSame([11, 11], $params);
@@ -430,5 +432,27 @@ final class ForumRepositoryTest extends TestCase
         $this->assertSame(0, (new ForumRepository($this->db()))->countParticipants([]));
         // An empty list short-circuits before the query, like the others.
         $this->assertSame([], $this->reads);
+    }
+
+    /**
+     * The author card's post count includes topics and replies, but not the
+     * same user's comments in blogs, library pages or other modules.
+     */
+    public function testCountUserForumPostsReturnsRealPerAuthorTotals(): void
+    {
+        $repository = new ForumRepository($this->db(rows: [
+            ['owner_id' => '7', 'total' => '12'],
+            ['owner_id' => '9', 'total' => '3'],
+        ]));
+
+        $this->assertSame([7 => 12, 9 => 3], $repository->countUserForumPosts([7, 7, 9]));
+
+        [$sql, $params] = $this->reads[0];
+        $this->assertStringContainsString("type = 'forum-post'", $sql);
+        $this->assertStringContainsString("c.type = 'comment'", $sql);
+        $this->assertStringContainsString('EXISTS', $sql);
+        $this->assertStringContainsString("t.type = 'forum-post'", $sql);
+        // Deduplicated ids are bound once for topics and once for replies.
+        $this->assertSame([7, 9, 7, 9], $params);
     }
 }

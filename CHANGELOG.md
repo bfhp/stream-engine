@@ -18,6 +18,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
   replies, while keeping topic deletion outside the reply endpoint.
 - Added per-post forum ratings with each topic message and reply retaining its
   own vote state and aggregate score.
+- Replaced forum topic placeholders with real post and distinct-participant
+  totals, participant avatars with overflow counts, and per-author post totals.
 
 ### Fixed
 
