@@ -57,11 +57,11 @@ final readonly class ControllerFactory
      * Let each active module extend the database-backed page tree, then bind
      * every newly declared action to the controller that declared it.
      */
-    public function registerRuntimePages(PageTree $pageTree): void
+    public function registerRuntimePages(PageTree $pageTree, TranslationManager $tm): void
     {
         foreach ($this->modules->entries() as ['id' => $id, 'controllerClass' => $controllerClass]) {
             $offset = $pageTree->definitionCount();
-            $controllerClass::registerRuntimePages($pageTree);
+            $controllerClass::registerRuntimePages($pageTree, $tm);
 
             foreach ($pageTree->definitionsSince($offset) as $page) {
                 if ($page->action === null) {

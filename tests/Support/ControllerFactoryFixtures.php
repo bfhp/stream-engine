@@ -75,7 +75,7 @@ final class FactoryProbeController implements ControllerInterface
         return null;
     }
 
-    public static function registerRuntimePages(PageTree $pageTree): void
+    public static function registerRuntimePages(PageTree $pageTree, TranslationManager $tm): void
     {
     }
 
@@ -135,7 +135,7 @@ final class ControllerWithUnknownDependency implements ControllerInterface
         return null;
     }
 
-    public static function registerRuntimePages(PageTree $pageTree): void
+    public static function registerRuntimePages(PageTree $pageTree, TranslationManager $tm): void
     {
     }
 
@@ -196,7 +196,7 @@ final class ActionProbeController implements ControllerInterface
         return null;
     }
 
-    public static function registerRuntimePages(PageTree $pageTree): void
+    public static function registerRuntimePages(PageTree $pageTree, TranslationManager $tm): void
     {
     }
 
@@ -219,7 +219,7 @@ final class ActionProbeController implements ControllerInterface
 
 final class RuntimePageProbeController extends AbstractController
 {
-    public static function registerRuntimePages(PageTree $pageTree): void
+    public static function registerRuntimePages(PageTree $pageTree, TranslationManager $tm): void
     {
         $mount = $pageTree->findByAction('runtime.mount');
         if ($mount === null) {
@@ -246,7 +246,7 @@ final class RuntimePageConflictController extends AbstractController
         return ['runtime.conflict' => 'Runtime conflict'];
     }
 
-    public static function registerRuntimePages(PageTree $pageTree): void
+    public static function registerRuntimePages(PageTree $pageTree, TranslationManager $tm): void
     {
         $mount = $pageTree->findByAction('runtime.conflict-mount');
         if ($mount === null) {
@@ -438,7 +438,7 @@ final class CronProbeController implements ControllerInterface
         return null;
     }
 
-    public static function registerRuntimePages(PageTree $pageTree): void
+    public static function registerRuntimePages(PageTree $pageTree, TranslationManager $tm): void
     {
     }
 

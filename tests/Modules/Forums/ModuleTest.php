@@ -78,6 +78,7 @@ final class ModuleTest extends TestCase
             ),
         ]);
         $urlGenerator = new UrlGenerator($pageTree, new FakeFeedRepository([]), new ArrayCache());
+        $tm = new TranslationManager('ru', 'en');
 
         // UserService is `final`, so it can't be doubled with createStub()
         // - build a real instance the same way Modules\Users\ModuleTest and
@@ -137,13 +138,13 @@ final class ModuleTest extends TestCase
             $pageTree,
             $urlGenerator,
             new Config([]),
-            new Formatter(new TranslationManager('ru', 'en'), 'ru'),
-            new TranslationManager('ru', 'en'),
+            new Formatter($tm, 'ru'),
+            $tm,
         ];
 
         $modules = new ModuleRegistry();
         $factory = new ControllerFactory($modules, ...$services);
-        $factory->registerRuntimePages($pageTree);
+        $factory->registerRuntimePages($pageTree, $tm);
         $pageTree->validateDefinitions();
 
         $context = new RequestContext(new User(1, '', AccessService::ROLE_USER), new \DateTimeZone('UTC'));
@@ -169,6 +170,7 @@ final class ModuleTest extends TestCase
         );
         $this->assertSame(AccessService::ACCESS_AUTHENTICATED, $runtimePage->accessRule);
         $this->assertSame('noindex', $runtimePage->changefreq);
+        $this->assertSame('Редактирование темы', $runtimePage->pageName);
 
         $topicList = $pageTree->findByAction('forums.topic-list');
         $topicView = $pageTree->findByAction('forums.topic-view');
@@ -179,15 +181,42 @@ final class ModuleTest extends TestCase
         $this->assertSame(AccessService::ACCESS_PUBLIC, $topicView?->accessRule);
         $this->assertSame(AccessService::ACCESS_AUTHENTICATED, $topicNew?->accessRule);
         $this->assertSame('noindex', $topicNew?->changefreq);
+        $this->assertSame('Новая тема', $topicNew?->pageName);
     }
 
     public function testRuntimePagesAreNotRegisteredWithoutForumsMount(): void
     {
         $tree = new PageTree([]);
 
-        ForumsController::registerRuntimePages($tree);
+        ForumsController::registerRuntimePages($tree, new TranslationManager('ru', 'en'));
 
         $this->assertSame([], $tree->all());
+    }
+
+    public function testRuntimePageNamesUseActiveLocale(): void
+    {
+        $tree = new PageTree([
+            new Page(
+                id: 1,
+                parentId: null,
+                pattern: 'forums',
+                pageName: 'Forums',
+                settings: null,
+                feedType: null,
+                listFeedType: null,
+                feedId: null,
+                commentsEnabled: false,
+                requestMethods: ['GET'],
+                responseType: 'html',
+                accessRule: AccessService::ACCESS_PUBLIC,
+                action: 'forums.list',
+            ),
+        ]);
+
+        ForumsController::registerRuntimePages($tree, new TranslationManager('en'));
+
+        $this->assertSame('New theme', $tree->findByAction('forums.topic-new')?->pageName);
+        $this->assertSame('Editing the topic', $tree->findByAction('forums.topic-edit')?->pageName);
     }
 
     public function testOnlyForumsMountRemainsPubliclyConfigurable(): void

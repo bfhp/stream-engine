@@ -86,12 +86,13 @@ final class Page
         ?string $changefreq,
         ?object $settings,
         bool $commentsEnabled = false,
+        ?string $pageName = null,
     ): self {
         return new self(
             id: $id,
             parentId: $parentId,
             pattern: $pattern,
-            pageName: null,
+            pageName: $pageName,
             settings: $settings,
             feedType: $feedType,
             listFeedType: null,

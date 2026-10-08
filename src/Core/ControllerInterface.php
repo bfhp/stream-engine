@@ -32,7 +32,7 @@ interface ControllerInterface
 
     public function show(Page $page, array $args = []): ?ViewModel;
 
-    public static function registerRuntimePages(PageTree $pageTree): void;
+    public static function registerRuntimePages(PageTree $pageTree, TranslationManager $tm): void;
 
     public static function registerApi(int $apiPageId, PageTree $pageTree): void;
 

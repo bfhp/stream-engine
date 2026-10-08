@@ -13,6 +13,7 @@ use StreamEngine\Core\TranslationManager;
 use StreamEngine\Core\UrlGenerator;
 use StreamEngine\Domain\Feed;
 use StreamEngine\Domain\Notification;
+use StreamEngine\Domain\Page;
 use StreamEngine\Domain\User;
 use StreamEngine\Repository\FeedRepository;
 use StreamEngine\Repository\MembershipRepository;
@@ -74,21 +75,6 @@ class CommunityService
      * can. Same role_level scale as getRelationshipStatus()'s own match().
      */
     private const int MIN_POSTING_ROLE_LEVEL = 1;
-
-    /**
-     * Slugs a community is never allowed to land on - each collides with a
-     * static sibling page mounted under the same community.main parent:
-     * 'create' is community.create's own pattern, 'tags' is reserved for a
-     * planned tag-listing route (same "/community/{slug}/" URL shape a real
-     * community would otherwise use). Same Router::resolve()-matches-
-     * static-before-dynamic reasoning as BlogPostService::
-     * RESERVED_BLOG_POST_SLUGS, just scoped to communities (a top-level feed
-     * type, so uniqueCommunitySlug() checks this list against every
-     * community rather than one blog's own posts).
-     *
-     * @var string[]
-     */
-    private const array RESERVED_COMMUNITY_SLUGS = ['create', 'tags'];
 
     public function __construct(
         private readonly FeedService $feedService,
@@ -615,9 +601,10 @@ class CommunityService
 
         $candidate = $base;
         $suffix = 1;
+        $reservedSlugs = $this->reservedCommunitySlugs();
 
         while (
-            in_array($candidate, self::RESERVED_COMMUNITY_SLUGS, true)
+            in_array($candidate, $reservedSlugs, true)
             || $this->feedRepository->findByParentAndSlug(null, $candidate, $user, 'community') !== null
         ) {
             $suffix++;
@@ -626,6 +613,24 @@ class CommunityService
         }
 
         return $candidate;
+    }
+
+    /** @return list<string> */
+    private function reservedCommunitySlugs(): array
+    {
+        $communityPage = $this->pageTree->findByAction('community.show-slug');
+        if ($communityPage === null || $communityPage->parentId === null) {
+            return [];
+        }
+
+        return array_values(array_map(
+            static fn (Page $page): string => $page->pattern,
+            array_filter(
+                $this->pageTree->findChildren($communityPage->parentId),
+                static fn (Page $page): bool => $page->pattern !== ''
+                    && ! str_contains($page->pattern, '{'),
+            ),
+        ));
     }
 
     /**

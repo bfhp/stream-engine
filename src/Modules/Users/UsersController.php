@@ -236,77 +236,142 @@ class UsersController extends AbstractController
                 ],
             ],
             'community.main' => 'Community page',
-            'community.create' => 'Create community page',
             'community.show-id' => [
                 'label' => 'Fixed community page',
                 'fields' => [
                     'feedId' => ['status' => 'required', 'feedTypes' => ['community']],
                 ],
             ],
-            'community.show-slug' => [
-                'label' => 'Community page from the route slug',
-                'fields' => [
-                    'feedType' => ['status' => 'required', 'values' => ['community']],
-                ],
-            ],
-            'community.post-new' => 'New community post page',
             'community.post-show-id' => [
                 'label' => 'Fixed community post page',
                 'fields' => [
                     'feedId' => ['status' => 'required', 'feedTypes' => ['blog-post']],
                 ],
             ],
-            'community.post-show-slug' => [
-                'label' => 'Community post page from the route slug',
-                'fields' => [
-                    'feedType' => ['status' => 'required', 'values' => ['blog-post']],
-                ],
-            ],
-            'community.post-edit' => 'Community post edit page',
-            'community.manage' => 'Community manage page',
         ];
     }
 
-    public static function registerRuntimePages(PageTree $pageTree): void
+    public static function registerRuntimePages(PageTree $pageTree, TranslationManager $tm): void
     {
         $profile = $pageTree->findByAction('user.show');
-        if ($profile === null) {
+        if ($profile !== null) {
+            $pageTree->add(Page::runtime(
+                id: $pageTree->getMaxPageId(),
+                parentId: $profile->id,
+                pattern: 'post',
+                action: 'user.post-new',
+                accessRule: AccessService::ACCESS_AUTHENTICATED,
+                feedType: null,
+                changefreq: 'noindex',
+                settings: null,
+                pageName: $tm->trans('blog.new_post'),
+            ));
+
+            $postId = $pageTree->getMaxPageId();
+            $pageTree->add(Page::runtime(
+                id: $postId,
+                parentId: $profile->id,
+                pattern: '{slug}',
+                action: 'user.post-show-slug',
+                accessRule: AccessService::ACCESS_PUBLIC,
+                feedType: 'blog-post',
+                changefreq: null,
+                settings: null,
+                commentsEnabled: true,
+                pageName: null,
+            ));
+
+            $pageTree->add(Page::runtime(
+                id: $pageTree->getMaxPageId(),
+                parentId: $postId,
+                pattern: 'edit',
+                action: 'user.post-edit',
+                accessRule: AccessService::ACCESS_AUTHENTICATED,
+                feedType: null,
+                changefreq: 'noindex',
+                settings: null,
+                pageName: $tm->trans('blog.edit_post'),
+            ));
+        }
+
+        $communityMain = $pageTree->findByAction('community.main');
+        if ($communityMain === null) {
             return;
         }
 
         $pageTree->add(Page::runtime(
             id: $pageTree->getMaxPageId(),
-            parentId: $profile->id,
-            pattern: 'post',
-            action: 'user.post-new',
+            parentId: $communityMain->id,
+            pattern: 'create',
+            action: 'community.create',
             accessRule: AccessService::ACCESS_AUTHENTICATED,
             feedType: null,
             changefreq: 'noindex',
             settings: null,
+            pageName: $tm->trans('community.create_title'),
+        ));
+
+        $communityId = $pageTree->getMaxPageId();
+        $pageTree->add(Page::runtime(
+            id: $communityId,
+            parentId: $communityMain->id,
+            pattern: '{slug}',
+            action: 'community.show-slug',
+            accessRule: AccessService::ACCESS_PUBLIC,
+            feedType: 'community',
+            changefreq: null,
+            settings: null,
+            pageName: null,
+        ));
+
+        $pageTree->add(Page::runtime(
+            id: $pageTree->getMaxPageId(),
+            parentId: $communityId,
+            pattern: 'post',
+            action: 'community.post-new',
+            accessRule: AccessService::ACCESS_AUTHENTICATED,
+            feedType: null,
+            changefreq: 'noindex',
+            settings: null,
+            pageName: $tm->trans('community.new_post'),
         ));
 
         $postId = $pageTree->getMaxPageId();
         $pageTree->add(Page::runtime(
             id: $postId,
-            parentId: $profile->id,
+            parentId: $communityId,
             pattern: '{slug}',
-            action: 'user.post-show-slug',
+            action: 'community.post-show-slug',
             accessRule: AccessService::ACCESS_PUBLIC,
             feedType: 'blog-post',
             changefreq: null,
             settings: null,
             commentsEnabled: true,
+            pageName: null,
         ));
 
         $pageTree->add(Page::runtime(
             id: $pageTree->getMaxPageId(),
             parentId: $postId,
             pattern: 'edit',
-            action: 'user.post-edit',
+            action: 'community.post-edit',
             accessRule: AccessService::ACCESS_AUTHENTICATED,
             feedType: null,
             changefreq: 'noindex',
             settings: null,
+            pageName: $tm->trans('blog.edit_post'),
+        ));
+
+        $pageTree->add(Page::runtime(
+            id: $pageTree->getMaxPageId(),
+            parentId: $communityId,
+            pattern: 'manage',
+            action: 'community.manage',
+            accessRule: AccessService::ACCESS_AUTHENTICATED,
+            feedType: null,
+            changefreq: 'noindex',
+            settings: null,
+            pageName: $tm->trans('view.users.community.sidebar.02'),
         ));
     }
 
@@ -1604,6 +1669,7 @@ class UsersController extends AbstractController
     private function showCommunityPage(Page $page): ViewModel
     {
         $viewer = $this->context->user;
+        $canonicalUrl = $this->urlGenerator->page($page);
 
         $tagSlug = $this->context->query->trimmed('tag');
         $tagSlug = $tagSlug !== '' ? $tagSlug : null;
@@ -1618,13 +1684,8 @@ class UsersController extends AbstractController
             // community.create actually exists (see
             // showCommunityCreatePage()), community.twig no longer needs to
             // fall back to its disabled stub.
-            $createCommunityPage = $this->pageTree->findByAction('community.create');
-            if ($createCommunityPage !== null) {
-                $createCommunityUrl = $this->urlGenerator->page($createCommunityPage);
-            }
+            $createCommunityUrl = $this->urlGenerator->childAction('community.create', $canonicalUrl);
         }
-
-        $canonicalUrl = $this->urlGenerator->page($page);
 
         return ViewModel::fromPage(
             $page,
@@ -1723,6 +1784,9 @@ class UsersController extends AbstractController
         $canonicalUrl = $community->slug !== null
             ? $this->urlGenerator->page($page, ['slug' => $community->slug])
             : $community->canonicalUrl;
+        $runtimeCommunityUrl = $community->slug !== null
+            ? $this->urlGenerator->action('community.show-slug', ['slug' => $community->slug])
+            : null;
 
         // A community itself is never rated directly - only its own posts
         // are (see components/users/community-sidebar.twig's own note) -
@@ -1738,11 +1802,8 @@ class UsersController extends AbstractController
         // membership gate handleCommunityPostCreateRequest() itself
         // enforces on the actual write.
         $newPostUrl = null;
-        if ($this->communityService->canPost($viewer, $community)) {
-            $newPostPage = $this->pageTree->findByAction('community.post-new');
-            if ($newPostPage !== null && $community->slug !== null) {
-                $newPostUrl = $this->urlGenerator->page($newPostPage, ['slug' => $community->slug]);
-            }
+        if ($this->communityService->canPost($viewer, $community) && $community->slug !== null) {
+            $newPostUrl = $this->urlGenerator->childAction('community.post-new', $runtimeCommunityUrl);
         }
 
         // The sidebar's "Manage" action (community-sidebar.twig's own
@@ -1751,11 +1812,8 @@ class UsersController extends AbstractController
         // used to see this stub too, back when it was just a disabled
         // placeholder) no longer gets a button that would 403 if clicked.
         $manageUrl = null;
-        if (! $viewer->isGuest() && $viewer->id === $community->ownerId) {
-            $managePage = $this->pageTree->findByAction('community.manage');
-            if ($managePage !== null && $community->slug !== null) {
-                $manageUrl = $this->urlGenerator->page($managePage, ['slug' => $community->slug]);
-            }
+        if (! $viewer->isGuest() && $viewer->id === $community->ownerId && $community->slug !== null) {
+            $manageUrl = $this->urlGenerator->childAction('community.manage', $runtimeCommunityUrl);
         }
 
         return ViewModel::fromPage(
@@ -1915,15 +1973,12 @@ class UsersController extends AbstractController
             throw new ForbiddenException($this->tm->trans('community.post_forbidden'));
         }
 
-        $canonical = $community->slug !== null
-            ? $this->urlGenerator->page($page, ['slug' => $community->slug])
-            : null;
-
         $cancelUrl = null;
         $communityShowPage = $this->pageTree->findByAction('community.show-slug');
         if ($communityShowPage !== null && $community->slug !== null) {
             $cancelUrl = $this->urlGenerator->page($communityShowPage, ['slug' => $community->slug]);
         }
+        $canonical = $this->urlGenerator->childAction('community.post-new', $cancelUrl);
 
         // Same Trix bundle (and its cover-image drop-zone styling) as
         // showBlogPostFormPage()/showCommunityCreatePage() - the form

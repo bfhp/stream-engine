@@ -317,7 +317,7 @@ final class ControllerFactoryTest extends TestCase
     {
         $deps = $this->makeFactory();
 
-        $deps['factory']->registerRuntimePages($deps['pageTree']);
+        $deps['factory']->registerRuntimePages($deps['pageTree'], $deps['tm']);
 
         $this->assertNull($deps['pageTree']->findByAction('runtime.internal'));
     }
@@ -327,7 +327,7 @@ final class ControllerFactoryTest extends TestCase
         $deps = $this->makeFactory();
         $deps['pageTree']->add($this->pageWithAction('runtime.mount'));
 
-        $deps['factory']->registerRuntimePages($deps['pageTree']);
+        $deps['factory']->registerRuntimePages($deps['pageTree'], $deps['tm']);
 
         $runtimePage = $deps['pageTree']->findByAction('runtime.internal');
         $this->assertNotNull($runtimePage);
@@ -348,13 +348,13 @@ final class ControllerFactoryTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage("Duplicate page action 'runtime.conflict'");
 
-        $factory->registerRuntimePages($tree);
+        $factory->registerRuntimePages($tree, new TranslationManager('ru', 'en'));
     }
 
     public function testBootstrapRegistersRuntimePagesBeforeApiAndThenValidatesDefinitions(): void
     {
         $source = file_get_contents(__DIR__.'/../../src/StreamEngine.php');
-        $runtime = strpos($source, '$this->controllerFactory->registerRuntimePages($this->pageTree);');
+        $runtime = strpos($source, '$this->controllerFactory->registerRuntimePages($this->pageTree, $this->tm);');
         $api = strpos($source, '$this->initCronAndApi();');
         $validation = strpos($source, '$this->pageTree->validateDefinitions();');
 

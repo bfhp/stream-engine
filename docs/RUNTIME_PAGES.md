@@ -78,20 +78,20 @@ configuration.
   - `forums.topic-view` at `{slug}`;
   - `forums.topic-edit` at `edit`.
 - [x] Register internal user blog routes beneath the public profile page.
-- [ ] Register the community tree beneath `community.main`, including community
+- [x] Register the community tree beneath `community.main`, including community
   view, post creation, post view, post editing, and community management.
-- [ ] Define these properties in module code for every runtime route:
+- [x] Define these properties in module code for every runtime route:
   - access level (`public`, `authenticated`, and so on);
   - indexing behavior (`changefreq`, normally `noindex` for forms and
     management pages);
   - `feedType`, `listFeedType`, or `termVocabulary` when required by URL
     generation or sitemap generation;
   - page settings that are genuinely part of module behavior.
-- [ ] Remove internal actions from `pageActions()`, leaving only pages that an
+- [x] Remove internal actions from `pageActions()`, leaving only pages that an
   administrator may create and configure.
-- [ ] Remove manually assembled `new/` and `edit/` URLs from controllers and
+- [x] Remove manually assembled `new/` and `edit/` URLs from controllers and
   frontend code. Generate them from runtime actions in `PageTree`.
-- [ ] Derive reserved content slugs from actual static siblings of a runtime
+- [x] Derive reserved content slugs from actual static siblings of a runtime
   route instead of maintaining word-list constants.
 - [ ] Verify URL generation, access control, breadcrumbs, and sitemap output for
   every migrated tree.

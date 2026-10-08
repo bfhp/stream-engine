@@ -116,7 +116,7 @@ class ForumsController extends AbstractController
         ];
     }
 
-    public static function registerRuntimePages(PageTree $pageTree): void
+    public static function registerRuntimePages(PageTree $pageTree, TranslationManager $tm): void
     {
         $mount = $pageTree->findByAction('forums.list');
         if ($mount === null) {
@@ -133,6 +133,7 @@ class ForumsController extends AbstractController
             feedType: 'forum',
             changefreq: null,
             settings: null,
+            pageName: null,
         ));
 
         $pageTree->add(Page::runtime(
@@ -144,6 +145,7 @@ class ForumsController extends AbstractController
             feedType: null,
             changefreq: 'noindex',
             settings: null,
+            pageName: $tm->trans('forums.topic_new'),
         ));
 
         $topicViewId = $pageTree->getMaxPageId();
@@ -156,6 +158,7 @@ class ForumsController extends AbstractController
             feedType: 'forum-post',
             changefreq: null,
             settings: null,
+            pageName: null,
         ));
 
         $pageTree->add(Page::runtime(
@@ -167,6 +170,7 @@ class ForumsController extends AbstractController
             feedType: null,
             changefreq: 'noindex',
             settings: null,
+            pageName: $tm->trans('forums.topic_edit'),
         ));
     }
 

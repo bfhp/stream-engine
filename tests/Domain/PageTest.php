@@ -40,6 +40,7 @@ final class PageTest extends TestCase
             changefreq: 'weekly',
             settings: $settings,
             commentsEnabled: true,
+            pageName: 'Article',
         );
 
         self::assertSame(['GET'], $page->requestMethods);
@@ -49,6 +50,7 @@ final class PageTest extends TestCase
         self::assertSame('article', $page->feedType);
         self::assertSame('weekly', $page->changefreq);
         self::assertSame($settings, $page->settings);
+        self::assertSame('Article', $page->pageName);
     }
 
     /**

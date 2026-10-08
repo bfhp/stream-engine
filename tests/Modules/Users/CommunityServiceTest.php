@@ -16,6 +16,7 @@ use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Core\TranslationManager;
 use StreamEngine\Core\UrlGenerator;
 use StreamEngine\Domain\Feed;
+use StreamEngine\Domain\Page;
 use StreamEngine\Domain\User;
 use StreamEngine\Modules\Users\CommunityService;
 use StreamEngine\Repository\FeedMetadataRepository;
@@ -178,7 +179,8 @@ final class CommunityServiceTest extends TestCase
         );
 
         $feedRepository = new FeedRepository($db);
-        $urlGenerator = new UrlGenerator(new PageTree([]), new FakeFeedRepository([]), new ArrayCache());
+        $pageTree = $this->communityPageTree();
+        $urlGenerator = new UrlGenerator($pageTree, new FakeFeedRepository([]), new ArrayCache());
 
         $feedService = new FeedService(
             $feedRepository,
@@ -194,7 +196,7 @@ final class CommunityServiceTest extends TestCase
             $feedRepository,
             new MembershipRepository($db),
             new TranslationManager('ru', 'en'),
-            new PageTree([]),
+            $pageTree,
             $urlGenerator,
             $this->notifications(),
             new Config(['SITE_URL' => 'https://example.test']),
@@ -331,13 +333,7 @@ final class CommunityServiceTest extends TestCase
         $this->assertSame('my-community', $this->insertedFeedParams[4]);
     }
 
-    /**
-     * 'create' collides with community.create's own pattern (a sibling
-     * page under the same community.main parent) - RESERVED_COMMUNITY_SLUGS
-     * makes uniqueCommunitySlug() treat it exactly like an already-taken
-     * slug, same as BlogPostService::RESERVED_BLOG_POST_SLUGS does for
-     * blog posts.
-     */
+    /** 'create' is reserved because it is a real static route sibling. */
     #[AllowMockObjectsWithoutExpectations]
     public function testCreateCommunityAvoidsReservedSlug(): void
     {
@@ -354,6 +350,65 @@ final class CommunityServiceTest extends TestCase
         );
 
         $this->assertSame('create-2', $this->insertedFeedParams[4]);
+    }
+
+    #[AllowMockObjectsWithoutExpectations]
+    public function testSlugWithoutAStaticSiblingIsNotReserved(): void
+    {
+        $user = new User(id: 7, email: 'user@example.com', role: AccessService::ROLE_USER);
+
+        [$service] = $this->makeService();
+
+        $service->createCommunity(
+            user: $user,
+            name: 'Tags',
+            description: null,
+            imageUrl: null,
+            membershipType: CommunityService::MEMBERSHIP_TYPE_OPEN,
+        );
+
+        $this->assertSame('tags', $this->insertedFeedParams[4]);
+    }
+
+    private function communityPageTree(): PageTree
+    {
+        return new PageTree([
+            new Page(
+                id: 1,
+                parentId: null,
+                pattern: 'communities',
+                pageName: null,
+                settings: null,
+                feedType: null,
+                listFeedType: null,
+                feedId: null,
+                commentsEnabled: false,
+                requestMethods: ['GET'],
+                responseType: 'html',
+                accessRule: AccessService::ACCESS_PUBLIC,
+                action: 'community.main',
+            ),
+            Page::runtime(
+                id: 2,
+                parentId: 1,
+                pattern: 'create',
+                action: 'community.create',
+                accessRule: AccessService::ACCESS_AUTHENTICATED,
+                feedType: null,
+                changefreq: 'noindex',
+                settings: null,
+            ),
+            Page::runtime(
+                id: 3,
+                parentId: 1,
+                pattern: '{slug}',
+                action: 'community.show-slug',
+                accessRule: AccessService::ACCESS_PUBLIC,
+                feedType: 'community',
+                changefreq: null,
+                settings: null,
+            ),
+        ]);
     }
 
     /**

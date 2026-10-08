@@ -48,6 +48,7 @@ final class ModuleTest extends TestCase
             $this->page(id: 1, parentId: null, pattern: '', action: null),
             $this->page(id: 2, parentId: 1, pattern: 'users', action: 'users.list'),
             $this->page(id: 3, parentId: 2, pattern: '{username}', action: 'user.show', feedType: 'blog'),
+            $this->page(id: 4, parentId: 1, pattern: 'communities', action: 'community.main'),
         ]);
         $urlGenerator = new UrlGenerator($pageTree, new FakeFeedRepository([]), new ArrayCache());
         $tm = new TranslationManager('ru', 'en');
@@ -122,7 +123,7 @@ final class ModuleTest extends TestCase
 
         $modules = new ModuleRegistry();
         $factory = new ControllerFactory($modules, ...$services);
-        $factory->registerRuntimePages($pageTree);
+        $factory->registerRuntimePages($pageTree, $tm);
         $pageTree->validateDefinitions();
         $context = new RequestContext(new User(1, '', AccessService::ROLE_USER), new \DateTimeZone('UTC'));
 
@@ -140,21 +141,71 @@ final class ModuleTest extends TestCase
         $editPage = $pageTree->findByAction('user.post-edit');
         $this->assertSame(AccessService::ACCESS_AUTHENTICATED, $newPage?->accessRule);
         $this->assertSame('noindex', $newPage?->changefreq);
+        $this->assertSame('Новый пост', $newPage?->pageName);
         $this->assertSame(AccessService::ACCESS_AUTHENTICATED, $editPage?->accessRule);
         $this->assertSame('noindex', $editPage?->changefreq);
+        $this->assertSame('Редактирование записи', $editPage?->pageName);
 
         $router = new Router($pageTree);
         $this->assertSame('user.post-new', $router->resolve('/users/alice/post/')['page']->action);
         $this->assertSame('user.post-edit', $router->resolve('/users/alice/hello/edit/')['page']->action);
+        $this->assertSame('community.create', $router->resolve('/communities/create/')['page']->action);
+        $this->assertSame('community.post-new', $router->resolve('/communities/devs/post/')['page']->action);
+        $this->assertSame('community.post-edit', $router->resolve('/communities/devs/hello/edit/')['page']->action);
+        $this->assertSame('community.manage', $router->resolve('/communities/devs/manage/')['page']->action);
     }
 
     public function testPersonalBlogRuntimePagesRequireProfileMount(): void
     {
         $tree = new PageTree([]);
 
-        UsersController::registerRuntimePages($tree);
+        UsersController::registerRuntimePages($tree, new TranslationManager('ru', 'en'));
 
         $this->assertSame([], $tree->all());
+    }
+
+    public function testCommunityRuntimePagesDoNotRequireProfileMount(): void
+    {
+        $tree = new PageTree([
+            $this->page(id: 1, parentId: null, pattern: '', action: null),
+            $this->page(id: 2, parentId: 1, pattern: 'communities', action: 'community.main'),
+        ]);
+
+        UsersController::registerRuntimePages($tree, new TranslationManager('ru', 'en'));
+        $tree->validateDefinitions();
+
+        $community = $tree->findByAction('community.show-slug');
+        $post = $tree->findByAction('community.post-show-slug');
+        $this->assertSame('community', $community?->feedType);
+        $this->assertSame(AccessService::ACCESS_PUBLIC, $community?->accessRule);
+        $this->assertSame('blog-post', $post?->feedType);
+        $this->assertTrue($post?->commentsEnabled);
+        $this->assertSame('noindex', $tree->findByAction('community.create')?->changefreq);
+        $this->assertSame('Создание сообщества', $tree->findByAction('community.create')?->pageName);
+        $this->assertSame('noindex', $tree->findByAction('community.post-new')?->changefreq);
+        $this->assertSame('Новый пост в сообществе', $tree->findByAction('community.post-new')?->pageName);
+        $this->assertSame('noindex', $tree->findByAction('community.post-edit')?->changefreq);
+        $this->assertSame('Редактирование записи', $tree->findByAction('community.post-edit')?->pageName);
+        $this->assertSame('noindex', $tree->findByAction('community.manage')?->changefreq);
+        $this->assertSame('Управление', $tree->findByAction('community.manage')?->pageName);
+    }
+
+    public function testRuntimePageNamesUseActiveLocale(): void
+    {
+        $tree = new PageTree([
+            $this->page(id: 1, parentId: null, pattern: '', action: null),
+            $this->page(id: 2, parentId: 1, pattern: 'users', action: 'users.list'),
+            $this->page(id: 3, parentId: 2, pattern: '{username}', action: 'user.show', feedType: 'blog'),
+            $this->page(id: 4, parentId: 1, pattern: 'communities', action: 'community.main'),
+        ]);
+
+        UsersController::registerRuntimePages($tree, new TranslationManager('en'));
+
+        $this->assertSame('New post', $tree->findByAction('user.post-new')?->pageName);
+        $this->assertSame('Edit post', $tree->findByAction('user.post-edit')?->pageName);
+        $this->assertSame('Create a community', $tree->findByAction('community.create')?->pageName);
+        $this->assertSame('New community post', $tree->findByAction('community.post-new')?->pageName);
+        $this->assertSame('Management', $tree->findByAction('community.manage')?->pageName);
     }
 
     public function testPersonalBlogInternalActionsAreNotPubliclyConfigurable(): void
@@ -166,6 +217,25 @@ final class ModuleTest extends TestCase
         $this->assertArrayNotHasKey('user.post-new', $actions);
         $this->assertArrayNotHasKey('user.post-show-slug', $actions);
         $this->assertArrayNotHasKey('user.post-edit', $actions);
+    }
+
+    public function testCommunityInternalActionsAreNotPubliclyConfigurable(): void
+    {
+        $actions = UsersController::pageActions();
+
+        $this->assertArrayHasKey('community.main', $actions);
+        $this->assertArrayHasKey('community.show-id', $actions);
+        $this->assertArrayHasKey('community.post-show-id', $actions);
+        foreach ([
+            'community.create',
+            'community.show-slug',
+            'community.post-new',
+            'community.post-show-slug',
+            'community.post-edit',
+            'community.manage',
+        ] as $action) {
+            $this->assertArrayNotHasKey($action, $actions);
+        }
     }
 
     private function pageWithAction(string $action): Page
