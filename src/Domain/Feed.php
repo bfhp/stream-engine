@@ -31,10 +31,10 @@ final class Feed
         public ?array $children = null,
         public readonly int $ratingSum = 0,
         public readonly int $ratingCount = 0,
-        // Raw view counter (`feeds.views`) - incremented by
+        // Deduplicated view counter (`feeds.views`) - incremented by
         // Service\FeedService::recordView(), currently only called from
-        // Modules\Forums\ForumsController::showTopicViewPage(). Every view
-        // counts, no per-viewer dedup (see recordView()'s own docblock).
+        // Modules\Forums\ForumsController::showTopicViewPage(). See
+        // recordView() for its per-viewer window.
         public readonly int $views = 0,
         // 0-100, how far the current user has progressed through this feed's
         // positioned children; null when progress was not requested.

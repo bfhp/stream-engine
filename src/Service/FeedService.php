@@ -9,12 +9,14 @@ use DateTimeImmutable;
 use HTMLPurifier;
 use HTMLPurifier_Config;
 use InvalidArgumentException;
+use Jaybizzle\CrawlerDetect\CrawlerDetect;
 use RuntimeException;
 use StreamEngine\Core\Exceptions\ForbiddenException;
 use StreamEngine\Core\Exceptions\NotFoundException;
 use StreamEngine\Core\Exceptions\ValidationException;
 use StreamEngine\Core\Formatter;
 use StreamEngine\Core\GuestFeedReadStore;
+use StreamEngine\Core\GuestFeedViewStore;
 use StreamEngine\Core\TranslationManager;
 use StreamEngine\Core\UrlGenerator;
 use StreamEngine\Domain\Feed;
@@ -25,6 +27,7 @@ use StreamEngine\Repository\FeedMetadataRepository;
 use StreamEngine\Repository\FeedRatingRepository;
 use StreamEngine\Repository\FeedReadRepository;
 use StreamEngine\Repository\FeedRepository;
+use StreamEngine\Repository\FeedViewRepository;
 
 class FeedService
 {
@@ -53,6 +56,8 @@ class FeedService
 
     public const int COMMENT_EDIT_WINDOW_SECONDS = 86400;
 
+    public const int VIEW_DEDUPLICATION_WINDOW_SECONDS = 86400;
+
     private const array ALLOWED_VISIBILITY = ['public', 'members', 'private'];
 
     private HTMLPurifier $purifier;
@@ -69,6 +74,8 @@ class FeedService
         private readonly ?FeedReadRepository $readRepository = null,
         private readonly ?GuestFeedReadStore $guestReadStore = null,
         private readonly ?MentionService $mentionService = null,
+        private readonly ?FeedViewRepository $viewRepository = null,
+        private readonly ?GuestFeedViewStore $guestViewStore = null,
     ) {
         $config = HTMLPurifier_Config::createDefault();
 
@@ -617,20 +624,35 @@ class FeedService
      * lives here rather than in any one module (today, only
      * Modules\Forums\ForumsController::showTopicViewPage() calls it).
      *
-     * Deliberately a raw, un-deduped counter: every render of the page that
-     * calls this bumps `feeds.views` by one, including repeat views from the
-     * same visitor or the same page reloaded - there's no per-user/per-
-     * session "already counted this view" tracking (that would need
-     * something like the existing per-user read-tracking
-     * (getFeedReadAtMap()/markFeedAsRead()), which is a separate, explicitly
-     * out-of-scope concern for this counter - see docs/TODO.md's "View
-     * counter" bullet). Doesn't throw or return anything - a failed
-     * increment shouldn't ever break rendering the page it's counting a
-     * view of.
+     * Counts at most one view per viewer and feed in each 24-hour window.
+     * Members use the server-side feed_views marker; guests use a bounded
+     * cookie, deliberately separate from the read/unread watermark. Known
+     * crawlers never count. Returns whether `feeds.views` was incremented so
+     * a caller that already loaded the feed can render the correct total
+     * without another query.
      */
-    public function recordView(int $feedId): void
+    public function recordView(int $feedId, User $user): bool
     {
-        $this->repository->incrementViews($feedId);
+        if ($user->isGuest()) {
+            $userAgent = (string) ($_SERVER['HTTP_USER_AGENT'] ?? '');
+            if ($userAgent !== '' && (new CrawlerDetect(userAgent: $userAgent))->isCrawler()) {
+                return false;
+            }
+
+            if (! $this->guestViewStore?->claim($feedId, self::VIEW_DEDUPLICATION_WINDOW_SECONDS)) {
+                return false;
+            }
+
+            $this->repository->incrementViews($feedId);
+
+            return true;
+        }
+
+        return $this->viewRepository?->recordForUser(
+            $feedId,
+            $user->id,
+            self::VIEW_DEDUPLICATION_WINDOW_SECONDS,
+        ) ?? false;
     }
 
     /**

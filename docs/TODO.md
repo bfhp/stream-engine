@@ -42,13 +42,6 @@ generator, hosted site, or build step.
   installation and a new developer can run, change, test, and extend it using
   only the repository documentation, with every internal link checked.
 
-### View counter
-
-`FeedService::recordView()` intentionally counts every render, including repeat
-views and bots. If unique-view metrics are needed, define a deduplication window
-and storage for guests/users; do not mix this with the existing read/unread
-watermark.
-
 ### TypeScript strictness
 
 The current `tsc` check is green, but the project is not in strict mode.

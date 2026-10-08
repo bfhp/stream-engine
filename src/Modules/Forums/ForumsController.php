@@ -1094,8 +1094,8 @@ class ForumsController extends AbstractController
      * /api/v1/comments/{parentId} every other comment form uses - needed so
      * a new reply can also notify the topic's "Follow" followers (see
      * notifyTopicFollowers()). Also records a view
-     * (FeedService::recordView() - see its own docblock for why it's a
-     * plain, un-deduped counter), and marks the topic read for the current
+     * (FeedService::recordView() applies its 24-hour per-viewer window), and
+     * marks the topic read for the current
      * viewer once they're on its last page (FeedService::markFeedAsRead() -
      * automatic, not a manual "Mark as read" button; see the call
      * site's own comment for why it's gated to the last page, not any page).
@@ -1113,13 +1113,11 @@ class ForumsController extends AbstractController
             throw new ForbiddenException('Topic not found');
         }
 
-        // Counts this page render as a view - see recordView()'s own
-        // docblock for why it's a plain, un-deduped increment (no "already
-        // viewed" tracking, unlike the separate read/unread mechanism).
-        // $topicFeed->views still holds the pre-increment count in memory
-        // (it was fetched above), so the view model below adds 1 locally
-        // rather than re-fetching the row just to read the new value back.
-        $this->feedService->recordView($topicFeed->id);
+        // recordView() reports whether this viewer was outside the 24-hour
+        // deduplication window. Keep that separate from the read watermark.
+        // The feed was fetched before this call, so reflect a successful
+        // increment locally instead of re-querying it.
+        $viewCounted = $this->feedService->recordView($topicFeed->id, $this->context->user);
 
         // Eyebrow above the title ("Section · <forum>") - same
         // plain FeedRepository::findById() (not FeedService's getFeedById(),
@@ -1222,7 +1220,7 @@ class ForumsController extends AbstractController
                 'topicTotals' => [
                     'posts' => $totalPosts,
                     'participants' => $participantsPage['total'],
-                    'views' => $topicFeed->views + 1,
+                    'views' => $topicFeed->views + ($viewCounted ? 1 : 0),
                 ],
                 'pagination' => [
                     'current' => $currentPage,

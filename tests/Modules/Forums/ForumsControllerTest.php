@@ -1884,9 +1884,9 @@ final class ForumsControllerTest extends TestCase
 
     /**
      * The header stats, and the two side effects of rendering a topic: the
-     * view counter (a plain increment, reflected locally rather than
-     * re-fetched) and - because this render lands on the topic's last page -
-     * the read watermark.
+     * view counter (when recordView() claims this viewer, reflected locally
+     * rather than re-fetched) and - because this render lands on the topic's
+     * last page - the read watermark.
      */
     public function testTopicViewCountsTheViewAndMarksTheTopicReadOnItsLastPage(): void
     {
@@ -1904,7 +1904,10 @@ final class ForumsControllerTest extends TestCase
 
         $feedService = $this->createMock(FeedService::class);
         $this->stubTopicResolution($feedService, $this->makeTopic(views: 17));
-        $feedService->expects($this->once())->method('recordView')->with(self::TOPIC_ID);
+        $feedService->expects($this->once())
+            ->method('recordView')
+            ->with(self::TOPIC_ID, $this->anything())
+            ->willReturn(true);
         $feedService->expects($this->once())->method('markFeedAsRead')->with(self::TOPIC_ID, $this->anything());
         $this->setProperty($module, 'feedService', $feedService);
 
@@ -1917,8 +1920,8 @@ final class ForumsControllerTest extends TestCase
         // Opening post + 2 replies.
         $this->assertSame(3, $view->data['topicTotals']['posts']);
         $this->assertSame(7, $view->data['topicTotals']['participants']);
-        // The row was read before recordView() bumped it, so the page adds the
-        // increment locally instead of re-querying.
+        // The row was read before recordView() claimed and bumped it, so the
+        // page adds the increment locally instead of re-querying.
         $this->assertSame(18, $view->data['topicTotals']['views']);
         // Five more posters than the avatar strip has room for.
         $this->assertSame(5, $view->data['participantsOverflow']);
@@ -1941,7 +1944,7 @@ final class ForumsControllerTest extends TestCase
 
         $feedService = $this->createMock(FeedService::class);
         $this->stubTopicResolution($feedService, $this->makeTopic());
-        $feedService->expects($this->once())->method('recordView');
+        $feedService->expects($this->once())->method('recordView')->willReturn(false);
         $feedService->expects($this->never())->method('markFeedAsRead');
         $this->setProperty($module, 'feedService', $feedService);
 
@@ -1954,6 +1957,7 @@ final class ForumsControllerTest extends TestCase
         $this->assertSame(3, $view->data['pagination']['total']);
         $this->assertSame(1, $view->data['pagination']['current']);
         $this->assertSame(42, $view->data['topicTotals']['posts']);
+        $this->assertSame(0, $view->data['topicTotals']['views']);
     }
 
     /**

@@ -23,6 +23,7 @@ use StreamEngine\Core\FileProcessing\ImageProcessor;
 use StreamEngine\Core\FileProcessing\MimeDetector;
 use StreamEngine\Core\Formatter;
 use StreamEngine\Core\GuestFeedReadStore;
+use StreamEngine\Core\GuestFeedViewStore;
 use StreamEngine\Core\ModuleRegistry;
 use StreamEngine\Core\PageTree;
 use StreamEngine\Core\PdoDatabase;
@@ -41,6 +42,7 @@ use StreamEngine\Repository\FeedMetadataRepository;
 use StreamEngine\Repository\FeedRatingRepository;
 use StreamEngine\Repository\FeedReadRepository;
 use StreamEngine\Repository\FeedRepository;
+use StreamEngine\Repository\FeedViewRepository;
 use StreamEngine\Repository\FeedTermRepository;
 use StreamEngine\Repository\MembershipRepository;
 use StreamEngine\Repository\MentionRepository;
@@ -174,6 +176,8 @@ class StreamEngine
         $feedFavoriteRepository = new FeedFavoriteRepository($this->db);
         $feedReadRepository = new FeedReadRepository($this->db);
         $guestFeedReadStore = new GuestFeedReadStore();
+        $feedViewRepository = new FeedViewRepository($this->db);
+        $guestFeedViewStore = new GuestFeedViewStore();
         $feedTermRepository = new FeedTermRepository($this->db);
 
         $membershipRepository = new MembershipRepository($this->db);
@@ -208,6 +212,8 @@ class StreamEngine
             $feedReadRepository,
             $guestFeedReadStore,
             $mentionService,
+            $feedViewRepository,
+            $guestFeedViewStore,
         );
 
         $this->termService = new TermService(

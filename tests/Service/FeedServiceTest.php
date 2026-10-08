@@ -12,6 +12,7 @@ use StreamEngine\Core\Exceptions\NotFoundException;
 use StreamEngine\Core\Exceptions\ValidationException;
 use StreamEngine\Core\Formatter;
 use StreamEngine\Core\GuestFeedReadStore;
+use StreamEngine\Core\GuestFeedViewStore;
 use StreamEngine\Core\PageTree;
 use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Core\TranslationManager;
@@ -24,6 +25,7 @@ use StreamEngine\Repository\FeedMetadataRepository;
 use StreamEngine\Repository\FeedRatingRepository;
 use StreamEngine\Repository\FeedReadRepository;
 use StreamEngine\Repository\FeedRepository;
+use StreamEngine\Repository\FeedViewRepository;
 use StreamEngine\Repository\MentionRepository;
 use StreamEngine\Service\AccessService;
 use StreamEngine\Service\FeedService;
@@ -34,18 +36,21 @@ use Tests\Support\FakeFeedRepository;
 final class FeedServiceTest extends TestCase
 {
     private array $cookieBackup = [];
+    private array $serverBackup = [];
 
     protected function setUp(): void
     {
         parent::setUp();
 
         $this->cookieBackup = $_COOKIE;
+        $this->serverBackup = $_SERVER;
         $_COOKIE = [];
     }
 
     protected function tearDown(): void
     {
         $_COOKIE = $this->cookieBackup;
+        $_SERVER = $this->serverBackup;
 
         parent::tearDown();
     }
@@ -61,6 +66,8 @@ final class FeedServiceTest extends TestCase
         ?FeedReadRepository $readRepository = null,
         ?GuestFeedReadStore $guestReadStore = null,
         ?MentionService $mentionService = null,
+        ?FeedViewRepository $viewRepository = null,
+        ?GuestFeedViewStore $guestViewStore = null,
     ): FeedService {
         return new FeedService(
             $repository,
@@ -74,7 +81,55 @@ final class FeedServiceTest extends TestCase
             $readRepository,
             $guestReadStore,
             $mentionService,
+            $viewRepository,
+            $guestViewStore,
         );
+    }
+
+    public function testGuestViewIsCountedOnlyOnceWithinWindow(): void
+    {
+        $_SERVER['HTTP_USER_AGENT'] = 'Mozilla/5.0';
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects($this->once())
+            ->method('execute')
+            ->with($this->stringContains('UPDATE feeds SET views = views + 1'), [58])
+            ->willReturn(1);
+
+        $service = $this->makeService(
+            new FeedRepository($db),
+            guestViewStore: new GuestFeedViewStore(),
+        );
+        $guest = new User(id: 0, email: '');
+
+        self::assertTrue($service->recordView(58, $guest));
+        self::assertFalse($service->recordView(58, $guest));
+    }
+
+    public function testKnownCrawlerDoesNotCountAView(): void
+    {
+        $_SERVER['HTTP_USER_AGENT'] = 'Mozilla/5.0 (compatible; Googlebot/2.1)';
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects($this->never())->method('execute');
+
+        $service = $this->makeService(
+            new FeedRepository($db),
+            guestViewStore: new GuestFeedViewStore(),
+        );
+
+        self::assertFalse($service->recordView(58, new User(id: 0, email: '')));
+    }
+
+    public function testMemberViewUsesServerSideMarker(): void
+    {
+        $db = $this->createStub(PdoDatabase::class);
+        $db->method('execute')->willReturn(1);
+
+        $service = $this->makeService(
+            new FeedRepository($this->createStub(PdoDatabase::class)),
+            viewRepository: new FeedViewRepository($db),
+        );
+
+        self::assertTrue($service->recordView(58, new User(id: 7, email: 'user@example.com')));
     }
 
     private function trans(string $key, array $params = []): string

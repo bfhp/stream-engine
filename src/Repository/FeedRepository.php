@@ -1287,9 +1287,9 @@ final class FeedRepository implements FeedRepositoryInterface
     }
 
     /**
-     * Bumps a feed's raw `views` counter by one - no per-viewer dedup, no
-     * read-tracking involved (see Service\FeedService::recordView()'s own
-     * docblock for why). A plain `UPDATE ... SET views = views + 1` rather
+     * Bumps a feed's `views` counter after the caller has claimed a unique
+     * guest view. Member claims are handled transactionally by
+     * FeedViewRepository. A plain `UPDATE ... SET views = views + 1` rather
      * than read-then-write, so concurrent views on the same feed can't lose
      * an increment to a race.
      */

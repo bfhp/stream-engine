@@ -2,7 +2,7 @@
     "format": 1,
     "release": "0.4.6",
     "schema": "schema.sql",
-    "schema_checksum": "12d1595ca71d043b5a2f4259ee2e63d4b9f0f9221d69e01ce5212c3d2c8188ed",
+    "schema_checksum": "f5e6fbfddf348a5f751df2bbc257db9a81ff51bd952c02a86d1fedcdaed42054",
     "migrations": [
         {
             "version": "20260912000000_initial",
@@ -78,6 +78,11 @@
             "version": "20261008020000_track_upload_purpose",
             "file": "20261008020000_track_upload_purpose.sql",
             "checksum": "49dcfd6a3d02a1c48d6ff4e5300888b2314fc854abf65e43526bc542abb62658"
+        },
+        {
+            "version": "20261008030000_add_unique_feed_views",
+            "file": "20261008030000_add_unique_feed_views.sql",
+            "checksum": "7fc6c97212d3eca58d7c1d23603b3cffba689a79972bbddde6a01aa57d42957c"
         }
     ]
 }
