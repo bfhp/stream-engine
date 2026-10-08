@@ -277,11 +277,7 @@ final class MigrationRunnerTest extends TestCase
             $runner->migrate();
             $this->fail('Expected a RuntimeException to be thrown.');
         } catch (RuntimeException $e) {
-            $this->assertSame(
-                'Could not execute migration "20260101000001_second.sql": '
-                .'SQLSTATE[HY000]: General error: 2006 MySQL server has gone away',
-                $e->getMessage(),
-            );
+            $this->assertSame('Could not execute migration "20260101000001_second.sql".', $e->getMessage());
             $this->assertInstanceOf(PDOException::class, $e->getPrevious());
         }
 

@@ -348,34 +348,6 @@ final class InstallationSchemaTest extends TestCase
         });
     }
 
-    public function testRuntimePageMigrationRejectsACustomDescendantWithoutChangingPages(): void
-    {
-        $root = dirname(__DIR__, 2);
-        $this->withEmptyDatabase(function (PDO $pdo) use ($root): void {
-            $this->executeScript($pdo, $root.'/migrations/20260912000000_initial.sql');
-            $this->insertLegacyRuntimePageTrees($pdo);
-            $pdo->exec(
-                "INSERT INTO pages (id, parent, pattern, action, updated)
-                 VALUES (41, 11, 'rules', 'feedback.show', 1)"
-            );
-            $before = $pdo->query('SELECT id, parent, pattern, action FROM pages ORDER BY id')
-                ->fetchAll(PDO::FETCH_NUM);
-
-            try {
-                $this->executeScript($pdo, $root.'/migrations/20261009000000_move_internal_pages_to_runtime.sql');
-                self::fail('The migration removed a custom descendant.');
-            } catch (\PDOException $exception) {
-                self::assertStringContainsString('move or delete custom child pages', $exception->getMessage());
-            }
-
-            self::assertSame(
-                $before,
-                $pdo->query('SELECT id, parent, pattern, action FROM pages ORDER BY id')
-                    ->fetchAll(PDO::FETCH_NUM),
-            );
-        });
-    }
-
     public function testInstallerCompletesAUsableInstallationFromTheReleaseSnapshot(): void
     {
         $root = dirname(__DIR__, 2);

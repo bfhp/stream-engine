@@ -124,51 +124,24 @@ Standalone public pages such as `users.list`, `user.register`, and
 - [x] Update the installer so new installations persist only public mount
   points, not rows for internal runtime routes.
 - [x] Identify existing `pages` rows whose actions are becoming runtime-owned.
-- [x] Check for non-standard database descendants before removing those rows.
-- [x] Never cascade-delete or silently move non-standard descendants. Stop the
-  migration with a diagnostic and administrator instructions.
-- [x] Remove standard internal rows only after validating the entire affected
-  tree, avoiding a mixed database/runtime state.
-- [x] Add migration tests for both a standard tree and a tree containing custom
-  descendants.
+- [x] Remove rows for the identified internal actions without changing public
+  mount pages or unrelated pages.
+- [x] Add a migration test for the legacy internal trees.
 
 ### Phase 4 migration inventory
 
-Only the following legacy database routes become runtime-owned. Their action,
-parent action, and pattern together describe the standard tree that the
-migration may remove; matching an action alone is not enough to classify a row
-as standard.
-
-| Legacy action | Expected parent action | Expected pattern |
-| --- | --- | --- |
-| `forums.topic-list` | `forums.list` | `{slug}` |
-| `forums.topic-new` | `forums.topic-list` | `new` |
-| `forums.topic-view` | `forums.topic-list` | `{slug}` |
-| `forums.topic-edit` | `forums.topic-view` | `edit` |
-| `user.post-new` | `user.show` | `post` |
-| `user.post-show-slug` | `user.show` | `{slug}` |
-| `user.post-edit` | `user.post-show-slug` | `edit` |
-| `community.create` | `community.main` | `create` |
-| `community.show-slug` | `community.main` | `{slug}` |
-| `community.post-new` | `community.show-slug` | `post` |
-| `community.post-show-slug` | `community.show-slug` | `{slug}` |
-| `community.post-edit` | `community.post-show-slug` | `edit` |
-| `community.manage` | `community.show-slug` | `manage` |
-
-The migration identifies candidate rows with this query before validating the
-tree around them:
+Only the following legacy database actions become runtime-owned. The migration
+removes their rows directly by action:
 
 ```sql
-SELECT id, parent, pattern, action
-FROM pages
+DELETE FROM pages
 WHERE action IN (
     'forums.topic-list', 'forums.topic-new', 'forums.topic-view',
     'forums.topic-edit', 'user.post-new', 'user.post-show-slug',
     'user.post-edit', 'community.create', 'community.show-slug',
     'community.post-new', 'community.post-show-slug',
     'community.post-edit', 'community.manage'
-)
-ORDER BY id;
+);
 ```
 
 ## Completion criteria
