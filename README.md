@@ -71,7 +71,7 @@ Stream Engine is distributed as a complete application through
 project from the latest compatible release:
 
 ```bash
-composer create-project --no-dev bfhp/stream-engine stream-engine "^0.2"
+composer create-project --no-dev bfhp/stream-engine stream-engine "^0.5"
 cd stream-engine
 ```
 
