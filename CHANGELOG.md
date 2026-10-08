@@ -14,6 +14,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 - Added rich-text forum quick replies with an inline preview, safe HTML
   purification, rich-text editing, and safely escaped quote insertion into
   the editor.
+- Added explicit edit and confirmed-delete controls for a member's own forum
+  replies, while keeping topic deletion outside the reply endpoint.
 
 ### Fixed
 

@@ -21,6 +21,7 @@ import { bytesToLabel } from "../shared/bytes";
 import { getApiErrorMessage } from "../shared/api-errors";
 import { trans, transChoiceWithCount } from "../shared/i18n";
 import { buildRichQuoteInsertionHtml } from "../shared/comment-quotes";
+import { initForumPostActions } from "./forum-post-actions";
 import {
     PollApiResponse,
     applyPollResponse,
@@ -178,96 +179,19 @@ function initPostActions() {
     const postsContainer = document.getElementById("topic-posts");
     if (!postsContainer) return;
 
-    // Delegated on the whole posts list rather than bound per-button, same
-    // reasoning CMS.initComments() gives for delegating on #comments:
-    // buttons only exist for canEdit/canDelete rows (see
-    // ForumsController::buildPostRows()), but one listener here is simpler
-    // than conditionally attaching N.
-    postsContainer.addEventListener("click", (event) => {
-        const target = event.target as HTMLElement;
-
-        const quoteToggle = target.closest("[data-quote-toggle]") as HTMLElement | null;
-        if (quoteToggle) {
-            insertQuote(quoteToggle);
-            return;
-        }
-
-        const editToggle = target.closest("[data-comment-edit-toggle]") as HTMLElement | null;
-        if (editToggle) {
-            const id = editToggle.dataset.commentId;
-            const editWrapper = postsContainer.querySelector(`[data-comment-edit-wrapper="${id}"]`);
-            const contentWrapper = postsContainer.querySelector(`[data-comment-content-wrapper="${id}"]`);
-            if (editWrapper) (editWrapper as HTMLElement).hidden = false;
-            if (contentWrapper) (contentWrapper as HTMLElement).hidden = true;
-            return;
-        }
-
-        const editCancel = target.closest("[data-comment-edit-cancel]") as HTMLElement | null;
-        if (editCancel) {
-            const id = editCancel.dataset.commentId;
-            const editWrapper = postsContainer.querySelector(`[data-comment-edit-wrapper="${id}"]`);
-            const contentWrapper = postsContainer.querySelector(`[data-comment-content-wrapper="${id}"]`);
-            if (editWrapper) (editWrapper as HTMLElement).hidden = true;
-            hideFieldError(editWrapper?.querySelector("[data-comment-edit-error]") as HTMLElement | null);
-            if (contentWrapper) (contentWrapper as HTMLElement).hidden = false;
-            return;
-        }
-
-        const editSave = target.closest("[data-comment-edit-save]") as HTMLButtonElement | null;
-        if (editSave) {
-            const commentId = editSave.dataset.commentId;
-            const topicId = editSave.dataset.parentId;
-            const wrapper = postsContainer.querySelector(`[data-comment-edit-wrapper="${commentId}"]`);
-            const contentInput = wrapper?.querySelector("[data-comment-edit-input]") as HTMLInputElement | null;
-            const editor = wrapper?.querySelector("[data-comment-edit-editor]") as (HTMLElement & { editor?: any }) | null;
-            const errorEl = wrapper?.querySelector("[data-comment-edit-error]") as HTMLElement | null;
-            const content = (contentInput?.value || "").trim();
-            const plainText = editor?.editor?.getDocument().toString().trim() || "";
-
-            hideFieldError(errorEl);
-
-            if (!plainText && !content.includes("<figure")) {
-                showFieldError(errorEl, trans("js.forums.message_required"));
-                return;
-            }
-
-            editSave.disabled = true;
-
-            cms.api(`/api/v1/comments/${topicId}/${commentId}`, { method: "PATCH", data: { content, format: "html" } })
-                .then(() => {
-                    const postEl = editSave.closest('li[id^="post-"]');
-                    if (postEl) window.location.hash = postEl.id;
-                    window.location.reload();
-                })
-                .catch((error) => {
-                    editSave.disabled = false;
-                    showFieldError(errorEl, getApiErrorMessage(error, trans("js.forums.message_save_failed")));
-                });
-            return;
-        }
-
-        const deleteButton = target.closest("[data-comment-delete]") as HTMLElement | null;
-        if (deleteButton) {
-            const commentId = deleteButton.dataset.commentId;
-            const topicId = deleteButton.dataset.parentId;
-
-            cms.confirm({
-                title: trans("js.forums.message_delete_title"),
-                message: trans("js.forums.message_delete_confirm"),
-                onConfirm: () => {
-                    cms.api(`/api/v1/comments/${topicId}/${commentId}`, { method: "DELETE" })
-                        .then(() => {
-                            window.location.reload();
-                        })
-                        .catch((error) => {
-                            cms.toast({
-                                message: getApiErrorMessage(error, trans("js.forums.message_delete_failed")),
-                                type: "danger",
-                            });
-                        });
-                },
-            });
-        }
+    // The list owns one delegated listener. Buttons themselves are rendered
+    // only when ForumsController's per-post permission flags allow them.
+    initForumPostActions(postsContainer, {
+        api: cms.api,
+        confirm: cms.confirm,
+        toast: cms.toast,
+        trans,
+        onQuote: insertQuote,
+        onEditSaved: (post) => {
+            if (post) window.location.hash = post.id;
+            window.location.reload();
+        },
+        onReplyDeleted: () => window.location.reload(),
     });
 }
 
