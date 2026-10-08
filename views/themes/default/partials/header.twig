@@ -4,7 +4,12 @@
         {% block header_navbar %}
         <nav class="site-nav">
             {% block header_logo %}
-            <a href="/" class="site-nav__brand">{{ siteName }}</a>
+            <a href="/" class="site-nav__brand">
+                {% if headerLogo %}
+                    <img class="header-logo" src="{{ headerLogo }}" alt="">
+                {% endif %}
+                <span>{{ siteName }}</span>
+            </a>
             {% endblock %}
             {% block header_menu %}
                 {% include 'components/nav/navbar.twig' %}

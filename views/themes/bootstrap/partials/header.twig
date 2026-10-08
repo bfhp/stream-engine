@@ -9,7 +9,10 @@
         {# Top row #}
         <div class="container-fluid d-flex align-items-center">
             {% block header_logo %}
-            <a href="/" class="navbar-brand d-flex align-items-center order-1">
+            <a href="/" class="navbar-brand d-flex align-items-center gap-2 order-1">
+                {% if headerLogo %}
+                    <img class="header-logo" src="{{ headerLogo }}" alt="">
+                {% endif %}
                 <span class="fw-semibold">{{ siteName }}</span>
             </a>
             {% endblock %}

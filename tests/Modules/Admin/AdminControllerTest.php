@@ -1431,6 +1431,87 @@ final class AdminControllerTest extends TestCase
         }
     }
 
+    public function testHeaderLogoUploadProcessesImageAndReplacesManagedFile(): void
+    {
+        $uploads = sys_get_temp_dir().'/header-logo-'.bin2hex(random_bytes(8));
+        $directory = $uploads.'/site-brand';
+        mkdir($directory, 0777, true);
+        $oldUrl = '/uploads/site-brand/header-logo-a83f42c1d92e176a.png';
+        $oldPath = $directory.'/header-logo-a83f42c1d92e176a.png';
+        file_put_contents($oldPath, 'old');
+        $source = tempnam(sys_get_temp_dir(), 'header-logo-source-');
+        $image = imagecreatetruecolor(320, 80);
+        imagefilledrectangle($image, 0, 0, 319, 79, imagecolorallocate($image, 20, 120, 220));
+        imagepng($image, $source);
+
+        try {
+            $_SERVER['REQUEST_METHOD'] = 'POST';
+            $this->withValidCsrf();
+            $_FILES['file'] = [
+                'name' => 'brand.png',
+                'type' => 'image/png',
+                'tmp_name' => $source,
+                'error' => UPLOAD_ERR_OK,
+                'size' => filesize($source),
+            ];
+
+            $response = $this->callAndDecode(
+                $this->makeModule(
+                    settings: [SettingsService::HEADER_LOGO_KEY => $oldUrl],
+                    uploadsDir: $uploads,
+                ),
+                $this->makeApiPage('admin.header-logo', ['POST', 'DELETE']),
+            );
+
+            $this->assertTrue($response['customized']);
+            $this->assertMatchesRegularExpression(
+                '~\A/uploads/site-brand/header-logo-[a-f0-9]{16}\.(?:png|webp)\z~',
+                $response['url'],
+            );
+            $this->assertFileExists($directory.'/'.basename($response['url']));
+            $this->assertFileDoesNotExist($oldPath);
+            $this->assertSame(SettingsService::HEADER_LOGO_KEY, $this->writes[0][1][0]);
+            $this->assertSame($response['url'], $this->writes[0][1][1]);
+        } finally {
+            foreach (glob($directory.'/header-logo-*') ?: [] as $path) {
+                @unlink($path);
+            }
+            @rmdir($directory);
+            @rmdir($uploads);
+            @unlink($source);
+        }
+    }
+
+    public function testRemovingHeaderLogoRestoresTextFallbackAndDeletesManagedFile(): void
+    {
+        $uploads = sys_get_temp_dir().'/header-logo-reset-'.bin2hex(random_bytes(8));
+        $directory = $uploads.'/site-brand';
+        mkdir($directory, 0777, true);
+        $url = '/uploads/site-brand/header-logo-a83f42c1d92e176a.webp';
+        $path = $directory.'/header-logo-a83f42c1d92e176a.webp';
+        file_put_contents($path, 'old');
+
+        try {
+            $_SERVER['REQUEST_METHOD'] = 'DELETE';
+            $this->withValidCsrf();
+            $response = $this->callAndDecode(
+                $this->makeModule(
+                    settings: [SettingsService::HEADER_LOGO_KEY => $url],
+                    uploadsDir: $uploads,
+                ),
+                $this->makeApiPage('admin.header-logo', ['POST', 'DELETE']),
+            );
+
+            $this->assertSame(['customized' => false, 'url' => null], $response);
+            $this->assertSame([SettingsService::HEADER_LOGO_KEY, '', ''], $this->writes[0][1]);
+            $this->assertFileDoesNotExist($path);
+        } finally {
+            @unlink($path);
+            @rmdir($directory);
+            @rmdir($uploads);
+        }
+    }
+
     public static function invalidDisplayFormatProvider(): array
     {
         return [
@@ -2064,6 +2145,7 @@ final class AdminControllerTest extends TestCase
         $settings = (new Router($tree))->resolve('/api/v1/admin/settings');
         $registration = (new Router($tree))->resolve('/api/v1/admin/registration');
         $siteIcon = (new Router($tree))->resolve('/api/v1/admin/settings/site-icon');
+        $headerLogo = (new Router($tree))->resolve('/api/v1/admin/settings/header-logo');
         $setting = (new Router($tree))->resolve('/api/v1/admin/settings/site_name');
         $themes = (new Router($tree))->resolve('/api/v1/admin/themes');
         $users = (new Router($tree))->resolve('/api/v1/admin/users');
@@ -2086,6 +2168,7 @@ final class AdminControllerTest extends TestCase
         $this->assertSame('admin.settings', $settings['page']->action ?? null);
         $this->assertSame('admin.registration', $registration['page']->action ?? null);
         $this->assertSame('admin.site-icon', $siteIcon['page']->action ?? null);
+        $this->assertSame('admin.header-logo', $headerLogo['page']->action ?? null);
         $this->assertSame('admin.setting', $setting['page']->action ?? null);
         $this->assertSame(['key' => 'site_name'], $setting['params']);
         $this->assertSame('admin.themes', $themes['page']->action ?? null);

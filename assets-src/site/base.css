@@ -364,10 +364,22 @@ body {
 }
 
 .site-nav__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ui-space-2);
     color: var(--ui-text);
     font-weight: 600;
     font-size: 1.25rem;
     text-decoration: none;
+}
+
+.header-logo {
+    display: block;
+    inline-size: auto;
+    max-inline-size: min(45vw, 15rem);
+    block-size: auto;
+    max-block-size: 2.5rem;
+    object-fit: contain;
 }
 
 /* Mobile: brand, user actions, burger on one row; the menu drops below. */

@@ -17,15 +17,6 @@ Priorities:
 
 ## P2
 
-### Header logo upload
-
-Allow administrators to upload, replace, and remove a site header logo. Render
-the configured image inside the existing `header_logo` block: in
-`.navbar-brand` for the `bootstrap` theme and in the equivalent brand link for
-the `default` theme. Preserve the site-name text as the fallback when no logo
-is configured, validate the uploaded image through the existing admin file
-handling, and keep the logo responsive and accessible in both themes.
-
 ### GitHub-native administrator and developer documentation
 
 Create two maintained documentation entry points inside the repository: an

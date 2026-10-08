@@ -35,6 +35,10 @@ type SiteIcon = {
     ico: string;
     apple: string;
 };
+type HeaderLogo = {
+    customized: boolean;
+    url: string | null;
+};
 
 const EDITABLE_KEYS: EditableKey[] = ["site_name", "locale", "date_format", "time_format", "uploads.user_limit_mb"];
 const displayNames = new Intl.DisplayNames([getLocale()], { type: "language" });
@@ -105,6 +109,9 @@ export default function Settings() {
     });
     const [siteIconFile, setSiteIconFile] = useState<File | null>(null);
     const [resettingSiteIcon, setResettingSiteIcon] = useState(false);
+    const [headerLogo, setHeaderLogo] = useState<HeaderLogo>({ customized: false, url: null });
+    const [headerLogoFile, setHeaderLogoFile] = useState<File | null>(null);
+    const [removingHeaderLogo, setRemovingHeaderLogo] = useState(false);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -125,6 +132,9 @@ export default function Settings() {
                 const nextSettings = indexedSettings(items);
                 if (data.siteIcon) {
                     setSiteIcon(data.siteIcon);
+                }
+                if (data.headerLogo) {
+                    setHeaderLogo(data.headerLogo);
                 }
 
                 setSettings(nextSettings);
@@ -169,7 +179,7 @@ export default function Settings() {
     }
 
     function saveSettings() {
-        if (dirtyKeys.length === 0 && siteIconFile === null) {
+        if (dirtyKeys.length === 0 && siteIconFile === null && headerLogoFile === null) {
             return;
         }
 
@@ -212,9 +222,27 @@ export default function Settings() {
                     return response.json() as Promise<SiteIcon>;
                 });
             })();
+        const logoRequest = headerLogoFile === null
+            ? Promise.resolve<HeaderLogo | null>(null)
+            : (() => {
+                const body = new FormData();
+                body.append("file", headerLogoFile);
 
-        Promise.all([Promise.all(settingRequests), iconRequest])
-            .then(([savedItems, savedIcon]) => {
+                return fetch("/api/v1/admin/settings/header-logo", {
+                    method: "POST",
+                    headers: csrfHeaders(),
+                    body
+                }).then(async response => {
+                    if (!response.ok) {
+                        throw new Error(await response.text() || trans("js.admin.settings.header_logo_save_failed"));
+                    }
+
+                    return response.json() as Promise<HeaderLogo>;
+                });
+            })();
+
+        Promise.all([Promise.all(settingRequests), iconRequest, logoRequest])
+            .then(([savedItems, savedIcon, savedLogo]) => {
                 setSettings(current => ({
                     ...current,
                     ...Object.fromEntries(savedItems.map((setting: Setting) => [setting.key, setting]))
@@ -223,13 +251,17 @@ export default function Settings() {
                     setSiteIcon(savedIcon);
                     setSiteIconFile(null);
                 }
+                if (savedLogo) {
+                    setHeaderLogo(savedLogo);
+                    setHeaderLogoFile(null);
+                }
 
                 notifications.show({
                     color: "green",
                     message: trans("js.admin.settings.saved"),
                     autoClose: 2000
                 });
-                if (displayFormatChanged || savedIcon) {
+                if (displayFormatChanged || savedIcon || savedLogo) {
                     window.location.reload();
                 }
             })
@@ -275,6 +307,37 @@ export default function Settings() {
             .finally(() => setResettingSiteIcon(false));
     }
 
+    function removeHeaderLogo() {
+        setRemovingHeaderLogo(true);
+        fetch("/api/v1/admin/settings/header-logo", {
+            method: "DELETE",
+            headers: csrfHeaders()
+        })
+            .then(async response => {
+                if (!response.ok) {
+                    throw new Error(await response.text() || trans("js.admin.settings.header_logo_remove_failed"));
+                }
+
+                return response.json() as Promise<HeaderLogo>;
+            })
+            .then(logo => {
+                setHeaderLogo(logo);
+                setHeaderLogoFile(null);
+                notifications.show({
+                    color: "green",
+                    message: trans("js.admin.settings.header_logo_removed"),
+                    autoClose: 2000
+                });
+                window.location.reload();
+            })
+            .catch(err => notifications.show({
+                color: "red",
+                title: trans("js.admin.error"),
+                message: err.message || trans("js.admin.settings.header_logo_remove_failed")
+            }))
+            .finally(() => setRemovingHeaderLogo(false));
+    }
+
     return (
         <Stack>
             <Group justify="space-between" align="end">
@@ -298,7 +361,7 @@ export default function Settings() {
 
                     <Button
                         loading={saving}
-                        disabled={dirtyKeys.length === 0 && siteIconFile === null}
+                        disabled={dirtyKeys.length === 0 && siteIconFile === null && headerLogoFile === null}
                         leftSection={<IconDeviceFloppy size={16} />}
                         onClick={saveSettings}
                     >
@@ -359,6 +422,37 @@ export default function Settings() {
                     )}
                 />
             </SimpleGrid>
+
+            <Stack gap="xs">
+                <Text fw={500}>{trans("js.admin.settings.header_logo")}</Text>
+                <Group align="end" wrap="wrap">
+                    {headerLogo.url && (
+                        <img
+                            src={headerLogo.url}
+                            alt=""
+                            style={{ maxWidth: 240, maxHeight: 48, objectFit: "contain" }}
+                        />
+                    )}
+                    <FileInput
+                        label={trans("js.admin.settings.header_logo_file")}
+                        description={trans("js.admin.settings.header_logo_formats")}
+                        accept="image/png,image/jpeg,image/webp,image/gif"
+                        value={headerLogoFile}
+                        onChange={setHeaderLogoFile}
+                        clearable
+                        w={360}
+                    />
+                    <Button
+                        variant="default"
+                        leftSection={<IconRestore size={16} />}
+                        loading={removingHeaderLogo}
+                        disabled={!headerLogo.customized && headerLogoFile === null}
+                        onClick={removeHeaderLogo}
+                    >
+                        {trans("js.admin.settings.header_logo_remove")}
+                    </Button>
+                </Group>
+            </Stack>
 
             <Stack gap="xs">
                 <Text fw={500}>{trans("js.admin.settings.site_icon")}</Text>

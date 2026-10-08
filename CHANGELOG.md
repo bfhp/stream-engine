@@ -9,6 +9,9 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added an administrator-configurable header logo with validated image upload,
+  replacement and removal, responsive rendering in both bundled themes, and
+  the site name kept visible alongside it.
 - Added administrator-configurable site icons with automatic favicon and
   Apple Touch Icon generation, optional SVG support, and default restoration.
 - Added registration controls for closed, email-confirmed, and immediately

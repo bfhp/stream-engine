@@ -43,6 +43,7 @@ use StreamEngine\View\ViewModel;
 class AdminController extends AbstractController implements DashboardCardProviderInterface
 {
     private const int SITE_ICON_MAX_SIZE = 2 * 1024 * 1024;
+    private const int HEADER_LOGO_MAX_SIZE = 2 * 1024 * 1024;
 
     public static function pageActions(): array
     {
@@ -369,6 +370,9 @@ class AdminController extends AbstractController implements DashboardCardProvide
             case 'admin.site-icon':
                 $this->handleSiteIconRequest();
                 break;
+            case 'admin.header-logo':
+                $this->handleHeaderLogoRequest();
+                break;
             case 'admin.themes':
                 $this->handleThemesRequest();
                 break;
@@ -604,6 +608,18 @@ class AdminController extends AbstractController implements DashboardCardProvide
                 pattern: 'site-icon',
                 requestMethods: ['POST', 'DELETE'],
                 action: 'admin.site-icon',
+                accessRule: AccessService::ACCESS_ADMIN,
+            )
+        );
+
+        $headerLogoPageId = $pageTree->getMaxPageId();
+        $pageTree->add(
+            Page::api(
+                id: $headerLogoPageId,
+                parentId: $settingsPageId,
+                pattern: 'header-logo',
+                requestMethods: ['POST', 'DELETE'],
+                action: 'admin.header-logo',
                 accessRule: AccessService::ACCESS_ADMIN,
             )
         );
@@ -1246,6 +1262,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
                 static fn (array $setting): bool => ! str_starts_with($setting['key'], 'registration.'),
             )),
             'siteIcon' => $this->siteIconPayload(),
+            'headerLogo' => $this->headerLogoPayload(),
         ]);
     }
 
@@ -1435,6 +1452,112 @@ class AdminController extends AbstractController implements DashboardCardProvide
         foreach (['ico', 'png', 'svg'] as $extension) {
             @unlink($directory.'/'.$name.'.'.$extension);
         }
+    }
+
+    /** @throws ValidationException */
+    private function handleHeaderLogoRequest(): void
+    {
+        Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
+        $oldUrl = $this->settingsService->headerLogo();
+
+        if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+            $this->settingsRepository->setMany([SettingsService::HEADER_LOGO_KEY => '']);
+            $this->removeHeaderLogoFile($oldUrl);
+
+            echo Formatter::json(['customized' => false, 'url' => null]);
+
+            return;
+        }
+
+        $file = $_FILES['file'] ?? null;
+        if (! is_array($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            throw new ValidationException($this->tm->trans('admin.error.header_logo_upload'));
+        }
+        $size = (int) ($file['size'] ?? 0);
+        $tmpFile = is_string($file['tmp_name'] ?? null) ? $file['tmp_name'] : '';
+        if ($size <= 0 || $size > self::HEADER_LOGO_MAX_SIZE || ! is_file($tmpFile)) {
+            throw new ValidationException($this->tm->trans('admin.error.header_logo_size'));
+        }
+
+        $mime = (new MimeDetector())->detect($tmpFile);
+        $processedFile = $tmpFile;
+        try {
+            [$processedFile, $mime] = (new ImageProcessor($this->config->tempDir()))->process($tmpFile, $mime);
+            $extension = match ($mime) {
+                'image/gif' => 'gif',
+                'image/png' => 'png',
+                'image/webp' => 'webp',
+                default => throw new ValidationException($this->tm->trans('admin.error.header_logo_upload')),
+            };
+            $hash = substr(hash_file('sha256', $processedFile), 0, 16);
+            $name = 'header-logo-'.$hash.'.'.$extension;
+            $url = '/uploads/site-brand/'.$name;
+            $directory = $this->config->uploadsPath(dirname(__DIR__, 3)).'/site-brand';
+            if (! is_dir($directory) && ! mkdir($directory, 0777, true) && ! is_dir($directory)) {
+                throw new ValidationException($this->tm->trans('admin.error.header_logo_store'));
+            }
+
+            $path = $directory.'/'.$name;
+            $written = $this->writeUploadedFile($path, $processedFile, 'header-logo');
+            try {
+                $this->settingsRepository->setMany([SettingsService::HEADER_LOGO_KEY => $url]);
+            } catch (\Throwable $error) {
+                if ($written) {
+                    @unlink($path);
+                }
+                throw $error;
+            }
+        } finally {
+            if ($processedFile !== $tmpFile) {
+                @unlink($processedFile);
+            }
+        }
+
+        if ($oldUrl !== $url) {
+            $this->removeHeaderLogoFile($oldUrl);
+        }
+
+        echo Formatter::json(['customized' => true, 'url' => $url]);
+    }
+
+    /** @return array{customized:bool, url:?string} */
+    private function headerLogoPayload(): array
+    {
+        $url = $this->settingsService->headerLogo();
+
+        return ['customized' => $url !== null, 'url' => $url];
+    }
+
+    /** @throws ValidationException */
+    private function writeUploadedFile(string $path, string $source, string $temporaryPrefix): bool
+    {
+        if (is_file($path)) {
+            return false;
+        }
+        $temporary = tempnam(dirname($path), '.'.$temporaryPrefix.'-');
+        if ($temporary === false || ! copy($source, $temporary) || ! rename($temporary, $path)) {
+            if (is_string($temporary)) {
+                @unlink($temporary);
+            }
+            throw new ValidationException($this->tm->trans('admin.error.header_logo_store'));
+        }
+        chmod($path, 0644);
+
+        return true;
+    }
+
+    private function removeHeaderLogoFile(?string $url): void
+    {
+        if ($url === null || preg_match(
+            '~\A/uploads/site-brand/(header-logo-[a-f0-9]{16}\.(?:gif|png|webp))\z~',
+            $url,
+            $matches,
+        ) !== 1) {
+            return;
+        }
+
+        $directory = $this->config->uploadsPath(dirname(__DIR__, 3)).'/site-brand';
+        @unlink($directory.'/'.$matches[1]);
     }
 
     /**
@@ -2043,7 +2166,11 @@ class AdminController extends AbstractController implements DashboardCardProvide
             || strlen($key) > 100
             || ! preg_match('/\A[A-Za-z0-9_.-]+\z/', $key)
             || $key === ThemeService::ACTIVE_KEY
-            || in_array($key, [SettingsService::SITE_ICON_KEY, SettingsService::SITE_ICON_SVG_KEY], true)
+            || in_array($key, [
+                SettingsService::SITE_ICON_KEY,
+                SettingsService::SITE_ICON_SVG_KEY,
+                SettingsService::HEADER_LOGO_KEY,
+            ], true)
             || str_starts_with($key, 'registration.')
             || str_starts_with($key, 'theme.')) {
             throw new ValidationException($this->tm->trans('admin.error.setting_key'));

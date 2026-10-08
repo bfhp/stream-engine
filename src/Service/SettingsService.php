@@ -11,6 +11,7 @@ final class SettingsService
     public const array CRON_MODES = ['os', 'web', 'off'];
     public const string SITE_ICON_KEY = 'site_icon';
     public const string SITE_ICON_SVG_KEY = 'site_icon_svg';
+    public const string HEADER_LOGO_KEY = 'header_logo';
     public const string REGISTRATION_HONEYPOT_FIELD_KEY = 'registration.honeypot_field';
     public const string DEFAULT_REGISTRATION_HONEYPOT_FIELD = 'contact_reference';
     public const string REGISTRATION_MODE_KEY = 'registration.mode';
@@ -133,6 +134,16 @@ final class SettingsService
             'ico' => $base.'.ico',
             'apple' => $base.'.png',
         ];
+    }
+
+    public function headerLogo(): ?string
+    {
+        $url = $this->getString(self::HEADER_LOGO_KEY);
+
+        return preg_match(
+            '~\A/uploads/site-brand/header-logo-[a-f0-9]{16}\.(?:gif|png|webp)\z~',
+            $url,
+        ) === 1 ? $url : null;
     }
 
     public function set(string $key, string $value): void

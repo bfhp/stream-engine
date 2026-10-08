@@ -111,6 +111,19 @@ final class SettingsServiceTest extends TestCase
         self::assertNull($withoutSvg['svg']);
     }
 
+    public function testHeaderLogoOnlyResolvesManagedImageUrls(): void
+    {
+        $valid = '/uploads/site-brand/header-logo-a83f42c1d92e176a.webp';
+
+        self::assertNull($this->makeService()->headerLogo());
+        self::assertNull($this->makeService([
+            SettingsService::HEADER_LOGO_KEY => ['/uploads/other/logo.webp', 1],
+        ])->headerLogo());
+        self::assertSame($valid, $this->makeService([
+            SettingsService::HEADER_LOGO_KEY => [$valid, 1],
+        ])->headerLogo());
+    }
+
     /** @var list<string> every statement the service caused */
     private array $queries = [];
 
