@@ -1774,9 +1774,22 @@ final class ForumsControllerTest extends TestCase
         $expected = "> Аня писал(а):\n> Первая строка\n> Вторая & строка\n\nМой ответ & вывод";
 
         $this->assertSame($expected, $opening['quoteText']);
-        // The edit textarea is prefilled from the same computed string rather
-        // than transforming twice.
-        $this->assertSame($expected, $opening['editableContent']);
+        // The rich editor is initialized from the purified stored HTML,
+        // while quoting uses the readable plain-text snapshot above.
+        $this->assertSame($stored, $opening['editableContent']);
+    }
+
+    public function testRichTextBlockBoundariesSurviveInTheQuoteSnapshot(): void
+    {
+        $module = $this->makeModule($this->makeRoutingDb());
+
+        $text = $this->invoke(
+            $module,
+            'contentToQuoteText',
+            '<div><strong>Первая строка</strong></div><div>Вторая &amp; строка</div>',
+        );
+
+        $this->assertSame("Первая строка\nВторая & строка", $text);
     }
 
     /**
@@ -2556,7 +2569,7 @@ final class ForumsControllerTest extends TestCase
         $feedService = $this->createMock(FeedService::class);
         $feedService->expects($this->once())
             ->method('createComment')
-            ->with(self::TOPIC_ID, 'Ответ по теме', $this->anything())
+            ->with(self::TOPIC_ID, 'Ответ по теме', $this->anything(), true)
             ->willReturn($this->makeReply(910));
         $this->setProperty($module, 'feedService', $feedService);
 

@@ -924,6 +924,52 @@ final class FeedServiceTest extends TestCase
         $service->createComment(55, '   ', $user);
     }
 
+    public function testRichTextCommentKeepsFormattingAndPurifiesUnsafeHtml(): void
+    {
+        $service = $this->makeService(
+            new FeedRepository($this->createStub(PdoDatabase::class)),
+            $this->makeUrlGenerator(),
+        );
+
+        $content = '<div><strong>Ответ</strong> <script>alert(1)</script>'
+            .'<a href="javascript:alert(2)" onclick="alert(3)">ссылка</a></div>';
+        $normalized = (new ReflectionMethod(FeedService::class, 'normalizeCommentContent'))
+            ->invoke($service, $content, true);
+
+        $this->assertStringContainsString('<strong>Ответ</strong>', $normalized);
+        $this->assertStringNotContainsString('<script', $normalized);
+        $this->assertStringNotContainsString('javascript:', $normalized);
+        $this->assertStringNotContainsString('onclick', $normalized);
+    }
+
+    public function testRichTextCommentRejectsAnEmptyTrixDocument(): void
+    {
+        $service = $this->makeService(
+            new FeedRepository($this->createStub(PdoDatabase::class)),
+            $this->makeUrlGenerator(),
+        );
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage($this->trans('feed.comment_empty'));
+
+        (new ReflectionMethod(FeedService::class, 'normalizeCommentContent'))
+            ->invoke($service, '<div><br></div>', true);
+    }
+
+    public function testRichTextCommentRejectsContentRemovedEntirelyByPurification(): void
+    {
+        $service = $this->makeService(
+            new FeedRepository($this->createStub(PdoDatabase::class)),
+            $this->makeUrlGenerator(),
+        );
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage($this->trans('feed.comment_empty'));
+
+        (new ReflectionMethod(FeedService::class, 'normalizeCommentContent'))
+            ->invoke($service, '<script>alert(1)</script>', true);
+    }
+
     public function testRateFeedThrowsForbiddenExceptionForGuest(): void
     {
         $guest = new User(id: 0, email: '', role: AccessService::ROLE_USER);

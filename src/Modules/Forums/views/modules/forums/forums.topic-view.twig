@@ -321,7 +321,9 @@
                                 {% if post.canEdit %}
                                     <div class="forums-post__edit" hidden data-comment-edit-wrapper="{{ postFeed.id }}">
                                         <label class="ui-visually-hidden" for="comment-edit-{{ postFeed.id }}">{{ trans('view.forums.topic.view.30') }}</label>
-                                        <textarea id="comment-edit-{{ postFeed.id }}" class="ui-input" rows="4" maxlength="5000" data-comment-edit-textarea>{{ post.editableContent }}</textarea>
+                                        <input id="comment-edit-input-{{ postFeed.id }}" type="hidden" value="{{ post.editableContent|e('html_attr') }}" data-comment-edit-input>
+                                        <trix-editor id="comment-edit-{{ postFeed.id }}" input="comment-edit-input-{{ postFeed.id }}"
+                                                     class="trix-content" data-comment-edit-editor></trix-editor>
                                         <div class="ui-error" hidden data-comment-edit-error></div>
                                         <div class="forums-post__edit-actions">
                                             <button type="button" class="ui-button ui-button--primary ui-button--sm" data-comment-edit-save data-comment-id="{{ postFeed.id }}" data-parent-id="{{ feed.id }}">{{ trans('view.forums.topic.form.41') }}</button>
@@ -399,18 +401,15 @@
                           data-per-page="{{ pagination.perPage|default(20) }}"
                           data-topic-url="{{ feed.canonicalUrl }}">
                         <label class="ui-visually-hidden" for="forum-quick-reply-content">{{ trans('view.forums.topic.view.38') }}</label>
-                        {# Shown instead of the textarea by forums.ts's
-                           initQuickReplyPreview() - rendered client-side via
-                           renderCommentPreviewHtml(), close to but not
-                           byte-identical with what the server stores. #}
+                        {# Shown instead of the Trix editor by forums.ts's
+                           preview toggle. The server still runs the submitted
+                           HTML through HTMLPurifier before storing it. #}
                         <div class="content forums-post__content forums-reply__preview" hidden data-forum-quick-reply-preview></div>
-                        <textarea id="forum-quick-reply-content"
-                                  name="content"
-                                  class="ui-input"
-                                  rows="5"
-                                  maxlength="5000"
-                                  placeholder="{{ trans('view.forums.topic.view.39') }}"
-                                  required></textarea>
+                        <input id="forum-quick-reply-content" type="hidden" name="content" value="">
+                        <trix-editor id="forum-quick-reply-editor" input="forum-quick-reply-content"
+                                     class="trix-content forums-reply__editor"
+                                     placeholder="{{ trans('view.forums.topic.view.39') }}"
+                                     data-forum-quick-reply-editor></trix-editor>
                         <div class="ui-error" hidden data-forum-quick-reply-error></div>
                         <div class="forums-reply__actions">
                             <button type="submit" class="ui-button ui-button--primary"><i class="bi bi-send"></i><span>{{ trans('view.forums.topic.view.40') }}</span></button>

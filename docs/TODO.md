@@ -46,7 +46,6 @@ generator, hosted site, or build step.
 
 The topic and reply view MVP works. Deferred work:
 
-- rich-text quick reply and preview;
 - quoting into the reply form;
 - editing/deleting one's own reply through explicit UI;
 - ratings for individual posts;

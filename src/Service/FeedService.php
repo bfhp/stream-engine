@@ -430,7 +430,7 @@ class FeedService
      * @throws ForbiddenException
      * @throws ValidationException
      */
-    public function createComment(int $parentId, string $content, User $user): Feed
+    public function createComment(int $parentId, string $content, User $user, bool $richText = false): Feed
     {
         if ($user->isGuest()) {
             throw new ForbiddenException($this->tm->trans('feed.forbidden'));
@@ -441,7 +441,7 @@ class FeedService
             throw new NotFoundException($this->tm->trans('feed.parent_not_found'));
         }
 
-        $normalizedContent = $this->normalizeCommentContent($content);
+        $normalizedContent = $this->normalizeCommentContent($content, $richText);
         $this->mentionService?->validate($normalizedContent);
 
         $id = $this->repository->insert(
@@ -487,7 +487,7 @@ class FeedService
      * @throws ForbiddenException
      * @throws ValidationException
      */
-    public function editComment(int $commentId, string $content, User $user): Feed
+    public function editComment(int $commentId, string $content, User $user, bool $richText = false): Feed
     {
         if ($user->isGuest()) {
             throw new ForbiddenException($this->tm->trans('feed.forbidden'));
@@ -510,7 +510,7 @@ class FeedService
             throw new ForbiddenException($this->tm->trans('feed.comment_edit_window_expired'));
         }
 
-        $normalizedContent = $this->normalizeCommentContent($content);
+        $normalizedContent = $this->normalizeCommentContent($content, $richText);
         $this->mentionService?->validate($normalizedContent);
 
         $this->repository->update(
@@ -1642,9 +1642,25 @@ class FeedService
     /**
      * @throws ValidationException
      */
-    private function normalizeCommentContent(string $content): string
+    private function normalizeCommentContent(string $content, bool $richText = false): string
     {
         $content = trim($content);
+
+        if ($richText) {
+            $purifiedContent = $this->purifier->purify($content);
+            $plainText = trim(html_entity_decode(strip_tags($purifiedContent), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+            $hasAttachment = str_contains($purifiedContent, '<figure');
+
+            if ($plainText === '' && ! $hasAttachment) {
+                throw new ValidationException($this->tm->trans('feed.comment_empty'));
+            }
+
+            if (mb_strlen($plainText) > 5000) {
+                throw new ValidationException($this->tm->trans('feed.comment_too_long'));
+            }
+
+            return $purifiedContent;
+        }
 
         if ($content === '') {
             throw new ValidationException($this->tm->trans('feed.comment_empty'));

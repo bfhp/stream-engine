@@ -824,7 +824,7 @@ final class APIControllerFeedsTest extends TestCase
         $feedService = $this->feedServiceMock(['editComment']);
         $feedService->expects($this->once())
             ->method('editComment')
-            ->with(90, 'Исправлено', $this->callback(static fn (User $u): bool => $u->id === 1))
+            ->with(90, 'Исправлено', $this->callback(static fn (User $u): bool => $u->id === 1), false)
             ->willReturn($this->feed(id: 90, type: 'comment', title: null));
 
         $this->withToken('PATCH');
@@ -838,6 +838,23 @@ final class APIControllerFeedsTest extends TestCase
         self::assertSame(200, http_response_code());
     }
 
+    public function testEditingAForumReplyRequestsRichTextNormalization(): void
+    {
+        $feedService = $this->feedServiceMock(['editComment']);
+        $feedService->expects($this->once())
+            ->method('editComment')
+            ->with(90, '<div><strong>Исправлено</strong></div>', $this->anything(), true)
+            ->willReturn($this->feed(id: 90, type: 'comment', title: null));
+
+        $this->withToken('PATCH');
+        PhpInputStreamMock::register(json_encode([
+            'content' => '<div><strong>Исправлено</strong></div>',
+            'format' => 'html',
+        ]));
+
+        $this->capture($this->makeModule($feedService), $this->commentItemPage(), ['commentId' => 90]);
+    }
+
     public function testAnEmptyEditReachesTheServiceRatherThanBeingSwallowed(): void
     {
         // Ownership, the edit window and the empty-content rule all live in
@@ -846,7 +863,7 @@ final class APIControllerFeedsTest extends TestCase
         $feedService = $this->feedServiceMock(['editComment']);
         $feedService->expects($this->once())
             ->method('editComment')
-            ->with(90, '', $this->anything())
+            ->with(90, '', $this->anything(), false)
             ->willThrowException(new ValidationException('Comment is empty'));
 
         $this->withToken('PATCH');
@@ -886,7 +903,7 @@ final class APIControllerFeedsTest extends TestCase
         $feedService = $this->feedServiceMock(['editComment']);
         $feedService->expects($this->once())
             ->method('editComment')
-            ->with(90, $expected, $this->anything())
+            ->with(90, $expected, $this->anything(), false)
             ->willReturn($this->feed(id: 90, type: 'comment', title: null));
 
         $this->withToken('PATCH');

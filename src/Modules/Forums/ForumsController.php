@@ -818,9 +818,7 @@ class ForumsController extends AbstractController
      * its keep:
      * - `topic.content` is fed straight back into the hidden #topicBody input
      *   the <trix-editor> initializes from, i.e. the already-purified stored
-     *   HTML - *not* contentToEditableText()'s reverse transform, which
-     *   exists for the plain-text quick-reply textarea and would actively
-     *   corrupt rich text (it decodes entities and unwraps <br>).
+     *   HTML - the same representation the rich-text reply editors use.
      * - `attachments` are buildAttachmentRows()'s same rows the topic itself
      *   renders, plus each row's own upload id so the form can send the
      *   unchanged ones straight back as `attachments` (see
@@ -1056,8 +1054,8 @@ class ForumsController extends AbstractController
      * forums.topic-view: one topic, its opening post + a page of replies,
      * ordered oldest-first (classic forum numbering: opening post is #1).
      *
-     * MVP scope only, same posture as showTopicListPage()'s own docblock:
-     * this renders the topic and lets a member post a reply, submitted to
+     * This renders the topic and lets a member post a rich-text reply,
+     * submitted to
      * this module's own POST /api/v1/forums/{topicId}/reply action (see
      * handleTopicReplyRequest()) rather than the generic
      * /api/v1/comments/{parentId} every other comment form uses - needed so
@@ -1068,15 +1066,9 @@ class ForumsController extends AbstractController
      * viewer once they're on its last page (FeedService::markFeedAsRead() -
      * automatic, not a manual "Mark as read" button; see the call
      * site's own comment for why it's gated to the last page, not any page).
-     * Everything else the mockup shows as an *interactive*
-     * feature beyond that - per-post rating, editing/deleting your own
-     * post, quoting into a reply, "Preview" - is left as a
-     * disabled "Coming soon" stub in forums.topic-view.twig (mirroring the
-     * unread-tracking stubs forums.topic-list.twig already has) or omitted
-     * outright where even a disabled control would be misleading (e.g. no
-     * fabricated participant/post counts - same reasoning showTopicListPage()
-     * gives for not inventing pinned columns). See docs/TODO.md "Forums:
-     * topic-view interactive features" for the deferred list.
+     * Per-post rating, quote, edit/delete, preview and real counters are all
+     * populated below; upload garbage collection remains separate deferred
+     * maintenance work.
      *
      * @throws ForbiddenException
      */
@@ -1383,7 +1375,9 @@ class ForumsController extends AbstractController
      * button carries no time-limit hint) and excludes the topic's own
      * opening post entirely (see FeedService::deleteComment()'s own
      * docblock for why deleting that is a different, not-yet-built
-     * action). editableContent is only computed when canEdit is true, and
+     * action). editableContent is the stored, already-purified HTML when
+     * canEdit is true, ready to initialize the same Trix editor used by the
+     * quick-reply form, and
      * wasEdited/editedAtLabel/editedAtTitle reflect updatedAt having moved
      * past createdAt (i.e. an actual edit happened, not just the row being
      * freshly inserted, since insert() sets both to the same timestamp).
@@ -1391,10 +1385,9 @@ class ForumsController extends AbstractController
      * generic rating widget's initial star state (see
      * FeedService::getUserRatingValues()); ratingSum/ratingCount/
      * ratingAverage() are already on $feed itself, no extra field needed.
-     * quoteText is contentToEditableText()'s same reverse-transform, but
-     * computed for every post regardless of canEdit - "Quote" needs
-     * the quoted author's plain text too, not just your own; editableContent
-     * reuses the same computed string rather than transforming twice.
+     * quoteText is contentToQuoteText()'s plain-text reverse-transform,
+     * computed for every post regardless of canEdit - "Quote" needs the
+     * quoted author's readable text too, not just your own.
      *
      * authorSignature is the author's forum signature (users.signature, edited
      * in Modules\Profile's "Forum" tab) as display-ready HTML, repeated on
@@ -1506,11 +1499,9 @@ class ForumsController extends AbstractController
                 $editedAtTitle = $this->formatter->datetime($editedAt);
             }
 
-            // Same reverse-transform contentToEditableText() already does
-            // for the "Edit" textarea, but computed for every post (not
-            // just canEdit ones) - quoting into a reply needs the quoted
-            // author's plain text too, not just your own.
-            $plainContent = $this->contentToEditableText((string) $post->content);
+            // Quoting inserts a plain-text snapshot into a rich blockquote;
+            // the editable value itself remains the original purified HTML.
+            $plainContent = $this->contentToQuoteText((string) $post->content);
 
             $rows[] = [
                 'feed' => $post,
@@ -1524,7 +1515,7 @@ class ForumsController extends AbstractController
                 'authorSignature' => $authorSignatures[$post->ownerId] ?? '',
                 'canEdit' => $canEdit,
                 'canDelete' => $canDelete,
-                'editableContent' => $canEdit ? $plainContent : null,
+                'editableContent' => $canEdit ? (string) $post->content : null,
                 'quoteText' => $plainContent,
                 'wasEdited' => $wasEdited,
                 'editedAtLabel' => $editedAtLabel,
@@ -1543,28 +1534,20 @@ class ForumsController extends AbstractController
     }
 
     /**
-     * Reverses FeedService::normalizeCommentContent()'s
-     * htmlspecialchars+nl2br+purify transform (plus, since quoting shipped,
-     * FeedService::renderQuoteBlock()'s <blockquote> markup) well enough to
-     * prefill the "Edit" textarea - or feed "Quote" quoting
-     * someone else's post - with something close to what the author
-     * originally typed: any quote block(s) at the very start become
+     * Builds the plain-text snapshot embedded by the "Quote" action from
+     * stored, purified HTML. Legacy leading comment-quote blocks become
      * "> Author wrote: / > ..." lines again (the exact shape
      * FeedService::extractLeadingQuotes() expects on the way back in, so
-     * editing or re-quoting an already-quoted post round-trips instead of
-     * doubling up the markup), then <br> variants become newlines and
-     * entities are decoded back (&amp; -> &, etc). Not a byte-perfect
-     * inverse (the purifier could in principle rewrite something on the way
-     * in), but the quick-reply form is plain-text input to begin with - no
-     * rich-text editor exists yet (see docs/TODO.md) - so round-tripping
-     * through this is enough for an edit/quote box, not a rich-text
-     * re-render. Both <br> replacements below also eat the one literal "\n"
+     * re-quoting an already-quoted post remains readable), then <br>
+     * variants become newlines, remaining tags are stripped and entities are
+     * decoded back (&amp; -> &, etc). Both <br> replacements below also eat
+     * the one literal "\n"
      * PHP's nl2br() always leaves right after the tag it inserts (it
      * inserts <br> *before* the newline, not instead of it) - matching only
      * the tag itself would leave a doubled blank line per original line
      * break once it's converted back.
      */
-    private function contentToEditableText(string $content): string
+    private function contentToQuoteText(string $content): string
     {
         $quoteAuthorMarker = '__QUOTE_AUTHOR__';
         $quoteHeaderPattern = preg_quote(
@@ -1595,8 +1578,17 @@ class ForumsController extends AbstractController
         ) ?? $content;
 
         $withNewlines = preg_replace('~<br\s*/?>\r?\n?~i', "\n", $content) ?? $content;
+        $withNewlines = preg_replace(
+            '~</(?:div|p|li|h[1-6]|blockquote)>~i',
+            "\n",
+            $withNewlines,
+        ) ?? $withNewlines;
 
-        return html_entity_decode($withNewlines, ENT_QUOTES, 'UTF-8');
+        $plainText = html_entity_decode(strip_tags($withNewlines), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $plainText = preg_replace("~[ \t]+\n~", "\n", $plainText) ?? $plainText;
+        $plainText = preg_replace("~\n{3,}~", "\n\n", $plainText) ?? $plainText;
+
+        return trim($plainText);
     }
 
     /**
@@ -1873,7 +1865,8 @@ class ForumsController extends AbstractController
         $comment = $this->feedService->createComment(
             parentId: $topicId,
             content: trim((string) ($input['content'] ?? '')),
-            user: $this->context->user
+            user: $this->context->user,
+            richText: true,
         );
 
         $this->notifyTopicFollowers($topicId, $this->context->user);

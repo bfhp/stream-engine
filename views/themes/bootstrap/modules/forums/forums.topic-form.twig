@@ -60,10 +60,7 @@
                 {# Trix initializes its own document from this input's value, so
                    prefilling it is the whole "load the existing post into the
                    editor" step. The value is the stored, already-purified HTML
-                   as-is - deliberately *not* run through
-                   ForumsController::contentToEditableText(), which exists for
-                   the plain-text quick-reply textarea and would mangle rich
-                   text (see buildTopicFormViewModel()'s own note). #}
+               as-is, matching the topic-view rich-text reply editors. #}
                 <input id="topicBody" type="hidden" name="content" value="{{ isEdit ? topic.content : '' }}">
                 <trix-editor id="topicBodyEditor" input="topicBody" class="trix-content"
                              placeholder="{{ trans('view.forums.topic.form.07') }}" data-forum-topic-editor></trix-editor>

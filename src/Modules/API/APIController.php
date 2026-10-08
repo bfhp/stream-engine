@@ -305,7 +305,8 @@ class APIController extends AbstractController
             $comment = $this->feedService->editComment(
                 commentId: $commentId,
                 content: trim((string) $content),
-                user: $this->context->user
+                user: $this->context->user,
+                richText: ($input['format'] ?? null) === 'html',
             );
 
             echo Formatter::json($comment);

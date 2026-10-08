@@ -20,10 +20,7 @@ import { ui } from "../shared/ui";
 import { bytesToLabel } from "../shared/bytes";
 import { getApiErrorMessage } from "../shared/api-errors";
 import { trans, transChoiceWithCount } from "../shared/i18n";
-import {
-    buildQuoteBlock,
-    renderCommentPreviewHtml,
-} from "../shared/comment-quotes";
+import { renderCommentQuoteBlockHtml } from "../shared/comment-quotes";
 import {
     PollApiResponse,
     applyPollResponse,
@@ -48,26 +45,25 @@ function hideFieldError(el: HTMLElement | null | undefined) {
     el.hidden = true;
 }
 
-// forum-quick-reply-form's own preview toggle: swaps the textarea for
-// a rendered preview of its current content (renderCommentPreviewHtml())
+// forum-quick-reply-form's own preview toggle: swaps the Trix editor for
+// a rendered preview of its current HTML
 // and back, flipping the button's icon/label each time. Exported as a
 // closure returning showEditor() so the submit handler can force the form
-// back into edit mode first - a hidden `required` textarea (display:none
-// while the preview is showing) would otherwise silently block HTML5
-// constraint validation with no visible error.
+// back into edit mode first.
 function initQuickReplyPreview(form: HTMLFormElement): () => void {
     const button = form.querySelector("[data-forum-quick-reply-preview-toggle]") as HTMLButtonElement | null;
-    const textarea = document.getElementById("forum-quick-reply-content") as HTMLTextAreaElement | null;
+    const contentInput = document.getElementById("forum-quick-reply-content") as HTMLInputElement | null;
+    const editor = document.getElementById("forum-quick-reply-editor") as (HTMLElement & { editor?: any }) | null;
     const previewEl = form.querySelector("[data-forum-quick-reply-preview]") as HTMLElement | null;
 
     const showEditor = () => {
-        if (!button || !textarea || !previewEl) return;
+        if (!button || !contentInput || !editor || !previewEl) return;
         previewEl.hidden = true;
-        textarea.hidden = false;
+        editor.hidden = false;
         button.innerHTML = `<i class="bi bi-eye"></i><span>${trans("js.forums.preview")}</span>`;
     };
 
-    if (!button || !textarea || !previewEl) return showEditor;
+    if (!button || !contentInput || !editor || !previewEl) return showEditor;
 
     button.addEventListener("click", () => {
         const isPreviewing = !previewEl.hidden;
@@ -77,15 +73,16 @@ function initQuickReplyPreview(form: HTMLFormElement): () => void {
             return;
         }
 
-        const content = textarea.value.trim();
-        if (content) {
-            previewEl.innerHTML = renderCommentPreviewHtml(content);
+        const content = contentInput.value.trim();
+        const plainText = editor.editor?.getDocument().toString().trim() || "";
+        if (plainText || content.includes("<figure")) {
+            previewEl.innerHTML = content;
             delete previewEl.dataset.empty;
         } else {
             previewEl.textContent = trans("js.forums.content_empty");
             previewEl.dataset.empty = "1";
         }
-        textarea.hidden = true;
+        editor.hidden = true;
         previewEl.hidden = false;
         button.innerHTML = `<i class="bi bi-pencil"></i><span>${trans("js.common.edit")}</span>`;
     });
@@ -104,13 +101,15 @@ function initQuickReplyForm() {
 
         showEditor();
 
-        const textarea = document.getElementById("forum-quick-reply-content") as HTMLTextAreaElement | null;
+        const contentInput = document.getElementById("forum-quick-reply-content") as HTMLInputElement | null;
+        const editor = document.getElementById("forum-quick-reply-editor") as (HTMLElement & { editor?: any }) | null;
         const errorEl = form.querySelector("[data-forum-quick-reply-error]") as HTMLElement | null;
-        const content = (textarea?.value || "").trim();
+        const content = (contentInput?.value || "").trim();
+        const plainText = editor?.editor?.getDocument().toString().trim() || "";
 
         hideFieldError(errorEl);
 
-        if (!content) {
+        if (!plainText && !content.includes("<figure")) {
             showFieldError(errorEl, trans("js.forums.reply_required"));
             return;
         }
@@ -156,33 +155,23 @@ function initQuickReplyForm() {
     });
 }
 
-// Prepends "> " to every line of a quoted post's plain text - the classic
-// forum-quote look - and returns it together with a localized quote header
-// header line, ready to prepend to whatever's already in the reply box.
+// Inserts the post snapshot as a rich blockquote at the start of the reply.
 function insertQuote(button: HTMLElement) {
-    const textarea = document.getElementById("forum-quick-reply-content") as HTMLTextAreaElement | null;
-    // No textarea to insert into means the reply form isn't on the page at
+    const editor = document.getElementById("forum-quick-reply-editor") as (HTMLElement & { editor?: any }) | null;
+    // No editor to insert into means the reply form isn't on the page at
     // all (shouldn't happen - the button only renders for !user.isGuest,
     // same gate the quick-reply card itself uses - but bail quietly rather
     // than throw if that ever drifts).
-    if (!textarea) return;
+    if (!editor?.editor) return;
 
     const author = button.dataset.quoteAuthor || "";
     const content = button.dataset.quoteContent || "";
-    const block = buildQuoteBlock(author, content);
-
-    // Always goes at the very start, ahead of anything already typed
-    // (including an earlier quote, if this is a second one) - the backend
-    // parser (FeedService::extractLeadingQuotes()) only recognizes quote
-    // blocks stacked at the beginning of the message, not scattered
-    // through it, so this has to match. Caret lands right after the new
-    // block so the reply gets typed above whatever was already there,
-    // rather than at the very end of a possibly much longer message.
-    textarea.value = block + textarea.value;
+    const block = renderCommentQuoteBlockHtml(author, content) + "<div><br></div>";
+    editor.editor.setSelectedRange([0, 0]);
+    editor.editor.insertHTML(block);
 
     document.getElementById("reply")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    textarea.focus();
-    textarea.setSelectionRange(block.length, block.length);
+    editor.focus();
 }
 
 function initPostActions() {
@@ -229,20 +218,22 @@ function initPostActions() {
             const commentId = editSave.dataset.commentId;
             const topicId = editSave.dataset.parentId;
             const wrapper = postsContainer.querySelector(`[data-comment-edit-wrapper="${commentId}"]`);
-            const textarea = wrapper?.querySelector("[data-comment-edit-textarea]") as HTMLTextAreaElement | null;
+            const contentInput = wrapper?.querySelector("[data-comment-edit-input]") as HTMLInputElement | null;
+            const editor = wrapper?.querySelector("[data-comment-edit-editor]") as (HTMLElement & { editor?: any }) | null;
             const errorEl = wrapper?.querySelector("[data-comment-edit-error]") as HTMLElement | null;
-            const content = (textarea?.value || "").trim();
+            const content = (contentInput?.value || "").trim();
+            const plainText = editor?.editor?.getDocument().toString().trim() || "";
 
             hideFieldError(errorEl);
 
-            if (!content) {
+            if (!plainText && !content.includes("<figure")) {
                 showFieldError(errorEl, trans("js.forums.message_required"));
                 return;
             }
 
             editSave.disabled = true;
 
-            cms.api(`/api/v1/comments/${topicId}/${commentId}`, { method: "PATCH", data: { content } })
+            cms.api(`/api/v1/comments/${topicId}/${commentId}`, { method: "PATCH", data: { content, format: "html" } })
                 .then(() => {
                     const postEl = editSave.closest('li[id^="post-"]');
                     if (postEl) window.location.hash = postEl.id;
@@ -278,6 +269,16 @@ function initPostActions() {
             });
         }
     });
+}
+
+function initForumReplyEditors() {
+    document.querySelectorAll<HTMLElement>("[data-forum-quick-reply-editor], [data-comment-edit-editor]")
+        .forEach((editor) => {
+            // Topic attachments have a dedicated upload flow. Replies do not,
+            // so reject local Trix attachments instead of serializing a
+            // temporary blob/data URL that the server would strip.
+            editor.addEventListener("trix-file-accept", (event) => event.preventDefault());
+        });
 }
 
 function initMarkTopicRead() {
@@ -1109,6 +1110,7 @@ function initTopicForm() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+    initForumReplyEditors();
     initQuickReplyForm();
     initPostActions();
     initMarkTopicRead();
