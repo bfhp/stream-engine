@@ -7,6 +7,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.5] - 2026-10-08
+
 ### Added
 
 - Added an administrator-configurable header logo with validated image upload,

@@ -1,6 +1,6 @@
 {
     "format": 1,
-    "release": "0.4.4",
+    "release": "0.4.5",
     "schema": "schema.sql",
     "schema_checksum": "2b40ff49dd48f17753051078c2f3314f20df640541eed38836417d3ddcefa575",
     "migrations": [
