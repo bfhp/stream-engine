@@ -40,6 +40,7 @@ const CONTENT_PARSE_LIMIT = 5000;
 
     const resultsContainer = document.getElementById('searchResults');
     if (!resultsContainer) return;
+    const results = resultsContainer;
 
     let currentController: AbortController | null = null;
     let nextCursor: string | null = null;
@@ -54,7 +55,7 @@ const CONTENT_PARSE_LIMIT = 5000;
         ?? fallbackMoreButton();
     moreButton.textContent = trans('js.common.load_more');
     moreButton.addEventListener('click', () => {
-        void performSearch(resultsContainer.dataset.search || '', nextCursor);
+        void performSearch(results.dataset.search || '', nextCursor);
     });
 
     function fallbackStatus(): HTMLElement {
@@ -62,7 +63,7 @@ const CONTENT_PARSE_LIMIT = 5000;
         status.setAttribute('role', 'status');
         status.setAttribute('aria-live', 'polite');
         status.hidden = true;
-        resultsContainer!.after(status);
+        results.after(status);
         return status;
     }
 
@@ -80,7 +81,7 @@ const CONTENT_PARSE_LIMIT = 5000;
         const message = document.createElement('div');
         message.className = 'search-message';
         message.textContent = text;
-        resultsContainer!.replaceChildren(message);
+        results.replaceChildren(message);
     }
 
     async function performSearch(raw: string, cursor: string | null = null): Promise<void> {
@@ -102,9 +103,9 @@ const CONTENT_PARSE_LIMIT = 5000;
         loading = true;
         moreButton.disabled = true;
         moreButton.textContent = trans('js.common.loading_dots');
-        resultsContainer.setAttribute('aria-busy', 'true');
+        results.setAttribute('aria-busy', 'true');
         if (!cursor) {
-            resultsContainer.innerHTML = '';
+            results.innerHTML = '';
             moreButton.hidden = true;
         }
         loadingMessage.textContent = trans(cursor ? 'js.search.loading_more' : 'js.search.searching');
@@ -164,7 +165,7 @@ const CONTENT_PARSE_LIMIT = 5000;
             loadingStatus.hidden = true;
             loadingMessage.textContent = '';
             loading = false;
-            resultsContainer.setAttribute('aria-busy', 'false');
+            results.setAttribute('aria-busy', 'false');
             moreButton.disabled = false;
             moreButton.textContent = trans(failed ? 'js.search.retry' : 'js.common.load_more');
             if (failed) {
@@ -196,9 +197,9 @@ const CONTENT_PARSE_LIMIT = 5000;
             .filter((row): row is HTMLElement => row !== null);
 
         if (append) {
-            resultsContainer.append(...rows);
+            results.append(...rows);
         } else {
-            resultsContainer.replaceChildren(...rows);
+            results.replaceChildren(...rows);
         }
     }
 

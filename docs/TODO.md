@@ -1,7 +1,7 @@
 # TODO
 
 The project's current backlog. Last reviewed against the code and tests on
-**October 3, 2026**.
+**October 8, 2026**.
 
 This file contains only unfinished work and decisions that have been made but
 not yet implemented. Completed work is not recorded here; Git provides that
@@ -41,22 +41,6 @@ generator, hosted site, or build step.
 - Consider the task complete when a new administrator can operate a clean
   installation and a new developer can run, change, test, and extend it using
   only the repository documentation, with every internal link checked.
-
-### TypeScript strictness
-
-The current `tsc` check is green, but the project is not in strict mode.
-
-First, expand the actual scope of `npm run typecheck`: tests in
-`tests/Site/js/`, as well as `vite-build-data.ts`, `vite.config.ts`, and
-`vitest.config.ts`, are currently excluded. Include them in the main
-`tsconfig.json` or check them with a separate configuration while keeping the
-shared script green.
-
-1. Enable `strictNullChecks` incrementally, starting with DOM-heavy modules.
-2. Then address `noImplicitAny`; local declarations are needed for
-   `@bfhp/astro-natal-chart` and the Bootstrap subpath in use.
-3. Do not conceal the migration with large numbers of `@ts-expect-error`
-   comments without individual explanations.
 
 ## File maintenance rule
 

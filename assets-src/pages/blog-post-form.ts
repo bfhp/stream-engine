@@ -38,6 +38,7 @@ type TrixEditorElement = HTMLElement & {
     const isEdit = method === 'PATCH';
 
     if (!apiUrl || !uploadsApiUrl) return;
+    const postsApiUrl = apiUrl;
 
     const cms = window.CMS;
 
@@ -67,6 +68,8 @@ type TrixEditorElement = HTMLElement & {
 
     if (!titleInput || !contentInput || !contentEditor || !visibilitySelect || !btnPublish || !btnDraft) return;
 
+    const editorElement = contentEditor;
+
     let tags: string[] = [];
     if (isEdit && form.dataset.initialTags) {
         try {
@@ -78,7 +81,7 @@ type TrixEditorElement = HTMLElement & {
     }
 
     function editorPlainText(): string {
-        return (contentEditor.editor ? contentEditor.editor.getDocument().toString() : contentEditor.textContent || '').trim();
+        return (editorElement.editor ? editorElement.editor.getDocument().toString() : editorElement.textContent || '').trim();
     }
 
     /* ---------- word count ---------- */
@@ -88,7 +91,7 @@ type TrixEditorElement = HTMLElement & {
         const words = text ? text.split(/\s+/).filter(Boolean).length : 0;
         wordCountEl.textContent = transChoiceWithCount('js.common.word', words);
     };
-    contentEditor.addEventListener('trix-change', updateWordCount);
+    editorElement.addEventListener('trix-change', updateWordCount);
     updateWordCount();
 
     const setError = (message = '') => {
@@ -97,7 +100,7 @@ type TrixEditorElement = HTMLElement & {
     };
 
     /* ---------- attachments ---------- */
-    contentEditor.addEventListener('trix-attachment-add', (event) => {
+    editorElement.addEventListener('trix-attachment-add', (event) => {
         const attachment = (event as TrixAttachmentEvent).attachment;
         if (!attachment.file) return;
 
@@ -118,7 +121,7 @@ type TrixEditorElement = HTMLElement & {
     // own option label - see the twig) says community members instead of
     // friends. Everything else about the form is identical either way.
     const isCommunityPost = form.dataset.visibilityContext === 'community';
-    const VISIBILITY_NOTES = {
+    const VISIBILITY_NOTES: Record<'public' | 'members', readonly [string, string]> = {
         public: ['bi-globe', trans('js.blog.visibility_public')],
         members: isCommunityPost
             ? ['bi-people', trans('js.blog.visibility_community')]
@@ -246,7 +249,7 @@ type TrixEditorElement = HTMLElement & {
 
         if (!editorPlainText() && !hasAttachment) {
             setError(trans('js.blog.content_required'));
-            contentEditor.focus();
+            editorElement.focus();
             return;
         }
 
@@ -257,7 +260,7 @@ type TrixEditorElement = HTMLElement & {
         button.innerHTML = `<span class="ui-spinner" aria-hidden="true"></span> ${trans('js.common.saving')}`;
 
         try {
-            const post = await cms.api<{ canonicalUrl?: string | null }>(apiUrl, {
+            const post = await cms.api<{ canonicalUrl?: string | null }>(postsApiUrl, {
                 method,
                 data: {
                     title,

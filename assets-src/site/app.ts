@@ -104,14 +104,18 @@ const CMS = (() => {
     /* ===============================
        Toast
     =============================== */
-    function toastMessage({ message, type = "success", html = false }) {
+    function toastMessage({ message, type = "success", html = false }: {
+        message: unknown;
+        type?: string;
+        html?: boolean;
+    }): void {
         const toastEl = document.getElementById('globalToast');
         const toastBody = document.getElementById('globalToastBody');
 
         if (!toastEl || !toastBody) return;
 
         if (html) {
-            toastBody.innerHTML = message;
+            toastBody.innerHTML = String(message ?? "");
         } else {
             toastBody.textContent = String(message ?? "");
         }
@@ -123,7 +127,12 @@ const CMS = (() => {
     /* ===============================
        Confirm Modal
     =============================== */
-    function confirm({ title, message, onConfirm, onDismiss = null }) {
+    function confirm({ title, message, onConfirm, onDismiss }: {
+        title: string;
+        message: string;
+        onConfirm: () => void;
+        onDismiss?: () => void;
+    }): void {
         const modalEl = document.getElementById('globalConfirmModal');
         const okBtn = document.getElementById('globalConfirmOk');
         const titleEl = document.getElementById('globalConfirmTitle');
@@ -185,7 +194,7 @@ const CMS = (() => {
     };
 
     function getShareIcon(name: string): string {
-        const icon = shareIcons[name];
+        const icon = shareIcons[name as keyof typeof shareIcons];
         if (!icon) return "";
 
         return `<svg viewBox="0 0 24 24" fill="currentColor">

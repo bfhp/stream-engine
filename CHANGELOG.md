@@ -9,6 +9,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- TypeScript checking now runs in strict mode and covers the browser sources,
+  JavaScript tests, and Vite/Vitest configuration files together.
 - Feed view counters now count each member or guest at most once per feed in a
   24-hour window, ignore known crawlers, and remain independent from read/unread
   state.

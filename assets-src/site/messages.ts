@@ -1525,16 +1525,17 @@ export function initMessages() {
 
     function renderGroupDrawer() {
         if (!activeDetail) return;
+        const detail = activeDetail;
 
-        groupTitleEl.textContent = activeDetail.title;
-        groupCountEl.textContent = transChoiceWithCount('js.common.participant', activeDetail.participants.length);
-        groupAddToggleBtn.hidden = !activeDetail.can_manage_participants;
-        if (!activeDetail.can_manage_participants) {
+        groupTitleEl.textContent = detail.title;
+        groupCountEl.textContent = transChoiceWithCount('js.common.participant', detail.participants.length);
+        groupAddToggleBtn.hidden = !detail.can_manage_participants;
+        if (!detail.can_manage_participants) {
             groupAddOpen = false;
             groupAddPanel.hidden = true;
         }
 
-        groupMembersEl.innerHTML = activeDetail.participants.map((p) => {
+        groupMembersEl.innerHTML = detail.participants.map((p) => {
             const isMe = p.id === currentUserId;
             return `
                 <div class="msgr-member-row">
@@ -1542,7 +1543,7 @@ export function initMessages() {
                     <div class="msgr-member-body">
                         <div class="msgr-member-name">${cms.escapeHtml(p.displayName)}${isMe ? trans('js.messenger.you_parenthetical') : ''}</div>
                     </div>
-                    ${!isMe && activeDetail.can_manage_participants ? `<button type="button" class="msgr-member-remove" data-remove-member="${p.id}" title="${trans('js.common.remove')}"><i class="bi bi-x-lg"></i></button>` : ''}
+                    ${!isMe && detail.can_manage_participants ? `<button type="button" class="msgr-member-remove" data-remove-member="${p.id}" title="${trans('js.common.remove')}"><i class="bi bi-x-lg"></i></button>` : ''}
                 </div>`;
         }).join('');
     }

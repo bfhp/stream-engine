@@ -11,7 +11,6 @@ import { trans } from "../shared/i18n";
 import { formatDateValue } from "../shared/date-time-format";
 import { ui } from "../shared/ui";
 
-// @ts-ignore
 const cms = window.CMS;
 
 /* ===============================
@@ -409,6 +408,8 @@ function initCommunityCreateForm() {
     const uploadsApiUrl = form.dataset.uploadsApiUrl;
 
     if (!apiUrl || !uploadsApiUrl) return;
+    const communityForm = form;
+    const communityApiUrl = apiUrl;
 
     const nameInput = document.getElementById('communityName') as HTMLInputElement | null;
     const descriptionInput = document.getElementById('communityDescription') as HTMLTextAreaElement | null;
@@ -443,7 +444,7 @@ function initCommunityCreateForm() {
             return;
         }
 
-        const membershipType = form.querySelector<HTMLInputElement>('input[name="membershipType"]:checked')?.value || 'open';
+        const membershipType = communityForm.querySelector<HTMLInputElement>('input[name="membershipType"]:checked')?.value || 'open';
 
         setError();
         btnCreate!.disabled = true;
@@ -451,7 +452,7 @@ function initCommunityCreateForm() {
         btnCreate!.innerHTML = `<span class="ui-spinner" aria-hidden="true"></span> ${trans('js.users.creating')}`;
 
         try {
-            const community = await cms.api<{ redirectUrl?: string }>(apiUrl, {
+            const community = await cms.api<{ redirectUrl?: string }>(communityApiUrl, {
                 method: 'POST',
                 data: {
                     name,
@@ -504,6 +505,8 @@ function initCommunityManageSettingsForm() {
     const uploadsApiUrl = form.dataset.uploadsApiUrl;
 
     if (!apiUrl || !uploadsApiUrl) return;
+    const settingsForm = form;
+    const settingsApiUrl = apiUrl;
 
     const nameInput = document.getElementById('communityManageName') as HTMLInputElement | null;
     const descriptionInput = document.getElementById('communityManageDescription') as HTMLTextAreaElement | null;
@@ -539,8 +542,8 @@ function initCommunityManageSettingsForm() {
             return;
         }
 
-        const membershipType = form.querySelector<HTMLInputElement>('input[name="membershipType"]:checked')?.value
-            || form.dataset.membershipTypeOpen
+        const membershipType = settingsForm.querySelector<HTMLInputElement>('input[name="membershipType"]:checked')?.value
+            || settingsForm.dataset.membershipTypeOpen
             || 'open';
 
         setStatus();
@@ -554,7 +557,7 @@ function initCommunityManageSettingsForm() {
         let awaitingConfirmation = false;
 
         try {
-            const result = await cms.api<CommunityManageSettingsPayload>(apiUrl, {
+            const result = await cms.api<CommunityManageSettingsPayload>(settingsApiUrl, {
                 method: 'PATCH',
                 data: {
                     name,
@@ -598,7 +601,7 @@ function initCommunityManageSettingsForm() {
             }
 
             if (typeof result.membershipType === 'string') {
-                form.dataset.currentMembershipType = result.membershipType;
+                settingsForm.dataset.currentMembershipType = result.membershipType;
             }
 
             setStatus(trans('js.common.saved'));

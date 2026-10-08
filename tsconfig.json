@@ -10,17 +10,8 @@
         "so nothing here had ever actually been checked. With that fixed the",
         "tree came out clean, which is why this is worth keeping green.",
         "",
-        "Not `strict` yet, but not nothing either. Measured flag by flag, these",
-        "four cost 0 errors (or two one-line fixes) and are on; the rest is real",
-        "work and stays off for now:",
-        "",
-        "  noImplicitThis, strictFunctionTypes, noImplicitReturns  0 errors",
-        "  noUnusedLocals                                          2, both fixed",
-        "  strictNullChecks                                       21",
-        "  noImplicitAny                                          30",
-        "  strict (all of it)                                     37",
-        "",
-        "Remaining strictness work is tracked in docs/TODO.md."
+        "The application sources, JavaScript tests, and Vite/Vitest build",
+        "configuration are all checked together in strict mode."
     ],
     "compilerOptions": {
         "target": "ES2020",
@@ -39,17 +30,20 @@
         ],
         "jsx": "react-jsx",
         "noEmit": true,
+        "allowImportingTsExtensions": true,
         "resolveJsonModule": true,
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
         "skipLibCheck": true,
-        "noImplicitThis": true,
-        "strictFunctionTypes": true,
+        "strict": true,
         "noImplicitReturns": true,
         "noUnusedLocals": true
     },
     "include": [
         "assets-src",
-        "tests/js"
+        "tests",
+        "vite-build-data.ts",
+        "vite.config.ts",
+        "vitest.config.ts"
     ]
 }

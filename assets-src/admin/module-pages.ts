@@ -7,7 +7,7 @@ export type AdminPage = {
     load: () => Promise<{ default: ComponentType }>;
 };
 
-export type AdminPageModules = Record<string, { default: AdminPage[] }>;
+export type AdminPageModules = Record<string, { default: unknown }>;
 
 export type AdminRoute = Pick<AdminPage, "path" | "labelKey"> & {
     Component: LazyExoticComponent<ComponentType>;
@@ -22,7 +22,7 @@ export function collectModulePages(modules: AdminPageModules): AdminPage[] {
     const pages: AdminPage[] = [];
     const paths = new Set<string>();
     for (const source of Object.keys(modules).sort()) {
-        const entries = modules[source].default;
+        const entries = modules[source]?.default;
         if (!Array.isArray(entries)) throw new Error(`Admin module ${source} must export a page list`);
         for (const page of entries) {
             if (!page || typeof page.path !== "string" || !/^\/[a-z0-9-]+(?:\/[a-z0-9-]+)*$/.test(page.path)

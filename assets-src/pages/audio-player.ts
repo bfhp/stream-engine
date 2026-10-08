@@ -46,6 +46,13 @@ export function initAudioPlayers() {
 
         if (!audio || !toggle || !toggleIcon || !seek || !title) return;
 
+        // Preserve the checked DOM contract inside the nested callbacks below.
+        const playerAudio = audio;
+        const playerToggle = toggle;
+        const playerToggleIcon = toggleIcon;
+        const playerSeek = seek;
+        const playerTitle = title;
+
         let activeIndex = 0;
         let isSeeking = false;
         let isSwitchingTrack = false;
@@ -77,7 +84,7 @@ export function initAudioPlayers() {
             }
         }
 
-        function saveState(isPlaying = shouldResumePlayback, position = audio.currentTime): void {
+        function saveState(isPlaying = shouldResumePlayback, position = playerAudio.currentTime): void {
             const item = playlist[activeIndex];
 
             localStorage.setItem(stateKey, JSON.stringify({
@@ -104,8 +111,8 @@ export function initAudioPlayers() {
                 !item ||
                 !hasRenderedTrack ||
                 currentMediaItemId !== item.id ||
-                audio.readyState < HTMLMediaElement.HAVE_METADATA ||
-                !Number.isFinite(audio.currentTime)
+                playerAudio.readyState < HTMLMediaElement.HAVE_METADATA ||
+                !Number.isFinite(playerAudio.currentTime)
             ) {
                 return;
             }
@@ -115,34 +122,34 @@ export function initAudioPlayers() {
 
         function restorePosition(position: number): void {
             if (Number.isFinite(position) && position > 0) {
-                audio.currentTime = position;
+                playerAudio.currentTime = position;
             }
         }
 
         function updateProgress(): void {
             if (!isSeeking) {
-                const ratio = audio.duration > 0 ? audio.currentTime / audio.duration : 0;
-                seek.value = String(Math.round(ratio * 1000));
+                const ratio = playerAudio.duration > 0 ? playerAudio.currentTime / playerAudio.duration : 0;
+                playerSeek.value = String(Math.round(ratio * 1000));
             }
 
-            if (current) current.textContent = formatTime(audio.currentTime);
-            if (duration) duration.textContent = formatTime(audio.duration);
+            if (current) current.textContent = formatTime(playerAudio.currentTime);
+            if (duration) duration.textContent = formatTime(playerAudio.duration);
         }
 
         function setPlayingState(isPlaying: boolean): void {
-            toggleIcon.className = `bi ${isPlaying ? "bi-pause-fill" : "bi-play-fill"}`;
-            toggle.title = isPlaying ? trans("js.audio.pause") : trans("js.audio.play");
-            toggle.setAttribute("aria-label", toggle.title);
+            playerToggleIcon.className = `bi ${isPlaying ? "bi-pause-fill" : "bi-play-fill"}`;
+            playerToggle.title = isPlaying ? trans("js.audio.pause") : trans("js.audio.play");
+            playerToggle.setAttribute("aria-label", playerToggle.title);
         }
 
         function renderTrack(): void {
             const item = playlist[activeIndex];
             if (!item) return;
 
-            audio.src = item.url;
+            playerAudio.src = item.url;
             currentMediaItemId = item.id;
             hasRenderedTrack = true;
-            title.textContent = item.title || trans("js.common.untitled");
+            playerTitle.textContent = item.title || trans("js.common.untitled");
 
             if (post) {
                 post.textContent = item.postTitle || trans("js.common.post");
@@ -159,14 +166,14 @@ export function initAudioPlayers() {
                 button.classList.toggle("is-active", Number(button.dataset.audioTrackIndex) === activeIndex);
             });
 
-            seek.value = "0";
+            playerSeek.value = "0";
             updateProgress();
         }
 
         async function playCurrentTrack(): Promise<void> {
             shouldResumePlayback = true;
             try {
-                await audio.play();
+                await playerAudio.play();
             } catch {
                 shouldResumePlayback = false;
                 isSwitchingTrack = false;
@@ -190,13 +197,13 @@ export function initAudioPlayers() {
                 isSwitchingTrack = false;
             };
 
-            audio.addEventListener("loadedmetadata", restoreCurrentTrack, { once: true });
-            audio.addEventListener("error", () => {
+            playerAudio.addEventListener("loadedmetadata", restoreCurrentTrack, { once: true });
+            playerAudio.addEventListener("error", () => {
                 isSwitchingTrack = false;
             }, { once: true });
             renderTrack();
 
-            if (audio.readyState >= HTMLMediaElement.HAVE_METADATA) {
+            if (playerAudio.readyState >= HTMLMediaElement.HAVE_METADATA) {
                 restoreCurrentTrack();
             }
 
@@ -213,12 +220,12 @@ export function initAudioPlayers() {
             return true;
         }
 
-        toggle.addEventListener("click", () => {
-            if (audio.paused) {
+        playerToggle.addEventListener("click", () => {
+            if (playerAudio.paused) {
                 void playCurrentTrack();
             } else {
                 shouldResumePlayback = false;
-                audio.pause();
+                playerAudio.pause();
             }
         });
 
@@ -244,38 +251,38 @@ export function initAudioPlayers() {
             }
         });
 
-        seek.addEventListener("input", () => {
+        playerSeek.addEventListener("input", () => {
             isSeeking = true;
         });
 
-        seek.addEventListener("change", () => {
-            const ratio = Number(seek.value) / 1000;
-            if (Number.isFinite(audio.duration) && audio.duration > 0) {
-                audio.currentTime = audio.duration * ratio;
+        playerSeek.addEventListener("change", () => {
+            const ratio = Number(playerSeek.value) / 1000;
+            if (Number.isFinite(playerAudio.duration) && playerAudio.duration > 0) {
+                playerAudio.currentTime = playerAudio.duration * ratio;
                 saveCurrentPosition();
             }
             isSeeking = false;
             updateProgress();
         });
 
-        audio.addEventListener("play", () => {
+        playerAudio.addEventListener("play", () => {
             isSwitchingTrack = false;
             setPlayingState(true);
             saveState(true);
         });
-        audio.addEventListener("pause", () => {
+        playerAudio.addEventListener("pause", () => {
             setPlayingState(false);
             if (isSwitchingTrack) return;
 
             saveCurrentPosition();
             saveState();
         });
-        audio.addEventListener("timeupdate", () => {
+        playerAudio.addEventListener("timeupdate", () => {
             updateProgress();
             saveCurrentPosition();
         });
-        audio.addEventListener("durationchange", updateProgress);
-        audio.addEventListener("ended", () => {
+        playerAudio.addEventListener("durationchange", updateProgress);
+        playerAudio.addEventListener("ended", () => {
             loadTrack(activeIndex + 1, true);
         });
 

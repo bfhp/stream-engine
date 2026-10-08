@@ -83,8 +83,6 @@ export default defineConfig({
                 chunkFileNames: "js/chunks/[name].js",
                 assetFileNames: (assetInfo) => {
                     const name = assetInfo.names?.[0] ?? "";
-                    const originalName = (assetInfo.originalFileNames?.[0] ?? "").replaceAll("\\", "/");
-                    // @ts-ignore
                     if (name.endsWith(".css")) {
                         return "css/[name][extname]";
                     }
