@@ -109,8 +109,8 @@ Standalone public pages such as `users.list`, `user.register`, and
 
 ## Phase 3: page editor
 
-- [ ] Return only public `pageActions()` entries through the page editor API.
-- [ ] Do not show runtime pages in the editable database page list or tree.
+- [x] Return only public `pageActions()` entries through the page editor API.
+- [x] Do not show runtime pages in the editable database page list or tree.
 - [ ] Reject a second instance of a singleton public mount action with a clear
   validation error.
 - [ ] Ensure that creating, moving, or deleting a mount page causes its runtime

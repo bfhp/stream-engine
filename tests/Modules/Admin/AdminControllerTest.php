@@ -257,6 +257,73 @@ final class AdminControllerTest extends TestCase
         ], $adminAction[0]['fields']);
     }
 
+    public function testPageActionsExposeMountsButNotModuleOwnedRuntimeActions(): void
+    {
+        $module = $this->makeModule();
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+
+        $response = $this->callAndDecode($module, $this->makeApiPage('admin.page-actions', ['GET']));
+        $actions = array_column($response['data'], 'action');
+
+        foreach ([
+            'forums.list',
+            'user.show',
+            'user.post-show-id',
+            'community.main',
+            'community.show-id',
+            'community.post-show-id',
+        ] as $publicAction) {
+            $this->assertContains($publicAction, $actions);
+        }
+
+        foreach ([
+            'forums.topic-list',
+            'forums.topic-new',
+            'forums.topic-view',
+            'forums.topic-edit',
+            'user.post-new',
+            'user.post-show-slug',
+            'user.post-edit',
+            'community.create',
+            'community.show-slug',
+            'community.post-new',
+            'community.post-show-slug',
+            'community.post-edit',
+            'community.manage',
+        ] as $runtimeAction) {
+            $this->assertNotContains($runtimeAction, $actions);
+        }
+    }
+
+    public function testPagesListContainsOnlyPersistedRowsAndDoesNotExpandMounts(): void
+    {
+        $root = $this->legacyPageRow();
+        $root['id'] = 1;
+        $root['parent'] = null;
+        $root['pattern'] = '';
+        $root['action'] = 'home.index';
+
+        $forums = $this->legacyPageRow();
+        $forums['id'] = 2;
+        $forums['parent'] = 1;
+        $forums['pattern'] = 'forums';
+        $forums['action'] = 'forums.list';
+
+        $communities = $this->legacyPageRow();
+        $communities['id'] = 3;
+        $communities['parent'] = 1;
+        $communities['pattern'] = 'communities';
+        $communities['action'] = 'community.main';
+
+        $module = $this->makeModule(rows: [$root, $forums, $communities]);
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+
+        $response = $this->callAndDecode($module, $this->makeApiPage('admin.pages', ['GET', 'POST']));
+
+        $this->assertSame(['home.index', 'forums.list', 'community.main'], array_column($response['data'], 'action'));
+        $this->assertCount(3, $response['data']);
+    }
+
     public function testPageActionsReturnsNormalizedSettingsSchema(): void
     {
         $module = $this->makeModule(modules: $this->settingsActionRegistry());
