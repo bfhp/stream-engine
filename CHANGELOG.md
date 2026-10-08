@@ -19,6 +19,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 - Fixed `@mention` autocomplete in forum rich-text editors, mention
   synchronization when a topic is edited, and profile-link rendering in
   paginated replies.
+- Constrained default-theme forum pages to the standard content width and
+  restored visible Trix toolbar icons in light mode.
 
 ## [0.4.5] - 2026-10-08
 

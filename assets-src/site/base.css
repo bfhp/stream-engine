@@ -31,6 +31,7 @@
     --ui-info: #06b6d4;
     --ui-header-bg: #070614;
     --ui-shadow: 0 1px 3px rgb(0 0 0 / .4);
+    --ui-trix-icon-filter: invert(1) grayscale(1) brightness(1.6);
 }
 
 [data-color-mode="light"] {
@@ -44,6 +45,7 @@
     --ui-primary: #2563eb;
     --ui-header-bg: #ffffff;
     --ui-shadow: 0 1px 3px rgb(15 23 42 / .12);
+    --ui-trix-icon-filter: none;
 }
 
 :root {
