@@ -58,6 +58,13 @@
                         <i class="bi bi-pencil-square"></i><span>{{ trans('view.forums.topic.view.06') }}</span>
                     </a>
                 {% endif %}
+                {% if canDeleteTopic %}
+                    <button type="button" class="btn btn-outline-danger btn-sm d-inline-flex align-items-center gap-2"
+                            data-forum-topic-delete data-topic-id="{{ feed.id }}"
+                            data-redirect-url="{{ parentForum ? parentForum.canonicalUrl : forumsListUrl }}">
+                        <i class="bi bi-trash"></i><span>{{ trans('view.forums.topic.view.34') }}</span>
+                    </button>
+                {% endif %}
                 {# Generic feed favoriting widget (the shared implementation) repurposed as "follow this topic" - bell icon/
                    "Follow" wording instead of heart/"favorites" via the
                    data-favorite-*-on/off overrides CMS.updateFavoriteButton()

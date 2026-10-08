@@ -22,6 +22,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
   totals, participant avatars with overflow counts, and per-author post totals.
 - Added hourly garbage collection for forum attachment-card uploads left
   unattached for more than 24 hours, with reservation and race-safe rechecks.
+- Added self-service topic deletion for authors during the first 24 hours,
+  limited to topics without replies and protected against concurrent replies.
 
 ### Fixed
 

@@ -448,6 +448,33 @@ final class ForumRepository
     }
 
     /**
+     * Atomically removes an author's still-empty topic inside the self-service
+     * window. The LEFT JOIN repeats the no-replies rule in the DELETE itself:
+     * a reply arriving after the controller's friendly pre-check must protect
+     * the topic rather than being cascade-deleted with it.
+     *
+     * Uses index: PRIMARY(id) on topic and
+     * feeds_parent_id_type_position_index(parent_id, type, position) on reply.
+     */
+    public function deleteEmptyOwnedTopic(int $topicId, int $ownerId, int $createdAtCutoff): bool
+    {
+        return $this->db->execute(
+            "
+            DELETE topic
+            FROM feeds topic
+            LEFT JOIN feeds reply
+              ON reply.parent_id = topic.id AND reply.type = 'comment'
+            WHERE topic.id = ?
+              AND topic.type = 'forum-post'
+              AND topic.owner_id = ?
+              AND topic.created_at >= ?
+              AND reply.id IS NULL
+            ",
+            [$topicId, $ownerId, $createdAtCutoff]
+        ) === 1;
+    }
+
+    /**
      * Uses index: feeds_parent_id_type_created_at_id_index (parent_id, type, created_at, id) on feeds - parent_id/type equality plus the exact (created_at, id) sort order this query asks for (ASC here instead of the DESC most other callers in this class use, but a B-tree index serves either direction without a filesort).
      *
      * One page of a topic's replies (forums.topic-view), oldest first -

@@ -57,6 +57,40 @@ final class ForumRepositoryTest extends TestCase
         return $db;
     }
 
+    public function testDeleteEmptyOwnedTopicKeepsAllMutableGuardsInTheDelete(): void
+    {
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects($this->once())
+            ->method('execute')
+            ->with(
+                $this->callback(function (string $sql): bool {
+                    $this->assertStringContainsString("topic.type = 'forum-post'", $sql);
+                    $this->assertStringContainsString('topic.owner_id = ?', $sql);
+                    $this->assertStringContainsString('topic.created_at >= ?', $sql);
+                    $this->assertStringContainsString("reply.type = 'comment'", $sql);
+                    $this->assertStringContainsString('reply.id IS NULL', $sql);
+
+                    return true;
+                }),
+                [41, 7, 1_700_000_000],
+            )
+            ->willReturn(1);
+
+        $this->assertTrue(
+            (new ForumRepository($db))->deleteEmptyOwnedTopic(41, 7, 1_700_000_000)
+        );
+    }
+
+    public function testDeleteEmptyOwnedTopicReportsAConcurrentDisqualifyingChange(): void
+    {
+        $db = $this->createStub(PdoDatabase::class);
+        $db->method('execute')->willReturn(0);
+
+        $this->assertFalse(
+            (new ForumRepository($db))->deleteEmptyOwnedTopic(41, 7, 1_700_000_000)
+        );
+    }
+
     /* ===============================
        Empty input
     =============================== */

@@ -42,15 +42,6 @@ generator, hosted site, or build step.
   installation and a new developer can run, change, test, and extend it using
   only the repository documentation, with every internal link checked.
 
-### Forums: topic-view interactive features
-
-The topic and reply view now includes rich-text replies and previews, quoting,
-mentions, per-post rating and self-service editing/deletion, real counters, and
-cleanup of abandoned attachment-card uploads.
-
-Deleting an entire topic must remain a separate owner/moderator action and must
-not be reachable through the endpoint for deleting a single reply.
-
 ### Forums: who's online within a forum
 
 `forums.list` already displays active members, guests, and bots based on

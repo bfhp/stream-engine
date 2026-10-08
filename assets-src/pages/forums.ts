@@ -22,6 +22,7 @@ import { getApiErrorMessage } from "../shared/api-errors";
 import { trans, transChoiceWithCount } from "../shared/i18n";
 import { buildRichQuoteInsertionHtml } from "../shared/comment-quotes";
 import { initForumPostActions } from "./forum-post-actions";
+import { initForumTopicDelete } from "./forum-topic-actions";
 import {
     PollApiResponse,
     applyPollResponse,
@@ -192,6 +193,16 @@ function initPostActions() {
             window.location.reload();
         },
         onReplyDeleted: () => window.location.reload(),
+    });
+}
+
+function initTopicDelete() {
+    initForumTopicDelete(document.querySelector("[data-forum-topic-delete]"), {
+        api: cms.api,
+        confirm: cms.confirm,
+        toast: cms.toast,
+        trans,
+        redirect: (url) => window.location.assign(url),
     });
 }
 
@@ -1043,6 +1054,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initForumReplyEditors();
     initQuickReplyForm();
     initPostActions();
+    initTopicDelete();
     initMarkTopicRead();
     initMarkAllRead();
     initTopicForm();

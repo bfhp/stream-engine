@@ -546,9 +546,9 @@ class FeedService
      * delete every reply underneath it too (feeds' FK is ON DELETE CASCADE,
      * see FeedRepository::delete()'s own docblock), which is "delete the
      * whole topic", a different and more consequential action than "delete
-     * my own reply". That needs its own explicit flow later (see
-     * docs/TODO.md) rather than being reachable by accident through this
-     * one-reply endpoint.
+     * my own reply". ForumsController exposes that through its own narrowly
+     * gated topics/{id} endpoint rather than making it reachable by accident
+     * through this one-reply endpoint.
      *
      * No time window, unlike editComment() - matches the mockup this was
      * built from (its delete button carries no "N hours left" hint the way

@@ -952,6 +952,22 @@ class ForumsController extends AbstractController
     }
 
     /**
+     * Self-service topic deletion is deliberately narrower than editing and
+     * than a future moderator action: only the author, only during the same
+     * 24-hour window as post editing, and only before the first reply.
+     */
+    private function canDeleteTopic(Feed $topic, int $replyCount): bool
+    {
+        $user = $this->context->user;
+
+        return ! $user->isGuest()
+            && $topic->ownerId === $user->id
+            && $replyCount === 0
+            && ($topic->createdAt === null
+                || $topic->createdAt >= time() - FeedService::COMMENT_EDIT_WINDOW_SECONDS);
+    }
+
+    /**
      * forums.topic-view.twig's "Edit" button href, and
      * forums.topic-edit's own canonical - just the topic's canonicalUrl with
      * a literal '/edit/' suffix, exactly like
@@ -1080,8 +1096,8 @@ class ForumsController extends AbstractController
      * automatic, not a manual "Mark as read" button; see the call
      * site's own comment for why it's gated to the last page, not any page).
      * Per-post rating, quote, edit/delete, preview and real counters are all
-     * populated below; upload garbage collection remains separate deferred
-     * maintenance work.
+     * populated below; abandoned attachment-card uploads are cleaned by the
+     * module's separate hourly maintenance task.
      *
      * @throws ForbiddenException
      */
@@ -1192,6 +1208,7 @@ class ForumsController extends AbstractController
                 'isFollowing' => $isFollowing,
                 'poll' => $pollView,
                 'canEditTopic' => $this->canEditTopic($topicFeed),
+                'canDeleteTopic' => $this->canDeleteTopic($topicFeed, $replyCount),
                 'topicEditUrl' => $this->buildTopicEditUrl($topicFeed),
                 'parentForum' => $parentForum,
                 'forumsListUrl' => $this->urlGenerator->action('forums.list'),
@@ -1387,8 +1404,8 @@ class ForumsController extends AbstractController
      * self-service check minus the window (matches the mockup - its delete
      * button carries no time-limit hint) and excludes the topic's own
      * opening post entirely (see FeedService::deleteComment()'s own
-     * docblock for why deleting that is a different, not-yet-built
-     * action). editableContent is the stored, already-purified HTML when
+     * docblock for why whole-topic deletion has its own endpoint and stricter
+     * no-replies rule). editableContent is the stored, already-purified HTML when
      * canEdit is true, ready to initialize the same Trix editor used by the
      * quick-reply form, and
      * wasEdited/editedAtLabel/editedAtTitle reflect updatedAt having moved
@@ -1677,14 +1694,10 @@ class ForumsController extends AbstractController
      * POST /api/v1/forums/topics - forums.topic-new's submit button (see
      * handleTopicCreateRequest()'s own docblock).
      *
-     * PATCH /api/v1/forums/topics/{id} - forums.topic-edit's save button (see
-     * handleTopicUpdateRequest()'s own docblock). No DELETE alongside it, one
-     * of only two places this resource deviates from Modules\Users's
-     * blog-posts/{id} shape: deleting a topic (and with it every reply under
-     * it) is a moderation action nothing in the UI offers yet - see
-     * FeedService::deleteComment()'s own note on why even the opening post
-     * isn't individually deletable - so registering the verb would advertise
-     * a capability with no product decision behind it.
+     * PATCH/DELETE /api/v1/forums/topics/{id} update or self-delete a topic.
+     * DELETE is intentionally separate from the generic comment endpoint and
+     * only accepts the author inside the 24-hour window while there are no
+     * replies; it can therefore never cascade-delete a conversation.
      *
      * @throws ValidationException
      * @throws ForbiddenException
@@ -1777,7 +1790,7 @@ class ForumsController extends AbstractController
                 id: $pageTree->getMaxPageId(),
                 parentId: $topicsPageId,
                 pattern: '{id}',
-                requestMethods: ['PATCH'],
+                requestMethods: ['PATCH', 'DELETE'],
                 action: 'forums.topic-item',
             )
         );
@@ -2032,10 +2045,9 @@ class ForumsController extends AbstractController
     }
 
     /**
-     * Single dispatcher for the topics/{id} resource. Only PATCH today (see
-     * callApi()'s own note on the deliberately absent DELETE), but kept as
-     * its own match() rather than calling handleTopicUpdateRequest()
-     * directly, same shape as Modules\Users\UsersController::
+     * Single dispatcher for the topics/{id} resource, kept as its own match()
+     * rather than calling either handler directly, same shape as
+     * Modules\Users\UsersController::
      * handleBlogPostItemRequest(): the page row itself declares which verbs
      * Router lets through, and this is the layer that turns anything else
      * into a clean 405 instead of silently treating it as a save.
@@ -2048,8 +2060,58 @@ class ForumsController extends AbstractController
     {
         match ($_SERVER['REQUEST_METHOD']) {
             'PATCH' => $this->handleTopicUpdateRequest($id),
+            'DELETE' => $this->handleTopicDeleteRequest($id),
             default => throw new ValidationException('Method not allowed', 405),
         };
+    }
+
+    /**
+     * DELETE /api/v1/forums/topics/{id} - the author's narrow self-service
+     * escape hatch for a just-created topic. This is not moderator deletion:
+     * ownership is checked directly, the normal 24-hour window always
+     * applies, and even one reply permanently disables this action.
+     *
+     * The repository repeats all three mutable predicates in one DELETE. In
+     * particular, a reply racing the preliminary count wins and makes the
+     * DELETE affect zero rows instead of being removed by the parent FK's
+     * cascade.
+     */
+    private function handleTopicDeleteRequest(int $id): void
+    {
+        Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
+
+        $user = $this->context->user;
+        if ($user->isGuest()) {
+            throw new ForbiddenException($this->tm->trans('feed.forbidden'));
+        }
+
+        if ($id <= 0) {
+            throw new NotFoundException($this->tm->trans('feed.not_found'));
+        }
+
+        $topic = $this->feedService->getFeedById($id, $user);
+        if ($topic->type !== 'forum-post') {
+            throw new NotFoundException($this->tm->trans('feed.not_found'));
+        }
+
+        if ($topic->ownerId !== $user->id) {
+            throw new ForbiddenException($this->tm->trans('feed.forbidden'));
+        }
+
+        $cutoff = time() - FeedService::COMMENT_EDIT_WINDOW_SECONDS;
+        if ($topic->createdAt !== null && $topic->createdAt < $cutoff) {
+            throw new ForbiddenException($this->tm->trans('forums.topic_delete_window_expired'));
+        }
+
+        if ($this->forumRepository->countReplies($topic->id) > 0) {
+            throw new ValidationException($this->tm->trans('forums.topic_delete_has_replies'), 409, 'conflict');
+        }
+
+        if (! $this->forumRepository->deleteEmptyOwnedTopic($topic->id, $user->id, $cutoff)) {
+            throw new ValidationException($this->tm->trans('forums.topic_delete_has_replies'), 409, 'conflict');
+        }
+
+        http_response_code(204);
     }
 
     /**
@@ -2086,8 +2148,7 @@ class ForumsController extends AbstractController
      * id the client omits is detached (the metadata value is rewritten
      * wholesale), which is why buildTopicFormViewModel() hands the form every
      * currently-attached id to send back. An edit that drops an attachment
-     * leaves the underlying upload row alone; nothing in this app garbage-
-     * collects orphaned uploads yet.
+     * leaves the underlying upload row for the hourly orphan cleanup task.
      *
      * @throws ForbiddenException
      * @throws NotFoundException

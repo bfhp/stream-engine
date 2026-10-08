@@ -458,6 +458,37 @@ final class ForumsControllerTest extends TestCase
         ];
     }
 
+    #[DataProvider('topicDeletePermissionProvider')]
+    public function testTopicDeleteButtonUsesAuthorWindowAndReplyCount(
+        int $viewerId,
+        int $ownerId,
+        int $age,
+        int $replyCount,
+        bool $expected,
+    ): void {
+        $module = $this->makeModule($this->makeRoutingDb());
+        $this->setContext($module, new User(id: $viewerId, email: 'a@b.c'));
+
+        $topic = $this->makeTopic(ownerId: $ownerId, createdAt: time() - $age);
+
+        $this->assertSame(
+            $expected,
+            $this->invoke($module, 'canDeleteTopic', $topic, $replyCount),
+        );
+    }
+
+    /** @return array<string, array{int, int, int, int, bool}> */
+    public static function topicDeletePermissionProvider(): array
+    {
+        return [
+            'recent empty own topic' => [7, 7, 3600, 0, true],
+            'topic already has a reply' => [7, 7, 3600, 1, false],
+            'window has expired' => [7, 7, FeedService::COMMENT_EDIT_WINDOW_SECONDS + 1, 0, false],
+            'another author owns it' => [7, 99, 3600, 0, false],
+            'guest' => [0, 7, 3600, 0, false],
+        ];
+    }
+
     private function contextUser(ForumsController $module): User
     {
         return (new ReflectionClass(ForumsController::class))
@@ -610,7 +641,7 @@ final class ForumsControllerTest extends TestCase
             'create a topic' => ['forums.topic-create', ['POST']],
             // PATCH, not POST: an edit is a partial update of the item the
             // create endpoint made.
-            'edit a topic' => ['forums.topic-item', ['PATCH']],
+            'edit or self-delete a topic' => ['forums.topic-item', ['PATCH', 'DELETE']],
             'reply' => ['forums.reply', ['POST']],
             'mark one topic read' => ['forums.topic-read', ['POST']],
         ];
@@ -1149,14 +1180,14 @@ final class ForumsControllerTest extends TestCase
         ]);
     }
 
-    public function testTopicUpdateRejectsNonPatchMethod(): void
+    public function testTopicItemRejectsUnsupportedMethod(): void
     {
         $module = $this->makeUpdatableModule($feedService, $pollService);
 
         $this->expectException(ValidationException::class);
         $this->expectExceptionMessage('Method not allowed');
 
-        $this->callUpdateApi($module, ['title' => 'T', 'content' => '<p>x</p>'], method: 'DELETE');
+        $this->callUpdateApi($module, ['title' => 'T', 'content' => '<p>x</p>'], method: 'GET');
     }
 
     public function testTopicUpdateThrowsForbiddenOutsideEditWindow(): void
@@ -1172,6 +1203,105 @@ final class ForumsControllerTest extends TestCase
         $this->expectException(ForbiddenException::class);
 
         $this->callUpdateApi($module, ['title' => 'Заголовок', 'content' => '<div>Текст</div>']);
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* DELETE /api/v1/forums/topics/{id}                                  */
+    /* ------------------------------------------------------------------ */
+
+    public function testTopicAuthorCanDeleteARecentTopicWithoutReplies(): void
+    {
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects($this->once())->method('fetchOne')->willReturn(['total' => 0]);
+        $db->expects($this->once())
+            ->method('execute')
+            ->with(
+                $this->stringContains('DELETE topic'),
+                $this->callback(static fn (array $params): bool => $params[0] === self::TOPIC_ID
+                    && $params[1] === 7
+                    && abs($params[2] - (time() - FeedService::COMMENT_EDIT_WINDOW_SECONDS)) <= 2),
+            )
+            ->willReturn(1);
+
+        $module = $this->makeModule($db);
+        $feedService = $this->createStub(FeedService::class);
+        $feedService->method('getFeedById')->willReturn($this->makeTopic());
+        $this->setProperty($module, 'feedService', $feedService);
+
+        $this->callDeleteTopicApi($module);
+
+        $this->assertSame(204, http_response_code());
+    }
+
+    public function testTopicWithAReplyCannotBeDeleted(): void
+    {
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects($this->once())->method('fetchOne')->willReturn(['total' => 1]);
+        $db->expects($this->never())->method('execute');
+
+        $module = $this->makeModule($db);
+        $feedService = $this->createStub(FeedService::class);
+        $feedService->method('getFeedById')->willReturn($this->makeTopic());
+        $this->setProperty($module, 'feedService', $feedService);
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('Тему с ответами больше нельзя удалить');
+
+        $this->callDeleteTopicApi($module);
+    }
+
+    public function testTopicDeleteRejectsSomeoneOtherThanTheAuthor(): void
+    {
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects($this->never())->method('fetchOne');
+        $db->expects($this->never())->method('execute');
+
+        $module = $this->makeModule($db);
+        $feedService = $this->createStub(FeedService::class);
+        $feedService->method('getFeedById')->willReturn($this->makeTopic(ownerId: 99));
+        $this->setProperty($module, 'feedService', $feedService);
+
+        $this->expectException(ForbiddenException::class);
+
+        $this->callDeleteTopicApi($module);
+    }
+
+    public function testTopicDeleteRejectsAnExpiredTopicBeforeCountingReplies(): void
+    {
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects($this->never())->method('fetchOne');
+        $db->expects($this->never())->method('execute');
+
+        $module = $this->makeModule($db);
+        $expired = $this->makeTopic(
+            createdAt: time() - FeedService::COMMENT_EDIT_WINDOW_SECONDS - 1,
+        );
+
+        $feedService = $this->createStub(FeedService::class);
+        $feedService->method('getFeedById')->willReturn($expired);
+        $this->setProperty($module, 'feedService', $feedService);
+
+        $this->expectException(ForbiddenException::class);
+        $this->expectExceptionMessage('Удалить тему можно только в течение 24 часов после публикации');
+
+        $this->callDeleteTopicApi($module);
+    }
+
+    public function testConcurrentReplyMakesTheAtomicTopicDeleteFail(): void
+    {
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects($this->once())->method('fetchOne')->willReturn(['total' => 0]);
+        $db->expects($this->once())->method('execute')->willReturn(0);
+
+        $module = $this->makeModule($db);
+        $feedService = $this->createStub(FeedService::class);
+        $feedService->method('getFeedById')->willReturn($this->makeTopic());
+        $this->setProperty($module, 'feedService', $feedService);
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('Тему с ответами больше нельзя удалить');
+
+        $this->callDeleteTopicApi($module);
     }
 
     /* ------------------------------------------------------------------ */
@@ -1587,8 +1717,8 @@ final class ForumsControllerTest extends TestCase
      * Classic forum numbering: the topic's own opening message is post #1 of
      * page 1, replies follow. Per-post gates differ on purpose - "Изменить" is
      * self-service and window-bound, "Удалить" is self-service but never
-     * offered for the opening post (deleting that is a different, not-yet-built
-     * action).
+     * offered for the opening post (whole-topic deletion has its own endpoint
+     * and only appears while the topic has no replies).
      */
     public function testTopicViewNumbersTheOpeningPostFirstAndGatesPerPostActions(): void
     {
@@ -2879,6 +3009,16 @@ final class ForumsControllerTest extends TestCase
         );
     }
 
+    private function callDeleteTopicApi(ForumsController $module): string
+    {
+        return $this->callJsonApi(
+            $module,
+            $this->makeTopicItemApiPage(),
+            ['id' => (string) self::TOPIC_ID],
+            method: 'DELETE',
+        );
+    }
+
     /**
      * @param array<string, mixed> $body
      */
@@ -3349,6 +3489,7 @@ final class ForumsControllerTest extends TestCase
         int $ownerId = 7,
         ?string $content = null,
         int $views = 0,
+        ?int $createdAt = null,
     ): Feed {
         return new Feed(
             id: $id,
@@ -3363,7 +3504,7 @@ final class ForumsControllerTest extends TestCase
             containerId: null,
             visibility: 'public',
             position: 0,
-            createdAt: time() - 3600,
+            createdAt: $createdAt ?? time() - 3600,
             relevance: null,
             canonicalUrl: '/forums/magiya/'.$slug.'/',
             views: $views,
@@ -3553,7 +3694,7 @@ final class ForumsControllerTest extends TestCase
             parentId: 299,
             pattern: '{id}',
             action: 'forums.topic-item',
-            requestMethods: ['PATCH'],
+            requestMethods: ['PATCH', 'DELETE'],
             responseType: 'json',
         );
     }
