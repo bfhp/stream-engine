@@ -170,10 +170,10 @@ final class FakePdoDatabase extends PdoDatabase
 
     /**
      * Mirrors MembershipRepository::findMutualFriends()/
-     * countMutualFriends()'s query: every user with a membership row in
-     * $userId's blog who also has $userId sitting in *their* blog in
-     * return. Returns [memberUserId => membershipOrder] so callers can
-     * sort by "joined_at" (insertion order here) themselves.
+     * countMutualFriends()'s query: every member-role row in $userId's blog.
+     * FriendService promotes both directional subscriber rows when a
+     * friendship becomes mutual. Returns [memberUserId => membershipOrder]
+     * so callers can sort by "joined_at" (insertion order here) themselves.
      *
      * @return array<int, int>
      */
@@ -188,13 +188,10 @@ final class FakePdoDatabase extends PdoDatabase
         foreach ($this->memberships as $key => $order) {
             [$containerId, $memberUserId] = array_map('intval', explode(':', $key));
 
-            if ($containerId !== $targetBlogId || $memberUserId === $userId) {
+            if ($containerId !== $targetBlogId
+                || $memberUserId === $userId
+                || ($this->membershipRoleIds[$key] ?? 0) !== \StreamEngine\Repository\MembershipRepository::ROLE_MEMBER_ID) {
                 continue;
-            }
-
-            $memberBlogId = $this->findBlogIdByOwner($memberUserId);
-            if ($memberBlogId === null || !isset($this->memberships["$memberBlogId:$userId"])) {
-                continue; // not mutual - $memberUserId hasn't (also) subscribed back
             }
 
             $result[$memberUserId] = $order;
@@ -341,7 +338,7 @@ final class FakePdoDatabase extends PdoDatabase
             return $rows;
         }
 
-        if (str_contains($sql, 'SELECT m1.user_id') && str_contains($sql, 'JOIN memberships m2')) {
+        if (str_contains($sql, 'SELECT m1.user_id') && str_contains($sql, 'm1.membership_role_id = ?')) {
             return array_map(
                 static fn (int $userId): array => ['user_id' => $userId],
                 array_keys($this->findMutualFriendUserIds((int) $params[0])),
@@ -465,14 +462,59 @@ final class FakePdoDatabase extends PdoDatabase
             if (!isset($this->memberships[$key])) {
                 $this->memberships[$key] = $this->nextMembershipOrder++;
                 $this->membershipRoleIds[$key] = (int) $roleId;
+
+                return 1;
             }
 
-            return 1;
+            return 0;
         }
 
         if (str_contains($sql, 'DELETE FROM memberships')) {
             [$containerId, $userId] = $params;
             unset($this->memberships["$containerId:$userId"], $this->membershipRoleIds["$containerId:$userId"]);
+
+            return 1;
+        }
+
+        if (str_contains($sql, 'UPDATE memberships first_membership')) {
+            [
+                $secondBlogId,
+                $secondUserId,
+                $firstNewRoleId,
+                $secondNewRoleId,
+                $firstBlogId,
+                $firstUserId,
+                $firstAllowedRoleOne,
+                $firstAllowedRoleTwo,
+                $secondAllowedRoleOne,
+                $secondAllowedRoleTwo,
+            ] = array_map('intval', $params);
+
+            $firstKey = "$firstBlogId:$firstUserId";
+            $secondKey = "$secondBlogId:$secondUserId";
+            if (!isset($this->memberships[$firstKey], $this->memberships[$secondKey])
+                || !in_array($this->membershipRoleIds[$firstKey], [$firstAllowedRoleOne, $firstAllowedRoleTwo], true)
+                || !in_array($this->membershipRoleIds[$secondKey], [$secondAllowedRoleOne, $secondAllowedRoleTwo], true)) {
+                return 0;
+            }
+
+            $affected = (int) ($this->membershipRoleIds[$firstKey] !== $firstNewRoleId)
+                + (int) ($this->membershipRoleIds[$secondKey] !== $secondNewRoleId);
+            $this->membershipRoleIds[$firstKey] = $firstNewRoleId;
+            $this->membershipRoleIds[$secondKey] = $secondNewRoleId;
+
+            return $affected;
+        }
+
+        if (str_contains($sql, 'AND membership_role_id = ?')) {
+            [$roleId, $containerId, $userId, $expectedRoleId] = array_map('intval', $params);
+            $key = "$containerId:$userId";
+
+            if (!isset($this->memberships[$key]) || $this->membershipRoleIds[$key] !== $expectedRoleId) {
+                return 0;
+            }
+
+            $this->membershipRoleIds[$key] = $roleId;
 
             return 1;
         }

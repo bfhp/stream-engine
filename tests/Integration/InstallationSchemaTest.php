@@ -72,6 +72,54 @@ final class InstallationSchemaTest extends TestCase
         });
     }
 
+    public function testBlogFriendRoleMigrationMaterializesOnlyReciprocalMemberships(): void
+    {
+        $root = dirname(__DIR__, 2);
+        $this->withEmptyDatabase(function (PDO $pdo) use ($root): void {
+            $this->executeScript($pdo, $root.'/migrations/20260912000000_initial.sql');
+
+            $pdo->exec("
+                INSERT INTO users (id, email, password_hash, created_at) VALUES
+                    (10, 'a@example.test', 'x', 1),
+                    (20, 'b@example.test', 'x', 1),
+                    (30, 'c@example.test', 'x', 1),
+                    (40, 'd@example.test', 'x', 1)
+            ");
+            $pdo->exec("
+                INSERT INTO feeds (id, owner_id, type, created_at, updated_at) VALUES
+                    (101, 10, 'blog', 1, 1),
+                    (102, 20, 'blog', 1, 1),
+                    (103, 30, 'blog', 1, 1),
+                    (200, 40, 'community', 1, 1)
+            ");
+            $pdo->exec("
+                INSERT INTO memberships (container_id, user_id, joined_at, membership_role_id) VALUES
+                    (101, 20, 1, 2),
+                    (102, 10, 1, 2),
+                    (101, 30, 1, 2),
+                    (200, 20, 1, 2),
+                    (200, 30, 1, 1)
+            ");
+
+            $this->executeScript($pdo, $root.'/migrations/20261008010000_materialize_blog_friend_roles.sql');
+
+            $rows = $pdo->query("
+                SELECT CONCAT(m.container_id, ':', m.user_id) AS relationship, mr.name AS role_name
+                FROM memberships m
+                JOIN membership_roles mr ON mr.id = m.membership_role_id
+                ORDER BY m.container_id, m.user_id
+            ")->fetchAll(PDO::FETCH_KEY_PAIR);
+
+            self::assertSame([
+                '101:20' => 'member',
+                '101:30' => 'subscriber',
+                '102:10' => 'member',
+                '200:20' => 'member',
+                '200:30' => 'subscriber',
+            ], $rows);
+        });
+    }
+
     public function testCronObservabilityMigrationAddsTaskDiagnosticsAndSchedulerHeartbeat(): void
     {
         $root = dirname(__DIR__, 2);

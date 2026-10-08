@@ -10,6 +10,44 @@ use StreamEngine\Repository\MembershipRepository;
 
 final class MembershipRepositoryTest extends TestCase
 {
+    public function testPromoteBlogFriendshipRequiresAndUpdatesBothRows(): void
+    {
+        $db = $this->createMock(PdoDatabase::class);
+        $db
+            ->expects($this->once())
+            ->method('execute')
+            ->with(
+                $this->callback(
+                    static fn (string $sql): bool => str_contains($sql, 'UPDATE memberships first_membership')
+                        && str_contains($sql, 'JOIN memberships second_membership')
+                        && str_contains($sql, 'first_membership.membership_role_id = ?')
+                ),
+                [
+                    600,
+                    7,
+                    MembershipRepository::ROLE_MEMBER_ID,
+                    MembershipRepository::ROLE_MEMBER_ID,
+                    500,
+                    8,
+                    MembershipRepository::ROLE_SUBSCRIBER_ID,
+                    MembershipRepository::ROLE_MEMBER_ID,
+                    MembershipRepository::ROLE_SUBSCRIBER_ID,
+                    MembershipRepository::ROLE_MEMBER_ID,
+                ]
+            )
+            ->willReturn(2);
+
+        self::assertTrue((new MembershipRepository($db))->promoteBlogFriendship(500, 8, 600, 7));
+    }
+
+    public function testPromoteBlogFriendshipReturnsFalseWithoutBothRows(): void
+    {
+        $db = $this->createStub(PdoDatabase::class);
+        $db->method('execute')->willReturn(0);
+
+        self::assertFalse((new MembershipRepository($db))->promoteBlogFriendship(500, 8, 600, 7));
+    }
+
     public function testFindMemberIdsExcludesPendingSubscribersAndReturnsUniqueIntegers(): void
     {
         $db = $this->createMock(PdoDatabase::class);
@@ -43,9 +81,9 @@ final class MembershipRepositoryTest extends TestCase
                 $this->callback(
                     static fn (string $sql): bool => str_contains($sql, 'SELECT m1.user_id')
                         && str_contains($sql, "f1.type = 'blog'")
-                        && str_contains($sql, 'JOIN memberships m2')
+                        && str_contains($sql, 'm1.membership_role_id = ?')
                 ),
-                [7, 7, 7]
+                [7, MembershipRepository::ROLE_MEMBER_ID, 7]
             )
             ->willReturn([
                 ['user_id' => '8'],

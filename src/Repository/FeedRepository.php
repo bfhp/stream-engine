@@ -1182,6 +1182,16 @@ final class FeedRepository implements FeedRepositoryInterface
         return "$condition AND ($aclSql)";
     }
 
+    /**
+     * Uses index: PRIMARY(container_id, user_id) on memberships.
+     * Uses index: PRIMARY(id) on membership_roles.
+     *
+     * Friendship and community approval are already materialized in the
+     * membership role, so this remains one indexed membership probe per
+     * protected candidate rather than deriving relationships inside the ACL.
+     *
+     * @return array{0:string, 1:list<int>}
+     */
     private function buildAclCondition(User $user): array
     {
         // Admin override
@@ -1203,8 +1213,14 @@ final class FeedRepository implements FeedRepositoryInterface
                     WHERE m.user_id = ?
                       AND m.container_id = f.container_id
                       AND (
-                            f.visibility = 'members'
-                            OR mr.role_level >= 2
+                            (
+                                f.visibility = 'private'
+                                AND mr.role_level >= 2
+                            )
+                            OR (
+                                f.visibility = 'members'
+                                AND mr.role_level >= 1
+                            )
                           )
                 )
             )
@@ -1285,15 +1301,12 @@ final class FeedRepository implements FeedRepositoryInterface
     /**
      * $containerId/$containerType (if given) point this feed at the
      * membership-checked container it lives inside - e.g. a community post
-     * passes its community's own feed id/type here, so AccessService::
-     * canAccessFeed()'s 'members'-visibility branch (which looks up
-     * MembershipRepository::find($feed->containerId, ...)) can actually
-     * restrict it to that container's members instead of degrading to
-     * "owner/admin only" (containerId null). Personal blog posts pass their
-     * own blog feed here only for 'members' visibility, so "Friends only"
-     * resolves through the same memberships table. Left null for feed types
-     * that don't nest inside a membership container (comments, articles, etc.)
-     * - same as before this param existed.
+     * passes its community's own feed id/type here, so the 'members' policy
+     * can require a role level of member or above. Personal blog posts pass
+     * their own blog feed here only for 'members' visibility; FriendService
+     * materializes mutual friendship by promoting both blog memberships from
+     * subscriber to member. Left null for feed types that don't nest inside a
+     * membership container (comments, articles, etc.).
      */
     public function insert(
         int $ownerId,

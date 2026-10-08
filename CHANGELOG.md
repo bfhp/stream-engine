@@ -23,6 +23,10 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
   before delivery, and deep links to the referenced comment, forum post, or
   message. Mention resolution uses one bounded batch lookup when content is
   saved.
+- Added friends-only personal blog posts. One-way friend requests remain
+  subscribers, mutual requests promote both existing memberships to members,
+  and removing either direction revokes friends-only access without expensive
+  reverse-relationship checks in feed queries.
 
 ## [0.4.4] - 2026-10-07
 

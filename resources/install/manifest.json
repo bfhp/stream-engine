@@ -68,6 +68,11 @@
             "version": "20261008000000_add_mentions",
             "file": "20261008000000_add_mentions.sql",
             "checksum": "c604f867e5b768fdd8fbcb38efe34093c8ec0a4dae5046f2d7870f429dca4171"
+        },
+        {
+            "version": "20261008010000_materialize_blog_friend_roles",
+            "file": "20261008010000_materialize_blog_friend_roles.sql",
+            "checksum": "d8a1de449dafa7ac745ee2f50c3c244044dcde08ee758279c0b6d759c89aab10"
         }
     ]
 }

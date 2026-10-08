@@ -243,6 +243,81 @@ final readonly class MembershipRepository
     }
 
     /**
+     * Promotes both directional personal-blog subscriptions to member in one
+     * statement. The inner join makes this conditional on both rows existing,
+     * so a one-way request can never grant friends-only access.
+     *
+     * Uses index: PRIMARY(container_id, user_id) for both membership aliases.
+     */
+    public function promoteBlogFriendship(
+        int $firstBlogId,
+        int $firstUserId,
+        int $secondBlogId,
+        int $secondUserId,
+    ): bool {
+        return $this->db->execute(
+            '
+            UPDATE memberships first_membership
+            JOIN memberships second_membership
+              ON second_membership.container_id = ?
+             AND second_membership.user_id = ?
+            SET first_membership.membership_role_id = ?,
+                second_membership.membership_role_id = ?
+            WHERE first_membership.container_id = ?
+              AND first_membership.user_id = ?
+              AND first_membership.membership_role_id IN (?, ?)
+              AND second_membership.membership_role_id IN (?, ?)
+            ',
+            [
+                $secondBlogId,
+                $secondUserId,
+                self::ROLE_MEMBER_ID,
+                self::ROLE_MEMBER_ID,
+                $firstBlogId,
+                $firstUserId,
+                self::ROLE_SUBSCRIBER_ID,
+                self::ROLE_MEMBER_ID,
+                self::ROLE_SUBSCRIBER_ID,
+                self::ROLE_MEMBER_ID,
+            ]
+        ) > 0;
+    }
+
+    /**
+     * Removes one directional subscription and downgrades the surviving
+     * reverse row back to subscriber. Both changes commit together, so readers
+     * see either the mutual friendship or the resulting one-way request.
+     *
+     * Uses index: PRIMARY(container_id, user_id) for both writes.
+     */
+    public function removeBlogRelationship(
+        int $targetBlogId,
+        int $actorUserId,
+        ?int $actorBlogId,
+        int $targetUserId,
+    ): void {
+        $this->db->begin();
+
+        try {
+            $this->delete($targetBlogId, $actorUserId);
+
+            if ($actorBlogId !== null) {
+                $this->db->execute(
+                    'UPDATE memberships SET membership_role_id = ?
+                     WHERE container_id = ? AND user_id = ? AND membership_role_id = ?',
+                    [self::ROLE_SUBSCRIBER_ID, $actorBlogId, $targetUserId, self::ROLE_MEMBER_ID]
+                );
+            }
+
+            $this->db->commit();
+        } catch (\Throwable $e) {
+            $this->db->rollback();
+
+            throw $e;
+        }
+    }
+
+    /**
      * Bulk-promotes every pending subscriber of $containerId straight to
      * ROLE_MEMBER_ID in one statement - CommunityService::updateSettings()'s
      * own "switch from approval to open membership" transition (see its
@@ -263,14 +338,11 @@ final readonly class MembershipRepository
     }
 
     /**
-     * Every user with their own membership row in $userId's personal blog
-     * container (m1) who *also* has $userId sitting in their own personal
-     * blog container in return (m2) - i.e. the relationship is mutual in
-     * both directions, which is this whole feature's definition of
-     * "friends" (see FriendService's own docblock: there's no separate
-     * "friend" role, mutuality is derived by checking for the reverse row).
+     * Every member-level row in $userId's personal blog. FriendService writes
+     * one-way requests as subscriber and promotes both directions to member
+     * when the relationship becomes mutual, so no reverse join is needed.
      *
-     * Uses index: owner_id (feeds.owner_id) for f1/f2, PRIMARY(container_id, user_id) for m1/m2.
+     * Uses index: owner_id (feeds.owner_id) for f1 and PRIMARY(container_id, user_id) for m1.
      *
      * @return list<array{id:int, nick:string, username:?string, avatarUrl:string}>
      */
@@ -285,13 +357,12 @@ final readonly class MembershipRepository
             FROM memberships m1
             JOIN feeds f1 ON f1.id = m1.container_id AND f1.owner_id = ? AND f1.type = 'blog'
             JOIN users u ON u.id = m1.user_id
-            JOIN feeds f2 ON f2.owner_id = m1.user_id AND f2.type = 'blog'
-            JOIN memberships m2 ON m2.container_id = f2.id AND m2.user_id = ?
-            WHERE m1.user_id != ?
+            WHERE m1.membership_role_id = ?
+              AND m1.user_id != ?
             ORDER BY m1.joined_at DESC
             LIMIT $limit OFFSET $offset
             ",
-            [$userId, $userId, $userId]
+            [$userId, self::ROLE_MEMBER_ID, $userId]
         );
 
         return array_map(static fn (array $row): array => [
@@ -317,11 +388,10 @@ final readonly class MembershipRepository
             SELECT m1.user_id
             FROM memberships m1
             JOIN feeds f1 ON f1.id = m1.container_id AND f1.owner_id = ? AND f1.type = 'blog'
-            JOIN feeds f2 ON f2.owner_id = m1.user_id AND f2.type = 'blog'
-            JOIN memberships m2 ON m2.container_id = f2.id AND m2.user_id = ?
-            WHERE m1.user_id != ?
+            WHERE m1.membership_role_id = ?
+              AND m1.user_id != ?
             ",
-            [$userId, $userId, $userId]
+            [$userId, self::ROLE_MEMBER_ID, $userId]
         );
 
         return array_values(array_unique(array_map(
@@ -432,8 +502,9 @@ final readonly class MembershipRepository
      * does - without running two existence queries per person:
      * `incoming` = that user has a row in $userId's blog (they asked first,
      * $userId hasn't reciprocated yet), `outgoing` = $userId has a row in
-     * theirs. Both together = mutual, i.e. "friends" - see FriendService's
-     * own docblock for why mutuality is derived rather than stored.
+     * theirs. Both directions are retained for request-state presentation;
+     * FriendService additionally materializes mutuality by promoting both
+     * rows from subscriber to member for access checks and public lists.
      *
      * findMutualFriends() is the both-directions-only subset of this and
      * stays a separate method rather than a filter over it, because the two
@@ -506,7 +577,7 @@ final readonly class MembershipRepository
     }
 
     /**
-     * Uses index: owner_id (feeds.owner_id) for f1/f2, PRIMARY(container_id, user_id) for m1/m2.
+     * Uses index: owner_id (feeds.owner_id) for f1 and PRIMARY(container_id, user_id) for m1.
      */
     public function countMutualFriends(int $userId): int
     {
@@ -515,11 +586,10 @@ final readonly class MembershipRepository
             SELECT COUNT(*) AS total
             FROM memberships m1
             JOIN feeds f1 ON f1.id = m1.container_id AND f1.owner_id = ? AND f1.type = 'blog'
-            JOIN feeds f2 ON f2.owner_id = m1.user_id AND f2.type = 'blog'
-            JOIN memberships m2 ON m2.container_id = f2.id AND m2.user_id = ?
-            WHERE m1.user_id != ?
+            WHERE m1.membership_role_id = ?
+              AND m1.user_id != ?
             ",
-            [$userId, $userId, $userId]
+            [$userId, self::ROLE_MEMBER_ID, $userId]
         );
 
         return (int) ($row['total'] ?? 0);

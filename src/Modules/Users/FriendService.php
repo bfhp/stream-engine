@@ -18,25 +18,20 @@ use StreamEngine\Service\NotificationService;
 
 /**
  * Friend requests and blog subscriptions, built entirely on top of the
- * existing `memberships` table (see docs/TODO.md's own "Blog: friends-only
- * posts via container_id/container_type" entry, which anticipated exactly
- * this) rather than a new table of its own:
+ * existing `memberships` table rather than a new table of its own:
  *
  * "A subscribed to / requested friendship with B" is nothing more than a
  * `memberships` row whose container is B's personal blog feed
  * (BlogPostService::getOrCreateUserBlogFeed()) and whose user is A. There
- * is no separate "pending"/"accepted" state column - mutuality (real,
- * reciprocal "friendship") is derived on read by checking whether the
- * reverse row (B's own membership in A's blog) also exists. Until it does,
- * A is simply a one-directional subscriber of B, exactly matching the
- * product framing (until friendship is mutual, the requester is considered
- * a subscriber).
+ * is no separate "pending"/"accepted" state column: a one-way request uses
+ * the existing subscriber role, while mutual friendship promotes both rows
+ * to member. Removing either direction deletes that row and downgrades the
+ * survivor to subscriber again.
  *
  * CommunityService now uses the same storage shape for joining a community:
  * subscribing is a pending request for approval-based communities, and a
  * member role is an accepted/open membership. This class remains specific to
- * personal blog containers; the pending-community approval UI is tracked in
- * docs/TODO.md.
+ * personal blog containers.
  */
 final class FriendService
 {
@@ -132,13 +127,32 @@ final class FriendService
 
         $targetBlog = $this->blogPostService->getOrCreateUserBlogFeed($target);
 
-        if ($this->memberships->exists($targetBlog->id, $actor->id)) {
+        $created = $this->memberships->create(
+            $targetBlog->id,
+            $actor->id,
+            MembershipRepository::ROLE_SUBSCRIBER_ID,
+        );
+
+        // A reverse request can only exist if the actor already has a blog
+        // container. Promotion is one conditional UPDATE over both rows, so
+        // this also acts as the mutuality check without adding read-time ACL
+        // joins or a separate friendship state.
+        $actorBlog = $this->feeds->findByOwnerAndType($actor->id, 'blog', $actor);
+        $promoted = $actorBlog !== null && $this->memberships->promoteBlogFriendship(
+            $targetBlog->id,
+            $actor->id,
+            $actorBlog->id,
+            $target->id,
+        );
+
+        // A repeated request may still repair roles left inconsistent by an
+        // interrupted older deployment, but it must not emit the notification
+        // a second time.
+        if (! $created) {
             return;
         }
 
-        $this->memberships->create($targetBlog->id, $actor->id, MembershipRepository::ROLE_MEMBER_ID);
-
-        $becameMutual = $this->hasMembership($actor, $target);
+        $becameMutual = $promoted;
 
         $message = $becameMutual
             ? $this->tm->trans('friend.became_mutual', ['name' => $actor->getDisplayName()])
@@ -230,7 +244,17 @@ final class FriendService
             return;
         }
 
-        $this->memberships->delete($targetBlog->id, $actor->id);
+        // If the relationship was mutual, the surviving reverse direction is
+        // still a valid request/subscription but no longer grants members-only
+        // access. Resolve the actor's blog as its owner for the same ACL reason
+        // as hasMembership() above.
+        $actorBlog = $this->feeds->findByOwnerAndType($actor->id, 'blog', $actor);
+        $this->memberships->removeBlogRelationship(
+            $targetBlog->id,
+            $actor->id,
+            $actorBlog?->id,
+            $target->id,
+        );
     }
 
     /**

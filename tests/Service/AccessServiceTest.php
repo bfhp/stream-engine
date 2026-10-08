@@ -76,6 +76,7 @@ final class AccessServiceTest extends TestCase
         int $ownerId = 1,
         ?int $containerId = null,
         string $visibility = 'public',
+        ?string $containerType = null,
     ): Feed {
         return new Feed(
             id: 10,
@@ -93,6 +94,7 @@ final class AccessServiceTest extends TestCase
             createdAt: time(),
             relevance: null,
             canonicalUrl: null,
+            containerType: $containerType,
         );
     }
 
@@ -159,12 +161,17 @@ final class AccessServiceTest extends TestCase
         ));
     }
 
-    public function testMembersVisibilityRequiresMembership(): void
+    public function testCommunityMembersVisibilityRequiresApprovedMembership(): void
     {
         $membershipDb = $this->createMock(PdoDatabase::class);
         $service = $this->makeService($membershipDb);
         $user = $this->makeUser(7);
-        $feed = $this->makeFeed(ownerId: 1, containerId: 42, visibility: 'members');
+        $feed = $this->makeFeed(
+            ownerId: 1,
+            containerId: 42,
+            visibility: 'members',
+            containerType: 'community',
+        );
 
         $membershipDb
             ->expects($this->once())
@@ -173,6 +180,71 @@ final class AccessServiceTest extends TestCase
             ->willReturn(['role_level' => 1]);
 
         $this->assertTrue($service->canAccessFeed($user, $feed));
+    }
+
+    public function testPendingCommunitySubscriberCannotAccessMembersFeed(): void
+    {
+        $membershipDb = $this->createMock(PdoDatabase::class);
+        $service = $this->makeService($membershipDb);
+        $user = $this->makeUser(7);
+        $feed = $this->makeFeed(
+            ownerId: 1,
+            containerId: 42,
+            visibility: 'members',
+            containerType: 'community',
+        );
+
+        $membershipDb->expects($this->once())->method('fetchOne')->willReturn(['role_level' => 0]);
+
+        $this->assertFalse($service->canAccessFeed($user, $feed));
+    }
+
+    public function testPersonalBlogMemberRoleGrantsFriendsOnlyAccess(): void
+    {
+        $membershipDb = $this->createMock(PdoDatabase::class);
+        $service = $this->makeService($membershipDb);
+        $user = $this->makeUser(7);
+        $feed = $this->makeFeed(
+            ownerId: 1,
+            containerId: 42,
+            visibility: 'members',
+            containerType: 'blog',
+        );
+
+        $membershipDb
+            ->expects($this->once())
+            ->method('fetchOne')
+            ->with($this->stringContains('FROM memberships'), [42, 7])
+            ->willReturn(['role_level' => 1]);
+
+        $this->assertTrue($service->canAccessFeed($user, $feed));
+    }
+
+    public function testOneWayPersonalBlogMembershipDoesNotGrantAccess(): void
+    {
+        $membershipDb = $this->createMock(PdoDatabase::class);
+        $service = $this->makeService($membershipDb);
+        $feed = $this->makeFeed(
+            ownerId: 1,
+            containerId: 42,
+            visibility: 'members',
+            containerType: 'blog',
+        );
+
+        $membershipDb->expects($this->once())->method('fetchOne')->willReturn(['role_level' => 0]);
+
+        $this->assertFalse($service->canAccessFeed($this->makeUser(7), $feed));
+    }
+
+    public function testMembersVisibilityDependsOnRoleRatherThanContainerType(): void
+    {
+        $membershipDb = $this->createMock(PdoDatabase::class);
+        $service = $this->makeService($membershipDb);
+        $feed = $this->makeFeed(ownerId: 1, containerId: 42, visibility: 'members');
+
+        $membershipDb->expects($this->once())->method('fetchOne')->willReturn(['role_level' => 1]);
+
+        $this->assertTrue($service->canAccessFeed($this->makeUser(7), $feed));
     }
 
     public function testPrivateVisibilityRequiresModeratorLevel(): void
@@ -209,7 +281,12 @@ final class AccessServiceTest extends TestCase
         $membershipDb = $this->createMock(PdoDatabase::class);
         $service = $this->makeService($membershipDb);
         $user = $this->makeUser(7);
-        $feed = $this->makeFeed(ownerId: 1, containerId: 42, visibility: 'members');
+        $feed = $this->makeFeed(
+            ownerId: 1,
+            containerId: 42,
+            visibility: 'members',
+            containerType: 'community',
+        );
 
         $membershipDb
             ->expects($this->once())

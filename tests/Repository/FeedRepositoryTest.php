@@ -64,7 +64,7 @@ final class FeedRepositoryTest extends TestCase
         $this->assertSame([], $params);
     }
 
-    public function testEveryoneElseGetsTheThreeArmsAndBindsTheirIdTwice(): void
+    public function testEveryoneElseGetsRoleBasedContainerPolicyAndBindsTheirIdTwice(): void
     {
         [$sql, $params] = $this->aclCondition($this->user(7));
 
@@ -73,6 +73,7 @@ final class FeedRepositoryTest extends TestCase
         $this->assertStringContainsString("f.visibility = 'public'", $sql);
         $this->assertStringContainsString('FROM memberships m', $sql);
         $this->assertStringContainsString('m.user_id = ?', $sql);
+        $this->assertStringContainsString('mr.role_level >= 1', $sql);
 
         // Two placeholders, same id, in that order - the pair the ordering
         // tests below expect to find at the end of every query's params.
@@ -103,10 +104,10 @@ final class FeedRepositoryTest extends TestCase
 
     /**
      * The invariant that matters, and the reason this is worth testing at all:
-     * applyAcl() *appends* its two params, so for a non-admin they are the last
-     * two of every query. Get the order wrong and nothing errors - the query
-     * still runs, comparing an owner id against a slug, and returns rows the
-     * caller was never allowed to see.
+     * applyAcl() *appends* its two params, so for a non-admin they are the
+     * last two of every query. Get the order wrong and nothing errors - the
+     * query still runs, comparing an owner id against a slug, and returns rows
+     * the caller was never allowed to see.
      *
      * @param callable(FeedRepository, User): mixed $call
      * @param list<mixed> $ownParams what the method binds before the ACL
@@ -153,7 +154,7 @@ final class FeedRepositoryTest extends TestCase
                 fn (FeedRepository $r, User $u) => $r->findByParentAndSlug(58, 'x', $u),
                 [58, 'x'],
             ],
-            // The parent-is-null branch binds one fewer param, so the ACL pair
+            // The parent-is-null branch binds one fewer param, so the ACL set
             // shifts left with it.
             'findByParentAndSlug, no parent' => [
                 fn (FeedRepository $r, User $u) => $r->findByParentAndSlug(null, 'x', $u),
@@ -167,7 +168,7 @@ final class FeedRepositoryTest extends TestCase
                 fn (FeedRepository $r, User $u) => $r->findCommentsPage(58, 10, null, $u),
                 [58],
             ],
-            // Three cursor params ahead of the ACL pair - the widest gap
+            // Three cursor params ahead of the ACL set - the widest gap
             // between a method's own list and the appended one.
             'findCommentsPage, paged' => [
                 fn (FeedRepository $r, User $u) => $r->findCommentsPage(58, 10, $cursor, $u),
@@ -234,7 +235,7 @@ final class FeedRepositoryTest extends TestCase
             // owner themselves, so that fragment is not unique and matching
             // it found the method's own placeholder instead of the ACL's.
             // Nothing binds between this line and the `?` above it, so the
-            // ACL's pair starts one placeholder back.
+            // ACL's parameter set starts one placeholder back.
             $offset = strpos($sql, "OR f.visibility = 'public'");
             $this->assertNotFalse($offset, $method.' does not apply the ACL predicate');
 
@@ -242,7 +243,10 @@ final class FeedRepositoryTest extends TestCase
 
             $this->assertSame(
                 [7, 7],
-                [$params[$before] ?? null, $params[$before + 1] ?? null],
+                [
+                    $params[$before] ?? null,
+                    $params[$before + 1] ?? null,
+                ],
                 $method.' binds the wrong values at its ACL placeholders'
             );
         }
@@ -253,7 +257,7 @@ final class FeedRepositoryTest extends TestCase
      * synthesised from the parameter types.
      *
      * The values are deliberately unlike the user id (7), so a method binding
-     * one of its own arguments where the ACL pair belongs fails rather than
+     * one of its own arguments where the ACL set belongs fails rather than
      * coincidentally matching.
      *
      * @return array<string, array{string, list<mixed>}>
@@ -339,15 +343,15 @@ final class FeedRepositoryTest extends TestCase
 
         (new FeedRepository($db))->findById(90, $this->user(1, role: AccessService::ROLE_ADMIN));
 
-        // Not "[90, 1, 1]" - the admin branch contributes nothing, so a query
-        // that still bound an id would mean the override wasn't taken.
+        // The admin branch contributes nothing, so a query that still bound
+        // an ACL id would mean the override wasn't taken.
         $this->assertSame([90], $captured);
     }
 
     /**
      * search() is the one method that binds *after* applyAcl() - the cursor
-     * params are pushed on last - so it is the single place where the "ACL pair
-     * is at the end" rule does not hold. Pinned separately so that fixing one
+     * params are pushed on last - so it is the single place where the ACL set
+     * "is at the end" rule does not hold. Pinned separately so that fixing one
      * doesn't silently break the other.
      */
     public function testSearchBindsTheCursorAfterTheAclPair(): void

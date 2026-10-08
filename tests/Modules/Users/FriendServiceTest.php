@@ -307,6 +307,8 @@ final class FriendServiceTest extends TestCase
         // mutual-follow platform.
         $this->assertSame('incoming', $service->getRelationshipStatus($a, $b));
         $this->assertSame('subscribed', $service->getRelationshipStatus($b, $a));
+        $this->assertSame([], $service->getFriends($a, 10)['items']);
+        $this->assertSame([], $service->getFriends($b, 10)['items']);
     }
 
     public function testRemoveFriendIsANoOpWhenTargetHasNeverPosted(): void

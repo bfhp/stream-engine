@@ -42,14 +42,6 @@ generator, hosted site, or build step.
   installation and a new developer can run, change, test, and extend it using
   only the repository documentation, with every internal link checked.
 
-### Blog: friends-only posts via container_id/container_type
-
-`FriendService` already stores relationships in the personal blog feed's
-`memberships`. If the product needs “friends only” visibility, add it as an
-explicit feed access policy and check both sides of the mutual membership. Do
-not add a new visibility type merely because the relationship exists before a
-product decision is made.
-
 ### Forums: topic-view interactive features
 
 The topic and reply view MVP works. Deferred work:

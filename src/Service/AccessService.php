@@ -27,7 +27,7 @@ use StreamEngine\Repository\MembershipRepository;
  * 2. Owner override — feed owner or container owner can access everything inside container.
  * 3. Visibility rules:
  *      - public  → accessible to everyone
- *      - members → accessible to container members
+ *      - members → accessible to accepted container members (role level 1+)
  *      - private → accessible to container moderators+
  *
  * Notes:
@@ -117,21 +117,22 @@ class AccessService
             return false;
         }
 
-        // 🔹 5. Membership is required
-        $membership = $this->membershipRepository
-            ->find($feed->containerId, $user->id);
+        // 🔹 5. Membership is required. Both community approval and
+        // mutual friendship are materialized as the subscriber → member
+        // role transition, so reads never have to derive either relationship.
+        $membership = $this->membershipRepository->find($feed->containerId, $user->id);
 
-        if (!$membership) {
-            return false;
-        }
-
-        // members
         if ($feed->visibility === 'members') {
-            return true;
+            return (int) ($membership?->roleLevel ?? 0) >= 1;
         }
 
-        // private → moderator+
-        return (int) ($membership->roleLevel ?? 0) >= 2;
+        // 🔹 6. Private → moderator+. Unknown visibility values deny
+        // access even if a membership row exists.
+        if ($feed->visibility === 'private') {
+            return (int) ($membership?->roleLevel ?? 0) >= 2;
+        }
+
+        return false;
     }
 
     public function canEditFeed(User $user, Feed $feed): bool
@@ -150,7 +151,7 @@ class AccessService
         // 🔹 3. Container moderator - same role_level >= 2 threshold
         // canAccessFeed() already uses for 'private' visibility. A personal
         // blog's container never has a moderator-level membership row
-        // (FriendService only ever grants 'member', role_level 1 - see
+        // (FriendService only uses subscriber/member, role levels 0/1 - see
         // migrations/20260912000000_initial.sql), so this is
         // a no-op there and only actually grants anything for a community
         // post's moderators.
