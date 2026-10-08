@@ -45,12 +45,12 @@
                         {%- include 'components/users/post-tag.twig' with {tag: ''} only -%}
                     </template>
 
-                {% if nextOffset is not null %}
+                {% if nextCursor is not null %}
                     <div class="text-center mt-3" data-community-feed-load-more-wrapper>
                         <button
                             type="button"
                             class="btn btn-outline-secondary load-more-community-posts"
-                            data-offset="{{ nextOffset }}"
+                            data-cursor="{{ nextCursor }}"
                         >
                             {{ trans('view.users.community.sidebar.13') }}
                         </button>

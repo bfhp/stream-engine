@@ -492,7 +492,7 @@ class UsersController extends AbstractController
 
     /**
      * Builds the profile page's blog feed: the profile owner's own first
-     * page of blog-post cards, an API URL + next offset for the
+     * page of blog-post cards, an API URL + next cursor for the
      * "Load more" button to fetch more from client-side (see
      * handleUserPostsRequest() and users.ts's initBlogFeedLoadMore() -
      * appending cards to the DOM this way, rather than a full page
@@ -508,7 +508,7 @@ class UsersController extends AbstractController
      *         commentCount: int, ratingAverage: float, ratingCount: int
      *     }>,
      *     hasPosts: bool, isEmpty: bool, postsApiUrl: string,
-     *     nextOffset: ?int, newPostUrl: ?string
+     *     nextCursor: ?string, newPostUrl: ?string
      * }
      */
     private function buildBlogFeedViewData(User $profileUser, User $viewer, bool $isOwnProfile, ?Feed $blogFeed): array
@@ -516,12 +516,9 @@ class UsersController extends AbstractController
         $perPage = self::BLOG_POSTS_PER_PAGE;
 
         $postsPage = $blogFeed !== null
-            ? $this->feedService->getFeedsByParentAndTypePage($blogFeed->id, 'blog-post', $viewer, $perPage)
-            : ['items' => [], 'total' => 0];
+            ? $this->feedService->getFeedsByParentAndTypeAfter($blogFeed->id, 'blog-post', $viewer, $perPage)
+            : ['items' => [], 'nextCursor' => null];
         $postCards = $this->buildPostCards($postsPage['items']);
-        $total = $postsPage['total'];
-
-        $nextOffset = $total > count($postCards) ? count($postCards) : null;
 
         $newPostUrl = null;
         if ($isOwnProfile) {
@@ -536,7 +533,7 @@ class UsersController extends AbstractController
             'hasPosts' => $postCards !== [],
             'isEmpty' => $postCards === [],
             'postsApiUrl' => '/api/v1/users/'.rawurlencode($profileUser->username).'/blog-posts',
-            'nextOffset' => $nextOffset,
+            'nextCursor' => $postsPage['nextCursor'],
             'newPostUrl' => $newPostUrl,
         ];
     }
@@ -636,11 +633,11 @@ class UsersController extends AbstractController
     }
 
     /**
-     * GET /api/v1/users/{username}/blog-posts?offset= - the profile
+     * GET /api/v1/users/{username}/blog-posts?cursor= - the profile
      * page's "Load more" button. Same card shape (buildPostCards()) and
-     * ACL scoping (FeedService::getFeedsByParentAndTypePage() on the
+     * ACL scoping (FeedService::getFeedsByParentAndTypeAfter() on the
      * user's personal blog feed) as the page's own first-render batch,
-     * just offset further into the same ordered list.
+     * continuing after the last `(created_at, id)` tuple returned.
      *
      * @throws NotFoundException
      * @throws ValidationException
@@ -658,22 +655,20 @@ class UsersController extends AbstractController
             throw new NotFoundException($this->tm->trans('user.not_found'));
         }
 
-        $offset = max(0, $this->context->query->int('offset'));
+        $cursor = $this->context->query->trimmed('cursor');
+        $cursor = $cursor !== '' ? $cursor : null;
         $limit = self::BLOG_POSTS_PER_PAGE;
 
         $blogFeed = $this->resolvePersonalBlogFeed($profileUser, $this->context->user);
         $postsPage = $blogFeed !== null
-            ? $this->feedService->getFeedsByParentAndTypePage($blogFeed->id, 'blog-post', $this->context->user, $limit, $offset)
-            : ['items' => [], 'total' => 0];
+            ? $this->feedService->getFeedsByParentAndTypeAfter($blogFeed->id, 'blog-post', $this->context->user, $limit, $cursor)
+            : ['items' => [], 'nextCursor' => null];
         $items = $this->buildPostCards($postsPage['items']);
-
-        $nextOffset = $postsPage['total'] > $offset + count($items) ? $offset + count($items) : null;
 
         echo Formatter::json([
             'items' => $items,
             'meta' => [
-                'total' => $postsPage['total'],
-                'nextOffset' => $nextOffset,
+                'nextCursor' => $postsPage['nextCursor'],
             ],
         ]);
     }
@@ -723,11 +718,11 @@ class UsersController extends AbstractController
     }
 
     /**
-     * GET /api/v1/community/blog-posts?offset=&tag= - the community page's
+     * GET /api/v1/community/blog-posts?cursor=&tag= - the community page's
      * "Load more" button (action=community.main). Same card shape
      * (buildCommunityPostCards()) and ACL scoping
-     * (FeedService::getFeedsByTypePage()) as the page's own first-render
-     * batch, just offset further into the same ordered (optionally
+     * (FeedService::getFeedsByTypeAfter()) as the page's own first-render
+     * batch, continuing from a stable tuple in the same ordered (optionally
      * tag-filtered) feed - see handleUserPostsRequest() for the profile
      * page's equivalent.
      *
@@ -742,25 +737,23 @@ class UsersController extends AbstractController
         $tagSlug = $this->context->query->trimmed('tag');
         $tagSlug = $tagSlug !== '' ? $tagSlug : null;
 
-        $offset = max(0, $this->context->query->int('offset'));
+        $cursor = $this->context->query->trimmed('cursor');
+        $cursor = $cursor !== '' ? $cursor : null;
         $limit = self::COMMUNITY_POSTS_PER_PAGE;
 
-        $postsPage = $this->feedService->getFeedsByTypePage('blog-post', $this->context->user, $limit, $offset, $tagSlug);
+        $postsPage = $this->feedService->getFeedsByTypeAfter('blog-post', $this->context->user, $limit, $cursor, $tagSlug);
         $items = $this->buildCommunityPostCards($postsPage['items']);
-
-        $nextOffset = $postsPage['total'] > $offset + count($items) ? $offset + count($items) : null;
 
         echo Formatter::json([
             'items' => $items,
             'meta' => [
-                'total' => $postsPage['total'],
-                'nextOffset' => $nextOffset,
+                'nextCursor' => $postsPage['nextCursor'],
             ],
         ]);
     }
 
     /**
-     * GET /api/v1/communities/{id}/blog-posts?offset= - a single community
+     * GET /api/v1/communities/{id}/blog-posts?cursor= - a single community
      * page's own "Load more" button. Same card shape as the site-wide
      * community feed, but scoped to posts parented directly under this
      * community.
@@ -780,19 +773,17 @@ class UsersController extends AbstractController
             throw new NotFoundException($this->tm->trans('community.not_found'));
         }
 
-        $offset = max(0, $this->context->query->int('offset'));
+        $cursor = $this->context->query->trimmed('cursor');
+        $cursor = $cursor !== '' ? $cursor : null;
         $limit = self::COMMUNITY_POSTS_PER_PAGE;
 
-        $postsPage = $this->feedService->getFeedsByParentAndTypePage($community->id, 'blog-post', $this->context->user, $limit, $offset);
+        $postsPage = $this->feedService->getFeedsByParentAndTypeAfter($community->id, 'blog-post', $this->context->user, $limit, $cursor);
         $items = $this->buildCommunityPostCards($postsPage['items']);
-
-        $nextOffset = $postsPage['total'] > $offset + count($items) ? $offset + count($items) : null;
 
         echo Formatter::json([
             'items' => $items,
             'meta' => [
-                'total' => $postsPage['total'],
-                'nextOffset' => $nextOffset,
+                'nextCursor' => $postsPage['nextCursor'],
             ],
         ]);
     }
@@ -1538,7 +1529,7 @@ class UsersController extends AbstractController
 
     /**
      * Builds a single community page's own first post batch: posts parented
-     * directly under that community plus the API URL and next offset for
+     * directly under that community plus the API URL and next cursor for
      * users.ts's load-more wiring.
      *
      * @return array{
@@ -1548,31 +1539,28 @@ class UsersController extends AbstractController
      *         commentCount: int, ratingAverage: float, ratingCount: int,
      *         authorName: string, authorAvatarUrl: string, authorUrl: ?string
      *     }>,
-     *     hasPosts: bool, isEmpty: bool, postsApiUrl: string, nextOffset: ?int
+     *     hasPosts: bool, isEmpty: bool, postsApiUrl: string, nextCursor: ?string
      * }
      */
     private function buildCommunityShowFeedViewData(Feed $community, User $viewer): array
     {
         $perPage = self::COMMUNITY_POSTS_PER_PAGE;
 
-        $postsPage = $this->feedService->getFeedsByParentAndTypePage($community->id, 'blog-post', $viewer, $perPage);
+        $postsPage = $this->feedService->getFeedsByParentAndTypeAfter($community->id, 'blog-post', $viewer, $perPage);
         $postCards = $this->buildCommunityPostCards($postsPage['items']);
-        $total = $postsPage['total'];
-
-        $nextOffset = $total > count($postCards) ? count($postCards) : null;
 
         return [
             'posts' => $postCards,
             'hasPosts' => $postCards !== [],
             'isEmpty' => $postCards === [],
             'postsApiUrl' => '/api/v1/communities/'.$community->id.'/blog-posts',
-            'nextOffset' => $nextOffset,
+            'nextCursor' => $postsPage['nextCursor'],
         ];
     }
 
     /**
      * action=community.main: the site-wide feed of every blog-post feed the
-     * viewer can see (ACL-filtered by FeedRepository::findByTypePage(), same
+     * viewer can see (ACL-filtered by FeedRepository::findByTypeAfter(), same
      * as every other listing here), optionally narrowed to one tag via
      * ?tag=slug.
      *
@@ -2136,7 +2124,7 @@ class UsersController extends AbstractController
     /**
      * Builds the community page's first "Load more" batch - same
      * AJAX-append shape/reasoning as buildBlogFeedViewData() on the profile
-     * page (postsApiUrl + nextOffset for users.ts's
+     * page (postsApiUrl + nextCursor for users.ts's
      * initCommunityFeedLoadMore(), see handleCommunityPostsRequest() for
      * the API it calls), just site-wide instead of one owner's feed. The
      * API URL carries the active tag filter (if any) so every subsequent
@@ -2149,18 +2137,15 @@ class UsersController extends AbstractController
      *         commentCount: int, ratingAverage: float, ratingCount: int,
      *         authorName: string, authorAvatarUrl: string, authorUrl: ?string
      *     }>,
-     *     hasPosts: bool, isEmpty: bool, postsApiUrl: string, nextOffset: ?int
+     *     hasPosts: bool, isEmpty: bool, postsApiUrl: string, nextCursor: ?string
      * }
      */
     private function buildCommunityFeedViewData(User $viewer, ?string $tagSlug): array
     {
         $perPage = self::COMMUNITY_POSTS_PER_PAGE;
 
-        $postsPage = $this->feedService->getFeedsByTypePage('blog-post', $viewer, $perPage, 0, $tagSlug);
+        $postsPage = $this->feedService->getFeedsByTypeAfter('blog-post', $viewer, $perPage, null, $tagSlug);
         $postCards = $this->buildCommunityPostCards($postsPage['items']);
-        $total = $postsPage['total'];
-
-        $nextOffset = $total > count($postCards) ? count($postCards) : null;
 
         $postsApiUrl = '/api/v1/community/blog-posts';
         if ($tagSlug !== null) {
@@ -2172,7 +2157,7 @@ class UsersController extends AbstractController
             'hasPosts' => $postCards !== [],
             'isEmpty' => $postCards === [],
             'postsApiUrl' => $postsApiUrl,
-            'nextOffset' => $nextOffset,
+            'nextCursor' => $postsPage['nextCursor'],
         ];
     }
 

@@ -12,6 +12,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 - Feed view counters now count each member or guest at most once per feed in a
   24-hour window, ignore known crawlers, and remain independent from read/unread
   state.
+- Replaced offset-based loading in the growing profile, community, and
+  tag-filtered post feeds with stable `(created_at, id)` cursor pagination.
 
 ## [0.4.6] - 2026-10-08
 

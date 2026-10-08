@@ -58,13 +58,6 @@ shared script green.
 3. Do not conceal the migration with large numbers of `@ts-expect-error`
    comments without individual explanations.
 
-### Cursor pagination
-
-Offset pagination in ACL-filtered lists can scan large parts of a table. Move
-hot lists to stable cursor pagination over indexed `(sort_column, id)`. Choose
-specific queries based on measurements and the rules in
-`docs/PERFORMANCE_CONTRACT.md` rather than rewriting every paginator in advance.
-
 ## File maintenance rule
 
 A new task must describe the observable problem, the desired outcome, and,

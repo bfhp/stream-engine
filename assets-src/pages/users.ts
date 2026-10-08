@@ -139,6 +139,7 @@ function initBlogFeedLoadMore() {
         wrapperSelector: '[data-blog-feed-load-more-wrapper]',
         render: renderFeedPostCard,
         errorMessage: trans('js.users.posts_load_failed'),
+        pagination: 'cursor',
     });
 }
 
@@ -158,6 +159,7 @@ function initCommunityFeedLoadMore() {
         // profile's, above, do not - that flag is the only difference.
         render: renderFeedPostCard,
         errorMessage: trans('js.users.posts_load_failed'),
+        pagination: 'cursor',
     });
 }
 
@@ -175,6 +177,7 @@ function initCommunityShowFeedLoadMore() {
         wrapperSelector: '[data-community-show-feed-load-more-wrapper]',
         render: renderFeedPostCard,
         errorMessage: trans('js.users.posts_load_failed'),
+        pagination: 'cursor',
     });
 }
 

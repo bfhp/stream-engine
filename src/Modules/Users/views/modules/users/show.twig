@@ -28,12 +28,12 @@
                     {% endfor %}
                 </div>
 
-                {% if nextOffset is not null %}
+                {% if nextCursor is not null %}
                     <div class="users-more" data-blog-feed-load-more-wrapper>
                         <button
                             type="button"
                             class="ui-button ui-button--secondary load-more-blog-posts"
-                            data-offset="{{ nextOffset }}"
+                            data-cursor="{{ nextCursor }}"
                         >
                             {{ trans('view.users.community.sidebar.13') }}
                         </button>

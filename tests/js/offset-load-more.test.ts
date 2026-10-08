@@ -45,6 +45,29 @@ async function click(): Promise<void> {
     await vi.waitFor(() => {});
 }
 
+function mountCursor(cursor = "cursor-1") {
+    document.body.innerHTML = `
+        <div id="cursor-feed" data-posts-api-url="/api/v1/posts?tag=php">
+            <ul id="cursor-items"></ul>
+            <div data-cursor-wrapper>
+                <button class="cursor-more" data-cursor="${cursor}">Показать ещё</button>
+            </div>
+        </div>
+    `;
+
+    initOffsetLoadMore<{ title: string }>({
+        containerId: "cursor-feed",
+        readyFlag: "cursorReady",
+        apiUrlKey: "postsApiUrl",
+        buttonSelector: ".cursor-more",
+        listId: "cursor-items",
+        wrapperSelector: "[data-cursor-wrapper]",
+        render: (item) => `<li>${item.title}</li>`,
+        errorMessage: "Не удалось загрузить записи",
+        pagination: "cursor",
+    });
+}
+
 beforeEach(() => {
     api.mockReset().mockResolvedValue({ items: [], meta: { nextOffset: null } });
     toast.mockReset();
@@ -120,6 +143,29 @@ describe("the request", () => {
         await vi.waitFor(() => {});
 
         expect(api).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe("keyset cursor mode", () => {
+    it("sends and advances an opaque cursor while preserving existing filters", async () => {
+        api.mockResolvedValue({ items: [], meta: { nextCursor: "cursor-2" } });
+        mountCursor();
+
+        document.querySelector<HTMLButtonElement>(".cursor-more")!.click();
+        await vi.waitFor(() => {});
+
+        expect(api).toHaveBeenCalledWith("/api/v1/posts?tag=php&cursor=cursor-1");
+        expect(document.querySelector<HTMLButtonElement>(".cursor-more")!.dataset.cursor).toBe("cursor-2");
+    });
+
+    it("removes the wrapper when the cursor page is exhausted", async () => {
+        api.mockResolvedValue({ items: [], meta: { nextCursor: null } });
+        mountCursor();
+
+        document.querySelector<HTMLButtonElement>(".cursor-more")!.click();
+        await vi.waitFor(() => {});
+
+        expect(document.querySelector("[data-cursor-wrapper]")).toBeNull();
     });
 });
 

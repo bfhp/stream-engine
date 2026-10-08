@@ -496,12 +496,13 @@ final class UsersControllerTest extends TestCase
         $feedService = $this->createMock(FeedService::class);
         $feedService->method('getFeedByOwnerAndType')->with(7, 'blog', $this->anything())->willReturn($blogFeed);
         $feedService
-            ->method('getFeedsByParentAndTypePage')
-            ->willReturnCallback(function (int $parentId, string $type, User $viewer, int $limit, int $offset = 0) use (&$calls, $post): array {
-                $calls[] = [$parentId, $type, $limit, $offset];
+            ->method('getFeedsByParentAndTypeAfter')
+            ->willReturnCallback(function (int $parentId, string $type, User $viewer, int $limit, ?string $cursor = null) use (&$calls, $post): array {
+                $calls[] = [$parentId, $type, $limit, $cursor];
 
-                return $limit === 4 ? ['items' => [$post], 'total' => 1] : ['items' => [], 'total' => 1];
+                return ['items' => [$post], 'nextCursor' => null];
             });
+        $feedService->method('getFeedsByParentAndTypePage')->willReturn(['items' => [], 'total' => 1]);
         $feedService->method('countCommentsForFeeds')->willReturn([902 => 0]);
         $feedService->method('countFeedsByParentAndType')->with(900, 'blog-post', $this->anything())->willReturn(1);
         $feedService->method('getRatingTotalsByParentAndType')->with(900, 'blog-post', $this->anything())->willReturn(['sum' => 0, 'count' => 0]);
@@ -511,8 +512,7 @@ final class UsersControllerTest extends TestCase
         $view = $module->show($page, ['username' => 'nicky42']);
 
         $this->assertSame('My Post Title', $view->data['posts'][0]['title']);
-        $this->assertContains([900, 'blog-post', 4, 0], $calls);
-        $this->assertContains([900, 'blog-post', 100, 0], $calls);
+        $this->assertSame([[900, 'blog-post', 4, null]], $calls);
         $this->assertSame(1, $view->data['postCount']);
     }
 
@@ -1969,9 +1969,9 @@ final class UsersControllerTest extends TestCase
         );
     }
 
-    public function testCallApiReturnsUserPostsPageWithNextOffset(): void
+    public function testCallApiReturnsUserPostsPageWithNextCursor(): void
     {
-        $_GET['offset'] = '4';
+        $_GET['cursor'] = 'cursor-4';
         $_SERVER['REQUEST_METHOD'] = 'GET';
 
         $page = $this->makeUserPostsPage();
@@ -2012,9 +2012,9 @@ final class UsersControllerTest extends TestCase
             ->willReturn($blogFeed);
         $feedService
             ->expects($this->once())
-            ->method('getFeedsByParentAndTypePage')
-            ->with(900, 'blog-post', $this->anything(), 4, 4)
-            ->willReturn(['items' => [$post], 'total' => 10]);
+            ->method('getFeedsByParentAndTypeAfter')
+            ->with(900, 'blog-post', $this->anything(), 4, 'cursor-4')
+            ->willReturn(['items' => [$post], 'nextCursor' => 'cursor-5']);
         $feedService->method('countCommentsForFeeds')->willReturn([902 => 3]);
         $this->setFeedService($module, $feedService);
 
@@ -2023,7 +2023,7 @@ final class UsersControllerTest extends TestCase
             $module->callApi($page, ['username' => 'nicky42']);
             $output = ob_get_clean();
         } finally {
-            unset($_GET['offset'], $_SERVER['REQUEST_METHOD']);
+            unset($_GET['cursor'], $_SERVER['REQUEST_METHOD']);
         }
 
         $decoded = json_decode($output, true);
@@ -2035,9 +2035,7 @@ final class UsersControllerTest extends TestCase
         // suite that still rely on it.
         $this->assertSame('/blog/my-post-title/', $decoded['items'][0]['url']);
         $this->assertSame(3, $decoded['items'][0]['commentCount']);
-        $this->assertSame(10, $decoded['meta']['total']);
-        // offset(4) + count(items)(1) = 5 < total(10) -> more to load.
-        $this->assertSame(5, $decoded['meta']['nextOffset']);
+        $this->assertSame('cursor-5', $decoded['meta']['nextCursor']);
     }
 
     public function testCallApiReturnsUserPlaylistWithStableTrackIds(): void
@@ -2135,7 +2133,7 @@ final class UsersControllerTest extends TestCase
         $this->assertSame('/blog/my-post-title/', $decoded['items'][0]['postUrl']);
     }
 
-    public function testCallApiReturnsUserPostsPageWithNullNextOffsetWhenExhausted(): void
+    public function testCallApiReturnsUserPostsPageWithNullNextCursorWhenExhausted(): void
     {
         $_SERVER['REQUEST_METHOD'] = 'GET';
 
@@ -2148,7 +2146,7 @@ final class UsersControllerTest extends TestCase
         $module = $this->makeUsersModule($db);
 
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedsByOwnerAndTypePage')->willReturn(['items' => [], 'total' => 0]);
+        $feedService->method('getFeedsByParentAndTypeAfter')->willReturn(['items' => [], 'nextCursor' => null]);
         $this->setFeedService($module, $feedService);
 
         try {
@@ -2161,7 +2159,7 @@ final class UsersControllerTest extends TestCase
 
         $decoded = json_decode($output, true);
         $this->assertSame([], $decoded['items']);
-        $this->assertNull($decoded['meta']['nextOffset']);
+        $this->assertNull($decoded['meta']['nextCursor']);
     }
 
     public function testCallApiThrowsNotFoundForUnknownUsernameOnUserPosts(): void
@@ -2490,7 +2488,7 @@ final class UsersControllerTest extends TestCase
         // 4.7, exercising both the full-star and half-star math.
         $feedService->method('getRatingTotalsByParentAndType')->willReturn(['sum' => 14, 'count' => 3]);
         $feedService->method('getFeedsByParentAndType')->willReturn([]);
-        $feedService->method('getFeedsByParentAndTypePage')->willReturn(['items' => [$this->makeBlogPostFeed()], 'total' => 12]);
+        $feedService->method('getFeedsByParentAndTypeAfter')->willReturn(['items' => [$this->makeBlogPostFeed()], 'nextCursor' => 'next-community-page']);
         // Sidebar's "Статистика" card (community_stats block) - see
         // UsersController::buildCommunityStatsViewData().
         $feedService->method('countFeedsByParentAndType')->willReturn(2);
@@ -2511,7 +2509,7 @@ final class UsersControllerTest extends TestCase
         $this->assertTrue($view->data['hasPosts']);
         $this->assertFalse($view->data['isEmpty']);
         $this->assertSame('/api/v1/communities/500/blog-posts', $view->data['postsApiUrl']);
-        $this->assertSame(1, $view->data['nextOffset']);
+        $this->assertSame('next-community-page', $view->data['nextCursor']);
         $this->assertSame(3, $view->data['ratingCount']);
         $this->assertSame(4.7, $view->data['ratingAverage']);
         $this->assertSame(4, $view->data['ratingFullStars']);
@@ -2628,7 +2626,7 @@ final class UsersControllerTest extends TestCase
         $feedService = $this->createStub(FeedService::class);
         $feedService->method('getFeedsByType')->willReturn([$newCommunity]);
         $feedService->method('getTopTermsByVocabulary')->willReturn([]);
-        $feedService->method('getFeedsByTypePage')->willReturn(['items' => [], 'total' => 0]);
+        $feedService->method('getFeedsByTypeAfter')->willReturn(['items' => [], 'nextCursor' => null]);
         $this->setFeedService($module, $feedService);
 
         // buildCommunityWidgetCards() (used for both widgets below) calls
@@ -2726,7 +2724,7 @@ final class UsersControllerTest extends TestCase
         $feedService = $this->createStub(FeedService::class);
         $feedService->method('getFeedsByType')->willReturn([]);
         $feedService->method('getTopTermsByVocabulary')->willReturn([]);
-        $feedService->method('getFeedsByTypePage')->willReturn(['items' => [], 'total' => 0]);
+        $feedService->method('getFeedsByTypeAfter')->willReturn(['items' => [], 'nextCursor' => null]);
         $this->setFeedService($module, $feedService);
 
         $communityService = $this->createStub(CommunityService::class);

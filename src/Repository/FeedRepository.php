@@ -235,6 +235,36 @@ final class FeedRepository implements FeedRepositoryInterface
     }
 
     /**
+     * Keyset-paginated variant for growing container feeds. The strict tuple
+     * comparison prevents duplicates when rows are inserted between requests.
+     * Uses index: feeds_parent_id_type_created_at_id_index (parent_id, type, created_at, id).
+     *
+     * @return Feed[]
+     */
+    public function findByParentAndTypeAfter(
+        int $parentId,
+        string $type,
+        User $user,
+        int $limit,
+        ?object $cursor = null,
+    ): array {
+        $sql = $this->baseSelect();
+        $condition = "f.parent_id = ?\nAND f.type = ?\n";
+        $params = [$parentId, $type];
+
+        if ($cursor !== null) {
+            $condition .= "AND (f.created_at < ? OR (f.created_at = ? AND f.id < ?))\n";
+            array_push($params, $cursor->createdAt, $cursor->createdAt, $cursor->id);
+        }
+
+        $condition = $this->applyAcl($condition, $params, $user);
+        $sql .= $this->where($condition);
+        $sql .= "\nORDER BY f.created_at DESC, f.id DESC\nLIMIT $limit";
+
+        return $this->fetch($sql, $params);
+    }
+
+    /**
      * Gets Feeds list for the public API's endpoint /api/v1/feeds.
      * Checks ACL.
      * Keep every branch tied to an index named inline below.
@@ -648,6 +678,48 @@ final class FeedRepository implements FeedRepositoryInterface
         $sql .= "\nORDER BY f.created_at DESC, f.id DESC\nLIMIT $limit OFFSET $offset";
 
         return $this->fetchWithTotal($sql, $params);
+    }
+
+    /**
+     * Keyset-paginated site-wide feed used by the community load-more API.
+     * Uses index: feeds_type_created_at_id_index (type, created_at, id).
+     * Uses index: PRIMARY(feed_id, term_id) on feed_term_links when filtering by tag.
+     * Uses index: PRIMARY(id) on feed_terms when filtering by tag.
+     *
+     * @return Feed[]
+     */
+    public function findByTypeAfter(
+        string $type,
+        User $user,
+        int $limit,
+        ?object $cursor = null,
+        ?string $tagSlug = null,
+    ): array {
+        $joins = '';
+        if ($tagSlug !== null) {
+            $joins = "\nJOIN feed_term_links ftl ON ftl.feed_id = f.id"
+                ."\nJOIN feed_terms ft ON ft.id = ftl.term_id";
+        }
+
+        $sql = $this->baseSelect().$joins;
+        $condition = "f.type = ?\n";
+        $params = [$type];
+
+        if ($tagSlug !== null) {
+            $condition .= "AND ft.vocabulary = 'tag'\nAND ft.slug = ?\n";
+            $params[] = $tagSlug;
+        }
+
+        if ($cursor !== null) {
+            $condition .= "AND (f.created_at < ? OR (f.created_at = ? AND f.id < ?))\n";
+            array_push($params, $cursor->createdAt, $cursor->createdAt, $cursor->id);
+        }
+
+        $condition = $this->applyAcl($condition, $params, $user);
+        $sql .= $this->where($condition);
+        $sql .= "\nORDER BY f.created_at DESC, f.id DESC\nLIMIT $limit";
+
+        return $this->fetch($sql, $params);
     }
 
     /**

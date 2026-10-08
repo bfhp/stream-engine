@@ -348,6 +348,53 @@ final class FeedRepositoryTest extends TestCase
         $this->assertSame([90], $captured);
     }
 
+    public function testParentFeedCursorUsesStableTupleWithoutOffset(): void
+    {
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects($this->once())
+            ->method('fetchAll')
+            ->with(
+                $this->callback(static fn (string $sql): bool => str_contains($sql, 'f.created_at < ?')
+                    && str_contains($sql, 'f.created_at = ? AND f.id < ?')
+                    && str_contains($sql, 'ORDER BY f.created_at DESC, f.id DESC')
+                    && str_contains($sql, 'LIMIT 11')
+                    && ! str_contains($sql, 'OFFSET')),
+                [900, 'blog-post', 1_700_000_000, 1_700_000_000, 42]
+            )
+            ->willReturn([]);
+
+        (new FeedRepository($db))->findByParentAndTypeAfter(
+            900,
+            'blog-post',
+            $this->user(1, AccessService::ROLE_ADMIN),
+            11,
+            (object) ['createdAt' => 1_700_000_000, 'id' => 42],
+        );
+    }
+
+    public function testTypeFeedCursorKeepsTagAndAclParamsInOrder(): void
+    {
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects($this->once())
+            ->method('fetchAll')
+            ->with(
+                $this->callback(static fn (string $sql): bool => str_contains($sql, 'JOIN feed_term_links')
+                    && str_contains($sql, 'JOIN feed_terms')
+                    && str_contains($sql, 'f.created_at < ?')
+                    && ! str_contains($sql, 'OFFSET')),
+                ['blog-post', 'php', 1_700_000_000, 1_700_000_000, 42, 7, 7]
+            )
+            ->willReturn([]);
+
+        (new FeedRepository($db))->findByTypeAfter(
+            'blog-post',
+            $this->user(7),
+            11,
+            (object) ['createdAt' => 1_700_000_000, 'id' => 42],
+            'php',
+        );
+    }
+
     /**
      * search() is the one method that binds *after* applyAcl() - the cursor
      * params are pushed on last - so it is the single place where the ACL set

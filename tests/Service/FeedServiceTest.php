@@ -132,6 +132,54 @@ final class FeedServiceTest extends TestCase
         self::assertTrue($service->recordView(58, new User(id: 7, email: 'user@example.com')));
     }
 
+    public function testFeedCursorUsesLastReturnedRowAndDropsProbe(): void
+    {
+        $rows = [
+            ['id' => 30, 'parent_id' => 900, 'owner_id' => 1, 'type' => 'blog-post', 'container_id' => null, 'created_at' => 300],
+            ['id' => 20, 'parent_id' => 900, 'owner_id' => 1, 'type' => 'blog-post', 'container_id' => null, 'created_at' => 200],
+            ['id' => 10, 'parent_id' => 900, 'owner_id' => 1, 'type' => 'blog-post', 'container_id' => null, 'created_at' => 100],
+        ];
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects($this->once())
+            ->method('fetchAll')
+            ->with($this->stringContains('LIMIT 3'), [900, 'blog-post'])
+            ->willReturn($rows);
+
+        $service = $this->makeService(
+            new FeedRepository($db),
+            $this->makeUrlGenerator([
+                900 => $this->makeFeed(900, type: 'blog'),
+                30 => $this->makeFeed(30, parentId: 900, createdAt: 300, type: 'blog-post'),
+                20 => $this->makeFeed(20, parentId: 900, createdAt: 200, type: 'blog-post'),
+            ]),
+        );
+
+        $page = $service->getFeedsByParentAndTypeAfter(
+            900,
+            'blog-post',
+            new User(id: 1, email: 'admin@example.com', role: AccessService::ROLE_ADMIN),
+            2,
+        );
+
+        self::assertSame([30, 20], array_map(static fn (Feed $feed): int => $feed->id, $page['items']));
+        self::assertSame(['createdAt' => 200, 'id' => 20], json_decode(base64_decode($page['nextCursor']), true));
+    }
+
+    public function testFeedCursorRejectsMalformedPayloadBeforeQuerying(): void
+    {
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects($this->never())->method('fetchAll');
+
+        $this->expectException(ValidationException::class);
+
+        $this->makeService(new FeedRepository($db))->getFeedsByTypeAfter(
+            'blog-post',
+            new User(id: 0, email: ''),
+            10,
+            'not-a-cursor',
+        );
+    }
+
     private function trans(string $key, array $params = []): string
     {
         return (new TranslationManager('ru', 'en'))->trans($key, $params);

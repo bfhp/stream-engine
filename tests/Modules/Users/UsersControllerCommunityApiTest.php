@@ -210,12 +210,12 @@ final class UsersControllerCommunityApiTest extends TestCase
         );
     }
 
-    private function feedServiceReturning(?Feed $community, array $page = ['items' => [], 'total' => 0]): FeedService
+    private function feedServiceReturning(?Feed $community, array $page = ['items' => [], 'nextCursor' => null]): FeedService
     {
         $feedService = $this->createStub(FeedService::class);
         $feedService->method('getFeedById')->willReturn($community);
-        $feedService->method('getFeedsByTypePage')->willReturn($page);
-        $feedService->method('getFeedsByParentAndTypePage')->willReturn($page);
+        $feedService->method('getFeedsByTypeAfter')->willReturn($page);
+        $feedService->method('getFeedsByParentAndTypeAfter')->willReturn($page);
 
         return $feedService;
     }
@@ -872,9 +872,9 @@ final class UsersControllerCommunityApiTest extends TestCase
     {
         $feedService = $this->createMock(FeedService::class);
         $feedService->expects($this->once())
-            ->method('getFeedsByTypePage')
-            ->with('blog-post', $this->isInstanceOf(User::class), 10, 0, 'php')
-            ->willReturn(['items' => [], 'total' => 0]);
+            ->method('getFeedsByTypeAfter')
+            ->with('blog-post', $this->isInstanceOf(User::class), 10, null, 'php')
+            ->willReturn(['items' => [], 'nextCursor' => null]);
 
         $module = $this->makeModule(['feedService' => $feedService], query: ['tag' => '  php  ']);
 
@@ -889,9 +889,9 @@ final class UsersControllerCommunityApiTest extends TestCase
         // join the term table at all.
         $feedService = $this->createMock(FeedService::class);
         $feedService->expects($this->once())
-            ->method('getFeedsByTypePage')
-            ->with('blog-post', $this->anything(), 10, 0, null)
-            ->willReturn(['items' => [], 'total' => 0]);
+            ->method('getFeedsByTypeAfter')
+            ->with('blog-post', $this->anything(), 10, null, null)
+            ->willReturn(['items' => [], 'nextCursor' => null]);
 
         $module = $this->makeModule(['feedService' => $feedService], query: ['tag' => '   ']);
 
@@ -911,7 +911,7 @@ final class UsersControllerCommunityApiTest extends TestCase
         // The client renders `items` unconditionally, so it has to be an
         // array - `[]`, not null and not a missing key.
         $this->assertSame([], $payload['items']);
-        $this->assertNull($payload['meta']['nextOffset']);
+        $this->assertNull($payload['meta']['nextCursor']);
     }
 
     public function testACommunitysOwnPostFeedUsesParentScopedPaging(): void
@@ -921,11 +921,11 @@ final class UsersControllerCommunityApiTest extends TestCase
         $feedService = $this->createMock(FeedService::class);
         $feedService->method('getFeedById')->with(42, $this->anything())->willReturn($this->feed());
         $feedService->expects($this->once())
-            ->method('getFeedsByParentAndTypePage')
-            ->with(42, 'blog-post', $this->anything(), 10, 20)
-            ->willReturn(['items' => [$post], 'total' => 25]);
+            ->method('getFeedsByParentAndTypeAfter')
+            ->with(42, 'blog-post', $this->anything(), 10, 'cursor-20')
+            ->willReturn(['items' => [$post], 'nextCursor' => 'cursor-21']);
 
-        $module = $this->makeModule(['feedService' => $feedService], query: ['offset' => '20']);
+        $module = $this->makeModule(['feedService' => $feedService], query: ['cursor' => 'cursor-20']);
 
         $_SERVER['REQUEST_METHOD'] = 'GET';
 
@@ -935,8 +935,7 @@ final class UsersControllerCommunityApiTest extends TestCase
         );
 
         $this->assertSame('Первый пост', $payload['items'][0]['title']);
-        $this->assertSame(25, $payload['meta']['total']);
-        $this->assertSame(21, $payload['meta']['nextOffset']);
+        $this->assertSame('cursor-21', $payload['meta']['nextCursor']);
     }
 
     public function testListingACommunitysOwnPostsRequiresACommunity(): void

@@ -296,6 +296,22 @@ class FeedService
         return $result;
     }
 
+    /**
+     * @return array{items: Feed[], nextCursor: ?string}
+     */
+    public function getFeedsByParentAndTypeAfter(
+        int $parentId,
+        string $type,
+        User $user,
+        int $limit,
+        ?string $cursor = null,
+    ): array {
+        $cursorObject = $this->decodeFeedCursor($cursor);
+        $items = $this->repository->findByParentAndTypeAfter($parentId, $type, $user, $limit + 1, $cursorObject);
+
+        return $this->finishFeedCursorPage($items, $limit);
+    }
+
     public function getPrevNext(Feed $feed, User $user): array
     {
         $prev = $this->repository->findSibling(
@@ -1355,6 +1371,65 @@ class FeedService
         $this->decorateFeedsWithUrls($result['items']);
 
         return $result;
+    }
+
+    /**
+     * @return array{items: Feed[], nextCursor: ?string}
+     */
+    public function getFeedsByTypeAfter(
+        string $type,
+        User $user,
+        int $limit,
+        ?string $cursor = null,
+        ?string $tagSlug = null,
+    ): array {
+        $cursorObject = $this->decodeFeedCursor($cursor);
+        $items = $this->repository->findByTypeAfter($type, $user, $limit + 1, $cursorObject, $tagSlug);
+
+        return $this->finishFeedCursorPage($items, $limit);
+    }
+
+    /** @return object{createdAt:int,id:int}|null */
+    private function decodeFeedCursor(?string $cursor): ?object
+    {
+        if ($cursor === null || $cursor === '') {
+            return null;
+        }
+
+        $decodedJson = base64_decode($cursor, true);
+        $decoded = is_string($decodedJson) ? json_decode($decodedJson, true) : null;
+
+        if (! is_array($decoded)
+            || ! isset($decoded['createdAt'], $decoded['id'])
+            || ! is_int($decoded['createdAt'])
+            || $decoded['createdAt'] < 1
+            || ! is_int($decoded['id'])
+            || $decoded['id'] < 1
+        ) {
+            throw new ValidationException($this->tm->trans('feed.cursor_invalid'));
+        }
+
+        return (object) $decoded;
+    }
+
+    /**
+     * @param Feed[] $items
+     * @return array{items: Feed[], nextCursor: ?string}
+     */
+    private function finishFeedCursorPage(array $items, int $limit): array
+    {
+        $hasMore = count($items) > $limit;
+        if ($hasMore) {
+            $items = array_slice($items, 0, $limit);
+        }
+
+        $this->decorateFeedsWithUrls($items);
+        $last = $hasMore ? end($items) : false;
+        $nextCursor = $last instanceof Feed && $last->createdAt !== null
+            ? base64_encode(json_encode(['createdAt' => $last->createdAt, 'id' => $last->id]))
+            : null;
+
+        return ['items' => $items, 'nextCursor' => $nextCursor];
     }
 
     /**

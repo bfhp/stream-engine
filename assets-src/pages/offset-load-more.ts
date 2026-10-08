@@ -1,20 +1,18 @@
 /* ==========================================================================
-   Offset-paginated load-more behavior
+   Load-more behavior for offset and keyset-cursor pagers
 
-   One implementation of the four near-identical closures `users.ts` carried -
-   the blog feed, the community feed, the friends list and the community
-   members list. They differed only in which element, which endpoint, which
-   selector and which renderer; everything about the pagination itself was
-   copied.
+   One implementation shared by growing cursor-paginated post feeds and the
+   smaller offset-paginated friends/member lists. Callers differ only in the
+   endpoint, selectors, renderer and pagination token name.
 
    The rules that were copied four times, and are worth keeping exactly:
 
-   - the button's `data-offset` is the whole cursor; absent means "not a
-     pager" and the click is ignored;
-   - a `nextOffset` of `null` **or** `undefined` removes the entire wrapper,
+   - the button's `data-offset` or `data-cursor` is the whole paging token;
+     absent means "not a pager" and the click is ignored;
+   - a next token of `null` **or** `undefined` removes the entire wrapper,
      not just the button - otherwise an empty toolbar is left behind;
-   - a *failed* request leaves `data-offset` untouched, so a retry asks for
-     the same page rather than skipping it. Invisible in manual testing,
+   - a *failed* request leaves the paging token untouched, so a retry asks
+     for the same page rather than skipping it. Invisible in manual testing,
      because the retry usually succeeds and nobody counts the rows;
    - the button is re-enabled in `finally` only `if (button.isConnected)`,
      since the success path may have just removed it from the document.
@@ -25,6 +23,7 @@ export type OffsetPayload<T> = {
     meta?: {
         total?: number;
         nextOffset?: number | null;
+        nextCursor?: string | null;
     };
 };
 
@@ -48,6 +47,8 @@ export type OffsetLoadMoreOptions<T> = {
      */
     render: (item: T) => HTMLElement | string | null;
     errorMessage: string;
+    /** Growing feed lists use stable keyset cursors; legacy small lists use offsets. */
+    pagination?: 'offset' | 'cursor';
 };
 
 export function initOffsetLoadMore<T>(options: OffsetLoadMoreOptions<T>): void {
@@ -59,8 +60,9 @@ export function initOffsetLoadMore<T>(options: OffsetLoadMoreOptions<T>): void {
     if (!apiUrl) return;
 
     async function loadMore(button: HTMLButtonElement): Promise<void> {
-        const offset = button.dataset.offset;
-        if (offset === undefined) return;
+        const pagination = options.pagination ?? 'offset';
+        const value = pagination === 'cursor' ? button.dataset.cursor : button.dataset.offset;
+        if (value === undefined) return;
 
         // Read at call time rather than at import: these bundles are loaded
         // as modules alongside site.js, and a test can stub the surface
@@ -71,7 +73,7 @@ export function initOffsetLoadMore<T>(options: OffsetLoadMoreOptions<T>): void {
 
         try {
             const url = new URL(apiUrl!, window.location.origin);
-            url.searchParams.set('offset', offset);
+            url.searchParams.set(pagination, value);
 
             const res = await cms.api<OffsetPayload<T>>(`${url.pathname}${url.search}`);
             const list = document.getElementById(options.listId);
@@ -87,12 +89,14 @@ export function initOffsetLoadMore<T>(options: OffsetLoadMoreOptions<T>): void {
                 });
             }
 
-            const nextOffset = res.meta?.nextOffset;
+            const nextValue = pagination === 'cursor' ? res.meta?.nextCursor : res.meta?.nextOffset;
 
-            if (nextOffset === null || nextOffset === undefined) {
+            if (nextValue === null || nextValue === undefined) {
                 button.closest(options.wrapperSelector)?.remove();
+            } else if (pagination === 'cursor') {
+                button.dataset.cursor = String(nextValue);
             } else {
-                button.dataset.offset = String(nextOffset);
+                button.dataset.offset = String(nextValue);
             }
         } catch (error) {
             cms.toast({ message: options.errorMessage, type: 'danger' });
