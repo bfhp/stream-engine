@@ -15,6 +15,15 @@ use StreamEngine\Domain\Page;
  */
 final class PageTree
 {
+    /**
+     * Registration history is kept separately from the indexes so boot-time
+     * validation can see duplicate definitions even though the live index is
+     * allowed to hold a resolved clone with the same id.
+     *
+     * @var list<Page>
+     */
+    private array $definitions = [];
+
     /** @var array<int, Page> */
     private array $pagesById = [];
 
@@ -29,7 +38,7 @@ final class PageTree
     public function __construct(array $pages)
     {
         foreach ($pages as $page) {
-            $this->indexPage($page);
+            $this->add($page);
         }
     }
 
@@ -153,12 +162,87 @@ final class PageTree
         return null;
     }
 
-    /**
-     * Build canonical path for a page.
-     */
+    /** Register a page definition and update the live indexes. */
     public function add(Page $page): void
     {
+        $this->definitions[] = $page;
         $this->indexPage($page);
+    }
+
+    /** Store a request-specific clone without treating it as a definition. */
+    public function replaceWithResolved(Page $page): void
+    {
+        $this->indexPage($page);
+    }
+
+    public function definitionCount(): int
+    {
+        return count($this->definitions);
+    }
+
+    /** @return list<Page> */
+    public function definitionsSince(int $offset): array
+    {
+        return array_slice($this->definitions, $offset);
+    }
+
+    /**
+     * Validate the definitions collected during boot. This deliberately is
+     * not part of add() so modules can register a complete tree before it is
+     * checked and produce a precise boot error.
+     */
+    public function validateDefinitions(): void
+    {
+        $ids = [];
+        $actions = [];
+        $pagesById = [];
+        $staticPatterns = [];
+        $dynamicPatterns = [];
+
+        foreach ($this->definitions as $page) {
+            if (isset($ids[$page->id])) {
+                throw new RuntimeException("Duplicate page definition id '{$page->id}'");
+            }
+            $ids[$page->id] = true;
+            $pagesById[$page->id] = $page;
+
+            if ($page->action !== null) {
+                if (isset($actions[$page->action])) {
+                    throw new RuntimeException("Duplicate page definition action '{$page->action}'");
+                }
+                $actions[$page->action] = true;
+            }
+
+            $parent = $page->parentId ?? 0;
+            if (str_contains($page->pattern, '{')) {
+                if (isset($dynamicPatterns[$parent])) {
+                    throw new RuntimeException(
+                        "Ambiguous dynamic page patterns '{$dynamicPatterns[$parent]}' and '{$page->pattern}' "
+                        ."under parent '{$parent}'"
+                    );
+                }
+                $dynamicPatterns[$parent] = $page->pattern;
+            } else {
+                if (isset($staticPatterns[$parent][$page->pattern])) {
+                    throw new RuntimeException(
+                        "Duplicate static page pattern '{$page->pattern}' under parent '{$parent}'"
+                    );
+                }
+                $staticPatterns[$parent][$page->pattern] = true;
+            }
+        }
+
+        foreach ($this->definitions as $page) {
+            if ($page->parentId !== null && ! isset($pagesById[$page->parentId])) {
+                throw new RuntimeException(
+                    "Page definition '{$page->id}' references missing parent '{$page->parentId}'"
+                );
+            }
+        }
+
+        foreach ($this->definitions as $page) {
+            $this->ancestors($page);
+        }
     }
 
     public function getMaxPageId(): int

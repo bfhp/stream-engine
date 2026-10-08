@@ -1,6 +1,6 @@
 # Runtime pages refactoring plan
 
-Status: proposed.
+Status: in progress (Phase 1 complete).
 
 ## Goal
 
@@ -44,29 +44,28 @@ configuration.
 
 ## Phase 1: runtime page infrastructure
 
-- [ ] Add `Page::runtime()` with safe HTML/GET defaults and explicit parameters
+- [x] Add `Page::runtime()` with safe HTML/GET defaults and explicit parameters
   for `action`, `pattern`, `parentId`, `accessRule`, `feedType`, `changefreq`,
   and `settings`.
-- [ ] Add a `registerRuntimePages(PageTree $pageTree): void` hook to
+- [x] Add a `registerRuntimePages(PageTree $pageTree): void` hook to
   `ControllerInterface` and `AbstractController`.
-- [ ] Call the hook for every active module after loading database pages and
+- [x] Call the hook for every active module after loading database pages and
   before constructing `Router`.
-- [ ] Associate newly registered actions with their owning controller in
+- [x] Associate newly registered actions with their owning controller in
   `ControllerFactory`, following the existing `registerApi()` lifecycle.
-- [ ] Fail boot with a clear error if a runtime action is already publicly
+- [x] Fail boot with a clear error if a runtime action is already publicly
   declared or owned by another module.
-- [ ] Validate page definitions before constructing `Router`:
+- [x] Validate page definitions before constructing `Router`:
   - every parent exists;
   - definition IDs are unique;
   - definition actions are unique;
   - a parent has no duplicate static child pattern;
   - ambiguous dynamic sibling patterns are rejected.
-- [ ] Do not add strict ID rejection directly to the current `PageTree::add()`
-  without changing its semantics. `Router::resolve()` adds a resolved clone
-  with the same ID and populated `params`. Either separate definition
-  registration from resolved instances or perform validation in a dedicated
-  boot-time step.
-- [ ] Cover lifecycle order, missing mount points, conflicts, and controller
+- [x] Keep strict ID rejection out of `PageTree::add()`. Definition
+  registration is tracked separately from the resolved clones that
+  `Router::resolve()` stores with populated `params`; definitions are checked
+  in a dedicated boot-time validation step.
+- [x] Cover lifecycle order, missing mount points, conflicts, and controller
   ownership with tests.
 
 ## Phase 2: move module trees to runtime

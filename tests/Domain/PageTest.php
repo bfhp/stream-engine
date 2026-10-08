@@ -26,6 +26,30 @@ use StreamEngine\Service\AccessService;
  */
 final class PageTest extends TestCase
 {
+    public function testRuntimePageUsesSafeHtmlGetDefaults(): void
+    {
+        $settings = (object) ['layout' => 'compact'];
+
+        $page = Page::runtime(
+            id: 20,
+            parentId: 10,
+            pattern: '{slug}',
+            action: 'article.show',
+            accessRule: AccessService::ACCESS_PUBLIC,
+            feedType: 'article',
+            changefreq: 'weekly',
+            settings: $settings,
+        );
+
+        self::assertSame(['GET'], $page->requestMethods);
+        self::assertSame('html', $page->responseType);
+        self::assertSame(AccessService::ACCESS_PUBLIC, $page->accessRule);
+        self::assertFalse($page->commentsEnabled);
+        self::assertSame('article', $page->feedType);
+        self::assertSame('weekly', $page->changefreq);
+        self::assertSame($settings, $page->settings);
+    }
+
     /**
      * @param list<string>|null $methods
      */

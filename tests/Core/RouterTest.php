@@ -238,4 +238,19 @@ class RouterTest extends TestCase
         $this->assertNotSame($first['page'], $second['page']);
         $this->assertSame(['slug' => 'foo'], $first['page']->params);
     }
+
+    public function testResolvedClonesAreNotRegisteredAsDefinitions(): void
+    {
+        $pageTree = new PageTree([
+            self::makeFakePage(1),
+            self::makeFakePage(2, 1, '{slug}'),
+        ]);
+        $router = new Router($pageTree);
+
+        $this->assertNotNull($router->resolve('/first/'));
+        $this->assertNotNull($router->resolve('/second/'));
+        $pageTree->validateDefinitions();
+
+        $this->addToAssertionCount(1);
+    }
 }

@@ -69,7 +69,7 @@ final class Router
             if (isset($this->staticRoutes[$parentId][$segment])) {
                 $page = clone $this->staticRoutes[$parentId][$segment];
                 $page->params = [];
-                $this->pageTree->add($page);
+                $this->pageTree->replaceWithResolved($page);
                 $breadcrumbs[] = $page;
                 $parentId = $page->id;
                 continue;
@@ -97,7 +97,7 @@ final class Router
                 }
 
                 $page->params = $pageParams;
-                $this->pageTree->add($page);
+                $this->pageTree->replaceWithResolved($page);
 
                 $breadcrumbs[] = $page;
 

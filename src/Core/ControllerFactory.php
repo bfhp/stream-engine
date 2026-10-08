@@ -54,6 +54,28 @@ final readonly class ControllerFactory
     }
 
     /**
+     * Let each active module extend the database-backed page tree, then bind
+     * every newly declared action to the controller that declared it.
+     */
+    public function registerRuntimePages(PageTree $pageTree): void
+    {
+        foreach ($this->modules->entries() as ['id' => $id, 'controllerClass' => $controllerClass]) {
+            $offset = $pageTree->definitionCount();
+            $controllerClass::registerRuntimePages($pageTree);
+
+            foreach ($pageTree->definitionsSince($offset) as $page) {
+                if ($page->action === null) {
+                    throw new RuntimeException(
+                        "Runtime page '{$page->pattern}' declared by $id must have an action"
+                    );
+                }
+
+                $this->registerAction($page->action, $id);
+            }
+        }
+    }
+
+    /**
      * Resolve and instantiate the controller responsible for the page's action.
      *
      * @throws Exception

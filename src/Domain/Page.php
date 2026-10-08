@@ -75,4 +75,32 @@ final class Page
             action: $action,
         );
     }
+
+    public static function runtime(
+        int $id,
+        int $parentId,
+        string $pattern,
+        string $action,
+        string $accessRule,
+        ?string $feedType,
+        ?string $changefreq,
+        ?object $settings,
+    ): self {
+        return new self(
+            id: $id,
+            parentId: $parentId,
+            pattern: $pattern,
+            pageName: null,
+            settings: $settings,
+            feedType: $feedType,
+            listFeedType: null,
+            feedId: null,
+            commentsEnabled: false,
+            requestMethods: ['GET'],
+            responseType: 'html',
+            accessRule: $accessRule,
+            action: $action,
+            changefreq: $changefreq,
+        );
+    }
 }

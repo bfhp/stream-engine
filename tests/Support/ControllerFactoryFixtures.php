@@ -75,6 +75,10 @@ final class FactoryProbeController implements ControllerInterface
         return null;
     }
 
+    public static function registerRuntimePages(PageTree $pageTree): void
+    {
+    }
+
     public static function registerApi(int $apiPageId, PageTree $pageTree): void
     {
     }
@@ -129,6 +133,10 @@ final class ControllerWithUnknownDependency implements ControllerInterface
     public function show(Page $page, array $args = []): ?ViewModel
     {
         return null;
+    }
+
+    public static function registerRuntimePages(PageTree $pageTree): void
+    {
     }
 
     public static function registerApi(int $apiPageId, PageTree $pageTree): void
@@ -188,6 +196,10 @@ final class ActionProbeController implements ControllerInterface
         return null;
     }
 
+    public static function registerRuntimePages(PageTree $pageTree): void
+    {
+    }
+
     public static function registerApi(int $apiPageId, PageTree $pageTree): void
     {
     }
@@ -202,6 +214,55 @@ final class ActionProbeController implements ControllerInterface
 
     public function runCron(string $task): void
     {
+    }
+}
+
+final class RuntimePageProbeController extends AbstractController
+{
+    public static function registerRuntimePages(PageTree $pageTree): void
+    {
+        $mount = $pageTree->findByAction('runtime.mount');
+        if ($mount === null) {
+            return;
+        }
+
+        $pageTree->add(Page::runtime(
+            id: $pageTree->getMaxPageId(),
+            parentId: $mount->id,
+            pattern: 'internal',
+            action: 'runtime.internal',
+            accessRule: AccessService::ACCESS_PUBLIC,
+            feedType: null,
+            changefreq: null,
+            settings: null,
+        ));
+    }
+}
+
+final class RuntimePageConflictController extends AbstractController
+{
+    public static function pageActions(): array
+    {
+        return ['runtime.conflict' => 'Runtime conflict'];
+    }
+
+    public static function registerRuntimePages(PageTree $pageTree): void
+    {
+        $mount = $pageTree->findByAction('runtime.conflict-mount');
+        if ($mount === null) {
+            return;
+        }
+
+        $pageTree->add(Page::runtime(
+            id: $pageTree->getMaxPageId(),
+            parentId: $mount->id,
+            pattern: 'conflict',
+            action: 'runtime.conflict',
+            accessRule: AccessService::ACCESS_PUBLIC,
+            feedType: null,
+            changefreq: null,
+            settings: null,
+        ));
     }
 }
 
@@ -375,6 +436,10 @@ final class CronProbeController implements ControllerInterface
     public function show(Page $page, array $args = []): ?ViewModel
     {
         return null;
+    }
+
+    public static function registerRuntimePages(PageTree $pageTree): void
+    {
     }
 
     public static function registerApi(int $apiPageId, PageTree $pageTree): void

@@ -40,6 +40,10 @@ abstract class AbstractController implements ControllerInterface
         return null;
     }
 
+    public static function registerRuntimePages(PageTree $pageTree): void
+    {
+    }
+
     public static function registerApi(int $apiPageId, PageTree $pageTree): void
     {
     }

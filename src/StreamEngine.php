@@ -327,7 +327,9 @@ class StreamEngine
             $mentionService,
         );
 
+        $this->controllerFactory->registerRuntimePages($this->pageTree);
         $this->initCronAndApi();
+        $this->pageTree->validateDefinitions();
     }
 
     /**

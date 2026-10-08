@@ -231,4 +231,92 @@ class PageTreeTest extends TestCase
 
         $this->assertSame(1, $emptyTree->getMaxPageId());
     }
+
+    public function testValidateDefinitionsAcceptsStaticAndDynamicSiblings(): void
+    {
+        $tree = new PageTree([
+            self::makePage(1, null, ''),
+            self::makePage(2, 1, 'new'),
+            self::makePage(3, 1, '{slug}', action: 'post.show'),
+        ]);
+
+        $tree->validateDefinitions();
+
+        $this->addToAssertionCount(1);
+    }
+
+    public function testValidateDefinitionsRejectsMissingParent(): void
+    {
+        $tree = new PageTree([self::makePage(2, 99, 'orphan')]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage("references missing parent '99'");
+
+        $tree->validateDefinitions();
+    }
+
+    public function testValidateDefinitionsRejectsDuplicateIdsEvenThoughAddReplacesIndex(): void
+    {
+        $tree = new PageTree([self::makePage(1, null, '')]);
+        $tree->add(self::makePage(1, null, 'replacement'));
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage("Duplicate page definition id '1'");
+
+        $tree->validateDefinitions();
+    }
+
+    public function testValidateDefinitionsRejectsDuplicateActions(): void
+    {
+        $tree = new PageTree([
+            self::makePage(1, null, '', action: 'same.action'),
+            self::makePage(2, 1, 'child', action: 'same.action'),
+        ]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage("Duplicate page definition action 'same.action'");
+
+        $tree->validateDefinitions();
+    }
+
+    public function testValidateDefinitionsRejectsDuplicateStaticSiblingPatterns(): void
+    {
+        $tree = new PageTree([
+            self::makePage(1, null, ''),
+            self::makePage(2, 1, 'archive'),
+            self::makePage(3, 1, 'archive'),
+        ]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage("Duplicate static page pattern 'archive'");
+
+        $tree->validateDefinitions();
+    }
+
+    public function testValidateDefinitionsRejectsAmbiguousDynamicSiblings(): void
+    {
+        $tree = new PageTree([
+            self::makePage(1, null, ''),
+            self::makePage(2, 1, '{slug}'),
+            self::makePage(3, 1, '{id:\\d+}'),
+        ]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Ambiguous dynamic page patterns');
+
+        $tree->validateDefinitions();
+    }
+
+    public function testValidateDefinitionsRejectsParentCycle(): void
+    {
+        $tree = new PageTree([
+            self::makePage(1, 2, 'first'),
+            self::makePage(2, 1, 'second'),
+        ]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Page hierarchy cycle detected');
+
+        $tree->validateDefinitions();
+    }
 }

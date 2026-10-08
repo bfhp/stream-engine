@@ -12,6 +12,8 @@ use StreamEngine\Controllers\ActionProbeController;
 use StreamEngine\Controllers\ControllerWithUnknownDependency;
 use StreamEngine\Controllers\FactoryProbeController;
 use StreamEngine\Controllers\PlainClass;
+use StreamEngine\Controllers\RuntimePageConflictController;
+use StreamEngine\Controllers\RuntimePageProbeController;
 use StreamEngine\Core\Cache;
 use StreamEngine\Core\Config;
 use StreamEngine\Core\ControllerFactory;
@@ -151,6 +153,7 @@ final class ControllerFactoryTest extends TestCase
             FactoryProbeController::class,
             ControllerWithUnknownDependency::class,
             ActionProbeController::class,
+            RuntimePageProbeController::class,
             APIController::class,
         ]);
 
@@ -308,6 +311,58 @@ final class ControllerFactoryTest extends TestCase
         $this->expectExceptionMessage("Duplicate page action 'probe.show'");
 
         $deps['factory']->registerAction('probe.show', 'Search');
+    }
+
+    public function testRegisterRuntimePagesSkipsTreeWithoutMountPoint(): void
+    {
+        $deps = $this->makeFactory();
+
+        $deps['factory']->registerRuntimePages($deps['pageTree']);
+
+        $this->assertNull($deps['pageTree']->findByAction('runtime.internal'));
+    }
+
+    public function testRegisterRuntimePagesBindsNewActionToOwningController(): void
+    {
+        $deps = $this->makeFactory();
+        $deps['pageTree']->add($this->pageWithAction('runtime.mount'));
+
+        $deps['factory']->registerRuntimePages($deps['pageTree']);
+
+        $runtimePage = $deps['pageTree']->findByAction('runtime.internal');
+        $this->assertNotNull($runtimePage);
+        $controller = $deps['factory']->createForPage(
+            $runtimePage,
+            new RequestContext(new User(1, '', AccessService::ROLE_USER), new \DateTimeZone('UTC'))
+        );
+        $this->assertInstanceOf(RuntimePageProbeController::class, $controller);
+    }
+
+    public function testRegisterRuntimePagesRejectsPublicActionConflict(): void
+    {
+        $db = $this->createStub(PdoDatabase::class);
+        $modules = \StreamEngine\Controllers\registryWithFixtures([RuntimePageConflictController::class]);
+        $factory = new ControllerFactory($modules, $db);
+        $tree = new PageTree([$this->pageWithAction('runtime.conflict-mount')]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage("Duplicate page action 'runtime.conflict'");
+
+        $factory->registerRuntimePages($tree);
+    }
+
+    public function testBootstrapRegistersRuntimePagesBeforeApiAndThenValidatesDefinitions(): void
+    {
+        $source = file_get_contents(__DIR__.'/../../src/StreamEngine.php');
+        $runtime = strpos($source, '$this->controllerFactory->registerRuntimePages($this->pageTree);');
+        $api = strpos($source, '$this->initCronAndApi();');
+        $validation = strpos($source, '$this->pageTree->validateDefinitions();');
+
+        $this->assertIsInt($runtime);
+        $this->assertIsInt($api);
+        $this->assertIsInt($validation);
+        $this->assertLessThan($api, $runtime);
+        $this->assertLessThan($validation, $api);
     }
 
     /**
