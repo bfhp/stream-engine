@@ -121,7 +121,7 @@ Standalone public pages such as `users.list`, `user.register`, and
 
 ## Phase 4: migrate existing pages
 
-- [ ] Update the installer so new installations persist only public mount
+- [x] Update the installer so new installations persist only public mount
   points, not rows for internal runtime routes.
 - [ ] Identify existing `pages` rows whose actions are becoming runtime-owned.
 - [ ] Check for non-standard database descendants before removing those rows.

@@ -20,6 +20,7 @@ use StreamEngine\Core\Installation\Installer;
 use StreamEngine\Core\Installation\SchemaSnapshot;
 use StreamEngine\Core\Migrations\MigrationRunner;
 use StreamEngine\Core\Migrations\SqlScript;
+use StreamEngine\Core\ModuleRegistry;
 use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Repository\UploadRepository;
 
@@ -395,6 +396,14 @@ final class InstallationSchemaTest extends TestCase
                         "SELECT parent, pattern, action, page_name, changefreq, access_rule
                          FROM pages WHERE action = 'profile.show'"
                     )->fetch(PDO::FETCH_NUM),
+                );
+                $persistedActions = $pdo->query('SELECT action FROM pages ORDER BY id')
+                    ->fetchAll(PDO::FETCH_COLUMN);
+                $publicActions = array_column((new ModuleRegistry())->pageActions(), 'action');
+                self::assertSame(
+                    [],
+                    array_values(array_diff($persistedActions, $publicActions)),
+                    'A fresh installation must not persist module-owned runtime page actions.',
                 );
                 self::assertSame(
                     [
