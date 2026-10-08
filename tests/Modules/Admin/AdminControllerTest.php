@@ -299,6 +299,9 @@ final class AdminControllerTest extends TestCase
         $this->assertTrue($byAction['user.show']['singleton']);
         $this->assertTrue($byAction['community.main']['singleton']);
         $this->assertFalse($byAction['users.list']['singleton']);
+        $this->assertSame([], $byAction['forums.list']['settings']);
+        $this->assertSame([], $byAction['user.show']['settings']);
+        $this->assertSame([], $byAction['community.main']['settings']);
     }
 
     public function testPagesListContainsOnlyPersistedRowsAndDoesNotExpandMounts(): void

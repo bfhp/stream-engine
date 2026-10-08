@@ -1,6 +1,6 @@
 # Runtime pages refactoring plan
 
-Status: in progress (Phase 1 complete).
+Status: in progress (Phases 1–3 complete).
 
 ## Goal
 
@@ -116,7 +116,7 @@ Standalone public pages such as `users.list`, `user.register`, and
 - [x] Ensure that creating, moving, or deleting a mount page causes its runtime
   subtree to appear, move, or disappear on the next request without database
   writes for internal pages.
-- [ ] Do not add an "add child pages" checkbox. The runtime subtree is an
+- [x] Do not add an "add child pages" checkbox. The runtime subtree is an
   unconditional part of the mounted module.
 
 ## Phase 4: migrate existing pages
