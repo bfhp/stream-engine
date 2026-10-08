@@ -223,6 +223,7 @@ Key documentation:
 - [Installation architecture](docs/INSTALLATION.md)
 - [Cron deployment runbook](docs/CRON.md)
 - [Building and loading modules](docs/MODULES.md)
+- [URL ownership and runtime pages](docs/ROUTING.md)
 - [Module dependency contract](docs/MODULE_CONTRACT.md)
 - [Theme ownership and override contract](docs/THEME_CONTRACT.md)
 - [Performance contract](docs/PERFORMANCE_CONTRACT.md)

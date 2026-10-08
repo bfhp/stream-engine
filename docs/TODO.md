@@ -1,7 +1,7 @@
 # TODO
 
 The project's current backlog. Last reviewed against the code and tests on
-**October 8, 2026**.
+**October 9, 2026**.
 
 This file contains only unfinished work and decisions that have been made but
 not yet implemented. Completed work is not recorded here; Git provides that
@@ -16,19 +16,6 @@ Priorities:
 - **P2** — product improvements, refactoring, and localized technical debt.
 
 ## P2
-
-### Module-owned runtime pages
-
-Internal module routes such as community post creation, editing, and management
-are currently represented as administrator-managed database pages. This exposes
-module implementation details and allows required route structure to become
-invalid. Replace those rows with module-owned runtime pages while keeping only
-the public mount points configurable in the page editor.
-
-Follow the staged [runtime pages refactoring plan](RUNTIME_PAGES.md). The work is
-complete when mounting a module requires only its public page, its internal
-tree is registered and validated during boot, and no standard internal module
-routes remain in the `pages` table.
 
 ### GitHub-native administrator and developer documentation
 

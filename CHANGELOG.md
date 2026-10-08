@@ -9,6 +9,14 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- Forum, personal-blog, and community internal routes are now module-owned
+  runtime pages registered beneath their public mount pages. The page editor
+  and installer persist only configurable public pages, moving a mount moves
+  its entire internal URL tree, and the upgrade migration removes the legacy
+  internal page rows.
+- Runtime page definitions now declare access, indexing, feed behavior, and
+  localized static breadcrumb names in module code and are validated for
+  hierarchy and route conflicts during application boot.
 - TypeScript checking now runs in strict mode and covers the browser sources,
   JavaScript tests, and Vite/Vitest configuration files together.
 - Feed view counters now count each member or guest at most once per feed in a

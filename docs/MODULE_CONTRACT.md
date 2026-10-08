@@ -131,8 +131,12 @@ module ID conventions.
 ## Page action configuration descriptors
 
 `ControllerInterface::pageActions()` is also the source of truth for the
-Pages editor. A plain string value remains supported as shorthand for an
-action that uses none of the action-specific page fields:
+Pages editor. It contains only public pages that an administrator may create
+or configure. Fixed internal route trees belong to
+`registerRuntimePages()` and follow the
+[runtime-page routing contract](ROUTING.md#module-owned-runtime-pages). A plain
+string value remains supported as shorthand for an action that uses none of
+the action-specific page fields:
 
 ```php
 return ['module.index' => 'Module landing page'];

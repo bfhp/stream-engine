@@ -47,9 +47,13 @@ regenerate the map. A dependency's Composer config does not enable optimization
 for its consumer: set it in the site's root manifest as shown above.
 
 Controllers receive shared services and `RequestContext` through the
-controller factory. Page actions still require pages configured in the CMS;
-discovery does not create pages. See [the module contract](MODULE_CONTRACT.md)
-for dependency rules.
+controller factory. Public page actions still require pages configured in the
+CMS; discovery does not create public mount pages. Internal routes with a fixed
+module-owned structure belong in `registerRuntimePages()` and are created only
+when their public mount exists. Do not expose those internal actions through
+`pageActions()`. See [URL ownership](ROUTING.md#module-owned-runtime-pages) for
+the runtime-page rules and [the module contract](MODULE_CONTRACT.md) for
+dependency rules.
 
 ### Action-specific page settings
 

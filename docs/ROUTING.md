@@ -21,6 +21,85 @@ explicit at their point of use instead of being proxied through view data.
 The site root `/`, administration entry point `/admin/`, and installer-only
 `/install` endpoint are fixed application entry points.
 
+## Module-owned runtime pages
+
+Module page trees have two kinds of HTML pages:
+
+- **public mount pages** are persisted in `pages`, exposed by
+  `ControllerInterface::pageActions()`, and managed by an administrator;
+- **internal runtime pages** are registered in memory by
+  `registerRuntimePages()` during application boot and are not exposed in the
+  page editor.
+
+`pageActions()` must contain only pages whose location or settings are genuine
+site configuration. A module with a fixed internal tree exposes its mount as a
+singleton and registers the rest beneath that mount:
+
+```php
+public static function pageActions(): array
+{
+    return [
+        'notes.list' => [
+            'label' => 'Notes',
+            'singleton' => true,
+        ],
+    ];
+}
+
+public static function registerRuntimePages(
+    PageTree $pageTree,
+    TranslationManager $tm,
+): void {
+    $mount = $pageTree->findByAction('notes.list');
+    if ($mount === null) {
+        return;
+    }
+
+    $pageTree->add(Page::runtime(
+        id: $pageTree->getMaxPageId(),
+        parentId: $mount->id,
+        pattern: 'create',
+        action: 'notes.create',
+        accessRule: AccessService::ACCESS_AUTHENTICATED,
+        feedType: null,
+        changefreq: 'noindex',
+        settings: null,
+        pageName: $tm->trans('notes.create'),
+    ));
+}
+```
+
+The hook must do nothing when its mount is absent. Mount creation, movement,
+and deletion then create, move, and remove the runtime subtree automatically on
+the next request without writes for internal pages.
+
+Runtime definitions follow these rules:
+
+- the module owns their patterns, access rules, indexing behavior, feed types,
+  comment support, and settings;
+- forms, editors, and management pages declare their access rule explicitly and
+  normally use `changefreq: 'noindex'`;
+- public dynamic content routes declare `feedType` when sitemap and content URL
+  generation require it;
+- static breadcrumb names are translated through the supplied
+  `TranslationManager` and stored in `pageName`; breadcrumbs for dynamic
+  content may still be derived by the controller;
+- runtime IDs are valid only in the current in-memory `PageTree`. Never persist
+  them or use a runtime page as the parent of a database page;
+- links to runtime routes are generated from the shared `PageTree` through
+  `UrlGenerator`, never by manually appending route segments.
+
+Runtime pages are registered after database pages are loaded and before the
+`Router` is constructed. Boot validation rejects missing parents, duplicate IDs
+or actions, duplicate static sibling patterns, and ambiguous dynamic siblings.
+An action already declared by `pageActions()` or owned by another module is
+also a boot-time conflict.
+
+A persisted static page may be a sibling of a runtime dynamic pattern such as
+`{slug}`. Static routes take precedence. Content services must derive reserved
+slugs from those actual static siblings so an administrator-added page cannot
+be shadowed by dynamic content.
+
 ## Versioned API
 
 `/api/v1` is a stable transport contract, not a public page permalink. PHP
