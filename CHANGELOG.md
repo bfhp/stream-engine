@@ -7,6 +7,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.6] - 2026-10-08
+
 ### Added
 
 - Added a cross-platform Docker Compose scheduler that uses Supercronic and the
