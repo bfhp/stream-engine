@@ -19,7 +19,7 @@
             </div>
             <div class="forums-header__aside">
                 {% if not subForums %}
-                    <a href="{{ user.isGuest ? '#authFormModal' : feed.canonicalUrl ~ 'new/' }}" {% if user.isGuest %}data-ui-toggle="modal" data-ui-target="#authFormModal"{% endif %} class="ui-button ui-button--primary">
+                    <a href="{{ user.isGuest ? '#authFormModal' : topicNewUrl }}" {% if user.isGuest %}data-ui-toggle="modal" data-ui-target="#authFormModal"{% endif %} class="ui-button ui-button--primary">
                         <i class="bi bi-pencil-square"></i>
                         <span>{{ trans('forums.topic_new') }}</span>
                     </a>
@@ -198,7 +198,7 @@
             <div class="forums-footer-actions">
                 <div>
                     {% if not subForums %}
-                        <a href="{{ user.isGuest ? '#authFormModal' : feed.canonicalUrl ~ 'new/' }}" {% if user.isGuest %}data-ui-toggle="modal" data-ui-target="#authFormModal"{% endif %} class="ui-button ui-button--primary">
+                        <a href="{{ user.isGuest ? '#authFormModal' : topicNewUrl }}" {% if user.isGuest %}data-ui-toggle="modal" data-ui-target="#authFormModal"{% endif %} class="ui-button ui-button--primary">
                             <i class="bi bi-pencil-square"></i>
                             <span>{{ trans('forums.topic_new') }}</span>
                         </a>

@@ -13,6 +13,7 @@ use StreamEngine\Core\ModuleRegistry;
 use StreamEngine\Core\PageTree;
 use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Core\RequestContext;
+use StreamEngine\Core\Router;
 use StreamEngine\Core\TranslationManager;
 use StreamEngine\Core\UrlGenerator;
 use StreamEngine\Domain\Page;
@@ -59,6 +60,21 @@ final class ModuleTest extends TestCase
                 requestMethods: ['GET'],
                 responseType: 'raw',
                 accessRule: AccessService::ACCESS_PUBLIC
+            ),
+            new Page(
+                id: 2,
+                parentId: 1,
+                pattern: 'forums',
+                pageName: 'Forums',
+                settings: null,
+                feedType: null,
+                listFeedType: null,
+                feedId: null,
+                commentsEnabled: false,
+                requestMethods: ['GET'],
+                responseType: 'html',
+                accessRule: AccessService::ACCESS_PUBLIC,
+                action: 'forums.list',
             ),
         ]);
         $urlGenerator = new UrlGenerator($pageTree, new FakeFeedRepository([]), new ArrayCache());
@@ -127,6 +143,8 @@ final class ModuleTest extends TestCase
 
         $modules = new ModuleRegistry();
         $factory = new ControllerFactory($modules, ...$services);
+        $factory->registerRuntimePages($pageTree);
+        $pageTree->validateDefinitions();
 
         $context = new RequestContext(new User(1, '', AccessService::ROLE_USER), new \DateTimeZone('UTC'));
 
@@ -135,6 +153,46 @@ final class ModuleTest extends TestCase
 
         $viaAction = $factory->createForPage($this->pageWithAction('forums.list'), $context);
         $this->assertInstanceOf(ForumsController::class, $viaAction);
+
+        $runtimePage = $pageTree->findByAction('forums.topic-edit');
+        $this->assertNotNull($runtimePage);
+        $this->assertInstanceOf(ForumsController::class, $factory->createForPage($runtimePage, $context));
+
+        $router = new Router($pageTree);
+        $this->assertSame(
+            'forums.topic-new',
+            $router->resolve('/forums/magiya/new/')['page']->action,
+        );
+        $this->assertSame(
+            'forums.topic-edit',
+            $router->resolve('/forums/magiya/svecha/edit/')['page']->action,
+        );
+        $this->assertSame(AccessService::ACCESS_AUTHENTICATED, $runtimePage->accessRule);
+        $this->assertSame('noindex', $runtimePage->changefreq);
+
+        $topicList = $pageTree->findByAction('forums.topic-list');
+        $topicView = $pageTree->findByAction('forums.topic-view');
+        $topicNew = $pageTree->findByAction('forums.topic-new');
+        $this->assertSame('forum', $topicList?->feedType);
+        $this->assertSame(AccessService::ACCESS_PUBLIC, $topicList?->accessRule);
+        $this->assertSame('forum-post', $topicView?->feedType);
+        $this->assertSame(AccessService::ACCESS_PUBLIC, $topicView?->accessRule);
+        $this->assertSame(AccessService::ACCESS_AUTHENTICATED, $topicNew?->accessRule);
+        $this->assertSame('noindex', $topicNew?->changefreq);
+    }
+
+    public function testRuntimePagesAreNotRegisteredWithoutForumsMount(): void
+    {
+        $tree = new PageTree([]);
+
+        ForumsController::registerRuntimePages($tree);
+
+        $this->assertSame([], $tree->all());
+    }
+
+    public function testOnlyForumsMountRemainsPubliclyConfigurable(): void
+    {
+        $this->assertSame(['forums.list'], array_keys(ForumsController::pageActions()));
     }
 
     private function pageWithAction(string $action): Page

@@ -70,9 +70,9 @@ configuration.
 
 ## Phase 2: move module trees to runtime
 
-- [ ] Inventory the exact public mount actions and internal runtime actions
+- [x] Inventory the exact public mount actions and internal runtime actions
   before changing `pageActions()`.
-- [ ] Register the forum tree beneath `forums.list`:
+- [x] Register the forum tree beneath `forums.list`:
   - `forums.topic-list` at `{slug}`;
   - `forums.topic-new` at `new`;
   - `forums.topic-view` at `{slug}`;
@@ -95,6 +95,17 @@ configuration.
   route instead of maintaining word-list constants.
 - [ ] Verify URL generation, access control, breadcrumbs, and sitemap output for
   every migrated tree.
+
+### Phase 2 action inventory
+
+| Tree | Public/configurable actions | Runtime-owned actions |
+| --- | --- | --- |
+| Forums | `forums.list` | `forums.topic-list`, `forums.topic-new`, `forums.topic-view`, `forums.topic-edit` |
+| Personal blog | `user.show`, `user.post-show-id` | `user.post-new`, `user.post-show-slug`, `user.post-edit` |
+| Communities | `community.main`, `community.show-id`, `community.post-show-id` | `community.create`, `community.show-slug`, `community.post-new`, `community.post-show-slug`, `community.post-edit`, `community.manage` |
+
+Standalone public pages such as `users.list`, `user.register`, and
+`user.retrieve` remain configurable and are not part of these internal trees.
 
 ## Phase 3: page editor
 

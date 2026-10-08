@@ -103,6 +103,25 @@ final class UrlGenerator
     }
 
     /**
+     * Append a registered static child action to an already resolved parent
+     * URL. Useful when ancestors reuse the same placeholder name and cannot
+     * be represented by page()'s flat parameter map.
+     */
+    public function childAction(string $action, ?string $parentUrl): ?string
+    {
+        if ($parentUrl === null) {
+            return null;
+        }
+
+        $page = $this->pageTree->findByAction($action);
+        if ($page === null || $page->pattern === '' || str_contains($page->pattern, '{')) {
+            return null;
+        }
+
+        return rtrim($parentUrl, '/').'/'.trim($page->pattern, '/').'/';
+    }
+
+    /**
      * Batch mode
      *
      * @param  Feed[]  $feeds

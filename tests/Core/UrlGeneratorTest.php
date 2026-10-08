@@ -695,6 +695,30 @@ final class UrlGeneratorTest extends TestCase
         );
     }
 
+    public function testChildActionUsesRegisteredStaticPattern(): void
+    {
+        $tree = new PageTree([
+            self::makePage(id: 1, parentId: null, pattern: ''),
+            $this->makeActionPage(id: 2, parentId: 1, pattern: 'compose', action: 'post.new'),
+        ]);
+        $generator = new UrlGenerator($tree, new FakeFeedRepository([]), new ArrayCache());
+
+        $this->assertSame('/blog/alice/compose/', $generator->childAction('post.new', '/blog/alice/'));
+    }
+
+    public function testChildActionReturnsNullForMissingOrDynamicAction(): void
+    {
+        $tree = new PageTree([
+            self::makePage(id: 1, parentId: null, pattern: ''),
+            $this->makeActionPage(id: 2, parentId: 1, pattern: '{slug}', action: 'post.show'),
+        ]);
+        $generator = new UrlGenerator($tree, new FakeFeedRepository([]), new ArrayCache());
+
+        $this->assertNull($generator->childAction('post.missing', '/blog/alice/'));
+        $this->assertNull($generator->childAction('post.show', '/blog/alice/'));
+        $this->assertNull($generator->childAction('post.show', null));
+    }
+
     public function testPageOmitsEmptyQueryAndFragmentDelimiters(): void
     {
         $page = self::makePage(id: 1, parentId: null, pattern: 'register');

@@ -431,7 +431,7 @@
         <div class="forums-footer-actions">
             <div>
                 {% if parentForum %}
-                    <a href="{{ user.isGuest ? '#authFormModal' : parentForum.canonicalUrl ~ 'new/' }}" {% if user.isGuest %}data-ui-toggle="modal" data-ui-target="#authFormModal"{% endif %} class="ui-button ui-button--primary">
+                    <a href="{{ user.isGuest ? '#authFormModal' : topicNewUrl }}" {% if user.isGuest %}data-ui-toggle="modal" data-ui-target="#authFormModal"{% endif %} class="ui-button ui-button--primary">
                         <i class="bi bi-pencil-square"></i>
                         <span>{{ trans('forums.topic_new') }}</span>
                     </a>

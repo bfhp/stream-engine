@@ -3292,6 +3292,8 @@ final class ForumsControllerTest extends TestCase
             $this->makePage(id: 2, parentId: 1, pattern: 'forums', action: 'forums.list'),
             $topicListPage,
             $topicViewPage,
+            $this->makeTopicNewPage(),
+            $this->makeTopicEditPage(),
             // Not a Forums page at all - Modules\Users owns it - but
             // buildOnlineNow() links member names through it, so the
             // "member without a username gets no link" branch is only

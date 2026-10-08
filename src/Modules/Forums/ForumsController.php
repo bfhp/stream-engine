@@ -28,6 +28,7 @@ use StreamEngine\Domain\User;
 use StreamEngine\Repository\FeedFavoriteRepository;
 use StreamEngine\Repository\FeedRepository;
 use StreamEngine\Repository\UserRepository;
+use StreamEngine\Service\AccessService;
 use StreamEngine\Service\FeedService;
 use StreamEngine\Service\NotificationService;
 use StreamEngine\Service\PollService;
@@ -100,30 +101,6 @@ class ForumsController extends AbstractController
      */
     private const array POLL_DURATION_DAYS = [7, 14, 30];
 
-    /**
-     * Slugs a forum topic is never allowed to land on - 'new' is
-     * forums.topic-new's own pattern, mounted (see registerApi()'s own
-     * 'topics' sibling and showTopicNewPage()'s docblock) as a static
-     * child of forums.topic-list's {slug} page, exactly the same shape as
-     * a topic's own forums.topic-view page (also a dynamic child of that
-     * same {slug} page). Router::resolve()
-     * matches static routes before dynamic ones (see
-     * Modules\Users\BlogPostService::RESERVED_BLOG_POST_SLUGS's identical
-     * reasoning), so a topic whose slug happened to be "new" would
-     * silently become unreachable at its own URL - the request would
-     * resolve to this "create a topic" page instead.
-     *
-     * forums.topic-edit's own 'edit' pattern deliberately isn't in here:
-     * unlike 'new' it's mounted one level deeper, as a static child of
-     * forums.topic-view's {slug} page rather than a sibling of it (see
-     * showTopicEditPage()'s own docblock), so it's only ever reached *under*
-     * an already-resolved topic and no topic slug can shadow or be shadowed
-     * by it.
-     *
-     * @var string[]
-     */
-    private const array RESERVED_FORUM_TOPIC_SLUGS = ['new'];
-
     private readonly ForumRepository $forumRepository;
 
     private readonly FeedRepository $feedRepository;
@@ -136,21 +113,61 @@ class ForumsController extends AbstractController
     {
         return [
             'forums.list' => 'List forums',
-            'forums.topic-list' => [
-                'label' => 'List topics of a forum section',
-                'fields' => [
-                    'feedType' => ['status' => 'required', 'values' => ['forum']],
-                ],
-            ],
-            'forums.topic-view' => [
-                'label' => 'View a forum topic and its replies',
-                'fields' => [
-                    'feedType' => ['status' => 'required', 'values' => ['forum-post']],
-                ],
-            ],
-            'forums.topic-new' => 'Create a new topic in a forum section',
-            'forums.topic-edit' => 'Edit an existing forum topic',
         ];
+    }
+
+    public static function registerRuntimePages(PageTree $pageTree): void
+    {
+        $mount = $pageTree->findByAction('forums.list');
+        if ($mount === null) {
+            return;
+        }
+
+        $topicListId = $pageTree->getMaxPageId();
+        $pageTree->add(Page::runtime(
+            id: $topicListId,
+            parentId: $mount->id,
+            pattern: '{slug}',
+            action: 'forums.topic-list',
+            accessRule: AccessService::ACCESS_PUBLIC,
+            feedType: 'forum',
+            changefreq: null,
+            settings: null,
+        ));
+
+        $pageTree->add(Page::runtime(
+            id: $pageTree->getMaxPageId(),
+            parentId: $topicListId,
+            pattern: 'new',
+            action: 'forums.topic-new',
+            accessRule: AccessService::ACCESS_AUTHENTICATED,
+            feedType: null,
+            changefreq: 'noindex',
+            settings: null,
+        ));
+
+        $topicViewId = $pageTree->getMaxPageId();
+        $pageTree->add(Page::runtime(
+            id: $topicViewId,
+            parentId: $topicListId,
+            pattern: '{slug}',
+            action: 'forums.topic-view',
+            accessRule: AccessService::ACCESS_PUBLIC,
+            feedType: 'forum-post',
+            changefreq: null,
+            settings: null,
+        ));
+
+        $pageTree->add(Page::runtime(
+            id: $pageTree->getMaxPageId(),
+            parentId: $topicViewId,
+            pattern: 'edit',
+            action: 'forums.topic-edit',
+            accessRule: AccessService::ACCESS_AUTHENTICATED,
+            feedType: null,
+            changefreq: 'noindex',
+            settings: null,
+        ));
     }
 
     public static function registerCron(CronRegistry $cron): void
@@ -700,6 +717,10 @@ class ForumsController extends AbstractController
                 'feed' => $forumFeed,
                 'parentForum' => $parentForum,
                 'forumsListUrl' => $this->urlGenerator->action('forums.list'),
+                'topicNewUrl' => $this->urlGenerator->childAction(
+                    'forums.topic-new',
+                    $forumFeed->canonicalUrl,
+                ),
                 'subForums' => $subForums,
                 'subForumStats' => $subForumStats,
                 'subForumLastPost' => $subForumLastPost,
@@ -721,8 +742,7 @@ class ForumsController extends AbstractController
 
     /**
      * forums.topic-new: the "create a topic in this section" form. Mounted
-     * (see registerApi()'s own 'topics' sibling route and
-     * RESERVED_FORUM_TOPIC_SLUGS's own docblock) as a static 'new' child of
+     * by registerRuntimePages() as a static 'new' child of
      * forums.topic-list's own {slug} page, so - exactly like
      * Modules\Users\UsersController::resolveCommunityFeed() reads
      * community.post-new's {slug} from its own parent page's placeholder -
@@ -746,13 +766,9 @@ class ForumsController extends AbstractController
             throw new ForbiddenException('Forum not found');
         }
 
-        // Same call as UsersController::showBlogPostFormPage()'s own
-        // canonical - the page itself has no placeholder ('new' is
-        // literal), but urlGenerator->page() fills the *ancestor*
-        // forums.topic-list page's {slug} from $params here regardless
-        // (see UrlGenerator::page()'s own loop over buildPageAncestors()),
-        // producing '/{section slug}/new/'.
-        $canonical = $this->urlGenerator->page($page, ['slug' => $slug]);
+        // The forum URL already contains the resolved dynamic ancestor;
+        // childAction() appends the runtime page's registered static pattern.
+        $canonical = $this->urlGenerator->childAction('forums.topic-new', $forumFeed->canonicalUrl);
 
         return $this->buildTopicFormViewModel(
             page: $page,
@@ -768,9 +784,7 @@ class ForumsController extends AbstractController
      * existing topic. Mounted as a static 'edit' child of
      * forums.topic-view's own {slug} page - the identical shape
      * Modules\Users\UsersController's user.post-edit/community.post-edit use
-     * for a blog post (URL '/{section}/{topic}/edit/'), and the reason
-     * RESERVED_FORUM_TOPIC_SLUGS needs no 'edit' entry alongside its 'new'
-     * (see that constant's own docblock): 'new' is a *sibling* of every
+     * for a blog post (URL '/{section}/{topic}/edit/'). 'new' is a *sibling* of every
      * topic's own page and so competes with topic slugs, whereas 'edit'
      * lives one level deeper, under a single already-resolved topic, where
      * nothing dynamic can collide with it. $slug is therefore the topic's
@@ -973,17 +987,14 @@ class ForumsController extends AbstractController
 
     /**
      * forums.topic-view.twig's "Edit" button href, and
-     * forums.topic-edit's own canonical - just the topic's canonicalUrl with
-     * a literal '/edit/' suffix, exactly like
-     * Modules\Users\UsersController::buildPostEditUrl() (see its docblock for
-     * why appending to the feed's own URL beats rebuilding via
-     * UrlGenerator::page(): several ancestor pages here share the {slug}
-     * placeholder *name*, so one flat params array would fill the section's
-     * and the topic's from the same value).
+     * forums.topic-edit's own canonical. childAction() reads the registered
+     * runtime pattern and appends it to the resolved topic URL; rebuilding via
+     * UrlGenerator::page() is not possible because both dynamic ancestors use
+     * the same {slug} placeholder name.
      */
     private function buildTopicEditUrl(Feed $topic): ?string
     {
-        return $topic->canonicalUrl !== null ? rtrim($topic->canonicalUrl, '/').'/edit/' : null;
+        return $this->urlGenerator->childAction('forums.topic-edit', $topic->canonicalUrl);
     }
 
     /**
@@ -1213,6 +1224,10 @@ class ForumsController extends AbstractController
                 'canDeleteTopic' => $this->canDeleteTopic($topicFeed, $replyCount),
                 'topicEditUrl' => $this->buildTopicEditUrl($topicFeed),
                 'parentForum' => $parentForum,
+                'topicNewUrl' => $this->urlGenerator->childAction(
+                    'forums.topic-new',
+                    $parentForum?->canonicalUrl,
+                ),
                 'forumsListUrl' => $this->urlGenerator->action('forums.list'),
                 'posts' => $posts,
                 'participants' => $participants,
@@ -1963,9 +1978,8 @@ class ForumsController extends AbstractController
      * topic created here is 'public' (createFeed()'s own default), full
      * stop.
      *
-     * Slug collisions/reservations are uniqueTopicSlug()'s own job (see its
-     * docblock, and RESERVED_FORUM_TOPIC_SLUGS's, for exactly why "new" is
-     * one of them) - this method just calls it once and passes the result
+     * Slug collisions/reservations are uniqueTopicSlug()'s own job; this
+     * method just calls it once and passes the result
      * straight through to createFeed().
      *
      * @throws ForbiddenException
@@ -2421,13 +2435,9 @@ class ForumsController extends AbstractController
      * forum slug, and resolveTopicForPage() resolves that forum first, so the
      * same topic slug is valid in two different forums.
      *
-     * RESERVED_FORUM_TOPIC_SLUGS is folded into the same loop for the same
-     * reason BlogPostService::RESERVED_BLOG_POST_SLUGS is (see that
-     * constant's own docblock and this class's copy of it): 'new' is
-     * forums.topic-new's own pattern, a static sibling - under the same
-     * forums.topic-list {slug} parent - of every forum's own dynamic
-     * topic-view page, and Router::resolve() matches static routes before
-     * dynamic ones.
+     * Static siblings of forums.topic-view are folded into the same loop:
+     * Router resolves those before the dynamic topic route, so their actual
+     * registered patterns are reserved without maintaining a second list.
      */
     private function uniqueTopicSlug(int $forumId, string $title, User $user): string
     {
@@ -2444,7 +2454,7 @@ class ForumsController extends AbstractController
         $suffix = 1;
 
         while (
-            in_array($candidate, self::RESERVED_FORUM_TOPIC_SLUGS, true)
+            in_array($candidate, $this->reservedTopicSlugs(), true)
             || $this->feedRepository->findByParentAndSlug($forumId, $candidate, $user, 'forum-post') !== null
         ) {
             $suffix++;
@@ -2453,6 +2463,23 @@ class ForumsController extends AbstractController
         }
 
         return $candidate;
+    }
+
+    /** @return list<string> */
+    private function reservedTopicSlugs(): array
+    {
+        $topicPage = $this->pageTree->findByAction('forums.topic-view');
+        if ($topicPage === null || $topicPage->parentId === null) {
+            return [];
+        }
+
+        return array_values(array_map(
+            static fn (Page $page): string => $page->pattern,
+            array_filter(
+                $this->pageTree->findChildren($topicPage->parentId),
+                static fn (Page $page): bool => $page->pattern !== '' && ! str_contains($page->pattern, '{'),
+            ),
+        ));
     }
 
     /**
