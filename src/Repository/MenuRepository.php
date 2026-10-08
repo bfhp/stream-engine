@@ -113,6 +113,11 @@ final readonly class MenuRepository
         return $this->db->fetchOne('SELECT id FROM menu WHERE parent = ? LIMIT 1', [$id]) !== null;
     }
 
+    public function referencesPage(int $pageId): bool
+    {
+        return $this->db->fetchOne('SELECT id FROM menu WHERE page_id = ? LIMIT 1', [$pageId]) !== null;
+    }
+
     public function delete(int $id): void
     {
         $this->db->execute('DELETE FROM menu WHERE id = ?', [$id]);

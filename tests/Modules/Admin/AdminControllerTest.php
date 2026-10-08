@@ -856,6 +856,79 @@ final class AdminControllerTest extends TestCase
         ];
     }
 
+    public function testPageDeleteRemovesOnlyThePersistedPage(): void
+    {
+        $page = $this->legacyPageRow();
+        $module = $this->makeModule(fetchOneRows: [$page, null, null]);
+        $_SERVER['REQUEST_METHOD'] = 'DELETE';
+        $this->withValidCsrf();
+
+        $response = $this->callAndDecode(
+            $module,
+            $this->makeApiPage('admin.page', ['GET', 'PATCH', 'DELETE']),
+            ['id' => 9],
+        );
+
+        $this->assertTrue($response['deleted']);
+        $this->assertCount(1, $this->writes);
+        $this->assertSame('DELETE FROM pages WHERE id = ?', $this->writes[0][0]);
+        $this->assertSame([9], $this->writes[0][1]);
+    }
+
+    #[DataProvider('blockedPageDeletes')]
+    public function testPageDeleteRejectsUnsafeTargets(
+        array $page,
+        array $fetchOneRows,
+        string $message,
+    ): void {
+        $module = $this->makeModule(fetchOneRows: [$page, ...$fetchOneRows]);
+        $_SERVER['REQUEST_METHOD'] = 'DELETE';
+        $this->withValidCsrf();
+
+        try {
+            $module->callApi(
+                $this->makeApiPage('admin.page', ['GET', 'PATCH', 'DELETE']),
+                ['id' => $page['id']],
+            );
+            $this->fail('An unsafe page delete was accepted.');
+        } catch (ValidationException $e) {
+            $this->assertSame($message, $e->getMessage());
+            $this->assertSame([], $this->writes);
+        }
+    }
+
+    public static function blockedPageDeletes(): array
+    {
+        $root = self::pageRow(id: 1, parent: null);
+        $page = self::pageRow(id: 9, parent: 1);
+
+        return [
+            'root page' => [$root, [], 'The root page cannot be deleted'],
+            'persisted child' => [$page, [['id' => 10]], 'Move or delete child pages first'],
+            'menu reference' => [$page, [null, ['id' => 4]], 'Remove this page from menus before deleting it'],
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private static function pageRow(int $id, ?int $parent): array
+    {
+        return [
+            'id' => $id,
+            'parent' => $parent,
+            'pattern' => $id === 1 ? '' : 'page',
+            'action' => 'feedback.show',
+            'page_name' => 'Page',
+            'settings' => null,
+            'feed_type' => null,
+            'list_feed_type' => null,
+            'term_vocabulary' => null,
+            'feed_id' => null,
+            'changefreq' => null,
+            'updated' => 123,
+            'access_rule' => 'public',
+        ];
+    }
+
     public function testAValidPageUpdateIsSaved(): void
     {
         $parent = $this->legacyPageRow();
@@ -2221,7 +2294,7 @@ final class AdminControllerTest extends TestCase
 
         foreach ([
             'admin.pages' => ['GET', 'POST'],
-            'admin.page' => ['GET', 'PATCH'],
+            'admin.page' => ['GET', 'PATCH', 'DELETE'],
             'admin.page-actions' => ['GET'],
             'admin.menus' => ['GET', 'POST', 'PATCH'],
             'admin.menu' => ['GET', 'PATCH', 'DELETE'],

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
     Button,
     Group,
+    Modal,
     NumberInput,
     Select,
     SimpleGrid,
@@ -12,6 +13,7 @@ import {
     TextInput
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
+import { IconTrash } from "@tabler/icons-react";
 import {
     feedContentWidth,
     parsePageSettings,
@@ -119,6 +121,8 @@ export default function PageEdit() {
     const [parentPagesLoading, setParentPagesLoading] = useState(false);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+    const [confirmDelete, setConfirmDelete] = useState(false);
 
     useEffect(() => {
         if (!id) {
@@ -409,6 +413,44 @@ export default function PageEdit() {
             .finally(() => setSaving(false));
     }
 
+    function remove() {
+        if (!page?.id || page.id === 1) {
+            return;
+        }
+
+        setDeleting(true);
+        fetch(`/api/v1/admin/pages/${page.id}`, {
+            method: "DELETE",
+            headers: csrfHeaders()
+        })
+            .then(async response => {
+                if (!response.ok) {
+                    throw await getApiResponseError(response, trans("js.admin.pages.delete_failed"));
+                }
+
+                return response.json();
+            })
+            .then(() => {
+                notifications.show({
+                    color: "green",
+                    message: trans("js.admin.pages.deleted"),
+                    autoClose: 2000
+                });
+                navigate("/pages", { replace: true });
+            })
+            .catch(err => {
+                notifications.show({
+                    color: "red",
+                    title: trans("js.admin.error"),
+                    message: err.message || trans("js.admin.pages.delete_failed")
+                });
+            })
+            .finally(() => {
+                setDeleting(false);
+                setConfirmDelete(false);
+            });
+    }
+
     if (!page || loading) {
         return <Text>{trans("js.admin.loading")}</Text>;
     }
@@ -416,14 +458,45 @@ export default function PageEdit() {
     return (
         <Stack>
             <Group justify="space-between">
-                <Button variant="light" onClick={() => navigate("/pages")}>
-                    {trans("js.admin.back")}
-                </Button>
+                <Group>
+                    <Button variant="light" onClick={() => navigate("/pages")}>
+                        {trans("js.admin.back")}
+                    </Button>
+                    {!isNew && page.id !== 1 && (
+                        <Button
+                            color="red"
+                            variant="light"
+                            leftSection={<IconTrash size={16} />}
+                            onClick={() => setConfirmDelete(true)}
+                        >
+                            {trans("js.admin.delete")}
+                        </Button>
+                    )}
+                </Group>
 
                 <Button loading={saving} onClick={save}>
                     {trans("js.admin.save")}
                 </Button>
             </Group>
+
+            <Modal
+                opened={confirmDelete}
+                onClose={() => setConfirmDelete(false)}
+                title={trans("js.admin.delete")}
+                centered
+            >
+                <Stack>
+                    <Text>{trans("js.admin.cannot_undo")}</Text>
+                    <Group justify="flex-end">
+                        <Button variant="default" onClick={() => setConfirmDelete(false)}>
+                            {trans("js.admin.cancel")}
+                        </Button>
+                        <Button color="red" loading={deleting} onClick={remove}>
+                            {trans("js.admin.delete")}
+                        </Button>
+                    </Group>
+                </Stack>
+            </Modal>
 
             <SimpleGrid cols={{ base: 1, md: 2 }}>
                 <TextInput

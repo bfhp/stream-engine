@@ -209,6 +209,67 @@ final class ModuleTest extends TestCase
         $this->assertSame([], $tree->all());
     }
 
+    public function testRuntimeSubtreeFollowsMountLifecycleAcrossTreeRebuilds(): void
+    {
+        $root = new Page(
+            id: 1,
+            parentId: null,
+            pattern: '',
+            pageName: 'Root',
+            settings: null,
+            feedType: null,
+            listFeedType: null,
+            feedId: null,
+            commentsEnabled: false,
+            requestMethods: ['GET'],
+            responseType: 'html',
+            accessRule: AccessService::ACCESS_PUBLIC,
+            action: 'home.index',
+        );
+        $section = new Page(
+            id: 2,
+            parentId: 1,
+            pattern: 'section',
+            pageName: 'Section',
+            settings: null,
+            feedType: null,
+            listFeedType: null,
+            feedId: null,
+            commentsEnabled: false,
+            requestMethods: ['GET'],
+            responseType: 'html',
+            accessRule: AccessService::ACCESS_PUBLIC,
+            action: 'feedback.show',
+        );
+        $mount = $this->pageWithAction('forums.list');
+        $mount->parentId = 2;
+
+        $createdTree = new PageTree([$root, $section, $mount]);
+        ForumsController::registerRuntimePages($createdTree, new TranslationManager('en'));
+        $createdTree->validateDefinitions();
+        $this->assertSame(
+            '/section/forums/{slug}/new/',
+            $createdTree->buildPath($createdTree->findByAction('forums.topic-new')),
+        );
+
+        $movedMount = clone $mount;
+        $movedMount->parentId = 1;
+        $movedMount->pattern = 'discussions';
+        $movedTree = new PageTree([$root, $section, $movedMount]);
+        ForumsController::registerRuntimePages($movedTree, new TranslationManager('en'));
+        $movedTree->validateDefinitions();
+        $this->assertSame(
+            '/discussions/{slug}/new/',
+            $movedTree->buildPath($movedTree->findByAction('forums.topic-new')),
+        );
+
+        $deletedTree = new PageTree([$root, $section]);
+        ForumsController::registerRuntimePages($deletedTree, new TranslationManager('en'));
+        $deletedTree->validateDefinitions();
+        $this->assertNull($deletedTree->findByAction('forums.topic-new'));
+        $this->assertCount(2, $deletedTree->all());
+    }
+
     public function testRuntimePageNamesUseActiveLocale(): void
     {
         $tree = new PageTree([

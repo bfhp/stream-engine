@@ -113,7 +113,7 @@ Standalone public pages such as `users.list`, `user.register`, and
 - [x] Do not show runtime pages in the editable database page list or tree.
 - [x] Reject a second instance of a singleton public mount action with a clear
   validation error.
-- [ ] Ensure that creating, moving, or deleting a mount page causes its runtime
+- [x] Ensure that creating, moving, or deleting a mount page causes its runtime
   subtree to appear, move, or disappear on the next request without database
   writes for internal pages.
 - [ ] Do not add an "add child pages" checkbox. The runtime subtree is an

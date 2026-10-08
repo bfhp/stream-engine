@@ -558,7 +558,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
                 id: $pagePageId,
                 parentId: $pagesPageId,
                 pattern: '{id:\d+}',
-                requestMethods: ['GET', 'PATCH'],
+                requestMethods: ['GET', 'PATCH', 'DELETE'],
                 action: 'admin.page',
                 accessRule: AccessService::ACCESS_ADMIN,
             )
@@ -1084,6 +1084,28 @@ class AdminController extends AbstractController implements DashboardCardProvide
     {
         if ($id <= 0) {
             throw new NotFoundException($this->tm->trans('admin.error.page_not_found'));
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+            Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
+
+            if ($this->pageRepository->findForAdminById($id) === null) {
+                throw new NotFoundException($this->tm->trans('admin.error.page_not_found'));
+            }
+            if ($id === 1) {
+                throw new ValidationException($this->tm->trans('admin.error.root_page_delete'));
+            }
+            if ($this->pageRepository->hasChildren($id)) {
+                throw new ValidationException($this->tm->trans('admin.error.page_has_children'));
+            }
+            if ($this->menuRepository->referencesPage($id)) {
+                throw new ValidationException($this->tm->trans('admin.error.page_used_in_menu'));
+            }
+
+            $this->pageRepository->delete($id);
+            echo Formatter::json(['deleted' => true]);
+
+            return;
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'PATCH') {

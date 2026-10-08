@@ -131,6 +131,16 @@ final readonly class PageRepository
         return $this->findForAdminById($id) ?? ['id' => $id] + $data;
     }
 
+    public function hasChildren(int $id): bool
+    {
+        return $this->db->fetchOne('SELECT id FROM pages WHERE parent = ? LIMIT 1', [$id]) !== null;
+    }
+
+    public function delete(int $id): void
+    {
+        $this->db->execute('DELETE FROM pages WHERE id = ?', [$id]);
+    }
+
     /**
      * @param array<string, mixed> $row
      * @return array<string, mixed>
