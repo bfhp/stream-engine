@@ -393,7 +393,6 @@ return [
     'view.forums.topic.list.10' => 'جميع أقسام المنتدى',
     'view.forums.topic.list.11' => 'إحصاءات القسم',
     'view.forums.topic.list.12' => 'مشاركون كتبوا هنا',
-    'view.forums.topic.list.13' => 'ستظهر هنا لاحقًا قائمة بالمشاركين المتصلين.',
     'view.forums.topic.view.05' => 'المشاركون في الموضوع:',
     'view.forums.topic.view.06' => 'تعديل',
     'view.forums.topic.view.07' => 'تتم المتابعة',

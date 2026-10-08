@@ -233,13 +233,34 @@
                         <div class="forums-totals__label">{{ trans('view.forums.list.15') }}</div>
                     </div>
                 </div>
-                {# Stub - same as forums.list.twig's own stats card: needs
-                   the site's session-based online tracking, not just a
-                   count. See docs/TODO.md "Forums: who's online on the
-                   forum stats card". #}
-                <p class="forums-online forums-online__line">
-                    {{ trans('view.forums.topic.list.13') }}
-                </p>
+                {# Presence is site-wide, so this deliberately renders the
+                   same server-built contract as forums.list rather than
+                   pretending these visitors are scoped to this section. #}
+                <div class="forums-online">
+                    <div class="forums-online__line">
+                        <i class="bi bi-broadcast"></i> {{ trans('view.forums.list.16') }}
+                        <span class="forums-online__number">{{ onlineNow.total }}</span>
+                        {{ onlineNow.totalLabel }},
+                        <span class="forums-online__number">{{ onlineNow.guests }}</span>
+                        {{ onlineNow.guestLabel }}
+                        {%- if onlineNow.bots is not empty %}
+                            {{ trans('view.forums.list.17') }} {{ onlineNow.bots|join(', ') }}
+                        {%- endif %}
+                    </div>
+                    {% if onlineNow.members is not empty %}
+                        <div class="forums-online__members">
+                            {% for member in onlineNow.members %}
+                                {%- if member.url -%}
+                                    <a href="{{ member.url }}"><bdi>{{ member.displayName }}</bdi></a>
+                                {%- else -%}
+                                    <span><bdi>{{ member.displayName }}</bdi></span>
+                                {%- endif -%}
+                                {{- not loop.last ? ', ' : '' -}}
+                            {% endfor %}
+                            {%- if onlineNow.hidden > 0 %} {{ trans('view.forums.list.18') }} {{ onlineNow.hidden }}{% endif -%}
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         </section>
 

@@ -393,7 +393,6 @@ E-mail: {email}
     'view.forums.topic.list.10' => 'Alle secties van het forum',
     'view.forums.topic.list.11' => 'Statistieken van de sectie',
     'view.forums.topic.list.12' => 'deelnemers hebben hier geschreven',
-    'view.forums.topic.list.13' => 'Hier verschijnt later een lijst met online deelnemers.',
     'view.forums.topic.view.05' => 'Deelnemers aan het onderwerp:',
     'view.forums.topic.view.06' => 'Bewerken',
     'view.forums.topic.view.07' => 'Volgend',

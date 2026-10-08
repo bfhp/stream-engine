@@ -393,7 +393,6 @@ return [
     'view.forums.topic.list.10' => 'フォーラムのすべてのセクション',
     'view.forums.topic.list.11' => 'セクションの統計',
     'view.forums.topic.list.12' => '人がここに書き込みました',
-    'view.forums.topic.list.13' => 'オンラインの参加者の一覧は、後ほどここに表示されます。',
     'view.forums.topic.view.05' => 'トピックの参加者:',
     'view.forums.topic.view.06' => '編集',
     'view.forums.topic.view.07' => 'フォロー中',

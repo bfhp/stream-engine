@@ -393,7 +393,6 @@ return [
     'view.forums.topic.list.10' => '论坛的所有版块',
     'view.forums.topic.list.11' => '版块统计',
     'view.forums.topic.list.12' => '位参与者在此发言',
-    'view.forums.topic.list.13' => '在线参与者列表稍后将显示在这里。',
     'view.forums.topic.view.05' => '主题参与者：',
     'view.forums.topic.view.06' => '编辑',
     'view.forums.topic.view.07' => '已关注',

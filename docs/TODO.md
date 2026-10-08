@@ -42,13 +42,6 @@ generator, hosted site, or build step.
   installation and a new developer can run, change, test, and extend it using
   only the repository documentation, with every internal link checked.
 
-### Forums: who's online within a forum
-
-`forums.list` already displays active members, guests, and bots based on
-`user_sessions`. `forums.topic-list.twig` still contains a text placeholder:
-reuse the same contract and name limit for an individual forum's card without
-duplicating presence calculations in Twig.
-
 ### View counter
 
 `FeedService::recordView()` intentionally counts every render, including repeat

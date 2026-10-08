@@ -497,9 +497,9 @@ class ForumsController extends AbstractController
     }
 
     /**
-     * forums.list's "Online now" line: how many members are online
-     * and (up to ONLINE_NAMES_LIMIT of) who they are, most recently seen
-     * first.
+     * The forums.list and forums.topic-list "Online now" lines: how many
+     * members are online and (up to ONLINE_NAMES_LIMIT of) who they are,
+     * most recently seen first.
      *
      * All this does is decorate UserService::onlineMembers()' answer for
      * the view - no presence logic of its own, deliberately: what counts as
@@ -706,6 +706,10 @@ class ForumsController extends AbstractController
                 'subForumUnreadCounts' => $subForumUnreadCounts,
                 'topics' => $topics,
                 'forumTotals' => $forumTotals,
+                // Presence is site-wide rather than scoped to this forum,
+                // so use the exact same decorated contract and name cap as
+                // forums.list instead of deriving anything in Twig.
+                'onlineNow' => $this->buildOnlineNow(),
                 'pagination' => [
                     'current' => min($currentPage, $totalPages),
                     'total' => $totalPages,

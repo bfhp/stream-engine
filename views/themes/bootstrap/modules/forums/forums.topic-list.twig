@@ -266,13 +266,34 @@
                         <div class="text-body-secondary" style="font-size: .78rem">{{ trans('view.forums.list.15') }}</div>
                     </div>
                 </div>
-                {# Stub - same as forums.list.twig's own stats card: needs
-                   the site's session-based online tracking, not just a
-                   count. See docs/TODO.md "Forums: who's online on the
-                   forum stats card". #}
-                <p class="mb-0 text-body-secondary" style="font-size: .82rem">
-                    {{ trans('view.forums.topic.list.13') }}
-                </p>
+                {# Presence is site-wide, so this deliberately renders the
+                   same server-built contract as forums.list rather than
+                   pretending these visitors are scoped to this section. #}
+                <div class="border-top border-secondary-subtle pt-3" style="font-size: .82rem">
+                    <div class="text-body-secondary mb-1">
+                        <i class="bi bi-broadcast me-1"></i>{{ trans('view.forums.list.16') }}
+                        <span class="fw-semibold text-body" style="font-variant-numeric: tabular-nums">{{ onlineNow.total }}</span>
+                        {{ onlineNow.totalLabel }},
+                        <span class="fw-semibold text-body" style="font-variant-numeric: tabular-nums">{{ onlineNow.guests }}</span>
+                        {{ onlineNow.guestLabel }}
+                        {%- if onlineNow.bots is not empty %}
+                            {{ trans('view.forums.list.17') }} {{ onlineNow.bots|join(', ') }}
+                        {%- endif %}
+                    </div>
+                    {% if onlineNow.members is not empty %}
+                        <div class="text-body-secondary">
+                            {% for member in onlineNow.members %}
+                                {%- if member.url -%}
+                                    <a href="{{ member.url }}" class="text-decoration-none"><bdi>{{ member.displayName }}</bdi></a>
+                                {%- else -%}
+                                    <span><bdi>{{ member.displayName }}</bdi></span>
+                                {%- endif -%}
+                                {{- not loop.last ? ', ' : '' -}}
+                            {% endfor %}
+                            {%- if onlineNow.hidden > 0 %} {{ trans('view.forums.list.18') }} {{ onlineNow.hidden }}{% endif -%}
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
 

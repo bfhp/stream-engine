@@ -393,7 +393,6 @@ E-mail: {email}
     'view.forums.topic.list.10' => 'Tutte le sezioni del forum',
     'view.forums.topic.list.11' => 'Statistiche della sezione',
     'view.forums.topic.list.12' => 'partecipanti hanno scritto qui',
-    'view.forums.topic.list.13' => 'Qui apparirà più avanti l’elenco dei partecipanti online.',
     'view.forums.topic.view.05' => 'Partecipanti alla discussione:',
     'view.forums.topic.view.06' => 'Modifica',
     'view.forums.topic.view.07' => 'Seguita',

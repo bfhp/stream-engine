@@ -414,7 +414,6 @@ return [
     'view.forums.topic.list.10' => 'Все разделы форума',
     'view.forums.topic.list.11' => 'Статистика раздела',
     'view.forums.topic.list.12' => 'участников писали здесь',
-    'view.forums.topic.list.13' => 'Список участников онлайн появится здесь позже.',
     'view.forums.topic.view.05' => 'Участники темы:',
     'view.forums.topic.view.06' => 'Редактировать',
     'view.forums.topic.view.07' => 'Вы подписаны',

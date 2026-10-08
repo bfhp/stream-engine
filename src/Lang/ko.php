@@ -393,7 +393,6 @@ return [
     'view.forums.topic.list.10' => '포럼의 모든 섹션',
     'view.forums.topic.list.11' => '섹션 통계',
     'view.forums.topic.list.12' => '명이 여기에 글을 남겼습니다',
-    'view.forums.topic.list.13' => '온라인 참가자 목록이 나중에 여기에 표시됩니다.',
     'view.forums.topic.view.05' => '주제 참가자:',
     'view.forums.topic.view.06' => '수정',
     'view.forums.topic.view.07' => '팔로우 중',

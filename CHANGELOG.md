@@ -24,6 +24,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
   unattached for more than 24 hours, with reservation and race-safe rechecks.
 - Added self-service topic deletion for authors during the first 24 hours,
   limited to topics without replies and protected against concurrent replies.
+- Added the live member, guest, and bot presence summary to individual forum
+  section statistics, using the same capped member list as the forum index.
 
 ### Fixed
 

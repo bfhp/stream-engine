@@ -1513,6 +1513,55 @@ final class ForumsControllerTest extends TestCase
         $this->assertSame(['Googlebot'], $online['bots']);
     }
 
+    /**
+     * An individual section uses the forum index's complete presence
+     * contract, including the shared 30-name cap, instead of maintaining a
+     * second approximation in its template.
+     */
+    public function testTopicListUsesTheSharedOnlinePresenceContractAndNameLimit(): void
+    {
+        $memberIds = range(2, 32);
+        $onlineRows = array_map(
+            static fn (int $id): array => ['user_id' => $id],
+            $memberIds
+        );
+        $userRows = array_map(
+            fn (int $id): array => $this->activeUserRow($id, 'Участник '.$id, 'member-'.$id),
+            $memberIds
+        );
+
+        $module = $this->makeModule($this->makeRoutingDb(
+            [
+                self::SQL_ONLINE_MEMBER_IDS => $onlineRows,
+                self::SQL_ACTIVE_USERS_BY_ID => $userRows,
+                self::SQL_ONLINE_BOT_NAMES => [['bot_name' => 'Googlebot']],
+            ],
+            [
+                self::SQL_TOPICS_TOTAL => ['total' => 0],
+                self::SQL_ONLINE_GUEST_COUNT => ['total' => 4],
+            ]
+        ));
+
+        $feedService = $this->createStub(FeedService::class);
+        $feedService->method('getFeedByTypeAndSlug')->willReturn($this->makeForumFeed());
+        $feedService->method('getFeedsByParentAndType')->willReturn([]);
+        $feedService->method('getFeedReadAtMap')->willReturn([]);
+        $this->setProperty($module, 'feedService', $feedService);
+
+        $online = $module->show(
+            $this->makeTopicListPage(),
+            ['slug' => 'magiya']
+        )->data['onlineNow'];
+
+        $this->assertSame(31, $online['total']);
+        $this->assertCount(30, $online['members']);
+        $this->assertSame(1, $online['hidden']);
+        $this->assertSame('Участник 2', $online['members'][0]['displayName']);
+        $this->assertSame('/users/member-2/', $online['members'][0]['url']);
+        $this->assertSame(4, $online['guests']);
+        $this->assertSame(['Googlebot'], $online['bots']);
+    }
+
     /* ------------------------------------------------------------------ */
     /* forums.topic-list (GET)                                            */
     /* ------------------------------------------------------------------ */
