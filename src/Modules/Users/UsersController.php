@@ -26,6 +26,7 @@ use StreamEngine\Repository\FeedRepository;
 use StreamEngine\Repository\FeedTermRepository;
 use StreamEngine\Repository\MembershipRepository;
 use StreamEngine\Repository\UploadRepository;
+use StreamEngine\Service\AccessService;
 use StreamEngine\Service\AuthService;
 use StreamEngine\Service\FeedService;
 use StreamEngine\Service\NotificationService;
@@ -189,6 +190,7 @@ class UsersController extends AbstractController
             $feedRepository,
             $this->urlGenerator,
             $this->tm,
+            $this->pageTree,
             new FeedTermRepository($db),
         );
 
@@ -227,20 +229,12 @@ class UsersController extends AbstractController
             ],
             'user.register' => 'User registration page',
             'user.retrieve' => 'Password retrieval page',
-            'user.post-new' => 'New blog post page',
             'user.post-show-id' => [
                 'label' => 'Fixed blog post page',
                 'fields' => [
                     'feedId' => ['status' => 'required', 'feedTypes' => ['blog-post']],
                 ],
             ],
-            'user.post-show-slug' => [
-                'label' => 'Blog post page from the route slug',
-                'fields' => [
-                    'feedType' => ['status' => 'required', 'values' => ['blog-post']],
-                ],
-            ],
-            'user.post-edit' => 'Blog post edit page',
             'community.main' => 'Community page',
             'community.create' => 'Create community page',
             'community.show-id' => [
@@ -271,6 +265,49 @@ class UsersController extends AbstractController
             'community.post-edit' => 'Community post edit page',
             'community.manage' => 'Community manage page',
         ];
+    }
+
+    public static function registerRuntimePages(PageTree $pageTree): void
+    {
+        $profile = $pageTree->findByAction('user.show');
+        if ($profile === null) {
+            return;
+        }
+
+        $pageTree->add(Page::runtime(
+            id: $pageTree->getMaxPageId(),
+            parentId: $profile->id,
+            pattern: 'post',
+            action: 'user.post-new',
+            accessRule: AccessService::ACCESS_AUTHENTICATED,
+            feedType: null,
+            changefreq: 'noindex',
+            settings: null,
+        ));
+
+        $postId = $pageTree->getMaxPageId();
+        $pageTree->add(Page::runtime(
+            id: $postId,
+            parentId: $profile->id,
+            pattern: '{slug}',
+            action: 'user.post-show-slug',
+            accessRule: AccessService::ACCESS_PUBLIC,
+            feedType: 'blog-post',
+            changefreq: null,
+            settings: null,
+            commentsEnabled: true,
+        ));
+
+        $pageTree->add(Page::runtime(
+            id: $pageTree->getMaxPageId(),
+            parentId: $postId,
+            pattern: 'edit',
+            action: 'user.post-edit',
+            accessRule: AccessService::ACCESS_AUTHENTICATED,
+            feedType: null,
+            changefreq: 'noindex',
+            settings: null,
+        ));
     }
 
     public function getBreadcrumb(Page $page): ?Breadcrumb
@@ -522,10 +559,8 @@ class UsersController extends AbstractController
 
         $newPostUrl = null;
         if ($isOwnProfile) {
-            $newPostPage = $this->pageTree->findByAction('user.post-new');
-            if ($newPostPage !== null) {
-                $newPostUrl = $this->urlGenerator->page($newPostPage, ['username' => $profileUser->username]);
-            }
+            $profileUrl = $this->urlGenerator->action('user.show', ['username' => $profileUser->username]);
+            $newPostUrl = $this->urlGenerator->childAction('user.post-new', $profileUrl);
         }
 
         return [
@@ -1576,10 +1611,8 @@ class UsersController extends AbstractController
         $newPostUrl = null;
         $createCommunityUrl = null;
         if (! $viewer->isGuest()) {
-            $newPostPage = $this->pageTree->findByAction('user.post-new');
-            if ($newPostPage !== null) {
-                $newPostUrl = $this->urlGenerator->page($newPostPage, ['username' => $viewer->username]);
-            }
+            $profileUrl = $this->urlGenerator->action('user.show', ['username' => $viewer->username]);
+            $newPostUrl = $this->urlGenerator->childAction('user.post-new', $profileUrl);
 
             // "Create community" sidebar button - now that
             // community.create actually exists (see
@@ -2492,23 +2525,8 @@ class UsersController extends AbstractController
             throw new ForbiddenException($this->tm->trans('feed.forbidden'));
         }
 
-        $canonical = $this->urlGenerator->page($page, ['username' => $user->username]);
-        // A page whose ancestor pattern doesn't actually carry a {username}
-        // segment would leave the placeholder untouched here - skip the
-        // (broken) canonical tag rather than emit it. Low stakes either way:
-        // the page is access_rule-gated and changefreq='noindex', so it's
-        // already excluded from the sitemap.
-        $canonical = str_contains($canonical, '{') ? null : $canonical;
-
-        // "Cancel" link for the form - back to the user's own profile,
-        // which doubles as their blog (user.show has list_feed_type
-        // 'blog-post'). Same lookup showBlogPostEditPage() uses to point
-        // its own cancel link at the post itself.
-        $cancelUrl = null;
-        $userShowPage = $this->pageTree->findByAction('user.show');
-        if ($userShowPage !== null) {
-            $cancelUrl = $this->urlGenerator->page($userShowPage, ['username' => $user->username]);
-        }
+        $cancelUrl = $this->urlGenerator->action('user.show', ['username' => $user->username]);
+        $canonical = $this->urlGenerator->childAction('user.post-new', $cancelUrl);
 
         // The form's general layout uses the shared site.css, but the Trix
         // editor (and its behavior/attachment wiring) is its own bundle -
@@ -2653,17 +2671,10 @@ class UsersController extends AbstractController
      * Shared blog-post-form.twig view model for both edit actions above.
      * Canonical/cancel URLs come straight off $post->canonicalUrl (already
      * correct either way via UrlGenerator::feed(), see BlogPostService::
-     * getOrCreateUserBlogFeed()'s own note on how) with a literal '/edit/'
-     * suffix appended for canonical, rather than rebuilt via
-     * UrlGenerator::page() the way this used to work - that method fills
-     * every ancestor page sharing a placeholder *name* from one flat
-     * array, which breaks for a community post's edit page specifically:
-     * community.show and community.post-show both use {slug}, so passing
-     * one value would wrongly fill both instead of each from its own post/
-     * community. $post->canonicalUrl has no such issue (UrlGenerator::feed()
-     * matches by feed type/position, not placeholder name), and "cancel"
-     * is just that URL unchanged - no separate page/params lookup needed
-     * for either.
+     * getOrCreateUserBlogFeed()'s own note on how). childAction() appends the
+     * registered edit pattern to that resolved URL; this avoids the flat
+     * parameter map problem when multiple ancestors share `{slug}`. "Cancel"
+     * is the post URL unchanged.
      */
     private function buildPostEditViewModel(Page $page, Feed $post, User $user): ViewModel
     {
@@ -2676,8 +2687,10 @@ class UsersController extends AbstractController
         }
 
         $isCommunityPost = $post->containerType === 'community';
-
-        $canonical = $post->canonicalUrl !== null ? rtrim($post->canonicalUrl, '/').'/edit/' : null;
+        $canonical = $this->urlGenerator->childAction(
+            $isCommunityPost ? 'community.post-edit' : 'user.post-edit',
+            $post->canonicalUrl,
+        );
         $cancelUrl = $post->canonicalUrl;
 
         // trix.css: see showBlogPostFormPage()'s own note on why this has to
@@ -2716,16 +2729,18 @@ class UsersController extends AbstractController
 
     /**
      * The "Edit" button's href on both post-show pages
-     * (showBlogPostPage()/showCommunityPostPage()) - just $post->canonicalUrl
-     * with a literal '/edit/' suffix, same reasoning as
-     * buildPostEditViewModel()'s own canonical (that method's own docblock
-     * explains why this is safer than rebuilding via UrlGenerator::page()).
+     * (showBlogPostPage()/showCommunityPostPage()) - the registered static
+     * edit action appended to $post->canonicalUrl, same reasoning as
+     * buildPostEditViewModel()'s own canonical.
      * Callers decide *whether* to show it (author-only vs $canDelete's
      * broader policy) - this only builds the URL itself.
      */
     private function buildPostEditUrl(Feed $post): ?string
     {
-        return $post->canonicalUrl !== null ? rtrim($post->canonicalUrl, '/').'/edit/' : null;
+        return $this->urlGenerator->childAction(
+            $post->containerType === 'community' ? 'community.post-edit' : 'user.post-edit',
+            $post->canonicalUrl,
+        );
     }
 
     /**
@@ -3848,8 +3863,8 @@ class UsersController extends AbstractController
         // "retrieve" or "blog-posts" would 404 here rather than even reach
         // this page (static routes match before dynamic ones at this same
         // parent - see Router::resolve()'s own doc comment), same known
-        // trade-off as BlogPostService::RESERVED_BLOG_POST_SLUGS already
-        // accepts for post slugs.
+        // trade-off for dynamic/static siblings; HTML post slugs avoid it by
+        // deriving their reserved words from the actual PageTree siblings.
         $usernamePageId = $pageTree->getMaxPageId();
         $pageTree->add(
             Page::api(

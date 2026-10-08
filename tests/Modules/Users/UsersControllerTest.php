@@ -238,12 +238,16 @@ final class UsersControllerTest extends TestCase
 
     private function setUrlGeneratorPages(UsersController $module, array $pages): void
     {
+        $hasUserShow = array_filter(
+            $pages,
+            static fn (Page $page): bool => $page->action === 'user.show',
+        ) !== [];
         $reflection = new ReflectionClass(UsersController::class);
         $property = $reflection->getProperty('urlGenerator');
         $property->setValue(
             $module,
             new UrlGenerator(
-                new PageTree([...$pages, $this->makeUserShowRoutePage()]),
+                new PageTree([...$pages, ...($hasUserShow ? [] : [$this->makeUserShowRoutePage()])]),
                 new FakeFeedRepository([]),
                 new ArrayCache()
             )
@@ -1104,7 +1108,7 @@ final class UsersControllerTest extends TestCase
         $module = $this->makeUsersModule($db);
         $this->setContext($module, new User(id: 7, email: 'user@example.com', role: AccessService::ROLE_USER, username: 'nicky42'));
         $this->setPersonalPostRoute($module, $page);
-        $this->setUrlGenerator($module, $page);
+        $this->setUrlGeneratorPages($module, [$page, $this->makeBlogPostEditPage()]);
 
         $post = $this->makeBlogPostFeed();
 
@@ -1126,8 +1130,8 @@ final class UsersControllerTest extends TestCase
         // Taken as-is from $post->canonicalUrl (set on the fixture by
         // makeBlogPostFeed()) - showBlogPostPage() no longer rebuilds this.
         $this->assertSame('/blog/my-post-title/', $view->data['canonical']);
-        // buildPostEditUrl(): $post->canonicalUrl with a literal '/edit/'
-        // suffix - no pageTree/urlGenerator lookup needed any more.
+        // buildPostEditUrl(): the registered user.post-edit child appended
+        // to the post's already-resolved canonical URL.
         $this->assertSame('/blog/my-post-title/edit/', $view->data['editUrl']);
         // Own profile -> guarded, never calls friendService.
         $this->assertNull($view->data['relationshipStatus']);
@@ -1172,8 +1176,7 @@ final class UsersControllerTest extends TestCase
 
         $this->assertSame(7, $view->data['profileUser']->id);
         $this->assertFalse($view->data['isOwnProfile']);
-        // Not the owner - no editUrl, and no pageTree lookup attempted for
-        // one (pageTree is never even wired up in this test).
+        // Not the owner - no edit URL is generated.
         $this->assertNull($view->data['editUrl']);
         // Friend button data is now computed for this "another viewer sees
         // someone else's post" case - the empty-stub FriendService resolves
@@ -1487,6 +1490,7 @@ final class UsersControllerTest extends TestCase
         $module = $this->makeUsersModule($db);
         $this->setContext($module, new User(id: 7, email: 'user@example.com', role: AccessService::ROLE_USER, username: 'nicky42'));
         $this->setPersonalPostRoute($module, $editPage, $showPage);
+        $this->setUrlGeneratorPages($module, [$showPage, $editPage]);
         $this->setUploadService($module, $this->makeUploadServiceStub());
 
         $post = $this->makeBlogPostFeed();
@@ -1572,6 +1576,7 @@ final class UsersControllerTest extends TestCase
         $module = $this->makeUsersModule($db);
         $this->setContext($module, new User(id: 42, email: 'mod@example.com', role: AccessService::ROLE_USER, username: 'moderator'));
         $this->setCommunityPostRoute($module, $editPage, $showPage);
+        $this->setUrlGeneratorPages($module, [$this->makeCommunityShowPage(), $showPage, $editPage]);
         $this->setUploadService($module, $this->makeUploadServiceStub());
 
         $post = $this->makeCommunityPostFeed();

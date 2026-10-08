@@ -77,7 +77,7 @@ configuration.
   - `forums.topic-new` at `new`;
   - `forums.topic-view` at `{slug}`;
   - `forums.topic-edit` at `edit`.
-- [ ] Register internal user blog routes beneath the public profile page.
+- [x] Register internal user blog routes beneath the public profile page.
 - [ ] Register the community tree beneath `community.main`, including community
   view, post creation, post view, post editing, and community management.
 - [ ] Define these properties in module code for every runtime route:

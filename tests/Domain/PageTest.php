@@ -39,12 +39,13 @@ final class PageTest extends TestCase
             feedType: 'article',
             changefreq: 'weekly',
             settings: $settings,
+            commentsEnabled: true,
         );
 
         self::assertSame(['GET'], $page->requestMethods);
         self::assertSame('html', $page->responseType);
         self::assertSame(AccessService::ACCESS_PUBLIC, $page->accessRule);
-        self::assertFalse($page->commentsEnabled);
+        self::assertTrue($page->commentsEnabled);
         self::assertSame('article', $page->feedType);
         self::assertSame('weekly', $page->changefreq);
         self::assertSame($settings, $page->settings);

@@ -13,6 +13,7 @@ use StreamEngine\Core\ModuleRegistry;
 use StreamEngine\Core\PageTree;
 use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Core\RequestContext;
+use StreamEngine\Core\Router;
 use StreamEngine\Core\TranslationManager;
 use StreamEngine\Core\UrlGenerator;
 use StreamEngine\Domain\Page;
@@ -43,7 +44,11 @@ final class ModuleTest extends TestCase
         // createStub(), so build real instances the way ControllerFactoryTest
         // and CronRunnerTest already do for the same reason.
         $db = $this->createStub(PdoDatabase::class);
-        $pageTree = new PageTree([]);
+        $pageTree = new PageTree([
+            $this->page(id: 1, parentId: null, pattern: '', action: null),
+            $this->page(id: 2, parentId: 1, pattern: 'users', action: 'users.list'),
+            $this->page(id: 3, parentId: 2, pattern: '{username}', action: 'user.show', feedType: 'blog'),
+        ]);
         $urlGenerator = new UrlGenerator($pageTree, new FakeFeedRepository([]), new ArrayCache());
         $tm = new TranslationManager('ru', 'en');
         $config = new Config(['SITE_URL' => 'https://example.test']);
@@ -117,11 +122,50 @@ final class ModuleTest extends TestCase
 
         $modules = new ModuleRegistry();
         $factory = new ControllerFactory($modules, ...$services);
+        $factory->registerRuntimePages($pageTree);
+        $pageTree->validateDefinitions();
         $context = new RequestContext(new User(1, '', AccessService::ROLE_USER), new \DateTimeZone('UTC'));
 
         $controller = $factory->createForPage($this->pageWithAction('users.list'), $context);
 
         $this->assertInstanceOf(UsersController::class, $controller);
+
+        $runtime = $pageTree->findByAction('user.post-show-slug');
+        $this->assertNotNull($runtime);
+        $this->assertInstanceOf(UsersController::class, $factory->createForPage($runtime, $context));
+        $this->assertSame('blog-post', $runtime->feedType);
+        $this->assertTrue($runtime->commentsEnabled);
+
+        $newPage = $pageTree->findByAction('user.post-new');
+        $editPage = $pageTree->findByAction('user.post-edit');
+        $this->assertSame(AccessService::ACCESS_AUTHENTICATED, $newPage?->accessRule);
+        $this->assertSame('noindex', $newPage?->changefreq);
+        $this->assertSame(AccessService::ACCESS_AUTHENTICATED, $editPage?->accessRule);
+        $this->assertSame('noindex', $editPage?->changefreq);
+
+        $router = new Router($pageTree);
+        $this->assertSame('user.post-new', $router->resolve('/users/alice/post/')['page']->action);
+        $this->assertSame('user.post-edit', $router->resolve('/users/alice/hello/edit/')['page']->action);
+    }
+
+    public function testPersonalBlogRuntimePagesRequireProfileMount(): void
+    {
+        $tree = new PageTree([]);
+
+        UsersController::registerRuntimePages($tree);
+
+        $this->assertSame([], $tree->all());
+    }
+
+    public function testPersonalBlogInternalActionsAreNotPubliclyConfigurable(): void
+    {
+        $actions = UsersController::pageActions();
+
+        $this->assertArrayHasKey('user.show', $actions);
+        $this->assertArrayHasKey('user.post-show-id', $actions);
+        $this->assertArrayNotHasKey('user.post-new', $actions);
+        $this->assertArrayNotHasKey('user.post-show-slug', $actions);
+        $this->assertArrayNotHasKey('user.post-edit', $actions);
     }
 
     private function pageWithAction(string $action): Page
@@ -133,6 +177,30 @@ final class ModuleTest extends TestCase
             pageName: 'Users',
             settings: null,
             feedType: null,
+            listFeedType: null,
+            feedId: null,
+            commentsEnabled: false,
+            requestMethods: ['GET'],
+            responseType: 'html',
+            accessRule: AccessService::ACCESS_PUBLIC,
+            action: $action,
+        );
+    }
+
+    private function page(
+        int $id,
+        ?int $parentId,
+        string $pattern,
+        ?string $action,
+        ?string $feedType = null,
+    ): Page {
+        return new Page(
+            id: $id,
+            parentId: $parentId,
+            pattern: $pattern,
+            pageName: 'Page '.$id,
+            settings: null,
+            feedType: $feedType,
             listFeedType: null,
             feedId: null,
             commentsEnabled: false,

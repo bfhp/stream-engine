@@ -85,6 +85,7 @@ final class Page
         ?string $feedType,
         ?string $changefreq,
         ?object $settings,
+        bool $commentsEnabled = false,
     ): self {
         return new self(
             id: $id,
@@ -95,7 +96,7 @@ final class Page
             feedType: $feedType,
             listFeedType: null,
             feedId: null,
-            commentsEnabled: false,
+            commentsEnabled: $commentsEnabled,
             requestMethods: ['GET'],
             responseType: 'html',
             accessRule: $accessRule,

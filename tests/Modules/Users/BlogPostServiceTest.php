@@ -60,10 +60,8 @@ final class BlogPostServiceTest extends TestCase
         ?FeedTermRepository $termRepository = null,
         ?PageTree $pageTree = null,
     ): BlogPostService {
-        // $pageTree only needs to feed $urlGenerator here - BlogPostService
-        // itself no longer takes a PageTree; canonicalUrl now comes from
-        // $urlGenerator->feed(), whose generic chain walker resolves the
-        // right page(s) using its own internal PageTree.
+        // Url generation and reserved-slug discovery must share the same
+        // definition tree.
         $pageTree ??= $this->makePageTree();
         $urlGenerator ??= $this->makeUrlGenerator(pageTree: $pageTree);
 
@@ -81,6 +79,7 @@ final class BlogPostServiceTest extends TestCase
             $repository,
             $urlGenerator,
             new TranslationManager('ru', 'en'),
+            $pageTree,
             $termRepository,
         );
     }
@@ -114,6 +113,7 @@ final class BlogPostServiceTest extends TestCase
             $repository,
             $urlGenerator,
             new TranslationManager('ru', 'en'),
+            $pageTree,
         );
     }
 
@@ -176,6 +176,11 @@ final class BlogPostServiceTest extends TestCase
                 accessRule: AccessService::ACCESS_PUBLIC,
                 action: 'user.post-show-slug',
             ),
+            Page::runtime(10, 7, 'post', 'user.post-new', AccessService::ACCESS_AUTHENTICATED, null, 'noindex', null),
+            Page::runtime(11, 7, 'friends', 'user.friends-page', AccessService::ACCESS_PUBLIC, null, null, null),
+            Page::runtime(12, 7, 'rating', 'user.rating-page', AccessService::ACCESS_PUBLIC, null, null, null),
+            Page::runtime(13, 7, 'members', 'user.members-page', AccessService::ACCESS_PUBLIC, null, null, null),
+            Page::runtime(14, 7, 'manage', 'user.manage-page', AccessService::ACCESS_AUTHENTICATED, null, 'noindex', null),
             // Same reasoning as the blog/blog-post pair above -
             // deleteBlogPost()'s wrong-feed-type test resolves a feed whose
             // type is deliberately something other than 'blog-post', which
@@ -456,8 +461,8 @@ final class BlogPostServiceTest extends TestCase
     public static function reservedBlogPostSlugTitleProvider(): array
     {
         // Titles that slugify (Formatter::slugify() lowercases first) to one
-        // of BlogPostService::RESERVED_BLOG_POST_SLUGS - each collides with
-        // a static page already mounted as a sibling of user.post-show under
+        // of the static patterns in makePageTree() - each collides with a
+        // page already mounted as a sibling of user.post-show under
         // user.show (e.g. 'post' is user.post-new's own pattern), so none of
         // these must ever be handed out as an actual post slug.
         return [

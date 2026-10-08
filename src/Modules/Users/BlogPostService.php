@@ -8,10 +8,12 @@ use StreamEngine\Core\Exceptions\ForbiddenException;
 use StreamEngine\Core\Exceptions\NotFoundException;
 use StreamEngine\Core\Exceptions\ValidationException;
 use StreamEngine\Core\Formatter;
+use StreamEngine\Core\PageTree;
 use StreamEngine\Core\TranslationManager;
 use StreamEngine\Core\UrlGenerator;
 use StreamEngine\Domain\Feed;
 use StreamEngine\Domain\FeedTerm;
+use StreamEngine\Domain\Page;
 use StreamEngine\Domain\User;
 use StreamEngine\Repository\FeedRepository;
 use StreamEngine\Repository\FeedTermRepository;
@@ -35,26 +37,12 @@ class BlogPostService
 
     private const int MAX_BLOG_TAG_LENGTH = 50;
 
-    /**
-     * Slugs a blog post is never allowed to land on - they'd collide with
-     * other static pages already mounted as siblings of user.post-show-slug
-     * under user.show ({username}), e.g. 'post' is user.post-new's own
-     * pattern. Router::resolve() matches static routes before dynamic ones
-     * (see its own doc comment), so a post whose slug happened to be one of
-     * these would silently become unreachable at its own URL - the request
-     * would resolve to the static page instead of user.post-show-slug with
-     * slug='post'/'friends'/etc. uniqueBlogPostSlug() treats these exactly
-     * like an already-taken slug, appending the same numeric suffix.
-     *
-     * @var string[]
-     */
-    private const array RESERVED_BLOG_POST_SLUGS = ['post', 'friends', 'rating', 'members', 'manage'];
-
     public function __construct(
         private readonly FeedService $feedService,
         private readonly FeedRepository $repository,
         private readonly UrlGenerator $urlGenerator,
         private readonly TranslationManager $tm,
+        private readonly PageTree $pageTree,
         private readonly ?FeedTermRepository $termRepository = null,
     ) {
     }
@@ -185,7 +173,12 @@ class BlogPostService
             : null;
 
         $blog = $parent ?? $this->getOrCreateUserBlogFeed($user);
-        $slug = $this->uniqueBlogPostSlug($blog->id, $title, $user);
+        $slug = $this->uniqueBlogPostSlug(
+            $blog->id,
+            $title,
+            $user,
+            $parent !== null ? 'community.post-show-slug' : 'user.post-show-slug',
+        );
 
         [$containerId, $containerType] = $this->containerForNewPost($visibility, $blog, $parent);
 
@@ -442,13 +435,13 @@ class BlogPostService
      * Slugifies $title and appends a numeric suffix until the result is free
      * under $blogId. The application-level check chooses a friendly suffix;
      * the database constraint closes the concurrent-create race for this
-     * parent/type scope. RESERVED_BLOG_POST_
-     * SLUGS is folded into the same loop, so e.g. a post titled "Post" (or
+     * parent/type scope. Static siblings of the selected runtime route are
+     * folded into the same loop, so e.g. a post titled "Post" (or
      * one whose title has no latin/digit characters at all, which falls back
      * to the literal 'post' below) gets suffixed exactly like a genuine
      * duplicate would.
      */
-    private function uniqueBlogPostSlug(int $blogId, string $title, User $user): string
+    private function uniqueBlogPostSlug(int $blogId, string $title, User $user, string $routeAction): string
     {
         $maxLength = FeedService::MAX_SLUG_LENGTH;
         $base = Formatter::slugify($title, '-');
@@ -461,9 +454,10 @@ class BlogPostService
 
         $candidate = $base;
         $suffix = 1;
+        $reservedSlugs = $this->reservedPostSlugs($routeAction);
 
         while (
-            in_array($candidate, self::RESERVED_BLOG_POST_SLUGS, true)
+            in_array($candidate, $reservedSlugs, true)
             || $this->repository->findByParentAndSlug($blogId, $candidate, $user, 'blog-post') !== null
         ) {
             $suffix++;
@@ -472,5 +466,23 @@ class BlogPostService
         }
 
         return $candidate;
+    }
+
+    /** @return list<string> */
+    private function reservedPostSlugs(string $routeAction): array
+    {
+        $postPage = $this->pageTree->findByAction($routeAction);
+        if ($postPage === null || $postPage->parentId === null) {
+            return [];
+        }
+
+        return array_values(array_map(
+            static fn (Page $page): string => $page->pattern,
+            array_filter(
+                $this->pageTree->findChildren($postPage->parentId),
+                static fn (Page $page): bool => $page->pattern !== ''
+                    && ! str_contains($page->pattern, '{'),
+            ),
+        ));
     }
 }
