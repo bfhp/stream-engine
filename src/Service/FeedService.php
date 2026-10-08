@@ -1075,6 +1075,13 @@ class FeedService
             ? $this->normalizeMetadataInput($data['metadata'])
             : null;
 
+        $updatesForumContent = $type === 'forum-post'
+            && array_key_exists('content', $data)
+            && $content !== null;
+        if ($updatesForumContent) {
+            $this->mentionService?->validate($content);
+        }
+
         if (array_key_exists('parentId', $data) && $parentId !== null) {
             $parent = $this->repository->findById($parentId, $user);
             if (! $parent) {
@@ -1117,6 +1124,10 @@ class FeedService
 
         if ($metadata !== null) {
             $this->replaceMetadataForFeed($id, $metadata);
+        }
+
+        if ($updatesForumContent && $this->mentionService !== null) {
+            $this->mentionService->synchronizeFeed($id, $content, $user->id);
         }
 
         return $this->getFeedById($id, $user);
@@ -1885,12 +1896,7 @@ class FeedService
 
     private function decorateFeed(Feed $feed): void
     {
-        if ($this->mentionService !== null
-            && $feed->content !== null
-            && in_array($feed->type, ['comment', 'forum-post'], true)
-        ) {
-            $feed->content = $this->mentionService->renderFeed($feed->id, $feed->content);
-        }
+        $this->decorateFeedMentions($feed);
 
         if ($feed->createdAt === null) {
             return;
@@ -1909,5 +1915,38 @@ class FeedService
 
         $feed->createdAtLabel = $this->formatter->relative($createdAt);
         $feed->createdAtTitle = $this->formatter->datetime($createdAt);
+    }
+
+    /**
+     * Applies stored mention identities to a feed already loaded by a
+     * specialized repository query. Most callers use the fully decorated
+     * service lookups; forum reply pagination is the exception because its
+     * repository query preserves topic post order and numbering.
+     */
+    public function decorateFeedMentions(Feed $feed): void
+    {
+        $this->decorateFeedsMentions([$feed]);
+    }
+
+    /** @param list<Feed> $feeds */
+    public function decorateFeedsMentions(array $feeds): void
+    {
+        if ($this->mentionService === null) {
+            return;
+        }
+
+        $contentByFeedId = [];
+        foreach ($feeds as $feed) {
+            if ($feed->content !== null && in_array($feed->type, ['comment', 'forum-post'], true)) {
+                $contentByFeedId[$feed->id] = $feed->content;
+            }
+        }
+
+        $renderedByFeedId = $this->mentionService->renderFeeds($contentByFeedId);
+        foreach ($feeds as $feed) {
+            if (isset($renderedByFeedId[$feed->id])) {
+                $feed->content = $renderedByFeedId[$feed->id];
+            }
+        }
     }
 }

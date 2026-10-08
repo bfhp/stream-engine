@@ -7,7 +7,22 @@ type MentionCandidate = {
 
 type CandidateResponse = { data?: MentionCandidate[] };
 
+type TrixEditor = {
+    getDocument(): { toString(): string };
+    getSelectedRange(): [number, number];
+    setSelectedRange(range: [number, number]): void;
+    insertString(value: string): void;
+};
+
+type TrixEditorElement = HTMLElement & { editor?: TrixEditor };
+type MentionTarget = HTMLTextAreaElement | TrixEditorElement;
+
 const ELIGIBLE_SELECTOR = 'textarea[name="content"], textarea[data-message-input]';
+const TRIX_SELECTOR = [
+    'trix-editor[data-forum-topic-editor]',
+    'trix-editor[data-forum-quick-reply-editor]',
+    'trix-editor[data-comment-edit-editor]',
+].join(', ');
 const TOKEN_AT_CARET = /(^|[^A-Za-z0-9_@./\\-])@([A-Za-z0-9_-]{1,30})$/;
 
 /**
@@ -16,7 +31,7 @@ const TOKEN_AT_CARET = /(^|[^A-Za-z0-9_@./\\-])@([A-Za-z0-9_-]{1,30})$/;
  * responsibilities.
  */
 export function initMentionAutocomplete(): void {
-    let textarea: HTMLTextAreaElement | null = null;
+    let input: MentionTarget | null = null;
     let tokenStart = -1;
     let selected = 0;
     let candidates: MentionCandidate[] = [];
@@ -32,7 +47,7 @@ export function initMentionAutocomplete(): void {
     const close = () => {
         popup.hidden = true;
         popup.replaceChildren();
-        textarea?.removeAttribute('aria-activedescendant');
+        input?.removeAttribute('aria-activedescendant');
         candidates = [];
         selected = 0;
         tokenStart = -1;
@@ -41,8 +56,8 @@ export function initMentionAutocomplete(): void {
     };
 
     const position = () => {
-        if (!textarea) return;
-        const rect = textarea.getBoundingClientRect();
+        if (!input) return;
+        const rect = input.getBoundingClientRect();
         popup.style.left = `${Math.max(8, Math.min(rect.left, window.innerWidth - 288))}px`;
         popup.style.top = `${Math.min(rect.bottom + 4, window.innerHeight - popup.offsetHeight - 8)}px`;
         popup.style.width = `${Math.max(240, Math.min(rect.width, 360))}px`;
@@ -69,27 +84,40 @@ export function initMentionAutocomplete(): void {
         }));
 
         popup.hidden = candidates.length === 0;
-        if (!popup.hidden && textarea) {
-            textarea.setAttribute('aria-activedescendant', `mention-option-${candidates[selected].id}`);
+        if (!popup.hidden && input) {
+            input.setAttribute('aria-activedescendant', `mention-option-${candidates[selected].id}`);
             position();
         }
     };
 
     const choose = (index: number) => {
-        if (!textarea || tokenStart < 0 || !candidates[index]) return;
+        if (!input || tokenStart < 0 || !candidates[index]) return;
         const candidate = candidates[index];
-        const caret = textarea.selectionStart;
         const insertion = `@${candidate.username} `;
-        textarea.setRangeText(insertion, tokenStart, caret, 'end');
-        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+
+        if (input instanceof HTMLTextAreaElement) {
+            const caret = input.selectionStart;
+            input.setRangeText(insertion, tokenStart, caret, 'end');
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+        } else if (input.editor) {
+            const caret = input.editor.getSelectedRange()[0];
+            input.editor.setSelectedRange([tokenStart, caret]);
+            input.editor.insertString(insertion);
+        }
+
         close();
-        textarea.focus();
+        input?.focus();
     };
 
-    const lookup = (target: HTMLTextAreaElement) => {
-        textarea = target;
-        const caret = target.selectionStart;
-        const before = target.value.slice(0, caret);
+    const lookup = (target: MentionTarget) => {
+        input = target;
+        const caret = target instanceof HTMLTextAreaElement
+            ? target.selectionStart
+            : target.editor?.getSelectedRange()[0] ?? 0;
+        const value = target instanceof HTMLTextAreaElement
+            ? target.value
+            : target.editor?.getDocument().toString() ?? '';
+        const before = value.slice(0, caret);
         const match = before.match(TOKEN_AT_CARET);
         if (!match) {
             close();
@@ -108,7 +136,7 @@ export function initMentionAutocomplete(): void {
         })
             .then(response => response.ok ? response.json() as Promise<CandidateResponse> : Promise.reject())
             .then(payload => {
-                if (request !== activeRequest || textarea !== target) return;
+                if (request !== activeRequest || input !== target) return;
                 candidates = Array.isArray(payload.data) ? payload.data.slice(0, 8) : [];
                 selected = 0;
                 render();
@@ -118,15 +146,20 @@ export function initMentionAutocomplete(): void {
             });
     };
 
-    document.addEventListener('input', event => {
+    const scheduleLookup = (event: Event) => {
         const target = event.target;
-        if (!(target instanceof HTMLTextAreaElement) || !target.matches(ELIGIBLE_SELECTOR)) return;
+        const eligibleTextarea = target instanceof HTMLTextAreaElement && target.matches(ELIGIBLE_SELECTOR);
+        const eligibleTrix = target instanceof HTMLElement && target.matches(TRIX_SELECTOR) && 'editor' in target;
+        if (!eligibleTextarea && !eligibleTrix) return;
         if (timer !== null) window.clearTimeout(timer);
-        timer = window.setTimeout(() => lookup(target), 150);
-    });
+        timer = window.setTimeout(() => lookup(target as MentionTarget), 150);
+    };
+
+    document.addEventListener('input', scheduleLookup);
+    document.addEventListener('trix-change', scheduleLookup);
 
     document.addEventListener('keydown', event => {
-        if (popup.hidden || event.target !== textarea) return;
+        if (popup.hidden || event.target !== input) return;
         if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
             event.preventDefault();
             const delta = event.key === 'ArrowDown' ? 1 : -1;
@@ -148,7 +181,7 @@ export function initMentionAutocomplete(): void {
     });
 
     document.addEventListener('mousedown', event => {
-        if (event.target !== textarea && !popup.contains(event.target as Node)) close();
+        if (event.target !== input && !popup.contains(event.target as Node)) close();
     });
     window.addEventListener('resize', position);
     window.addEventListener('scroll', position, true);

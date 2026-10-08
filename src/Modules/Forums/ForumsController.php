@@ -1433,6 +1433,7 @@ class ForumsController extends AbstractController
         $replies = $replyIds !== []
             ? $this->feedRepository->findByIds($replyIds, $this->context->user, 'comment')
             : [];
+        $this->feedService->decorateFeedsMentions($replies);
 
         $posts = $includeOpeningPost ? [$topicFeed] : [];
         $posts = array_merge($posts, $replies);

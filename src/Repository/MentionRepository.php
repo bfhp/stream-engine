@@ -18,6 +18,37 @@ final readonly class MentionRepository
         return $this->findForTarget('feed_id', $feedId);
     }
 
+    /**
+     * @param list<int> $feedIds
+     * @return array<int, array<int, array{userId:int, usernameSnapshot:string, active:bool, currentUsername:?string}>>
+     */
+    public function findForFeeds(array $feedIds): array
+    {
+        $feedIds = array_values(array_unique(array_filter(array_map('intval', $feedIds), static fn (int $id): bool => $id > 0)));
+        if ($feedIds === []) {
+            return [];
+        }
+
+        $placeholders = implode(', ', array_fill(0, count($feedIds), '?'));
+        $rows = $this->db->fetchAll(
+            "SELECT m.feed_id, m.user_id, m.username_snapshot, m.active,
+                    IF(u.is_active = 1, u.username, NULL) AS current_username
+             FROM mentions m
+             LEFT JOIN users u ON u.id = m.user_id
+             WHERE m.feed_id IN ({$placeholders})",
+            $feedIds,
+        );
+
+        $result = [];
+        foreach ($rows as $row) {
+            $feedId = (int) $row['feed_id'];
+            $userId = (int) $row['user_id'];
+            $result[$feedId][$userId] = $this->mapRow($row);
+        }
+
+        return $result;
+    }
+
     /** @return array<int, array{userId:int, usernameSnapshot:string, active:bool, currentUsername:?string}> */
     public function findForMessage(int $messageId): array
     {
@@ -95,17 +126,23 @@ final readonly class MentionRepository
         $result = [];
         foreach ($rows as $row) {
             $userId = (int) $row['user_id'];
-            $result[$userId] = [
-                'userId' => $userId,
-                'usernameSnapshot' => (string) $row['username_snapshot'],
-                'active' => (bool) $row['active'],
-                'currentUsername' => isset($row['current_username']) && trim((string) $row['current_username']) !== ''
-                    ? (string) $row['current_username']
-                    : null,
-            ];
+            $result[$userId] = $this->mapRow($row);
         }
 
         return $result;
+    }
+
+    /** @return array{userId:int, usernameSnapshot:string, active:bool, currentUsername:?string} */
+    private function mapRow(array $row): array
+    {
+        return [
+            'userId' => (int) $row['user_id'],
+            'usernameSnapshot' => (string) $row['username_snapshot'],
+            'active' => (bool) $row['active'],
+            'currentUsername' => isset($row['current_username']) && trim((string) $row['current_username']) !== ''
+                ? (string) $row['current_username']
+                : null,
+        ];
     }
 
     /** @param array<int, string> $desired */

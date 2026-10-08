@@ -1598,8 +1598,10 @@ final class ForumsControllerTest extends TestCase
             ],
         ));
 
-        $feedService = $this->createStub(FeedService::class);
+        $feedService = $this->createMock(FeedService::class);
         $this->stubTopicResolution($feedService, $this->makeTopic());
+        $feedService->expects($this->once())->method('decorateFeedsMentions')
+            ->with($this->callback(static fn (array $feeds): bool => array_column($feeds, 'id') === [910, 911]));
         $feedService->method('isWithinEditWindow')->willReturn(true);
         $feedService->method('canEditFeed')->willReturn(true);
         $feedService->method('getUserRatingValues')->willReturn([910 => 4]);

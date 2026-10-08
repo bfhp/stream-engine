@@ -126,6 +126,40 @@ final class MentionServiceTest extends TestCase
         self::assertSame('Plain text', $this->service($db)->renderFeed(91, 'Plain text'));
     }
 
+    public function testRenderFeedsResolvesAPageOfMentionsInOneQuery(): void
+    {
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects($this->once())
+            ->method('fetchAll')
+            ->with($this->stringContains('m.feed_id IN (?, ?)'), [91, 92])
+            ->willReturn([
+                [
+                    'feed_id' => 91,
+                    'user_id' => 10,
+                    'username_snapshot' => 'Alice',
+                    'active' => 1,
+                    'current_username' => 'alice',
+                ],
+                [
+                    'feed_id' => 92,
+                    'user_id' => 11,
+                    'username_snapshot' => 'Bob',
+                    'active' => 1,
+                    'current_username' => 'bob',
+                ],
+            ]);
+
+        $rendered = $this->service($db)->renderFeeds([
+            90 => 'No token',
+            91 => 'Hello @Alice',
+            92 => 'Hello @Bob',
+        ]);
+
+        self::assertSame('No token', $rendered[90]);
+        self::assertStringContainsString('@Alice', $rendered[91]);
+        self::assertStringContainsString('@Bob', $rendered[92]);
+    }
+
     public function testEditDeactivatesRemovedMentionsWithoutAnotherUsernameLookup(): void
     {
         $db = $this->createMock(PdoDatabase::class);

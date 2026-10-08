@@ -24,8 +24,10 @@ use StreamEngine\Repository\FeedMetadataRepository;
 use StreamEngine\Repository\FeedRatingRepository;
 use StreamEngine\Repository\FeedReadRepository;
 use StreamEngine\Repository\FeedRepository;
+use StreamEngine\Repository\MentionRepository;
 use StreamEngine\Service\AccessService;
 use StreamEngine\Service\FeedService;
+use StreamEngine\Service\MentionService;
 use Tests\Support\ArrayCache;
 use Tests\Support\FakeFeedRepository;
 
@@ -58,6 +60,7 @@ final class FeedServiceTest extends TestCase
         ?FeedFavoriteRepository $favoriteRepository = null,
         ?FeedReadRepository $readRepository = null,
         ?GuestFeedReadStore $guestReadStore = null,
+        ?MentionService $mentionService = null,
     ): FeedService {
         return new FeedService(
             $repository,
@@ -70,6 +73,7 @@ final class FeedServiceTest extends TestCase
             $favoriteRepository,
             $readRepository,
             $guestReadStore,
+            $mentionService,
         );
     }
 
@@ -2329,6 +2333,72 @@ final class FeedServiceTest extends TestCase
         $this->assertSame('<p>Updated</p>', $result->content);
         $this->assertSame('Nice <b>desc</b>', $result->description);
         $this->assertSame('/uploads/feed-covers/new.jpg', $result->imageUrl);
+    }
+
+    public function testUpdatingAForumTopicResynchronizesMentions(): void
+    {
+        $user = new User(id: 7, email: 'user@example.com', role: AccessService::ROLE_USER);
+        $db = $this->createMock(PdoDatabase::class);
+        $repository = new FeedRepository($db);
+        $accessService = $this->createMock(AccessService::class);
+        $accessService->expects($this->exactly(2))->method('canAccessFeed')->willReturn(true);
+        $accessService->expects($this->once())->method('canEditFeed')->willReturn(true);
+
+        $existing = [
+            'id' => 42,
+            'parent_id' => null,
+            'owner_id' => 7,
+            'type' => 'forum-post',
+            'slug' => 'topic',
+            'title' => 'Topic',
+            'content' => '<div>Old text</div>',
+            'description' => null,
+            'image_url' => null,
+            'container_id' => null,
+            'visibility' => 'public',
+            'position' => 0,
+            'created_at' => time() - 60,
+            'nick' => 'Author',
+            'avatar_url' => '',
+        ];
+        $updated = array_merge($existing, ['content' => '<div>Hello @alice</div>']);
+        $db->expects($this->exactly(2))->method('fetchOne')
+            ->willReturnOnConsecutiveCalls($existing, $updated);
+        $db->expects($this->exactly(3))->method('fetchAll')
+            ->willReturnOnConsecutiveCalls(
+                [],
+                [['id' => 10, 'username' => 'alice']],
+                [[
+                    'feed_id' => 42,
+                    'user_id' => 10,
+                    'username_snapshot' => 'alice',
+                    'active' => 1,
+                    'current_username' => 'alice',
+                ]],
+            );
+
+        $writes = [];
+        $db->expects($this->exactly(3))->method('execute')
+            ->willReturnCallback(static function (string $sql, array $params) use (&$writes): int {
+                $writes[] = [$sql, $params];
+                return 1;
+            });
+
+        $mentionService = new MentionService(new MentionRepository($db));
+        $service = $this->makeService(
+            $repository,
+            $this->makeUrlGenerator([42 => $this->makeFeed(id: 42, type: 'forum-post')]),
+            $accessService,
+            mentionService: $mentionService,
+        );
+
+        $result = $service->updateFeed(42, ['content' => '<div>Hello @alice</div>'], $user);
+
+        $this->assertSame('<div>Hello @alice</div>', $result->content);
+        $this->assertTrue((bool) array_filter(
+            $writes,
+            static fn (array $write): bool => str_contains($write[0], 'INSERT INTO mentions'),
+        ));
     }
 
     public function testUpdateFeedPreservesOmittedFieldsAndClearsAnExplicitNull(): void

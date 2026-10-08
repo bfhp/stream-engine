@@ -14,6 +14,12 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 - Added rich-text forum quick replies with an inline preview, safe HTML
   purification, rich-text editing, and quote insertion into the editor.
 
+### Fixed
+
+- Fixed `@mention` autocomplete in forum rich-text editors, mention
+  synchronization when a topic is edited, and profile-link rendering in
+  paginated replies.
+
 ## [0.4.5] - 2026-10-08
 
 ### Added

@@ -97,6 +97,28 @@ final class MentionService
         return $this->render($this->mentions->findForFeed($feedId), $html);
     }
 
+    /**
+     * @param array<int, string> $htmlByFeedId
+     * @return array<int, string>
+     */
+    public function renderFeeds(array $htmlByFeedId): array
+    {
+        $withMentionTokens = array_filter(
+            $htmlByFeedId,
+            static fn (string $html): bool => str_contains($html, '@'),
+        );
+        if ($withMentionTokens === []) {
+            return $htmlByFeedId;
+        }
+
+        $mentionsByFeedId = $this->mentions->findForFeeds(array_keys($withMentionTokens));
+        foreach ($withMentionTokens as $feedId => $html) {
+            $htmlByFeedId[$feedId] = $this->render($mentionsByFeedId[$feedId] ?? [], $html);
+        }
+
+        return $htmlByFeedId;
+    }
+
     public function renderMessage(int $messageId, string $html): string
     {
         if ($html === '' || ! str_contains($html, '@')) {
