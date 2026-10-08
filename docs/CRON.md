@@ -70,6 +70,22 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now stream-engine-cron.timer
 ```
 
+### Docker Compose scheduler
+
+The Compose configuration includes a `scheduler` service that uses the same
+application image, environment and volumes as PHP-FPM. Supercronic runs in the
+foreground and invokes the runner once per minute without depending on a host
+cron implementation or systemd:
+
+```bash
+docker compose up -d scheduler
+docker compose logs -f scheduler
+```
+
+The service runs as `www-data`, restarts unless explicitly stopped, and works
+with Linux Docker Engine and Docker Desktop. The PHP image verifies the
+downloaded Supercronic binary checksum during its multi-platform build.
+
 Container schedulers should invoke the same `php bin/cron.php` command once per
 minute in an application container with the same release, environment, database
 access and writable `storage` volume as the web application. Do not run one

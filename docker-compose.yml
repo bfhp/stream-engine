@@ -1,3 +1,29 @@
+x-app: &app
+  image: stream-engine-app:dev
+  build: ./docker/php
+  volumes:
+    - ./:/var/www:cached
+    - ./docker/php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
+  working_dir: /var/www
+  depends_on:
+    - db
+    - memcached
+    - minio
+  environment:
+    APP_ENV: "dev"
+    LANG: "C.UTF-8"
+    LC_ALL: "C.UTF-8"
+    PHP_IDE_CONFIG: "serverName=localhost"
+    SITE_URL: "http://localhost:5000"
+    MEMCACHED_HOST: "memcached"
+    MEMCACHED_PORT: "11211"
+    OBJECT_STORAGE_ENDPOINT: "http://minio:9000"
+    OBJECT_STORAGE_BUCKET: "stream-engine"
+    OBJECT_STORAGE_REGION: "us-east-1"
+    OBJECT_STORAGE_ACCESS_KEY: "stream-engine"
+    OBJECT_STORAGE_SECRET_KEY: "stream-engine-secret"
+    OBJECT_STORAGE_PUBLIC_BASE_URL: "http://localhost:9000/stream-engine"
+
 services:
   nginx:
     image: nginx:latest
@@ -5,35 +31,18 @@ services:
       - "5000:80"
     volumes:
       - ./:/var/www:cached
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - php
 
   php:
+    <<: *app
 
-    build: ./php
-    volumes:
-      - ./:/var/www:cached
-      - ./php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
-    working_dir: /var/www
-    depends_on:
-      - db
-      - memcached
-      - minio
-    environment:
-      APP_ENV: "dev"
-      LANG: "C.UTF-8"
-      LC_ALL: "C.UTF-8"
-      PHP_IDE_CONFIG: "serverName=localhost"
-      SITE_URL: "http://localhost:5000"
-      MEMCACHED_HOST: "memcached"
-      MEMCACHED_PORT: "11211"
-      OBJECT_STORAGE_ENDPOINT: "http://minio:9000"
-      OBJECT_STORAGE_BUCKET: "stream-engine"
-      OBJECT_STORAGE_REGION: "us-east-1"
-      OBJECT_STORAGE_ACCESS_KEY: "stream-engine"
-      OBJECT_STORAGE_SECRET_KEY: "stream-engine-secret"
-      OBJECT_STORAGE_PUBLIC_BASE_URL: "http://localhost:9000/stream-engine"
+  scheduler:
+    <<: *app
+    command: ["supercronic", "/etc/stream-engine/crontab"]
+    user: www-data
+    restart: unless-stopped
 
 
   db:
@@ -57,7 +66,7 @@ services:
     working_dir: /app
 
   node:
-    build: ./php
+    build: ./docker/php
     volumes:
       - ./:/app
       - node_modules:/app/node_modules

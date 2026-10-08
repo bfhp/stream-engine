@@ -7,6 +7,11 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added a cross-platform Docker Compose scheduler that uses Supercronic and the
+  shared application image to run `bin/cron.php` once per minute.
+
 ## [0.4.5] - 2026-10-08
 
 ### Added
