@@ -388,6 +388,12 @@ function initAttachments(
     };
     if (!drop || !input || !list) return noop;
 
+    // Only files from this explicit attachment card are eligible for the
+    // forum orphan sweep. Inline Trix images still use the ordinary endpoint
+    // above because their reference lives in HTML rather than attachment ids.
+    const attachmentUploadsUrl = new URL(uploadsApiUrl, window.location.origin);
+    attachmentUploadsUrl.searchParams.set("variant", "forum-attachment");
+
     // Mirrors ForumsController::MAX_TOPIC_ATTACHMENTS / UploadService's own
     // limits - enforced again server-side (resolveTopicAttachments() caps
     // the count, UploadService::validateFile() the size/mime), so bypassing
@@ -497,7 +503,7 @@ function initAttachments(
             onError(trans("js.forums.file_upload_failed", { name: item.name }));
         });
 
-        xhr.open("POST", uploadsApiUrl);
+        xhr.open("POST", attachmentUploadsUrl.pathname + attachmentUploadsUrl.search);
         xhr.withCredentials = true;
         // This is the one upload that can't go through shared/uploads.ts's
         // uploadFile(): the per-file progress bar needs XMLHttpRequest.upload,

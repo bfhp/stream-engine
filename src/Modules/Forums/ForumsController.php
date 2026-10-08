@@ -7,6 +7,7 @@ namespace StreamEngine\Modules\Forums;
 use DateTimeImmutable;
 use RuntimeException;
 use StreamEngine\Core\AbstractController;
+use StreamEngine\Core\Cron\CronRegistry;
 use StreamEngine\Core\Exceptions\ForbiddenException;
 use StreamEngine\Core\Exceptions\NotFoundException;
 use StreamEngine\Core\Exceptions\ValidationException;
@@ -150,6 +151,18 @@ class ForumsController extends AbstractController
             'forums.topic-new' => 'Create a new topic in a forum section',
             'forums.topic-edit' => 'Edit an existing forum topic',
         ];
+    }
+
+    public static function registerCron(CronRegistry $cron): void
+    {
+        $cron->add('forums:uploads-cleanup', 'Forums', 60 * 60);
+    }
+
+    public function runCron(string $task): void
+    {
+        match ($task) {
+            'forums:uploads-cleanup' => $this->uploadService->cleanupOrphanedForumAttachments(),
+        };
     }
 
     public function __construct(
@@ -2612,9 +2625,8 @@ class ForumsController extends AbstractController
      * owned uploads - each id must already be a file the current user
      * uploaded through the generic /api/v1/uploads endpoint (forums.ts's own
      * initTopicForm(), same call blog-post-form.js's cover-image/track
-     * widgets make), verified the same ownership-checked way
-     * BlogPostService::createBlogPost() verifies its own single
-     * $trackUploadId: UploadService::findOwnedUpload(). No mime-prefix
+     * widgets make), verified and reserved through
+     * UploadService::reserveForumAttachment(). No mime-prefix
      * filter here (unlike that audio-only check) - forums.topic-new allows
      * images *and* PDFs, so the prefix check would have to accept two
      * different prefixes; UploadService::ALLOWED_MIME already rejected
@@ -2636,7 +2648,7 @@ class ForumsController extends AbstractController
      * were ownership-checked once at upload time, and they belong to the
      * topic's author, not necessarily to whoever is editing. Without this an
      * admin or moderator saving someone else's topic would silently detach
-     * every one of its files, since findOwnedUpload() has no admin bypass:
+     * every one of its files, since the ownership check has no admin bypass:
      * the form faithfully sends the existing ids back, and every one of them
      * would fail the "is this yours?" test. Ids *not* in this list are new in
      * this request and still have to be the editor's own uploads.
@@ -2668,7 +2680,7 @@ class ForumsController extends AbstractController
 
             $upload = isset($trusted[$id])
                 ? $this->uploadService->findById($id)
-                : $this->uploadService->findOwnedUpload($id, $user);
+                : $this->uploadService->reserveForumAttachment($id, $user);
 
             if ($upload !== null) {
                 $uploads[] = $upload;

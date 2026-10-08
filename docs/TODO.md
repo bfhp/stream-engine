@@ -44,9 +44,9 @@ generator, hosted site, or build step.
 
 ### Forums: topic-view interactive features
 
-The topic and reply view MVP works. Deferred work:
-
-- garbage collection for orphaned uploads.
+The topic and reply view now includes rich-text replies and previews, quoting,
+mentions, per-post rating and self-service editing/deletion, real counters, and
+cleanup of abandoned attachment-card uploads.
 
 Deleting an entire topic must remain a separate owner/moderator action and must
 not be reachable through the endpoint for deleting a single reply.

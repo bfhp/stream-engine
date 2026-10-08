@@ -19,6 +19,9 @@ class UploadService
 {
     private const string STORAGE_LIMIT_SETTING = 'uploads.user_limit_mb';
     private const int MAX_FILE_SIZE = 50 * 1024 * 1024;
+    private const int ORPHAN_GRACE_SECONDS = 24 * 60 * 60;
+    private const int ORPHAN_BATCH_SIZE = 100;
+    private const int ORPHAN_MAX_BATCHES = 10;
 
     private const array ALLOWED_MIME = [
         'image/jpeg',
@@ -50,6 +53,21 @@ class UploadService
      */
     public function uploadForUser(User $user, array $file): Upload
     {
+        return $this->storeUserUpload($user, $file, null);
+    }
+
+    /** A pending file from the forum topic form's attachment card. */
+    public function uploadForumAttachmentForUser(User $user, array $file): Upload
+    {
+        return $this->storeUserUpload($user, $file, UploadRepository::PURPOSE_FORUM_ATTACHMENT);
+    }
+
+    /**
+     * @throws RandomException
+     * @throws ValidationException
+     */
+    private function storeUserUpload(User $user, array $file, ?string $purpose): Upload
+    {
         $mime = $this->mime->detect($file['tmp_name']);
 
         $this->validateFile($file['size'], $mime);
@@ -69,7 +87,8 @@ class UploadService
             'path' => $result['path'],
             'mime' => $mime,
             'size' => $result['size'],
-            'original_name' => $file['name']
+            'original_name' => $file['name'],
+            'purpose' => $purpose,
         ]);
     }
 
@@ -149,6 +168,65 @@ class UploadService
         }
 
         return $upload;
+    }
+
+    /**
+     * Reserves a pending forum attachment immediately before the topic write.
+     * Refreshing its timestamp gives that write a full grace period even when
+     * an old draft is finally submitted at the same time as cleanup runs.
+     */
+    public function reserveForumAttachment(int $uploadId, User $user): ?Upload
+    {
+        if ($user->isGuest()) {
+            return null;
+        }
+
+        return $this->uploads->reserveOwnedForumAttachment($uploadId, $user->id);
+    }
+
+    /**
+     * Removes old files uploaded through the forum attachment card but never
+     * referenced by a topic. Work is bounded so one cron tick cannot spend an
+     * unlimited amount of time draining a large historical backlog.
+     */
+    public function cleanupOrphanedForumAttachments(?int $now = null): int
+    {
+        $createdBefore = ($now ?? time()) - self::ORPHAN_GRACE_SECONDS;
+        $deleted = 0;
+
+        for ($batch = 0; $batch < self::ORPHAN_MAX_BATCHES; $batch++) {
+            $ids = $this->uploads->findOrphanedForumAttachmentIds(
+                $createdBefore,
+                self::ORPHAN_BATCH_SIZE,
+            );
+            if ($ids === []) {
+                break;
+            }
+
+            foreach ($ids as $id) {
+                $upload = $this->uploads->claimOrphanedForumAttachment($id, $createdBefore);
+                if ($upload === null) {
+                    continue;
+                }
+
+                if (! $this->storage->deleteStoredFile($upload->path)) {
+                    $this->uploads->releaseOrphanedForumAttachment($upload->id);
+                    error_log('Unable to delete orphaned forum upload '.$upload->path);
+
+                    continue;
+                }
+
+                if ($this->uploads->deleteClaimedForumAttachment($upload->id)) {
+                    $deleted++;
+                }
+            }
+
+            if (count($ids) < self::ORPHAN_BATCH_SIZE) {
+                break;
+            }
+        }
+
+        return $deleted;
     }
 
     /**

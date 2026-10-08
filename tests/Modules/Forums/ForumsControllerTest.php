@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use RuntimeException;
 use StreamEngine\Core\Config;
+use StreamEngine\Core\Cron\CronRegistry;
 use StreamEngine\Core\Exceptions\ForbiddenException;
 use StreamEngine\Core\Exceptions\NotFoundException;
 use StreamEngine\Core\Exceptions\ValidationException;
@@ -127,6 +128,34 @@ final class ForumsControllerTest extends TestCase
     private const string SQL_ONLINE_BOT_NAMES = 'GROUP BY bot_name';
 
     private const string SQL_TOPIC_FOLLOWERS = 'FROM feed_favorites WHERE feed_id = ?';
+
+    public function testRegistersAndDispatchesTheOrphanUploadCleanupTask(): void
+    {
+        $registry = new CronRegistry();
+        ForumsController::registerCron($registry);
+
+        $this->assertSame([
+            'forums:uploads-cleanup' => [
+                'task' => 'forums:uploads-cleanup',
+                'controller' => 'Forums',
+                'interval' => 60 * 60,
+            ],
+        ], $registry->all());
+
+        $uploads = $this->createMock(UploadService::class);
+        $uploads->expects($this->once())->method('cleanupOrphanedForumAttachments')->willReturn(2);
+
+        $this->makeModule($this->createStub(PdoDatabase::class), $uploads)
+            ->runCron('forums:uploads-cleanup');
+    }
+
+    public function testUnknownForumCronTaskFailsLoudly(): void
+    {
+        $this->expectException(\UnhandledMatchError::class);
+
+        $this->makeModule($this->createStub(PdoDatabase::class))
+            ->runCron('forums:unknown');
+    }
 
     /* ------------------------------------------------------------------ */
     /* The helpers the page tests reach only indirectly                   */
@@ -979,16 +1008,16 @@ final class ForumsControllerTest extends TestCase
 
     /**
      * An admin or moderator editing someone else's topic doesn't own its
-     * uploads, and findOwnedUpload() has no admin bypass - so the ids the form
+     * uploads, and reserving a pending upload has no admin bypass - so the ids the form
      * faithfully sends back have to resolve through the unscoped findById()
      * instead, or every attachment silently detaches on save.
      */
     public function testTopicUpdateKeepsAttachmentsWhenEditorIsNotTheUploader(): void
     {
         // The trusted path: already-attached ids go through findById(), never
-        // findOwnedUpload() (which would reject them - they belong to user 7).
+        // reserveForumAttachment() (which would reject them - they belong to user 7).
         $uploadService = $this->createMock(UploadService::class);
-        $uploadService->expects($this->never())->method('findOwnedUpload');
+        $uploadService->expects($this->never())->method('reserveForumAttachment');
         $uploadService->method('findById')->willReturnCallback(
             fn (int $id): Upload => $this->makeUpload($id)
         );
@@ -2224,7 +2253,7 @@ final class ForumsControllerTest extends TestCase
     public function testTopicCreateDeduplicatesAndCapsAttachments(): void
     {
         $uploadService = $this->createStub(UploadService::class);
-        $uploadService->method('findOwnedUpload')->willReturnCallback(
+        $uploadService->method('reserveForumAttachment')->willReturnCallback(
             fn (int $id): Upload => $this->makeUpload($id)
         );
 
@@ -2256,13 +2285,13 @@ final class ForumsControllerTest extends TestCase
 
     /**
      * Every id in a create payload has to be one of the author's own uploads -
-     * findOwnedUpload() is the same ownership-checked lookup a blog post's
-     * track goes through. A foreign id is dropped, not fatal.
+     * reserveForumAttachment() is ownership-checked and also refreshes the
+     * cleanup grace period. A foreign id is dropped, not fatal.
      */
     public function testTopicCreateDropsAttachmentsTheAuthorDoesNotOwn(): void
     {
         $uploadService = $this->createStub(UploadService::class);
-        $uploadService->method('findOwnedUpload')->willReturnCallback(
+        $uploadService->method('reserveForumAttachment')->willReturnCallback(
             fn (int $id): ?Upload => $id === 41 ? $this->makeUpload($id) : null
         );
 

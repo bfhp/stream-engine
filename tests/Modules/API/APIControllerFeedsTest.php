@@ -984,10 +984,11 @@ final class APIControllerFeedsTest extends TestCase
     {
         $uploadService = $this->getMockBuilder(UploadService::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['uploadForUser', 'uploadAvatarForUser'])
+            ->onlyMethods(['uploadForUser', 'uploadAvatarForUser', 'uploadForumAttachmentForUser'])
             ->getMock();
 
         $uploadService->expects($this->never())->method('uploadAvatarForUser');
+        $uploadService->expects($this->never())->method('uploadForumAttachmentForUser');
         $uploadService->expects($this->once())
             ->method('uploadForUser')
             ->with($this->callback(static fn (User $u): bool => $u->id === 1), $this->anything())
@@ -1043,26 +1044,29 @@ final class APIControllerFeedsTest extends TestCase
     {
         return [
             'the avatar variant' => ['avatar', 'uploadAvatarForUser'],
+            'a pending forum attachment' => ['forum-attachment', 'uploadForumAttachmentForUser'],
             'anything else' => ['banner', 'uploadForUser'],
             'an empty variant' => ['', 'uploadForUser'],
         ];
     }
 
     /**
-     * `?variant=avatar` picks a different service method - the avatar one
-     * crops and re-encodes, and it is chosen by an exact string match, so
-     * every other value is an ordinary upload rather than an error.
+     * Known variants pick their dedicated storage lifecycle; every unknown
+     * value remains an ordinary upload for backward compatibility.
      */
     #[DataProvider('uploadVariantProvider')]
     public function testTheVariantChoosesWhichUploadRuns(string $variant, string $expected): void
     {
         $uploadService = $this->getMockBuilder(UploadService::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['uploadForUser', 'uploadAvatarForUser'])
+            ->onlyMethods(['uploadForUser', 'uploadAvatarForUser', 'uploadForumAttachmentForUser'])
             ->getMock();
 
-        $other = $expected === 'uploadForUser' ? 'uploadAvatarForUser' : 'uploadForUser';
-        $uploadService->expects($this->never())->method($other);
+        foreach (['uploadForUser', 'uploadAvatarForUser', 'uploadForumAttachmentForUser'] as $method) {
+            if ($method !== $expected) {
+                $uploadService->expects($this->never())->method($method);
+            }
+        }
         $uploadService->expects($this->once())->method($expected)->willReturn($this->upload());
 
         $_GET = ['variant' => $variant];

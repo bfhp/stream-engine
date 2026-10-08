@@ -21,6 +21,7 @@ use StreamEngine\Core\Installation\SchemaSnapshot;
 use StreamEngine\Core\Migrations\MigrationRunner;
 use StreamEngine\Core\Migrations\SqlScript;
 use StreamEngine\Core\PdoDatabase;
+use StreamEngine\Repository\UploadRepository;
 
 final class InstallationSchemaTest extends TestCase
 {
@@ -117,6 +118,51 @@ final class InstallationSchemaTest extends TestCase
                 '200:20' => 'member',
                 '200:30' => 'subscriber',
             ], $rows);
+        });
+    }
+
+    public function testUploadPurposeMigrationAddsTheForumCleanupIndex(): void
+    {
+        $root = dirname(__DIR__, 2);
+        $this->withEmptyDatabase(function (PDO $pdo) use ($root): void {
+            $this->executeScript($pdo, $root.'/migrations/20260912000000_initial.sql');
+            $this->executeScript($pdo, $root.'/migrations/20261008020000_track_upload_purpose.sql');
+
+            $columns = $pdo->query('SHOW COLUMNS FROM uploads')->fetchAll(PDO::FETCH_COLUMN);
+            self::assertContains('purpose', $columns);
+            self::assertContains('uploads_purpose_created_at_index', $this->indexes($pdo, 'uploads'));
+
+            $pdo->exec("
+                INSERT INTO users (id, email, password_hash, created_at, is_active)
+                VALUES (10, 'upload-owner@example.test', 'x', 1, 1)
+            ");
+            $pdo->exec("
+                INSERT INTO feeds (id, owner_id, type, created_at, updated_at)
+                VALUES (100, 10, 'forum-post', 1, 1)
+            ");
+            $pdo->exec("
+                INSERT INTO uploads
+                    (id, user_id, path, mime, size, original_name, purpose, created_at)
+                VALUES
+                    (41, 10, '10/orphan.pdf', 'application/pdf', 1, 'orphan.pdf', 'forum-attachment', 1),
+                    (42, 10, '10/attached.pdf', 'application/pdf', 1, 'attached.pdf', 'forum-attachment', 1),
+                    (43, 10, '10/draft.pdf', 'application/pdf', 1, 'draft.pdf', 'forum-attachment', 1)
+            ");
+            $pdo->exec("
+                INSERT INTO feed_metadata (feed_id, name, content, created_at, updated_at)
+                VALUES (100, 'attachment_upload_ids', '[42]', 1, 1)
+            ");
+
+            $uploads = new UploadRepository($this->database($pdo));
+            self::assertSame([41, 43], $uploads->findOrphanedForumAttachmentIds(100, 100));
+
+            // A form submission refreshes the draft before cleanup claims it.
+            self::assertSame(43, $uploads->reserveOwnedForumAttachment(43, 10)?->id);
+            self::assertSame([41], $uploads->findOrphanedForumAttachmentIds(100, 100));
+
+            // The referenced row is never claimable even though it is old.
+            self::assertNull($uploads->claimOrphanedForumAttachment(42, 100));
+            self::assertSame(41, $uploads->claimOrphanedForumAttachment(41, 100)?->id);
         });
     }
 

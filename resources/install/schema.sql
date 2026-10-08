@@ -410,9 +410,11 @@ CREATE TABLE `uploads` (
   `mime` varchar(100) DEFAULT NULL,
   `size` int(11) DEFAULT NULL,
   `original_name` varchar(255) DEFAULT NULL,
+  `purpose` varchar(40) DEFAULT NULL,
   `created_at` int(10) unsigned NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
-  KEY `uploads_user_id_size_index` (`user_id`,`size`)
+  KEY `uploads_user_id_size_index` (`user_id`,`size`),
+  KEY `uploads_purpose_created_at_index` (`purpose`,`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 CREATE TABLE `users` (

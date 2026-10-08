@@ -102,6 +102,54 @@ class FileStorage
     }
 
     /**
+     * Deletes one database-tracked file without allowing a stored path to
+     * escape the uploads root. Missing files count as already deleted.
+     */
+    public function deleteStoredFile(string $relativePath): bool
+    {
+        if ($relativePath === '' || str_starts_with($relativePath, '/')
+            || str_contains($relativePath, "\0") || str_contains($relativePath, '\\')) {
+            return false;
+        }
+
+        $segments = explode('/', $relativePath);
+        if (in_array('', $segments, true) || in_array('.', $segments, true) || in_array('..', $segments, true)) {
+            return false;
+        }
+
+        $root = realpath($this->basePath);
+        if ($root === false) {
+            return false;
+        }
+
+        $candidate = $root.'/'.$relativePath;
+        if (! file_exists($candidate) && ! is_link($candidate)) {
+            return true;
+        }
+
+        $parent = realpath(dirname($candidate));
+        if ($parent === false
+            || ($parent !== $root && ! str_starts_with($parent, rtrim($root, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR))) {
+            return false;
+        }
+
+        $path = $parent.'/'.basename($relativePath);
+        if (! is_file($path) && ! is_link($path)) {
+            return false;
+        }
+
+        if (! @unlink($path)) {
+            return false;
+        }
+
+        if ($parent !== $root) {
+            @rmdir($parent);
+        }
+
+        return true;
+    }
+
+    /**
      * @throws ValidationException
      */
     private function getExtension(string $mime): string

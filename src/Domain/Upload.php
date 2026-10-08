@@ -13,7 +13,8 @@ class Upload
         public string $mime,
         public int $size,
         public string $originalName,
-        public int $createdAt
+        public int $createdAt,
+        public ?string $purpose = null,
     ) {
     }
 }

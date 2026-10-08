@@ -2,7 +2,7 @@
     "format": 1,
     "release": "0.4.5",
     "schema": "schema.sql",
-    "schema_checksum": "2b40ff49dd48f17753051078c2f3314f20df640541eed38836417d3ddcefa575",
+    "schema_checksum": "12d1595ca71d043b5a2f4259ee2e63d4b9f0f9221d69e01ce5212c3d2c8188ed",
     "migrations": [
         {
             "version": "20260912000000_initial",
@@ -73,6 +73,11 @@
             "version": "20261008010000_materialize_blog_friend_roles",
             "file": "20261008010000_materialize_blog_friend_roles.sql",
             "checksum": "d8a1de449dafa7ac745ee2f50c3c244044dcde08ee758279c0b6d759c89aab10"
+        },
+        {
+            "version": "20261008020000_track_upload_purpose",
+            "file": "20261008020000_track_upload_purpose.sql",
+            "checksum": "49dcfd6a3d02a1c48d6ff4e5300888b2314fc854abf65e43526bc542abb62658"
         }
     ]
 }

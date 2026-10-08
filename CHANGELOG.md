@@ -20,6 +20,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
   own vote state and aggregate score.
 - Replaced forum topic placeholders with real post and distinct-participant
   totals, participant avatars with overflow counts, and per-author post totals.
+- Added hourly garbage collection for forum attachment-card uploads left
+  unattached for more than 24 hours, with reservation and race-safe rechecks.
 
 ### Fixed
 

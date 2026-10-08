@@ -108,6 +108,42 @@ class UploadServiceTest extends TestCase
         $this->assertSame($expectedUpload, $result);
     }
 
+    public function testForumAttachmentUploadIsMarkedForTheOrphanLifecycle(): void
+    {
+        $user = new User(id: 7, email: '', role: AccessService::ROLE_USER);
+        $file = ['tmp_name' => '/tmp/file', 'size' => 1000, 'name' => 'notes.pdf'];
+        $uploads = $this->createMock(UploadRepository::class);
+        $mime = $this->createStub(MimeDetector::class);
+        $storage = $this->createStub(FileStorage::class);
+        $images = $this->createStub(ImageProcessor::class);
+        $access = $this->createStub(AccessService::class);
+        $service = $this->makeService($uploads, $mime, $storage, $images, $access);
+
+        $mime->method('detect')->willReturn('application/pdf');
+        $images->method('isImage')->willReturn(false);
+        $access->method('isAdmin')->willReturn(false);
+        $uploads->method('getUserUsage')->willReturn(0);
+        $storage->method('storeUserFile')->willReturn(['path' => '7/notes.pdf', 'size' => 900]);
+
+        $created = new Upload(
+            41,
+            7,
+            '7/notes.pdf',
+            'application/pdf',
+            900,
+            'notes.pdf',
+            1_700_000_000,
+            UploadRepository::PURPOSE_FORUM_ATTACHMENT,
+        );
+        $uploads->expects($this->once())->method('create')->with($this->callback(
+            static fn (array $data): bool =>
+                $data['purpose'] === UploadRepository::PURPOSE_FORUM_ATTACHMENT
+                && $data['original_name'] === 'notes.pdf'
+        ))->willReturn($created);
+
+        $this->assertSame($created, $service->uploadForumAttachmentForUser($user, $file));
+    }
+
     public function testAdminUploadKeepsTheVisibleNameInTheRequestedDirectory(): void
     {
         $user = new User(id: 7, email: '', role: AccessService::ROLE_ADMIN);
@@ -738,5 +774,104 @@ class UploadServiceTest extends TestCase
 
         $this->assertNotNull($service->findOwnedUpload(7, $user, 'image'));
         $this->assertNull($service->findOwnedUpload(7, $user, 'Image/'));
+    }
+
+    public function testReserveForumAttachmentDelegatesWithTheCurrentOwner(): void
+    {
+        $user = new User(3, 'a@b.c', AccessService::ROLE_USER);
+        $upload = $this->upload(3);
+        $uploads = $this->createMock(UploadRepository::class);
+        $uploads->expects($this->once())
+            ->method('reserveOwnedForumAttachment')
+            ->with(7, 3)
+            ->willReturn($upload);
+        $service = $this->makeService(
+            $uploads,
+            $this->createStub(MimeDetector::class),
+            $this->createStub(FileStorage::class),
+            $this->createStub(ImageProcessor::class),
+            $this->createStub(AccessService::class),
+        );
+
+        $this->assertSame($upload, $service->reserveForumAttachment(7, $user));
+    }
+
+    public function testOrphanCleanupDeletesTheClaimedFileAndRowAfterTheGracePeriod(): void
+    {
+        $uploads = $this->createMock(UploadRepository::class);
+        $storage = $this->createMock(FileStorage::class);
+        $upload = new Upload(
+            41,
+            7,
+            '7/old.pdf',
+            'application/pdf',
+            100,
+            'old.pdf',
+            1_699_900_000,
+            UploadRepository::PURPOSE_FORUM_ATTACHMENT_DELETING,
+        );
+
+        $uploads->expects($this->once())
+            ->method('findOrphanedForumAttachmentIds')
+            ->with(1_700_000_000 - 24 * 60 * 60, 100)
+            ->willReturn([41]);
+        $uploads->expects($this->once())
+            ->method('claimOrphanedForumAttachment')
+            ->with(41, 1_700_000_000 - 24 * 60 * 60)
+            ->willReturn($upload);
+        $storage->expects($this->once())->method('deleteStoredFile')->with('7/old.pdf')->willReturn(true);
+        $uploads->expects($this->once())->method('deleteClaimedForumAttachment')->with(41)->willReturn(true);
+        $uploads->expects($this->never())->method('releaseOrphanedForumAttachment');
+
+        $service = $this->makeService(
+            $uploads,
+            $this->createStub(MimeDetector::class),
+            $storage,
+            $this->createStub(ImageProcessor::class),
+            $this->createStub(AccessService::class),
+        );
+
+        $this->assertSame(1, $service->cleanupOrphanedForumAttachments(1_700_000_000));
+    }
+
+    public function testOrphanCleanupReleasesTheClaimWhenFileDeletionFails(): void
+    {
+        $uploads = $this->createMock(UploadRepository::class);
+        $storage = $this->createMock(FileStorage::class);
+        $upload = new Upload(
+            41,
+            7,
+            '7/locked.pdf',
+            'application/pdf',
+            100,
+            'locked.pdf',
+            1_699_900_000,
+            UploadRepository::PURPOSE_FORUM_ATTACHMENT_DELETING,
+        );
+
+        $uploads->method('findOrphanedForumAttachmentIds')->willReturn([41]);
+        $uploads->method('claimOrphanedForumAttachment')->willReturn($upload);
+        $storage->expects($this->once())->method('deleteStoredFile')->with('7/locked.pdf')->willReturn(false);
+        $uploads->expects($this->once())->method('releaseOrphanedForumAttachment')->with(41);
+        $uploads->expects($this->never())->method('deleteClaimedForumAttachment');
+
+        $service = $this->makeService(
+            $uploads,
+            $this->createStub(MimeDetector::class),
+            $storage,
+            $this->createStub(ImageProcessor::class),
+            $this->createStub(AccessService::class),
+        );
+
+        $log = tempnam(sys_get_temp_dir(), 'upload-cleanup-log-');
+        $oldLog = ini_get('error_log');
+        ini_set('error_log', $log);
+        try {
+            $this->assertSame(0, $service->cleanupOrphanedForumAttachments(1_700_000_000));
+            $this->assertStringContainsString('7/locked.pdf', (string) file_get_contents($log));
+        } finally {
+            ini_set('error_log', is_string($oldLog) ? $oldLog : '');
+            @unlink($log);
+        }
     }
 }

@@ -553,9 +553,14 @@ class APIController extends AbstractController
 
         $variant = $this->context->query->string('variant');
 
-        $upload = $variant === 'avatar'
-            ? $this->uploadService->uploadAvatarForUser($this->context->user, $_FILES['file'])
-            : $this->uploadService->uploadForUser($this->context->user, $_FILES['file']);
+        $upload = match ($variant) {
+            'avatar' => $this->uploadService->uploadAvatarForUser($this->context->user, $_FILES['file']),
+            'forum-attachment' => $this->uploadService->uploadForumAttachmentForUser(
+                $this->context->user,
+                $_FILES['file'],
+            ),
+            default => $this->uploadService->uploadForUser($this->context->user, $_FILES['file']),
+        };
 
         echo Formatter::json([
             'id' => $upload->id,

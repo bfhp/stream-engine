@@ -118,6 +118,39 @@ final class FileStorageTest extends TestCase
         }
     }
 
+    public function testDeleteStoredFileRemovesOnlyAFileInsideTheUploadsRoot(): void
+    {
+        self::assertTrue(mkdir($this->baseDir.'/7', 0700, true));
+        self::assertNotFalse(file_put_contents($this->baseDir.'/7/old.pdf', 'payload'));
+
+        $storage = new FileStorage($this->baseDir);
+
+        $this->assertTrue($storage->deleteStoredFile('7/old.pdf'));
+        $this->assertFileDoesNotExist($this->baseDir.'/7/old.pdf');
+        // Empty per-user directories are tidied as a best effort too.
+        $this->assertDirectoryDoesNotExist($this->baseDir.'/7');
+        // Idempotent when a previous run removed the file already.
+        $this->assertTrue($storage->deleteStoredFile('7/old.pdf'));
+    }
+
+    public function testDeleteStoredFileRejectsTraversalAndDirectories(): void
+    {
+        self::assertTrue(mkdir($this->baseDir.'/7', 0700, true));
+        $outside = dirname($this->baseDir).'/outside-'.bin2hex(random_bytes(4)).'.txt';
+        self::assertNotFalse(file_put_contents($outside, 'keep'));
+
+        try {
+            $storage = new FileStorage($this->baseDir);
+
+            $this->assertFalse($storage->deleteStoredFile('../'.basename($outside)));
+            $this->assertFalse($storage->deleteStoredFile('/etc/passwd'));
+            $this->assertFalse($storage->deleteStoredFile('7'));
+            $this->assertFileExists($outside);
+        } finally {
+            @unlink($outside);
+        }
+    }
+
     private function removeDirectory(string $path): void
     {
         if (!is_dir($path)) {
