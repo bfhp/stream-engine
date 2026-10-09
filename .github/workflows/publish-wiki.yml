@@ -1,0 +1,79 @@
+name: Publish Wiki
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - docs/wiki/**
+      - bin/check-wiki-docs.php
+      - .github/workflows/publish-wiki.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-wiki
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Validate and publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+
+      - name: Validate Wiki source
+        run: php bin/check-wiki-docs.php
+
+      - name: Publish Wiki pages
+        env:
+          BUILT_IN_TOKEN: ${{ github.token }}
+          OPTIONAL_WIKI_TOKEN: ${{ secrets.WIKI_TOKEN }}
+          SOURCE_REPOSITORY: ${{ github.repository }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          token="${OPTIONAL_WIKI_TOKEN:-$BUILT_IN_TOKEN}"
+          auth="$(printf 'x-access-token:%s' "$token" | base64 | tr -d '\n')"
+          wiki_directory="$(mktemp -d)"
+          trap 'rm -rf -- "$wiki_directory"' EXIT
+
+          git -c http.https://github.com/.extraheader="AUTHORIZATION: basic $auth" \
+            clone "https://github.com/${SOURCE_REPOSITORY}.wiki.git" "$wiki_directory"
+          git -C "$wiki_directory" config \
+            http.https://github.com/.extraheader "AUTHORIZATION: basic $auth"
+
+          wiki_branch="$(git -C "$wiki_directory" branch --show-current)"
+          if [ -z "$wiki_branch" ]; then
+            echo "The Wiki clone has no current branch." >&2
+            exit 1
+          fi
+
+          find "$wiki_directory" -mindepth 1 -maxdepth 1 \
+            ! -name .git -exec rm -rf -- {} +
+          cp -a docs/wiki/. "$wiki_directory/"
+
+          git -C "$wiki_directory" add --all
+          if git -C "$wiki_directory" diff --cached --quiet; then
+            echo "Wiki is already up to date."
+            exit 0
+          fi
+
+          git -C "$wiki_directory" config user.name github-actions[bot]
+          git -C "$wiki_directory" config user.email \
+            41898282+github-actions[bot]@users.noreply.github.com
+          git -C "$wiki_directory" commit \
+            -m "Publish documentation from ${SOURCE_SHA}"
+          git -C "$wiki_directory" push origin "HEAD:${wiki_branch}"
