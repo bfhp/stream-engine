@@ -8,7 +8,8 @@ TypeScript. Choose the guide that matches your work.
 The [Administrator Guide](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide) is for people responsible
 for a Stream Engine site. It starts with server requirements and installation
 and will cover configuration, content and routing, users and permissions,
-scheduled work, backups, upgrades, troubleshooting, and removal.
+appearance and files, scheduled work, backups, upgrades, troubleshooting, and
+removal.
 
 Start here if you need to deploy or operate a site:
 
@@ -17,7 +18,8 @@ Start here if you need to deploy or operate a site:
 3. [Complete the initial configuration](https://github.com/bfhp/stream-engine/wiki/Administrator-Configuration).
 4. [Publish content and configure routing](https://github.com/bfhp/stream-engine/wiki/Administrator-Content-and-Routing).
 5. [Manage users and permissions](https://github.com/bfhp/stream-engine/wiki/Administrator-Users-and-Permissions).
-6. Continue with the next operational chapter listed in the
+6. [Configure appearance, navigation, and files](https://github.com/bfhp/stream-engine/wiki/Administrator-Appearance-and-Files).
+7. Continue with the next operational chapter listed in the
    [Administrator Guide](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide).
 
 ## Developer Guide

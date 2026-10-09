@@ -281,4 +281,4 @@ Do not implement either operation with direct database edits.
 - [ ] Username or email changes were communicated to the account owner.
 - [ ] The operator, reason, and time of the change were recorded externally.
 
-[Back: Content, pages, and routing](https://github.com/bfhp/stream-engine/wiki/Administrator-Content-and-Routing) · [Administrator Guide](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide)
+[Back: Content, pages, and routing](https://github.com/bfhp/stream-engine/wiki/Administrator-Content-and-Routing) · [Administrator Guide](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide) · [Next: Appearance, navigation, and files](https://github.com/bfhp/stream-engine/wiki/Administrator-Appearance-and-Files)

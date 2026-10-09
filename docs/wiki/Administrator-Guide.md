@@ -33,6 +33,9 @@ so explicitly.
 5. [Users and permissions](https://github.com/bfhp/stream-engine/wiki/Administrator-Users-and-Permissions) — operate
    accounts, assign global roles, suspend access, protect administrator
    continuity, and distinguish page, content, ownership, and community rules.
+6. [Appearance, navigation, and files](https://github.com/bfhp/stream-engine/wiki/Administrator-Appearance-and-Files) — select
+   and preview themes, manage branding, menus and widgets, and operate the
+   local uploads File Browser safely.
 
 ## Planned lifecycle chapters
 
@@ -40,7 +43,6 @@ The following chapters will be added incrementally. A chapter is included in
 the published navigation only after its instructions have been checked against
 the current application.
 
-6. Appearance, navigation, and files
 7. Scheduler and background tasks
 8. Routine operations
 9. Backups and restore
