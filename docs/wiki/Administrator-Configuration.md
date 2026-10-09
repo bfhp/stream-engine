@@ -96,11 +96,106 @@ files, preserve their relative paths, and verify them before removing the old
 directory.
 
 Stream Engine currently stores runtime uploads locally through `FileStorage`.
-The repository contains an S3-compatible client and reference environment
-keys, but the runtime upload service does not currently select that client as a
-storage backend. Do not move uploads to S3 or MinIO merely by setting
-`OBJECT_STORAGE_*`; doing so does not replace local storage in the current
-release. Keep local uploads in the backup set.
+The object-storage boundary and the currently inactive S3-compatible client
+are described below. Keep local uploads in the backup set.
+
+## Current object-storage integration
+
+Object storage is not a selectable runtime backend in the current release.
+The repository contains a low-level `S3ObjectStorage` client and a development
+MinIO service, but Stream Engine does not instantiate that client during normal
+application startup. No administration setting selects it.
+
+The active data flow remains entirely local:
+
+| Operation | Current storage behavior |
+| --- | --- |
+| User, profile, forum, message, and administrator uploads | `UploadService` writes through `FileStorage` below `UPLOADS_DIR`. |
+| Header logo and site icon | Written into local subdirectories of `UPLOADS_DIR`. |
+| File Browser | Reads and changes the configured local uploads directory. It cannot browse an object bucket. |
+| Public file URLs | Stored or generated as `/uploads/...` paths and served by the web-server alias. |
+| S3-compatible client | Available to code, but not connected to any standard upload, branding, rendering, or deletion workflow. |
+
+Consequently, setting `OBJECT_STORAGE_*` does not upload, copy, migrate, mirror,
+or serve existing files from a bucket. It does not change `/uploads/...` URLs,
+the File Browser, per-user storage accounting, local disk requirements, or the
+required uploads backup. Leaving these variables unset in production is the
+least surprising configuration.
+
+### Reference environment values
+
+The inactive client reads the following group from `.env` when code explicitly
+constructs and calls it:
+
+| Variable | Client interpretation |
+| --- | --- |
+| `OBJECT_STORAGE_ENDPOINT` | S3-compatible service URL, without the bucket name. Trailing slashes are removed. |
+| `OBJECT_STORAGE_BUCKET` | Existing bucket name appended to the endpoint as a path. |
+| `OBJECT_STORAGE_REGION` | AWS Signature Version 4 signing region; defaults to `us-east-1`. |
+| `OBJECT_STORAGE_ACCESS_KEY` | Static access-key identifier used to sign requests. |
+| `OBJECT_STORAGE_SECRET_KEY` | Static secret used to sign requests. Treat it as a deployment secret. |
+| `OBJECT_STORAGE_PUBLIC_BASE_URL` | Optional public or CDN base used only when constructing an object URL. If omitted, the client uses `endpoint/bucket`. |
+
+Configure the group together only when developing or operating code that
+explicitly uses this client. A configured public base URL does not make a
+bucket public, create a CDN distribution, validate that an object exists, or
+generate a time-limited signed URL.
+
+### What the reference client can do
+
+An explicit caller can currently:
+
+- upload an in-memory string with a content type and optional custom metadata;
+- upload a local file after reading the complete file into PHP memory;
+- test one key with an authenticated `HEAD` request;
+- delete one key, treating an already missing key as successfully absent; and
+- construct a URL for one key.
+
+Requests use AWS Signature Version 4 and path-style URLs in the form
+`endpoint/bucket/key`. Object keys are relative slash-separated paths and each
+segment is URL-encoded. The client has a 10-second connection timeout and a
+60-second total request timeout and does not follow redirects.
+
+This is not a complete storage backend. The client does not create buckets or
+policies, download or list objects, perform multipart uploads, stream large
+files, generate private presigned URLs, discover credentials from an instance
+role, refresh temporary credentials, manage versions or lifecycle rules, or
+retry failed requests. The repository currently tests request-independent
+client behavior but does not run a live S3/MinIO integration suite. Treat
+provider compatibility as unverified until it has been exercised against the
+exact service and network path.
+
+### MinIO in the included Compose environment
+
+The development Compose stack starts MinIO, exposes its API on port `9000` and
+console on port `9001`, passes reference credentials and endpoint values to the
+PHP and scheduler containers, and persists MinIO data in the `minio_data`
+volume. This supports object-storage development; it does not activate object
+storage for the site.
+
+The stack does not automatically create the configured `stream-engine` bucket,
+apply an access policy, or copy local uploads into MinIO. With the unmodified
+application, MinIO can remain empty while uploads work normally from the local
+bind mount. The published ports and example root credentials are unsuitable
+for an untrusted network. `docker compose down --volumes` deletes the MinIO
+volume along with the other Compose volumes.
+
+### Operational boundary
+
+Do not replace the local uploads directory, its Nginx alias, capacity alerts,
+or its backup with object-storage procedures. A site-specific module that
+calls `S3ObjectStorage` directly creates state outside the standard Stream
+Engine storage lifecycle. Its operator must separately document bucket
+creation, least-privilege permissions, public/private delivery, CORS when
+needed, encryption, versioning, lifecycle, monitoring, backup, restore,
+orphan cleanup, and behavior when object storage is unavailable. Standard File
+Browser operations and database cleanup will not automatically manage those
+custom objects.
+
+Consider object storage a supported upload backend only when a future release
+explicitly documents backend selection, migration of existing files, URL and
+access behavior, administration integration, failure handling, backup and
+restore, and rollback to local storage.
 
 ## SMTP configuration
 

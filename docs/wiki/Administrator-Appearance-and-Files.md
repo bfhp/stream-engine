@@ -199,6 +199,10 @@ Open **Administration → File Browser** to manage the configured local uploads
 directory. It is not a general server file manager: paths are confined to the
 uploads root, and symbolic links are neither listed nor followed.
 
+The File Browser does not display or manage MinIO or S3-compatible objects.
+Setting `OBJECT_STORAGE_*` does not change its root or copy its files; see the
+[current object-storage integration](https://github.com/bfhp/stream-engine/wiki/Administrator-Configuration#current-object-storage-integration).
+
 The interface supports:
 
 - opening folders and public files;

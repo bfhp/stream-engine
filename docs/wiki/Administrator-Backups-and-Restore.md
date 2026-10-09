@@ -73,8 +73,10 @@ The current runtime upload backend is local filesystem storage.
 `OBJECT_STORAGE_*` variables and the included development MinIO service do not
 move application uploads into object storage. Do not replace the local upload
 backup with a MinIO or S3 bucket copy unless a future release explicitly adds
-and enables that backend. When such an integration exists, its bucket data,
-versions, metadata, and consistency point must join the same recovery set.
+and enables that backend. The exact present boundary is documented under
+[Current object-storage integration](https://github.com/bfhp/stream-engine/wiki/Administrator-Configuration#current-object-storage-integration).
+When such an integration exists, its bucket data, versions, metadata, and
+consistency point must join the same recovery set.
 
 ## Consistency and write control
 

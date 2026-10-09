@@ -109,7 +109,9 @@ server {
 
 If `UPLOADS_DIR` points elsewhere, update the `/uploads/` alias. Runtime uploads
 in the current release use local filesystem storage; setting the available
-`OBJECT_STORAGE_*` reference variables does not switch this backend.
+`OBJECT_STORAGE_*` reference variables does not switch this backend. See
+[Current object-storage integration](https://github.com/bfhp/stream-engine/wiki/Administrator-Configuration#current-object-storage-integration)
+for the exact boundary.
 
 Test and reload Nginx using the commands provided by your distribution. For
 example:
@@ -317,9 +319,10 @@ Open `http://localhost:5000`. Use these installer values:
 | Database password | `password` |
 
 The Compose environment also starts Memcached, MinIO, and the scheduler. MinIO
-is present for object-storage development, but current runtime uploads remain
-local. The environment's credentials, published ports, bind mounts, and
-development mode are unsuitable for an untrusted network.
+is present for object-storage development, but the stack does not create its
+configured bucket and current runtime uploads remain local. The environment's
+credentials, published ports, bind mounts, and development mode are unsuitable
+for an untrusted network.
 
 Stop it without removing data:
 
