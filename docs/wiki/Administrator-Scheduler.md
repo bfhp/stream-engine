@@ -337,4 +337,4 @@ window assumes registered tasks finish sooner.
 - [ ] Scheduler health is rechecked after deployments and infrastructure
       changes.
 
-[Back: Appearance, navigation, and files](https://github.com/bfhp/stream-engine/wiki/Administrator-Appearance-and-Files) · [Administrator Guide](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide)
+[Back: Appearance, navigation, and files](https://github.com/bfhp/stream-engine/wiki/Administrator-Appearance-and-Files) · [Administrator Guide](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide) · [Next: Routine operations](https://github.com/bfhp/stream-engine/wiki/Administrator-Routine-Operations)

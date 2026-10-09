@@ -39,6 +39,9 @@ so explicitly.
 7. [Scheduler and background tasks](https://github.com/bfhp/stream-engine/wiki/Administrator-Scheduler) — configure a
    once-per-minute runner, control registered tasks, inspect execution history,
    and diagnose delayed or failed work.
+8. [Routine operations](https://github.com/bfhp/stream-engine/wiki/Administrator-Routine-Operations) — monitor the
+   application and its dependencies, review logs, queues, capacity, accounts,
+   migrations, and updates, and follow daily, weekly, and monthly checklists.
 
 ## Planned lifecycle chapters
 
@@ -46,7 +49,6 @@ The following chapters will be added incrementally. A chapter is included in
 the published navigation only after its instructions have been checked against
 the current application.
 
-8. Routine operations
 9. Backups and restore
 10. Upgrades and rollback
 11. Troubleshooting

@@ -20,7 +20,8 @@ Start here if you need to deploy or operate a site:
 5. [Manage users and permissions](https://github.com/bfhp/stream-engine/wiki/Administrator-Users-and-Permissions).
 6. [Configure appearance, navigation, and files](https://github.com/bfhp/stream-engine/wiki/Administrator-Appearance-and-Files).
 7. [Configure and verify scheduled tasks](https://github.com/bfhp/stream-engine/wiki/Administrator-Scheduler).
-8. Continue with the next operational chapter listed in the
+8. [Establish routine operational checks](https://github.com/bfhp/stream-engine/wiki/Administrator-Routine-Operations).
+9. Continue with the next operational chapter listed in the
    [Administrator Guide](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide).
 
 ## Developer Guide
