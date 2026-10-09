@@ -220,6 +220,7 @@ modules to evolve independently.
 
 Key documentation:
 
+- [Administrator Guide](docs/wiki/Administrator-Guide.md)
 - [Installation architecture](docs/INSTALLATION.md)
 - [Cron deployment runbook](docs/CRON.md)
 - [Building and loading modules](docs/MODULES.md)

@@ -1,0 +1,36 @@
+# Stream Engine documentation
+
+Stream Engine is a modular content management system built with PHP and
+TypeScript. Choose the guide that matches your work.
+
+## Administrator Guide
+
+The [Administrator Guide](Administrator-Guide.md) is for people responsible
+for a Stream Engine site. It starts with server requirements and installation
+and will cover configuration, content and routing, users and permissions,
+scheduled work, backups, upgrades, troubleshooting, and removal.
+
+Start here if you need to deploy or operate a site:
+
+1. [Check the requirements](Administrator-Requirements.md).
+2. [Install Stream Engine](Administrator-Installation.md).
+3. Continue with the next operational chapter listed in the
+   [Administrator Guide](Administrator-Guide.md).
+
+## Developer Guide
+
+The Developer Guide will explain the architecture, extension contracts,
+development workflow, testing, releases, and contribution process. It will be
+added after the Administrator Guide reaches an operationally complete state.
+
+> [!IMPORTANT]
+> Stream Engine is under active development and is not yet recommended for
+> production use. Interfaces, migrations, and installation workflows may
+> change before the first stable release.
+
+## Documentation source
+
+The canonical documentation is maintained in `docs/wiki/` in the
+[Stream Engine repository](https://github.com/bfhp/stream-engine). The GitHub
+Wiki is a published copy. Documentation changes should be submitted through
+the same pull-request workflow as code changes.

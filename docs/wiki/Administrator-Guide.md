@@ -1,0 +1,74 @@
+# Stream Engine Administrator Guide
+
+This guide is for the person responsible for the complete lifecycle of a
+Stream Engine site: preparing the host, installing the application, configuring
+the site, keeping it healthy, recovering it, updating it, and removing it when
+it is no longer required.
+
+You do not need to understand the PHP implementation. You should be
+comfortable using your hosting control panel or a command-line session,
+managing a database, protecting credentials, and checking service logs. When a
+task requires elevated operating-system or database privileges, the guide says
+so explicitly.
+
+> [!IMPORTANT]
+> Stream Engine is under active development and is not yet recommended for
+> production use. Test installation, backup, restore, and upgrade procedures
+> in a non-production environment before relying on them for a public site.
+
+## Current chapters
+
+1. [Requirements](Administrator-Requirements.md) — choose a deployment model
+   and prepare PHP, MariaDB, Memcached, the web server, storage, and the task
+   scheduler.
+2. [Installation](Administrator-Installation.md) — install a release with
+   Composer, configure Nginx and PHP-FPM, run the protected web installer or
+   CLI installer, and verify the result.
+
+## Planned lifecycle chapters
+
+The following chapters will be added incrementally. A chapter is included in
+the published navigation only after its instructions have been checked against
+the current application.
+
+3. Initial configuration
+4. Content, pages, and routing
+5. Users and permissions
+6. Appearance, navigation, and files
+7. Scheduler and background tasks
+8. Routine operations
+9. Backups and restore
+10. Upgrades and rollback
+11. Troubleshooting
+12. Uninstallation
+
+## Administrative boundaries
+
+Stream Engine manages site content and application settings. The site operator
+remains responsible for the surrounding platform, including:
+
+- operating-system and container security updates;
+- TLS certificates, DNS, firewall rules, and reverse proxies;
+- MariaDB, Memcached, SMTP, and object-storage availability;
+- scheduled execution of the Stream Engine task runner;
+- monitoring, capacity, and log retention; and
+- backup scheduling, off-host storage, and restore testing.
+
+The engine will not implement its own backup scheduler. The backup chapter will
+provide operating-system and container examples for protecting all required
+state.
+
+## Conventions used by this guide
+
+- `/srv/stream-engine` is the example production application directory.
+  Replace it with the absolute path used by your deployment.
+- `www-data` is the example PHP-FPM service account. Replace it when your
+  distribution or hosting platform uses another account.
+- `example.com` and example credentials are placeholders. Never use them as
+  production secrets.
+- Commands are shown for a POSIX shell unless a section names another
+  environment.
+- A warning marked **destructive** identifies a command or operation that can
+  permanently remove data.
+
+[Documentation home](Home.md) · [Next: Requirements](Administrator-Requirements.md)
