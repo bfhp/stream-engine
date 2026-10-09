@@ -25,6 +25,10 @@ reviewable Markdown, relative links, GitHub-rendered tables and Mermaid only
 where a diagram materially helps; do not require a separate documentation
 generator, hosted site, or build step.
 
+The agreed information architecture, GitHub Wiki publishing model, migration
+sequence, and completion criteria are defined in
+[the documentation implementation plan](DOCUMENTATION_PLAN.md).
+
 - Add clearly linked entry points under `docs/` and from the root `README.md`,
   with a compact table of contents and stable relative links between topics.
 - The administrator guide must cover installation and upgrades, global
