@@ -14,7 +14,8 @@ Start here if you need to deploy or operate a site:
 
 1. [Check the requirements](https://github.com/bfhp/stream-engine/wiki/Administrator-Requirements).
 2. [Install Stream Engine](https://github.com/bfhp/stream-engine/wiki/Administrator-Installation).
-3. Continue with the next operational chapter listed in the
+3. [Complete the initial configuration](https://github.com/bfhp/stream-engine/wiki/Administrator-Configuration).
+4. Continue with the next operational chapter listed in the
    [Administrator Guide](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide).
 
 ## Developer Guide

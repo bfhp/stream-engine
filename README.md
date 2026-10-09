@@ -41,7 +41,7 @@ open-source libraries and infrastructure.
 - Modular backend controllers, module-owned templates, and discoverable module
   assets and admin pages
 - Database migrations and shared CLI/web installation infrastructure
-- Local uploads and S3-compatible object storage
+- Local upload storage and an administration file browser
 - Twig themes with an explicit override and ownership model, and a visual theme
   gallery with validated per-theme settings
 - Localization infrastructure with English, Russian, German, French, Spanish,
@@ -142,8 +142,9 @@ The installer-managed core settings are:
 
 `MEMCACHED_HOST` and `MEMCACHED_PORT` select the cache service and default to
 `127.0.0.1:11211`; use `CACHE_PREFIX` to isolate multiple installations that
-share it. The example also lists optional filesystem, SMTP, theme, and
-S3-compatible storage settings together with their expected grouping.
+share it. The example also lists optional filesystem, SMTP, and theme settings.
+It keeps the S3-compatible storage settings grouped as a reference, but current
+runtime uploads still use local filesystem storage.
 
 Do not commit `.env`. For a manually managed deployment, replace every
 placeholder and generate `APP_SECRET`, for example with:

@@ -107,9 +107,9 @@ server {
 }
 ```
 
-If `UPLOADS_DIR` points elsewhere, update the `/uploads/` alias. If uploads use
-S3-compatible storage, configure the object-storage variables after the core
-installation and apply the access policy required by that provider.
+If `UPLOADS_DIR` points elsewhere, update the `/uploads/` alias. Runtime uploads
+in the current release use local filesystem storage; setting the available
+`OBJECT_STORAGE_*` reference variables does not switch this backend.
 
 Test and reload Nginx using the commands provided by your distribution. For
 example:
@@ -316,9 +316,10 @@ Open `http://localhost:5000`. Use these installer values:
 | Database username | `user` |
 | Database password | `password` |
 
-The Compose environment also starts Memcached, MinIO, and the scheduler. Its
-credentials, published ports, bind mounts, and development mode are unsuitable
-for an untrusted network.
+The Compose environment also starts Memcached, MinIO, and the scheduler. MinIO
+is present for object-storage development, but current runtime uploads remain
+local. The environment's credentials, published ports, bind mounts, and
+development mode are unsuitable for an untrusted network.
 
 Stop it without removing data:
 
@@ -350,4 +351,4 @@ Do not include `.env`, passwords, installation tokens, session cookies, or raw
 secret-bearing logs in a public issue. Report the Stream Engine release, PHP
 and MariaDB versions, deployment model, failed check, and a redacted error.
 
-[Back: Requirements](https://github.com/bfhp/stream-engine/wiki/Administrator-Requirements) · [Guide overview](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide)
+[Back: Requirements](https://github.com/bfhp/stream-engine/wiki/Administrator-Requirements) · [Next: Initial configuration](https://github.com/bfhp/stream-engine/wiki/Administrator-Configuration)

@@ -16,7 +16,7 @@ development-oriented Docker Compose environment included in the repository.
 | Cache | A reachable Memcached service. Use a unique cache prefix when several sites share one service. |
 | Web server | Nginx is the documented production example. The public document root must be the application's `public/` directory, never the application root. Equivalent servers must provide front-controller routing to `public/index.php`. |
 | Scheduler | A mechanism that runs `php bin/cron.php` once per minute in production, such as cron, a systemd timer, or a container scheduler. |
-| Storage | Persistent storage for `.env`, `storage/`, and local uploads. External S3-compatible storage is optional. |
+| Storage | Persistent storage for `.env`, `storage/`, and local uploads. The current runtime upload service uses the local filesystem. |
 | TLS | HTTPS for every public production site. TLS normally terminates at Nginx, a load balancer, or a trusted reverse proxy. |
 
 The installer performs its own PHP, extension, release-file, filesystem, and
@@ -123,7 +123,6 @@ release:
 | Database | MariaDB | Required. Contains configuration, users, content, routing, and task state. |
 | Installation and migration state | `storage/installation.json` and `storage/migrations.json` | Required with the deployed site. |
 | Local uploads | `storage/uploads/` | Required when local storage is used. |
-| External uploads | Configured S3-compatible bucket | Required when object storage is used; protect it through provider-side backup or replication. |
 | Runtime locks and error logs | `storage/` | Must be writable; retention requirements depend on the file. |
 
 Application code, Composer dependencies, and compiled frontend assets should
@@ -137,8 +136,7 @@ Allow only the connections required by the deployment:
 - public HTTPS traffic to the web server or load balancer;
 - application-to-MariaDB and application-to-Memcached traffic on private or
   otherwise protected networks;
-- application-to-SMTP traffic if email delivery is configured; and
-- application-to-object-storage traffic if S3-compatible storage is used.
+- application-to-SMTP traffic if email delivery is configured.
 
 Do not expose MariaDB, Memcached, MinIO administration, PHP-FPM, or internal
 service ports to the public internet.

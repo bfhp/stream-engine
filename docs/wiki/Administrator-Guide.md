@@ -24,6 +24,9 @@ so explicitly.
 2. [Installation](https://github.com/bfhp/stream-engine/wiki/Administrator-Installation) — install a release with
    Composer, configure Nginx and PHP-FPM, run the protected web installer or
    CLI installer, and verify the result.
+3. [Initial configuration](https://github.com/bfhp/stream-engine/wiki/Administrator-Configuration) — configure the
+   deployment environment, email, cache, uploads, site identity, branding,
+   registration, and CAPTCHA.
 
 ## Planned lifecycle chapters
 
@@ -31,7 +34,6 @@ The following chapters will be added incrementally. A chapter is included in
 the published navigation only after its instructions have been checked against
 the current application.
 
-3. Initial configuration
 4. Content, pages, and routing
 5. Users and permissions
 6. Appearance, navigation, and files
@@ -49,7 +51,7 @@ remains responsible for the surrounding platform, including:
 
 - operating-system and container security updates;
 - TLS certificates, DNS, firewall rules, and reverse proxies;
-- MariaDB, Memcached, SMTP, and object-storage availability;
+- MariaDB, Memcached, SMTP, and local upload-storage availability;
 - scheduled execution of the Stream Engine task runner;
 - monitoring, capacity, and log retention; and
 - backup scheduling, off-host storage, and restore testing.
