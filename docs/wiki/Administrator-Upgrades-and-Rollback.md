@@ -347,4 +347,4 @@ Record:
 - [ ] Monitoring remains active through the rollback window.
 - [ ] Old release and recovery material remain available until change closure.
 
-[Back: Backups and restore](https://github.com/bfhp/stream-engine/wiki/Administrator-Backups-and-Restore) · [Administrator Guide](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide)
+[Back: Backups and restore](https://github.com/bfhp/stream-engine/wiki/Administrator-Backups-and-Restore) · [Administrator Guide](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide) · [Next: Troubleshooting](https://github.com/bfhp/stream-engine/wiki/Administrator-Troubleshooting)

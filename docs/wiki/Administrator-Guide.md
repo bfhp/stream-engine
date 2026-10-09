@@ -49,6 +49,9 @@ so explicitly.
     rehearse a release, coordinate backups, writers, migrations, caches, and
     smoke tests, and restore matching code, database, and files when rollback
     is required.
+11. [Troubleshooting](https://github.com/bfhp/stream-engine/wiki/Administrator-Troubleshooting) — diagnose symptoms by
+    separating proxy, PHP, database, cache, filesystem, scheduler, mail,
+    upload, theme, and deployment failures while preserving safe evidence.
 
 ## Planned lifecycle chapters
 
@@ -56,7 +59,6 @@ The following chapters will be added incrementally. A chapter is included in
 the published navigation only after its instructions have been checked against
 the current application.
 
-11. Troubleshooting
 12. Uninstallation
 
 ## Administrative boundaries

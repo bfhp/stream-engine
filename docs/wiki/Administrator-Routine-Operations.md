@@ -272,6 +272,11 @@ When a routine check finds a problem:
    as applicable; and
 8. document the cause, repair, and prevention work.
 
+Use the symptom-first
+[Troubleshooting guide](https://github.com/bfhp/stream-engine/wiki/Administrator-Troubleshooting)
+to separate proxy, application, dependency, filesystem, and deployment
+failures while preserving evidence.
+
 Stream Engine has no built-in maintenance mode. Use the reverse proxy,
 load balancer, or hosting platform when requests must be paused. Closing public
 registration affects only new account creation and is not a site-wide
