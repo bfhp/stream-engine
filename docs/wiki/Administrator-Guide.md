@@ -27,6 +27,12 @@ so explicitly.
 3. [Initial configuration](https://github.com/bfhp/stream-engine/wiki/Administrator-Configuration) — configure the
    deployment environment, email, cache, uploads, site identity, branding,
    registration, and CAPTCHA.
+4. [Content, pages, and routing](https://github.com/bfhp/stream-engine/wiki/Administrator-Content-and-Routing) — create
+   content, expose it through safe routes and page actions, control access,
+   add navigation, and verify sitemap behavior.
+5. [Users and permissions](https://github.com/bfhp/stream-engine/wiki/Administrator-Users-and-Permissions) — operate
+   accounts, assign global roles, suspend access, protect administrator
+   continuity, and distinguish page, content, ownership, and community rules.
 
 ## Planned lifecycle chapters
 
@@ -34,8 +40,6 @@ The following chapters will be added incrementally. A chapter is included in
 the published navigation only after its instructions have been checked against
 the current application.
 
-4. Content, pages, and routing
-5. Users and permissions
 6. Appearance, navigation, and files
 7. Scheduler and background tasks
 8. Routine operations
