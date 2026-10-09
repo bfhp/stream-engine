@@ -150,7 +150,7 @@ service ports to the public internet.
 This is the documented production path. It gives the operator control over
 PHP-FPM, Nginx, filesystem permissions, MariaDB, Memcached, TLS, scheduling,
 and backup integration. Continue to
-[Installation](Administrator-Installation.md).
+[Installation](https://github.com/bfhp/stream-engine/wiki/Administrator-Installation).
 
 ### Included Docker Compose environment
 
@@ -193,4 +193,4 @@ managed application host, or container platform instead.
 - [ ] A once-per-minute scheduler can be configured.
 - [ ] Database, `.env`, and upload backup destinations have been planned.
 
-[Back: Guide overview](Administrator-Guide.md) · [Next: Installation](Administrator-Installation.md)
+[Back: Guide overview](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide) · [Next: Installation](https://github.com/bfhp/stream-engine/wiki/Administrator-Installation)

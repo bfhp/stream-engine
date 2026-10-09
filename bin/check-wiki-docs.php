@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 $projectRoot = dirname(__DIR__);
 $wikiDirectory = $projectRoot.'/docs/wiki';
+$wikiBaseUrl = 'https://github.com/bfhp/stream-engine/wiki/';
 $requiredPages = [
     'Home.md',
     '_Sidebar.md',
@@ -61,25 +62,39 @@ foreach ($pages as $name => $contents) {
     preg_match_all('/(?<!!)\[[^\]]+\]\(([^)]+)\)/', $contents, $matches);
     foreach ($matches[1] as $destination) {
         $destination = trim($destination);
-        if ($destination === ''
-            || str_starts_with($destination, '#')
-            || preg_match('/\A(?:https?:|mailto:)/i', $destination) === 1) {
+        if ($destination === '' || str_starts_with($destination, '#')) {
             continue;
         }
 
-        $target = rawurldecode(explode('#', $destination, 2)[0]);
-        if (str_contains($target, '/') || ! str_ends_with($target, '.md')) {
+        if (str_starts_with($destination, $wikiBaseUrl)) {
+            $wikiTarget = rawurldecode(substr($destination, strlen($wikiBaseUrl)));
+            $page = explode('#', $wikiTarget, 2)[0];
+            if (preg_match('/\A(?:Home|_Sidebar|[A-Z][A-Za-z0-9-]*)\z/', $page) !== 1) {
+                fail(sprintf('Wiki page "%s" has invalid Wiki link "%s".', $name, $destination));
+            }
+
+            $target = $page.'.md';
+            if (! isset($pages[$target])) {
+                fail(sprintf('Wiki page "%s" links to missing page "%s".', $name, $page));
+            }
+            $links[$name][] = $target;
+
+            continue;
+        }
+
+        if (preg_match('/\A(?:https?:|mailto:)/i', $destination) === 1) {
+            continue;
+        }
+
+        if (preg_match('/\.md(?:#|\z)/', $destination) === 1) {
             fail(sprintf(
-                'Wiki page "%s" has non-portable internal link "%s"; link to a flat .md page name.',
+                'Wiki page "%s" has source-style link "%s"; use the canonical GitHub Wiki URL.',
                 $name,
                 $destination,
             ));
         }
-        if (! isset($pages[$target])) {
-            fail(sprintf('Wiki page "%s" links to missing page "%s".', $name, $target));
-        }
 
-        $links[$name][] = $target;
+        fail(sprintf('Wiki page "%s" has unsupported relative link "%s".', $name, $destination));
     }
 }
 

@@ -2,7 +2,7 @@
 
 This chapter installs a tagged Stream Engine release on a traditional
 PHP-FPM/Nginx host. It also documents the included Docker Compose environment
-for local evaluation. Complete the [requirements](Administrator-Requirements.md)
+for local evaluation. Complete the [requirements](https://github.com/bfhp/stream-engine/wiki/Administrator-Requirements)
 before starting.
 
 > [!WARNING]
@@ -350,4 +350,4 @@ Do not include `.env`, passwords, installation tokens, session cookies, or raw
 secret-bearing logs in a public issue. Report the Stream Engine release, PHP
 and MariaDB versions, deployment model, failed check, and a redacted error.
 
-[Back: Requirements](Administrator-Requirements.md) · [Guide overview](Administrator-Guide.md)
+[Back: Requirements](https://github.com/bfhp/stream-engine/wiki/Administrator-Requirements) · [Guide overview](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide)

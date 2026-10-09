@@ -1,12 +1,12 @@
 ## Stream Engine
 
-- [Documentation home](Home.md)
+- [Documentation home](https://github.com/bfhp/stream-engine/wiki/Home)
 
 ### Administrator Guide
 
-- [Guide overview](Administrator-Guide.md)
-- [Requirements](Administrator-Requirements.md)
-- [Installation](Administrator-Installation.md)
+- [Guide overview](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide)
+- [Requirements](https://github.com/bfhp/stream-engine/wiki/Administrator-Requirements)
+- [Installation](https://github.com/bfhp/stream-engine/wiki/Administrator-Installation)
 
 ### Developer Guide
 

@@ -42,6 +42,12 @@ The workflow uses a concurrency group, so two merges cannot publish over one
 another. It removes published pages that are no longer present in `docs/wiki/`
 and records the source commit SHA in every Wiki publication commit.
 
+Source pages use canonical links such as
+`https://github.com/bfhp/stream-engine/wiki/Administrator-Guide`. Do not link to
+`Administrator-Guide.md`: GitHub Wiki interprets that target as a raw Markdown
+file. The source files are already in publication format and are copied without
+transformation.
+
 ## Authentication
 
 The workflow first tries the built-in `GITHUB_TOKEN` with `contents: write`.

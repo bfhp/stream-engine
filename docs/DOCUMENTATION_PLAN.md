@@ -46,8 +46,10 @@ its ownership and rotation procedure will be documented.
 
 Wiki source filenames will be flat, stable, ASCII names because filenames
 become Wiki page names. `Home.md` and `_Sidebar.md` will provide the main entry
-points and navigation. Internal links must work both in the repository and in
-the published Wiki.
+points and navigation. Source pages use canonical GitHub Wiki URLs without the
+`.md` suffix and are copied to the Wiki without transformation. Repository
+review remains useful for content and diffs, but published Wiki navigation is
+the priority.
 
 ## Information architecture
 

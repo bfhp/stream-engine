@@ -18,10 +18,10 @@ so explicitly.
 
 ## Current chapters
 
-1. [Requirements](Administrator-Requirements.md) — choose a deployment model
+1. [Requirements](https://github.com/bfhp/stream-engine/wiki/Administrator-Requirements) — choose a deployment model
    and prepare PHP, MariaDB, Memcached, the web server, storage, and the task
    scheduler.
-2. [Installation](Administrator-Installation.md) — install a release with
+2. [Installation](https://github.com/bfhp/stream-engine/wiki/Administrator-Installation) — install a release with
    Composer, configure Nginx and PHP-FPM, run the protected web installer or
    CLI installer, and verify the result.
 
@@ -71,4 +71,4 @@ state.
 - A warning marked **destructive** identifies a command or operation that can
   permanently remove data.
 
-[Documentation home](Home.md) · [Next: Requirements](Administrator-Requirements.md)
+[Documentation home](https://github.com/bfhp/stream-engine/wiki/Home) · [Next: Requirements](https://github.com/bfhp/stream-engine/wiki/Administrator-Requirements)
