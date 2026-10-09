@@ -285,10 +285,10 @@ Perform every check before directing public traffic to the site:
 
 Production installations select OS scheduler mode by default. The site is not
 operationally complete until `bin/cron.php` runs once per minute and its result
-has been verified. The Scheduler chapter will consolidate those instructions;
-until then, use the repository's existing
-[`docs/CRON.md`](https://github.com/bfhp/stream-engine/blob/main/docs/CRON.md)
-runbook.
+has been verified. Follow
+[Scheduler and background tasks](https://github.com/bfhp/stream-engine/wiki/Administrator-Scheduler)
+to configure cron, a systemd timer, or a container scheduler and verify task
+history.
 
 ## Local evaluation with Docker Compose
 

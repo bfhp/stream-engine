@@ -272,4 +272,4 @@ interface.
 - [ ] Free storage and the 50 MB per-file limit were considered.
 - [ ] Public pages and server logs were checked after the change.
 
-[Back: Users and permissions](https://github.com/bfhp/stream-engine/wiki/Administrator-Users-and-Permissions) · [Administrator Guide](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide)
+[Back: Users and permissions](https://github.com/bfhp/stream-engine/wiki/Administrator-Users-and-Permissions) · [Administrator Guide](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide) · [Next: Scheduler and background tasks](https://github.com/bfhp/stream-engine/wiki/Administrator-Scheduler)

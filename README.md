@@ -155,7 +155,7 @@ php -r 'echo bin2hex(random_bytes(32)), PHP_EOL;'
 
 Production installations should select the OS scheduler mode on the admin
 Scheduler page and invoke `bin/cron.php` once per minute as described in
-[Cron deployment](docs/CRON.md).
+[Scheduler and background tasks](https://github.com/bfhp/stream-engine/wiki/Administrator-Scheduler).
 
 For CLI installation, unattended deployment, installation security, and schema
 snapshot details, see [docs/INSTALLATION.md](docs/INSTALLATION.md).
@@ -223,7 +223,7 @@ Key documentation:
 
 - [Administrator Guide](docs/wiki/Administrator-Guide.md)
 - [Installation architecture](docs/INSTALLATION.md)
-- [Cron deployment runbook](docs/CRON.md)
+- [Scheduler and background tasks](https://github.com/bfhp/stream-engine/wiki/Administrator-Scheduler)
 - [Building and loading modules](docs/MODULES.md)
 - [URL ownership and runtime pages](docs/ROUTING.md)
 - [Module dependency contract](docs/MODULE_CONTRACT.md)

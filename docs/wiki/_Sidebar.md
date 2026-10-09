@@ -11,6 +11,7 @@
 - [Content, pages, and routing](https://github.com/bfhp/stream-engine/wiki/Administrator-Content-and-Routing)
 - [Users and permissions](https://github.com/bfhp/stream-engine/wiki/Administrator-Users-and-Permissions)
 - [Appearance, navigation, and files](https://github.com/bfhp/stream-engine/wiki/Administrator-Appearance-and-Files)
+- [Scheduler and background tasks](https://github.com/bfhp/stream-engine/wiki/Administrator-Scheduler)
 
 ### Developer Guide
 

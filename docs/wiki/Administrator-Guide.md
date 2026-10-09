@@ -36,6 +36,9 @@ so explicitly.
 6. [Appearance, navigation, and files](https://github.com/bfhp/stream-engine/wiki/Administrator-Appearance-and-Files) — select
    and preview themes, manage branding, menus and widgets, and operate the
    local uploads File Browser safely.
+7. [Scheduler and background tasks](https://github.com/bfhp/stream-engine/wiki/Administrator-Scheduler) — configure a
+   once-per-minute runner, control registered tasks, inspect execution history,
+   and diagnose delayed or failed work.
 
 ## Planned lifecycle chapters
 
@@ -43,7 +46,6 @@ The following chapters will be added incrementally. A chapter is included in
 the published navigation only after its instructions have been checked against
 the current application.
 
-7. Scheduler and background tasks
 8. Routine operations
 9. Backups and restore
 10. Upgrades and rollback
