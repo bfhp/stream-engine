@@ -367,4 +367,4 @@ still configured outside Stream Engine.
 - [ ] CAPTCHA succeeds and fails as expected, if enabled.
 - [ ] PHP-FPM, Nginx, and provider logs contain no new configuration errors.
 
-[Back: Installation](https://github.com/bfhp/stream-engine/wiki/Administrator-Installation) · [Next: Content, pages, and routing](https://github.com/bfhp/stream-engine/wiki/Administrator-Content-and-Routing)
+[Back: Installation](https://github.com/bfhp/stream-engine/wiki/Administrator-Installation) · [Administrator Guide](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide) · [Next: Content, pages, and routing](https://github.com/bfhp/stream-engine/wiki/Administrator-Content-and-Routing)

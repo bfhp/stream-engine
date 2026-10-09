@@ -19,21 +19,17 @@ Priorities:
 
 ### GitHub-native administrator and developer documentation
 
-Create two maintained documentation entry points inside the repository: an
-administrator guide and a developer guide. Keep them native to GitHub using
-reviewable Markdown, relative links, GitHub-rendered tables and Mermaid only
-where a diagram materially helps; do not require a separate documentation
-generator, hosted site, or build step.
+The Wiki publication workflow and the complete twelve-chapter Administrator
+Guide are implemented. The remaining work is the Developer Guide and final
+reconciliation of developer-facing source documents. Keep the result native to
+GitHub using reviewable Markdown, GitHub-rendered tables and Mermaid only where
+a diagram materially helps; do not require a separate documentation generator,
+hosted site, or build step.
 
 The agreed information architecture, GitHub Wiki publishing model, migration
 sequence, and completion criteria are defined in
 [the documentation implementation plan](DOCUMENTATION_PLAN.md).
 
-- Add clearly linked entry points under `docs/` and from the root `README.md`,
-  with a compact table of contents and stable relative links between topics.
-- The administrator guide must cover installation and upgrades, global
-  settings, users, feeds, pages and routing, menus, themes, widgets, routine
-  operations, permissions, backups, and troubleshooting.
 - The developer guide must cover local setup, architecture and request flow,
   database migrations, modules, page-action contracts, themes and template
   inheritance, frontend assets, API conventions, authorization and CSRF,
@@ -42,9 +38,10 @@ sequence, and completion criteria are defined in
   them. Examples and commands must be executable against the current tree, and
   documentation changes should become part of the completion criteria for
   user-visible features and extension contracts.
-- Consider the task complete when a new administrator can operate a clean
-  installation and a new developer can run, change, test, and extend it using
-  only the repository documentation, with every internal link checked.
+- Consider the remaining task complete when a new developer can run, change,
+  test, and extend Stream Engine using only the repository documentation, the
+  existing developer contracts have one canonical location, and every internal
+  link is checked.
 
 ## File maintenance rule
 

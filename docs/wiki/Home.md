@@ -7,7 +7,7 @@ TypeScript. Choose the guide that matches your work.
 
 The [Administrator Guide](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide) is for people responsible
 for a Stream Engine site. It starts with server requirements and installation
-and will cover configuration, content and routing, users and permissions,
+and covers configuration, content and routing, users and permissions,
 appearance and files, scheduled work, backups, upgrades, troubleshooting, and
 removal.
 
@@ -29,8 +29,9 @@ Start here if you need to deploy or operate a site:
 ## Developer Guide
 
 The Developer Guide will explain the architecture, extension contracts,
-development workflow, testing, releases, and contribution process. It will be
-added after the Administrator Guide reaches an operationally complete state.
+development workflow, testing, releases, and contribution process. It is the
+next documentation phase now that the Administrator Guide covers the complete
+site lifecycle.
 
 > [!IMPORTANT]
 > Stream Engine is under active development and is not yet recommended for

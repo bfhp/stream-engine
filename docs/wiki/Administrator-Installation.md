@@ -354,4 +354,4 @@ Do not include `.env`, passwords, installation tokens, session cookies, or raw
 secret-bearing logs in a public issue. Report the Stream Engine release, PHP
 and MariaDB versions, deployment model, failed check, and a redacted error.
 
-[Back: Requirements](https://github.com/bfhp/stream-engine/wiki/Administrator-Requirements) · [Next: Initial configuration](https://github.com/bfhp/stream-engine/wiki/Administrator-Configuration)
+[Back: Requirements](https://github.com/bfhp/stream-engine/wiki/Administrator-Requirements) · [Administrator Guide](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide) · [Next: Initial configuration](https://github.com/bfhp/stream-engine/wiki/Administrator-Configuration)

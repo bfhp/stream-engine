@@ -60,7 +60,7 @@ memberships, or ownership records. Use it as the reversible administrative
 response when access must be stopped. The current administration interface
 does not provide account deletion.
 
-New registration behaves according to **Administration > Registration**:
+New registration behaves according to **Administration → Registration**:
 
 - **Open registration** creates an active account immediately.
 - **Email confirmation** creates an inactive account and sends a confirmation
@@ -76,7 +76,7 @@ covered in
 
 ## Find and review accounts
 
-Open **Administration > Users**. The catalogue includes active and inactive
+Open **Administration → Users**. The catalogue includes active and inactive
 accounts and is available only to administrators.
 
 The list shows 25 accounts per page, newest first. Search matches email,

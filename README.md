@@ -157,8 +157,10 @@ Production installations should select the OS scheduler mode on the admin
 Scheduler page and invoke `bin/cron.php` once per minute as described in
 [Scheduler and background tasks](https://github.com/bfhp/stream-engine/wiki/Administrator-Scheduler).
 
-For CLI installation, unattended deployment, installation security, and schema
-snapshot details, see [docs/INSTALLATION.md](docs/INSTALLATION.md).
+For the complete deployment and operational lifecycle, use the published
+[Administrator Guide](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide).
+Release maintainers can find installer and schema-snapshot implementation
+details in [docs/INSTALLATION.md](docs/INSTALLATION.md).
 
 ## Development
 
@@ -221,7 +223,7 @@ modules to evolve independently.
 
 Key documentation:
 
-- [Administrator Guide](docs/wiki/Administrator-Guide.md)
+- [Administrator Guide](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide)
 - [Installation architecture](docs/INSTALLATION.md)
 - [Scheduler and background tasks](https://github.com/bfhp/stream-engine/wiki/Administrator-Scheduler)
 - [Building and loading modules](docs/MODULES.md)

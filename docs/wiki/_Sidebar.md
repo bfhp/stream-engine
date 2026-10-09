@@ -20,4 +20,4 @@
 
 ### Developer Guide
 
-Coming after the Administrator Guide.
+Planned next; not yet published.

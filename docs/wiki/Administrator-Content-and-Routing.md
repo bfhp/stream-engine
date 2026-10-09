@@ -55,7 +55,7 @@ or search engines may already know.
 
 ## Manage feeds
 
-Open **Administration > Feeds** to find content records. You can filter by
+Open **Administration → Feeds** to find content records. You can filter by
 type, ID, slug, owner ID, or parent ID. The default view is limited to 100
 newest records; use a narrow filter instead of assuming that an absent record
 does not exist.
@@ -86,7 +86,7 @@ ID** or another feed needs this record as its parent.
 
 ## Understand the page tree
 
-Open **Administration > Pages** to see the routing table in hierarchy order.
+Open **Administration → Pages** to see the routing table in hierarchy order.
 Page ID `1` is the root page at `/`. Its pattern and parent cannot be changed,
 and it cannot be deleted.
 
@@ -158,7 +158,7 @@ installation first.
 
 ### 1. Find the content root
 
-1. Open **Administration > Pages**.
+1. Open **Administration → Pages**.
 2. Find page `#1`, the root page.
 3. Record the Feed ID displayed for it. Call this value `ROOT_FEED_ID` in the
    following steps.
@@ -170,7 +170,7 @@ defines.
 
 ### 2. Create the article feed
 
-Open **Administration > Feeds > New feed** and enter:
+Open **Administration → Feeds → New feed** and enter:
 
 | Field | Value |
 | --- | --- |
@@ -190,7 +190,7 @@ inside the feed hierarchy anchored by the nearest ancestor page.
 ### 3. Create the dynamic page once
 
 Skip this step if the required `article.show-slug` page already exists.
-Otherwise, open **Administration > Pages > New page** and enter:
+Otherwise, open **Administration → Pages → New page** and enter:
 
 | Field | Value |
 | --- | --- |
@@ -225,7 +225,7 @@ Also revisit existing top-level URLs. The static routes should still win over
 
 ### 5. Add navigation
 
-Open **Administration > Menus > New menu item** and enter:
+Open **Administration → Menus → New menu item** and enter:
 
 | Field | Value |
 | --- | --- |
@@ -328,4 +328,4 @@ backup until verification is complete.
 - The rollback backup and old route details are retained until monitoring
   shows normal traffic.
 
-[Back: Initial configuration](https://github.com/bfhp/stream-engine/wiki/Administrator-Configuration) · [Next: Users and permissions](https://github.com/bfhp/stream-engine/wiki/Administrator-Users-and-Permissions)
+[Back: Initial configuration](https://github.com/bfhp/stream-engine/wiki/Administrator-Configuration) · [Administrator Guide](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide) · [Next: Users and permissions](https://github.com/bfhp/stream-engine/wiki/Administrator-Users-and-Permissions)

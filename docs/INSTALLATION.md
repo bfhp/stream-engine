@@ -1,5 +1,12 @@
 # Installation architecture
 
+This document describes installer internals and release-snapshot maintenance.
+Site administrators should use the published
+[Installation](https://github.com/bfhp/stream-engine/wiki/Administrator-Installation)
+and
+[Upgrades and rollback](https://github.com/bfhp/stream-engine/wiki/Administrator-Upgrades-and-Rollback)
+runbooks instead.
+
 New installations and upgrades use different database inputs:
 
 - a new installation applies `resources/install/schema.sql` once, baselines
@@ -102,7 +109,7 @@ passwords may be passed as CLI arguments for fully automated deployment, but
 password files or deployment secrets are preferable where the process list or
 shell history is visible.
 
-CLI and the future web wizard use the same `Core\Installation\Installer`.
+CLI and the web wizard use the same `Core\Installation\Installer`.
 It applies the snapshot to an empty database, writes the snapshot baseline,
 applies newer site migrations, creates the reserved system account and active
 administrator, stores the site name and locale, and publishes an English
