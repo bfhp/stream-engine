@@ -45,6 +45,10 @@ so explicitly.
 9. [Backups and restore](https://github.com/bfhp/stream-engine/wiki/Administrator-Backups-and-Restore) — protect every
    persistent state component with external tooling, retain encrypted off-host
    copies, and practise isolated and production recovery.
+10. [Upgrades and rollback](https://github.com/bfhp/stream-engine/wiki/Administrator-Upgrades-and-Rollback) — evaluate and
+    rehearse a release, coordinate backups, writers, migrations, caches, and
+    smoke tests, and restore matching code, database, and files when rollback
+    is required.
 
 ## Planned lifecycle chapters
 
@@ -52,7 +56,6 @@ The following chapters will be added incrementally. A chapter is included in
 the published navigation only after its instructions have been checked against
 the current application.
 
-10. Upgrades and rollback
 11. Troubleshooting
 12. Uninstallation
 

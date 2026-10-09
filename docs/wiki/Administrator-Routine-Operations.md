@@ -253,7 +253,7 @@ updates.
 Do not run `composer update`, `npm update`, or an unpinned container pull in a
 live release directory as an update check. Those commands can change deployed
 code or dependencies. Evaluate a specific release in staging and follow the
-project's upgrade and rollback procedure.
+[upgrade and rollback procedure](https://github.com/bfhp/stream-engine/wiki/Administrator-Upgrades-and-Rollback).
 
 ## Respond to an abnormal check
 

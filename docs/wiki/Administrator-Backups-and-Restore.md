@@ -428,4 +428,4 @@ access to the restored site is confirmed.
 - [ ] An isolated restore test has passed within the required interval.
 - [ ] Recovery documentation is available when the application host is not.
 
-[Back: Routine operations](https://github.com/bfhp/stream-engine/wiki/Administrator-Routine-Operations) · [Administrator Guide](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide)
+[Back: Routine operations](https://github.com/bfhp/stream-engine/wiki/Administrator-Routine-Operations) · [Administrator Guide](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide) · [Next: Upgrades and rollback](https://github.com/bfhp/stream-engine/wiki/Administrator-Upgrades-and-Rollback)

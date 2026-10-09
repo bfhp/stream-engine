@@ -22,7 +22,8 @@ Start here if you need to deploy or operate a site:
 7. [Configure and verify scheduled tasks](https://github.com/bfhp/stream-engine/wiki/Administrator-Scheduler).
 8. [Establish routine operational checks](https://github.com/bfhp/stream-engine/wiki/Administrator-Routine-Operations).
 9. [Configure and test backup recovery](https://github.com/bfhp/stream-engine/wiki/Administrator-Backups-and-Restore).
-10. Continue with the next operational chapter listed in the
+10. [Plan upgrades and complete rollback drills](https://github.com/bfhp/stream-engine/wiki/Administrator-Upgrades-and-Rollback).
+11. Continue with the next operational chapter listed in the
    [Administrator Guide](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide).
 
 ## Developer Guide
