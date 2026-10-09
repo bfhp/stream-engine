@@ -429,4 +429,4 @@ when the original text remains embedded in the file.
 - [ ] Shared evidence is minimal and fully redacted.
 - [ ] Root cause, recovery, user impact, and prevention work are recorded.
 
-[Back: Upgrades and rollback](https://github.com/bfhp/stream-engine/wiki/Administrator-Upgrades-and-Rollback) · [Administrator Guide](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide)
+[Back: Upgrades and rollback](https://github.com/bfhp/stream-engine/wiki/Administrator-Upgrades-and-Rollback) · [Administrator Guide](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide) · [Next: Uninstallation](https://github.com/bfhp/stream-engine/wiki/Administrator-Uninstallation)

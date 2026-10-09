@@ -16,6 +16,7 @@
 - [Backups and restore](https://github.com/bfhp/stream-engine/wiki/Administrator-Backups-and-Restore)
 - [Upgrades and rollback](https://github.com/bfhp/stream-engine/wiki/Administrator-Upgrades-and-Rollback)
 - [Troubleshooting](https://github.com/bfhp/stream-engine/wiki/Administrator-Troubleshooting)
+- [Uninstallation](https://github.com/bfhp/stream-engine/wiki/Administrator-Uninstallation)
 
 ### Developer Guide
 

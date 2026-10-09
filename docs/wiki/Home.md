@@ -24,8 +24,7 @@ Start here if you need to deploy or operate a site:
 9. [Configure and test backup recovery](https://github.com/bfhp/stream-engine/wiki/Administrator-Backups-and-Restore).
 10. [Plan upgrades and complete rollback drills](https://github.com/bfhp/stream-engine/wiki/Administrator-Upgrades-and-Rollback).
 11. [Diagnose operational problems safely](https://github.com/bfhp/stream-engine/wiki/Administrator-Troubleshooting).
-12. Continue with the next operational chapter listed in the
-   [Administrator Guide](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide).
+12. [Retire or uninstall a site](https://github.com/bfhp/stream-engine/wiki/Administrator-Uninstallation).
 
 ## Developer Guide
 

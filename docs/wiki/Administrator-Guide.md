@@ -52,14 +52,16 @@ so explicitly.
 11. [Troubleshooting](https://github.com/bfhp/stream-engine/wiki/Administrator-Troubleshooting) — diagnose symptoms by
     separating proxy, PHP, database, cache, filesystem, scheduler, mail,
     upload, theme, and deployment failures while preserving safe evidence.
+12. [Uninstallation](https://github.com/bfhp/stream-engine/wiki/Administrator-Uninstallation) — retire or permanently
+    remove a site through a final recovery set, controlled shutdown, exact
+    resource deletion, credential revocation, and external verification.
 
-## Planned lifecycle chapters
+## Lifecycle coverage
 
-The following chapters will be added incrementally. A chapter is included in
-the published navigation only after its instructions have been checked against
-the current application.
-
-12. Uninstallation
+The guide now covers the full administrator lifecycle from host preparation
+through permanent removal. Commands and provider-specific operations must
+still be rehearsed against the deployment model used by the site before they
+are relied on in production.
 
 ## Administrative boundaries
 
