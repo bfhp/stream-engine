@@ -13,6 +13,7 @@
 - [Appearance, navigation, and files](https://github.com/bfhp/stream-engine/wiki/Administrator-Appearance-and-Files)
 - [Scheduler and background tasks](https://github.com/bfhp/stream-engine/wiki/Administrator-Scheduler)
 - [Routine operations](https://github.com/bfhp/stream-engine/wiki/Administrator-Routine-Operations)
+- [Backups and restore](https://github.com/bfhp/stream-engine/wiki/Administrator-Backups-and-Restore)
 
 ### Developer Guide
 

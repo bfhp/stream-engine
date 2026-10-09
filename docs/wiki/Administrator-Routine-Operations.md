@@ -325,4 +325,4 @@ the original cause or create a second failure.
 - [ ] Rehearse the next upgrade in a non-production environment when one is
       planned.
 
-[Back: Scheduler and background tasks](https://github.com/bfhp/stream-engine/wiki/Administrator-Scheduler) · [Administrator Guide](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide)
+[Back: Scheduler and background tasks](https://github.com/bfhp/stream-engine/wiki/Administrator-Scheduler) · [Administrator Guide](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide) · [Next: Backups and restore](https://github.com/bfhp/stream-engine/wiki/Administrator-Backups-and-Restore)

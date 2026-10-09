@@ -42,6 +42,9 @@ so explicitly.
 8. [Routine operations](https://github.com/bfhp/stream-engine/wiki/Administrator-Routine-Operations) — monitor the
    application and its dependencies, review logs, queues, capacity, accounts,
    migrations, and updates, and follow daily, weekly, and monthly checklists.
+9. [Backups and restore](https://github.com/bfhp/stream-engine/wiki/Administrator-Backups-and-Restore) — protect every
+   persistent state component with external tooling, retain encrypted off-host
+   copies, and practise isolated and production recovery.
 
 ## Planned lifecycle chapters
 
@@ -49,7 +52,6 @@ The following chapters will be added incrementally. A chapter is included in
 the published navigation only after its instructions have been checked against
 the current application.
 
-9. Backups and restore
 10. Upgrades and rollback
 11. Troubleshooting
 12. Uninstallation
@@ -66,9 +68,9 @@ remains responsible for the surrounding platform, including:
 - monitoring, capacity, and log retention; and
 - backup scheduling, off-host storage, and restore testing.
 
-The engine will not implement its own backup scheduler. The backup chapter will
-provide operating-system and container examples for protecting all required
-state.
+The engine does not implement its own backup scheduler. The backup chapter
+provides operating-system and container examples for protecting all required
+state with external tooling.
 
 ## Conventions used by this guide
 
