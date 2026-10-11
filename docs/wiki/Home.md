@@ -38,8 +38,10 @@ Continue with [Architecture and request flow](https://github.com/bfhp/stream-eng
 changing bootstrap, routing, rendering, caching, or background-task behavior.
 Use [Database and migrations](https://github.com/bfhp/stream-engine/wiki/Developer-Database-and-Migrations) for schema
 changes, data migrations, migration state, and fresh-install snapshots.
-Extension-contract chapters will follow as their existing source documents are
-reconciled.
+Use [Modules](https://github.com/bfhp/stream-engine/wiki/Developer-Modules) to add site features while preserving
+autoloading, dependency, routing, template, frontend, API, cron, and removal
+contracts. Further extension chapters will follow as their existing source
+documents are reconciled.
 
 > [!IMPORTANT]
 > Stream Engine is under active development and is not yet recommended for

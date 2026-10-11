@@ -30,9 +30,10 @@ src/Modules/<Name>/views/components/<name>/*.twig
 
 referenced as `{% include 'components/<name>/...' %}` and resolved from the
 module's own views path (after the theme chain, so a theme can override it).
-This is consistent with `docs/MODULE_CONTRACT.md`: a module's `views/`
-folder is what it owns, and components are as much "views" as the page
-template that includes them.
+This is consistent with the
+[module dependency contract](https://github.com/bfhp/stream-engine/wiki/Developer-Modules#the-dependency-boundary):
+a module's `views/` folder is what it owns, and components are as much
+"views" as the page template that includes them.
 
 Everything else — `layouts/`, `partials/`, and the components that render
 platform-level concepts (`nav`, `comments`, `auth`, `share`, `common`, `ui`)
@@ -56,7 +57,8 @@ module.
 - Reach into `views/themes/<theme>/components/` for markup that renders its
   own domain data. If a module needs a component, that component lives in
   the module's own `views/components/`, mirroring the "modules depend on the
-  platform, not the other way around" direction from `docs/MODULE_CONTRACT.md`
+  platform, not the other way around" direction from the
+  [module contract](https://github.com/bfhp/stream-engine/wiki/Developer-Modules#the-dependency-boundary)
   — a theme is platform-adjacent presentation, and a module's own content
   should not depend on a specific theme supplying it.
 
@@ -500,8 +502,8 @@ module `views/` folder, and — for the JS surface — `assets-src/`.
 
 ## Checking it
 
-No CI check for this yet — same posture as `docs/MODULE_CONTRACT.md` and
-`docs/PERFORMANCE_CONTRACT.md`, enforced through code review. Until there's
+No CI check for this yet — same posture as the module and performance
+contracts, enforced through code review. Until there's
 automation, this answers "is a component actually module-owned, and is it in
 the wrong place":
 

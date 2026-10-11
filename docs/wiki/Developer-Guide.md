@@ -39,22 +39,24 @@ starting, but you should be comfortable with Git and command-line tools.
 3. [Database and migrations](https://github.com/bfhp/stream-engine/wiki/Developer-Database-and-Migrations) — create and
    test forward migrations, understand combined engine/site history and state,
    and maintain the fresh-install schema snapshot.
+4. [Modules](https://github.com/bfhp/stream-engine/wiki/Developer-Modules) — discover and compose modules, declare public
+   and runtime contributions, integrate templates and browser code, preserve
+   dependency boundaries, and remove an extension safely.
 
 ## Planned chapters
 
 The guide will be expanded in this order as existing source documents and
 implementation contracts are reconciled:
 
-1. Modules
-2. Pages and routing
-3. Themes
-4. Frontend development
-5. API and security
-6. Testing
-7. Localization and accessibility
-8. Performance
-9. Releases
-10. Contributing
+1. Pages and routing
+2. Themes
+3. Frontend development
+4. API and security
+5. Testing
+6. Localization and accessibility
+7. Performance
+8. Releases
+9. Contributing
 
 Until a chapter is published, use the existing documents linked from the
 [repository README](https://github.com/bfhp/stream-engine#architecture). They

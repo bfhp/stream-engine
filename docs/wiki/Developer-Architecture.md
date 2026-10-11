@@ -93,10 +93,8 @@ service into the shared platform. If only one module needs it, keep it private
 and construct it from dependencies already provided to that module. Deleting a
 module must not prevent unrelated features from booting.
 
-The existing
-[`MODULE_CONTRACT.md`](https://github.com/bfhp/stream-engine/blob/main/docs/MODULE_CONTRACT.md)
-remains the normative dependency contract until it is reconciled into the
-Modules chapter.
+The normative dependency and extension contract is documented in
+[Modules](https://github.com/bfhp/stream-engine/wiki/Developer-Modules).
 
 ## HTTP bootstrap
 

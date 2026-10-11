@@ -317,4 +317,4 @@ and verify both upgrade paths:
 - Rollback instructions restore matching database, migration state, code, and
   persistent files rather than attempting a down migration.
 
-[Back: Architecture and request flow](https://github.com/bfhp/stream-engine/wiki/Developer-Architecture) · [Developer Guide](https://github.com/bfhp/stream-engine/wiki/Developer-Guide)
+[Back: Architecture and request flow](https://github.com/bfhp/stream-engine/wiki/Developer-Architecture) · [Developer Guide](https://github.com/bfhp/stream-engine/wiki/Developer-Guide) · [Next: Modules](https://github.com/bfhp/stream-engine/wiki/Developer-Modules)
