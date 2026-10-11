@@ -330,6 +330,10 @@ Module browser code can import shared engine utilities through the
 `@stream-engine` alias. Rebuild the frontend after adding or removing an entry
 and deploy PHP and generated assets from the same revision.
 
+Follow [Frontend development](https://github.com/bfhp/stream-engine/wiki/Developer-Frontend)
+for entry discovery, stable outputs, page integration, admin extension wiring,
+localization, tests, and committed build artifacts.
+
 ## Database changes
 
 There is no module-local migration discovery. A site module that requires

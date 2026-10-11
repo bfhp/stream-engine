@@ -373,4 +373,4 @@ framework match, and inspect dynamically selected template paths manually.
 - Theme catalog, setting, widget, shared UI, type, and frontend build checks
   relevant to the change pass.
 
-[Back: Pages and routing](https://github.com/bfhp/stream-engine/wiki/Developer-Pages-and-Routing) · [Developer Guide](https://github.com/bfhp/stream-engine/wiki/Developer-Guide)
+[Back: Pages and routing](https://github.com/bfhp/stream-engine/wiki/Developer-Pages-and-Routing) · [Developer Guide](https://github.com/bfhp/stream-engine/wiki/Developer-Guide) · [Next: Frontend development](https://github.com/bfhp/stream-engine/wiki/Developer-Frontend)

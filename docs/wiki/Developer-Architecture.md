@@ -294,6 +294,9 @@ other module entries.
 The application references compiled `/assets/` paths. Keep PHP/templates and
 their matching assets in the same deployment and rebuild after changing an
 entry point, translation catalog, module registration, or imported source.
+The complete source ownership, entry-point, runtime integration, admin
+extension, localization, test, and generated-asset contract is documented in
+[Frontend development](https://github.com/bfhp/stream-engine/wiki/Developer-Frontend).
 
 ## Background-task flow
 

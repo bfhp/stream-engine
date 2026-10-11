@@ -233,6 +233,7 @@ Key documentation:
 - [Modules](https://github.com/bfhp/stream-engine/wiki/Developer-Modules)
 - [Pages and routing](https://github.com/bfhp/stream-engine/wiki/Developer-Pages-and-Routing)
 - [Themes](https://github.com/bfhp/stream-engine/wiki/Developer-Themes)
+- [Frontend development](https://github.com/bfhp/stream-engine/wiki/Developer-Frontend)
 - [Scheduler and background tasks](https://github.com/bfhp/stream-engine/wiki/Administrator-Scheduler)
 - [Performance contract](docs/PERFORMANCE_CONTRACT.md)
 - [Backlog and project status](docs/TODO.md)

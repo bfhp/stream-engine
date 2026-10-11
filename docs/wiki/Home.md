@@ -44,8 +44,10 @@ contracts. Use [Pages and routing](https://github.com/bfhp/stream-engine/wiki/De
 page trees, dynamic patterns, content bindings, canonical URLs, or route
 access. Use [Themes](https://github.com/bfhp/stream-engine/wiki/Developer-Themes) to create a public-site presentation
 layer, declare its manifest and assets, override templates, and preserve the
-shared browser UI contract. Further extension chapters will follow as their
-existing source documents are reconciled.
+shared browser UI contract. Use [Frontend development](https://github.com/bfhp/stream-engine/wiki/Developer-Frontend)
+for TypeScript and React organization, Vite entries, shared browser utilities,
+localization, tests, builds, and committed release assets. Further extension
+chapters will follow as their existing source documents are reconciled.
 
 > [!IMPORTANT]
 > Stream Engine is under active development and is not yet recommended for

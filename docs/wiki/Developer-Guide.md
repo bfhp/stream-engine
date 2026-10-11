@@ -48,19 +48,21 @@ starting, but you should be comfortable with Git and command-line tools.
 6. [Themes](https://github.com/bfhp/stream-engine/wiki/Developer-Themes) — create and discover themes, define manifests
    and settings, inherit templates and assets, override module presentation,
    preserve the browser UI contract, and test compatibility.
+7. [Frontend development](https://github.com/bfhp/stream-engine/wiki/Developer-Frontend) — organize TypeScript and
+   React code, define Vite entries, integrate public and administration
+   features, localize and test browser behavior, and ship generated assets.
 
 ## Planned chapters
 
 The guide will be expanded in this order as existing source documents and
 implementation contracts are reconciled:
 
-1. Frontend development
-2. API and security
-3. Testing
-4. Localization and accessibility
-5. Performance
-6. Releases
-7. Contributing
+1. API and security
+2. Testing
+3. Localization and accessibility
+4. Performance
+5. Releases
+6. Contributing
 
 Until a chapter is published, use the existing documents linked from the
 [repository README](https://github.com/bfhp/stream-engine#architecture). They
