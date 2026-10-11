@@ -42,21 +42,23 @@ starting, but you should be comfortable with Git and command-line tools.
 4. [Modules](https://github.com/bfhp/stream-engine/wiki/Developer-Modules) — discover and compose modules, declare public
    and runtime contributions, integrate templates and browser code, preserve
    dependency boundaries, and remove an extension safely.
+5. [Pages and routing](https://github.com/bfhp/stream-engine/wiki/Developer-Pages-and-Routing) — design static and
+   dynamic page trees, bind content, generate canonical URLs, preserve access
+   and method boundaries, and test route changes.
 
 ## Planned chapters
 
 The guide will be expanded in this order as existing source documents and
 implementation contracts are reconciled:
 
-1. Pages and routing
-2. Themes
-3. Frontend development
-4. API and security
-5. Testing
-6. Localization and accessibility
-7. Performance
-8. Releases
-9. Contributing
+1. Themes
+2. Frontend development
+3. API and security
+4. Testing
+5. Localization and accessibility
+6. Performance
+7. Releases
+8. Contributing
 
 Until a chapter is published, use the existing documents linked from the
 [repository README](https://github.com/bfhp/stream-engine#architecture). They

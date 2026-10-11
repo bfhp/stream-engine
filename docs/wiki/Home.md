@@ -40,7 +40,9 @@ Use [Database and migrations](https://github.com/bfhp/stream-engine/wiki/Develop
 changes, data migrations, migration state, and fresh-install snapshots.
 Use [Modules](https://github.com/bfhp/stream-engine/wiki/Developer-Modules) to add site features while preserving
 autoloading, dependency, routing, template, frontend, API, cron, and removal
-contracts. Further extension chapters will follow as their existing source
+contracts. Use [Pages and routing](https://github.com/bfhp/stream-engine/wiki/Developer-Pages-and-Routing) when changing
+page trees, dynamic patterns, content bindings, canonical URLs, or route
+access. Further extension chapters will follow as their existing source
 documents are reconciled.
 
 > [!IMPORTANT]

@@ -25,3 +25,4 @@
 - [Architecture and request flow](https://github.com/bfhp/stream-engine/wiki/Developer-Architecture)
 - [Database and migrations](https://github.com/bfhp/stream-engine/wiki/Developer-Database-and-Migrations)
 - [Modules](https://github.com/bfhp/stream-engine/wiki/Developer-Modules)
+- [Pages and routing](https://github.com/bfhp/stream-engine/wiki/Developer-Pages-and-Routing)

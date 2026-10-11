@@ -155,7 +155,9 @@ parameters, and the resolved page chain used for breadcrumbs.
 The page tree is also the basis for canonical URL generation. `UrlGenerator`
 maps actions, feed bindings, feed types, term vocabularies, and route
 parameters back to paths. Developers should use it instead of assembling URLs
-from known route strings.
+from known route strings. The normative pattern, binding, and URL-generation
+contract is documented in
+[Pages and routing](https://github.com/bfhp/stream-engine/wiki/Developer-Pages-and-Routing).
 
 ### Establish request identity
 

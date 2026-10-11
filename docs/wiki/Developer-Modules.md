@@ -300,9 +300,8 @@ actions, conflicting static patterns, and ambiguous dynamic siblings. A
 module must register its runtime tree only when the required public mount
 exists.
 
-The complete route ownership and pattern contract remains in
-[URL ownership and runtime pages](https://github.com/bfhp/stream-engine/blob/main/docs/ROUTING.md)
-until the next Developer Guide chapter reconciles it.
+The complete route ownership and pattern contract is documented in
+[Pages and routing](https://github.com/bfhp/stream-engine/wiki/Developer-Pages-and-Routing).
 
 ## Templates and theme overrides
 
@@ -492,4 +491,4 @@ archive that state according to an explicit data-retention decision.
 - PHP unit/integration tests, Vitest, type checking, the production build, and
   the relevant manual workflow pass.
 
-[Back: Database and migrations](https://github.com/bfhp/stream-engine/wiki/Developer-Database-and-Migrations) · [Developer Guide](https://github.com/bfhp/stream-engine/wiki/Developer-Guide)
+[Back: Database and migrations](https://github.com/bfhp/stream-engine/wiki/Developer-Database-and-Migrations) · [Developer Guide](https://github.com/bfhp/stream-engine/wiki/Developer-Guide) · [Next: Pages and routing](https://github.com/bfhp/stream-engine/wiki/Developer-Pages-and-Routing)
