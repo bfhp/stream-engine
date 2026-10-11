@@ -345,4 +345,7 @@ Before adding a class or dependency, ask:
 6. Does the change cross an existing contract? Update the relevant guide and
    add tests at the boundary, not only inside the new class.
 
+For indexed persistence access, cache semantics, bounded work, and measurement,
+continue with [Performance](https://github.com/bfhp/stream-engine/wiki/Developer-Performance).
+
 [Back: Getting started](https://github.com/bfhp/stream-engine/wiki/Developer-Getting-Started) · [Developer Guide](https://github.com/bfhp/stream-engine/wiki/Developer-Guide) · [Next: Database and migrations](https://github.com/bfhp/stream-engine/wiki/Developer-Database-and-Migrations)

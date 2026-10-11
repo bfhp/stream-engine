@@ -56,8 +56,10 @@ coverage, and reproduce the continuous-integration gates. Use
 [Localization and accessibility](https://github.com/bfhp/stream-engine/wiki/Developer-Localization-and-Accessibility)
 for catalog ownership, plural/date/time formatting, RTL and bidirectional
 content, semantic markup, keyboard and assistive-technology contracts, and
-their verification. Further extension chapters will follow as their existing
-source documents are reconciled.
+their verification. Use [Performance](https://github.com/bfhp/stream-engine/wiki/Developer-Performance) to design
+indexed access paths, bounded request and background work, safe caching, and
+reproducible measurements. Further extension chapters will follow as their
+existing source documents are reconciled.
 
 > [!IMPORTANT]
 > Stream Engine is under active development and is not yet recommended for

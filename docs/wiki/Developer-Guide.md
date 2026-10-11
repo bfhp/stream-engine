@@ -61,15 +61,17 @@ starting, but you should be comfortable with Git and command-line tools.
 10. [Localization and accessibility](https://github.com/bfhp/stream-engine/wiki/Developer-Localization-and-Accessibility) — maintain server and browser
     catalogs, plural/date/time and RTL behavior, semantic and keyboard
     contracts, assistive-technology expectations, and honest verification.
+11. [Performance](https://github.com/bfhp/stream-engine/wiki/Developer-Performance) — design indexed access paths,
+    prevent repeated and unbounded work, use caches safely, measure request,
+    background, and frontend cost, and document current platform limits.
 
 ## Planned chapters
 
 The guide will be expanded in this order as existing source documents and
 implementation contracts are reconciled:
 
-1. Performance
-2. Releases
-3. Contributing
+1. Releases
+2. Contributing
 
 Until a chapter is published, use the existing documents linked from the
 [repository README](https://github.com/bfhp/stream-engine#architecture). They

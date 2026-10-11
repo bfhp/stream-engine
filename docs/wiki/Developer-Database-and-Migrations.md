@@ -305,6 +305,9 @@ and verify both upgrade paths:
 1. apply the new migration to a database at the previous release state; and
 2. install an empty database through the regenerated release snapshot.
 
+For query/index annotations, representative execution plans, and access-path
+review, follow [Performance](https://github.com/bfhp/stream-engine/wiki/Developer-Performance).
+
 ## Migration pull-request checklist
 
 - The filename matches the required format and is globally unique.

@@ -425,4 +425,4 @@ string replaced a key.
 - Focused localization/accessibility tests, the production build, and the
   complete project gate pass; current limitations are reported honestly.
 
-[Back: Testing](https://github.com/bfhp/stream-engine/wiki/Developer-Testing) · [Developer Guide](https://github.com/bfhp/stream-engine/wiki/Developer-Guide)
+[Back: Testing](https://github.com/bfhp/stream-engine/wiki/Developer-Testing) · [Developer Guide](https://github.com/bfhp/stream-engine/wiki/Developer-Guide) · [Next: Performance](https://github.com/bfhp/stream-engine/wiki/Developer-Performance)

@@ -368,4 +368,7 @@ or run `npm run build` after each source change.
 - A production build succeeds, generated assets and licenses are reviewed, and
   the source and output changes are committed together.
 
+For bundle and response-cost measurement, follow
+[Performance](https://github.com/bfhp/stream-engine/wiki/Developer-Performance).
+
 [Back: Themes](https://github.com/bfhp/stream-engine/wiki/Developer-Themes) · [Developer Guide](https://github.com/bfhp/stream-engine/wiki/Developer-Guide) · [Next: API and security](https://github.com/bfhp/stream-engine/wiki/Developer-API-and-Security)
