@@ -176,7 +176,10 @@ npm install
 Common development commands:
 
 ```bash
-# Frontend development server
+# Rebuild frontend assets when sources change
+npm run build -- --watch
+
+# Standalone Vite development server (not automatically loaded by the site)
 npm run dev
 
 # Production frontend build
@@ -224,6 +227,7 @@ modules to evolve independently.
 Key documentation:
 
 - [Administrator Guide](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide)
+- [Developer Guide](https://github.com/bfhp/stream-engine/wiki/Developer-Guide)
 - [Installation architecture](docs/INSTALLATION.md)
 - [Scheduler and background tasks](https://github.com/bfhp/stream-engine/wiki/Administrator-Scheduler)
 - [Building and loading modules](docs/MODULES.md)

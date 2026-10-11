@@ -28,10 +28,14 @@ Start here if you need to deploy or operate a site:
 
 ## Developer Guide
 
-The Developer Guide will explain the architecture, extension contracts,
-development workflow, testing, releases, and contribution process. It is the
-next documentation phase now that the Administrator Guide covers the complete
-site lifecycle.
+The [Developer Guide](https://github.com/bfhp/stream-engine/wiki/Developer-Guide) is for people who want to
+understand the architecture, extend the engine, test changes, and contribute
+them to the open-source project.
+
+Start with [Getting started](https://github.com/bfhp/stream-engine/wiki/Developer-Getting-Started) to prepare a
+checkout, install a local site, build the frontend, and run the baseline checks.
+Architecture and extension-contract chapters will follow as their existing
+source documents are reconciled.
 
 > [!IMPORTANT]
 > Stream Engine is under active development and is not yet recommended for

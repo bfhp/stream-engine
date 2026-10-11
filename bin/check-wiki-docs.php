@@ -19,11 +19,18 @@ $administratorPages = [
     'Administrator-Troubleshooting.md',
     'Administrator-Uninstallation.md',
 ];
+$developerPages = [
+    'Developer-Getting-Started.md',
+];
+$guidePages = [
+    'Administrator-Guide.md' => $administratorPages,
+    'Developer-Guide.md' => $developerPages,
+];
 $requiredPages = [
     'Home.md',
     '_Sidebar.md',
-    'Administrator-Guide.md',
-    ...$administratorPages,
+    ...array_keys($guidePages),
+    ...array_merge(...array_values($guidePages)),
 ];
 
 if (! is_dir($wikiDirectory)) {
@@ -73,47 +80,60 @@ foreach ($requiredPages as $requiredPage) {
     }
 }
 
-foreach ($administratorPages as $administratorPage) {
-    $wikiPage = substr($administratorPage, 0, -3);
-    $canonicalUrl = $wikiBaseUrl.$wikiPage;
-    foreach (['Home.md', '_Sidebar.md', 'Administrator-Guide.md'] as $navigationPage) {
-        if (! str_contains($pages[$navigationPage], $canonicalUrl)) {
+foreach ($guidePages as $guidePage => $chapterPages) {
+    $guideUrl = $wikiBaseUrl.substr($guidePage, 0, -3);
+    foreach (['Home.md', '_Sidebar.md'] as $navigationPage) {
+        if (! str_contains($pages[$navigationPage], $guideUrl)) {
             fail(sprintf(
-                'Administrator page "%s" is missing from "%s".',
-                $administratorPage,
+                'Guide page "%s" is missing from "%s".',
+                $guidePage,
                 $navigationPage,
             ));
         }
     }
 
-    if (! str_contains($pages[$administratorPage], $wikiBaseUrl.'Administrator-Guide')) {
-        fail(sprintf(
-            'Administrator page "%s" does not link back to Administrator-Guide.',
-            $administratorPage,
-        ));
-    }
-}
+    foreach ($chapterPages as $chapterPage) {
+        $chapterUrl = $wikiBaseUrl.substr($chapterPage, 0, -3);
+        foreach (['Home.md', '_Sidebar.md', $guidePage] as $navigationPage) {
+            if (! str_contains($pages[$navigationPage], $chapterUrl)) {
+                fail(sprintf(
+                    'Chapter page "%s" is missing from "%s".',
+                    $chapterPage,
+                    $navigationPage,
+                ));
+            }
+        }
 
-foreach ($administratorPages as $index => $administratorPage) {
-    $previousPage = $index === 0 ? 'Administrator-Guide.md' : $administratorPages[$index - 1];
-    $previousUrl = $wikiBaseUrl.substr($previousPage, 0, -3);
-    if (! str_contains($pages[$administratorPage], $previousUrl)) {
-        fail(sprintf(
-            'Administrator page "%s" does not link to previous page "%s".',
-            $administratorPage,
-            $previousPage,
-        ));
-    }
-
-    $nextPage = $administratorPages[$index + 1] ?? null;
-    if ($nextPage !== null) {
-        $nextUrl = $wikiBaseUrl.substr($nextPage, 0, -3);
-        if (! str_contains($pages[$administratorPage], $nextUrl)) {
+        if (! str_contains($pages[$chapterPage], $guideUrl)) {
             fail(sprintf(
-                'Administrator page "%s" does not link to next page "%s".',
-                $administratorPage,
-                $nextPage,
+                'Chapter page "%s" does not link back to "%s".',
+                $chapterPage,
+                $guidePage,
             ));
+        }
+    }
+
+    foreach ($chapterPages as $index => $chapterPage) {
+        $previousPage = $index === 0 ? $guidePage : $chapterPages[$index - 1];
+        $previousUrl = $wikiBaseUrl.substr($previousPage, 0, -3);
+        if (! str_contains($pages[$chapterPage], $previousUrl)) {
+            fail(sprintf(
+                'Chapter page "%s" does not link to previous page "%s".',
+                $chapterPage,
+                $previousPage,
+            ));
+        }
+
+        $nextPage = $chapterPages[$index + 1] ?? null;
+        if ($nextPage !== null) {
+            $nextUrl = $wikiBaseUrl.substr($nextPage, 0, -3);
+            if (! str_contains($pages[$chapterPage], $nextUrl)) {
+                fail(sprintf(
+                    'Chapter page "%s" does not link to next page "%s".',
+                    $chapterPage,
+                    $nextPage,
+                ));
+            }
         }
     }
 }

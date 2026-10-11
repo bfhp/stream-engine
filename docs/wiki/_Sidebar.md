@@ -20,4 +20,5 @@
 
 ### Developer Guide
 
-Planned next; not yet published.
+- [Guide overview](https://github.com/bfhp/stream-engine/wiki/Developer-Guide)
+- [Getting started](https://github.com/bfhp/stream-engine/wiki/Developer-Getting-Started)
