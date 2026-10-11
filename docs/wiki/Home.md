@@ -46,8 +46,12 @@ access. Use [Themes](https://github.com/bfhp/stream-engine/wiki/Developer-Themes
 layer, declare its manifest and assets, override templates, and preserve the
 shared browser UI contract. Use [Frontend development](https://github.com/bfhp/stream-engine/wiki/Developer-Frontend)
 for TypeScript and React organization, Vite entries, shared browser utilities,
-localization, tests, builds, and committed release assets. Further extension
-chapters will follow as their existing source documents are reconciled.
+localization, tests, builds, and committed release assets. Use
+[API and security](https://github.com/bfhp/stream-engine/wiki/Developer-API-and-Security) to add versioned JSON routes,
+enforce authentication, authorization and CSRF, validate untrusted data, and
+review output, uploads, secrets, and external-service boundaries. Further
+extension chapters will follow as their existing source documents are
+reconciled.
 
 > [!IMPORTANT]
 > Stream Engine is under active development and is not yet recommended for

@@ -190,8 +190,9 @@ widgets, theme metadata, breadcrumbs, and request runtime before rendering.
 
 For non-HTML pages, the engine verifies the page's declared HTTP methods and
 calls `callApi(Page, params)`. The current API controller contract writes the
-response; it does not return a response object. The API and security chapter
-will document response bodies, authentication, CSRF, and validation in detail.
+response; it does not return a response object. See
+[API and security](https://github.com/bfhp/stream-engine/wiki/Developer-API-and-Security)
+for response bodies, authentication, authorization, CSRF, and validation.
 
 ## Templates and themes
 

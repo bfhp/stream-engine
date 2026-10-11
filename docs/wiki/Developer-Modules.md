@@ -402,7 +402,9 @@ requests. Declare allowed request methods in the page definition.
 
 API paths are an explicit public contract. Do not infer security from a hidden
 admin link, and do not expose internal exceptions or credentials in a JSON
-response. The dedicated API and security chapter will expand this contract.
+response. Follow the complete route, response, authorization, validation, and
+review contract in
+[API and security](https://github.com/bfhp/stream-engine/wiki/Developer-API-and-Security).
 
 ## Scheduled tasks
 

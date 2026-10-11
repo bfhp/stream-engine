@@ -28,3 +28,4 @@
 - [Pages and routing](https://github.com/bfhp/stream-engine/wiki/Developer-Pages-and-Routing)
 - [Themes](https://github.com/bfhp/stream-engine/wiki/Developer-Themes)
 - [Frontend development](https://github.com/bfhp/stream-engine/wiki/Developer-Frontend)
+- [API and security](https://github.com/bfhp/stream-engine/wiki/Developer-API-and-Security)

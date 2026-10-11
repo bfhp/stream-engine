@@ -27,6 +27,7 @@ $developerPages = [
     'Developer-Pages-and-Routing.md',
     'Developer-Themes.md',
     'Developer-Frontend.md',
+    'Developer-API-and-Security.md',
 ];
 $guidePages = [
     'Administrator-Guide.md' => $administratorPages,

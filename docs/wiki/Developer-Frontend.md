@@ -175,10 +175,10 @@ uploads use the shared upload helpers because `FormData` must set its own
 content boundary. The admin bundle does not load `site/app.ts`, so admin calls
 use `csrfHeaders()` directly. Do not copy the cookie parser into a feature.
 
-The dedicated API and security chapter will define response, authorization,
-validation, and CSRF rules. Until then, preserve the existing server contract
-and use `getApiErrorMessage()` or `getApiResponseError()` instead of inventing
-another error shape parser.
+[API and security](https://github.com/bfhp/stream-engine/wiki/Developer-API-and-Security)
+defines response, authorization, validation, and CSRF rules. Preserve that
+server contract and use `getApiErrorMessage()` or `getApiResponseError()`
+instead of inventing another error shape parser.
 
 ## Styling and theme boundaries
 
@@ -362,4 +362,4 @@ or run `npm run build` after each source change.
 - A production build succeeds, generated assets and licenses are reviewed, and
   the source and output changes are committed together.
 
-[Back: Themes](https://github.com/bfhp/stream-engine/wiki/Developer-Themes) · [Developer Guide](https://github.com/bfhp/stream-engine/wiki/Developer-Guide)
+[Back: Themes](https://github.com/bfhp/stream-engine/wiki/Developer-Themes) · [Developer Guide](https://github.com/bfhp/stream-engine/wiki/Developer-Guide) · [Next: API and security](https://github.com/bfhp/stream-engine/wiki/Developer-API-and-Security)

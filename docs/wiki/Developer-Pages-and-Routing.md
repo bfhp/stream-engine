@@ -284,8 +284,9 @@ the endpoint path explicit in clients. Encode inserted path segments with
 `rawurlencode()` in PHP or `encodeURIComponent()` in TypeScript; consume a URL
 provided by the server without encoding the complete string again.
 
-API versioning, error payloads, authorization, and CSRF are expanded in the
-API and security chapter. A route definition alone never makes a handler safe.
+[API and security](https://github.com/bfhp/stream-engine/wiki/Developer-API-and-Security)
+defines versioning, response and error payloads, authorization, validation,
+and CSRF. A route definition alone never makes a handler safe.
 
 ## Generate public URLs
 
