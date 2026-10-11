@@ -30,3 +30,4 @@
 - [Frontend development](https://github.com/bfhp/stream-engine/wiki/Developer-Frontend)
 - [API and security](https://github.com/bfhp/stream-engine/wiki/Developer-API-and-Security)
 - [Testing](https://github.com/bfhp/stream-engine/wiki/Developer-Testing)
+- [Localization and accessibility](https://github.com/bfhp/stream-engine/wiki/Developer-Localization-and-Accessibility)

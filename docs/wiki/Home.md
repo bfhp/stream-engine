@@ -52,8 +52,12 @@ enforce authentication, authorization and CSRF, validate untrusted data, and
 review output, uploads, secrets, and external-service boundaries. Use
 [Testing](https://github.com/bfhp/stream-engine/wiki/Developer-Testing) to select unit and integration boundaries,
 write PHPUnit and Vitest regressions, run disposable-database tests and
-coverage, and reproduce the continuous-integration gates. Further extension
-chapters will follow as their existing source documents are reconciled.
+coverage, and reproduce the continuous-integration gates. Use
+[Localization and accessibility](https://github.com/bfhp/stream-engine/wiki/Developer-Localization-and-Accessibility)
+for catalog ownership, plural/date/time formatting, RTL and bidirectional
+content, semantic markup, keyboard and assistive-technology contracts, and
+their verification. Further extension chapters will follow as their existing
+source documents are reconciled.
 
 > [!IMPORTANT]
 > Stream Engine is under active development and is not yet recommended for

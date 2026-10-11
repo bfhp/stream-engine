@@ -58,16 +58,18 @@ starting, but you should be comfortable with Git and command-line tools.
 9. [Testing](https://github.com/bfhp/stream-engine/wiki/Developer-Testing) — choose truthful unit, component, repository,
    integration, and browser test scopes; manage fixtures and external state;
    run coverage; write regressions; and reproduce continuous integration.
+10. [Localization and accessibility](https://github.com/bfhp/stream-engine/wiki/Developer-Localization-and-Accessibility) — maintain server and browser
+    catalogs, plural/date/time and RTL behavior, semantic and keyboard
+    contracts, assistive-technology expectations, and honest verification.
 
 ## Planned chapters
 
 The guide will be expanded in this order as existing source documents and
 implementation contracts are reconciled:
 
-1. Localization and accessibility
-2. Performance
-3. Releases
-4. Contributing
+1. Performance
+2. Releases
+3. Contributing
 
 Until a chapter is published, use the existing documents linked from the
 [repository README](https://github.com/bfhp/stream-engine#architecture). They

@@ -170,6 +170,11 @@ PHP controllers use superglobals, headers, output, cookies, files, and the
 - restore timezone, locale, environment variables, and error handlers changed
   by the test.
 
+Use the locale, direction, semantic markup, keyboard, live-region, and manual
+review matrix from
+[Localization and accessibility](https://github.com/bfhp/stream-engine/wiki/Developer-Localization-and-Accessibility)
+for user-visible changes.
+
 The PHP suite currently runs sequentially, but isolation is still required:
 CI order, a focused invocation, or a future runner may differ. Never make an
 assertion depend on the wall clock when a bounded range or injected timestamp
@@ -426,4 +431,4 @@ the workflow's concurrency setting retains only the latest run for a ref.
 - Coverage work targets meaningful missing behavior, and the maintained
   coverage backlog is updated only from a complete green measurement.
 
-[Back: API and security](https://github.com/bfhp/stream-engine/wiki/Developer-API-and-Security) · [Developer Guide](https://github.com/bfhp/stream-engine/wiki/Developer-Guide)
+[Back: API and security](https://github.com/bfhp/stream-engine/wiki/Developer-API-and-Security) · [Developer Guide](https://github.com/bfhp/stream-engine/wiki/Developer-Guide) · [Next: Localization and accessibility](https://github.com/bfhp/stream-engine/wiki/Developer-Localization-and-Accessibility)

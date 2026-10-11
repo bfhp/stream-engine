@@ -308,7 +308,8 @@ Preserve semantic headings, labels, keyboard operation, focus behavior, ARIA
 relationships, and visible focus indicators. Test long translated labels and
 mixed-direction user content as well as ordinary LTR text. Theme compatibility
 includes behavior with keyboard navigation and assistive technology, not just
-pixel similarity.
+pixel similarity. The full implementation and verification rules are in
+[Localization and accessibility](https://github.com/bfhp/stream-engine/wiki/Developer-Localization-and-Accessibility).
 
 ## Upgrade and compatibility workflow
 

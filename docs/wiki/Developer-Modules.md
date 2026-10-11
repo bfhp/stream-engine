@@ -465,6 +465,10 @@ base locale, then English, then the key; browser labels fall back to English
 and then the key. Do not document a module-local language directory until the
 loader actually supports one.
 
+Follow [Localization and accessibility](https://github.com/bfhp/stream-engine/wiki/Developer-Localization-and-Accessibility)
+for key ownership, catalog parity, browser builds, plural/date/time behavior,
+RTL and bidirectional content, and accessible UI review.
+
 ## Removing a module
 
 Before removal, identify public pages, runtime mounts, cron configuration,

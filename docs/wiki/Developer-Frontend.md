@@ -267,6 +267,10 @@ the requested value from `<html lang>`. Use `transChoice()` for plural forms
 and `transChoiceWithCount()` when the formatted number should be part of the
 label. Do not concatenate translated sentence fragments.
 
+The complete catalog, plural, date/time, RTL, bidi, semantic markup, keyboard,
+and assistive-technology contract is in
+[Localization and accessibility](https://github.com/bfhp/stream-engine/wiki/Developer-Localization-and-Accessibility).
+
 There is currently no module-local translation catalog discovery. A site-owned
 module must customize the translation integration or accept visible fallback
 keys. This limitation applies to module admin page labels too.
