@@ -32,6 +32,7 @@ $developerPages = [
     'Developer-Localization-and-Accessibility.md',
     'Developer-Performance.md',
     'Developer-Releases.md',
+    'Developer-Contributing.md',
 ];
 $guidePages = [
     'Administrator-Guide.md' => $administratorPages,

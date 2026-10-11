@@ -26,7 +26,8 @@ starting, but you should be comfortable with Git and command-line tools.
 3. Use the relevant extension chapter before adding a module, page action,
    theme, frontend entry point, or migration.
 4. Complete the security, test, documentation, and compatibility checks before
-   opening a pull request against `main`.
+   opening a pull request against `main`, following
+   [Contributing](https://github.com/bfhp/stream-engine/wiki/Developer-Contributing).
 
 ## Current chapters
 
@@ -67,18 +68,16 @@ starting, but you should be comfortable with Git and command-line tools.
 12. [Releases](https://github.com/bfhp/stream-engine/wiki/Developer-Releases) — choose and synchronize a version,
     prepare release notes, snapshots and assets, test clean installation and
     upgrades, tag an immutable commit, and verify public distribution.
+13. [Contributing](https://github.com/bfhp/stream-engine/wiki/Developer-Contributing) — scope an issue, work from a
+    fork and focused branch, preserve project contracts, submit evidence with a
+    pull request to `main`, respond to review, and meet the definition of done.
 
-## Planned chapters
+## Guide maintenance
 
-The guide will be expanded in this order as existing source documents and
-implementation contracts are reconciled:
-
-1. Contributing
-
-Until a chapter is published, use the existing documents linked from the
-[repository README](https://github.com/bfhp/stream-engine#architecture). They
-remain authoritative until their material is migrated and replaced with a
-short relocation notice.
+The planned core chapter set is now published. Keep each chapter synchronized
+with the implementation in the same pull request that changes its contract.
+Add another page only when it has distinct ownership and lifecycle; otherwise
+extend the existing canonical chapter so guidance cannot drift between pages.
 
 ## Documentation conventions
 

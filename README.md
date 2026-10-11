@@ -239,6 +239,7 @@ Key documentation:
 - [Localization and accessibility](https://github.com/bfhp/stream-engine/wiki/Developer-Localization-and-Accessibility)
 - [Performance](https://github.com/bfhp/stream-engine/wiki/Developer-Performance)
 - [Releases](https://github.com/bfhp/stream-engine/wiki/Developer-Releases)
+- [Contributing](https://github.com/bfhp/stream-engine/wiki/Developer-Contributing)
 - [Scheduler and background tasks](https://github.com/bfhp/stream-engine/wiki/Administrator-Scheduler)
 - [Backlog and project status](docs/TODO.md)
 - [Test coverage backlog](docs/TEST_COVERAGE_TODO.md)
@@ -251,7 +252,8 @@ module boundaries, include tests appropriate to its risk, and keep PHP,
 TypeScript, frontend builds, and CSRF checks green.
 
 Bug reports and focused pull requests are welcome through the
-[GitHub repository](https://github.com/bfhp/stream-engine).
+[GitHub repository](https://github.com/bfhp/stream-engine). Before starting,
+read the complete [contribution guide](https://github.com/bfhp/stream-engine/wiki/Developer-Contributing).
 
 ## License
 

@@ -61,8 +61,9 @@ indexed access paths, bounded request and background work, safe caching, and
 reproducible measurements. Use [Releases](https://github.com/bfhp/stream-engine/wiki/Developer-Releases) to synchronize
 version metadata and release notes, rebuild snapshots and assets, verify clean
 installation and upgrades, tag the reviewed commit, and check public
-distribution. Further extension chapters will follow as their existing source
-documents are reconciled.
+distribution. Use [Contributing](https://github.com/bfhp/stream-engine/wiki/Developer-Contributing) for the complete
+open-source workflow from issue scope and a fork through tests, pull-request
+review, CI, licensing, and merge readiness.
 
 > [!IMPORTANT]
 > Stream Engine is under active development and is not yet recommended for

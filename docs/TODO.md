@@ -19,12 +19,12 @@ Priorities:
 
 ### GitHub-native administrator and developer documentation
 
-The Wiki publication workflow and the complete twelve-chapter Administrator
-Guide are implemented. The remaining work is the Developer Guide and final
-reconciliation of developer-facing source documents. Keep the result native to
-GitHub using reviewable Markdown, GitHub-rendered tables and Mermaid only where
-a diagram materially helps; do not require a separate documentation generator,
-hosted site, or build step.
+The Wiki publication workflow, complete twelve-chapter Administrator Guide,
+and complete thirteen-chapter Developer Guide are implemented. The remaining
+work is final reconciliation and end-to-end verification of developer-facing
+source documents. Keep the result native to GitHub using reviewable Markdown,
+GitHub-rendered tables and Mermaid only where a diagram materially helps; do
+not require a separate documentation generator, hosted site, or build step.
 
 The agreed information architecture, GitHub Wiki publishing model, migration
 sequence, and completion criteria are defined in

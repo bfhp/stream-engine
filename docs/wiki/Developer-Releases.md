@@ -379,4 +379,4 @@ preserve an audit trail explaining the decision.
       were verified against the same tag.
 - [ ] Post-release documentation and operational checks passed.
 
-[Back: Performance](https://github.com/bfhp/stream-engine/wiki/Developer-Performance) · [Developer Guide](https://github.com/bfhp/stream-engine/wiki/Developer-Guide)
+[Back: Performance](https://github.com/bfhp/stream-engine/wiki/Developer-Performance) · [Developer Guide](https://github.com/bfhp/stream-engine/wiki/Developer-Guide) · [Next: Contributing](https://github.com/bfhp/stream-engine/wiki/Developer-Contributing)
