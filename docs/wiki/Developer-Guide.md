@@ -36,23 +36,25 @@ starting, but you should be comfortable with Git and command-line tools.
 2. [Architecture and request flow](https://github.com/bfhp/stream-engine/wiki/Developer-Architecture) — understand
    the composition root, layer ownership, request dispatch, rendering,
    frontend build, cache, and background-task boundaries.
+3. [Database and migrations](https://github.com/bfhp/stream-engine/wiki/Developer-Database-and-Migrations) — create and
+   test forward migrations, understand combined engine/site history and state,
+   and maintain the fresh-install schema snapshot.
 
 ## Planned chapters
 
 The guide will be expanded in this order as existing source documents and
 implementation contracts are reconciled:
 
-1. Database and migrations
-2. Modules
-3. Pages and routing
-4. Themes
-5. Frontend development
-6. API and security
-7. Testing
-8. Localization and accessibility
-9. Performance
-10. Releases
-11. Contributing
+1. Modules
+2. Pages and routing
+3. Themes
+4. Frontend development
+5. API and security
+6. Testing
+7. Localization and accessibility
+8. Performance
+9. Releases
+10. Contributing
 
 Until a chapter is published, use the existing documents linked from the
 [repository README](https://github.com/bfhp/stream-engine#architecture). They

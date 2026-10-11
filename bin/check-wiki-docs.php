@@ -22,6 +22,7 @@ $administratorPages = [
 $developerPages = [
     'Developer-Getting-Started.md',
     'Developer-Architecture.md',
+    'Developer-Database-and-Migrations.md',
 ];
 $guidePages = [
     'Administrator-Guide.md' => $administratorPages,

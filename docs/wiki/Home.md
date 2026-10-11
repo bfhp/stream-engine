@@ -36,6 +36,8 @@ Start with [Getting started](https://github.com/bfhp/stream-engine/wiki/Develope
 checkout, install a local site, build the frontend, and run the baseline checks.
 Continue with [Architecture and request flow](https://github.com/bfhp/stream-engine/wiki/Developer-Architecture) before
 changing bootstrap, routing, rendering, caching, or background-task behavior.
+Use [Database and migrations](https://github.com/bfhp/stream-engine/wiki/Developer-Database-and-Migrations) for schema
+changes, data migrations, migration state, and fresh-install snapshots.
 Extension-contract chapters will follow as their existing source documents are
 reconciled.
 

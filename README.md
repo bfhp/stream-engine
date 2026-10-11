@@ -160,7 +160,8 @@ Scheduler page and invoke `bin/cron.php` once per minute as described in
 For the complete deployment and operational lifecycle, use the published
 [Administrator Guide](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide).
 Release maintainers can find installer and schema-snapshot implementation
-details in [docs/INSTALLATION.md](docs/INSTALLATION.md).
+details in
+[Database and migrations](https://github.com/bfhp/stream-engine/wiki/Developer-Database-and-Migrations).
 
 ## Development
 
@@ -228,7 +229,7 @@ Key documentation:
 
 - [Administrator Guide](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide)
 - [Developer Guide](https://github.com/bfhp/stream-engine/wiki/Developer-Guide)
-- [Installation architecture](docs/INSTALLATION.md)
+- [Database and migrations](https://github.com/bfhp/stream-engine/wiki/Developer-Database-and-Migrations)
 - [Scheduler and background tasks](https://github.com/bfhp/stream-engine/wiki/Administrator-Scheduler)
 - [Building and loading modules](docs/MODULES.md)
 - [URL ownership and runtime pages](docs/ROUTING.md)
