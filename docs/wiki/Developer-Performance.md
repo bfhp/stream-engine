@@ -335,4 +335,4 @@ Test bounded behavior and query structure in the normal suite; keep controlled
 benchmarks separate until the project establishes dedicated infrastructure and
 budgets.
 
-[Back: Localization and accessibility](https://github.com/bfhp/stream-engine/wiki/Developer-Localization-and-Accessibility) · [Developer Guide](https://github.com/bfhp/stream-engine/wiki/Developer-Guide)
+[Back: Localization and accessibility](https://github.com/bfhp/stream-engine/wiki/Developer-Localization-and-Accessibility) · [Developer Guide](https://github.com/bfhp/stream-engine/wiki/Developer-Guide) · [Next: Releases](https://github.com/bfhp/stream-engine/wiki/Developer-Releases)

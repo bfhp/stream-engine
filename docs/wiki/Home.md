@@ -58,8 +58,11 @@ for catalog ownership, plural/date/time formatting, RTL and bidirectional
 content, semantic markup, keyboard and assistive-technology contracts, and
 their verification. Use [Performance](https://github.com/bfhp/stream-engine/wiki/Developer-Performance) to design
 indexed access paths, bounded request and background work, safe caching, and
-reproducible measurements. Further extension chapters will follow as their
-existing source documents are reconciled.
+reproducible measurements. Use [Releases](https://github.com/bfhp/stream-engine/wiki/Developer-Releases) to synchronize
+version metadata and release notes, rebuild snapshots and assets, verify clean
+installation and upgrades, tag the reviewed commit, and check public
+distribution. Further extension chapters will follow as their existing source
+documents are reconciled.
 
 > [!IMPORTANT]
 > Stream Engine is under active development and is not yet recommended for

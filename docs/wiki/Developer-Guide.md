@@ -64,14 +64,16 @@ starting, but you should be comfortable with Git and command-line tools.
 11. [Performance](https://github.com/bfhp/stream-engine/wiki/Developer-Performance) — design indexed access paths,
     prevent repeated and unbounded work, use caches safely, measure request,
     background, and frontend cost, and document current platform limits.
+12. [Releases](https://github.com/bfhp/stream-engine/wiki/Developer-Releases) — choose and synchronize a version,
+    prepare release notes, snapshots and assets, test clean installation and
+    upgrades, tag an immutable commit, and verify public distribution.
 
 ## Planned chapters
 
 The guide will be expanded in this order as existing source documents and
 implementation contracts are reconciled:
 
-1. Releases
-2. Contributing
+1. Contributing
 
 Until a chapter is published, use the existing documents linked from the
 [repository README](https://github.com/bfhp/stream-engine#architecture). They

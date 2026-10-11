@@ -307,6 +307,8 @@ and verify both upgrade paths:
 
 For query/index annotations, representative execution plans, and access-path
 review, follow [Performance](https://github.com/bfhp/stream-engine/wiki/Developer-Performance).
+For versioned snapshot generation and full lifecycle verification, follow
+[Releases](https://github.com/bfhp/stream-engine/wiki/Developer-Releases).
 
 ## Migration pull-request checklist
 

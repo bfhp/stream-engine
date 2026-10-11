@@ -32,3 +32,4 @@
 - [Testing](https://github.com/bfhp/stream-engine/wiki/Developer-Testing)
 - [Localization and accessibility](https://github.com/bfhp/stream-engine/wiki/Developer-Localization-and-Accessibility)
 - [Performance](https://github.com/bfhp/stream-engine/wiki/Developer-Performance)
+- [Releases](https://github.com/bfhp/stream-engine/wiki/Developer-Releases)

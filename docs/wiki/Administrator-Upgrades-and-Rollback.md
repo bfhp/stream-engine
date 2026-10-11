@@ -20,6 +20,8 @@ Use a tagged release from the project's
 [GitHub Releases](https://github.com/bfhp/stream-engine/releases) page or the
 corresponding Composer package version. Do not deploy an arbitrary branch,
 unpinned dependency resolution, or a moving container tag to production.
+Maintainers prepare and verify those versions using the
+[Developer release process](https://github.com/bfhp/stream-engine/wiki/Developer-Releases).
 
 Before scheduling the change:
 

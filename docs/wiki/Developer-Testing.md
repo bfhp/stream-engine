@@ -436,4 +436,8 @@ Use the reproducibility and measurement contract in
 comparisons, frontend cost, and controlled benchmarks. Do not turn ordinary CI
 timing into a brittle latency assertion.
 
+The clean-checkout matrix, installation and upgrade rehearsals, dependency
+audit, tag gate, and public-package verification are defined in
+[Releases](https://github.com/bfhp/stream-engine/wiki/Developer-Releases).
+
 [Back: API and security](https://github.com/bfhp/stream-engine/wiki/Developer-API-and-Security) · [Developer Guide](https://github.com/bfhp/stream-engine/wiki/Developer-Guide) · [Next: Localization and accessibility](https://github.com/bfhp/stream-engine/wiki/Developer-Localization-and-Accessibility)

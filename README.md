@@ -238,6 +238,7 @@ Key documentation:
 - [Testing](https://github.com/bfhp/stream-engine/wiki/Developer-Testing)
 - [Localization and accessibility](https://github.com/bfhp/stream-engine/wiki/Developer-Localization-and-Accessibility)
 - [Performance](https://github.com/bfhp/stream-engine/wiki/Developer-Performance)
+- [Releases](https://github.com/bfhp/stream-engine/wiki/Developer-Releases)
 - [Scheduler and background tasks](https://github.com/bfhp/stream-engine/wiki/Administrator-Scheduler)
 - [Backlog and project status](docs/TODO.md)
 - [Test coverage backlog](docs/TEST_COVERAGE_TODO.md)
