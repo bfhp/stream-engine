@@ -55,17 +55,19 @@ starting, but you should be comfortable with Git and command-line tools.
    routes, define success and error contracts, enforce authentication,
    authorization and CSRF, validate input, and protect output, uploads, and
    secrets.
+9. [Testing](https://github.com/bfhp/stream-engine/wiki/Developer-Testing) — choose truthful unit, component, repository,
+   integration, and browser test scopes; manage fixtures and external state;
+   run coverage; write regressions; and reproduce continuous integration.
 
 ## Planned chapters
 
 The guide will be expanded in this order as existing source documents and
 implementation contracts are reconciled:
 
-1. Testing
-2. Localization and accessibility
-3. Performance
-4. Releases
-5. Contributing
+1. Localization and accessibility
+2. Performance
+3. Releases
+4. Contributing
 
 Until a chapter is published, use the existing documents linked from the
 [repository README](https://github.com/bfhp/stream-engine#architecture). They

@@ -49,9 +49,11 @@ for TypeScript and React organization, Vite entries, shared browser utilities,
 localization, tests, builds, and committed release assets. Use
 [API and security](https://github.com/bfhp/stream-engine/wiki/Developer-API-and-Security) to add versioned JSON routes,
 enforce authentication, authorization and CSRF, validate untrusted data, and
-review output, uploads, secrets, and external-service boundaries. Further
-extension chapters will follow as their existing source documents are
-reconciled.
+review output, uploads, secrets, and external-service boundaries. Use
+[Testing](https://github.com/bfhp/stream-engine/wiki/Developer-Testing) to select unit and integration boundaries,
+write PHPUnit and Vitest regressions, run disposable-database tests and
+coverage, and reproduce the continuous-integration gates. Further extension
+chapters will follow as their existing source documents are reconciled.
 
 > [!IMPORTANT]
 > Stream Engine is under active development and is not yet recommended for

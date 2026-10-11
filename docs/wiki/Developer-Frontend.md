@@ -283,7 +283,9 @@ Vitest uses `vitest.config.ts`, not the production build configuration. It
 resolves the same engine alias and build-data virtual modules, runs
 `tests/**/*.test.ts` in jsdom, restores mocks between tests, and limits workers
 for predictable CI memory use. Tests import `describe`, `it`, `expect`, and
-mock helpers explicitly; globals are disabled.
+mock helpers explicitly; globals are disabled. See
+[Testing](https://github.com/bfhp/stream-engine/wiki/Developer-Testing) for
+fixture isolation, frontend regression design, coverage, and CI parity.
 
 Put pure behavior behind exported functions and inject browser/API dependencies
 when doing so makes failure paths deterministic. Reset modified DOM, timers,

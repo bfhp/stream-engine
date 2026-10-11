@@ -238,6 +238,9 @@ composer test:coverage-html
 ```
 
 The HTML report is written to `coverage/` and is ignored by Git.
+See [Testing](https://github.com/bfhp/stream-engine/wiki/Developer-Testing) for
+test scope, fixtures, database safety, focused runs, regression practice,
+coverage expectations, and exact CI parity.
 
 ## Know the repository layout
 

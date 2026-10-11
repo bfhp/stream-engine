@@ -279,6 +279,8 @@ vendor/bin/phpunit tests/Core/Installation/SchemaSnapshotBuilderTest.php
 Add an integration test under `tests/Integration/InstallationSchemaTest.php`
 for every meaningful schema or data transformation. Seed the old shape, apply
 the migration, and assert both the intended result and important invariants.
+The broader rules for test doubles and disposable infrastructure are in
+[Testing](https://github.com/bfhp/stream-engine/wiki/Developer-Testing).
 
 The destructive integration suite is opt-in because it creates temporary
 MariaDB databases. Against the local Compose database, run:

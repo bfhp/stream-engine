@@ -418,7 +418,9 @@ For every new or changed endpoint, cover:
   where files are involved.
 
 Use focused PHPUnit controller/service/repository tests while iterating, then
-run the security and project gates:
+run the security and project gates. [Testing](https://github.com/bfhp/stream-engine/wiki/Developer-Testing)
+defines the scope, isolation, database, regression, and CI rules behind these
+commands:
 
 ```bash
 vendor/bin/phpunit \
@@ -460,4 +462,4 @@ and output failures require runtime tests and review.
 - Negative authorization, CSRF, malformed-input, disclosure, and regression
   tests pass together with the complete project gate.
 
-[Back: Frontend development](https://github.com/bfhp/stream-engine/wiki/Developer-Frontend) · [Developer Guide](https://github.com/bfhp/stream-engine/wiki/Developer-Guide)
+[Back: Frontend development](https://github.com/bfhp/stream-engine/wiki/Developer-Frontend) · [Developer Guide](https://github.com/bfhp/stream-engine/wiki/Developer-Guide) · [Next: Testing](https://github.com/bfhp/stream-engine/wiki/Developer-Testing)
