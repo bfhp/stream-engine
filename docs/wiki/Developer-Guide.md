@@ -20,8 +20,9 @@ starting, but you should be comfortable with Git and command-line tools.
 1. [Set up a development environment](https://github.com/bfhp/stream-engine/wiki/Developer-Getting-Started),
    install both dependency sets, create a local site, and run the same checks
    used by continuous integration.
-2. Read the architecture and request-flow chapter before changing shared
-   bootstrap, routing, rendering, caching, or background-task behavior.
+2. Read [Architecture and request flow](https://github.com/bfhp/stream-engine/wiki/Developer-Architecture) before
+   changing shared bootstrap, routing, rendering, caching, or background-task
+   behavior.
 3. Use the relevant extension chapter before adding a module, page action,
    theme, frontend entry point, or migration.
 4. Complete the security, test, documentation, and compatibility checks before
@@ -32,24 +33,26 @@ starting, but you should be comfortable with Git and command-line tools.
 1. [Getting started](https://github.com/bfhp/stream-engine/wiki/Developer-Getting-Started) — fork or clone the
    repository, start the Docker development stack or prepare a host stack,
    install the application, build frontend assets, and run the baseline checks.
+2. [Architecture and request flow](https://github.com/bfhp/stream-engine/wiki/Developer-Architecture) — understand
+   the composition root, layer ownership, request dispatch, rendering,
+   frontend build, cache, and background-task boundaries.
 
 ## Planned chapters
 
 The guide will be expanded in this order as existing source documents and
 implementation contracts are reconciled:
 
-1. Architecture and request flow
-2. Database and migrations
-3. Modules
-4. Pages and routing
-5. Themes
-6. Frontend development
-7. API and security
-8. Testing
-9. Localization and accessibility
-10. Performance
-11. Releases
-12. Contributing
+1. Database and migrations
+2. Modules
+3. Pages and routing
+4. Themes
+5. Frontend development
+6. API and security
+7. Testing
+8. Localization and accessibility
+9. Performance
+10. Releases
+11. Contributing
 
 Until a chapter is published, use the existing documents linked from the
 [repository README](https://github.com/bfhp/stream-engine#architecture). They

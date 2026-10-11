@@ -272,4 +272,4 @@ reviewing the existing contracts linked from the repository README.
 - User-visible behavior or an extension-contract change includes matching
   documentation.
 
-[Back: Developer Guide](https://github.com/bfhp/stream-engine/wiki/Developer-Guide) · [Documentation home](https://github.com/bfhp/stream-engine/wiki/Home)
+[Back: Developer Guide](https://github.com/bfhp/stream-engine/wiki/Developer-Guide) · [Next: Architecture and request flow](https://github.com/bfhp/stream-engine/wiki/Developer-Architecture)

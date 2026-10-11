@@ -34,8 +34,10 @@ them to the open-source project.
 
 Start with [Getting started](https://github.com/bfhp/stream-engine/wiki/Developer-Getting-Started) to prepare a
 checkout, install a local site, build the frontend, and run the baseline checks.
-Architecture and extension-contract chapters will follow as their existing
-source documents are reconciled.
+Continue with [Architecture and request flow](https://github.com/bfhp/stream-engine/wiki/Developer-Architecture) before
+changing bootstrap, routing, rendering, caching, or background-task behavior.
+Extension-contract chapters will follow as their existing source documents are
+reconciled.
 
 > [!IMPORTANT]
 > Stream Engine is under active development and is not yet recommended for
