@@ -7,7 +7,7 @@ namespace StreamEngine\Domain;
 /**
  * A poll attached to a single feed (feed_polls.feed_id is unique - see
  * migrations/20260912000000_initial.sql). Generic per
- * docs/MODULE_CONTRACT.md's "useful to more than one module" test, same as
+ * docs/wiki/Developer-Modules.md's "useful to more than one module" test, same as
  * Feed's own rating/favorite machinery: Forums is the first caller
  * (Modules\Forums attaching one to a topic), but nothing here is
  * forum-specific.

@@ -5,6 +5,7 @@ declare(strict_types=1);
 $projectRoot = dirname(__DIR__);
 $wikiDirectory = $projectRoot.'/docs/wiki';
 $wikiBaseUrl = 'https://github.com/bfhp/stream-engine/wiki/';
+$repositoryBlobBaseUrl = 'https://github.com/bfhp/stream-engine/blob/main/';
 $administratorPages = [
     'Administrator-Requirements.md',
     'Administrator-Installation.md',
@@ -151,6 +152,7 @@ foreach ($guidePages as $guidePage => $chapterPages) {
 }
 
 $links = [];
+$repositoryAnchors = [];
 foreach ($pages as $name => $contents) {
     $links[$name] = [];
     preg_match_all('/(?<!!)\[[^\]]+\]\(([^)]+)\)/', $contents, $matches);
@@ -181,6 +183,36 @@ foreach ($pages as $name => $contents) {
                 assertAnchorExists($name, $target, $fragment, $destination, $anchors);
             }
             $links[$name][] = $target;
+
+            continue;
+        }
+
+        if (str_starts_with($destination, $repositoryBlobBaseUrl)) {
+            $repositoryTarget = rawurldecode(substr($destination, strlen($repositoryBlobBaseUrl)));
+            [$path, $fragment] = array_pad(explode('#', $repositoryTarget, 2), 2, null);
+            if (preg_match('/\A(?!\/)(?!.*(?:\A|\/)\.\.(?:\/|\z))[A-Za-z0-9._\/-]+\z/', $path) !== 1) {
+                fail(sprintf('Wiki page "%s" has invalid repository link "%s".', $name, $destination));
+            }
+
+            $repositoryFile = $projectRoot.'/'.$path;
+            if (! is_file($repositoryFile)) {
+                fail(sprintf(
+                    'Wiki page "%s" links to missing repository file "%s".',
+                    $name,
+                    $path,
+                ));
+            }
+
+            if ($fragment !== null && $fragment !== '' && str_ends_with($path, '.md')) {
+                if (! isset($repositoryAnchors[$path])) {
+                    $repositoryContents = file_get_contents($repositoryFile);
+                    if ($repositoryContents === false) {
+                        fail(sprintf('Could not read repository Markdown file "%s".', $path));
+                    }
+                    $repositoryAnchors[$path] = markdownAnchors($repositoryContents);
+                }
+                assertAnchorExists($name, $path, $fragment, $destination, $repositoryAnchors);
+            }
 
             continue;
         }

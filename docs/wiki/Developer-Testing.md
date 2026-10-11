@@ -327,6 +327,12 @@ npm run typecheck
 npm run build
 ```
 
+The documentation validator checks the required page set, stable filenames,
+guide navigation and reachability, Wiki page anchors, and canonical links to
+files and Markdown headings in the repository. External network links remain a
+review or retry-aware scheduled check so a transient service failure cannot
+make every pull request fail.
+
 Do not report “all tests pass” after only a focused file. State exactly which
 checks ran and identify skipped tests. In particular, the MariaDB integration
 suite is skipped when `INSTALL_TEST_DB_DSN` is absent; a green host run with

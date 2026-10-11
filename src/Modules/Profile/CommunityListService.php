@@ -15,7 +15,7 @@ use StreamEngine\Repository\MembershipRepository;
  *
  * Module-private to Profile and built by ProfileController's own constructor,
  * the same arrangement (and for the same reasons) as FriendListService next
- * door - see docs/MODULE_CONTRACT.md's "useful to exactly one module" case.
+ * door - see docs/wiki/Developer-Modules.md's "useful to exactly one module" case.
  * Read that class's docblock for the full rationale on why a Profile service
  * reads shared `memberships`/`feeds` data through Core's repositories instead
  * of calling into Modules\Users\CommunityService, which Profile may not
@@ -90,7 +90,7 @@ final class CommunityListService
         // Resolved once for the whole list. Both are null when the Users
         // module isn't installed, in which case cards render without links -
         // this module must not depend on another one's pages existing
-        // (docs/MODULE_CONTRACT.md), so their absence is a supported state.
+        // (docs/wiki/Developer-Modules.md), so their absence is a supported state.
         $showPage = $this->pageTree->findByAction('community.show-slug');
         $managePage = $this->pageTree->findByAction('community.manage');
 

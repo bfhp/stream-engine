@@ -110,7 +110,8 @@ Remove the temporary directory after publication.
 | --- | --- |
 | `Repository not found` while cloning | Initialize the first Wiki page and confirm that Wikis are enabled. The same message can also mean the selected token has no access. |
 | HTTP 403 while pushing | Grant workflow write permission or configure `WIKI_TOKEN`. |
-| Validation reports a missing page or heading | Add or correct the flat source page under `docs/wiki/`, then use its canonical GitHub Wiki URL without the `.md` suffix. |
+| Validation reports a missing Wiki page or heading | Add or correct the flat source page under `docs/wiki/`, then use its canonical GitHub Wiki URL without the `.md` suffix. |
+| Validation reports a missing repository file or Markdown heading | Correct the canonical `https://github.com/bfhp/stream-engine/blob/main/...` target or add the referenced file in the same change. |
 | Validation reports an unreachable page | Link the page from `Home.md`, `_Sidebar.md`, or another reachable page. |
 | Wiki shows an unexpected direct edit | Change the canonical file under `docs/wiki/` and republish; do not preserve unreviewed Wiki-only content. |
 | Publication ran for an older commit | Wait for the serialized workflow runs to finish. The latest `main` run publishes last. |

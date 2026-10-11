@@ -10,7 +10,7 @@ use StreamEngine\Core\PdoDatabase;
  * Forums-only read queries, built directly by ForumsController's own
  * constructor and never wired through ControllerFactory - same shape as
  * Modules\Users\BlogPostService/FriendService (see
- * docs/MODULE_CONTRACT.md's "where a new piece of logic belongs"). This
+ * docs/wiki/Developer-Modules.md's "where a new piece of logic belongs"). This
  * logic is useful to exactly one module, so it lives here instead of
  * bloating the shared FeedRepository/FeedService with forum vocabulary
  * ("topics", "posts") that every other module would otherwise have to

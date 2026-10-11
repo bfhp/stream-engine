@@ -634,7 +634,7 @@ class FeedService
     }
 
     /**
-     * Generic "someone viewed this feed" counter, per `docs/MODULE_CONTRACT.md`'s
+     * Generic "someone viewed this feed" counter, per `docs/wiki/Developer-Modules.md`'s
      * "useful to more than one module" test - a Forums topic
      * or a Blog post could all plausibly want a view count, so this
      * lives here rather than in any one module (today, only

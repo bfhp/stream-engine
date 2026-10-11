@@ -14,7 +14,7 @@ use StreamEngine\Domain\User;
 use StreamEngine\Repository\PollRepository;
 
 /**
- * Generic feed-attached polls - per docs/MODULE_CONTRACT.md's "useful to
+ * Generic feed-attached polls - per docs/wiki/Developer-Modules.md's "useful to
  * more than one module" test, same posture as FeedService's own
  * rating/favorite methods, just kept in its own Service rather than bolted
  * onto the already-1700-line FeedService: a poll's own vocabulary (options,

@@ -1,7 +1,7 @@
 # TODO
 
 The project's current backlog. Last reviewed against the code and tests on
-**October 9, 2026**.
+**October 11, 2026**.
 
 This file contains only unfinished work and decisions that have been made but
 not yet implemented. Completed work is not recorded here; Git provides that
@@ -14,34 +14,6 @@ Priorities:
   success response, or data may be lost or returned incorrectly;
 - **P1** — important reliability, security, or operational work;
 - **P2** — product improvements, refactoring, and localized technical debt.
-
-## P2
-
-### GitHub-native administrator and developer documentation
-
-The Wiki publication workflow, complete twelve-chapter Administrator Guide,
-and complete thirteen-chapter Developer Guide are implemented. The remaining
-work is final reconciliation and end-to-end verification of developer-facing
-source documents. Keep the result native to GitHub using reviewable Markdown,
-GitHub-rendered tables and Mermaid only where a diagram materially helps; do
-not require a separate documentation generator, hosted site, or build step.
-
-The agreed information architecture, GitHub Wiki publishing model, migration
-sequence, and completion criteria are defined in
-[the documentation implementation plan](DOCUMENTATION_PLAN.md).
-
-- The developer guide must cover local setup, architecture and request flow,
-  database migrations, modules, page-action contracts, themes and template
-  inheritance, frontend assets, API conventions, authorization and CSRF,
-  testing, localization, performance rules, and the release workflow.
-- Reconcile and link the existing contract documents instead of duplicating
-  them. Examples and commands must be executable against the current tree, and
-  documentation changes should become part of the completion criteria for
-  user-visible features and extension contracts.
-- Consider the remaining task complete when a new developer can run, change,
-  test, and extend Stream Engine using only the repository documentation, the
-  existing developer contracts have one canonical location, and every internal
-  link is checked.
 
 ## File maintenance rule
 

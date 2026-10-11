@@ -44,7 +44,7 @@ class ProfileController extends AbstractController
 
     /**
      * Module-private, so they're built here rather than constructor-injected -
-     * see docs/MODULE_CONTRACT.md and each class's own docblock. The
+     * see docs/wiki/Developer-Modules.md and each class's own docblock. The
      * repositories they need are stateless wrappers over PdoDatabase, so fresh
      * instances are equivalent to sharing StreamEngine's own.
      */

@@ -318,7 +318,7 @@ class ForumsController extends AbstractController
         // Kept as a separate id => counts map rather than stamped onto the
         // Feed objects themselves - topics/posts counts are a forums.list
         // presentation concern, not something a shared Domain\Feed should
-        // carry (see docs/MODULE_CONTRACT.md).
+        // carry (see docs/wiki/Developer-Modules.md).
         $forumStats = [];
         foreach ($subForumIds as $id) {
             $forumStats[$id] = [
@@ -1687,7 +1687,7 @@ class ForumsController extends AbstractController
      * rather than something generic on FeedService/APIController: which
      * topics belong to "this section" or "the whole forum" is Forums
      * vocabulary, same reasoning ForumRepository itself exists instead of
-     * that logic living in FeedRepository (see docs/MODULE_CONTRACT.md).
+     * that logic living in FeedRepository (see docs/wiki/Developer-Modules.md).
      * The actual bulk write (FeedService::markFeedsAsRead()) is the generic,
      * Core-owned primitive underneath - this endpoint's only job is
      * resolving *which* topic ids that scope means.
@@ -1709,7 +1709,7 @@ class ForumsController extends AbstractController
      * generic, Core-owned machinery (FeedService::isFeedFavorited()'s same
      * feed_favorites table), but "a new forum reply should message that
      * topic's followers" is a Forums product decision, not something every
-     * comment everywhere should trigger - see docs/MODULE_CONTRACT.md's
+     * comment everywhere should trigger - see docs/wiki/Developer-Modules.md's
      * module-vs-Core test. Editing/deleting a reply doesn't notify anyone,
      * so PATCH/DELETE stay on the generic /api/v1/comments/{topicId}/
      * {commentId} action (APIController::handleCommentItemRequest()) - only

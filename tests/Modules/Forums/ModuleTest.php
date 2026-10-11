@@ -36,7 +36,7 @@ use Tests\Support\FakeFeedRepository;
 
 /**
  * Forums was the pilot for the feature-module architecture (see
- * docs/MODULE_CONTRACT.md). This test exists to prove the module resolves
+ * docs/wiki/Developer-Modules.md). This test exists to prove the module resolves
  * correctly end to end: id/controller resolution through ModuleRegistry +
  * ControllerFactory using the module controller class. Discovery itself is
  * covered by ModuleAutoloadTest.

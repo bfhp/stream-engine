@@ -19,7 +19,7 @@ use StreamEngine\Service\UserService;
  * (rejecting an incoming request).
  *
  * Module-private to Profile, built by ProfileController's own constructor -
- * see docs/MODULE_CONTRACT.md's "useful to exactly one module" case, same
+ * see docs/wiki/Developer-Modules.md's "useful to exactly one module" case, same
  * shape as Modules\Users\FriendService/BlogPostService.
  *
  * It's a fair question why this isn't just a call into that FriendService,
@@ -103,7 +103,7 @@ final class FriendListService
         // Resolved once for the whole list, not per row. Null if the Users
         // module isn't installed, in which case names render as plain text
         // instead of links - this module must not depend on another one's
-        // pages existing (docs/MODULE_CONTRACT.md), so the absence is a
+        // pages existing (docs/wiki/Developer-Modules.md), so the absence is a
         // supported state rather than an error. Same "no username, no link"
         // rule applies per row: the public username is assigned by a
         // backfill after registration, not at registration.

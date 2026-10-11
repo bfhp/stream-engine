@@ -26,7 +26,7 @@ use Tests\Support\FakePdoDatabase;
  *
  * The relationships under test are seeded by inserting membership rows
  * directly rather than by going through Users\FriendService::sendRequest():
- * this module can't reference that class (docs/MODULE_CONTRACT.md), and the
+ * this module can't reference that class (docs/wiki/Developer-Modules.md), and the
  * point here is precisely that the same shared `memberships`/`feeds` rows read
  * back correctly from this side.
  */

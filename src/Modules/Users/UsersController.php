@@ -140,7 +140,7 @@ class UsersController extends AbstractController
 
     /**
      * BlogPostService/FriendService are only ever used from inside this
-     * module (see their own docblocks), so - per docs/MODULE_CONTRACT.md -
+     * module (see their own docblocks), so - per docs/wiki/Developer-Modules.md -
      * they're built right below in the constructor body rather than
      * declared as constructor-injected types, which would force
      * StreamEngine's global bootstrap (or its ControllerFactory) to know

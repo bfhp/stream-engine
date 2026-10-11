@@ -23,7 +23,7 @@ use Tests\Support\FakePdoDatabase;
  *
  * Memberships are seeded by inserting rows directly rather than through
  * Users\CommunityService::join(): this module can't reference that class
- * (docs/MODULE_CONTRACT.md), and the point is precisely that the same shared
+ * (docs/wiki/Developer-Modules.md), and the point is precisely that the same shared
  * `memberships`/`feeds` rows read back correctly from this side.
  */
 final class CommunityListServiceTest extends TestCase

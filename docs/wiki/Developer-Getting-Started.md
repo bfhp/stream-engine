@@ -62,7 +62,8 @@ git switch -c describe-the-change
 ```
 
 Use a short branch name that describes one coherent change. A complete pull
-request workflow will be documented in the contributing chapter.
+request workflow is documented in
+[Contributing](https://github.com/bfhp/stream-engine/wiki/Developer-Contributing).
 
 ## Recommended Docker setup
 
