@@ -42,8 +42,10 @@ Use [Modules](https://github.com/bfhp/stream-engine/wiki/Developer-Modules) to a
 autoloading, dependency, routing, template, frontend, API, cron, and removal
 contracts. Use [Pages and routing](https://github.com/bfhp/stream-engine/wiki/Developer-Pages-and-Routing) when changing
 page trees, dynamic patterns, content bindings, canonical URLs, or route
-access. Further extension chapters will follow as their existing source
-documents are reconciled.
+access. Use [Themes](https://github.com/bfhp/stream-engine/wiki/Developer-Themes) to create a public-site presentation
+layer, declare its manifest and assets, override templates, and preserve the
+shared browser UI contract. Further extension chapters will follow as their
+existing source documents are reconciled.
 
 > [!IMPORTANT]
 > Stream Engine is under active development and is not yet recommended for

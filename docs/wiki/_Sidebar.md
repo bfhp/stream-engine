@@ -26,3 +26,4 @@
 - [Database and migrations](https://github.com/bfhp/stream-engine/wiki/Developer-Database-and-Migrations)
 - [Modules](https://github.com/bfhp/stream-engine/wiki/Developer-Modules)
 - [Pages and routing](https://github.com/bfhp/stream-engine/wiki/Developer-Pages-and-Routing)
+- [Themes](https://github.com/bfhp/stream-engine/wiki/Developer-Themes)

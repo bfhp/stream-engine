@@ -314,6 +314,10 @@ to collide. Theme paths have priority, allowing a theme to override module
 markup while the module retains its default template. Keep business rules,
 authorization, and trusted validation in PHP rather than Twig.
 
+The complete ownership, lookup, namespaced extension, stable markup, and
+browser UI contract is documented in
+[Themes](https://github.com/bfhp/stream-engine/wiki/Developer-Themes).
+
 ## Browser assets
 
 The root Vite configuration discovers `.ts` and `.tsx` entry files directly

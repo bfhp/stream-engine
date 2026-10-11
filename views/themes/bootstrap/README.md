@@ -2,7 +2,7 @@
 
 The reference extended theme: the site's Bootstrap look, built on top of the
 `default` base theme. Copy this folder when you start a theme of your own.
-See `docs/THEME_CONTRACT.md`.
+See the [Developer Guide: Themes](https://github.com/bfhp/stream-engine/wiki/Developer-Themes).
 
 ## The rule
 

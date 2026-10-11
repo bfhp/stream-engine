@@ -45,20 +45,22 @@ starting, but you should be comfortable with Git and command-line tools.
 5. [Pages and routing](https://github.com/bfhp/stream-engine/wiki/Developer-Pages-and-Routing) — design static and
    dynamic page trees, bind content, generate canonical URLs, preserve access
    and method boundaries, and test route changes.
+6. [Themes](https://github.com/bfhp/stream-engine/wiki/Developer-Themes) — create and discover themes, define manifests
+   and settings, inherit templates and assets, override module presentation,
+   preserve the browser UI contract, and test compatibility.
 
 ## Planned chapters
 
 The guide will be expanded in this order as existing source documents and
 implementation contracts are reconciled:
 
-1. Themes
-2. Frontend development
-3. API and security
-4. Testing
-5. Localization and accessibility
-6. Performance
-7. Releases
-8. Contributing
+1. Frontend development
+2. API and security
+3. Testing
+4. Localization and accessibility
+5. Performance
+6. Releases
+7. Contributing
 
 Until a chapter is published, use the existing documents linked from the
 [repository README](https://github.com/bfhp/stream-engine#architecture). They

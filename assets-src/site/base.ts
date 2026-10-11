@@ -1,3 +1,3 @@
 // CSS-only entry: emits css/base.css, the `default` theme's framework-free
-// design. See docs/THEME_CONTRACT.md ("Theme layers").
+// design. See Developer Guide: Themes ("Inheritance and fallback").
 import "./base.css";

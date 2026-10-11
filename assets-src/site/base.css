@@ -3,7 +3,7 @@
 
    1. Tokens (--ui-*), light/dark via <html data-color-mode>.
    2. A small reset and typography.
-   3. The UI vocabulary from docs/THEME_CONTRACT.md (ui-*).
+   3. The UI vocabulary from Developer Guide: Themes (ui-*).
    4. Platform components: layout, header/nav, footer, modal, toast, tabs,
       comments, cards.
    5. A temporary --bs-* bridge for site.css (see the end of the file).

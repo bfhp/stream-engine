@@ -216,6 +216,10 @@ If a non-default theme throws a Twig loading, syntax, or runtime error, the
 request is retried with the default theme and the failure is logged. A failure
 in the default theme is not hidden.
 
+The normative discovery, manifest, inheritance, asset, ownership, override,
+and browser UI contracts are documented in
+[Themes](https://github.com/bfhp/stream-engine/wiki/Developer-Themes).
+
 ## Persistence, settings, and cache
 
 `PdoDatabase` is the shared PDO wrapper. It uses native prepared statements,
