@@ -300,7 +300,7 @@ testing the installation flow on a trusted workstation:
 ```bash
 git clone https://github.com/bfhp/stream-engine.git
 cd stream-engine
-git checkout v0.5.0
+git checkout v0.5.1
 docker compose build php
 docker compose run --rm php composer install
 docker compose up -d

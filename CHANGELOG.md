@@ -7,6 +7,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-10-12
+
 ### Fixed
 
 - Fixed application bootstrap rejecting multiple pages that intentionally use
