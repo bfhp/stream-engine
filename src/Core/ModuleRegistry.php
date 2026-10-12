@@ -235,6 +235,18 @@ final class ModuleRegistry
         return $this->pageActions;
     }
 
+    /** @return list<string> */
+    public function singletonPageActions(): array
+    {
+        return array_values(array_map(
+            static fn (array $descriptor): string => $descriptor['action'],
+            array_filter(
+                $this->pageActions,
+                static fn (array $descriptor): bool => $descriptor['singleton'],
+            ),
+        ));
+    }
+
     /** @return array<string, mixed>|null */
     public function pageAction(string $action): ?array
     {

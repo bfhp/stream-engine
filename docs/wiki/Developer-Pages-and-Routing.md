@@ -58,7 +58,7 @@ The principal fields are:
 | --- | --- |
 | `id`, `parentId` | Node identity and parent relationship. Runtime IDs exist only for the current boot. |
 | `pattern` | One path-segment pattern under the parent. The root pattern is empty. |
-| `action` | Globally unique controller dispatch name. |
+| `action` | Controller dispatch name. It is unique only for actions declared as singleton. |
 | `pageName` | Static display/breadcrumb fallback. Dynamic breadcrumbs may come from the controller. |
 | `settings` | Action-specific and presentation settings. |
 | `feedId` | Bind one specific feed to a page and URL anchor. |

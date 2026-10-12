@@ -266,7 +266,19 @@ class PageTreeTest extends TestCase
         $tree->validateDefinitions();
     }
 
-    public function testValidateDefinitionsRejectsDuplicateActions(): void
+    public function testValidateDefinitionsAcceptsDuplicateNonSingletonActions(): void
+    {
+        $tree = new PageTree([
+            self::makePage(1, null, '', feedId: 1, action: 'article.show-id'),
+            self::makePage(2, 1, 'rules', feedId: 13, action: 'article.show-id'),
+        ]);
+
+        $tree->validateDefinitions();
+
+        $this->addToAssertionCount(1);
+    }
+
+    public function testValidateDefinitionsRejectsDuplicateSingletonActions(): void
     {
         $tree = new PageTree([
             self::makePage(1, null, '', action: 'same.action'),
@@ -274,9 +286,9 @@ class PageTreeTest extends TestCase
         ]);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage("Duplicate page definition action 'same.action'");
+        $this->expectExceptionMessage("Duplicate singleton page definition action 'same.action'");
 
-        $tree->validateDefinitions();
+        $tree->validateDefinitions(['same.action']);
     }
 
     public function testValidateDefinitionsRejectsDuplicateStaticSiblingPatterns(): void

@@ -71,6 +71,7 @@ final class ModuleRegistryTest extends TestCase
         self::assertSame([['oneOf' => ['feedType', 'feedId']]], $action['requirements']);
         self::assertSame([], $action['settings']);
         self::assertNull($registry->pageAction('missing'));
+        self::assertNotContains('probe.show', $registry->singletonPageActions());
     }
 
     public function testSelectSettingsSchemaIsNormalized(): void
@@ -111,6 +112,17 @@ final class ModuleRegistryTest extends TestCase
         ]);
 
         self::assertTrue($action['singleton']);
+    }
+
+    public function testSingletonPageActionsReturnsOnlySingletonDescriptors(): void
+    {
+        $registry = \StreamEngine\Controllers\registryWithFixtures([ForumsController::class]);
+
+        self::assertContains('forums.list', $registry->singletonPageActions());
+        self::assertNotContains('article.show-id', $registry->singletonPageActions());
+        foreach ($registry->singletonPageActions() as $action) {
+            self::assertTrue($registry->pageAction($action)['singleton']);
+        }
     }
 
     #[\PHPUnit\Framework\Attributes\DataProvider('invalidSettingsSchemas')]

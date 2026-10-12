@@ -329,7 +329,7 @@ class StreamEngine
 
         $this->controllerFactory->registerRuntimePages($this->pageTree, $this->tm);
         $this->initCronAndApi();
-        $this->pageTree->validateDefinitions();
+        $this->pageTree->validateDefinitions($this->modules->singletonPageActions());
     }
 
     /**

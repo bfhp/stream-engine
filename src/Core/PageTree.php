@@ -190,11 +190,14 @@ final class PageTree
      * Validate the definitions collected during boot. This deliberately is
      * not part of add() so modules can register a complete tree before it is
      * checked and produce a precise boot error.
+     *
+     * @param list<string> $singletonActions
      */
-    public function validateDefinitions(): void
+    public function validateDefinitions(array $singletonActions = []): void
     {
         $ids = [];
         $actions = [];
+        $singletons = array_fill_keys($singletonActions, true);
         $pagesById = [];
         $staticPatterns = [];
         $dynamicPatterns = [];
@@ -206,9 +209,9 @@ final class PageTree
             $ids[$page->id] = true;
             $pagesById[$page->id] = $page;
 
-            if ($page->action !== null) {
+            if ($page->action !== null && isset($singletons[$page->action])) {
                 if (isset($actions[$page->action])) {
-                    throw new RuntimeException("Duplicate page definition action '{$page->action}'");
+                    throw new RuntimeException("Duplicate singleton page definition action '{$page->action}'");
                 }
                 $actions[$page->action] = true;
             }

@@ -7,6 +7,11 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed application bootstrap rejecting multiple pages that intentionally use
+  the same non-singleton action, such as fixed articles with distinct Feed IDs.
+
 ## [0.5.0] - 2026-10-09
 
 ### Changed

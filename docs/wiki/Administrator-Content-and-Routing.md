@@ -116,12 +116,13 @@ otherwise unmatched segment can reach the dynamic page.
 - A page cannot be its own parent or a child of one of its descendants.
 - Static sibling patterns must be unique.
 - Only one dynamic sibling pattern is allowed under a given parent.
-- Page action names must remain unique in the complete runtime page tree.
+- Page actions marked as singleton must remain unique in the complete runtime
+  page tree. Other actions may be reused by multiple concrete pages.
 
 The editor prevents invalid parent cycles and validates action-specific fields.
-The current release does not reject every duplicate pattern or duplicate
-action before writing it to the database. The runtime validates the complete
-tree on the next request and may fail to start if a conflict was saved.
+The current release does not reject every duplicate pattern before writing it
+to the database. The runtime validates the complete tree on the next request
+and may fail to start if a conflict was saved.
 Always search the Pages list for the intended pattern and action before
 creating a page, and keep the database backup until the site has passed its
 post-change checks.

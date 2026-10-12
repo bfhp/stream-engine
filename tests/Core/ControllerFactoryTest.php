@@ -356,7 +356,10 @@ final class ControllerFactoryTest extends TestCase
         $source = file_get_contents(__DIR__.'/../../src/StreamEngine.php');
         $runtime = strpos($source, '$this->controllerFactory->registerRuntimePages($this->pageTree, $this->tm);');
         $api = strpos($source, '$this->initCronAndApi();');
-        $validation = strpos($source, '$this->pageTree->validateDefinitions();');
+        $validation = strpos(
+            $source,
+            '$this->pageTree->validateDefinitions($this->modules->singletonPageActions());'
+        );
 
         $this->assertIsInt($runtime);
         $this->assertIsInt($api);

@@ -136,7 +136,9 @@ does not read `composer.json` and does not search directories at runtime.
 For a conventional class such as
 `MySite\Modules\Notes\NotesController`, the module ID is `Notes`. When the
 short class name is not `<last namespace segment>Controller`, the short class
-name becomes the ID. IDs and page action names are global and must be unique.
+name becomes the ID. Module IDs and action-to-controller declarations are
+global and must be unique; multiple page definitions may use the same action
+unless its descriptor sets `singleton`.
 Prefer the conventional form so controller IDs used by cron and diagnostics
 remain predictable.
 
