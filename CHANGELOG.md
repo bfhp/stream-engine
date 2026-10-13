@@ -7,6 +7,15 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Security
+
+- All responses now send `X-Content-Type-Options: nosniff`, so browsers no
+  longer guess a different content type than the server declared. PHP sets the
+  header for application responses; the Nginx examples set it for static files
+  and `/uploads/`. Existing Nginx installations should add
+  `add_header X-Content-Type-Options nosniff always;` to their `/uploads/` and
+  `/` locations.
+
 ## [0.5.1] - 2026-10-12
 
 ### Fixed

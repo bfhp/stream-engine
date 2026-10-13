@@ -337,6 +337,8 @@ class StreamEngine
      */
     public function handleRequest(): void
     {
+        Security::sendResponseHeaders();
+
         $twig = $this->createTwigEnvironment($this->activeTheme);
         $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         $pageData = (new Router($this->pageTree))->resolve($path);

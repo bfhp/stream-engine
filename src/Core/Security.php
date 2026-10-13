@@ -23,6 +23,26 @@ class Security
     }
 
     /**
+     * Response headers every application response carries, whatever its
+     * content type. The single place to add further site-wide security
+     * headers.
+     *
+     * `X-Content-Type-Options: nosniff` stops browsers from guessing a more
+     * dangerous type than the one declared, such as rendering a JSON body
+     * that echoes user input as HTML. Files under /uploads/ never reach PHP,
+     * so the web server sets the same header for them (see the Nginx example
+     * in the installation guide).
+     */
+    public static function sendResponseHeaders(): void
+    {
+        if (headers_sent()) {
+            return;
+        }
+
+        header('X-Content-Type-Options: nosniff');
+    }
+
+    /**
      * The token for this request, issuing one if the visitor hasn't got it yet.
      *
      * Stable within a request: it writes the new value straight into $_COOKIE

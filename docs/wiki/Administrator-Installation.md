@@ -92,10 +92,12 @@ server {
 
     location /uploads/ {
         alias /srv/stream-engine/storage/uploads/;
+        add_header X-Content-Type-Options nosniff always;
     }
 
     location / {
         try_files $uri /index.php?$query_string;
+        add_header X-Content-Type-Options nosniff always;
     }
 
     location ~ \.php$ {
