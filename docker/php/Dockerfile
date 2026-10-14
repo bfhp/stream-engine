@@ -1,4 +1,4 @@
-FROM node:20 AS node
+FROM node:24-slim AS node
 
 FROM php:8.3-fpm
 
