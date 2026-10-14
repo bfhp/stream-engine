@@ -94,7 +94,7 @@ composer migrate:check
 
 `migrate:status` prints applied and pending counts. `migrate:check` prints a
 warning and the pending filenames when work remains. These commands inspect
-files and `storage/migrations.json`; they do not connect to MariaDB and do not
+files and `storage/migrations.json`; they do not connect to the database and do not
 prove that the schema was modified outside the migration system.
 
 `migrate:check` currently exits successfully after printing its warning. Treat
@@ -121,21 +121,45 @@ composer migrate:make -- add_article_summary
 ```
 
 The generated file contains a placeholder comment. Replace it with plain
-MariaDB SQL. The runner splits statements at semicolons outside single- or
+MariaDB SQL that MySQL 8.4 also accepts after the dialect adjustments below. The runner splits statements at semicolons outside single- or
 double-quoted strings and removes `--` and `/* ... */` comments.
 
 Keep migration files within the supported SQL-script subset:
 
-- use ordinary MariaDB DDL and DML statements;
+- use ordinary MariaDB DDL and DML statements that MySQL 8.4 also supports;
 - terminate statements with semicolons;
 - use `--` or block comments; `#` comments are not recognized by the parser;
 - do not use `DELIMITER` directives; and
 - do not introduce triggers, stored routines, or database events. The release
   snapshot builder rejects these objects.
 
-Migrations execute through `PDO::exec()`. They do not run through a MariaDB
+Migrations execute through `PDO::exec()`. They do not run through a database
 command-line client, so client directives and interactive commands are not
 available.
+
+### MySQL and MariaDB
+
+Migration files and the installation snapshot are written in MariaDB SQL and
+are never rewritten on disk, so their checksums stay valid. Before each
+statement runs, `SqlDialect` (in `src/Core/Migrations/`) detects the server
+from `PDO::ATTR_SERVER_VERSION` and, on MySQL only:
+
+- replaces `utf8mb4_uca1400_ai_ci`, `_as_ci`, and `_as_cs` (including the
+  `_nopad` variants) with the matching `utf8mb4_0900_*` collation;
+- wraps a function used as a column default, such as
+  `DEFAULT unix_timestamp()`, in the parentheses MySQL requires; and
+- drops a `CREATE TABLE` check constraint that uses a column whose foreign key
+  has `ON DELETE` or `ON UPDATE` `CASCADE`, `SET NULL`, or `SET DEFAULT`,
+  because MySQL rejects it (error 3823). Keep such invariants in the
+  application as well.
+
+Everything else must already be valid on both servers. In particular, avoid
+MariaDB-only syntax such as `RETURNING`, `CREATE OR REPLACE`,
+`ADD COLUMN IF NOT EXISTS`, sequences, `INET6`/`UUID` column types, system
+versioning, and long unique keys without a prefix (`USING HASH`). Avoid
+MySQL-only syntax too, such as `INSERT ... AS new` row aliases. New tables
+should use the canonical `COLLATE=utf8mb4_uca1400_ai_ci` so the translation
+applies.
 
 ## Design a safe migration
 
@@ -154,8 +178,8 @@ backup for rollback. Do not put a misleading `down` section into the SQL file.
 
 ### Account for partial execution
 
-The runner does not start a transaction around a migration file, and MariaDB
-DDL commonly commits implicitly. If statement three fails after statements one
+The runner does not start a transaction around a migration file, and DDL on
+both MariaDB and MySQL commonly commits implicitly. If statement three fails after statements one
 and two succeeded, the migration remains pending even though the database may
 be partially changed.
 
@@ -198,7 +222,7 @@ executing SQL:
 composer migrate:baseline -- 20261011143000_add_article_summary
 ```
 
-This command does not connect to MariaDB or verify that the schema exists. It
+This command does not connect to the database or verify that the schema exists. It
 is an exceptional adoption tool for a database that was deliberately prepared
 and independently verified. It is not a way to skip a slow or failing
 migration. Normal fresh installation baselines the signed snapshot manifest
@@ -314,7 +338,8 @@ For versioned snapshot generation and full lifecycle verification, follow
 
 - The filename matches the required format and is globally unique.
 - No released or previously applied migration was edited.
-- SQL uses supported MariaDB syntax and no client directives.
+- SQL is valid on MariaDB and, after `SqlDialect` translation, on MySQL 8.4; no client directives.
+- CI passed on both the MariaDB and MySQL jobs.
 - Partial execution and operational lock duration were considered.
 - Data transformations have representative integration fixtures.
 - `storage/migrations.json` was treated as part of the database state.

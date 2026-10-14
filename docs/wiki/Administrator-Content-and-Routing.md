@@ -80,7 +80,7 @@ ID** or another feed needs this record as its parent.
 
 > [!CAUTION]
 > The generic feed editor does not currently provide a delete operation.
-> Do not delete feed rows directly from MariaDB: related content and cached
+> Do not delete feed rows directly from the database: related content and cached
 > URLs may depend on them. Restrict access while deciding on a supported
 > content-removal workflow.
 

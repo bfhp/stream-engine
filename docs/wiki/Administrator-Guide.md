@@ -19,7 +19,7 @@ so explicitly.
 ## Current chapters
 
 1. [Requirements](https://github.com/bfhp/stream-engine/wiki/Administrator-Requirements) — choose a deployment model
-   and prepare PHP, MariaDB, Memcached, the web server, storage, and the task
+   and prepare PHP, MySQL or MariaDB, Memcached, the web server, storage, and the task
    scheduler.
 2. [Installation](https://github.com/bfhp/stream-engine/wiki/Administrator-Installation) — install a release with
    Composer, configure Nginx and PHP-FPM, run the protected web installer or
@@ -70,7 +70,7 @@ remains responsible for the surrounding platform, including:
 
 - operating-system and container security updates;
 - TLS certificates, DNS, firewall rules, and reverse proxies;
-- MariaDB, Memcached, SMTP, and local upload-storage availability;
+- database, Memcached, SMTP, and local upload-storage availability;
 - scheduled execution of the Stream Engine task runner;
 - monitoring, capacity, and log retention; and
 - backup scheduling, off-host storage, and restore testing.

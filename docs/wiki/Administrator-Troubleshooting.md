@@ -44,7 +44,7 @@ Correlate these sources by timestamp:
 | Web access and proxy failures | Nginx access/error logs or the equivalent reverse-proxy/load-balancer logs. These distinguish requests rejected before PHP from application responses. |
 | Scheduler runtime errors | `storage/cron-error.log` after the runner has initialized logging. Errors before that point can appear only in cron mail, the systemd journal, or container scheduler output. |
 | Task state | **Administration → Scheduler**, including heartbeat, status, duration, last error, consecutive failures, and up to 25 recent attempts per task. |
-| Database | MariaDB service, error, connection, and slow-query logs, when enabled. |
+| Database | MySQL or MariaDB service, error, connection, and slow-query logs, when enabled. |
 | Email | Scheduler history, PHP/cron logs, and SMTP-provider acceptance, rejection, deferral, bounce, and suppression records. |
 | Runtime state | `storage/installation.json` and `storage/migrations.json`. Inspect them only through documented workflows; do not edit them to remove an error. |
 | Files | The configured `UPLOADS_DIR`, `TMP_DIR`, `TWIG_CACHE_DIR`, site-owned theme directory, and complete `storage/`. |
@@ -124,23 +124,23 @@ and use protected server logs.
 
 Typical signals include a site-wide 500, failed installer preflight, a failed
 scheduler tick, connection-refused or authentication messages in PHP logs, or
-MariaDB reporting unavailable connections.
+the database server reporting unavailable connections.
 
 Check in this order:
 
-1. MariaDB is running and listening on the expected private interface and port;
+1. the database server is running and listening on the expected private interface and port;
 2. the application host/container resolves `DB_HOST` to the intended server;
 3. firewall, security-group, container network, and TLS requirements permit the
    connection;
 4. `DB_NAME`, `DB_USERNAME`, and the account's allowed source host and grants
    match the deployment;
 5. PHP-FPM and scheduler loaded the current `.env` after its last change;
-6. MariaDB has free disk space and has not reached connection, memory, or lock
+6. the database server has free disk space and has not reached connection, memory, or lock
    limits; and
 7. database logs show whether the failure is authentication, capacity, schema,
    lock, or query related.
 
-Test with the MariaDB client using a protected option file or provider console;
+Test with the `mariadb` or `mysql` client using a protected option file or provider console;
 do not put the password in the command line or source `.env` into a shell. A
 successful `SELECT 1` proves only basic connectivity. It does not prove that
 the schema matches the release or that the application account has every
@@ -158,7 +158,7 @@ composer migrate:status
 ```
 
 Normal output after deployment reports `Pending: 0`. This command reads
-migration files and `storage/migrations.json`; it does not connect to MariaDB
+migration files and `storage/migrations.json`; it does not connect to the database
 or validate database contents.
 
 - **Pending migrations after a deployment:** stop writes and the scheduler,
@@ -395,7 +395,7 @@ possible and search existing release notes and issues. Include:
 
 - Stream Engine version or immutable commit and whether site-owned code exists;
 - deployment model, operating system/container image, web server, PHP and
-  MariaDB versions;
+  database server versions;
 - relevant PHP extensions without configuration values;
 - exact UTC timestamp, request method/path without sensitive query data, HTTP
   status, and a minimal reproduction sequence;

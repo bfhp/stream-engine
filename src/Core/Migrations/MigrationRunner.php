@@ -96,6 +96,7 @@ final readonly class MigrationRunner
             $this->assertAppliedFilesWereNotChanged($applied);
 
             $appliedNow = [];
+            $dialect = SqlDialect::forPdo($this->db->getPdo());
 
             foreach ($this->migrationFiles() as $version => $file) {
                 if (isset($applied[$version])) {
@@ -109,7 +110,7 @@ final readonly class MigrationRunner
 
                 foreach (SqlScript::statements($sql) as $statement) {
                     try {
-                        $result = $this->db->getPdo()->exec($statement);
+                        $result = $this->db->getPdo()->exec($dialect->translate($statement));
                     } catch (PDOException $e) {
                         throw new RuntimeException(sprintf('Could not execute migration "%s".', basename($file)), 0, $e);
                     }

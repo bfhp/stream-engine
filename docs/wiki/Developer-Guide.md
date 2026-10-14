@@ -6,7 +6,7 @@ reviewed pull request and documents the contracts that keep the platform,
 modules, themes, and site-specific code independent.
 
 Stream Engine uses PHP 8.3 for the backend and TypeScript for browser code.
-The main development stack also includes MariaDB, Memcached, Twig, React,
+The main development stack also includes MariaDB (MySQL 8.4 is also supported), Memcached, Twig, React,
 Vite, PHPUnit, and Vitest. You do not need to know every component before
 starting, but you should be comfortable with Git and command-line tools.
 

@@ -960,6 +960,7 @@ return [
     'js.admin.list_feed_type' => 'نوع خلاصة القائمة',
     'js.admin.term_vocabulary' => 'مفردات المصطلحات',
     'js.admin.changefreq' => 'معدل التغيير',
+    'js.admin.changefreq.none' => 'غير محدد',
     'js.admin.changefreq.always' => 'دائمًا',
     'js.admin.changefreq.hourly' => 'كل ساعة',
     'js.admin.changefreq.daily' => 'يوميًا',

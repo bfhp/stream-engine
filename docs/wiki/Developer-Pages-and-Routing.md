@@ -212,7 +212,7 @@ pages normally use `changefreq: 'noindex'` and an explicit restricted access
 rule. A dynamic content page declares `feedType` when feed URL and sitemap
 generation depend on it.
 
-Runtime IDs are allocation details. Never store them in MariaDB, cache them as
+Runtime IDs are allocation details. Never store them in the database, cache them as
 stable identifiers, expose them as extension IDs, or make a persisted page
 their child. Generate links by action or content identity, not by ID.
 

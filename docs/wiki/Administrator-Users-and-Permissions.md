@@ -126,7 +126,7 @@ and is sent only when SMTP and `SITE_URL` are correctly configured.
 User ID `1` is the reserved system account. Stream Engine uses it as a stable
 actor for system-owned content and notifications. It cannot start a user
 session and cannot be edited in Administration. Do not change or delete it
-directly in MariaDB.
+directly in the database.
 
 ### Current administrator
 

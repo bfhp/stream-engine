@@ -8,7 +8,7 @@ It describes what the code does today, not a proposed framework architecture.
 ## System boundaries
 
 The web server exposes only `public/`. PHP owns application bootstrap, routing,
-authorization, persistence, server rendering, and API dispatch. MariaDB stores
+authorization, persistence, server rendering, and API dispatch. MySQL or MariaDB stores
 durable application state, Memcached accelerates selected lookups, and the
 local filesystem stores configuration, runtime state, Twig cache files, and
 uploads.
@@ -18,7 +18,7 @@ flowchart LR
     Browser[Browser] --> Nginx[Nginx / public directory]
     Nginx --> PHP[PHP-FPM / public/index.php]
     PHP --> Engine[StreamEngine composition root]
-    Engine --> MariaDB[(MariaDB)]
+    Engine --> Database[(MySQL / MariaDB)]
     Engine --> Memcached[(Memcached)]
     Engine --> Files[Local files and uploads]
     Engine --> SMTP[SMTP provider]
@@ -42,7 +42,7 @@ is the application composition root. Its constructor currently:
 
 1. discovers module controllers;
 2. reads deployment configuration from the environment;
-3. connects to MariaDB and Memcached;
+3. connects to the database and Memcached;
 4. creates repositories and shared services;
 5. loads the database-backed page tree and active theme;
 6. gives shared dependencies to `ControllerFactory`;
@@ -141,7 +141,7 @@ flowchart TD
 ### Build the page tree
 
 At bootstrap, `PageRepository` loads administrator-configured pages from
-MariaDB into `PageTree`. Modules may add fixed internal pages through
+the database into `PageTree`. Modules may add fixed internal pages through
 `registerRuntimePages()`, then the engine adds `/api`, `/api/v1`, and `/admin`
 and lets modules register API pages. Page IDs, actions, parents, static
 patterns, dynamic patterns, and hierarchy cycles are validated after all
@@ -224,8 +224,8 @@ and browser UI contracts are documented in
 ## Persistence, settings, and cache
 
 `PdoDatabase` is the shared PDO wrapper. It uses native prepared statements,
-exception error mode, associative fetches, UTF-8, and a strict MariaDB SQL
-mode. Repositories own SQL and map rows into domain or service-facing data.
+exception error mode, associative fetches, UTF-8, and a strict SQL mode that
+behaves the same on MariaDB and MySQL. Repositories own SQL and map rows into domain or service-facing data.
 Services coordinate access rules and operations across repositories.
 
 Use transactions around multi-write invariants. A service should not place SQL
@@ -234,12 +234,12 @@ choose a shared or module-private repository according to ownership.
 
 Deployment configuration such as database credentials, cache endpoints,
 filesystem paths, SMTP credentials, and `APP_SECRET` comes from `.env` through
-`Config`. Administrator-editable site settings live in MariaDB and are loaded
+`Config`. Administrator-editable site settings live in the database and are loaded
 through `SettingsService`. Do not put a deploy-time secret into the settings
 table or hard-code a site setting into an environment lookup.
 
 `Cache` provides namespaced Memcached keys with an in-process fallback. Cache
-entries are disposable accelerators; MariaDB and persistent files remain the
+entries are disposable accelerators; the database and persistent files remain the
 source of truth. `UrlGenerator` is one current cache consumer. Features must
 remain correct after cache loss and must define invalidation when cached data
 depends on a write.

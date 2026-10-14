@@ -27,7 +27,7 @@ Before touching production, document:
   redirect, or be removed from DNS;
 - legal, contractual, privacy, audit, and user-data export obligations;
 - the final backup retention period and who can approve its later destruction;
-- whether another site shares the host, PHP-FPM pool, Nginx, MariaDB,
+- whether another site shares the host, PHP-FPM pool, Nginx, database server,
   Memcached, SMTP account, filesystem path, container network, or credentials;
   and
 - the point after which restoration is no longer promised.
@@ -49,7 +49,7 @@ At minimum, identify:
 | --- | --- |
 | Application releases | Active root, previous/staged release directories, immutable version, and site-owned overlays. |
 | Persistent files | `.env`, complete `storage/`, external `UPLOADS_DIR`, `THEME_DIR`, and any site-specific temporary or Twig-cache path. |
-| Database | Server/provider, database name, dedicated application account including its MariaDB host part, backup accounts, replicas, snapshots, and binary-log retention. |
+| Database | Server/provider, database name, dedicated application account including its host part, backup accounts, replicas, snapshots, and binary-log retention. |
 | Web entry point | DNS records, CDN/WAF/load balancer, TLS certificate and private key, Nginx virtual host, document root, and any dedicated PHP-FPM pool. |
 | Scheduled work | User crontab or `/etc/cron.d/` entry, systemd service/timer, container scheduler, backup jobs, and external monitors. |
 | Shared services | Memcached endpoint and `CACHE_PREFIX`, SMTP provider, CAPTCHA provider, logging, alerting, and secret manager references. |
@@ -70,7 +70,7 @@ consistent set before deletion:
 1. announce the final write cutoff;
 2. stop the external scheduler and wait for active tasks to finish;
 3. block new application requests and drain active PHP work;
-4. dump MariaDB and archive `.env`, complete `storage/`, external uploads,
+4. dump the database and archive `.env`, complete `storage/`, external uploads,
    site-owned files, and infrastructure configuration;
 5. record the exact release and resource inventory;
 6. checksum, encrypt, and transfer the set off the application host;
@@ -152,7 +152,7 @@ response or remove it from the load balancer. Then:
 - disable only this site's Nginx virtual host and test the complete Nginx
   configuration before reloading;
 - remove a dedicated PHP-FPM pool only after its workers are stopped;
-- retain shared Nginx, PHP-FPM, MariaDB, and Memcached services for other sites;
+- retain shared Nginx, PHP-FPM, database, and Memcached services for other sites;
 - remove CDN/WAF routes, origin access, health checks, and cache content for
   this hostname; and
 - ensure the hostname cannot fall through to another site's default virtual
@@ -170,15 +170,15 @@ If the name is removed, monitor for unexpected residual traffic. If the name
 is retained, keep its TLS certificate valid for as long as clients are expected
 to receive an HTTPS retirement response.
 
-## Remove the MariaDB database and accounts
+## Remove the database and accounts
 
 Do this only after web workers and schedulers are stopped, the final database
 dump is verified, and the database name and account ownership are confirmed.
-MariaDB account identity includes both user and host; for example,
+MySQL and MariaDB account identity includes both user and host; for example,
 `'stream_engine'@'127.0.0.1'` and `'stream_engine'@'localhost'` are different
 accounts.
 
-As a MariaDB administrator, inspect the exact targets first:
+As a database administrator, inspect the exact targets first:
 
 ```sql
 SELECT SCHEMA_NAME
@@ -202,7 +202,7 @@ DROP USER 'stream_engine'@'127.0.0.1';
 
 > [!CAUTION]
 > `DROP DATABASE` permanently removes every table and row in that database.
-> `DROP USER` removes the exact MariaDB account. Replace both examples with
+> `DROP USER` removes the exact database account. Replace both examples with
 > verified identifiers; do not delete an account used by another database,
 > backup job, migration process, or site.
 
@@ -210,7 +210,7 @@ Remove dedicated backup/migration accounts and network grants separately.
 For a managed database, use the provider's deletion and snapshot-retention
 workflow and verify replicas, automated backups, point-in-time recovery, and
 deletion-protection settings. Dropping the logical database does not
-necessarily erase provider snapshots or MariaDB binary logs immediately.
+necessarily erase provider snapshots or database binary logs immediately.
 
 ## Retire and delete application files
 
@@ -318,7 +318,7 @@ has stopped.
 Deleting `.env` or the database removes the application's copy of a credential;
 it does not revoke that credential at its issuer. Review and revoke or delete:
 
-- MariaDB application, backup, and migration accounts;
+- database application, backup, and migration accounts;
 - SMTP/API credentials, sender-domain authorization, webhooks, suppression or
   routing rules dedicated to the site;
 - Cloudflare Turnstile or hCaptcha site/secret keys stored in the database;
@@ -370,7 +370,7 @@ Verification must use external observations as well as the retired host:
   default virtual host, old upload, asset, or administration page;
 - no load balancer, PHP-FPM worker, container, scheduler, backup job, or timer
   can execute the application;
-- MariaDB shows no unintended site database, account, active connection,
+- the database server shows no unintended site database, account, active connection,
   replica, or retained snapshot outside policy;
 - application, external upload, theme, cache, temporary, container, and volume
   targets are either quarantined with dates or verified deleted;
@@ -397,7 +397,7 @@ resource or credential and every intentional retained copy has an owner.
 - [ ] Public writes and all scheduler/task processes are stopped.
 - [ ] The exact Nginx/load-balancer and dedicated PHP-FPM configuration is
       disabled without affecting other sites.
-- [ ] The verified MariaDB database and dedicated accounts are removed or have
+- [ ] The verified database and dedicated accounts are removed or have
       a documented retention deadline.
 - [ ] Application, uploads, themes, caches, temporary files, containers, and
       volumes are quarantined or deleted by exact target.

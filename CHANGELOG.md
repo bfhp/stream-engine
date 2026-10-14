@@ -11,6 +11,11 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 - Comment and reply author names now link to the author's profile page,
   including comments loaded without a page reload.
+- MySQL 8.4 LTS or newer is now supported alongside MariaDB 10.10 or newer.
+  The installer and migrations detect the server and adapt the schema
+  (collation `utf8mb4_0900_ai_ci`, MySQL default expressions); CI runs the
+  PHP suite on both MariaDB 12 and MySQL 8.4. Existing MariaDB sites are
+  unaffected. Moving a site between the two servers is not supported.
 
 ### Security
 

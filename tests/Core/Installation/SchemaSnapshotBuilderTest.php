@@ -90,6 +90,18 @@ final class SchemaSnapshotBuilderTest extends TestCase
         (new SchemaSnapshotBuilder($pdo, $runner))->build($this->dir.'/install', '1.2.3');
     }
 
+    public function testBuildRefusesToDumpAMySqlServer(): void
+    {
+        $pdo = $this->createMock(PDO::class);
+        $pdo->method('getAttribute')->willReturn('8.4.3');
+        $pdo->expects($this->never())->method('query');
+        $runner = new MigrationRunner(null, $this->dir.'/migrations', $this->dir.'/migrations.json');
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Build installation schema snapshots on MariaDB');
+        (new SchemaSnapshotBuilder($pdo, $runner))->build($this->dir.'/install', '1.2.3');
+    }
+
     private function removeDirectory(string $path): void
     {
         foreach (scandir($path) ?: [] as $item) {

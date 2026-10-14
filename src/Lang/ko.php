@@ -960,6 +960,7 @@ return [
     'js.admin.list_feed_type' => '목록 피드 유형',
     'js.admin.term_vocabulary' => '용어 어휘집',
     'js.admin.changefreq' => '변경 빈도',
+    'js.admin.changefreq.none' => '설정 안 함',
     'js.admin.changefreq.always' => '항상',
     'js.admin.changefreq.hourly' => '매시간',
     'js.admin.changefreq.daily' => '매일',

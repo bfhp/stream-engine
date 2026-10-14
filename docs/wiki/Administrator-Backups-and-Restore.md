@@ -40,12 +40,12 @@ Keep these items in every recoverable set:
 
 | State | Why it is required |
 | --- | --- |
-| MariaDB application database | Contains settings, users, content, routes, menus, notifications, scheduler state, and other application records. |
+| Application database (MySQL or MariaDB) | Contains settings, users, content, routes, menus, notifications, scheduler state, and other application records. |
 | `.env` | Contains the canonical URL, `APP_SECRET`, database and cache connection details, SMTP configuration, path overrides, and secrets. |
 | Complete `storage/` directory | Contains installation and migration state, local uploads by default, cron logs, and other persistent runtime files. |
 | External `UPLOADS_DIR` | Required separately when uploads are configured outside `storage/`. |
 | Site-owned files | Custom themes and assets, deployment overlays, or modules not reproducible from the tagged Stream Engine release. |
-| Release identity | Exact Stream Engine version or immutable commit, release artifact checksum, deployment configuration revision, and PHP/MariaDB versions. |
+| Release identity | Exact Stream Engine version or immutable commit, release artifact checksum, deployment configuration revision, and PHP and database server versions. |
 | Infrastructure configuration | Nginx virtual host, PHP-FPM pool settings, scheduler definition, filesystem ownership/ACL policy, and secret references needed to rebuild the service. |
 
 Preserve `.env` and its original `APP_SECRET`. Replacing that secret during an
@@ -87,7 +87,7 @@ The safest general backup uses a brief period with no application writes:
 3. stop the external scheduler;
 4. stop or drain PHP-FPM, or use the reverse proxy to block all application
    requests and wait for active requests to finish;
-5. create the MariaDB dump and filesystem archives;
+5. create the database dump and filesystem archives;
 6. run local integrity checks;
 7. restart PHP-FPM and exactly one scheduler; and
 8. verify the public site and Scheduler heartbeat.
@@ -97,7 +97,12 @@ maintenance response without forwarding requests to PHP. Stream Engine has no
 built-in maintenance mode. Closing registration is not sufficient because
 signed-in users, administrators, and background tasks can still write data.
 
-`mariadb-dump --single-transaction` creates a consistent transaction view of
+The examples use the MariaDB client tools. On MySQL, use `mysqldump` and
+`mysql` with the same options; `mysqldump` also accepts `--single-transaction`,
+`--quick`, `--hex-blob`, `--routines`, `--events`, and `--triggers`. A dump
+restores only onto the same server family it was taken from.
+
+`mariadb-dump --single-transaction` (or `mysqldump --single-transaction`) creates a consistent transaction view of
 InnoDB tables without holding table locks for the complete dump. It cannot make
 a separately copied filesystem atomic with that database view, and schema
 changes during the dump are unsafe. Pausing writers remains the documented
@@ -121,7 +126,7 @@ Create a root-controlled staging directory:
 sudo install -d -m 0700 /var/backups/stream-engine/2026-10-09T120000Z
 ```
 
-Configure a protected MariaDB option file such as
+Configure a protected client option file such as
 `/root/.config/stream-engine-backup.cnf` with the backup account's host, port,
 user, and password. Set its mode to `0600`. The account needs only the database
 permissions required by the tested dump method; do not put its password in the
@@ -144,7 +149,7 @@ mariadb-dump \
 ```
 
 The `--defaults-extra-file` option must be the first client option. Test the
-backup account in advance: provider-managed MariaDB services may restrict
+backup account in advance: provider-managed database services may restrict
 routine, event, or metadata privileges even when the current schema contains no
 such objects.
 
@@ -177,7 +182,7 @@ both custom theme templates and their public assets; a `THEME_DIR` override
 alone may not contain every asset used by that theme.
 
 Record non-secret recovery metadata in a plain text inventory next to the
-archives: release tag or commit, artifact checksum, MariaDB and PHP versions,
+archives: release tag or commit, artifact checksum, database server and PHP versions,
 application root, actual uploads path, database name, archive creation time,
 and whether writers were paused. Do not copy `.env` values into that inventory.
 
@@ -316,11 +321,13 @@ restored data has been reviewed.
 
 1. Select one complete recovery set and verify its protected checksum or
    signature before extraction.
-2. Provision the recorded PHP and compatible MariaDB versions plus required
+2. Provision the recorded PHP and database server (the same MySQL or MariaDB
+   family as the backup) plus required
    extensions and services.
 3. Deploy the exact recorded Stream Engine release. Do not run the installer.
-4. Create an empty database with `utf8mb4` and
-   `utf8mb4_uca1400_ai_ci`, and create a dedicated application account.
+4. Create an empty database with `utf8mb4` and the collation for that server
+   (`utf8mb4_uca1400_ai_ci` on MariaDB, `utf8mb4_0900_ai_ci` on MySQL), and
+   create a dedicated application account.
 5. Restore `.env`, `storage/`, any external uploads, and site-owned files to
    their recorded paths.
 6. Adjust only environment-specific endpoints needed for isolation, such as
@@ -328,7 +335,7 @@ restored data has been reviewed.
    Preserve the original file securely for comparison.
 7. Import the database dump into the empty database.
 8. restore the documented ownership and least-privilege filesystem access;
-9. start MariaDB and Memcached, then PHP-FPM and the private web endpoint, but
+9. start the database server and Memcached, then PHP-FPM and the private web endpoint, but
    leave the external scheduler stopped; and
 10. complete the validation checklist below before any production cutover.
 
@@ -366,7 +373,7 @@ checking:
 - [ ] `.env`, `storage/installation.json`, and `storage/migrations.json` exist
       with protected permissions.
 - [ ] `composer migrate:status` reports `Pending: 0` for the restored release.
-- [ ] MariaDB contains the expected tables and representative row counts.
+- [ ] The database contains the expected tables and representative row counts.
 - [ ] Administrator login works with a recovery account.
 - [ ] Site settings, pages, routes, menus, themes, widgets, and user roles are
       present.
@@ -419,7 +426,7 @@ access to the restored site is confirmed.
 ## Backup checklist
 
 - [ ] RPO, RTO, owner, schedule, and retention are documented.
-- [ ] MariaDB, `.env`, complete `storage/`, external uploads, site-owned files,
+- [ ] The database, `.env`, complete `storage/`, external uploads, site-owned files,
       and release identity are in one recovery set.
 - [ ] Writers and the scheduler are coordinated for a consistent point.
 - [ ] Backup credentials are not exposed in arguments or logs.

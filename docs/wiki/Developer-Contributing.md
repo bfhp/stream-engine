@@ -109,10 +109,11 @@ npm run typecheck
 npm run build
 ```
 
-The local PHPUnit run skips disposable-MariaDB integration tests unless the
+The local PHPUnit run skips disposable-database integration tests unless the
 `INSTALL_TEST_DB_*` variables are supplied. Use the Docker command in
 [Testing](https://github.com/bfhp/stream-engine/wiki/Developer-Testing) when the
-change depends on MariaDB schema, SQL behavior, constraints, or installation.
+change depends on database schema, SQL behavior, constraints, or installation.
+CI runs those tests on both MariaDB 12 and MySQL 8.4.
 
 If the baseline already fails, record the exact command and failure before
 working. Do not hide an unrelated failure by weakening a test or broadening the
@@ -192,7 +193,7 @@ pass with it.
 
 Cover relevant success, boundary, empty, invalid, unauthorized, and dependency-
 failure cases. Use a real disposable database when the claim depends on
-MariaDB, and browser-oriented tests when it depends on DOM or interaction.
+MariaDB and MySQL, and browser-oriented tests when it depends on DOM or interaction.
 Mocks may prove orchestration but not SQL syntax, query plans, constraints,
 transactions, filesystem permissions, cache expiry, object-storage semantics,
 or a real mail transport.
@@ -299,7 +300,7 @@ Every push and pull request runs these GitHub Actions jobs:
 | Job | Current checks |
 | --- | --- |
 | Documentation | `php bin/check-wiki-docs.php` |
-| PHP | PHP 8.3, required extensions, MariaDB 12, locked Composer install, `composer audit`, Pint, the complete PHPUnit suite with installation integration tests, and the CSRF audit |
+| PHP | PHP 8.3, required extensions, MariaDB 12 and MySQL 8.4 (one job each), locked Composer install, `composer audit`, Pint, the complete PHPUnit suite with installation integration tests, and the CSRF audit |
 | Frontend | PHP dependencies, Node.js 20.19, `npm ci`, `npm audit --audit-level=high`, Vitest, strict TypeScript, and the Vite production build |
 | Dependency review | Pull requests only: rejects new or upgraded dependencies with a known high or critical vulnerability or a licence outside the allowed list in `.github/workflows/ci.yml` |
 | Semgrep | Separate workflow: static security analysis of the source; findings appear under Security → Code scanning |

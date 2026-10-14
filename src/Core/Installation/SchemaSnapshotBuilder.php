@@ -8,6 +8,7 @@ use JsonException;
 use PDO;
 use RuntimeException;
 use StreamEngine\Core\Migrations\MigrationRunner;
+use StreamEngine\Core\Migrations\SqlDialect;
 
 final readonly class SchemaSnapshotBuilder
 {
@@ -54,6 +55,12 @@ final readonly class SchemaSnapshotBuilder
 
     private function dumpSchema(): string
     {
+        // The snapshot is canonical MariaDB SQL; SqlDialect adapts it to MySQL
+        // at install time. A MySQL dump would not install on MariaDB.
+        if (SqlDialect::forPdo($this->pdo)->isMySql()) {
+            throw new RuntimeException('Build installation schema snapshots on MariaDB; a MySQL dump is not portable.');
+        }
+
         $unsupported = $this->pdo->query(
             "SELECT
                 (SELECT COUNT(*) FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA = DATABASE()) AS triggers_count,

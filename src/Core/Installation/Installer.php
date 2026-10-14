@@ -7,6 +7,7 @@ namespace StreamEngine\Core\Installation;
 use PDO;
 use RuntimeException;
 use StreamEngine\Core\Migrations\MigrationRunner;
+use StreamEngine\Core\Migrations\SqlDialect;
 use StreamEngine\Core\Migrations\SqlScript;
 use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Domain\User;
@@ -137,8 +138,10 @@ final readonly class Installer
             throw new RuntimeException(sprintf('Could not read installation schema "%s".', $this->snapshot->schemaFile));
         }
 
+        $pdo = $this->db->getPdo();
+        $dialect = SqlDialect::forPdo($pdo);
         foreach (SqlScript::statements($sql) as $statement) {
-            $result = $this->db->getPdo()->exec($statement);
+            $result = $pdo->exec($dialect->translate($statement));
             if ($result === false) {
                 throw new RuntimeException('Could not execute the installation schema.');
             }

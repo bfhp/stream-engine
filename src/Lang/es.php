@@ -960,6 +960,7 @@ Correo: {email}
     'js.admin.list_feed_type' => 'Tipo de feed de la lista',
     'js.admin.term_vocabulary' => 'Vocabulario de términos',
     'js.admin.changefreq' => 'Frecuencia de cambio',
+    'js.admin.changefreq.none' => 'Sin especificar',
     'js.admin.changefreq.always' => 'Siempre',
     'js.admin.changefreq.hourly' => 'Cada hora',
     'js.admin.changefreq.daily' => 'Diaria',

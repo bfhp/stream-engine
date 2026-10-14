@@ -2,7 +2,7 @@
 
 This chapter takes a new contributor from an empty working directory to an
 installed development site and a green baseline test run. Use the Docker path
-unless you already maintain a compatible PHP, MariaDB, Memcached, and web
+unless you already maintain a compatible PHP, MySQL or MariaDB, Memcached, and web
 server stack on the host.
 
 ## Prerequisites
@@ -24,7 +24,7 @@ docker compose version
 
 For a host-based workflow, install PHP 8.3 with the extensions declared in
 [`composer.json`](https://github.com/bfhp/stream-engine/blob/main/composer.json),
-Composer 2, MariaDB 12, Memcached, Node.js 20.19 or newer within the Node 20
+Composer 2, MariaDB 12 (or MySQL 8.4), Memcached, Node.js 20.19 or newer within the Node 20
 release line, and npm. The Node version matches continuous integration; later
 supported Node release lines may also work, but must pass the complete
 frontend checks.
@@ -149,7 +149,7 @@ npm ci
 composer check-platform-reqs
 ```
 
-Prepare an empty MariaDB database and a dedicated account, start Memcached,
+Prepare an empty MySQL or MariaDB database and a dedicated account, start Memcached,
 and configure a web server whose document root is the repository's `public/`
 directory. Do not serve the repository root. Then open the site and complete
 the web installer with `APP_ENV=dev`, or run the interactive CLI installer:
@@ -159,7 +159,7 @@ composer cms:install
 ```
 
 The installer creates `.env`; copying `.env.example` is not required. If PHP,
-MariaDB, Memcached, or web-server setup fails, compare the host with the
+database, Memcached, or web-server setup fails, compare the host with the
 [application requirements](https://github.com/bfhp/stream-engine/wiki/Administrator-Requirements)
 before diagnosing application code.
 

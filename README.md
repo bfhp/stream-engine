@@ -57,7 +57,7 @@ The current backlog and known limitations are tracked in
 
 ## Technology
 
-The backend targets PHP 8.3 and uses Twig, PDO, MariaDB, Memcached, PHPMailer,
+The backend targets PHP 8.3 and uses Twig, PDO, MySQL 8.4+ or MariaDB 10.10+, Memcached, PHPMailer,
 and HTML Purifier. The frontend uses TypeScript, React, Mantine, Bootstrap,
 Trix, and Vite. PHPUnit and Vitest provide the backend and frontend test suites.
 
@@ -76,7 +76,7 @@ cd stream-engine
 ```
 
 Composer installs the PHP dependencies together with the application. Continue
-with either the Docker setup below or configure PHP, MariaDB, Memcached, and a
+with either the Docker setup below or configure PHP, MySQL or MariaDB, Memcached, and a
 web server directly. Release archives contain compiled frontend assets, so
 Node.js and npm are only needed for frontend development or rebuilding them.
 
@@ -136,7 +136,7 @@ The installer-managed core settings are:
 | `APP_ENV` | Runtime mode: `prod`, `dev`, or `test`. Use `prod` for a deployed site. |
 | `APP_SECRET` | Random signing key. The installer generates 32 random bytes as hexadecimal. |
 | `SITE_URL` | Canonical absolute HTTP(S) URL without a trailing slash. |
-| `DB_HOST`, `DB_PORT` | MariaDB host and port. |
+| `DB_HOST`, `DB_PORT` | MySQL or MariaDB host and port. |
 | `DB_NAME` | Application database name. |
 | `DB_USERNAME`, `DB_PASSWORD` | Application database credentials. |
 
@@ -166,7 +166,7 @@ details in
 ## Development
 
 For a host-based setup, install PHP 8.3 with the extensions required by
-`composer.json`, plus Node.js and a compatible MariaDB server. Then install the
+`composer.json`, plus Node.js and a MySQL 8.4+ or MariaDB 10.10+ server. Then install the
 dependencies:
 
 ```bash

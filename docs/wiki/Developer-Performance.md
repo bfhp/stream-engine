@@ -14,7 +14,7 @@ behavior that the change is meant to improve.
 
 Each HTTP request creates a new application composition root, connects to its
 configured services, resolves the page, executes the controller, and renders a
-response. MariaDB is the durable source of truth. Memcached accelerates selected
+response. The database (MySQL or MariaDB) is the durable source of truth. Memcached accelerates selected
 lookups, with a process-local fallback when the extension or service is not
 available. Twig uses a compiled-template cache.
 
@@ -32,7 +32,7 @@ relevant.
 
 Every method in a `*Repository.php` class under `src/` that filters, joins,
 groups, or sorts rows with `WHERE`, `JOIN`, `GROUP BY`, or `ORDER BY` must state
-in its PHPDoc which MariaDB index supports the query. If no useful index
+in its PHPDoc which index supports the query. If no useful index
 applies, document that fact and the reason.
 
 Put the annotation at the start of the method docblock:
@@ -75,7 +75,7 @@ Document known degradation rather than disguising it:
 This convention is mandatory for repositories and recommended for other code
 that calls `PdoDatabase` directly. It is currently enforced by code review,
 not by an automated checker. An annotation also does not prove that the
-optimizer selects the index; verify important plans against MariaDB.
+optimizer selects the index; verify important plans against MariaDB and MySQL.
 
 The annotation makes schema changes reviewable. Before renaming or removing an
 index, search for its consumers:
@@ -104,7 +104,7 @@ For performance-sensitive queries:
    schema snapshot as described in
    [Database and migrations](https://github.com/bfhp/stream-engine/wiki/Developer-Database-and-Migrations).
 5. Run the query with representative row counts and value distributions.
-6. Inspect `EXPLAIN` and, where supported, `ANALYZE` on the deployed MariaDB
+6. Inspect `EXPLAIN` and, where supported, `ANALYZE` (MariaDB) or `EXPLAIN ANALYZE` (MySQL) on the deployed
    version.
 
 Record the query, bound-value shape, relevant schema, row counts, selected
@@ -132,7 +132,7 @@ When changing a list or detail page, compare at least:
 
 Unit tests built on mocked database calls can verify orchestration, but they do
 not prove SQL validity, optimizer behavior, constraints, or transaction
-semantics. Use disposable-MariaDB integration tests for those claims.
+semantics. Use disposable-database integration tests for those claims.
 
 ## Keep lists and work bounded
 
@@ -210,7 +210,7 @@ load.
 
 ## Bound external I/O and uploads
 
-Remote services and object storage add latency outside PHP and MariaDB. Keep
+Remote services and object storage add latency outside PHP and the database. Keep
 connection and operation timeouts finite, validate sizes before expensive
 processing, stream large payloads where the current API supports it, and avoid
 holding a database transaction open during network I/O.
@@ -267,7 +267,7 @@ frontend work.
 Define the question before choosing a tool. A useful comparison records:
 
 - the exact revision and configuration;
-- PHP, MariaDB, Memcached, Node.js, and browser versions where relevant;
+- PHP, database server, Memcached, Node.js, and browser versions where relevant;
 - workload, representative data volume, and data distribution;
 - cache condition: disabled, cold, or warm;
 - concurrency and sample count;
@@ -296,7 +296,7 @@ The current repository does not provide:
 - an application performance monitoring integration;
 - continuous load or benchmark jobs;
 - enforced query-count, latency, memory, or bundle-size budgets; or
-- proof of MariaDB query plans from mocked repository tests.
+- proof of database query plans from mocked repository tests.
 
 Do not describe these capabilities as present. A contribution that introduces
 one should document its operating model, failure modes, cost, privacy impact,
@@ -309,7 +309,7 @@ Before merging a performance-sensitive change, confirm that:
 - correctness, authorization, security, localization, and accessibility remain
   intact;
 - repository queries name their supporting indexes or explain why none applies;
-- important MariaDB plans were checked with representative data;
+- important query plans were checked with representative data;
 - query count and repeated-query behavior were compared;
 - list sizes, batches, retries, recursion, uploads, and external calls are
   bounded;

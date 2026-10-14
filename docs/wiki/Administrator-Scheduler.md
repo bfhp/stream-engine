@@ -54,7 +54,7 @@ account with equivalent access. That account must be able to:
 
 - read the release files, Composer autoloader, and `.env`;
 - load the same required PHP extensions as PHP-FPM;
-- connect to MariaDB, Memcached, SMTP, and other services used by tasks; and
+- connect to the database, Memcached, SMTP, and other services used by tasks; and
 - create and write `storage/cron.lock` and `storage/cron-error.log`.
 
 Use the PHP CLI binary, not the PHP-FPM executable. Cron jobs receive a small

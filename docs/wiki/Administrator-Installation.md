@@ -145,7 +145,7 @@ The installer asks for:
 
 - application environment (`prod`, `dev`, or `test`);
 - canonical absolute site URL without a trailing slash;
-- MariaDB host, port, database, account, and password;
+- MySQL or MariaDB host, port, database, account, and password;
 - site name and interface locale;
 - administrator email and display name; and
 - administrator password.
@@ -354,6 +354,6 @@ Start with the failed preflight item or installer message:
 
 Do not include `.env`, passwords, installation tokens, session cookies, or raw
 secret-bearing logs in a public issue. Report the Stream Engine release, PHP
-and MariaDB versions, deployment model, failed check, and a redacted error.
+and database server versions, deployment model, failed check, and a redacted error.
 
 [Back: Requirements](https://github.com/bfhp/stream-engine/wiki/Administrator-Requirements) · [Administrator Guide](https://github.com/bfhp/stream-engine/wiki/Administrator-Guide) · [Next: Initial configuration](https://github.com/bfhp/stream-engine/wiki/Administrator-Configuration)

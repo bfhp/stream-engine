@@ -26,7 +26,7 @@ Maintainers prepare and verify those versions using the
 Before scheduling the change:
 
 1. record the currently deployed version, artifact checksum or immutable
-   commit, PHP version, MariaDB version, and deployment configuration revision;
+   commit, PHP version, database server and version, and deployment configuration revision;
 2. read the release notes and changelog for every version between the current
    and target releases;
 3. follow any required intermediate upgrade, data conversion, or manual step;
@@ -89,7 +89,7 @@ canonical URL, and scheduler configuration.
 In that environment:
 
 1. deploy the exact target artifact with production-equivalent PHP and
-   MariaDB versions;
+   database server versions;
 2. run `composer check-platform-reqs --no-dev`;
 3. run `composer migrate:status` and record the expected pending files;
 4. run `composer migrate` once and record its duration and output;
@@ -227,7 +227,7 @@ deployment. Platform-specific service commands belong in the site's runbook.
     checks pass.
 13. **Start exactly one scheduler.** Restore the external runner, then confirm
     a recent Scheduler heartbeat and normal task history.
-14. **Observe.** Watch application, PHP-FPM, Nginx, MariaDB, scheduler, email,
+14. **Observe.** Watch application, PHP-FPM, Nginx, the database, scheduler, email,
     capacity, and user reports through the rollback window.
 
 For an immutable container deployment, build one image from the exact release,

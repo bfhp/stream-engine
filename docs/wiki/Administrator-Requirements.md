@@ -12,7 +12,7 @@ development-oriented Docker Compose environment included in the repository.
 | PHP | PHP 8.3 or newer, using PHP-FPM or another supported web-server integration. The command-line PHP used for installation, migrations, and scheduled tasks must load the same required extensions. |
 | PHP extensions | `curl`, `dom`, `fileinfo`, `gd`, `intl`, `libxml`, `mbstring`, `memcached`, `pdo`, `pdo_mysql`, `simplexml`, `xmlreader`, and `zip`. |
 | Dependency manager | Composer 2. A release archive may already contain `vendor/`, but Composer is required by the installation and migration commands documented here. |
-| Database | MariaDB with InnoDB and `utf8mb4_uca1400_ai_ci` collation support. The included development environment currently uses MariaDB 12. Do not substitute MySQL without a separately tested compatibility statement. |
+| Database | MariaDB 10.10 or newer, or MySQL 8.4 LTS or newer, with InnoDB. Continuous integration tests MariaDB 12 and MySQL 8.4; the included development environment uses MariaDB 12. See [Database server](#database-server) for the differences between the two. |
 | Cache | A reachable Memcached service. Use a unique cache prefix when several sites share one service. |
 | Web server | Nginx is the documented production example. The public document root must be the application's `public/` directory, never the application root. Equivalent servers must provide front-controller routing to `public/index.php`. |
 | Scheduler | A mechanism that runs `php bin/cron.php` once per minute in production, such as cron, a systemd timer, or a container scheduler. |
@@ -31,7 +31,7 @@ PHP must be able to:
 - read the application and Composer dependencies;
 - write installation state, task locks, error logs, Twig cache files, and local
   uploads to their configured locations;
-- connect to MariaDB and Memcached; and
+- connect to the database and Memcached; and
 - accept uploads large enough for the limits configured for the site and web
   server.
 
@@ -52,15 +52,45 @@ The optional Imagick extension with SVG support improves administrator-uploaded
 site-icon conversion. Without it, raster icons still work, but the application
 cannot publish an SVG version from an uploaded raster image.
 
+## Database server
+
+Stream Engine supports two database servers. Choose one before installation
+and keep it for the life of the site.
+
+| Server | Supported versions | Table collation |
+| --- | --- | --- |
+| MariaDB | 10.10 or newer (needed for `utf8mb4_uca1400_ai_ci`) | `utf8mb4_uca1400_ai_ci` |
+| MySQL | 8.4 LTS or newer | `utf8mb4_0900_ai_ci` |
+
+The installer and the migration command detect the server from its version
+string and adapt the schema automatically; no setting is needed. On MySQL they
+also apply two other adjustments that do not change application behavior:
+column defaults such as `unix_timestamp()` are written as MySQL default
+expressions, and the `mentions_exactly_one_target` check constraint is omitted
+because MySQL does not allow a check constraint on a column whose foreign key
+cascades. The application always writes exactly one mention target itself.
+
+Both collations are case- and accent-insensitive Unicode collations. MySQL's
+`utf8mb4_0900_ai_ci` is a NO PAD collation, so on MySQL `'abc'` and `'abc '`
+are different values in comparisons and unique keys, while MariaDB treats them
+as equal.
+
+Moving an existing site between MariaDB and MySQL is not supported: a logical
+dump from one server contains collations and syntax that the other rejects.
+Restore a backup onto the same server family it was taken from.
+
+MySQL 5.7 and 8.0 are not supported. Versions of MariaDB before 10.10 lack the
+required collation.
+
 ## Database preparation
 
 Create an empty database and a dedicated application account. The application
 account must be able to create and alter the Stream Engine schema during
-installation and future migrations. It should not receive global MariaDB
+installation and future migrations. It should not receive global database
 administration privileges.
 
-For example, run the following as a MariaDB administrator after replacing the
-database name, account, host, and password:
+For example, run the following as a database administrator after replacing the
+database name, account, host, and password. On MariaDB:
 
 ```sql
 CREATE DATABASE stream_engine
@@ -74,7 +104,9 @@ GRANT ALL PRIVILEGES ON stream_engine.*
     TO 'stream_engine'@'127.0.0.1';
 ```
 
-MariaDB treats accounts from `localhost` and `127.0.0.1` separately on many
+On MySQL, use the same statements with `COLLATE utf8mb4_0900_ai_ci`.
+
+MySQL and MariaDB treat accounts from `localhost` and `127.0.0.1` separately on many
 installations. Create the account for the actual connection host. For a remote
 database, restrict inbound network access to the application hosts and require
 transport encryption according to the database provider's instructions.
@@ -120,7 +152,7 @@ release:
 | State | Default location | Persistence requirement |
 | --- | --- | --- |
 | Environment and secrets | `.env` | Required. Protect as a secret. |
-| Database | MariaDB | Required. Contains configuration, users, content, routing, and task state. |
+| Database | MySQL or MariaDB | Required. Contains configuration, users, content, routing, and task state. |
 | Installation and migration state | `storage/installation.json` and `storage/migrations.json` | Required with the deployed site. |
 | Local uploads | `storage/uploads/` | Required when local storage is used. |
 | Runtime locks and error logs | `storage/` | Must be writable; retention requirements depend on the file. |
@@ -134,11 +166,11 @@ a database and upload backup.
 Allow only the connections required by the deployment:
 
 - public HTTPS traffic to the web server or load balancer;
-- application-to-MariaDB and application-to-Memcached traffic on private or
+- application-to-database and application-to-Memcached traffic on private or
   otherwise protected networks;
 - application-to-SMTP traffic if email delivery is configured.
 
-Do not expose MariaDB, Memcached, MinIO administration, PHP-FPM, or internal
+Do not expose the database server, Memcached, MinIO administration, PHP-FPM, or internal
 service ports to the public internet.
 
 ## Choose a deployment model
@@ -146,7 +178,7 @@ service ports to the public internet.
 ### Composer installation on a managed host or VPS
 
 This is the documented production path. It gives the operator control over
-PHP-FPM, Nginx, filesystem permissions, MariaDB, Memcached, TLS, scheduling,
+PHP-FPM, Nginx, filesystem permissions, the database, Memcached, TLS, scheduling,
 and backup integration. Continue to
 [Installation](https://github.com/bfhp/stream-engine/wiki/Administrator-Installation).
 
@@ -172,7 +204,7 @@ network.
 ### Shared hosting
 
 Shared hosting is suitable only when it provides every required PHP extension,
-a compatible MariaDB service, Memcached, a document root that can point to
+a supported MySQL or MariaDB service, Memcached, a document root that can point to
 `public/`, command-line access for installation and migrations, and a reliable
 once-per-minute scheduler. If any of these capabilities is missing, use a VPS,
 managed application host, or container platform instead.
@@ -183,7 +215,7 @@ managed application host, or container platform instead.
 - [ ] PHP 8.3 or newer and every required extension are available to both
       PHP-FPM and the CLI.
 - [ ] Composer 2 is available.
-- [ ] An empty MariaDB database and dedicated account have been created.
+- [ ] An empty MySQL or MariaDB database and dedicated account have been created.
 - [ ] Memcached is reachable from the application host.
 - [ ] The web document root can be set to `public/`.
 - [ ] Persistent, writable storage has been allocated.

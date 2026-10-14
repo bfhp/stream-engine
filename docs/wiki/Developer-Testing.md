@@ -25,7 +25,7 @@ to every changed endpoint.
 | `tests/Modules/<Name>/` | Module registration, controller behavior, module-owned services, API branches, and cron handlers. |
 | `tests/View/` | Twig and rendered HTML contracts that cross template or navigation boundaries. |
 | `tests/Security/` | Cross-module security audits whose completeness matters more than one feature. |
-| `tests/Integration/` | Behavior that intentionally crosses into real infrastructure, currently the disposable MariaDB installation/schema suite. |
+| `tests/Integration/` | Behavior that intentionally crosses into real infrastructure, currently the disposable-database installation/schema suite, run against MariaDB and MySQL in CI. |
 | `tests/Support/` | Narrow reusable fakes, builders, stream wrappers, and audit helpers. This directory is not a second application layer. |
 | `tests/js/` | Browser utilities, DOM behavior, React/admin contracts, API error handling, localization, navigation, and uploads under Vitest/jsdom. |
 
@@ -68,7 +68,7 @@ Most current repository tests use a mocked `PdoDatabase`. They can prove:
 - rows are mapped into the correct public shape; and
 - empty, failure, and write-result branches are handled.
 
-They do **not** prove that MariaDB accepts the SQL, that an index or constraint
+They do **not** prove that MariaDB or MySQL accepts the SQL, that an index or constraint
 exists, that transaction isolation is correct, or that a query returns the
 right rows against the real schema. Add or extend a disposable-database
 integration test when the risk depends on any of those facts.
@@ -200,7 +200,7 @@ docker compose exec -T \
   php vendor/bin/phpunit tests/Integration/InstallationSchemaTest.php
 ```
 
-On a host, point the variables at a dedicated disposable MariaDB server before
+On a host, point the variables at a dedicated disposable MariaDB or MySQL server before
 running the same PHPUnit file. Never use a production server or an account
 that can reach valuable databases. A generated database name is protection
 against accidental overlap, not permission to use an unsafe server.
@@ -213,7 +213,7 @@ When adding a real-database test:
    the absence of an exception;
 4. cover the database-specific failure or boundary that required integration;
 5. clean up independently of the test result; and
-6. confirm the test runs in the CI PHP job with its MariaDB service.
+6. confirm the test runs in both CI PHP jobs (MariaDB and MySQL).
 
 ## Controller, API, and security tests
 
@@ -334,7 +334,7 @@ review or retry-aware scheduled check so a transient service failure cannot
 make every pull request fail.
 
 Do not report “all tests pass” after only a focused file. State exactly which
-checks ran and identify skipped tests. In particular, the MariaDB integration
+checks ran and identify skipped tests. In particular, the database integration
 suite is skipped when `INSTALL_TEST_DB_DSN` is absent; a green host run with
 that skip is not equivalent to the CI PHP job.
 
@@ -395,7 +395,7 @@ the behavior itself is intentionally changing.
 | Job | Environment and checks |
 | --- | --- |
 | Documentation | PHP 8.3; `php bin/check-wiki-docs.php`. |
-| PHP | PHP 8.3 plus MariaDB 12; Composer install, Pint, PHPUnit with `INSTALL_TEST_DB_*`, and the CSRF audit. |
+| PHP | Two jobs: PHP 8.3 with MariaDB 12, and PHP 8.3 with MySQL 8.4; Composer install, Pint, PHPUnit with `INSTALL_TEST_DB_*`, and the CSRF audit. |
 | Frontend | PHP 8.3 and Node 20.19; Composer install, `npm ci`, Vitest, TypeScript, and the production Vite build. |
 
 CI intentionally disables PHP coverage for speed. Reproduce its dependency
@@ -406,8 +406,8 @@ loosening an assertion, or changing generated assets without their source.
 Differences to consider when a local run is green:
 
 - CI uses PHP 8.3 even if the workstation runs a newer compatible version;
-- CI supplies a clean MariaDB 12 service and executes integration tests that a
-  host run may skip;
+- CI supplies clean MariaDB 12 and MySQL 8.4 services and executes integration
+  tests that a host run may skip;
 - CI starts from a clean checkout without ignored local files;
 - frontend dependencies come from `package-lock.json`; and
 - all jobs have a 15-minute limit except the five-minute documentation job.

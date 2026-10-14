@@ -19,6 +19,7 @@ use StreamEngine\Core\Installation\InstallationStateStore;
 use StreamEngine\Core\Installation\Installer;
 use StreamEngine\Core\Installation\SchemaSnapshot;
 use StreamEngine\Core\Migrations\MigrationRunner;
+use StreamEngine\Core\Migrations\SqlDialect;
 use StreamEngine\Core\Migrations\SqlScript;
 use StreamEngine\Core\ModuleRegistry;
 use StreamEngine\Core\PdoDatabase;
@@ -607,8 +608,9 @@ final class InstallationSchemaTest extends TestCase
 
     private function executeScript(PDO $pdo, string $file): void
     {
+        $dialect = SqlDialect::forPdo($pdo);
         foreach (SqlScript::statements((string) file_get_contents($file)) as $statement) {
-            $pdo->exec($statement);
+            $pdo->exec($dialect->translate($statement));
         }
     }
 

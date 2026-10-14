@@ -126,8 +126,10 @@ then rebuild and restart release verification from the resulting commit.
 ## Regenerate the installation snapshot
 
 The release snapshot must represent the complete migration chain at the
-candidate commit. From an environment whose configured MariaDB account may
-create and drop the restricted temporary schema, run:
+candidate commit. Build it on MariaDB: the snapshot is canonical MariaDB SQL
+that the installer adapts to MySQL, and the builder refuses to run against
+MySQL. From an environment whose configured MariaDB account may create and drop
+the restricted temporary schema, run:
 
 ```bash
 composer install-schema:build -- --release="$release_version"
@@ -192,7 +194,7 @@ npm run typecheck
 npm run build
 ```
 
-For release verification, supply the disposable MariaDB variables used by CI
+For release verification, supply the disposable-database variables used by CI
 so `tests/Integration/InstallationSchemaTest.php` runs instead of skipping.
 The complete CI environment and test-scope distinctions are documented in
 [Testing](https://github.com/bfhp/stream-engine/wiki/Developer-Testing).
@@ -368,7 +370,7 @@ preserve an audit trail explaining the decision.
       reviewed.
 - [ ] Production assets and third-party licenses were rebuilt and reviewed.
 - [ ] Clean-checkout PHP, frontend, security, documentation, and dependency
-      checks passed with the disposable MariaDB integration suite enabled.
+      checks passed with the disposable-database integration suite enabled on both MariaDB and MySQL.
 - [ ] Fresh installation and every declared upgrade path passed.
 - [ ] Rollback from a representative upgrade was rehearsed.
 - [ ] The final release pull request was approved and merged without later

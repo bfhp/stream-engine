@@ -21,7 +21,7 @@ Keep a private record outside the application containing:
 
 - the deployed Stream Engine release, deployment time, and responsible person;
 - the application root, uploads path, database name, and service-account name;
-- Nginx, PHP-FPM, scheduler, MariaDB, Memcached, and SMTP service ownership;
+- Nginx, PHP-FPM, scheduler, database, Memcached, and SMTP service ownership;
 - monitoring and log locations, retention periods, and alert destinations;
 - the last successful backup and restore test;
 - current storage and database baselines; and
@@ -74,7 +74,7 @@ At minimum, monitor:
 - DNS resolution, TLS certificate expiry, HTTP latency, and 4xx/5xx rates;
 - Nginx and PHP-FPM availability, saturation, restarts, and worker failures;
 - scheduler heartbeat and overdue or failed tasks;
-- MariaDB availability, connections, query latency, storage, and backups;
+- database availability, connections, query latency, storage, and backups;
 - Memcached availability, memory use, evictions, and restarts;
 - SMTP reachability and provider rejection or deferral rates;
 - application, upload, database, log, and temporary-volume free space and
@@ -103,7 +103,7 @@ Review these sources together:
 - Nginx access and error logs;
 - PHP-FPM service and PHP error logs;
 - `storage/cron-error.log` plus cron, systemd, or container scheduler output;
-- MariaDB error and slow-query logs when enabled;
+- database error and slow-query logs when enabled;
 - Memcached service metrics and restart history;
 - SMTP or email-provider delivery logs; and
 - host, container-runtime, kernel, and OOM logs.
@@ -133,7 +133,7 @@ Each failed delivery is retried after five minutes, up to three attempts. After
 the final failed attempt its status becomes `failed`; the current administration
 interface has no supported bulk retry or delivery-detail view. Fix SMTP,
 template, address, or scheduler problems before testing future delivery. Do not
-reset statuses directly in MariaDB: doing so can duplicate mail or in-site
+reset statuses directly in the database: doing so can duplicate mail or in-site
 notifications.
 
 When the Dashboard numbers are insufficient, a database administrator can run
@@ -179,7 +179,7 @@ Track at least:
 - local uploads, including branding and site icons;
 - Twig cache, temporary files, cron logs, and installation/migration state;
 - Nginx, PHP, database, scheduler, and container logs;
-- MariaDB data and binary logs on their actual volume;
+- database data and binary logs on their actual volume;
 - container volumes and image layers; and
 - filesystem inode use when many small files are possible.
 
@@ -187,7 +187,7 @@ The File Browser does not display total free space. Its upload records also do
 not include every file that may exist under the uploads root, so do not treat a
 database sum as the filesystem total.
 
-To identify growing MariaDB tables, use a read-only connection to the
+To identify growing database tables, use a read-only connection to the
 application database:
 
 ```sql
@@ -247,7 +247,7 @@ Stream Engine currently has no in-application update notification. Monitor the
 project's [GitHub releases](https://github.com/bfhp/stream-engine/releases) and
 security notices, and subscribe the responsible maintainers through GitHub or
 the organisation's dependency-monitoring service. Also track supported PHP,
-MariaDB, Nginx, operating-system, container-image, and Composer dependency
+MySQL or MariaDB, Nginx, operating-system, container-image, and Composer dependency
 updates.
 
 Do not run `composer update`, `npm update`, or an unpinned container pull in a
@@ -310,7 +310,7 @@ the original cause or create a second failure.
       and expiry date.
 - [ ] Run `composer migrate:status` and confirm the deployment inventory still
       identifies one intended release.
-- [ ] Review PHP-FPM, MariaDB, Memcached, SMTP, and container capacity trends,
+- [ ] Review PHP-FPM, database, Memcached, SMTP, and container capacity trends,
       restarts, and saturation.
 - [ ] Confirm log rotation and backup retention are succeeding.
 
