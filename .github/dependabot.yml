@@ -5,6 +5,12 @@
 # version updates - Dependabot security updates are still raised for any
 # version, including majors.
 #
+# Every ecosystem waits 7 days after a release before proposing it
+# (`cooldown`): most hijacked or broken releases are caught and yanked within
+# days, and a monthly schedule loses nothing by waiting a week. Like the
+# major-version rule, this only affects version updates - security updates
+# are raised immediately.
+#
 # Docker base images (docker/php/Dockerfile) are not tracked: their tags pin
 # the PHP and Node runtime versions, which change deliberately together with
 # composer.json, package.json and CI.
@@ -15,6 +21,8 @@ updates:
     directory: /
     schedule:
       interval: monthly
+    cooldown:
+      default-days: 7
     groups:
       composer:
         patterns: ["*"]
@@ -26,6 +34,8 @@ updates:
     directory: /
     schedule:
       interval: monthly
+    cooldown:
+      default-days: 7
     groups:
       npm:
         patterns: ["*"]
@@ -37,6 +47,8 @@ updates:
     directory: /
     schedule:
       interval: monthly
+    cooldown:
+      default-days: 7
     groups:
       github-actions:
         patterns: ["*"]
