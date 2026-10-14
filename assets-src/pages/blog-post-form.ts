@@ -159,8 +159,6 @@ type TrixEditorElement = HTMLElement & {
     function renderTrack(name: string, size: number, id: number): void {
         if (!trackSlot || !trackIdInput || !trackEmpty || !trackAddBtn || !trackFileInput) return;
 
-        const safeName = name.replace(/[<>&]/g, '');
-
         trackIdInput.value = String(id);
         trackEmpty.hidden = true;
         trackAddBtn.hidden = true;
@@ -168,12 +166,17 @@ type TrixEditorElement = HTMLElement & {
             <div class="blog-post-track-row">
                 <span class="blog-post-track-play"><i class="bi bi-music-note"></i></span>
                 <div class="blog-post-track-meta">
-                    <div class="blog-post-track-name">${safeName}</div>
-                    <div class="blog-post-track-sub">${bytesToLabel(size)}</div>
+                    <div class="blog-post-track-name"></div>
+                    <div class="blog-post-track-sub"></div>
                 </div>
                 <button type="button" class="blog-post-track-remove" aria-label="${trans('js.common.remove_aria')}"><i class="bi bi-x-lg"></i></button>
             </div>
         `;
+        // The file name is the visitor's, so it goes in as text rather than
+        // markup - which also keeps `&`, `<` and `>` in it instead of
+        // deleting them.
+        trackSlot.querySelector('.blog-post-track-name')!.textContent = name;
+        trackSlot.querySelector('.blog-post-track-sub')!.textContent = bytesToLabel(size);
         trackSlot.querySelector('.blog-post-track-remove')?.addEventListener('click', clearTrack);
     }
 
@@ -203,8 +206,14 @@ type TrixEditorElement = HTMLElement & {
         tags.forEach((tag, index) => {
             const chip = document.createElement('span');
             chip.className = 'blog-post-tag-chip';
-            chip.innerHTML = `#${tag.replace(/[<>&]/g, '')} <button type="button" aria-label="${trans('js.common.remove_aria')}">&times;</button>`;
-            chip.querySelector('button')?.addEventListener('click', () => {
+            // Tag text as a text node, not markup - same reasoning as the
+            // track name above.
+            const remove = document.createElement('button');
+            remove.type = 'button';
+            remove.setAttribute('aria-label', trans('js.common.remove_aria'));
+            remove.textContent = '\u00d7';
+            chip.append(`#${tag} `, remove);
+            remove.addEventListener('click', () => {
                 tags.splice(index, 1);
                 renderTags();
             });

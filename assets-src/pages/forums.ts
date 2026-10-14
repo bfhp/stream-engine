@@ -12,7 +12,7 @@
 // it out further.
 
 import { uploadFile, uploadHeaders } from "../shared/uploads";
-import "trix";
+import Trix from "trix";
 import "trix/dist/trix.css";
 // forums.topic-new's preview button (initTopicPreview()) opens a modal
 // through the theme's UI adapter, never through a framework import.
@@ -31,6 +31,19 @@ import {
 } from "./forum-poll";
 
 const cms = window.CMS;
+
+/**
+ * Editor HTML for a preview, run through Trix's own sanitizer (DOMPurify plus
+ * Trix's element/attribute rules) before it is rendered.
+ *
+ * The value comes from the form's hidden input, which Trix normally fills
+ * with its own serialization - but anything that can write that input can
+ * put arbitrary markup there, and a preview is a real render on this page.
+ * The server purifies on save; the preview has to hold the same line itself.
+ */
+function sanitizeEditorHtml(html: string): string {
+    return Trix.HTMLSanitizer.sanitize(html).getHTML();
+}
 
 function showFieldError(el: HTMLElement | null, message: string) {
     if (!el) return;
@@ -78,7 +91,7 @@ function initQuickReplyPreview(form: HTMLFormElement): () => void {
         const content = contentInput.value.trim();
         const plainText = editor.editor?.getDocument().toString().trim() || "";
         if (plainText || content.includes("<figure")) {
-            previewEl.innerHTML = content;
+            previewEl.innerHTML = sanitizeEditorHtml(content);
             delete previewEl.dataset.empty;
         } else {
             previewEl.textContent = trans("js.forums.content_empty");
@@ -682,7 +695,8 @@ function initTopicPreview(form: HTMLFormElement, source: TopicPreviewSource) {
 
     button.addEventListener("click", () => {
         const title = source.getTitle();
-        const contentHtml = source.hasContent() ? source.getContentHtml() : "";
+        // Rendered through ui.fill()'s html slot (innerHTML) - sanitize first.
+        const contentHtml = source.hasContent() ? sanitizeEditorHtml(source.getContentHtml()) : "";
         const poll = source.getPoll();
         const attachmentRows = source.getAttachments();
 
