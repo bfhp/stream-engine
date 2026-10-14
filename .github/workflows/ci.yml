@@ -62,6 +62,9 @@ jobs:
       - name: Install PHP dependencies
         run: composer install --no-interaction --no-progress --prefer-dist
 
+      - name: Audit PHP dependencies
+        run: composer audit --locked --abandoned=report
+
       - name: Run Pint
         run: composer lint
 
@@ -103,6 +106,9 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      - name: Audit frontend dependencies
+        run: npm audit --audit-level=high
+
       - name: Run Vitest
         run: npm test
 
@@ -111,3 +117,27 @@ jobs:
 
       - name: Run Vite build
         run: npm run build
+
+  dependency-review:
+    name: Dependency review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      # Blocks pull requests that add or upgrade to a dependency with a known
+      # high or critical vulnerability, or with a licence outside the list
+      # below. The list covers every licence in the current lock files and
+      # is compatible with the project's LGPL-3.0-only licence.
+      - name: Review dependency changes
+        uses: actions/dependency-review-action@v5
+        with:
+          fail-on-severity: high
+          allow-licenses: >-
+            0BSD, Apache-2.0, BlueOak-1.0.0, BSD-2-Clause, BSD-3-Clause,
+            CC-BY-4.0, CC0-1.0, ISC, LGPL-2.1-only, LGPL-2.1-or-later,
+            LGPL-3.0-only, LGPL-3.0-or-later, MIT, MIT-0, MPL-2.0,
+            Python-2.0, Unlicense, Zlib

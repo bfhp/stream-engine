@@ -37,11 +37,8 @@ but it reduces the risk of investing in a direction that conflicts with the
 project architecture or roadmap.
 
 Keep sensitive vulnerability details out of public issues and pull requests.
-The repository currently has no committed `SECURITY.md` with a dedicated
-private contact. Check the repository's Security tab for an enabled private
-reporting channel. If none is available, open a minimal issue asking the
-maintainer for a private contact without including exploit details, secrets,
-personal data, or an unpatched proof of concept.
+Report them privately as described in the
+[security policy](https://github.com/bfhp/stream-engine/blob/main/SECURITY.md).
 
 ## Choose a useful scope
 
@@ -297,13 +294,24 @@ for correctness, safety, migration, or compatibility of the current change.
 
 ## Understand continuous integration
 
-Every push and pull request runs three GitHub Actions jobs:
+Every push and pull request runs these GitHub Actions jobs:
 
 | Job | Current checks |
 | --- | --- |
 | Documentation | `php bin/check-wiki-docs.php` |
-| PHP | PHP 8.3, required extensions, MariaDB 12, locked Composer install, Pint, the complete PHPUnit suite with installation integration tests, and the CSRF audit |
-| Frontend | PHP dependencies, Node.js 20.19, `npm ci`, Vitest, strict TypeScript, and the Vite production build |
+| PHP | PHP 8.3, required extensions, MariaDB 12, locked Composer install, `composer audit`, Pint, the complete PHPUnit suite with installation integration tests, and the CSRF audit |
+| Frontend | PHP dependencies, Node.js 20.19, `npm ci`, `npm audit --audit-level=high`, Vitest, strict TypeScript, and the Vite production build |
+| Dependency review | Pull requests only: rejects new or upgraded dependencies with a known high or critical vulnerability or a licence outside the allowed list in `.github/workflows/ci.yml` |
+| Semgrep | Separate workflow: static security analysis of the source; findings appear under Security → Code scanning |
+
+The dependency audits check the lock files against public advisory databases,
+so a newly published advisory can fail a run whose change did not touch any
+dependency. Update the affected package, or wait for the Dependabot pull
+request, rather than disabling the audit.
+
+Dependabot opens grouped monthly pull requests for Composer, npm, and GitHub
+Actions updates (minor and patch versions only; see `.github/dependabot.yml`)
+and separate pull requests for security fixes.
 
 CI cancels an older run for the same ref when a newer commit arrives. Wait for
 the latest commit's jobs and inspect the first meaningful failure. A green run

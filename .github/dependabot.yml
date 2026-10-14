@@ -1,0 +1,46 @@
+# Monthly version updates, one grouped pull request per ecosystem.
+#
+# Major versions are skipped here on purpose: they can break things and are
+# upgraded deliberately by hand. The `update-types` ignore rule only affects
+# version updates - Dependabot security updates are still raised for any
+# version, including majors.
+#
+# Docker base images (docker/php/Dockerfile) are not tracked: their tags pin
+# the PHP and Node runtime versions, which change deliberately together with
+# composer.json, package.json and CI.
+version: 2
+
+updates:
+  - package-ecosystem: composer
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      composer:
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      npm:
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      github-actions:
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
