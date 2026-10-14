@@ -125,11 +125,20 @@ describe("previewText()", () => {
         expect(previewText("привет")).toBe("привет");
     });
 
-    it("is not a sanitizer, and is not asked to be", () => {
-        // It is a regex over tags, so it cannot be one - a `<` that is not a
-        // tag survives. That is fine: the server's purifier already limited
-        // the markup to anchors, and the toast writes textContent.
+    it("decodes the entities the purifier encodes", () => {
+        // The server sends `1 < 2 & 3` as entities; the toast must show what
+        // the sender typed, not `&lt;`.
+        expect(previewText("1 &lt; 2 &amp; 3")).toBe("1 < 2 & 3");
         expect(previewText("1 < 2")).toBe("1 < 2");
+    });
+
+    it("returns text as a browser would read it, not leftover markup", () => {
+        // `<<script>script>`: the first `<` is just a character, the real tag
+        // is dropped. What remains is *text* that happens to read
+        // `<script>` - harmless in textContent, which is the only place this
+        // may ever go.
+        expect(previewText("<<script>script>alert(1)</script>")).toBe("<script>alert(1)");
+        expect(previewText('<img src=x onerror="alert(1)">hi')).toBe("hi");
     });
 });
 

@@ -39,14 +39,16 @@ export const WEEKDAYS_FULL = Array.from({ length: 7 }, (_, day) => trans(`js.dat
  * quote) where a message's real `<a>` would otherwise show as raw markup if
  * escaped instead of stripped.
  *
- * Safe despite the innerHTML because `textContent` is read back: nothing
- * from the parse reaches the page.
+ * Parsed with `DOMParser`, not `innerHTML` on a scratch element. A detached
+ * `<div>` still belongs to the live document, so `<img src=x onerror=...>`
+ * assigned to its innerHTML starts loading and runs the handler even though
+ * the div is never inserted. `DOMParser` builds a separate, inert document:
+ * no scripts, no handlers, no fetches.
+ *
+ * The result is plain text - write it with `textContent` or escape it.
  */
 export function stripTags(html: string): string {
-    const div = document.createElement('div');
-    div.innerHTML = html ?? '';
-
-    return div.textContent || '';
+    return new DOMParser().parseFromString(html ?? '', 'text/html').body.textContent ?? '';
 }
 
 /**

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
     AVATAR_COLORS,
@@ -233,10 +233,15 @@ describe("stripTags()", () => {
         expect(stripTags("&quot;Зикр&quot; &amp; Co")).toBe('"Зикр" & Co');
     });
 
-    it("does not let the parse reach the page", () => {
-        // innerHTML is used to get at the text; textContent is read back, so
-        // nothing that was parsed is ever inserted anywhere.
+    it("parses in an inert document, not the page's", () => {
+        // innerHTML on a detached div would still run `onerror` in a real
+        // browser - the div belongs to the live document. jsdom does not load
+        // images, so the handler cannot be observed firing here; what is
+        // pinned instead is that the live document is never used to parse.
+        const spy = vi.spyOn(document, "createElement");
         expect(stripTags('<img src=x onerror="alert(1)">')).toBe("");
+        expect(spy).not.toHaveBeenCalled();
+        spy.mockRestore();
     });
 
     it("survives a null or undefined body", () => {

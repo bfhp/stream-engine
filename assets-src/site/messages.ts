@@ -810,17 +810,20 @@ export function initMessages() {
     }
 
     function renderAttachment(a: ApiAttachment): string {
+        // Server-built (`/uploads/` + a generated path), but this is an
+        // attribute in a template string, so escape it like everything else.
+        const url = cms.escapeHtml(a.url);
         if (a.mime.startsWith('image/')) {
             return `
-                <a class="msgr-attachment-image-link" href="${a.url}" target="_blank" rel="noopener">
-                    <img class="msgr-attachment-image" src="${a.url}" alt="${cms.escapeHtml(a.original_name)}" loading="lazy">
+                <a class="msgr-attachment-image-link" href="${url}" target="_blank" rel="noopener">
+                    <img class="msgr-attachment-image" src="${url}" alt="${cms.escapeHtml(a.original_name)}" loading="lazy">
                 </a>`;
         }
         if (a.mime.startsWith('audio/')) {
-            return `<audio class="msgr-attachment-audio" controls preload="none" src="${a.url}"></audio>`;
+            return `<audio class="msgr-attachment-audio" controls preload="none" src="${url}"></audio>`;
         }
         return `
-            <a class="msgr-attachment-file" href="${a.url}" download="${cms.escapeHtml(a.original_name)}" target="_blank" rel="noopener">
+            <a class="msgr-attachment-file" href="${url}" download="${cms.escapeHtml(a.original_name)}" target="_blank" rel="noopener">
                 <i class="bi bi-file-earmark-arrow-down-fill"></i>
                 <span class="msgr-attachment-file-body">
                     <span class="msgr-attachment-file-name"><bdi>${cms.escapeHtml(a.original_name)}</bdi></span>
@@ -1148,17 +1151,26 @@ export function initMessages() {
     function renderAttachPreview() {
         if (!pendingAttachment) {
             attachPreviewEl.hidden = true;
-            attachPreviewThumbEl.innerHTML = '';
+            attachPreviewThumbEl.replaceChildren();
             attachPreviewNameEl.textContent = '';
             attachPreviewSizeEl.textContent = '';
             attachPreviewEl.classList.remove('is-uploading');
             return;
         }
 
-        const isImage = pendingAttachment.mime.startsWith('image/');
-        attachPreviewThumbEl.innerHTML = isImage
-            ? `<img src="${pendingAttachment.previewUrl}" alt="">`
-            : `<i class="bi bi-file-earmark-fill"></i>`;
+        // Built as nodes, not a template string: the src goes in as a
+        // property, so there is no attribute for any value to break out of.
+        let thumb: HTMLElement;
+        if (pendingAttachment.mime.startsWith('image/')) {
+            const img = document.createElement('img');
+            img.src = pendingAttachment.previewUrl;
+            img.alt = '';
+            thumb = img;
+        } else {
+            thumb = document.createElement('i');
+            thumb.className = 'bi bi-file-earmark-fill';
+        }
+        attachPreviewThumbEl.replaceChildren(thumb);
         attachPreviewNameEl.textContent = pendingAttachment.name;
         attachPreviewSizeEl.textContent = attachUploading ? trans('js.common.loading') : bytesToLabel(pendingAttachment.size);
         attachPreviewEl.classList.toggle('is-uploading', attachUploading);

@@ -1,4 +1,5 @@
 import { trans } from "../shared/i18n";
+import { stripTags } from "./messenger-format";
 
 /* ==========================================================================
    Messenger notifications
@@ -74,15 +75,18 @@ export function updateUnreadBadge(
 /**
  * Message text arrives as server-sanitized HTML - MessageService's purifier
  * allows exactly `a[href]` - so a message containing a link carries real
- * markup. This drops tags so the preview remains readable instead of showing
- * raw anchors.
+ * markup, and a literal `<` or `&` arrives as an entity. This turns it back
+ * into the plain text the sender typed.
  *
- * Cosmetic only, and deliberately not a sanitizer: the whitelist upstream
- * means there is nothing here but anchors, and escaping is the toast's job
- * (`toastMessage()` writes `textContent` unless asked otherwise).
+ * Parsed (by `stripTags()`) rather than regex-stripped: a regex leaves
+ * `&lt;`/`&amp;` showing in the toast, and cannot strip tags reliably anyway.
+ *
+ * The result is plain text and must be written as such: `toastMessage()`
+ * uses `textContent` unless asked otherwise, and this must never go through
+ * the `html: true` path - decoded `&lt;script&gt;` *is* `<script>`.
  */
 export function previewText(html: string): string {
-    return html.replace(/<[^>]*>/g, '');
+    return stripTags(html);
 }
 
 /**
