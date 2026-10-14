@@ -996,6 +996,7 @@ return [
     'js.admin.list_feed_type' => 'Тип ленты списка',
     'js.admin.term_vocabulary' => 'Словарь терминов',
     'js.admin.changefreq' => 'Частота изменения',
+    'js.admin.changefreq.none' => 'Не указано',
     'js.admin.changefreq.always' => 'Всегда',
     'js.admin.changefreq.hourly' => 'Ежечасно',
     'js.admin.changefreq.daily' => 'Ежедневно',

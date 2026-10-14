@@ -960,6 +960,7 @@ return [
     'js.admin.list_feed_type' => '一覧のフィードタイプ',
     'js.admin.term_vocabulary' => '用語ボキャブラリー',
     'js.admin.changefreq' => '更新頻度',
+    'js.admin.changefreq.none' => '未設定',
     'js.admin.changefreq.always' => '常時',
     'js.admin.changefreq.hourly' => '毎時',
     'js.admin.changefreq.daily' => '毎日',

@@ -64,7 +64,7 @@ type ParentPage = {
 };
 
 const CHANGEFREQ_OPTIONS = [
-    { value: "", label: trans("js.admin.default") },
+    { value: "", label: trans("js.admin.changefreq.none") },
     { value: "always", label: trans("js.admin.changefreq.always") },
     { value: "hourly", label: trans("js.admin.changefreq.hourly") },
     { value: "daily", label: trans("js.admin.changefreq.daily") },

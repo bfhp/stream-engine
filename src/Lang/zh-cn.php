@@ -960,6 +960,7 @@ return [
     'js.admin.list_feed_type' => '列表信息流类型',
     'js.admin.term_vocabulary' => '术语词汇表',
     'js.admin.changefreq' => '更新频率',
+    'js.admin.changefreq.none' => '未设置',
     'js.admin.changefreq.always' => '始终',
     'js.admin.changefreq.hourly' => '每小时',
     'js.admin.changefreq.daily' => '每天',
