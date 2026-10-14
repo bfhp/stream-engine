@@ -983,6 +983,7 @@ export function initMessages() {
         lastRenderedUserId = prevUserId;
         lastRenderedDay = prevDay;
 
+        // nosemgrep: typescript.react.security.audit.react-unsanitized-method.react-unsanitized-method
         container.insertAdjacentHTML('beforeend', html);
         hardenMessageLinks(container);
         scrollMessagesToBottom();

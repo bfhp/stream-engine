@@ -31,9 +31,15 @@ function mount({ offset = "10", apiUrl = "/api/v1/posts" }: { offset?: string | 
         buttonSelector: ".load-more",
         listId: "feed-items",
         wrapperSelector: "[data-load-more-wrapper]",
-        render: (item) => `<li>${item.title}</li>`,
+        render: (item) => li(item.title),
         errorMessage: "Не удалось загрузить записи",
     });
+}
+
+function li(text: string): HTMLLIElement {
+    const el = document.createElement("li");
+    el.textContent = text;
+    return el;
 }
 
 const button = () => document.querySelector<HTMLButtonElement>(".load-more");
@@ -62,7 +68,7 @@ function mountCursor(cursor = "cursor-1") {
         buttonSelector: ".cursor-more",
         listId: "cursor-items",
         wrapperSelector: "[data-cursor-wrapper]",
-        render: (item) => `<li>${item.title}</li>`,
+        render: (item) => li(item.title),
         errorMessage: "Не удалось загрузить записи",
         pagination: "cursor",
     });
@@ -337,7 +343,7 @@ describe("initialisation", () => {
             buttonSelector: ".load-more",
             listId: "feed-items",
             wrapperSelector: "[data-load-more-wrapper]",
-            render: (item) => `<li>${item.title}</li>`,
+            render: (item) => li(item.title),
             errorMessage: "…",
         });
 
@@ -358,7 +364,7 @@ describe("initialisation", () => {
             buttonSelector: ".load-more",
             listId: "feed-items",
             wrapperSelector: "[data-load-more-wrapper]",
-            render: () => "",
+            render: () => null,
             errorMessage: "…",
         })).not.toThrow();
     });

@@ -41,11 +41,14 @@ export type OffsetLoadMoreOptions<T> = {
     /** Removed wholesale when there is no next page. */
     wrapperSelector: string;
     /**
-     * One row: an element (normally a filled copy of a theme <template>, so
-     * the markup stays the theme's) or, for simple callers, an HTML string.
-     * null skips the row.
+     * One row: an element, normally a filled copy of a theme <template> (so
+     * the markup stays the theme's and API values land in it as text via
+     * `ui.fill()`). null skips the row.
+     *
+     * Deliberately no HTML-string form: every row here is built from API
+     * data, and a string renderer makes escaping each caller's problem.
      */
-    render: (item: T) => HTMLElement | string | null;
+    render: (item: T) => HTMLElement | null;
     errorMessage: string;
     /** Growing feed lists use stable keyset cursors; legacy small lists use offsets. */
     pagination?: 'offset' | 'cursor';
@@ -81,11 +84,7 @@ export function initOffsetLoadMore<T>(options: OffsetLoadMoreOptions<T>): void {
             if (list) {
                 (res.items ?? []).forEach((item) => {
                     const row = options.render(item);
-                    if (typeof row === 'string') {
-                        list.insertAdjacentHTML('beforeend', row);
-                    } else if (row) {
-                        list.append(row);
-                    }
+                    if (row) list.append(row);
                 });
             }
 
