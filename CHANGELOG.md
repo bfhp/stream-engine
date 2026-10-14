@@ -7,6 +7,11 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Comment and reply author names now link to the author's profile page,
+  including comments loaded without a page reload.
+
 ### Security
 
 - All responses now send `X-Content-Type-Options: nosniff`, so browsers no

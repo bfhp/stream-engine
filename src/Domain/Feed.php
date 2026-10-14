@@ -45,6 +45,8 @@ final class Feed
         // query, e.g. UsersController::showCommunityPostPage()'s own guard.
         public readonly ?string $containerType = null,
         private readonly int $searchPriority = 0,
+        public readonly string $authorUsername = '',
+        public ?string $authorUrl = null,
     ) {
 
     }
@@ -112,6 +114,7 @@ final class Feed
             views: (int) ($row['views'] ?? 0),
             containerType: $row['container_type'] ?? null,
             searchPriority: (int) ($row['search_priority'] ?? 0),
+            authorUsername: (string) ($row['author_username'] ?? ''),
         );
     }
 }

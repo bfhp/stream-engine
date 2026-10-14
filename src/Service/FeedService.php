@@ -1995,6 +1995,8 @@ class FeedService
     {
         $this->decorateFeedMentions($feed);
 
+        $feed->authorUrl = $this->urlGenerator->action('user.show', ['username' => $feed->authorUsername]);
+
         if ($feed->createdAt === null) {
             return;
         }

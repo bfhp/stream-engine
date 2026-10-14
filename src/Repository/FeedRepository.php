@@ -1232,7 +1232,8 @@ final class FeedRepository implements FeedRepositoryInterface
             f.rating_count,
             f.views,
             u.nick,
-            u.avatar_url
+            u.avatar_url,
+            u.username AS author_username
             $extra
         FROM feeds f
         LEFT JOIN users u ON u.id = f.owner_id

@@ -17,7 +17,7 @@
                 {% endblock %}
                 {% block comment_meta %}
                     <div class="comment-meta-text min-w-0">
-                        <div class="comment-author fw-semibold lh-sm"><bdi data-slot="author">{{ comment.authorDisplayName }}</bdi></div>
+                        <div class="comment-author fw-semibold lh-sm"><a href="{{ comment.authorUrl }}" class="comment-author-link text-reset text-decoration-none" data-slot-attr="href:authorUrl"><bdi data-slot="author">{{ comment.authorDisplayName }}</bdi></a></div>
                         {% if comment.createdAtLabel %}
                             <time class="comment-date small text-secondary"
                                   datetime="{{ comment.createdAt ? comment.createdAt|date('c') : '' }}"

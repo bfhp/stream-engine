@@ -308,6 +308,7 @@ const CMS = (() => {
             id: String(item.id ?? ""),
             anchor: `comment-${item.id ?? ""}`,
             author: item.authorDisplayName ?? `#${item.ownerId}`,
+            authorUrl: item.authorUrl ?? "",
             avatar: item.authorAvatarUrl ?? "",
             date: item.createdAtLabel ?? "",
             dateTitle: item.createdAtTitle ?? "",

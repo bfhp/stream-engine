@@ -18,7 +18,7 @@
                 {% endblock %}
                 {% block comment_meta %}
                     <div class="comment-meta-text">
-                        <div class="comment-author"><bdi data-slot="author">{{ comment.authorDisplayName }}</bdi></div>
+                        <div class="comment-author"><a href="{{ comment.authorUrl }}" class="comment-author-link" data-slot-attr="href:authorUrl"><bdi data-slot="author">{{ comment.authorDisplayName }}</bdi></a></div>
                         {% if comment.createdAtLabel %}
                             <time class="comment-date"
                                   datetime="{{ comment.createdAt ? comment.createdAt|date('c') : '' }}"
