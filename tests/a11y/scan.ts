@@ -50,6 +50,7 @@ export async function expectNoNewViolations(
     testInfo: TestInfo,
     configure: (builder: AxeBuilder) => AxeBuilder = builder => builder,
 ): Promise<void> {
+    await expectProjectColorScheme(page, testInfo);
     const results = await configure(new AxeBuilder({ page }).withTags(WCAG_TAGS)).analyze();
 
     const report = JSON.stringify(results.violations, null, 2);
@@ -92,4 +93,32 @@ export async function waitForAdminScreen(page: Page): Promise<void> {
     await expect(page.locator('.mantine-Loader-root, [data-card-state="loading"]')).toHaveCount(0, {
         timeout: 15_000,
     });
+}
+
+/**
+ * The light and dark projects only mean something if the page follows the
+ * emulated system scheme. The admin always does; a public theme does only
+ * when its "Color mode" setting is "System", and it defaults to "Dark".
+ * In CI that is a broken setup and fails; locally it is reported, because a
+ * developer may be scanning a site configured on purpose.
+ */
+async function expectProjectColorScheme(page: Page, testInfo: TestInfo): Promise<void> {
+    const expected = testInfo.project.use.colorScheme;
+    if (expected !== "light" && expected !== "dark") return;
+
+    const actual = await page.evaluate(() => {
+        const root = document.documentElement;
+        return root.dataset.colorMode ?? root.dataset.mantineColorScheme ?? null;
+    });
+    if (actual === null || actual === expected) return;
+
+    const message = `The page renders "${actual}" in the ${expected} project. `
+        + 'Set the active theme\'s "Color mode" to "System" to scan both schemes.';
+    if (process.env.CI) {
+        throw new Error(message);
+    }
+    if (!testInfo.annotations.some(annotation => annotation.type === "color-scheme")) {
+        testInfo.annotations.push({ type: "color-scheme", description: message });
+        console.warn(`[a11y] ${message}`);
+    }
 }

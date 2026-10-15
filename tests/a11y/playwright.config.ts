@@ -32,6 +32,10 @@ export default defineConfig({
     use: {
         ...devices["Desktop Chrome"],
         baseURL: process.env.A11Y_BASE_URL ?? "http://127.0.0.1:8080",
+        // Without this, axe can measure a modal mid fade-in and report the
+        // blended, semi-transparent colours. Both themes drop transitions
+        // under reduced motion, so the scan sees the settled state.
+        reducedMotion: "reduce",
         trace: "retain-on-failure",
     },
     projects: [

@@ -328,8 +328,13 @@ is the reference suite.
 the home, not-found, and sign-in dialog views, account pages the sign-in
 dialog links to, the built-in administration screens, and the
 administrator's profile, each in the light and dark colour schemes. Direction
-follows the site locale, so CI installs one site in English and one in
-Arabic.
+follows the site locale and markup follows the active theme, so CI installs a
+site for each bundled theme in English and in Arabic. Locally, the scan checks
+whatever theme and locale the target site has; switch them in the
+administration panel to cover the others. Public pages follow the light and
+dark projects only when the active theme's **Color mode** setting is
+**System** (the default is **Dark**); CI sets it, and a local run warns when
+a page renders the other scheme.
 
 A scan fails only on axe rules that are not listed for that page in
 `tests/a11y/baseline.json`. The baseline is keyed by page and rule, not by
@@ -456,7 +461,7 @@ the behavior itself is intentionally changing.
 | Documentation | PHP 8.3; `php bin/check-wiki-docs.php`. |
 | PHP | Two jobs: PHP 8.3 with MariaDB 12, and PHP 8.3 with MySQL 8.4; Composer install, Pint, PHPUnit with `INSTALL_TEST_DB_*`, and the CSRF audit. |
 | Frontend | PHP 8.3 and Node 20.19; Composer install, `npm ci`, Vitest, TypeScript, and the production Vite build. |
-| Accessibility | Two jobs, English and Arabic: PHP 8.3, Node 20.19, MariaDB 12, and memcached; production build, `bin/install.php` into a clean database, PHP's built-in server with `tests/a11y/router.php`, and the Playwright/axe scan. The report is uploaded as a workflow artifact. |
+| Accessibility | Four jobs, the `default` and `bootstrap` themes each in English and Arabic: PHP 8.3, Node 20.19, MariaDB 12, and memcached; production build, `bin/install.php` into a clean database, `theme.active` set for the job's theme, PHP's built-in server with `tests/a11y/router.php`, and the Playwright/axe scan. The report is uploaded as a workflow artifact. |
 
 CI intentionally disables PHP coverage for speed. Reproduce its dependency
 installation with the lock files (`composer install`, `npm ci`) when diagnosing

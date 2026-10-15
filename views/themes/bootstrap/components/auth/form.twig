@@ -7,7 +7,7 @@
                 {% block auth_header %}
                     <div class="modal-header">
                         <h5 class="modal-title">{% block auth_title %}{{ trans('view.auth.title') }}{% endblock %}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ trans('view.ui.close') }}"></button>
                     </div>
                 {% endblock %}
 

@@ -25,6 +25,25 @@ ol.breadcrumb, .breadcrumb-item+.breadcrumb-item::before {
     color: var(--bs-secondary-color);
 }
 
+/* Bootstrap's .link-secondary is a fixed #6c757d (4.3:1 on the dark header);
+   use the skin's muted text colour, which passes in both modes (WCAG 1.4.3). */
+.breadcrumb .link-secondary {
+    color: var(--bs-secondary-color) !important;
+}
+
+.breadcrumb .link-secondary:hover,
+.breadcrumb .link-secondary:focus-visible {
+    color: var(--bs-body-color) !important;
+}
+
+/* Same for the outlined success button (the header "Sign in"): Bootstrap's
+   #198754 reaches only 4.4:1 on the dark header. --ui-success is chosen per
+   colour mode for text use. */
+.btn-outline-success {
+    --bs-btn-color: var(--ui-success);
+    --bs-btn-border-color: var(--ui-success);
+}
+
 body {
     color: var(--bs-body-color);
 }
