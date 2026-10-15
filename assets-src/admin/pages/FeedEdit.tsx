@@ -3,7 +3,7 @@ import { Link, useParams, useNavigate } from "react-router-dom";
 
 import Editor from "@monaco-editor/react";
 
-import { TextInput, Textarea, Button, Stack, Group, Grid, ActionIcon, Anchor, Text, Select, NumberInput, Fieldset, useComputedColorScheme } from "@mantine/core";
+import { TextInput, Textarea, Button, Stack, Group, Grid, ActionIcon, Anchor, Text, Select, NumberInput, Fieldset, useComputedColorScheme, Tooltip } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 
 import { IconFileUpload, IconPlus, IconTrash } from "@tabler/icons-react";
@@ -358,12 +358,15 @@ export default function FeedEdit() {
 
                 <Group>
 
-                    <ActionIcon
-                        variant="default"
-                        onClick={() => fileInputRef.current?.click()}
-                    >
-                        <IconFileUpload />
-                    </ActionIcon>
+                    <Tooltip label={trans("js.admin.feeds.insert_image")}>
+                        <ActionIcon
+                            variant="default"
+                            aria-label={trans("js.admin.feeds.insert_image")}
+                            onClick={() => fileInputRef.current?.click()}
+                        >
+                            <IconFileUpload />
+                        </ActionIcon>
+                    </Tooltip>
 
                 </Group>
             </Group>

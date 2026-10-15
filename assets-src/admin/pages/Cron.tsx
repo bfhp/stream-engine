@@ -241,7 +241,7 @@ export default function Cron() {
                 <Text c="dimmed" size="sm">{trans("js.admin.cron.subtitle")}</Text>
             </div>
             <Tooltip label={trans("js.admin.refresh")}>
-                <ActionIcon variant="default" loading={loading} onClick={() => setRefreshKey(key => key + 1)}>
+                <ActionIcon aria-label={trans("js.admin.refresh")} variant="default" loading={loading} onClick={() => setRefreshKey(key => key + 1)}>
                     <IconRefresh size={18} />
                 </ActionIcon>
             </Tooltip>
@@ -272,7 +272,7 @@ export default function Cron() {
                             }))}
                         />
                         <Tooltip label={trans("js.admin.save")}>
-                            <ActionIcon
+                            <ActionIcon aria-label={trans("js.admin.save")}
                                 variant="filled"
                                 size="lg"
                                 loading={savingMode}

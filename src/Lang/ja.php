@@ -973,6 +973,7 @@ return [
     'js.admin.feeds.metadata_name' => '名前',
     'js.admin.feeds.metadata_value' => '値',
     'js.admin.feeds.metadata_add' => 'フィールドを追加',
+    'js.admin.feeds.insert_image' => '画像を挿入',
     'js.admin.feeds.metadata_remove' => 'フィールドを削除',
     'js.admin.feeds.metadata_invalid_name' => '使用可能: a-z, 0-9, _ . -（64文字以内、英字または数字で開始）',
     'js.admin.feeds.metadata_duplicate_name' => '名前が重複しています',

@@ -142,7 +142,7 @@ export default function Menus() {
         <Group justify="space-between" align="end">
             <div><Text fw={700} size="xl">{trans("js.admin.menu.title")}</Text><Text c="dimmed" size="sm">{trans("js.admin.menu.subtitle")}</Text></div>
             <Group>
-                <Tooltip label={trans("js.admin.refresh")}><ActionIcon variant="default" loading={loading} onClick={() => setRefreshKey(key => key + 1)}><IconRefresh size={18} /></ActionIcon></Tooltip>
+                <Tooltip label={trans("js.admin.refresh")}><ActionIcon aria-label={trans("js.admin.refresh")} variant="default" loading={loading} onClick={() => setRefreshKey(key => key + 1)}><IconRefresh size={18} /></ActionIcon></Tooltip>
                 <Button variant="light" loading={saving} disabled={!reorderingEnabled} onClick={saveOrder}>{trans("js.admin.menu.save_order")}</Button>
                 <Button component={Link} to="/menus/new" leftSection={<IconPlus size={16} />}>{trans("js.admin.menu.new")}</Button>
             </Group>

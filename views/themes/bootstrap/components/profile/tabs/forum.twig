@@ -5,9 +5,9 @@
 {% block tab_content %}
     <form method="post" action="/api/v1/my/forum" data-profile-form>
         <div class="mb-3">
-            <label class="form-label">{{ trans('view.profile.tabs.forum.01') }}</label>
-            <textarea class="form-control" name="signature" rows="5">{{ user.signature }}</textarea>
-            <div class="form-text">
+            <label class="form-label" for="profileSignature">{{ trans('view.profile.tabs.forum.01') }}</label>
+            <textarea id="profileSignature" class="form-control" name="signature" rows="5" aria-describedby="profileSignatureHelp">{{ user.signature }}</textarea>
+            <div class="form-text" id="profileSignatureHelp">
                 {{ trans('view.profile.tabs.forum.02') }}
                 <code>&lt;b&gt;</code>, <code>&lt;i&gt;</code>, <code>&lt;a&gt;</code> {{ trans('view.forums.topic.form.36') }}
                 <code>&lt;img&gt;</code> {{ trans('view.profile.tabs.forum.03') }}

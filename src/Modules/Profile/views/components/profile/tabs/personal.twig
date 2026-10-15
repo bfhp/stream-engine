@@ -5,7 +5,7 @@
         <input type="hidden" name="avatar_url" value="{{ user.avatarUrl }}" data-profile-avatar-url>
 
         <div class="profile-section">
-            <span class="ui-label">{{ trans('view.profile.tabs.personal.01') }}</span>
+            <label class="ui-label" for="profileAvatarFile">{{ trans('view.profile.tabs.personal.01') }}</label>
             <div class="profile-avatar-row">
                 <img
                     src="{{ user.avatarUrl }}"
@@ -16,24 +16,24 @@
                     data-profile-avatar-preview
                 >
                 <div class="profile-avatar-row__input">
-                    <input type="file" class="ui-input" accept="image/*" data-profile-avatar-file>
-                    <div class="ui-help">{{ trans('view.profile.tabs.personal.02') }}</div>
+                    <input type="file" class="ui-input" accept="image/*" id="profileAvatarFile" aria-describedby="profileAvatarHelp" data-profile-avatar-file>
+                    <div class="ui-help" id="profileAvatarHelp">{{ trans('view.profile.tabs.personal.02') }}</div>
                 </div>
             </div>
         </div>
 
         <div class="ui-field">
-            <label class="ui-label">{{ trans('view.feedback.form.01') }}</label>
-            <input type="text" name="nick" class="ui-input" value="{{ user.nick }}">
-            <div class="ui-help">{{ trans('view.profile.tabs.personal.03') }}</div>
+            <label class="ui-label" for="profileNick">{{ trans('view.feedback.form.01') }}</label>
+            <input id="profileNick" type="text" name="nick" class="ui-input" value="{{ user.nick }}" aria-describedby="profileNickHelp">
+            <div class="ui-help" id="profileNickHelp">{{ trans('view.profile.tabs.personal.03') }}</div>
         </div>
         <div class="ui-field">
-            <label class="ui-label">{{ trans('view.profile.tabs.personal.04') }}</label>
-            <input type="url" name="homepage" class="ui-input" value="{{ user.homepage }}" placeholder="https://example.com">
+            <label class="ui-label" for="profileHomepage">{{ trans('view.profile.tabs.personal.04') }}</label>
+            <input id="profileHomepage" type="url" name="homepage" class="ui-input" value="{{ user.homepage }}" placeholder="https://example.com">
         </div>
         <div class="ui-field">
-            <label class="ui-label">{{ trans('view.profile.tabs.personal.05') }}</label>
-            <select name="gender" class="ui-select">
+            <label class="ui-label" for="profileGender">{{ trans('view.profile.tabs.personal.05') }}</label>
+            <select id="profileGender" name="gender" class="ui-select">
                 <option value="" {% if user.gender == '' %}selected{% endif %}>{{ trans('view.profile.tabs.personal.06') }}</option>
                 <option value="male" {% if user.gender == 'male' %}selected{% endif %}>{{ trans('view.profile.tabs.personal.07') }}</option>
                 <option value="female" {% if user.gender == 'female' %}selected{% endif %}>{{ trans('view.profile.tabs.personal.08') }}</option>
@@ -41,12 +41,12 @@
             </select>
         </div>
         <div class="ui-field">
-            <label class="ui-label">{{ trans('view.profile.tabs.personal.10') }}</label>
-            <input type="date" name="birth_date" class="ui-input" value="{{ user.birthDate }}">
+            <label class="ui-label" for="profileBirthDate">{{ trans('view.profile.tabs.personal.10') }}</label>
+            <input id="profileBirthDate" type="date" name="birth_date" class="ui-input" value="{{ user.birthDate }}">
         </div>
         <div class="ui-field">
-            <label class="ui-label">{{ trans('view.profile.tabs.personal.11') }}</label>
-            <textarea name="bio" class="ui-input" rows="4">{{ user.bio }}</textarea>
+            <label class="ui-label" for="profileBio">{{ trans('view.profile.tabs.personal.11') }}</label>
+            <textarea id="profileBio" name="bio" class="ui-input" rows="4">{{ user.bio }}</textarea>
         </div>
         <div class="profile-actions">
             <button class="ui-button ui-button--primary" type="submit">{{ trans('view.forums.topic.form.41') }}</button>

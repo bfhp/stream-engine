@@ -973,6 +973,7 @@ E-mail: {email}
     'js.admin.feeds.metadata_name' => 'Nome',
     'js.admin.feeds.metadata_value' => 'Valore',
     'js.admin.feeds.metadata_add' => 'Aggiungi campo',
+    'js.admin.feeds.insert_image' => 'Inserisci immagine',
     'js.admin.feeds.metadata_remove' => 'Rimuovi campo',
     'js.admin.feeds.metadata_invalid_name' => 'Consentiti: a-z, 0-9, _ . - (max 64, inizia con lettera o cifra)',
     'js.admin.feeds.metadata_duplicate_name' => 'Nome duplicato',

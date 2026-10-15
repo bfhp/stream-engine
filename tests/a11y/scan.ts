@@ -1,7 +1,8 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, type TestInfo } from "@playwright/test";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { BASELINE_FILE } from "./paths";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import path from "node:path";
+import { BASELINE_FILE, OUTPUT_DIR } from "./paths";
 import { WCAG_TAGS, formatViolations } from "./format";
 
 type Baseline = {
@@ -51,10 +52,16 @@ export async function expectNoNewViolations(
 ): Promise<void> {
     const results = await configure(new AxeBuilder({ page }).withTags(WCAG_TAGS)).analyze();
 
+    const report = JSON.stringify(results.violations, null, 2);
     await testInfo.attach(`axe-${pageId.replace(/\//g, "-")}.json`, {
-        body: JSON.stringify(results.violations, null, 2),
+        body: report,
         contentType: "application/json",
     });
+    // Also on disk, one file per page and project, so baseline entries can be
+    // investigated without a failing run (and are part of the CI artifact).
+    const reportDir = path.join(OUTPUT_DIR, "violations", testInfo.project.name);
+    mkdirSync(reportDir, { recursive: true });
+    writeFileSync(path.join(reportDir, `${pageId.replace(/\//g, "-")}.json`), report + "\n");
 
     const observed = results.violations.map(violation => violation.id);
     if (updating) {

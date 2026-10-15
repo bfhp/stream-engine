@@ -147,7 +147,7 @@ export default function Users() {
                     <Text c="dimmed" size="sm">{transChoiceWithCount("js.admin.users.accounts", total)}</Text>
                 </div>
                 <Tooltip label={trans("js.admin.refresh")}>
-                    <ActionIcon variant="default" loading={loading} onClick={() => setRefreshKey(key => key + 1)}>
+                    <ActionIcon aria-label={trans("js.admin.refresh")} variant="default" loading={loading} onClick={() => setRefreshKey(key => key + 1)}>
                         <IconRefresh size={18} />
                     </ActionIcon>
                 </Tooltip>

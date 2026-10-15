@@ -23,8 +23,12 @@
     --ui-text: #e5e7eb;
     --ui-muted: #94a3b8;
     --ui-border: #334155;
-    --ui-primary: #3b82f6;
+    /* --ui-primary fills controls under --ui-primary-contrast text;
+       --ui-link is primary-coloured text on page surfaces. One colour cannot
+       reach 4.5:1 in both roles on a dark background (WCAG 1.4.3). */
+    --ui-primary: #2563eb;
     --ui-primary-contrast: #ffffff;
+    --ui-link: #60a5fa;
     --ui-success: #22c55e;
     --ui-danger: #ef4444;
     --ui-warning: #f59e0b;
@@ -43,6 +47,9 @@
     --ui-muted: #64748b;
     --ui-border: #e2e8f0;
     --ui-primary: #2563eb;
+    --ui-link: #2563eb;
+    /* Darker than the dark-mode green: it is text on white here. */
+    --ui-success: #15803d;
     --ui-header-bg: #ffffff;
     --ui-shadow: 0 1px 3px rgb(15 23 42 / .12);
     --ui-trix-icon-filter: none;
@@ -95,7 +102,7 @@ p {
 }
 
 a {
-    color: var(--ui-primary);
+    color: var(--ui-link);
 }
 
 img {
@@ -174,7 +181,7 @@ hr {
 .ui-button--secondary { background: transparent; }
 .ui-button--danger { background: var(--ui-danger); border-color: var(--ui-danger); color: #fff; }
 .ui-button--success { background: transparent; border-color: var(--ui-success); color: var(--ui-success); }
-.ui-button--link { background: none; border-color: transparent; color: var(--ui-primary); padding-inline: 0; }
+.ui-button--link { background: none; border-color: transparent; color: var(--ui-link); padding-inline: 0; }
 .ui-button--link:hover { text-decoration: underline; filter: none; }
 .ui-button--sm { padding: .25rem .625rem; font-size: .875rem; }
 .ui-button--block { display: flex; inline-size: 100%; }
@@ -272,7 +279,7 @@ hr {
 .ui-segmented__option {
     padding: .25rem .625rem;
     font-size: .875rem;
-    color: var(--ui-primary);
+    color: var(--ui-link);
     cursor: pointer;
 }
 
@@ -545,7 +552,7 @@ body {
 }
 
 .site-footer__links a:hover,
-.site-footer__links a.active { color: var(--ui-primary); }
+.site-footer__links a.active { color: var(--ui-link); }
 
 /* Modal (<dialog>) */
 .ui-modal {
@@ -788,12 +795,12 @@ body {
     --bs-border-color-translucent: var(--ui-border);
     --bs-border-radius: var(--ui-radius);
     --bs-primary: var(--ui-primary);
-    --bs-primary-rgb: 59, 130, 246;
+    --bs-primary-rgb: 37, 99, 235;
     --bs-primary-bg-subtle: var(--ui-surface-2);
-    --bs-primary-text-emphasis: var(--ui-primary);
+    --bs-primary-text-emphasis: var(--ui-link);
     --bs-danger: var(--ui-danger);
     --bs-success: var(--ui-success);
-    --bs-link-color: var(--ui-primary);
-    --bs-link-hover-color: var(--ui-primary);
+    --bs-link-color: var(--ui-link);
+    --bs-link-hover-color: var(--ui-link);
     --bs-box-shadow-lg: var(--ui-shadow);
 }

@@ -973,6 +973,7 @@ return [
     'js.admin.feeds.metadata_name' => 'الاسم',
     'js.admin.feeds.metadata_value' => 'القيمة',
     'js.admin.feeds.metadata_add' => 'إضافة حقل',
+    'js.admin.feeds.insert_image' => 'إدراج صورة',
     'js.admin.feeds.metadata_remove' => 'إزالة الحقل',
     'js.admin.feeds.metadata_invalid_name' => 'المسموح: a-z و0-9 و_ . - (حتى 64، ويبدأ بحرف أو رقم)',
     'js.admin.feeds.metadata_duplicate_name' => 'اسم مكرر',

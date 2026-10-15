@@ -387,7 +387,7 @@ export default function Feeds() {
                     <Menu shadow="md" width={220}>
                         <Menu.Target>
                             <Tooltip label={trans("js.admin.columns")}>
-                                <ActionIcon variant="default" size="lg">
+                                <ActionIcon aria-label={trans("js.admin.columns")} variant="default" size="lg">
                                     <IconColumns3 size={18} />
                                 </ActionIcon>
                             </Tooltip>
@@ -408,7 +408,7 @@ export default function Feeds() {
                     <Menu shadow="md" width={240}>
                         <Menu.Target>
                             <Tooltip label={trans("js.admin.feeds.placeholders")}>
-                                <ActionIcon variant="default" size="lg">
+                                <ActionIcon aria-label={trans("js.admin.feeds.placeholders")} variant="default" size="lg">
                                     <IconAdjustmentsHorizontal size={18} />
                                 </ActionIcon>
                             </Tooltip>
@@ -423,13 +423,13 @@ export default function Feeds() {
                     </Menu>
 
                     <Tooltip label={trans("js.admin.reset_filters")}>
-                        <ActionIcon variant="default" size="lg" onClick={resetFilters}>
+                        <ActionIcon aria-label={trans("js.admin.reset_filters")} variant="default" size="lg" onClick={resetFilters}>
                             <IconFilterOff size={18} />
                         </ActionIcon>
                     </Tooltip>
 
                     <Tooltip label={trans("js.admin.reload")}>
-                        <ActionIcon variant="default" size="lg" onClick={() => setRefreshKey(value => value + 1)}>
+                        <ActionIcon aria-label={trans("js.admin.reload")} variant="default" size="lg" onClick={() => setRefreshKey(value => value + 1)}>
                             <IconRefresh size={18} />
                         </ActionIcon>
                     </Tooltip>

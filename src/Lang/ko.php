@@ -973,6 +973,7 @@ return [
     'js.admin.feeds.metadata_name' => '이름',
     'js.admin.feeds.metadata_value' => '값',
     'js.admin.feeds.metadata_add' => '필드 추가',
+    'js.admin.feeds.insert_image' => '이미지 삽입',
     'js.admin.feeds.metadata_remove' => '필드 삭제',
     'js.admin.feeds.metadata_invalid_name' => '허용: a-z, 0-9, _ . - (최대 64자, 문자나 숫자로 시작)',
     'js.admin.feeds.metadata_duplicate_name' => '중복된 이름',

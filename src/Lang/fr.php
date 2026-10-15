@@ -973,6 +973,7 @@ E-mail : {email}
     'js.admin.feeds.metadata_name' => 'Nom',
     'js.admin.feeds.metadata_value' => 'Valeur',
     'js.admin.feeds.metadata_add' => 'Ajouter un champ',
+    'js.admin.feeds.insert_image' => 'Insérer une image',
     'js.admin.feeds.metadata_remove' => 'Supprimer le champ',
     'js.admin.feeds.metadata_invalid_name' => 'Autorisé : a-z, 0-9, _ . - (64 max., commence par une lettre ou un chiffre)',
     'js.admin.feeds.metadata_duplicate_name' => 'Nom en double',

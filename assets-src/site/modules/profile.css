@@ -224,7 +224,7 @@
     color: var(--ui-muted);
 }
 
-.profile-tag--primary { color: var(--ui-primary); }
+.profile-tag--primary { color: var(--ui-link); }
 .profile-tag--success { color: var(--ui-success); }
 .profile-tag--warning { color: var(--ui-warning); }
 .profile-tag--info { color: var(--ui-info); }

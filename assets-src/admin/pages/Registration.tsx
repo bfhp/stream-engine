@@ -156,7 +156,7 @@ export default function Registration() {
                 <Text fw={700} size="xl">{trans("js.admin.registration.title")}</Text>
                 <Group>
                     <Tooltip label={trans("js.admin.refresh")}>
-                        <ActionIcon
+                        <ActionIcon aria-label={trans("js.admin.refresh")}
                             variant="default"
                             loading={loading}
                             onClick={() => setRefreshKey(key => key + 1)}

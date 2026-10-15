@@ -49,7 +49,7 @@
 
 .forums-legend__item { display: inline-flex; align-items: center; gap: var(--ui-space-1); }
 
-.forums-icon--unread { color: var(--ui-primary); }
+.forums-icon--unread { color: var(--ui-link); }
 .forums-icon--read { color: var(--ui-muted); }
 
 .forums-number { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; }
@@ -136,7 +136,7 @@
 .forums-row__icon { font-size: 1.4rem; line-height: 1; }
 .forums-row__text { min-inline-size: 0; }
 .forums-row__title { font-weight: 600; color: var(--ui-text); text-decoration: none; overflow-wrap: anywhere; }
-.forums-row__title:hover { color: var(--ui-primary); }
+.forums-row__title:hover { color: var(--ui-link); }
 .forums-row__desc { margin: var(--ui-space-1) 0 0; font-size: .85rem; color: var(--ui-muted); }
 .forums-row__meta { margin-block-start: var(--ui-space-1); font-size: .8rem; color: var(--ui-muted); }
 

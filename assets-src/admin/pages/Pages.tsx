@@ -95,7 +95,7 @@ export default function Pages() {
 
                 <Group>
                     <Tooltip label={trans("js.admin.refresh")}>
-                        <ActionIcon
+                        <ActionIcon aria-label={trans("js.admin.refresh")}
                             variant="default"
                             loading={loading}
                             onClick={() => setRefreshKey(key => key + 1)}
@@ -172,7 +172,7 @@ export default function Pages() {
                             <Table.Td>{page.accessRule ?? "public"}</Table.Td>
                             <Table.Td onClick={event => event.stopPropagation()}>
                                 <Tooltip label={trans("js.admin.edit")}>
-                                    <ActionIcon
+                                    <ActionIcon aria-label={trans("js.admin.edit")}
                                         component={Link}
                                         to={`/pages/${page.id}`}
                                         variant="subtle"

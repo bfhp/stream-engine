@@ -973,6 +973,7 @@ E-mail: {email}
     'js.admin.feeds.metadata_name' => 'Naam',
     'js.admin.feeds.metadata_value' => 'Waarde',
     'js.admin.feeds.metadata_add' => 'Veld toevoegen',
+    'js.admin.feeds.insert_image' => 'Afbeelding invoegen',
     'js.admin.feeds.metadata_remove' => 'Veld verwijderen',
     'js.admin.feeds.metadata_invalid_name' => 'Toegestaan: a-z, 0-9, _ . - (max. 64, begint met letter of cijfer)',
     'js.admin.feeds.metadata_duplicate_name' => 'Dubbele naam',

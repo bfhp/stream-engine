@@ -1009,6 +1009,7 @@ return [
     'js.admin.feeds.metadata_name' => 'Имя',
     'js.admin.feeds.metadata_value' => 'Значение',
     'js.admin.feeds.metadata_add' => 'Добавить поле',
+    'js.admin.feeds.insert_image' => 'Вставить изображение',
     'js.admin.feeds.metadata_remove' => 'Удалить поле',
     'js.admin.feeds.metadata_invalid_name' => 'Допустимо: a-z, 0-9, _ . - (до 64 символов, начало — буква или цифра)',
     'js.admin.feeds.metadata_duplicate_name' => 'Имя повторяется',

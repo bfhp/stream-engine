@@ -10,6 +10,7 @@ import "../shared/custom-content.css";
 
 import App from "./App";
 import { isRtl } from "./lib/direction";
+import { adminCssVariablesResolver, adminTheme } from "./theme";
 import { createModuleRoutes, type AdminPageModules } from "./module-pages";
 
 const systemColorSchemeManager: MantineColorSchemeManager = {
@@ -26,6 +27,8 @@ export function mountAdmin(modules: AdminPageModules = {}): void {
     ).render(
         <DirectionProvider initialDirection={isRtl() ? "rtl" : "ltr"} detectDirection={false}>
             <MantineProvider
+                theme={adminTheme}
+                cssVariablesResolver={adminCssVariablesResolver}
                 colorSchemeManager={systemColorSchemeManager}
                 defaultColorScheme="auto"
             >

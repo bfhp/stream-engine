@@ -3,12 +3,12 @@
 {% block tab_content %}
     <form method="post" action="/profile/security">
         <div class="ui-field">
-            <label class="ui-label">{{ trans('view.profile.tabs.security.01') }}</label>
-            <input type="email" name="email" class="ui-input" value="{{ user.email }}">
+            <label class="ui-label" for="profileEmail">{{ trans('view.profile.tabs.security.01') }}</label>
+            <input id="profileEmail" type="email" name="email" class="ui-input" value="{{ user.email }}">
         </div>
         <div class="ui-field">
-            <label class="ui-label">{{ trans('view.profile.tabs.security.02') }}</label>
-            <input type="password" name="password" class="ui-input">
+            <label class="ui-label" for="profilePassword">{{ trans('view.profile.tabs.security.02') }}</label>
+            <input id="profilePassword" type="password" name="password" class="ui-input">
         </div>
         <button class="ui-button ui-button--danger">{{ trans('view.profile.tabs.security.03') }}</button>
     </form>

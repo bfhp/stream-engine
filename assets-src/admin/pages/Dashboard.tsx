@@ -169,7 +169,7 @@ export default function Dashboard() {
         <Group justify="space-between">
             <div><Text fw={700} size="xl">{trans("js.admin.dashboard.title")}</Text><Text c="dimmed" size="sm">{trans("js.admin.dashboard.subtitle")}</Text></div>
             <Group>
-                <Tooltip label={trans("js.admin.refresh")}><ActionIcon variant="default" loading={loading} onClick={() => setRefreshKey(key => key + 1)}><IconRefresh size={18} /></ActionIcon></Tooltip>
+                <Tooltip label={trans("js.admin.refresh")}><ActionIcon aria-label={trans("js.admin.refresh")} variant="default" loading={loading} onClick={() => setRefreshKey(key => key + 1)}><IconRefresh size={18} /></ActionIcon></Tooltip>
                 <Button variant="default" leftSection={<IconSettings size={16} />} disabled={!payload} onClick={openCustomizer}>{trans("js.admin.dashboard.customize")}</Button>
             </Group>
         </Group>

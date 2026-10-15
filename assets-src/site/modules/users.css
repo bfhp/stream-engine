@@ -172,7 +172,7 @@
 }
 
 a.users-person:hover {
-    color: var(--ui-primary);
+    color: var(--ui-link);
 }
 
 .users-person--grow {
@@ -426,7 +426,7 @@ a.users-person:hover {
 
 .users-tag-cloud__tag.is-active {
     font-weight: 600;
-    color: var(--ui-primary);
+    color: var(--ui-link);
 }
 
 /* Blog post editor */

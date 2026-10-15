@@ -973,6 +973,7 @@ return [
     'js.admin.feeds.metadata_name' => '名称',
     'js.admin.feeds.metadata_value' => '值',
     'js.admin.feeds.metadata_add' => '添加字段',
+    'js.admin.feeds.insert_image' => '插入图片',
     'js.admin.feeds.metadata_remove' => '删除字段',
     'js.admin.feeds.metadata_invalid_name' => '允许：a-z、0-9、_ . -（最多 64 个字符，以字母或数字开头）',
     'js.admin.feeds.metadata_duplicate_name' => '名称重复',

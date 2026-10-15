@@ -973,6 +973,7 @@ Email: {email}
     'js.admin.feeds.metadata_name' => 'Name',
     'js.admin.feeds.metadata_value' => 'Value',
     'js.admin.feeds.metadata_add' => 'Add field',
+    'js.admin.feeds.insert_image' => 'Insert image',
     'js.admin.feeds.metadata_remove' => 'Remove field',
     'js.admin.feeds.metadata_invalid_name' => 'Allowed: a-z, 0-9, _ . - (up to 64, starts with a letter or digit)',
     'js.admin.feeds.metadata_duplicate_name' => 'Duplicate name',
