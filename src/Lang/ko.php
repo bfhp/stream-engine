@@ -1045,6 +1045,7 @@ return [
     'js.admin.nav.widgets' => '위젯',
     'js.admin.nav.file_browser' => '파일 관리자',
     'js.admin.nav.users' => '사용자',
+    'js.admin.nav.toggle' => '탐색 메뉴 표시 전환',
     'js.admin.page_action.admin' => '관리자 인터페이스',
 
     'js.admin.dashboard.title' => '대시보드',

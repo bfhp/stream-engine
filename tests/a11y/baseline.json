@@ -1,0 +1,9 @@
+{
+    "//": [
+        "Known WCAG 2.2 A/AA violations, by scanned page and axe rule id.",
+        "The scan fails only on rules not listed here. Record new entries with",
+        "A11Y_UPDATE_BASELINE=1 npm run test:a11y; delete an entry by hand once",
+        "the rule is fixed. See Developer-Localization-and-Accessibility in the wiki."
+    ],
+    "pages": {}
+}

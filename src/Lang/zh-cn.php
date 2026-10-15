@@ -1045,6 +1045,7 @@ return [
     'js.admin.nav.widgets' => '小组件',
     'js.admin.nav.file_browser' => '文件管理器',
     'js.admin.nav.users' => '用户',
+    'js.admin.nav.toggle' => '显示或隐藏导航',
     'js.admin.page_action.admin' => '管理界面',
 
     'js.admin.dashboard.title' => '仪表盘',

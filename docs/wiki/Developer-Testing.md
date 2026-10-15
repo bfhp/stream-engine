@@ -28,6 +28,7 @@ to every changed endpoint.
 | `tests/Integration/` | Behavior that intentionally crosses into real infrastructure, currently the disposable-database installation/schema suite, run against MariaDB and MySQL in CI. |
 | `tests/Support/` | Narrow reusable fakes, builders, stream wrappers, and audit helpers. This directory is not a second application layer. |
 | `tests/js/` | Browser utilities, DOM behavior, React/admin contracts, API error handling, localization, navigation, and uploads under Vitest/jsdom. |
+| `tests/a11y/` | Page-level WCAG 2.2 A/AA scan of an installed site with Playwright and axe-core, and its baseline of known violations. |
 
 Mirror the production owner where practical: `src/Core/Router.php` is covered
 by `tests/Core/RouterTest.php`, while a module controller belongs below that
@@ -299,6 +300,59 @@ npm run typecheck
 additional release/CI gate that proves the entry graph, build-data plugins,
 aliases, and generated assets still compile.
 
+## Accessibility checks
+
+Accessibility is checked automatically at two levels. Both use
+[axe-core](https://github.com/dequelabs/axe-core) with the WCAG 2.0–2.2 level A
+and AA rule tags from `tests/a11y/format.ts`; best-practice rules are not part
+of the gate. Neither replaces the manual review in
+[Localization and accessibility](https://github.com/bfhp/stream-engine/wiki/Developer-Localization-and-Accessibility#accessibility-review-and-current-limits).
+
+**Component checks** run in the normal Vitest suite. Render the component to
+markup, mount it, and assert an empty report:
+
+```ts
+import { axeReport, mount } from "./support/axe";
+
+const root = mount(renderToStaticMarkup(createElement(MantineProvider, null, element)));
+expect(await axeReport(root)).toBe("");
+```
+
+jsdom has no layout or cascaded colours, so `axeReport()` disables the
+contrast and `region` rules. These checks find missing names and labels,
+invalid ARIA, and duplicate ids quickly; they cannot judge contrast, focus
+behavior, or anything that depends on layout. `tests/js/a11y-admin.test.ts`
+is the reference suite.
+
+**Page scans** in `tests/a11y/` open an installed site in Chromium. They scan
+the home, not-found, and sign-in dialog views, account pages the sign-in
+dialog links to, the built-in administration screens, and the
+administrator's profile, each in the light and dark colour schemes. Direction
+follows the site locale, so CI installs one site in English and one in
+Arabic.
+
+A scan fails only on axe rules that are not listed for that page in
+`tests/a11y/baseline.json`. The baseline is keyed by page and rule, not by
+element: a known problem does not hide a second instance of the same rule.
+Fix the cause instead of adding to the baseline. When an existing problem
+must be accepted for now, record it and review the diff:
+
+```bash
+A11Y_BASE_URL=http://localhost:5000 \
+A11Y_ADMIN_EMAIL=admin@example.com A11Y_ADMIN_PASSWORD='…' \
+A11Y_UPDATE_BASELINE=1 npm run test:a11y
+```
+
+Recording only adds entries, because each locale and colour scheme sees a
+different subset. Remove an entry by hand once its rule is fixed everywhere;
+the scan annotates baseline entries that it no longer observes. Without
+`A11Y_UPDATE_BASELINE`, the same command runs the gate against the Docker
+development site. Run `npx playwright install chromium` once first. Results,
+traces, and the session file go to the ignored `storage/a11y/` directory.
+
+When you add a public page type or an administration screen, add it to
+`guest.spec.ts` or `admin.spec.ts`.
+
 ## Focused and complete runs
 
 Run the nearest suite during development:
@@ -326,6 +380,11 @@ npm test
 npm run typecheck
 npm run build
 ```
+
+The accessibility page scan needs a running site, so it is not part of this
+local gate; run it as described in
+[Accessibility checks](https://github.com/bfhp/stream-engine/wiki/Developer-Testing#accessibility-checks)
+when a change affects rendered markup, and rely on CI otherwise.
 
 The documentation validator checks the required page set, stable filenames,
 guide navigation and reachability, Wiki page anchors, and canonical links to
@@ -390,13 +449,14 @@ the behavior itself is intentionally changing.
 
 ## Continuous-integration parity
 
-`.github/workflows/ci.yml` runs on pushes and pull requests with three jobs:
+`.github/workflows/ci.yml` runs on pushes and pull requests with four jobs:
 
 | Job | Environment and checks |
 | --- | --- |
 | Documentation | PHP 8.3; `php bin/check-wiki-docs.php`. |
 | PHP | Two jobs: PHP 8.3 with MariaDB 12, and PHP 8.3 with MySQL 8.4; Composer install, Pint, PHPUnit with `INSTALL_TEST_DB_*`, and the CSRF audit. |
 | Frontend | PHP 8.3 and Node 20.19; Composer install, `npm ci`, Vitest, TypeScript, and the production Vite build. |
+| Accessibility | Two jobs, English and Arabic: PHP 8.3, Node 20.19, MariaDB 12, and memcached; production build, `bin/install.php` into a clean database, PHP's built-in server with `tests/a11y/router.php`, and the Playwright/axe scan. The report is uploaded as a workflow artifact. |
 
 CI intentionally disables PHP coverage for speed. Reproduce its dependency
 installation with the lock files (`composer install`, `npm ci`) when diagnosing
@@ -410,7 +470,8 @@ Differences to consider when a local run is green:
   tests that a host run may skip;
 - CI starts from a clean checkout without ignored local files;
 - frontend dependencies come from `package-lock.json`; and
-- all jobs have a 15-minute limit except the five-minute documentation job.
+- jobs have a 15-minute limit, except the five-minute documentation job and
+  the 20-minute accessibility job.
 
 Inspect the first meaningful failure, reproduce its job locally, and keep the
 fix scoped to the broken contract. A cancelled older workflow run is normal:

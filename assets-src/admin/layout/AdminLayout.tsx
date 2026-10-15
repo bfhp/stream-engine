@@ -23,7 +23,12 @@ export default function AdminLayout({ moduleAdminPages }: AdminLayoutProps) {
         >
             <AppShell.Header>
                 <Group h="100%" px="md">
-                    <Burger opened={opened} onClick={() => setOpened(!opened)} />
+                    <Burger
+                        opened={opened}
+                        onClick={() => setOpened(!opened)}
+                        aria-label={trans("js.admin.nav.toggle")}
+                        aria-expanded={opened}
+                    />
                     <Text fw={600}>{trans("js.admin.brand")}</Text>
                 </Group>
             </AppShell.Header>

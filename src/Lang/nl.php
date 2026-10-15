@@ -1045,6 +1045,7 @@ E-mail: {email}
     'js.admin.nav.widgets' => 'Widgets',
     'js.admin.nav.file_browser' => 'Bestandsbeheer',
     'js.admin.nav.users' => 'Gebruikers',
+    'js.admin.nav.toggle' => 'Navigatie tonen of verbergen',
     'js.admin.page_action.admin' => 'Beheerinterface',
 
     'js.admin.dashboard.title' => 'Dashboard',

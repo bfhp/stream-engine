@@ -1081,6 +1081,7 @@ return [
     'js.admin.nav.widgets' => 'Виджеты',
     'js.admin.nav.file_browser' => 'Файловый менеджер',
     'js.admin.nav.users' => 'Пользователи',
+    'js.admin.nav.toggle' => 'Показать или скрыть навигацию',
     'js.admin.page_action.admin' => 'Интерфейс администратора',
 
     'js.admin.dashboard.title' => 'Панель управления',

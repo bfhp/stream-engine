@@ -1045,6 +1045,7 @@ Email: {email}
     'js.admin.nav.widgets' => 'Widgets',
     'js.admin.nav.file_browser' => 'File Browser',
     'js.admin.nav.users' => 'Users',
+    'js.admin.nav.toggle' => 'Toggle navigation',
     'js.admin.page_action.admin' => 'Administrator interface',
 
     'js.admin.dashboard.title' => 'Dashboard',

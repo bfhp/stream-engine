@@ -1045,6 +1045,7 @@ E-mail: {email}
     'js.admin.nav.widgets' => 'Widget',
     'js.admin.nav.file_browser' => 'Gestione file',
     'js.admin.nav.users' => 'Utenti',
+    'js.admin.nav.toggle' => 'Mostra o nascondi la navigazione',
     'js.admin.page_action.admin' => 'Interfaccia dell’amministratore',
 
     'js.admin.dashboard.title' => 'Dashboard',

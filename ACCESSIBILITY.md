@@ -71,18 +71,24 @@ referenced as evidence for the engine's share only.
   polite live regions for asynchronous status.
 - Vitest covers several ARIA state transitions, keyboard handlers, and
   direction changes.
+- Automated WCAG checks run in CI (see below).
 
 ## How accessibility is checked
 
 | Method | Status |
 | --- | --- |
 | Design and code review against the developer guide checklist | In use |
-| Component checks with axe-core in Vitest | **TODO**: planned |
-| Page checks with axe-core and Playwright in CI (LTR and RTL, light and dark) | **TODO**: planned |
+| Component checks with axe-core in Vitest (administration components) | In use, every push and pull request |
+| Page checks with axe-core and Playwright in CI (English and Arabic, light and dark) | In use, every push and pull request; known violations are listed in [`tests/a11y/baseline.json`](tests/a11y/baseline.json) |
 | Keyboard-only review of key workflows | **TODO**: not yet systematic |
 | Screen reader review | **TODO**: not yet performed |
 | Zoom to 200% and reflow at 320 CSS px | **TODO**: not yet systematic |
 | Complete WCAG 2.2 AA audit | **TODO**: not yet performed |
+
+Both automated checks run the axe-core rules for WCAG 2.0, 2.1, and 2.2 at
+levels A and AA. They cover the bundled `default` theme; the `bootstrap`
+theme is not scanned yet. How they work is described in
+[Accessibility checks](https://github.com/bfhp/stream-engine/wiki/Developer-Testing#accessibility-checks).
 
 Automated tools find only part of the issues WCAG covers. A conformance claim
 will be made only after manual review.

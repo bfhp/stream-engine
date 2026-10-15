@@ -20,14 +20,14 @@
                             {% block auth_field_email %}
                                 <div class="ui-field">
                                     <label for="authEmail" class="ui-label">Email</label>
-                                    <input autocomplete="yes" type="email" class="ui-input" id="authEmail" name="email" required>
+                                    <input autocomplete="email" type="email" class="ui-input" id="authEmail" name="email" required>
                                 </div>
                             {% endblock %}
 
                             {% block auth_field_password %}
                                 <div class="ui-field">
                                     <label for="authPassword" class="ui-label">{{ trans('view.auth.password') }}</label>
-                                    <input autocomplete="yes" type="password" class="ui-input" id="authPassword" name="password" required>
+                                    <input autocomplete="current-password" type="password" class="ui-input" id="authPassword" name="password" required>
                                 </div>
                             {% endblock %}
 

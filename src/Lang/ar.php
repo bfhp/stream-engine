@@ -1045,6 +1045,7 @@ return [
     'js.admin.nav.widgets' => 'الأدوات',
     'js.admin.nav.file_browser' => 'مدير الملفات',
     'js.admin.nav.users' => 'المستخدمون',
+    'js.admin.nav.toggle' => 'إظهار التنقل أو إخفاؤه',
     'js.admin.page_action.admin' => 'واجهة الإدارة',
 
     'js.admin.dashboard.title' => 'لوحة التحكم',

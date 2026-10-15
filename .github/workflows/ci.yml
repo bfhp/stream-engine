@@ -131,6 +131,115 @@ jobs:
       - name: Run Vite build
         run: npm run build
 
+  accessibility:
+    # Installs a fresh site per locale and scans its public and admin pages
+    # with axe-core in Chromium, in the light and dark colour schemes. Arabic
+    # covers right-to-left layout. Known violations live in
+    # tests/a11y/baseline.json; only new ones fail the job.
+    name: Accessibility (${{ matrix.locale }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    strategy:
+      fail-fast: false
+      matrix:
+        locale: [en, ar]
+
+    services:
+      database:
+        image: mariadb:12
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: stream_engine
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+      memcached:
+        image: memcached:1.6
+        ports:
+          - 11211:11211
+
+    env:
+      A11Y_BASE_URL: http://127.0.0.1:8080
+      A11Y_ADMIN_EMAIL: a11y@example.com
+      # A throwaway site that exists only for the length of this job.
+      A11Y_ADMIN_PASSWORD: a11y-scan-password
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.3'
+          extensions: curl, dom, fileinfo, gd, intl, libxml, memcached, pdo, simplexml
+          coverage: none
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '20.19'
+          cache: npm
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build frontend assets
+        run: npm run build
+
+      - name: Install Stream Engine
+        run: >-
+          php bin/install.php --no-interaction
+          --app-env=prod
+          --site-url="$A11Y_BASE_URL"
+          --site-name="Stream Engine"
+          --locale="${{ matrix.locale }}"
+          --admin-email="$A11Y_ADMIN_EMAIL"
+          --admin-name="Administrator"
+          --db-host=127.0.0.1
+          --db-port=3306
+          --db-name=stream_engine
+          --db-username=root
+          --db-password=root
+        env:
+          CMS_ADMIN_PASSWORD: ${{ env.A11Y_ADMIN_PASSWORD }}
+
+      - name: Start web server
+        run: |
+          mkdir -p storage/a11y
+          PHP_CLI_SERVER_WORKERS=4 nohup php -S 127.0.0.1:8080 -t public tests/a11y/router.php \
+            > storage/a11y/server.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            curl --silent --fail --output /dev/null "$A11Y_BASE_URL/" && exit 0
+            sleep 1
+          done
+          cat storage/a11y/server.log
+          exit 1
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run accessibility scan
+        run: npm run test:a11y
+
+      - name: Upload scan report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: accessibility-${{ matrix.locale }}
+          path: |
+            storage/a11y/
+            !storage/a11y/admin-state.json
+          retention-days: 14
+
   dependency-review:
     name: Dependency review
     if: github.event_name == 'pull_request'

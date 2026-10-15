@@ -9,6 +9,7 @@
     "build": "vite build",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:a11y": "playwright test -c tests/a11y/playwright.config.ts",
     "typecheck": "tsc"
   },
   "devDependencies": {

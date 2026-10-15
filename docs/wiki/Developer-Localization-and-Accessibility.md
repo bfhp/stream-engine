@@ -384,11 +384,18 @@ interaction, normally with `hidden` or the component library's equivalent.
 
 ## Accessibility review and current limits
 
-The repository currently has focused markup and Vitest assertions for several
-ARIA state transitions, keyboard handlers, direction changes, and rendered
-views. It does not currently run an automated accessibility scanner, publish a
-browser/screen-reader matrix, or claim formal conformance to a WCAG level.
-Automated tests would not replace manual review even if added.
+The repository has focused markup and Vitest assertions for several ARIA
+state transitions, keyboard handlers, direction changes, and rendered views.
+axe-core checks WCAG 2.2 A/AA rules at two levels: admin components in Vitest,
+and installed pages in Chromium in English and Arabic, light and dark, in CI.
+Known violations are recorded in `tests/a11y/baseline.json` and only new ones
+fail. See
+[Accessibility checks](https://github.com/bfhp/stream-engine/wiki/Developer-Testing#accessibility-checks).
+
+Automated rules find only part of what WCAG covers. The project does not yet
+publish a browser/screen-reader matrix or claim formal conformance to a WCAG
+level; the current status and known gaps are in
+[ACCESSIBILITY.md](https://github.com/bfhp/stream-engine/blob/main/ACCESSIBILITY.md).
 
 For every substantial UI change, manually verify:
 
@@ -427,7 +434,10 @@ npm run typecheck
 npm run build
 ```
 
-Add focused view or browser tests for the component itself. Assert translated
+Add focused view or browser tests for the component itself, including an
+axe check (`axeReport()` from `tests/js/support/axe.ts`) for a new admin
+component, and add a new page type or admin screen to the page scan in
+`tests/a11y/`. Assert translated
 visible text, placeholder interpolation, plural boundaries, direction-sensitive
 state, semantic attributes, and keyboard/state transitions. Avoid snapshots so
 large that a reviewer cannot see which contract matters.

@@ -1045,6 +1045,7 @@ return [
     'js.admin.nav.widgets' => 'ウィジェット',
     'js.admin.nav.file_browser' => 'ファイルブラウザー',
     'js.admin.nav.users' => 'ユーザー',
+    'js.admin.nav.toggle' => 'ナビゲーションの表示を切り替える',
     'js.admin.page_action.admin' => '管理者インターフェース',
 
     'js.admin.dashboard.title' => 'ダッシュボード',
