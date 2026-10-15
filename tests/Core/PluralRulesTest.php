@@ -54,6 +54,7 @@ final class PluralRulesTest extends TestCase
         $this->assertSame(
             TranslationManager::availableLocales(),
             array_keys(self::rules()),
+            'tests/Support/plural-rules.json is out of date; run composer plural-rules:build',
         );
     }
 

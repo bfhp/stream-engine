@@ -222,7 +222,10 @@ sample numbers (integers, negatives, fractions) for every shipped locale;
 that moves a rule on either side fails a suite instead of changing a word
 between the server render and the next browser update. The same PHP test
 checks that every plural value in every catalog has exactly its locale's
-categories. When adding a locale, add its entry to the fixture.
+categories. The fixture is generated: after adding a locale or upgrading ICU,
+run `composer plural-rules:build` and review the diff, since a changed sample
+means the server and browsers may now disagree. `composer plural-rules:build
+-- --check` fails when the file is out of date.
 
 A missing category falls back to `other`. Positional lists from older
 catalogs (`[one, few, many]` or `[one, other]`) are still read, through the
