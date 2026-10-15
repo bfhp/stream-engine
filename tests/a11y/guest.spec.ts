@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { SIGN_IN_BUTTON } from "./paths";
 import { expectNoNewViolations } from "./scan";
 
 test("home page", async ({ page }, testInfo) => {
@@ -14,7 +15,7 @@ test("not found page", async ({ page }, testInfo) => {
 
 test("sign-in dialog", async ({ page }, testInfo) => {
     await page.goto("/");
-    await page.locator('[data-ui-target="#authFormModal"]').first().click();
+    await page.locator(SIGN_IN_BUTTON).first().click();
     await expect(page.locator("#authFormModal")).toBeVisible();
     await expectNoNewViolations(page, "guest/sign-in-dialog", testInfo, builder => builder.include("#authFormModal"));
 });

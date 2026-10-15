@@ -1,5 +1,5 @@
 import { expect, test as setup } from "@playwright/test";
-import { ADMIN_STATE } from "./paths";
+import { ADMIN_STATE, SIGN_IN_BUTTON } from "./paths";
 
 setup("sign in as the administrator", async ({ page }) => {
     const email = process.env.A11Y_ADMIN_EMAIL;
@@ -9,7 +9,7 @@ setup("sign in as the administrator", async ({ page }) => {
     }
 
     await page.goto("/");
-    await page.locator('[data-ui-target="#authFormModal"]').first().click();
+    await page.locator(SIGN_IN_BUTTON).first().click();
     await page.locator("#authEmail").fill(email);
     await page.locator("#authPassword").fill(password);
 
