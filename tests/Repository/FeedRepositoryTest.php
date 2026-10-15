@@ -95,11 +95,18 @@ final class FeedRepositoryTest extends TestCase
         $this->assertSame([0, 0], $params);
     }
 
-    public function testGlobalModeratorDoesNotBypassContentVisibility(): void
+    public function testGlobalModeratorBypassesContentVisibility(): void
     {
         [$sql, $params] = $this->aclCondition($this->user(7, AccessService::ROLE_MODERATOR));
+        $this->assertSame('1=1', $sql);
+        $this->assertSame([], $params);
+    }
+
+    public function testGuestWithModeratorRoleDoesNotBypassContentVisibility(): void
+    {
+        [$sql, $params] = $this->aclCondition($this->user(0, AccessService::ROLE_MODERATOR));
         $this->assertNotSame('1=1', $sql);
-        $this->assertSame([7, 7], $params);
+        $this->assertSame([0, 0], $params);
     }
 
     /**

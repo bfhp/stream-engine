@@ -26,6 +26,11 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- Global moderators can now read, edit and delete all content regardless of
+  visibility — members-only community posts, friends-only blog posts, and
+  private posts and drafts — and are exempt from the 24-hour edit window,
+  matching administrators. They still have no access to Administration, the
+  admin API, uploads management or private messages.
 - A feed can be bound to only one page; existing duplicates stay saveable
   until their feed is changed.
 

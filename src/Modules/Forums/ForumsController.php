@@ -933,7 +933,8 @@ class ForumsController extends AbstractController
      *   instead, and it's the identical rule FeedService::updateFeed() will
      *   re-check server-side anyway.
      * - FeedService::isWithinEditWindow() - the same 24h
-     *   COMMENT_EDIT_WINDOW_SECONDS an ordinary reply gets, admins excepted.
+     *   COMMENT_EDIT_WINDOW_SECONDS an ordinary reply gets, admins and global
+     *   moderators excepted.
      *   Deliberately not a second, topic-specific number: the opening post is
      *   a post, and editing it through the per-post "Edit" button (which
      *   goes to FeedService::editComment()) already had exactly this limit -

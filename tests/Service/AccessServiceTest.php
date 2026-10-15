@@ -122,16 +122,41 @@ final class AccessServiceTest extends TestCase
         $this->assertTrue($service->canAccessPage($this->makeUser(1, AccessService::ROLE_ADMIN), $this->makePage(AccessService::ACCESS_ADMIN)));
     }
 
-    public function testGlobalModeratorHasNoNewContentPrivileges(): void
+    /**
+     * A global moderator moderates all feed content - private global posts,
+     * members-only community posts, friends-only blog posts and private
+     * container content - without holding any membership row, but still
+     * gets no admin-only access.
+     */
+    public function testGlobalModeratorCanReadAndEditAllContent(): void
     {
         $service = $this->makeService();
         $user = $this->makeUser(7, AccessService::ROLE_MODERATOR);
-        $feed = $this->makeFeed(ownerId: 9, visibility: 'private');
 
+        $feeds = [
+            'private global' => $this->makeFeed(ownerId: 9, visibility: 'private'),
+            'members-only community' => $this->makeFeed(ownerId: 9, containerId: 42, visibility: 'members', containerType: 'community'),
+            'friends-only blog' => $this->makeFeed(ownerId: 9, containerId: 43, visibility: 'members', containerType: 'blog'),
+            'private container' => $this->makeFeed(ownerId: 9, containerId: 42, visibility: 'private', containerType: 'community'),
+        ];
+
+        foreach ($feeds as $label => $feed) {
+            $this->assertTrue($service->canAccessFeed($user, $feed), $label);
+            $this->assertTrue($service->canEditFeed($user, $feed), $label);
+        }
+
+        $this->assertTrue($service->canModerateContent($user));
         $this->assertFalse($service->isAdmin($user));
-        $this->assertFalse($service->canAccessFeed($user, $feed));
-        $this->assertFalse($service->canEditFeed($user, $feed));
         $this->assertFalse($service->canAccessPage($user, $this->makePage(AccessService::ACCESS_ADMIN)));
+    }
+
+    public function testRegularUserAndGuestCannotModerateContent(): void
+    {
+        $service = $this->makeService();
+
+        $this->assertFalse($service->canModerateContent($this->makeUser(5)));
+        $this->assertFalse($service->canModerateContent($this->makeUser(0, AccessService::ROLE_MODERATOR)));
+        $this->assertTrue($service->canModerateContent($this->makeUser(1, AccessService::ROLE_ADMIN)));
     }
 
     public function testOwnerCanAccessAndEditOwnFeed(): void

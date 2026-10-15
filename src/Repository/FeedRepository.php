@@ -1267,8 +1267,8 @@ final class FeedRepository implements FeedRepositoryInterface
      */
     private function buildAclCondition(User $user): array
     {
-        // Admin override
-        if ($user->isAdmin()) {
+        // Content moderator override (admin or global moderator)
+        if ($user->canModerateContent()) {
             return ['1=1', []];
         }
 

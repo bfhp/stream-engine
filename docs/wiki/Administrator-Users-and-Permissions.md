@@ -25,8 +25,8 @@ flowchart TD
     P --> R
 ```
 
-An account can therefore be a global site moderator without moderating a
-particular community, or own a community while retaining the normal global
+An account can therefore be a global site moderator without holding a local
+role in any community, or own a community while retaining the normal global
 `user` role. A visible menu item does not grant access, and a hidden menu item
 does not protect its URL.
 
@@ -37,7 +37,7 @@ Every human account has one global role:
 | Role | Site-wide meaning |
 | --- | --- |
 | `user` | Normal authenticated account. It can reach pages marked `authenticated` and perform operations granted by ownership or membership. |
-| `moderator` | Includes normal-user access and can reach pages and menu items marked `moderator`. It does not grant access to Administration and does not automatically make the account a moderator or owner of every community. |
+| `moderator` | Includes normal-user access and can reach pages and menu items marked `moderator`. Overrides feed visibility and feed edit checks like `admin`: it can read, edit and delete any content, including members-only community posts, friends-only blog posts and private posts and drafts, and is not limited by the 24-hour edit window. It does not grant access to Administration, the admin API, uploads management or private messages, and does not make the account a local moderator or owner of any community (community management stays with the owner). |
 | `admin` | Grants access to Administration, satisfies all page audience rules, and overrides feed visibility and feed edit checks. Assign it only to trusted site operators. |
 
 Modules may apply additional ownership or membership checks after the route
@@ -174,9 +174,11 @@ The current Users page cannot create accounts. To add an administrator:
 Do not share an administrator account. Separate accounts preserve ownership
 and make later removal of access safer.
 
-Use the same workflow with role `moderator` when an account only needs pages
-explicitly intended for global moderators. Do not grant `admin` merely to let
-someone moderate one community.
+Use the same workflow with role `moderator` when an account needs to moderate
+content across the whole site. A global moderator can read every non-public
+post, so grant the role only to people trusted with that. Do not grant
+`admin` merely to let someone moderate content, and do not grant global
+`moderator` merely to let someone moderate one community.
 
 ## Suspend and recover an account
 
@@ -225,17 +227,18 @@ Content access is evaluated after page access:
 | Feed visibility | Who can read it |
 | --- | --- |
 | `public` | Everyone who can reach the page. |
-| `members` | The feed or container owner, administrators, and accepted members of its container. |
-| `private` | The feed or container owner, administrators, and local container moderators or owners. |
+| `members` | The feed or container owner, administrators, global moderators, and accepted members of its container. |
+| `private` | The feed or container owner, administrators, global moderators, and local container moderators or owners. |
 
 For a generic feed with no container, non-public visibility leaves access to
-the feed owner and administrators; it does not mean every authenticated user
-or every global moderator.
+the feed owner, administrators and global moderators; it does not mean every
+authenticated user.
 
 Ownership can grant content access and editing even when the owner's global
-role is `user`. Administrators override feed visibility and feed edit checks.
-A local container moderator may edit content in that container, but a global
-`moderator` does not automatically receive that local capability.
+role is `user`. Administrators and global moderators override feed visibility,
+feed edit and delete checks, and the 24-hour edit window. A local container
+moderator may edit content only in that container. Private messages are not
+feeds and are never covered by these overrides.
 
 ## Community membership roles
 

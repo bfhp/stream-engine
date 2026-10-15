@@ -498,7 +498,7 @@ class FeedService
      * instead). Same ownership rule as updateFeed()/deleteFeed()
      * (AccessService::canEditFeed() - owner, admin, or container
      * moderator), plus a 24h window (COMMENT_EDIT_WINDOW_SECONDS) that
-     * admins bypass, same as a moderator/admin being able to act outside
+     * admins and global moderators bypass, same as a moderator/admin being able to act outside
      * the rules an ordinary owner is held to elsewhere in this class.
      *
      * Deliberately narrower than updateFeed(): only content changes (title/
@@ -526,7 +526,7 @@ class FeedService
         }
 
         if (
-            ! $this->accessService->isAdmin($user)
+            ! $this->accessService->canModerateContent($user)
             && $comment->createdAt !== null
             && $comment->createdAt < time() - self::COMMENT_EDIT_WINDOW_SECONDS
         ) {
@@ -1205,7 +1205,7 @@ class FeedService
 
     public function isWithinEditWindow(Feed $feed, User $user): bool
     {
-        if ($this->accessService->isAdmin($user)) {
+        if ($this->accessService->canModerateContent($user)) {
             return true;
         }
 

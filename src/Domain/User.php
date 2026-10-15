@@ -59,6 +59,17 @@ final class User
         return !$this->isGuest() && $this->role === AccessService::ROLE_ADMIN;
     }
 
+    /**
+     * Global content moderation: administrators and global moderators may
+     * read, edit and delete any feed content regardless of its visibility.
+     * Does not cover Administration, uploads, the API or private messages.
+     */
+    public function canModerateContent(): bool
+    {
+        return !$this->isGuest()
+            && in_array($this->role, [AccessService::ROLE_MODERATOR, AccessService::ROLE_ADMIN], true);
+    }
+
     public function withAvatarUrl(string $avatarUrl): self
     {
         return new self(

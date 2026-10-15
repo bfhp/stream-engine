@@ -19,11 +19,12 @@ use StreamEngine\Repository\MembershipRepository;
  *  - Global role-based access control (RBAC)
  *  - Container-based membership access
  *  - Owner override
- *  - Admin override
+ *  - Admin / global moderator content override
  *
  * Priority order of access rules:
  *
- * 1. Admin override — admin can access everything.
+ * 1. Content moderator override — admin and global moderator can read and
+ *    edit all feed content (not Administration or private messages).
  * 2. Owner override — feed owner or container owner can access everything inside container.
  * 3. Visibility rules:
  *      - public  → accessible to everyone
@@ -88,7 +89,7 @@ class AccessService
      * Determine whether a user can access a feed.
      *
      * Access resolution order:
-     *  1. Admin override
+     *  1. Content moderator override (admin or global moderator)
      *  2. Owner override (feed owner or container owner)
      *  3. Global (non-container) feeds are public
      *  4. Visibility-based rules
@@ -97,8 +98,8 @@ class AccessService
      */
     public function canAccessFeed(User $user, Feed $feed): bool
     {
-        // 🔥 1. Admin override
-        if ($this->isAdmin($user)) {
+        // 🔥 1. Content moderator override (admin or global moderator)
+        if ($this->canModerateContent($user)) {
             return true;
         }
 
@@ -137,8 +138,8 @@ class AccessService
 
     public function canEditFeed(User $user, Feed $feed): bool
     {
-        // 🔥 1. Admin override
-        if ($this->isAdmin($user)) {
+        // 🔥 1. Content moderator override (admin or global moderator)
+        if ($this->canModerateContent($user)) {
             return true;
         }
 
@@ -213,6 +214,15 @@ class AccessService
         $membership = $this->membershipRepository->find($containerId, $user->id);
 
         return (int) ($membership->roleLevel ?? 0) >= 2;
+    }
+
+    /**
+     * Admin or global moderator: bypasses feed visibility, edit/delete
+     * checks and the 24h edit window. Not a substitute for isAdmin().
+     */
+    public function canModerateContent(User $user): bool
+    {
+        return $user->canModerateContent();
     }
 
     /**

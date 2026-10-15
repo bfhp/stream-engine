@@ -2957,7 +2957,7 @@ final class FeedServiceTest extends TestCase
     private function makeCommentService(
         ?array $row,
         bool $canEdit = true,
-        bool $isAdmin = false,
+        bool $canModerate = false,
         array &$writes = []
     ): FeedService {
         $db = $this->createStub(PdoDatabase::class);
@@ -2972,7 +2972,7 @@ final class FeedServiceTest extends TestCase
 
         $accessService = $this->createStub(AccessService::class);
         $accessService->method('canEditFeed')->willReturn($canEdit);
-        $accessService->method('isAdmin')->willReturn($isAdmin);
+        $accessService->method('canModerateContent')->willReturn($canModerate);
 
         // No seeded UrlGenerator needed, unlike the search tests: editComment()
         // finishes with decorateFeed(), which only formats timestamps and never
@@ -3114,8 +3114,8 @@ final class FeedServiceTest extends TestCase
     }
 
     /**
-     * A 24h window on top of ownership (COMMENT_EDIT_WINDOW_SECONDS), which an
-     * admin is exempt from. Exactly-at-the-boundary is left out for the same
+     * A 24h window on top of ownership (COMMENT_EDIT_WINDOW_SECONDS), which
+     * admins and global moderators are exempt from. Exactly-at-the-boundary is left out for the same
      * reason as MessageServiceTest's edit window: the row's created_at and the
      * check call time() independently.
      */
@@ -3141,11 +3141,25 @@ final class FeedServiceTest extends TestCase
         $writes = [];
         $service = $this->makeCommentService(
             $this->commentRow(ageSeconds: FeedService::COMMENT_EDIT_WINDOW_SECONDS + 60),
-            isAdmin: true,
+            canModerate: true,
             writes: $writes
         );
 
         $service->editComment(90, 'новый текст', $this->user(role: AccessService::ROLE_ADMIN));
+
+        $this->assertTrue($this->wroteFeedUpdate($writes));
+    }
+
+    public function testEditCommentLetsAGlobalModeratorPastTheEditWindow(): void
+    {
+        $writes = [];
+        $service = $this->makeCommentService(
+            $this->commentRow(ageSeconds: FeedService::COMMENT_EDIT_WINDOW_SECONDS + 60),
+            canModerate: true,
+            writes: $writes
+        );
+
+        $service->editComment(90, 'новый текст', $this->user(role: AccessService::ROLE_MODERATOR));
 
         $this->assertTrue($this->wroteFeedUpdate($writes));
     }
