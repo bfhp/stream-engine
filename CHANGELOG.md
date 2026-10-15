@@ -20,6 +20,14 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
   feed's metadata as name/value pairs. Names are validated in the browser with
   the same rules as the API (`a-z`, `0-9`, `_ . -`, up to 64 characters), and
   removing a row deletes that key on save.
+- The page editor's Feed ID input is now a feed picker with search by title
+  or ID and in-place feed creation. The Pages list shows feed titles, and the
+  feed editor links back to its page.
+
+### Changed
+
+- A feed can be bound to only one page; existing duplicates stay saveable
+  until their feed is changed.
 
 ### Security
 
