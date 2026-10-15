@@ -5,8 +5,9 @@ import {
     Button,
     Checkbox,
     Group,
-    Menu,
+    List,
     NumberInput,
+    Popover,
     Select,
     Stack,
     Table,
@@ -384,43 +385,58 @@ export default function Feeds() {
                 </Group>
 
                 <Group gap="xs">
-                    <Menu shadow="md" width={220}>
-                        <Menu.Target>
-                            <Tooltip label={trans("js.admin.columns")}>
+                    {/* A popover of checkboxes, not a Menu: checkboxes inside
+                        menu items are nested controls (WCAG 4.1.2). Tooltip goes
+                        outside the target: it forwards only its own handlers, so
+                        the other way round the button lost aria-haspopup,
+                        aria-expanded and aria-controls. */}
+                    <Popover shadow="md" width={220} trapFocus position="bottom-end">
+                        <Tooltip label={trans("js.admin.columns")}>
+                            <Popover.Target>
                                 <ActionIcon aria-label={trans("js.admin.columns")} variant="default" size="lg">
                                     <IconColumns3 size={18} />
                                 </ActionIcon>
-                            </Tooltip>
-                        </Menu.Target>
-                        <Menu.Dropdown>
-                            {COLUMNS.map(column => (
-                                <Menu.Item key={column.key} closeMenuOnClick={false}>
+                            </Popover.Target>
+                        </Tooltip>
+                        <Popover.Dropdown aria-label={trans("js.admin.columns")}>
+                            <Stack gap="xs">
+                                {COLUMNS.map(column => (
                                     <Checkbox
+                                        key={column.key}
                                         label={column.label}
                                         checked={isColumnVisible(column.key)}
                                         onChange={() => toggleColumn(column.key)}
                                     />
-                                </Menu.Item>
-                            ))}
-                        </Menu.Dropdown>
-                    </Menu>
+                                ))}
+                            </Stack>
+                        </Popover.Dropdown>
+                    </Popover>
 
-                    <Menu shadow="md" width={240}>
-                        <Menu.Target>
-                            <Tooltip label={trans("js.admin.feeds.placeholders")}>
+                    {/* Information about upcoming filters, not a menu: every item
+                        was disabled, so a Menu left keyboard focus nowhere and
+                        Escape could not close it. The heading takes initial
+                        focus so it is announced and Escape works. */}
+                    <Popover shadow="md" width={240} trapFocus position="bottom-end">
+                        <Tooltip label={trans("js.admin.feeds.placeholders")}>
+                            <Popover.Target>
                                 <ActionIcon aria-label={trans("js.admin.feeds.placeholders")} variant="default" size="lg">
                                     <IconAdjustmentsHorizontal size={18} />
                                 </ActionIcon>
-                            </Tooltip>
-                        </Menu.Target>
-                        <Menu.Dropdown>
-                            <Menu.Label>{trans("js.admin.feeds.waiting_indexes")}</Menu.Label>
-                            <Menu.Item disabled>{trans("js.admin.feeds.title_contains")}</Menu.Item>
-                            <Menu.Item disabled>{trans("js.admin.visibility")}</Menu.Item>
-                            <Menu.Item disabled>{trans("js.admin.feeds.updated_range")}</Menu.Item>
-                            <Menu.Item disabled>{trans("js.admin.feeds.views_range")}</Menu.Item>
-                        </Menu.Dropdown>
-                    </Menu>
+                            </Popover.Target>
+                        </Tooltip>
+                        <Popover.Dropdown aria-labelledby="feeds-placeholders-title">
+                            <Text id="feeds-placeholders-title" size="sm" fw={500} mb="xs"
+                                tabIndex={-1} data-autofocus>
+                                {trans("js.admin.feeds.waiting_indexes")}
+                            </Text>
+                            <List size="sm" c="dimmed" spacing={4}>
+                                <List.Item>{trans("js.admin.feeds.title_contains")}</List.Item>
+                                <List.Item>{trans("js.admin.visibility")}</List.Item>
+                                <List.Item>{trans("js.admin.feeds.updated_range")}</List.Item>
+                                <List.Item>{trans("js.admin.feeds.views_range")}</List.Item>
+                            </List>
+                        </Popover.Dropdown>
+                    </Popover>
 
                     <Tooltip label={trans("js.admin.reset_filters")}>
                         <ActionIcon aria-label={trans("js.admin.reset_filters")} variant="default" size="lg" onClick={resetFilters}>

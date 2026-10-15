@@ -44,6 +44,25 @@ ol.breadcrumb, .breadcrumb-item+.breadcrumb-item::before {
     --bs-btn-border-color: var(--ui-success);
 }
 
+/* Outlined primary buttons (also the radio toggles in profile mailings) use
+   Bootstrap's compiled #0d6efd: 3.4:1 on dark surfaces and exactly 4.5:1
+   under white text. Use the skin's link colour for text and its primary
+   colour for fills. */
+.btn-outline-primary {
+    --bs-btn-color: var(--ui-link);
+    --bs-btn-border-color: var(--ui-primary);
+    --bs-btn-hover-bg: var(--ui-primary);
+    --bs-btn-hover-border-color: var(--ui-primary);
+    --bs-btn-active-bg: var(--ui-primary);
+    --bs-btn-active-border-color: var(--ui-primary);
+}
+
+/* And the outlined secondary button (header "Messages"): #6c757d is 4.3:1 on
+   the dark header; the muted text colour passes in both modes. */
+.btn-outline-secondary {
+    --bs-btn-color: var(--bs-secondary-color);
+}
+
 body {
     color: var(--bs-body-color);
 }

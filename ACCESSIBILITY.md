@@ -117,7 +117,9 @@ documented with a workaround.
 - **Third-party editors and widgets.** The administration panel embeds the
   Monaco code editor, the Chonky file browser, and the Trix rich-text editor.
   Their keyboard and screen reader support is controlled upstream and has not
-  been evaluated in Stream Engine.
+  been evaluated in Stream Engine. The automated scan reports one known issue
+  in the file browser: Chonky's file list uses `role="list"` without list
+  items (WCAG 1.3.1); it is recorded in `tests/a11y/baseline.json`.
 - **Alternative text for images.** **TODO**: confirm whether the editor and
   file uploads let authors add alternative text, and whether they prompt for
   it.

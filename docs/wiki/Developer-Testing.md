@@ -326,8 +326,14 @@ is the reference suite.
 
 **Page scans** in `tests/a11y/` open an installed site in Chromium. They scan
 the home, not-found, and sign-in dialog views, account pages the sign-in
-dialog links to, the built-in administration screens, and the
-administrator's profile, each in the light and dark colour schemes. Direction
+dialog links to, the built-in administration screens and empty editors, and
+the administrator's profile, each in the light and dark colour schemes. They
+also open and scan interactive states: failed sign-in feedback, the profile
+tabs, the user menu and sign-out confirmation, and the admin's dialogs,
+drawers, menus and select dropdowns (`tests/a11y/states.ts`). These tests
+never save: each state is opened, scanned and closed with Escape. The home
+page, sign-in dialog and profile are also checked at 320 CSS px for
+horizontal scrolling (WCAG 1.4.10), which axe does not test. Direction
 follows the site locale and markup follows the active theme. Without further
 settings, `npm run test:a11y` scans the target site as it is configured. Set
 `A11Y_THEMES` and/or `A11Y_LOCALES` to comma-separated lists to scan each

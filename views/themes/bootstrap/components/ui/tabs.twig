@@ -10,7 +10,11 @@
            (the constructor back-fill runs first), so this is belt-and-braces
            for the listener and a real fix for the missing role. #}
         <button class="nav-link {{ loop.first ? 'active' }}"
+                type="button"
                 role="tab"
+                id="{{ tab.id }}-tab"
+                aria-controls="{{ tab.id }}"
+                aria-selected="{{ loop.first ? 'true' : 'false' }}"
                 data-bs-toggle="pill"
                 data-bs-target="#{{ tab.id }}">
             {{ tab.label }}

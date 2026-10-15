@@ -221,6 +221,7 @@ export default function Dashboard() {
                             </Group>
                             {item && <Group wrap="nowrap">
                                 <Select size="xs" w={120} data={card.sizes} value={item.size} allowDeselect={false}
+                                    aria-label={trans("js.admin.dashboard.card_size", { label: trans(card.label) })}
                                     onChange={value => value && setDraft(current => current.map(candidate => candidate.id === card.id ? { ...candidate, size: value as DashboardSize } : candidate))} />
                                 <ActionIcon variant="subtle" aria-label={trans("js.admin.move_up", { label: trans(card.label) })} onClick={() => moveCard(card.id, -1)}><IconArrowUp size={16} /></ActionIcon>
                                 <ActionIcon variant="subtle" aria-label={trans("js.admin.move_down", { label: trans(card.label) })} onClick={() => moveCard(card.id, 1)}><IconArrowDown size={16} /></ActionIcon>

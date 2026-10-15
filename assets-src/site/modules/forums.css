@@ -380,7 +380,7 @@
 
 .post-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-space-3); }
 .post-actions-sep { color: var(--ui-muted); }
-.forums-danger-link { color: var(--ui-danger); }
+.forums-danger-link { color: var(--ui-danger-text); }
 
 /* Attachments (posts, preview, upload list) */
 .forums-attachments {

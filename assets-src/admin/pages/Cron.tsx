@@ -263,6 +263,7 @@ export default function Cron() {
                     <Group mt="xs" wrap="nowrap" align="end">
                         <Select
                             flex={1}
+                            aria-label={trans("js.admin.cron.mode")}
                             value={modeDraft}
                             allowDeselect={false}
                             onChange={value => setModeDraft((value || payload.mode) as CronMode)}
@@ -304,6 +305,7 @@ export default function Cron() {
                 <Select
                     clearable
                     w={240}
+                    aria-label={trans("js.admin.status")}
                     placeholder={trans("js.admin.cron.all_statuses")}
                     value={status}
                     onChange={setStatus}

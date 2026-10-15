@@ -90,7 +90,7 @@ export async function expectNoNewViolations(
  */
 export async function waitForAdminScreen(page: Page): Promise<void> {
     await expect(page.locator("main")).not.toBeEmpty();
-    await expect(page.locator('.mantine-Loader-root, [data-card-state="loading"]')).toHaveCount(0, {
+    await expect(page.locator('.mantine-Loader-root, .mantine-Skeleton-root, [data-card-state="loading"]')).toHaveCount(0, {
         timeout: 15_000,
     });
 }

@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { SIGN_IN_BUTTON } from "./paths";
 import { expectNoNewViolations } from "./scan";
+import { expectNoHorizontalScroll } from "./states";
 
 test("home page", async ({ page }, testInfo) => {
     await page.goto("/");
@@ -54,4 +55,40 @@ test("skip link moves keyboard focus to the main content", async ({ page }) => {
 
     await page.keyboard.press("Enter");
     await expect(page.locator("#main-content")).toBeFocused();
+});
+
+test("failed sign-in feedback", async ({ page }, testInfo) => {
+    await page.goto("/");
+    await page.locator(SIGN_IN_BUTTON).first().click();
+    // An address that cannot exist, so no real account is ever touched.
+    await page.locator("#authEmail").fill("a11y-scan@example.invalid");
+    await page.locator("#authPassword").fill("not-a-password");
+
+    const response = page.waitForResponse(candidate =>
+        new URL(candidate.url()).pathname === "/api/v1/auth" && candidate.request().method() === "POST");
+    await page.locator('#authForm button[type="submit"]').click();
+    expect((await response).ok()).toBe(false);
+
+    await expect(page.locator("#globalToast")).toBeVisible();
+    await expectNoNewViolations(page, "guest/sign-in-failed", testInfo);
+});
+
+/* WCAG 1.4.10: the same pages at 320 CSS px, scanned and checked for reflow. */
+test.describe("narrow viewport", () => {
+    test.use({ viewport: { width: 320, height: 640 } });
+
+    test("home page", async ({ page }, testInfo) => {
+        await page.goto("/");
+        await expectNoHorizontalScroll(page);
+        await expectNoNewViolations(page, "guest/home-narrow", testInfo);
+    });
+
+    test("sign-in dialog", async ({ page }, testInfo) => {
+        await page.goto("/");
+        await page.locator(SIGN_IN_BUTTON).first().click();
+        await expect(page.locator("#authFormModal")).toBeVisible();
+        await expectNoHorizontalScroll(page);
+        await expectNoNewViolations(page, "guest/sign-in-dialog-narrow", testInfo,
+            builder => builder.include("#authFormModal"));
+    });
 });

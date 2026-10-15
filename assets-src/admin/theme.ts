@@ -1,42 +1,76 @@
 import {
     DEFAULT_THEME,
+    Drawer,
+    Menu,
+    Modal,
     createTheme,
     type CSSVariablesResolver,
     type MantineColorsTuple,
 } from "@mantine/core";
+import { trans } from "../shared/i18n";
 
 /*
- * Contrast adjustments to Mantine's defaults so the administration panel meets
- * WCAG 1.4.3 (4.5:1 for normal text) in both colour schemes. Each value was
- * checked against the backgrounds the page scan reported: white, gray.0 and
- * gray.1 in light mode; dark.7, dark.6 and dark.5 in dark mode.
+ * Accessibility adjustments to Mantine's defaults for the administration
+ * panel. Contrast values target WCAG 1.4.3 (4.5:1 for normal text) and were
+ * checked against the backgrounds the page scan reported: white, gray.0,
+ * gray.1 and gray.2 in light mode; dark.7, dark.6 and dark.5 in dark mode.
  */
 
 /*
- * Mantine's green.9 (#2b8a3e) reaches only 4.4:1 under white text and 3.9:1 as
- * light-variant text on its own tint. This darker shade passes both; shades
- * 0-8 are unchanged.
+ * Shade 9 of each palette is used for filled controls (white text) and, in
+ * light mode, for light-variant text on a 10% tint of itself (badges, light
+ * buttons). These replacements are the default shade 9 darkened just enough
+ * to reach 4.5:1 in both roles; palettes not listed already do. Shades 0-8
+ * are unchanged.
  */
-const green = [...DEFAULT_THEME.colors.green.slice(0, 9), "#237032"] as unknown as MantineColorsTuple;
+const SHADE_9: Record<string, string> = {
+    red: "#b52424",
+    blue: "#1863a9",
+    cyan: "#0a6b7d",
+    teal: "#076e4f",
+    green: "#237032",
+    lime: "#436c09",
+    yellow: "#954d00",
+    orange: "#ab390c",
+};
 
-/* red.9 (#c92a2a) drops to 4.4:1 as light-variant text over a table row's gray. */
-const red = [...DEFAULT_THEME.colors.red.slice(0, 9), "#b52424"] as unknown as MantineColorsTuple;
+const colors = Object.fromEntries(Object.entries(SHADE_9).map(([name, shade9]) => [
+    name,
+    [...DEFAULT_THEME.colors[name].slice(0, 9), shade9] as unknown as MantineColorsTuple,
+]));
+
+/* The close button of modals and drawers is an icon; give it a name (4.1.2). */
+const closeButtonProps = { "aria-label": trans("js.admin.close") };
 
 export const adminTheme = createTheme({
-    // Shade 9 is used for filled controls (white text) and, in light mode, for
-    // light-variant text on a 10% tint; shade 6 (the default) passes neither.
     primaryShade: { light: 9, dark: 9 },
-    colors: { green, red },
+    colors,
     // Mantine's own transitions (modals, collapses, loaders) honour the
     // operating system's reduced-motion setting (WCAG 2.3.3).
     respectReducedMotion: true,
+    components: {
+        Modal: Modal.extend({ defaultProps: { closeButtonProps } }),
+        Drawer: Drawer.extend({ defaultProps: { closeButtonProps } }),
+        // The placeholder is a focusable <div> inside role="menu", which may
+        // only contain menu items (1.3.1); focus goes to the first item instead.
+        Menu: Menu.extend({ defaultProps: { withInitialFocusPlaceholder: false } }),
+    },
 });
 
 /*
- * `c="dimmed"` defaults to gray.6 (3.3:1 on white) and dark.2 (3.5:1 on dark.6).
+ * - `c="dimmed"` defaults to gray.6 (3.3:1 on white) and dark.2 (3.5:1 on
+ *   dark.6).
+ * - Validation errors default to red.6 (3.3:1 on white) and red.8 (3.0:1 on
+ *   dark.6).
  */
 export const adminCssVariablesResolver: CSSVariablesResolver = () => ({
     variables: {},
-    light: { "--mantine-color-dimmed": "#666d75" },
-    dark: { "--mantine-color-dimmed": "#a6a6a6" },
+    light: {
+        "--mantine-color-dimmed": "#666d75",
+        "--mantine-color-error": "#b52424",
+    },
+    dark: {
+        "--mantine-color-dimmed": "#a6a6a6",
+        "--mantine-color-error": "#ff8787",
+    },
 });

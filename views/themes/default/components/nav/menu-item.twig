@@ -3,7 +3,8 @@
 
 {# --- DIVIDER --- #}
 {% if item.isDivider %}
-    <li class="site-nav__divider" role="separator"></li>
+    {# Decorative: role="separator" on an <li> makes the list invalid (1.3.1). #}
+    <li class="site-nav__divider" aria-hidden="true"></li>
 
 {# --- LINK / ACTION --- #}
 {% else %}

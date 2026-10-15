@@ -3,7 +3,7 @@ import { useState, type MouseEvent } from "react";
 import { Outlet, Link } from "react-router-dom";
 import type { AdminRoute } from "../module-pages";
 import { trans } from "../../shared/i18n";
-import "./skip-link.css";
+import "./accessibility.css";
 
 export const ADMIN_MAIN_ID = "admin-main";
 

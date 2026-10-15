@@ -3,7 +3,19 @@
         "Known WCAG 2.2 A/AA violations, by scanned page and axe rule id.",
         "The scan fails only on rules not listed here. Record new entries with",
         "A11Y_UPDATE_BASELINE=1 npm run test:a11y; delete an entry by hand once",
-        "the rule is fixed. See Developer-Localization-and-Accessibility in the wiki."
+        "the rule is fixed. See Developer-Localization-and-Accessibility in the wiki.",
+        "Accepted entries:",
+        "- admin/file-browser aria-required-children: Chonky's file list (third party).",
+        "- admin/settings-select scrollable-region-focusable: Mantine's combobox listbox scrolls",
+        "  with aria-activedescendant while focus stays in the input, so it is keyboard",
+        "  operable (2.1.1); axe cannot see that."
     ],
-    "pages": {}
+    "pages": {
+        "admin/file-browser": [
+            "aria-required-children"
+        ],
+        "admin/settings-select": [
+            "scrollable-region-focusable"
+        ]
+    }
 }

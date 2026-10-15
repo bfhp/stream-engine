@@ -30,7 +30,10 @@
     --ui-primary-contrast: #ffffff;
     --ui-link: #60a5fa;
     --ui-success: #22c55e;
-    --ui-danger: #ef4444;
+    /* --ui-danger fills controls under white text; --ui-danger-text is red
+       text on page surfaces (as with --ui-primary and --ui-link). */
+    --ui-danger: #dc2626;
+    --ui-danger-text: #f87171;
     --ui-warning: #f59e0b;
     --ui-info: #06b6d4;
     --ui-header-bg: #070614;
@@ -48,6 +51,7 @@
     --ui-border: #e2e8f0;
     --ui-primary: #2563eb;
     --ui-link: #2563eb;
+    --ui-danger-text: #b91c1c;
     /* Darker than the dark-mode green: it is text on white here. */
     --ui-success: #15803d;
     --ui-header-bg: #ffffff;
@@ -336,7 +340,7 @@ hr {
 .ui-input[aria-invalid="true"] { border-color: var(--ui-danger); }
 
 .ui-help { font-size: .875rem; color: var(--ui-muted); }
-.ui-error { font-size: .875rem; color: var(--ui-danger); }
+.ui-error { font-size: .875rem; color: var(--ui-danger-text); }
 
 .ui-spinner {
     display: inline-block;

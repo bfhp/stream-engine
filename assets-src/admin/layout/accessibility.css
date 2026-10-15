@@ -1,3 +1,5 @@
+/* Accessibility additions to the admin shell. */
+
 /* "Skip to main content" (WCAG 2.4.1): off-screen until it has keyboard focus. */
 .admin-skip-link {
     position: fixed;
@@ -22,4 +24,10 @@
 /* The skip-link target is focused programmatically; it is not a control. */
 #admin-main:focus {
     outline: none;
+}
+
+/* The "Off" label inside an unchecked Switch is gray.6 on gray.3 (2.5:1) in
+   light mode; gray.7 reaches 6.3:1. The checked state keeps its white text. */
+[data-mantine-color-scheme="light"] .mantine-Switch-track {
+    --switch-text-color: var(--mantine-color-gray-7);
 }
