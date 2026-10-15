@@ -85,7 +85,7 @@ final class FormatterTest extends TestCase
         );
 
         $this->assertSame(
-            $this->tm->trans('time.minutes_ago', ['count' => 5, 'unit' => $this->tm->getAll()['time.minute'][2]]),
+            $this->tm->trans('time.minutes_ago', ['count' => 5, 'unit' => $this->tm->getAll()['time.minute']['many']]),
             $this->formatter->relative(new DateTimeImmutable('-5 minutes'))
         );
 
@@ -95,12 +95,12 @@ final class FormatterTest extends TestCase
         );
 
         $this->assertSame(
-            $this->tm->trans('time.hours_ago', ['count' => 3, 'unit' => $this->tm->getAll()['time.hour'][1]]),
+            $this->tm->trans('time.hours_ago', ['count' => 3, 'unit' => $this->tm->getAll()['time.hour']['few']]),
             $this->formatter->relative(new DateTimeImmutable('-3 hours'))
         );
 
         $this->assertSame(
-            $this->tm->trans('time.days_ago', ['count' => 2, 'unit' => $this->tm->getAll()['time.day'][1]]),
+            $this->tm->trans('time.days_ago', ['count' => 2, 'unit' => $this->tm->getAll()['time.day']['few']]),
             $this->formatter->relative(new DateTimeImmutable('-2 days'))
         );
     }
@@ -131,7 +131,7 @@ final class FormatterTest extends TestCase
         $this->assertSame('messages', $french->transChoice('forums.post_unit', 2));
     }
 
-    public function testPluralChoosesArabicForms(): void
+    public function testLegacyPositionalPluralChoosesArabicForms(): void
     {
         $arabic = new Formatter(new TranslationManager('ar', 'en'), 'ar');
 
@@ -158,7 +158,7 @@ final class FormatterTest extends TestCase
 
     public function testPluralChoosesCorrectRussianForm(): void
     {
-        [$one, $few, $many] = $this->tm->getAll()['time.minute'];
+        ['one' => $one, 'few' => $few, 'many' => $many] = $this->tm->getAll()['time.minute'];
 
         $this->assertSame($one, $this->formatter->plural(1, $one, $few, $many));
         $this->assertSame($few, $this->formatter->plural(2, $one, $few, $many));
@@ -168,20 +168,14 @@ final class FormatterTest extends TestCase
     }
 
     /**
-     * The same table `tests/js/plural.test.ts` asserts against
-     * `assets-src/shared/plural.ts`.
-     *
-     * The two have to agree: a count is rendered here on the first page load
-     * and by the front end on every update after it, so a divergence shows up
-     * as a number that changes its grammar when the page refreshes rather than
-     * as anything that fails. The front end had four implementations of this
-     * rule until they were collapsed into one; three of them skipped `abs()`
-     * and disagreed with this method on negatives.
+     * The Russian table through the deprecated positional `plural()`. The
+     * cross-runtime agreement for every locale is asserted by
+     * PluralRulesTest against `tests/Support/plural-rules.json`.
      *
      * @param 'one'|'few'|'many' $expected
      */
     #[DataProvider('pluralFormProvider')]
-    public function testPluralAgreesWithTheFrontEndTable(int $n, string $expected): void
+    public function testLegacyPluralKeepsTheRussianTable(int $n, string $expected): void
     {
         $this->assertSame(
             $expected,

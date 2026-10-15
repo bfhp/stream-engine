@@ -12,6 +12,8 @@ beforeEach(() => {
     setTranslationsForTests({
         "js.greeting": "Hello, {name}!",
         "js.book": ["book", "books", "books"],
+        "js.post": { one: "post", other: "posts" },
+        "js.kb": "KB",
     });
 });
 
@@ -43,5 +45,16 @@ describe("browser translations", () => {
         expect(transChoice("js.book", 1)).toBe("book");
         expect(transChoice("js.book", 2)).toBe("books");
         expect(transChoiceWithCount("js.book", 5)).toBe("5 books");
+    });
+
+    it("selects CLDR-keyed forms", () => {
+        expect(transChoice("js.post", 1)).toBe("post");
+        expect(transChoice("js.post", 21)).toBe("posts");
+        expect(transChoiceWithCount("js.post", 0)).toBe("0 posts");
+    });
+
+    it("returns a non-inflecting unit as is and a missing key as the key", () => {
+        expect(transChoice("js.kb", 5)).toBe("KB");
+        expect(transChoice("js.missing", 5)).toBe("js.missing");
     });
 });

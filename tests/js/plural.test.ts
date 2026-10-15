@@ -1,124 +1,93 @@
 import { describe, expect, it } from "vitest";
 
-import { plural, pluralWithCount } from "../../assets-src/shared/plural";
+import { legacyPluralIndex, pluralCategory, selectPluralForm, type PluralCategory } from "../../assets-src/shared/plural";
+import rulesFixture from "../Support/plural-rules.json";
 
 /**
- * The rule the front end had four implementations of, written three different
- * ways: `profile.ts`'s `plural()`, `blog-post-form.ts`'s and `forum-poll.ts`'s
- * `pluralize()`, and `messages.ts`'s `pluralRu()`.
- *
- * They agreed on every non-negative number and disagreed on negatives - the
- * three that skipped `Math.abs` fell through to the many-form for -1, because
- * `-1 % 10` is `-1` in JavaScript, not `9`. No live bug, since every counter
- * on the site counts things, but it is the divergence that would surface the
- * first time somebody rendered a delta.
- *
- * The other reason this is one function now: the same counts are rendered
- * server-side by `Core\Formatter::plural()` on the first page load and
- * client-side on every update after it, so the two have to agree. The table
- * below is the one the PHP formatting tests assert on the
- * PHP side.
+ * `tests/Support/plural-rules.json` is the contract between the two runtimes:
+ * `tests/Core/PluralRulesTest.php` asserts PHP intl against it, this file
+ * asserts the browser's `Intl.PluralRules`. A count is rendered server-side
+ * on the first page load and here on every update after it, so if an ICU
+ * upgrade on either side moves a rule, one of the suites goes red instead of
+ * a number changing its grammar on refresh.
  */
-const FORMS: [string, string, string] = ["книга", "книги", "книг"];
+type LocaleRules = { categories: PluralCategory[]; samples: Record<string, PluralCategory> };
 
-const form = (n: number) => plural(n, ...FORMS);
+const rules = Object.fromEntries(
+    Object.entries(rulesFixture).filter(([key]) => !key.startsWith("_")),
+) as unknown as Record<string, LocaleRules>;
 
-describe("plural()", () => {
-    it("uses the singular for one", () => {
-        expect(form(1)).toBe("книга");
-    });
+describe("pluralCategory()", () => {
+    for (const [locale, { categories, samples }] of Object.entries(rules)) {
+        it(`matches the shared fixture for ${locale}`, () => {
+            for (const [n, expected] of Object.entries(samples)) {
+                expect(pluralCategory(Number(n), locale), `${locale}, n = ${n}`).toBe(expected);
+            }
+        });
 
-    it("uses the few-form for two to four", () => {
-        expect(form(2)).toBe("книги");
-        expect(form(3)).toBe("книги");
-        expect(form(4)).toBe("книги");
-    });
+        it(`uses the same categories as the server for ${locale}`, () => {
+            const order: PluralCategory[] = ["zero", "one", "two", "few", "many", "other"];
+            const actual = new Intl.PluralRules(locale).resolvedOptions().pluralCategories;
 
-    it("uses the many-form for five upwards and for zero", () => {
-        expect(form(0)).toBe("книг");
-        expect(form(5)).toBe("книг");
-        expect(form(9)).toBe("книг");
-        expect(form(10)).toBe("книг");
-    });
+            expect(order.filter(category => actual.includes(category))).toEqual(categories);
+        });
+    }
 
-    /**
-     * The teens are the whole reason the function exists: 11-14 take the
-     * many-form despite ending in 1-4, and they do so at every hundred.
-     */
-    it("treats the teens as an exception", () => {
-        expect(form(11)).toBe("книг");
-        expect(form(12)).toBe("книг");
-        expect(form(13)).toBe("книг");
-        expect(form(14)).toBe("книг");
-        expect(form(15)).toBe("книг");
-        expect(form(19)).toBe("книг");
-    });
-
-    it("applies the exception at every hundred, and only there", () => {
-        expect(form(111)).toBe("книг");
-        expect(form(114)).toBe("книг");
-        expect(form(1011)).toBe("книг");
-
-        // 101 and 102 are past the teens again.
-        expect(form(101)).toBe("книга");
-        expect(form(102)).toBe("книги");
-        expect(form(121)).toBe("книга");
-    });
-
-    it("looks only at the last two digits", () => {
-        expect(form(21)).toBe("книга");
-        expect(form(1_000_001)).toBe("книга");
-        expect(form(22)).toBe("книги");
-        expect(form(25)).toBe("книг");
-    });
-
-    /**
-     * The divergence that motivated the consolidation. `Math.abs` first, so a
-     * negative reads like its magnitude - matching `Core\Formatter::plural()`,
-     * which has always had it.
-     */
-    it("handles negatives like their magnitude", () => {
-        expect(form(-1)).toBe("книга");
-        expect(form(-2)).toBe("книги");
-        expect(form(-5)).toBe("книг");
-        expect(form(-11)).toBe("книг");
-        expect(form(-21)).toBe("книга");
-    });
-
-    /**
-     * The table asserted on the PHP side too. If either implementation moves,
-     * one of the two test suites goes red rather than a count quietly
-     * disagreeing with itself between the server render and the first update.
-     */
-    it("agrees with Core\\Formatter::plural() across the interesting range", () => {
-        const expected: Record<number, string> = {
-            0: "книг", 1: "книга", 2: "книги", 4: "книги", 5: "книг",
-            10: "книг", 11: "книг", 12: "книг", 14: "книг", 15: "книг",
-            20: "книг", 21: "книга", 22: "книги", 25: "книг",
-            100: "книг", 101: "книга", 102: "книги", 111: "книг", 114: "книг",
-            1000: "книг", 1001: "книга", 1002: "книги",
-        };
-
-        for (const [n, want] of Object.entries(expected)) {
-            expect(form(Number(n)), `n = ${n}`).toBe(want);
-        }
+    it("chooses the plural for English 21, which the old server rule got wrong", () => {
+        expect(pluralCategory(21, "en")).toBe("other");
+        expect(pluralCategory(1, "en")).toBe("one");
     });
 });
 
-describe("pluralWithCount()", () => {
-    it("puts the number in front", () => {
-        expect(pluralWithCount(1, ...FORMS)).toBe("1 книга");
-        expect(pluralWithCount(5, ...FORMS)).toBe("5 книг");
-        expect(pluralWithCount(0, ...FORMS)).toBe("0 книг");
+describe("selectPluralForm()", () => {
+    const russian = { one: "книга", few: "книги", many: "книг", other: "книги" };
+
+    it("picks the keyed form for the category", () => {
+        expect(selectPluralForm(russian, 1, "ru")).toBe("книга");
+        expect(selectPluralForm(russian, 3, "ru")).toBe("книги");
+        expect(selectPluralForm(russian, 11, "ru")).toBe("книг");
+        expect(selectPluralForm(russian, 21, "ru")).toBe("книга");
+        expect(selectPluralForm(russian, 1.5, "ru")).toBe("книги");
+        expect(selectPluralForm(russian, -21, "ru")).toBe("книга");
     });
 
-    it("renders the number as given, without grouping", () => {
-        // The places that want thousands separated do their own
-        // number_format-style work first; this one must not surprise them.
-        expect(pluralWithCount(1234, ...FORMS)).toBe("1234 книги");
+    it("uses all six Arabic categories", () => {
+        const forms = { zero: "z", one: "o", two: "t", few: "f", many: "m", other: "x" };
+
+        expect([0, 1, 2, 3, 11, 100, 103].map(n => selectPluralForm(forms, n, "ar")))
+            .toEqual(["z", "o", "t", "f", "m", "x", "f"]);
     });
 
-    it("keeps the sign", () => {
-        expect(pluralWithCount(-1, ...FORMS)).toBe("-1 книга");
+    it("falls back to other when the category is missing", () => {
+        expect(selectPluralForm({ one: "o", other: "x" }, 5, "ru")).toBe("x");
+        expect(selectPluralForm({ one: "o" }, 5, "ru")).toBeUndefined();
+        expect(selectPluralForm([], 5, "ru")).toBeUndefined();
+    });
+
+    it("still reads legacy positional lists", () => {
+        expect(selectPluralForm(["a", "b"], 21, "en")).toBe("b");
+        expect(selectPluralForm(["a", "b", "c"], 21, "en")).toBe("c");
+        expect(selectPluralForm(["a", "b", "c"], 21, "ru")).toBe("a");
+        expect(selectPluralForm(["a", "b", "c"], 1.5, "ru")).toBe("b");
+        expect(selectPluralForm(["a", "b", "c"], 100, "ar")).toBe("a");
+        expect(selectPluralForm(["a"], 7, "ja")).toBe("a");
+    });
+});
+
+/** The table `testLegacyIndexTable()` in PluralRulesTest.php asserts too. */
+describe("legacyPluralIndex()", () => {
+    const cases: [string, PluralCategory, number, number][] = [
+        ["en", "one", 3, 0], ["en", "other", 3, 2], ["en", "other", 2, 1],
+        ["ru", "few", 3, 1], ["ru", "many", 3, 2], ["ru", "other", 3, 1],
+        ["pl", "other", 3, 1], ["fr", "many", 3, 2], ["fr", "many", 2, 1],
+        ["ar", "zero", 3, 1], ["ar", "two", 3, 1], ["ar", "few", 3, 1],
+        ["ar", "many", 3, 2], ["ar", "other", 3, 0], ["ar", "many", 2, 1],
+        ["pt-br", "other", 3, 2], ["ja", "other", 1, 0],
+    ];
+
+    it("maps each category to the same position as the server", () => {
+        for (const [locale, category, length, index] of cases) {
+            expect(legacyPluralIndex(locale, category, length), `${locale} ${category} of ${length}`).toBe(index);
+        }
     });
 });

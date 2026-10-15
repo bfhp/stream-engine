@@ -33,6 +33,15 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
   admin API, uploads management or private messages.
 - A feed can be bound to only one page; existing duplicates stay saveable
   until their feed is changed.
+- Plural forms follow CLDR via ICU on both server and browser. Catalog
+  plurals are keyed by category (`['one' => …, 'other' => …]`);
+  `Formatter::plural()` is deprecated in favour of `transChoice()`.
+
+### Fixed
+
+- English 21, 101, … took the singular on the server.
+- Arabic 0, 2 and 100+ got the wrong noun form.
+- Russian file sizes in the browser showed the catalog key.
 
 ### Security
 

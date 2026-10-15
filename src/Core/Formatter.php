@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use IntlDateFormatter;
 use JsonException;
+use MessageFormatter;
 use Normalizer;
 
 class Formatter
@@ -149,7 +150,7 @@ class Formatter
             $m = (int) floor($diff / 60);
             return $this->tm->trans('time.minutes_ago', [
                 'count' => $m,
-                'unit' => $this->unit($m, 'time.minute')
+                'unit' => $this->transChoice('time.minute', $m)
             ]);
         }
 
@@ -161,7 +162,7 @@ class Formatter
             $h = (int) floor($diff / 3600);
             return $this->tm->trans('time.hours_ago', [
                 'count' => $h,
-                'unit' => $this->unit($h, 'time.hour')
+                'unit' => $this->transChoice('time.hour', $h)
             ]);
         }
 
@@ -169,100 +170,139 @@ class Formatter
             $d = (int) floor($diff / 86400);
             return $this->tm->trans('time.days_ago', [
                 'count' => $d,
-                'unit' => $this->unit($d, 'time.day')
+                'unit' => $this->transChoice('time.day', $d)
             ]);
         }
 
         return $this->date($dt, true);
     }
 
-    private function unit(int $n, string $key): string
+    // --- PLURALS ---
+
+    /**
+     * The plural categories CLDR defines, in CLDR's canonical order. Every
+     * locale uses `other`; which of the rest it uses is up to the locale.
+     */
+    public const array PLURAL_CATEGORIES = ['zero', 'one', 'two', 'few', 'many', 'other'];
+
+    /**
+     * Languages whose `other` category (fractions: "1,5 минуты") takes the
+     * same noun form as `few`. Only consulted for legacy positional forms.
+     */
+    private const array LEGACY_OTHER_AS_FEW = ['be', 'pl', 'ru', 'uk'];
+
+    private ?MessageFormatter $pluralFormatter = null;
+
+    /**
+     * The CLDR plural category of $n for the active locale: one of
+     * PLURAL_CATEGORIES. The rules come from ICU, the same data the browser's
+     * `Intl.PluralRules` uses, so a count rendered here on the first page
+     * load and in the browser after it gets the same form.
+     *
+     * PHP's intl has no PluralRules class, but a plural MessageFormat whose
+     * every branch prints its own keyword is one.
+     */
+    public function pluralCategory(int|float $n): string
     {
-        $forms = $this->tm->getAll()[$key] ?? null;
+        $this->pluralFormatter ??= new MessageFormatter(
+            $this->locale,
+            '{n, plural, zero{zero} one{one} two{two} few{few} many{many} other{other}}',
+        );
 
-        if (!is_array($forms) || count($forms) < 3) {
-            return $key; // fallback
-        }
+        $category = $this->pluralFormatter->format(['n' => $n]);
 
-        return $this->plural($n, $forms[0], $forms[1], $forms[2]);
+        return is_string($category) && in_array($category, self::PLURAL_CATEGORIES, true)
+            ? $category
+            : 'other';
     }
 
     /**
-     * Picks the plural form of a noun stored as a list in the catalog
-     * (`[one, few, many]`, or `[one, other]`) for the active locale. The
-     * count itself is not included so templates can style it separately.
+     * Picks the form of a noun stored in the catalog for the active locale,
+     * without the count, so templates can style the number separately.
+     *
+     * A catalog value is either keyed by CLDR category
+     * (`['one' => 'post', 'other' => 'posts']`) or, for catalogs written
+     * before that, a positional list (`[one, few, many]`). A plain string is
+     * a unit that does not inflect ("КБ") and is returned as is.
      */
-    public function transChoice(string $key, int $count): string
+    public function transChoice(string $key, int|float $count): string
     {
         $forms = $this->tm->getAll()[$key] ?? null;
 
-        if (!is_array($forms) || count($forms) < 2) {
+        if (is_string($forms)) {
+            return $forms;
+        }
+
+        if (!is_array($forms)) {
             return $key;
         }
 
-        $forms = array_values($forms);
-
-        return $this->plural($count, $forms[0], $forms[1], $forms[2] ?? $forms[1]);
+        return $this->selectPluralForm($forms, $count) ?? $key;
     }
 
-    // --- NUMBERS / TEXT ---
-
-    public function plural(int $n, string $one, string $few, string $many): string
+    /**
+     * Chooses from $forms (keyed by category, or legacy positional) for $n.
+     * A keyed set missing the category falls back to `other`.
+     *
+     * @param array<array-key, string> $forms
+     */
+    public function selectPluralForm(array $forms, int|float $n): ?string
     {
-        // German, Spanish, Italian and Dutch only distinguish singular and plural.
-        if (preg_match('/^(de|es|it|nl)(?![a-z])/i', $this->locale) === 1) {
-            return abs($n) === 1 ? $one : $many;
+        if ($forms === []) {
+            return null;
         }
 
-        // Arabic: 1 is singular, 3-10 take the plural noun, 11+ the singular
-        // (accusative) noun; 2 (dual) and 0 are approximated with the plural.
-        if (preg_match('/^ar(?![a-z])/i', $this->locale) === 1) {
-            $n = abs($n);
-            if ($n === 1) {
-                return $one;
-            }
-            $mod = $n % 100;
+        $category = $this->pluralCategory($n);
 
-            return ($mod >= 11) ? $many : $few;
+        if (array_is_list($forms)) {
+            return $forms[self::legacyPluralIndex($this->locale, $category, count($forms))];
         }
 
-        // Japanese, Korean and Chinese have no grammatical plural; catalogs repeat one form.
-        if (preg_match('/^(ja|ko|zh)(?![a-z])/i', $this->locale) === 1) {
-            return $many;
+        return $forms[$category] ?? $forms['other'] ?? null;
+    }
+
+    /**
+     * Where a CLDR category lives in a legacy positional list: `[one, other]`
+     * or `[one, few, many]`, with Arabic's lists being
+     * `[singular, plural (3-10), accusative singular (11-99)]`. Mirrored by
+     * `legacyPluralIndex()` in `assets-src/shared/plural.ts`.
+     */
+    public static function legacyPluralIndex(string $locale, string $category, int $length): int
+    {
+        if ($length <= 1 || $category === 'one') {
+            return 0;
         }
 
-        // Polish: only exactly 1 is singular; 2-4 (except 12-14) take the paucal
-        // form, everything else the genitive plural.
-        if (preg_match('/^pl(?![a-z])/i', $this->locale) === 1) {
-            $n = abs($n);
-            if ($n === 1) {
-                return $one;
-            }
-            $mod10 = $n % 10;
-            $mod100 = $n % 100;
+        $language = strtolower(preg_split('/[-_]/', $locale, 2)[0] ?? '');
 
-            return ($mod10 >= 2 && $mod10 <= 4 && ($mod100 < 12 || $mod100 > 14)) ? $few : $many;
+        if ($language === 'ar') {
+            // 100-102 and so on take the singular: "مئة يوم".
+            $index = match ($category) {
+                'other' => 0,
+                'many' => 2,
+                default => 1,
+            };
+        } else {
+            $index = match ($category) {
+                'two', 'few' => 1,
+                'other' => in_array($language, self::LEGACY_OTHER_AS_FEW, true) ? 1 : 2,
+                default => 2,
+            };
         }
 
-        // French and Portuguese treat both 0 and 1 as singular.
-        if (preg_match('/^(fr|pt)(?![a-z])/i', $this->locale) === 1) {
-            return abs($n) < 2 ? $one : $many;
-        }
+        return min($index, $length - 1);
+    }
 
-        $n = abs($n) % 100;
-        $n1 = $n % 10;
-
-        if ($n > 10 && $n < 20) {
-            return $many;
-        }
-        if ($n1 > 1 && $n1 < 5) {
-            return $few;
-        }
-        if ($n1 == 1) {
-            return $one;
-        }
-
-        return $many;
+    /**
+     * Picks one of three ad-hoc forms for $n.
+     *
+     * @deprecated Put the forms in the catalog keyed by CLDR category and use
+     *             transChoice(); three positional forms cannot express every
+     *             locale (Arabic has six).
+     */
+    public function plural(int|float $n, string $one, string $few, string $many): string
+    {
+        return $this->selectPluralForm([$one, $few, $many], $n) ?? $many;
     }
 
     // --- TEMPLATE ---

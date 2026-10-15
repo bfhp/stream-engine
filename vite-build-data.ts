@@ -33,7 +33,7 @@ export function translationsPlugin(languagePath = "src/Lang"): Plugin {
                     ...languageFiles,
                 ],
                 { encoding: "utf8", maxBuffer: 10 * 1024 * 1024 },
-            )) as Record<string, Record<string, string | string[]>>;
+            )) as Record<string, Record<string, string | string[] | Record<string, string>>>;
             const browserCatalogs = Object.fromEntries(Object.entries(catalogs).map(([locale, messages]) => [
                 locale,
                 Object.fromEntries(Object.entries(messages).filter(([key]) => key.startsWith("js."))),

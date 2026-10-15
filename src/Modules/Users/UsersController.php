@@ -1509,12 +1509,11 @@ class UsersController extends AbstractController
         $ratingAverage = $ratingCount > 0 ? round($ratingTotals['sum'] / $ratingCount, 1) : null;
         $ratingFullStars = $ratingAverage !== null ? (int) floor($ratingAverage) : 0;
         $ratingHasHalfStar = $ratingAverage !== null && ($ratingAverage - $ratingFullStars) >= 0.5;
-        $ratingUnits = $this->tm->getAll()['rating.unit'];
 
         $ratingHint = $ratingCount > 0
             ? $this->tm->trans('user.rating_hint', [
                 'count' => $ratingCount,
-                'unit' => $this->formatter->plural($ratingCount, ...$ratingUnits),
+                'unit' => $this->formatter->transChoice('rating.unit', $ratingCount),
             ])
             : null;
 
@@ -2042,12 +2041,11 @@ class UsersController extends AbstractController
         $ratingAverage = $ratingCount > 0 ? round($ratingTotals['sum'] / $ratingCount, 1) : null;
         $ratingFullStars = $ratingAverage !== null ? (int) floor($ratingAverage) : 0;
         $ratingHasHalfStar = $ratingAverage !== null && ($ratingAverage - $ratingFullStars) >= 0.5;
-        $ratingUnits = $this->tm->getAll()['rating.unit'];
 
         $ratingHint = $ratingCount > 0
             ? $this->tm->trans('community.rating_hint', [
                 'count' => $ratingCount,
-                'unit' => $this->formatter->plural($ratingCount, ...$ratingUnits),
+                'unit' => $this->formatter->transChoice('rating.unit', $ratingCount),
             ])
             : null;
 

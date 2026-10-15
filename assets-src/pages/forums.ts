@@ -294,7 +294,6 @@ function initMarkAllRead() {
     });
 }
 
-// Russian plural forms: one, few, and many.
 // forums.topic-view's poll widget (#topic-poll, see
 // ForumsController::buildPollViewModel() for the server-rendered initial
 // state). Votes through the already-generic

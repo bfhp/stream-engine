@@ -1,41 +1,76 @@
 /* ==========================================================================
-   Russian numeric agreement
+   CLDR plural selection
 
-   One implementation of the rule the front end had four of - `profile.ts`'s
-   `plural()`, `blog-post-form.ts`'s and `forum-poll.ts`'s `pluralize()`, and
-   `messages.ts`'s `pluralRu()` - written three different ways.
+   The browser half of `Core\Formatter::pluralCategory()` /
+   `selectPluralForm()`. Both read CLDR through ICU - `Intl.PluralRules`
+   here, intl's MessageFormatter on the server - so a count rendered on the
+   first page load and re-rendered here after it gets the same form.
+   `tests/Support/plural-rules.json` pins the two together: the PHP and the
+   Vitest suites both assert against it.
 
-   They agreed on every non-negative number and disagreed on negatives: the
-   three that skipped `Math.abs` fell through to the many-form for -1 and -2,
-   because `-1 % 10` is `-1` in JavaScript. No live bug, since every counter
-   on the site counts things, but it is the kind of divergence that only
-   matters once somebody renders a delta.
-
-   `abs` is kept here because `Core\Formatter::plural()` has it, and that one
-   is the authority: the same counts are rendered server-side on the first
-   page load and client-side after it, so the two have to agree.
+   A catalog value is keyed by category (`{ one: "post", other: "posts" }`)
+   or, for catalogs written before that, a positional list
+   (`[one, few, many]`), mapped by `legacyPluralIndex()`.
    ========================================================================== */
 
-/**
- * Picks the form. Returns the **word only** - the callers that want the number
- * in front interpolate it, which keeps this usable in the places that put the
- * count somewhere else in the sentence.
- *
- * The one/few/many forms, and the 11-14 exception that makes the rule
- * worth writing down at all: they take the many-form despite ending in 1-4.
- */
-export function plural(n: number, one: string, few: string, many: string): string {
-    const mod100 = Math.abs(n) % 100;
-    const mod10 = mod100 % 10;
+export type PluralCategory = Intl.LDMLPluralRule;
+export type PluralForms = string[] | Partial<Record<PluralCategory, string>>;
 
-    if (mod100 >= 11 && mod100 <= 14) return many;
-    if (mod10 === 1) return one;
-    if (mod10 >= 2 && mod10 <= 4) return few;
+/** Languages whose `other` (fractions) takes the `few` noun. Legacy lists only. */
+const LEGACY_OTHER_AS_FEW = ["be", "pl", "ru", "uk"];
 
-    return many;
+const rulesCache = new Map<string, Intl.PluralRules>();
+
+function rulesFor(locale: string): Intl.PluralRules {
+    let rules = rulesCache.get(locale);
+    if (!rules) {
+        rules = new Intl.PluralRules(locale);
+        rulesCache.set(locale, rules);
+    }
+
+    return rules;
 }
 
-/** `plural()` with the count in front. */
-export function pluralWithCount(n: number, one: string, few: string, many: string): string {
-    return `${n} ${plural(n, one, few, many)}`;
+/** The CLDR plural category of `n` in `locale`. */
+export function pluralCategory(n: number, locale: string): PluralCategory {
+    return rulesFor(locale).select(n);
+}
+
+/**
+ * Where a category lives in a legacy positional list: `[one, other]` or
+ * `[one, few, many]`, Arabic's being `[singular, plural (3-10), accusative
+ * singular (11-99)]`. Mirrors `Core\Formatter::legacyPluralIndex()`.
+ */
+export function legacyPluralIndex(locale: string, category: PluralCategory, length: number): number {
+    if (length <= 1 || category === "one") return 0;
+
+    const language = locale.toLowerCase().split(/[-_]/)[0];
+    let index: number;
+
+    if (language === "ar") {
+        // 100-102 and so on take the singular.
+        index = category === "other" ? 0 : category === "many" ? 2 : 1;
+    } else if (category === "two" || category === "few") {
+        index = 1;
+    } else if (category === "other" && LEGACY_OTHER_AS_FEW.includes(language)) {
+        index = 1;
+    } else {
+        index = 2;
+    }
+
+    return Math.min(index, length - 1);
+}
+
+/**
+ * Picks the form for `n`, or `undefined` when there is none. A keyed set
+ * missing the category falls back to `other`.
+ */
+export function selectPluralForm(forms: PluralForms, n: number, locale: string): string | undefined {
+    const category = pluralCategory(n, locale);
+
+    if (Array.isArray(forms)) {
+        return forms.length > 0 ? forms[legacyPluralIndex(locale, category, forms.length)] : undefined;
+    }
+
+    return forms[category] ?? forms.other;
 }

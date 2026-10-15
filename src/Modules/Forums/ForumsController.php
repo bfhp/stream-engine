@@ -550,10 +550,8 @@ class ForumsController extends AbstractController
      * kind of number that reads as flattery.
      *
      * `totalLabel`/`guestLabel` are the pluralized nouns for their counts,
-     * built here rather than in the template because Twig has no plural
-     * filter in this project - Russian pluralization lives in
-     * Core\Formatter::plural(), same as the poll results' own vote counts
-     * a few hundred lines up.
+     * built here with Core\Formatter::transChoice(), same as the poll
+     * results' own vote counts.
      *
      * @return array{
      *     total: int,
@@ -585,19 +583,13 @@ class ForumsController extends AbstractController
             $presence['users']
         );
 
-        $participantForms = $this->tm->getAll()['forums.participant'];
-        $guestForms = $this->tm->getAll()['forums.guest'];
-
         return [
             'total' => $presence['total'],
-            'totalLabel' => $this->formatter->plural(
-                $presence['total'],
-                ...$participantForms
-            ),
+            'totalLabel' => $this->formatter->transChoice('forums.participant', $presence['total']),
             'hidden' => $presence['hidden'],
             'members' => $members,
             'guests' => $guests,
-            'guestLabel' => $this->formatter->plural($guests, ...$guestForms),
+            'guestLabel' => $this->formatter->transChoice('forums.guest', $guests),
             'bots' => $this->userService->onlineBotNames(),
         ];
     }
@@ -1325,12 +1317,9 @@ class ForumsController extends AbstractController
         // at once - using totalVotes there would make percentages sum to
         // less than 100% and under-represent popular options.
         $denom = $isMultiple ? $poll->votersCount : $totalVotes;
-        $voteForms = $this->tm->getAll()['forums.vote'];
-        $participantForms = $this->tm->getAll()['forums.participant'];
-        $optionForms = $this->tm->getAll()['forums.option'];
 
         $options = array_map(
-            function (PollOption $option) use ($userVotes, $denom, $leaderVotes, $voteForms): array {
+            function (PollOption $option) use ($userVotes, $denom, $leaderVotes): array {
                 $chosen = in_array($option->id, $userVotes, true);
                 $pct = $denom > 0 ? (int) round($option->votesCount / $denom * 100) : 0;
 
@@ -1341,7 +1330,7 @@ class ForumsController extends AbstractController
                     'pct' => $pct,
                     'isLeading' => $leaderVotes > 0 && $option->votesCount === $leaderVotes,
                     'statText' => $pct.'% · '.$option->votesCount.' '
-                        .$this->formatter->plural($option->votesCount, ...$voteForms),
+                        .$this->formatter->transChoice('forums.vote', $option->votesCount),
                 ];
             },
             $poll->options
@@ -1359,7 +1348,7 @@ class ForumsController extends AbstractController
         $hint = $isMultiple
             ? $this->tm->trans('forums.poll.multiple_hint', [
                 'count' => $poll->maxChoices,
-                'unit' => $this->formatter->plural($poll->maxChoices, ...$optionForms),
+                'unit' => $this->formatter->transChoice('forums.option', $poll->maxChoices),
             ])
             : $this->tm->trans('forums.poll.single_hint');
         if ($poll->allowRevote && !$closed) {
@@ -1398,9 +1387,9 @@ class ForumsController extends AbstractController
             'selectionHint' => $selectionHint,
             'currentVotesAttr' => implode(',', $userVotes),
             'options' => $options,
-            'totalVotesText' => $totalVotes.' '.$this->formatter->plural($totalVotes, ...$voteForms),
+            'totalVotesText' => $totalVotes.' '.$this->formatter->transChoice('forums.vote', $totalVotes),
             'votersText' => $poll->votersCount.' '
-                .$this->formatter->plural($poll->votersCount, ...$participantForms),
+                .$this->formatter->transChoice('forums.participant', $poll->votersCount),
         ];
     }
 

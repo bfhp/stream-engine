@@ -24,7 +24,7 @@ scope in [Testing](https://github.com/bfhp/stream-engine/wiki/Developer-Testing)
 | --- | --- |
 | Canonical catalogs | `src/Lang/<locale>.php`, one PHP array per locale. |
 | Server lookup | `TranslationManager::trans()` and Twig `trans()`. |
-| Server plural selection | `Formatter::transChoice()` / `plural()` and Twig `trans_choice()`. |
+| Server plural selection | `Formatter::transChoice()` and Twig `trans_choice()`, CLDR rules from intl. |
 | Browser catalogs | Build-generated `virtual:translations`, containing only `js.*` keys. |
 | Browser lookup | `assets-src/shared/i18n.ts`: `trans()`, `transChoice()`, and `transChoiceWithCount()`. |
 | Server dates | `Formatter`, using PHP `IntlDateFormatter` and site format settings. |
@@ -176,11 +176,18 @@ assets change.
 
 ## Plural forms
 
-A plural catalog value is an array. Use the shared plural selector instead of
-choosing a form in feature code:
+A plural catalog value is an array keyed by
+[CLDR plural category](https://cldr.unicode.org/index/cldr-spec/plural-rules)
+(`zero`, `one`, `two`, `few`, `many`, `other`). Each locale lists exactly the
+categories it uses, in that order. Use the shared selector instead of choosing
+a form in feature code:
 
 ```php
-'notes.item_count' => ['note', 'notes', 'notes'],
+// en.php
+'notes.item_count' => ['one' => 'note', 'other' => 'notes'],
+// ru.php: `other` is the fraction form ("1,5 заметки")
+'notes.item_count' => ['one' => 'заметка', 'few' => 'заметки', 'many' => 'заметок', 'other' => 'заметки'],
+// ar.php uses all six; ja.php, ko.php and zh-cn.php only `other`
 ```
 
 ```twig
@@ -193,22 +200,38 @@ label.textContent = transChoiceWithCount("js.notes.item_count", count);
 
 `transChoice()` returns the word/phrase only. `transChoiceWithCount()` formats
 and prepends the number in the browser locale. This distinction lets markup
-style a count separately without duplicating grammar.
+style a count separately without duplicating grammar. A plain string value is
+a unit that does not inflect (`'js.common.kilobyte' => 'КБ'`) and is returned
+as is by both runtimes.
 
-The current PHP formatter implements explicit rules for German, Spanish,
-Italian, Dutch, Arabic, Japanese, Korean, Chinese, Polish, French, Portuguese,
-and a legacy three-form rule used by Russian and the remaining locales. The
-browser uses the shared Russian rule, a matching Arabic approximation, and
-`Intl.PluralRules` for other locales.
+| Locale | Categories |
+| --- | --- |
+| `de`, `en`, `nl` | `one`, `other` |
+| `es`, `fr`, `it`, `pt-br` | `one`, `many` (exact millions: "1 000 000 de messages"), `other` |
+| `pl`, `ru` | `one`, `few`, `many`, `other` |
+| `ar` | `zero`, `one`, `two`, `few`, `many`, `other` |
+| `ja`, `ko`, `zh-cn` | `other` |
 
-These are deliberately limited application rules, not a complete CLDR message
-format. The two runtimes are tested for the shared Russian table but are not
-generically guaranteed to choose the same form for every number and locale.
-In particular, the server's legacy default can choose the singular English
-form for values ending in `1` outside the teens, such as `21`, while browser
-`Intl.PluralRules('en')` chooses plural. Until the server selector is unified
-with CLDR semantics, test the actual counts and locales used by a feature and
-avoid inventing another local plural function.
+Both runtimes take the rules from ICU's CLDR data: the server through
+`Formatter::pluralCategory()` (intl `MessageFormatter`), the browser through
+`Intl.PluralRules` in `assets-src/shared/plural.ts`. Neither hand-writes a
+rule. `tests/Support/plural-rules.json` records the category of a set of
+sample numbers (integers, negatives, fractions) for every shipped locale;
+`tests/Core/PluralRulesTest.php` asserts PHP against it and
+`tests/js/plural.test.ts` asserts the browser against it, so an ICU upgrade
+that moves a rule on either side fails a suite instead of changing a word
+between the server render and the next browser update. The same PHP test
+checks that every plural value in every catalog has exactly its locale's
+categories. When adding a locale, add its entry to the fixture.
+
+A missing category falls back to `other`. Positional lists from older
+catalogs (`[one, few, many]` or `[one, other]`) are still read, through the
+mirrored `legacyPluralIndex()` tables, but shipped catalogs must be keyed.
+`Formatter::plural($n, $one, $few, $many)` is kept for the same reason and is
+deprecated: put the forms in the catalog and call `transChoice()`.
+
+This selects the noun form only; it is not ICU MessageFormat. A sentence whose
+wording beyond one noun depends on the count needs separate keys.
 
 Do not handle plural by appending `s`, concatenate a number with an unrelated
 singular label, or assume two forms are enough for every locale. Preserve the
@@ -378,7 +401,8 @@ Localization changes normally need:
 ```bash
 vendor/bin/phpunit \
   tests/Core/TranslationManagerTest.php \
-  tests/Core/FormatterTest.php
+  tests/Core/FormatterTest.php \
+  tests/Core/PluralRulesTest.php
 
 npm test -- --run \
   tests/js/i18n.test.ts \
@@ -405,7 +429,8 @@ string replaced a key.
 
 - Every new user-visible server and browser string has one stable semantic key
   with complete entries in all supported catalogs.
-- Value types, plural forms, and named placeholder sets match across catalogs;
+- Value types and named placeholder sets match across catalogs, and plural
+  values are keyed by exactly the locale's CLDR categories;
   interpolated values are escaped for their final output context.
 - Sentences are translated as complete units; identifiers, API codes, routes,
   logs, hooks, and persisted enums remain stable and untranslated.

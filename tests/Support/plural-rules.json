@@ -1,0 +1,55 @@
+{
+    "_comment": "CLDR plural categories asserted against PHP intl (PluralRulesTest) and the browser Intl.PluralRules (plural.test.ts). Regenerate only when an ICU update changes CLDR data.",
+    "ar": {
+        "categories": ["zero","one","two","few","many","other"],
+        "samples": {"0":"zero","1":"one","2":"two","3":"few","4":"few","5":"few","10":"few","11":"many","12":"many","14":"many","19":"many","20":"many","21":"many","22":"many","25":"many","100":"other","101":"other","102":"other","103":"few","111":"many","1000":"other","1001":"other","1000000":"other","-1":"one","-2":"two","-21":"many","0.5":"other","1.5":"other","2.5":"other"}
+    },
+    "de": {
+        "categories": ["one","other"],
+        "samples": {"0":"other","1":"one","2":"other","3":"other","4":"other","5":"other","10":"other","11":"other","12":"other","14":"other","19":"other","20":"other","21":"other","22":"other","25":"other","100":"other","101":"other","102":"other","103":"other","111":"other","1000":"other","1001":"other","1000000":"other","-1":"one","-2":"other","-21":"other","0.5":"other","1.5":"other","2.5":"other"}
+    },
+    "en": {
+        "categories": ["one","other"],
+        "samples": {"0":"other","1":"one","2":"other","3":"other","4":"other","5":"other","10":"other","11":"other","12":"other","14":"other","19":"other","20":"other","21":"other","22":"other","25":"other","100":"other","101":"other","102":"other","103":"other","111":"other","1000":"other","1001":"other","1000000":"other","-1":"one","-2":"other","-21":"other","0.5":"other","1.5":"other","2.5":"other"}
+    },
+    "es": {
+        "categories": ["one","many","other"],
+        "samples": {"0":"other","1":"one","2":"other","3":"other","4":"other","5":"other","10":"other","11":"other","12":"other","14":"other","19":"other","20":"other","21":"other","22":"other","25":"other","100":"other","101":"other","102":"other","103":"other","111":"other","1000":"other","1001":"other","1000000":"many","-1":"one","-2":"other","-21":"other","0.5":"other","1.5":"other","2.5":"other"}
+    },
+    "fr": {
+        "categories": ["one","many","other"],
+        "samples": {"0":"one","1":"one","2":"other","3":"other","4":"other","5":"other","10":"other","11":"other","12":"other","14":"other","19":"other","20":"other","21":"other","22":"other","25":"other","100":"other","101":"other","102":"other","103":"other","111":"other","1000":"other","1001":"other","1000000":"many","-1":"one","-2":"other","-21":"other","0.5":"one","1.5":"one","2.5":"other"}
+    },
+    "it": {
+        "categories": ["one","many","other"],
+        "samples": {"0":"other","1":"one","2":"other","3":"other","4":"other","5":"other","10":"other","11":"other","12":"other","14":"other","19":"other","20":"other","21":"other","22":"other","25":"other","100":"other","101":"other","102":"other","103":"other","111":"other","1000":"other","1001":"other","1000000":"many","-1":"one","-2":"other","-21":"other","0.5":"other","1.5":"other","2.5":"other"}
+    },
+    "ja": {
+        "categories": ["other"],
+        "samples": {"0":"other","1":"other","2":"other","3":"other","4":"other","5":"other","10":"other","11":"other","12":"other","14":"other","19":"other","20":"other","21":"other","22":"other","25":"other","100":"other","101":"other","102":"other","103":"other","111":"other","1000":"other","1001":"other","1000000":"other","-1":"other","-2":"other","-21":"other","0.5":"other","1.5":"other","2.5":"other"}
+    },
+    "ko": {
+        "categories": ["other"],
+        "samples": {"0":"other","1":"other","2":"other","3":"other","4":"other","5":"other","10":"other","11":"other","12":"other","14":"other","19":"other","20":"other","21":"other","22":"other","25":"other","100":"other","101":"other","102":"other","103":"other","111":"other","1000":"other","1001":"other","1000000":"other","-1":"other","-2":"other","-21":"other","0.5":"other","1.5":"other","2.5":"other"}
+    },
+    "nl": {
+        "categories": ["one","other"],
+        "samples": {"0":"other","1":"one","2":"other","3":"other","4":"other","5":"other","10":"other","11":"other","12":"other","14":"other","19":"other","20":"other","21":"other","22":"other","25":"other","100":"other","101":"other","102":"other","103":"other","111":"other","1000":"other","1001":"other","1000000":"other","-1":"one","-2":"other","-21":"other","0.5":"other","1.5":"other","2.5":"other"}
+    },
+    "pl": {
+        "categories": ["one","few","many","other"],
+        "samples": {"0":"many","1":"one","2":"few","3":"few","4":"few","5":"many","10":"many","11":"many","12":"many","14":"many","19":"many","20":"many","21":"many","22":"few","25":"many","100":"many","101":"many","102":"few","103":"few","111":"many","1000":"many","1001":"many","1000000":"many","-1":"one","-2":"few","-21":"many","0.5":"other","1.5":"other","2.5":"other"}
+    },
+    "pt-br": {
+        "categories": ["one","many","other"],
+        "samples": {"0":"one","1":"one","2":"other","3":"other","4":"other","5":"other","10":"other","11":"other","12":"other","14":"other","19":"other","20":"other","21":"other","22":"other","25":"other","100":"other","101":"other","102":"other","103":"other","111":"other","1000":"other","1001":"other","1000000":"many","-1":"one","-2":"other","-21":"other","0.5":"one","1.5":"one","2.5":"other"}
+    },
+    "ru": {
+        "categories": ["one","few","many","other"],
+        "samples": {"0":"many","1":"one","2":"few","3":"few","4":"few","5":"many","10":"many","11":"many","12":"many","14":"many","19":"many","20":"many","21":"one","22":"few","25":"many","100":"many","101":"one","102":"few","103":"few","111":"many","1000":"many","1001":"one","1000000":"many","-1":"one","-2":"few","-21":"one","0.5":"other","1.5":"other","2.5":"other"}
+    },
+    "zh-cn": {
+        "categories": ["other"],
+        "samples": {"0":"other","1":"other","2":"other","3":"other","4":"other","5":"other","10":"other","11":"other","12":"other","14":"other","19":"other","20":"other","21":"other","22":"other","25":"other","100":"other","101":"other","102":"other","103":"other","111":"other","1000":"other","1001":"other","1000000":"other","-1":"other","-2":"other","-21":"other","0.5":"other","1.5":"other","2.5":"other"}
+    }
+}
