@@ -83,8 +83,8 @@ referenced as evidence for the engine's share only.
 | --- | --- |
 | Design and code review against the developer guide checklist | In use |
 | Component checks with axe-core in Vitest (administration components) | In use, every push and pull request |
-| Page checks with axe-core and Playwright in CI (both bundled themes, English and Arabic, light and dark) | In use, every push and pull request; known violations are listed in [`tests/a11y/baseline.json`](tests/a11y/baseline.json) |
-| Keyboard checks in CI: Tab walk with focus visibility and indicator contrast, no traps, focus kept in dialogs and returned on close | In use, every push and pull request |
+| Page checks with axe-core and Playwright in CI (both bundled themes, English and Arabic, light and dark) | In use on every change to templates, styles, scripts or translations, and weekly; known violations are listed in [`tests/a11y/baseline.json`](tests/a11y/baseline.json) |
+| Keyboard checks in CI: Tab walk with focus visibility and indicator contrast, no traps, focus kept in dialogs and returned on close | In use, together with the page checks |
 | Keyboard-only review of key workflows by a person | **TODO**: not yet systematic |
 | Screen reader review | **TODO**: not yet performed |
 | Zoom to 200% and reflow at 320 CSS px | **TODO**: not yet systematic |

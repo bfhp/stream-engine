@@ -481,14 +481,26 @@ the behavior itself is intentionally changing.
 
 ## Continuous-integration parity
 
-`.github/workflows/ci.yml` runs on pushes and pull requests with four jobs:
+`.github/workflows/ci.yml` runs on pushes and pull requests with these jobs:
 
 | Job | Environment and checks |
 | --- | --- |
 | Documentation | PHP 8.3; `php bin/check-wiki-docs.php`. |
 | PHP | Two jobs: PHP 8.3 with MariaDB 12, and PHP 8.3 with MySQL 8.4; Composer install, Pint, PHPUnit with `INSTALL_TEST_DB_*`, and the CSRF audit. |
 | Frontend | PHP 8.3 and Node 20.19; Composer install, `npm ci`, Vitest, TypeScript, and the production Vite build. |
-| Accessibility | PHP 8.3, Node 20.19, MariaDB 12, and memcached; production build, `bin/install.php` into a clean database, PHP's built-in server with `tests/a11y/router.php`, and the Playwright/axe scan for the `default` and `bootstrap` themes in English and Arabic. The reports are uploaded as a workflow artifact. |
+
+`.github/workflows/accessibility.yml` runs the page scan separately, because
+it is the slowest check: PHP 8.3, Node 20.19, MariaDB 12, and memcached;
+production build, `bin/install.php` into a clean database, `bin/seed-demo.php`,
+PHP's built-in server with `tests/a11y/router.php`, and the Playwright/axe scan
+for the `default` and `bootstrap` themes. Pull requests scan English only;
+pushes to `main`, the weekly run and manual runs add Arabic (right-to-left).
+The reports are uploaded as a workflow artifact. It runs only when a pull request or a push to
+`main` changes what the scan can see (`views/`, `assets-src/`, `public/assets/`,
+`src/Lang/`, `tests/a11y/`, the install and seed scripts, or the npm
+manifests), every Monday, and on demand: Actions → Accessibility → Run
+workflow, for any branch. Because of the path filter, do not make it a
+required status check, or pull requests that skip it will wait for it.
 
 CI intentionally disables PHP coverage for speed. Reproduce its dependency
 installation with the lock files (`composer install`, `npm ci`) when diagnosing

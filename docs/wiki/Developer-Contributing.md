@@ -304,6 +304,7 @@ Every push and pull request runs these GitHub Actions jobs:
 | Frontend | PHP dependencies, Node.js 20.19, `npm ci`, `npm audit --audit-level=high`, Vitest, strict TypeScript, and the Vite production build |
 | Dependency review | Pull requests only: rejects new or upgraded dependencies with a known high or critical vulnerability or a licence outside the allowed list in `.github/workflows/ci.yml` |
 | Semgrep | Separate workflow: static security analysis of the source; findings appear under Security → Code scanning |
+| Accessibility | Separate workflow: axe and keyboard scan of an installed, seeded site (both bundled themes, light and dark; English on pull requests, English and Arabic on `main`). Runs only when a pull request or a push to `main` touches templates, styles, scripts, built assets, translations or the scan; also weekly and on demand (Actions → Accessibility → Run workflow) |
 
 The dependency audits check the lock files against public advisory databases,
 so a newly published advisory can fail a run whose change did not touch any
