@@ -32,7 +32,6 @@ class RouterTest extends TestCase
             feedType: $feedType,
             listFeedType: null,
             feedId: null,
-            commentsEnabled: false,
             requestMethods: ['GET'],
             responseType: 'raw',
             accessRule: AccessService::ACCESS_PUBLIC

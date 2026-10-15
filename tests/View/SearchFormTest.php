@@ -70,7 +70,6 @@ final class SearchFormTest extends TestCase
             feedType: null,
             listFeedType: null,
             feedId: null,
-            commentsEnabled: false,
             requestMethods: ['GET'],
             responseType: 'html',
             accessRule: AccessService::ACCESS_PUBLIC,

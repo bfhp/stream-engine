@@ -74,7 +74,6 @@ final class ModuleTest extends TestCase
             feedType: null,
             listFeedType: null,
             feedId: null,
-            commentsEnabled: false,
             requestMethods: ['GET'],
             responseType: 'json',
             accessRule: AccessService::ACCESS_PUBLIC,

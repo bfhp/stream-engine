@@ -19,7 +19,6 @@ final class Page
         public ?string $feedType,
         public ?string $listFeedType,
         public ?int $feedId,
-        public ?bool $commentsEnabled,
         public ?array $requestMethods,
         public ?string $responseType,
         public string $accessRule,
@@ -50,6 +49,15 @@ final class Page
         return in_array($method, $this->requestMethods ?? [], true);
     }
 
+    /**
+     * Whether comments are shown on this page. The flag lives in the page's
+     * `settings` JSON (edited in admin); runtime pages set it there too.
+     */
+    public function commentsEnabled(): bool
+    {
+        return (bool) ($this->settings->commentsEnabled ?? false);
+    }
+
     public static function api(
         int $id,
         int $parentId,
@@ -68,7 +76,6 @@ final class Page
             feedType: null,
             listFeedType: null,
             feedId: null,
-            commentsEnabled: false,
             requestMethods: $requestMethods,
             responseType: 'json',
             accessRule: $accessRule,
@@ -85,7 +92,6 @@ final class Page
         ?string $feedType,
         ?string $changefreq,
         ?object $settings,
-        bool $commentsEnabled = false,
         ?string $pageName = null,
     ): self {
         return new self(
@@ -97,7 +103,6 @@ final class Page
             feedType: $feedType,
             listFeedType: null,
             feedId: null,
-            commentsEnabled: $commentsEnabled,
             requestMethods: ['GET'],
             responseType: 'html',
             accessRule: $accessRule,

@@ -134,7 +134,6 @@ final class BlogPostServiceTest extends TestCase
                 feedType: null,
                 listFeedType: null,
                 feedId: null,
-                commentsEnabled: false,
                 requestMethods: ['GET'],
                 responseType: 'raw',
                 accessRule: AccessService::ACCESS_PUBLIC
@@ -156,7 +155,6 @@ final class BlogPostServiceTest extends TestCase
                 feedType: 'blog',
                 listFeedType: null,
                 feedId: null,
-                commentsEnabled: false,
                 requestMethods: ['GET'],
                 responseType: 'raw',
                 accessRule: AccessService::ACCESS_PUBLIC
@@ -170,7 +168,6 @@ final class BlogPostServiceTest extends TestCase
                 feedType: 'blog-post',
                 listFeedType: null,
                 feedId: null,
-                commentsEnabled: false,
                 requestMethods: ['GET'],
                 responseType: 'raw',
                 accessRule: AccessService::ACCESS_PUBLIC,
@@ -194,7 +191,6 @@ final class BlogPostServiceTest extends TestCase
                 feedType: 'article',
                 listFeedType: null,
                 feedId: null,
-                commentsEnabled: false,
                 requestMethods: ['GET'],
                 responseType: 'raw',
                 accessRule: AccessService::ACCESS_PUBLIC

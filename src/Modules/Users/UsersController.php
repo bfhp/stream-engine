@@ -280,8 +280,7 @@ class UsersController extends AbstractController
                 accessRule: AccessService::ACCESS_PUBLIC,
                 feedType: 'blog-post',
                 changefreq: null,
-                settings: null,
-                commentsEnabled: true,
+                settings: (object) ['commentsEnabled' => true],
                 pageName: null,
             ));
 
@@ -349,8 +348,7 @@ class UsersController extends AbstractController
             accessRule: AccessService::ACCESS_PUBLIC,
             feedType: 'blog-post',
             changefreq: null,
-            settings: null,
-            commentsEnabled: true,
+            settings: (object) ['commentsEnabled' => true],
             pageName: null,
         ));
 
@@ -2943,7 +2941,7 @@ class UsersController extends AbstractController
     private function showBlogPostPage(Page $page, Feed $post): ViewModel
     {
         $comments = null;
-        if ($page->commentsEnabled) {
+        if ($page->commentsEnabled()) {
             $comments = $this->feedService->getComments($post->id, null, $this->context->user);
         }
 
@@ -3115,7 +3113,7 @@ class UsersController extends AbstractController
         }
 
         $comments = null;
-        if ($page->commentsEnabled) {
+        if ($page->commentsEnabled()) {
             $comments = $this->feedService->getComments($post->id, null, $viewer);
         }
 

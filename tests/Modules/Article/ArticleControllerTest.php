@@ -54,13 +54,17 @@ final class ArticleControllerTest extends TestCase
         string $pattern = 'articles',
         ?int $feedId = null,
         ?string $listFeedType = null,
-        ?bool $commentsEnabled = false,
+        bool $commentsEnabled = false,
         int $id = 5,
         ?int $parentId = null,
         ?string $feedType = 'article',
         array $params = [],
         ?object $settings = null,
     ): Page {
+        if ($commentsEnabled) {
+            $settings = (object) [...(array) ($settings ?? []), 'commentsEnabled' => true];
+        }
+
         $page = new Page(
             id: $id,
             parentId: $parentId,
@@ -70,7 +74,6 @@ final class ArticleControllerTest extends TestCase
             feedType: $feedType,
             listFeedType: $listFeedType,
             feedId: $feedId,
-            commentsEnabled: $commentsEnabled,
             requestMethods: ['GET'],
             responseType: 'html',
             accessRule: AccessService::ACCESS_PUBLIC,

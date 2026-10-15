@@ -202,7 +202,6 @@ final class FeedServiceTest extends TestCase
                 feedType: null,
                 listFeedType: null,
                 feedId: null,
-                commentsEnabled: false,
                 requestMethods: ['GET'],
                 responseType: 'raw',
                 accessRule: AccessService::ACCESS_PUBLIC
@@ -216,7 +215,6 @@ final class FeedServiceTest extends TestCase
                 feedType: null,
                 listFeedType: null,
                 feedId: null,
-                commentsEnabled: false,
                 requestMethods: ['GET'],
                 responseType: 'raw',
                 accessRule: AccessService::ACCESS_PUBLIC
@@ -230,7 +228,6 @@ final class FeedServiceTest extends TestCase
                 feedType: 'article',
                 listFeedType: null,
                 feedId: null,
-                commentsEnabled: false,
                 requestMethods: ['GET'],
                 responseType: 'raw',
                 accessRule: AccessService::ACCESS_PUBLIC
@@ -244,7 +241,6 @@ final class FeedServiceTest extends TestCase
                 feedType: null,
                 listFeedType: null,
                 feedId: null,
-                commentsEnabled: false,
                 requestMethods: ['GET'],
                 responseType: 'raw',
                 accessRule: AccessService::ACCESS_PUBLIC
@@ -258,7 +254,6 @@ final class FeedServiceTest extends TestCase
                 feedType: 'publication',
                 listFeedType: null,
                 feedId: null,
-                commentsEnabled: false,
                 requestMethods: ['GET'],
                 responseType: 'raw',
                 accessRule: AccessService::ACCESS_PUBLIC
@@ -272,7 +267,6 @@ final class FeedServiceTest extends TestCase
                 feedType: 'chapter',
                 listFeedType: null,
                 feedId: null,
-                commentsEnabled: false,
                 requestMethods: ['GET'],
                 responseType: 'raw',
                 accessRule: AccessService::ACCESS_PUBLIC
@@ -292,7 +286,6 @@ final class FeedServiceTest extends TestCase
                 feedType: 'blog',
                 listFeedType: null,
                 feedId: null,
-                commentsEnabled: false,
                 requestMethods: ['GET'],
                 responseType: 'raw',
                 accessRule: AccessService::ACCESS_PUBLIC
@@ -306,7 +299,6 @@ final class FeedServiceTest extends TestCase
                 feedType: 'blog-post',
                 listFeedType: null,
                 feedId: null,
-                commentsEnabled: false,
                 requestMethods: ['GET'],
                 responseType: 'raw',
                 accessRule: AccessService::ACCESS_PUBLIC
@@ -320,7 +312,6 @@ final class FeedServiceTest extends TestCase
                 feedType: null,
                 listFeedType: null,
                 feedId: null,
-                commentsEnabled: false,
                 requestMethods: ['GET'],
                 responseType: 'raw',
                 accessRule: AccessService::ACCESS_PUBLIC
@@ -334,7 +325,6 @@ final class FeedServiceTest extends TestCase
                 feedType: 'forum',
                 listFeedType: null,
                 feedId: null,
-                commentsEnabled: false,
                 requestMethods: ['GET'],
                 responseType: 'raw',
                 accessRule: AccessService::ACCESS_PUBLIC
@@ -348,7 +338,6 @@ final class FeedServiceTest extends TestCase
                 feedType: 'forum-post',
                 listFeedType: null,
                 feedId: null,
-                commentsEnabled: false,
                 requestMethods: ['GET'],
                 responseType: 'raw',
                 accessRule: AccessService::ACCESS_PUBLIC

@@ -30,7 +30,6 @@ class PageTreeTest extends TestCase
             feedType: $feedType,
             listFeedType: null,
             feedId: $feedId,
-            commentsEnabled: false,
             requestMethods: ['GET'],
             responseType: 'raw',
             accessRule: AccessService::ACCESS_PUBLIC,

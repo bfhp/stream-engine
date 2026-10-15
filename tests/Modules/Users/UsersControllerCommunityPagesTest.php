@@ -135,7 +135,6 @@ final class UsersControllerCommunityPagesTest extends TestCase
             feedType: null,
             listFeedType: null,
             feedId: $feedId,
-            commentsEnabled: false,
             requestMethods: ['GET'],
             responseType: 'html',
             accessRule: AccessService::ACCESS_AUTHENTICATED,

@@ -3774,7 +3774,6 @@ final class ForumsControllerTest extends TestCase
             feedType: $feedType,
             listFeedType: null,
             feedId: null,
-            commentsEnabled: false,
             requestMethods: $requestMethods,
             responseType: $responseType,
             accessRule: $accessRule,

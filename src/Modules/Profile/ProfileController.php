@@ -508,7 +508,6 @@ class ProfileController extends AbstractController
                 feedType: null,
                 listFeedType: null,
                 feedId: null,
-                commentsEnabled: false,
                 requestMethods: ['GET', 'POST'],
                 responseType: 'html',
                 accessRule: AccessService::ACCESS_PUBLIC,

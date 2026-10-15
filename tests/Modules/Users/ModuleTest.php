@@ -135,7 +135,7 @@ final class ModuleTest extends TestCase
         $this->assertNotNull($runtime);
         $this->assertInstanceOf(UsersController::class, $factory->createForPage($runtime, $context));
         $this->assertSame('blog-post', $runtime->feedType);
-        $this->assertTrue($runtime->commentsEnabled);
+        $this->assertTrue($runtime->commentsEnabled());
 
         $newPage = $pageTree->findByAction('user.post-new');
         $editPage = $pageTree->findByAction('user.post-edit');
@@ -217,7 +217,7 @@ final class ModuleTest extends TestCase
         $this->assertSame('community', $community?->feedType);
         $this->assertSame(AccessService::ACCESS_PUBLIC, $community?->accessRule);
         $this->assertSame('blog-post', $post?->feedType);
-        $this->assertTrue($post?->commentsEnabled);
+        $this->assertTrue($post?->commentsEnabled());
         $this->assertSame('noindex', $tree->findByAction('community.create')?->changefreq);
         $this->assertSame('Создание сообщества', $tree->findByAction('community.create')?->pageName);
         $this->assertSame(AccessService::ACCESS_AUTHENTICATED, $tree->findByAction('community.create')?->accessRule);
@@ -291,7 +291,6 @@ final class ModuleTest extends TestCase
             feedType: null,
             listFeedType: null,
             feedId: null,
-            commentsEnabled: false,
             requestMethods: ['GET'],
             responseType: 'html',
             accessRule: AccessService::ACCESS_PUBLIC,
@@ -315,7 +314,6 @@ final class ModuleTest extends TestCase
             feedType: $feedType,
             listFeedType: null,
             feedId: null,
-            commentsEnabled: false,
             requestMethods: ['GET'],
             responseType: 'html',
             accessRule: AccessService::ACCESS_PUBLIC,

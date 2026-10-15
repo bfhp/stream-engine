@@ -131,7 +131,7 @@ class ArticleController extends AbstractController
             $siblings = (object) $this->feedService->getPrevNext($articleFeed, $this->context->user);
         }
 
-        if ($page->commentsEnabled) {
+        if ($page->commentsEnabled()) {
             $comments = $this->feedService->getComments($articleFeed->id, null, $this->context->user);
         }
 

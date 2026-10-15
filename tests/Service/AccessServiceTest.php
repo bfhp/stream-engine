@@ -65,7 +65,6 @@ final class AccessServiceTest extends TestCase
             feedType: null,
             listFeedType: null,
             feedId: null,
-            commentsEnabled: false,
             requestMethods: ['GET'],
             responseType: 'raw',
             accessRule: $accessRule,

@@ -77,7 +77,7 @@ final class RoutingRepositoriesTest extends TestCase
         $this->assertSame(1, $page->parentId);
         $this->assertSame('forum', $page->pattern);
         $this->assertSame('forums.list', $page->action);
-        $this->assertFalse($page->commentsEnabled);
+        $this->assertFalse($page->commentsEnabled());
     }
 
     /**
@@ -167,7 +167,7 @@ final class RoutingRepositoriesTest extends TestCase
         $this->assertSame('blog-post', $page->listFeedType);
         $this->assertSame('tags', $page->termVocabulary);
         $this->assertSame('daily', $page->changefreq);
-        $this->assertTrue($page->commentsEnabled);
+        $this->assertTrue($page->commentsEnabled());
     }
 
     public function testAnEmptyPagesTableLoadsWithoutFailing(): void

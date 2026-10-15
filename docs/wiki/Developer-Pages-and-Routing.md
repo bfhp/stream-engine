@@ -67,7 +67,6 @@ The principal fields are:
 | `termVocabulary` | Associate a dynamic route with term slugs from one vocabulary. |
 | `accessRule` | Page audience: `public`, `authenticated`, `moderator`, or `admin`. |
 | `requestMethods`, `responseType` | Transport method list and `html`, `json`, or other response mode. |
-| `commentsEnabled` | Presentation/feature flag consumed by supporting controllers and templates. |
 | `changefreq`, `updated` | Sitemap metadata; `noindex` is the exclusion value used by current sitemap logic. |
 
 Persisted pages are loaded as `GET`/`html`. `Page::runtime()` also creates a

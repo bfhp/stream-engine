@@ -55,7 +55,6 @@ final class SitemapControllerTest extends TestCase
             feedType: $feedType,
             listFeedType: null,
             feedId: $feedId,
-            commentsEnabled: false,
             requestMethods: $requestMethods,
             responseType: $responseType,
             accessRule: $accessRule,

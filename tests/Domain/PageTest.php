@@ -28,7 +28,7 @@ final class PageTest extends TestCase
 {
     public function testRuntimePageUsesSafeHtmlGetDefaults(): void
     {
-        $settings = (object) ['layout' => 'compact'];
+        $settings = (object) ['layout' => 'compact', 'commentsEnabled' => true];
 
         $page = Page::runtime(
             id: 20,
@@ -39,14 +39,13 @@ final class PageTest extends TestCase
             feedType: 'article',
             changefreq: 'weekly',
             settings: $settings,
-            commentsEnabled: true,
             pageName: 'Article',
         );
 
         self::assertSame(['GET'], $page->requestMethods);
         self::assertSame('html', $page->responseType);
         self::assertSame(AccessService::ACCESS_PUBLIC, $page->accessRule);
-        self::assertTrue($page->commentsEnabled);
+        self::assertTrue($page->commentsEnabled());
         self::assertSame('article', $page->feedType);
         self::assertSame('weekly', $page->changefreq);
         self::assertSame($settings, $page->settings);
@@ -67,7 +66,6 @@ final class PageTest extends TestCase
             feedType: null,
             listFeedType: null,
             feedId: null,
-            commentsEnabled: false,
             requestMethods: $methods,
             responseType: 'json',
             accessRule: AccessService::ACCESS_PUBLIC,

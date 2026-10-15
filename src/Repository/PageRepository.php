@@ -53,7 +53,6 @@ final readonly class PageRepository
                 feedType: $row['feed_type'] ?? null,
                 listFeedType: $row['list_feed_type'] ?? null,
                 feedId: $row['feed_id'] !== null ? (int) $row['feed_id'] : null,
-                commentsEnabled: (bool) (json_decode($row['settings'] ?? '{}', true)['commentsEnabled'] ?? false),
                 requestMethods: ['GET'],
                 responseType: 'html',
                 accessRule: $row['access_rule'],
