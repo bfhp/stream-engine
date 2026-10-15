@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { expectNoNewViolations, waitForAdminScreen } from "./scan";
 import { adminDialog, closeWithEscape, expectNoHorizontalScroll, open } from "./states";
+import { expectFocusContained } from "./keyboard";
 
 /** Built-in administration screens, as routed by the admin HashRouter. */
 const ADMIN_SCREENS: Array<[id: string, route: string]> = [
@@ -61,17 +62,21 @@ test.describe("admin open states", () => {
     test("dashboard customization dialog", async ({ page }, testInfo) => {
         await screen(page, "/");
         const dialog = adminDialog(page);
-        await open(page.locator("main button:has(.tabler-icon-settings)").first(), dialog);
+        const trigger = page.locator("main button:has(.tabler-icon-settings)").first();
+        await open(trigger, dialog);
         await expectNoNewViolations(page, "admin/dashboard-customize", testInfo);
-        await closeWithEscape(page, dialog);
+        await expectFocusContained(page, dialog);
+        await closeWithEscape(page, dialog, trigger);
     });
 
     test("user editor dialog", async ({ page }, testInfo) => {
         await screen(page, "/users");
         const dialog = adminDialog(page);
-        await open(page.locator("main table tbody button:has(.tabler-icon-edit):not([disabled])").first(), dialog);
+        const trigger = page.locator("main table tbody button:has(.tabler-icon-edit):not([disabled])").first();
+        await open(trigger, dialog);
         await expectNoNewViolations(page, "admin/users-edit", testInfo);
-        await closeWithEscape(page, dialog);
+        await expectFocusContained(page, dialog);
+        await closeWithEscape(page, dialog, trigger);
     });
 
     test("feed list menus and popovers", async ({ page }, testInfo) => {
@@ -86,7 +91,7 @@ test.describe("admin open states", () => {
             const popup = page.locator(`#${await trigger.getAttribute("aria-controls")}`);
             await expect(popup).toBeVisible();
             await expectNoNewViolations(page, `admin/feeds-popup-${index + 1}`, testInfo);
-            await closeWithEscape(page, popup);
+            await closeWithEscape(page, popup, trigger);
         }
     });
 
@@ -94,25 +99,29 @@ test.describe("admin open states", () => {
         await screen(page, "/settings");
         // Mantine keeps every Select's listbox in the DOM; scan the open one.
         const listbox = page.locator('[role="listbox"]:visible');
-        await open(page.locator("main .mantine-Select-input").first(), listbox);
+        const input = page.locator("main .mantine-Select-input").first();
+        await open(input, listbox);
         await expectNoNewViolations(page, "admin/settings-select", testInfo);
-        await closeWithEscape(page, listbox);
+        await closeWithEscape(page, listbox, input);
     });
 
     test("cron history drawer and run confirmation", async ({ page }, testInfo) => {
         await screen(page, "/cron");
         const dialog = adminDialog(page);
 
-        await open(page.locator("main table tbody tr td:first-child button").first(), dialog);
+        const historyTrigger = page.locator("main table tbody tr td:first-child button").first();
+        await open(historyTrigger, dialog);
         await expectNoNewViolations(page, "admin/cron-history", testInfo);
-        await closeWithEscape(page, dialog);
+        await expectFocusContained(page, dialog);
+        await closeWithEscape(page, dialog, historyTrigger);
 
         const run = page.locator("main table tbody button:has(.tabler-icon-player-play):not([disabled])").first();
         test.skip(await run.count() === 0, "No cron task can be run on this site.");
         await open(run, dialog);
         await expectNoNewViolations(page, "admin/cron-run-confirm", testInfo);
+        await expectFocusContained(page, dialog);
         // Escape, not the confirm button: the task must not actually run.
-        await closeWithEscape(page, dialog);
+        await closeWithEscape(page, dialog, run);
     });
 });
 
@@ -151,11 +160,19 @@ test.describe("member open states", () => {
         await expectNoNewViolations(page, "member/user-menu", testInfo);
 
         const confirm = page.locator("#globalConfirmModal");
-        await open(menu.locator("[data-logout]").first(), confirm);
+        const signOut = menu.locator("[data-logout]").first();
+        await open(signOut, confirm);
         await expectNoNewViolations(page, "member/sign-out-confirm", testInfo,
             builder => builder.include("#globalConfirmModal"));
-        await page.keyboard.press("Escape");
-        await expect(confirm).toBeHidden();
+        // Tab and Shift+Tab only: nothing in the dialog is activated.
+        await expectFocusContained(page, confirm);
+        await closeWithEscape(page, confirm);
+        // Back on "Sign out" if its menu is still open, otherwise on the menu
+        // toggle: Bootstrap closes a dropdown when one of its items is used.
+        await expect.poll(() => page.evaluate(() => {
+            const active = document.activeElement;
+            return active?.id === "menu-user-toggle" || active?.hasAttribute("data-logout") === true;
+        }), { message: "focus returns to Sign out or the user menu toggle" }).toBe(true);
 
         await page.reload();
         await expect(page.locator("body")).toHaveAttribute("data-auth", "1");

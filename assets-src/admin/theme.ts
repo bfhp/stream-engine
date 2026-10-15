@@ -3,6 +3,7 @@ import {
     Drawer,
     Menu,
     Modal,
+    Popover,
     createTheme,
     type CSSVariablesResolver,
     type MantineColorsTuple,
@@ -54,6 +55,9 @@ export const adminTheme = createTheme({
         // The placeholder is a focusable <div> inside role="menu", which may
         // only contain menu items (1.3.1); focus goes to the first item instead.
         Menu: Menu.extend({ defaultProps: { withInitialFocusPlaceholder: false } }),
+        // Popover, unlike Modal, Drawer and Menu, leaves focus where it was
+        // when it closes, which is inside the removed dropdown (2.4.3).
+        Popover: Popover.extend({ defaultProps: { returnFocus: true } }),
     },
 });
 

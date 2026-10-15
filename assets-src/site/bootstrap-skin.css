@@ -141,3 +141,21 @@ footer,body {
     color: var(--bs-link-color);
     background: none;
 }
+
+/* Focus: Bootstrap's focus rings are 25-50% transparent box-shadows, 1.3-2:1
+   against the page (WCAG 1.4.11). Use the solid ring from base.css. */
+.btn:focus-visible,
+.btn-check:focus-visible + .btn,
+.btn-close:focus-visible,
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus,
+.nav-link:focus-visible,
+.page-link:focus-visible,
+.dropdown-item:focus-visible,
+.list-group-item-action:focus-visible,
+.navbar-toggler:focus-visible {
+    outline: 2px solid var(--ui-focus-ring);
+    outline-offset: 2px;
+    box-shadow: none;
+}

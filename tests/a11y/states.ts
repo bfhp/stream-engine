@@ -18,10 +18,17 @@ export async function open(trigger: Locator, visible: Locator): Promise<void> {
     await expect(visible).toBeVisible();
 }
 
-/** Closes the topmost Mantine overlay with Escape, as a keyboard user would. */
-export async function closeWithEscape(page: Page, overlay: Locator): Promise<void> {
+/**
+ * Closes the topmost overlay with Escape, as a keyboard user would, and
+ * checks that focus went back to `returnTo`, the control that opened it
+ * (WCAG 2.4.3).
+ */
+export async function closeWithEscape(page: Page, overlay: Locator, returnTo?: Locator): Promise<void> {
     await page.keyboard.press("Escape");
     await expect(overlay).toBeHidden();
+    if (returnTo) {
+        await expect(returnTo, "focus returns to the control that opened the overlay").toBeFocused();
+    }
 }
 
 /**

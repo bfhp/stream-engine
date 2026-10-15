@@ -84,7 +84,8 @@ referenced as evidence for the engine's share only.
 | Design and code review against the developer guide checklist | In use |
 | Component checks with axe-core in Vitest (administration components) | In use, every push and pull request |
 | Page checks with axe-core and Playwright in CI (both bundled themes, English and Arabic, light and dark) | In use, every push and pull request; known violations are listed in [`tests/a11y/baseline.json`](tests/a11y/baseline.json) |
-| Keyboard-only review of key workflows | **TODO**: not yet systematic |
+| Keyboard checks in CI: Tab walk with focus visibility and indicator contrast, no traps, focus kept in dialogs and returned on close | In use, every push and pull request |
+| Keyboard-only review of key workflows by a person | **TODO**: not yet systematic |
 | Screen reader review | **TODO**: not yet performed |
 | Zoom to 200% and reflow at 320 CSS px | **TODO**: not yet systematic |
 | Complete WCAG 2.2 AA audit | **TODO**: not yet performed |
@@ -119,16 +120,19 @@ documented with a workaround.
   Their keyboard and screen reader support is controlled upstream and has not
   been evaluated in Stream Engine. The automated scan reports one known issue
   in the file browser: Chonky's file list uses `role="list"` without list
-  items (WCAG 1.3.1); it is recorded in `tests/a11y/baseline.json`.
+  items (WCAG 1.3.1); it is recorded in `tests/a11y/baseline.json`. Monaco
+  uses Tab for indentation, so Tab does not leave the editor until Ctrl+M
+  (Ctrl+Shift+M on macOS) switches that off; the panel does not yet tell
+  users so (WCAG 2.1.2).
 - **Images are described by captions, not alt text.** Authors describe an
   image in the content editors by its caption: the image gets `alt=""` and
   the `<figcaption>` of its `<figure>` carries the description (WCAG 1.1.1).
   An image published without a caption therefore has no text alternative;
   the editors prompt for one but do not require it. There is no separate alt
   text field.
-- **Content saved before version 0.5.2** (**TODO**: confirm the version) may
-  contain images whose alt text is their file name, which the old sanitizer
-  inserted. Re-saving the content does not change existing alt attributes.
+- **Older content** may contain images whose alt text is their file name,
+  which earlier versions of the sanitizer inserted. It is not migrated, and
+  re-saving the content does not change existing alt attributes.
 - **Colour contrast.** Text contrast (WCAG 1.4.3) passes the automated scan on
   the scanned pages of the `default` theme and the administration panel in
   both colour modes. Non-text contrast (1.4.11), such as borders and focus

@@ -333,7 +333,19 @@ tabs, the user menu and sign-out confirmation, and the admin's dialogs,
 drawers, menus and select dropdowns (`tests/a11y/states.ts`). These tests
 never save: each state is opened, scanned and closed with Escape. The home
 page, sign-in dialog and profile are also checked at 320 CSS px for
-horizontal scrolling (WCAG 1.4.10), which axe does not test. Direction
+horizontal scrolling (WCAG 1.4.10), which axe does not test.
+
+**Keyboard checks** (`tests/a11y/keyboard.ts`, `*-keyboard.spec.ts`) cover
+what axe cannot. A Tab walk goes through each public page, the profile and
+the administration screens until focus comes back to the start, and fails
+on a keyboard trap (2.1.2), on a stop that looks the same focused and
+unfocused (2.4.7), and on an outline or shadow focus indicator below 3:1
+against its background (1.4.11). Visually hidden inputs are judged by their
+sibling, parent and `<label>`, which carry their focus ring. Open-state tests
+also check that Tab and Shift+Tab stay inside an open dialog and that Escape
+returns focus to the control that opened it (2.4.3). Monaco editors are
+excluded: they keep Tab for indentation by design (Ctrl+M releases it).
+Direction
 follows the site locale and markup follows the active theme. Without further
 settings, `npm run test:a11y` scans the target site as it is configured. Set
 `A11Y_THEMES` and/or `A11Y_LOCALES` to comma-separated lists to scan each

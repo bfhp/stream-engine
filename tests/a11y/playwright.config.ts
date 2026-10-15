@@ -43,12 +43,12 @@ export default defineConfig({
         ...schemes.flatMap(colorScheme => [
             {
                 name: `guest-${colorScheme}`,
-                testMatch: /guest\.spec\.ts$/,
+                testMatch: /guest(-keyboard)?\.spec\.ts$/,
                 use: { colorScheme },
             },
             {
                 name: `admin-${colorScheme}`,
-                testMatch: /admin\.spec\.ts$/,
+                testMatch: /admin(-keyboard)?\.spec\.ts$/,
                 dependencies: ["setup"],
                 use: { colorScheme, storageState: ADMIN_STATE },
             },

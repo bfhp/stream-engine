@@ -31,3 +31,28 @@
 [data-mantine-color-scheme="light"] .mantine-Switch-track {
     --switch-text-color: var(--mantine-color-gray-7);
 }
+
+/* Focus ring in dark mode: the primary filled colour (blue.9) is 2.2-2.5:1 on
+   dark.6/dark.7; blue.4 is 4.5:1 or more on every dark surface (1.4.11). The
+   same colour marks the border of a focused input. */
+[data-mantine-color-scheme="dark"] .mantine-focus-auto:focus-visible,
+[data-mantine-color-scheme="dark"] .mantine-focus-always:focus {
+    outline-color: var(--mantine-color-blue-4);
+}
+
+[data-mantine-color-scheme="dark"] .mantine-Input-input[data-variant] {
+    --input-bd-focus: var(--mantine-color-blue-4);
+}
+
+/* Reduced motion (WCAG 2.3.3) for CSS transitions; Mantine's
+   respectReducedMotion covers only its Transition components. */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

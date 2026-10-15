@@ -20,12 +20,41 @@ import { MODAL_CLOSED, TAB_SHOWN, ui, type UiAdapter } from "../shared/ui";
 
 const bound = new WeakSet<HTMLElement>();
 
+/*
+ * Bootstrap returns focus to the opener only for data-bs-toggle triggers; a
+ * modal shown from script (CMS.confirm()) left focus on <body> when it
+ * closed. Remember the opener and restore it (WCAG 2.4.3).
+ */
+const openers = new WeakMap<HTMLElement, HTMLElement>();
+
+/**
+ * Focuses the opener or, when it sits in a dropdown that has closed since
+ * (a menu item such as "Sign out"), the toggle that labels that dropdown.
+ */
+function focusOpener(opener: HTMLElement): void {
+    if (opener.getClientRects().length > 0) {
+        opener.focus();
+        return;
+    }
+    const toggleId = opener.closest("[aria-labelledby]")?.getAttribute("aria-labelledby");
+    const toggle = toggleId ? document.getElementById(toggleId) : null;
+    (toggle ?? opener).focus();
+}
+
 function bindClosed(el: HTMLElement): void {
     if (bound.has(el)) return;
     bound.add(el);
     // Bootstrap fires hidden.bs.modal on every close: OK, Escape, backdrop,
     // data-bs-dismiss. Translate it into the adapter-neutral event.
     el.addEventListener("hidden.bs.modal", () => {
+        const opener = openers.get(el);
+        openers.delete(el);
+        // Bootstrap leaves focus on the now hidden .modal itself, and the
+        // browser then drops it to <body>.
+        const active = document.activeElement;
+        if (opener?.isConnected && (!active || active === document.body || el.contains(active))) {
+            focusOpener(opener);
+        }
         el.dispatchEvent(new CustomEvent(MODAL_CLOSED));
     });
 }
@@ -35,6 +64,9 @@ export const bootstrapAdapter: UiAdapter = {
 
     modalOpen(el) {
         bindClosed(el);
+        if (document.activeElement instanceof HTMLElement && document.activeElement !== document.body) {
+            openers.set(el, document.activeElement);
+        }
         Modal.getOrCreateInstance(el).show();
     },
 

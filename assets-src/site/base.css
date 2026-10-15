@@ -29,6 +29,8 @@
     --ui-primary: #2563eb;
     --ui-primary-contrast: #ffffff;
     --ui-link: #60a5fa;
+    /* Keyboard focus ring: at least 5.7:1 on every dark surface (1.4.11). */
+    --ui-focus-ring: #60a5fa;
     --ui-success: #22c55e;
     /* --ui-danger fills controls under white text; --ui-danger-text is red
        text on page surfaces (as with --ui-primary and --ui-link). */
@@ -51,6 +53,7 @@
     --ui-border: #e2e8f0;
     --ui-primary: #2563eb;
     --ui-link: #2563eb;
+    --ui-focus-ring: #1d4ed8;
     --ui-danger-text: #b91c1c;
     /* Darker than the dark-mode green: it is text on white here. */
     --ui-success: #15803d;
@@ -180,7 +183,13 @@ hr {
 
 .ui-skip-link:focus {
     transform: none;
-    outline: 2px solid var(--ui-text);
+}
+
+/* One visible, measurable focus ring for keyboard users (WCAG 2.4.7,
+   1.4.11). The browser default reports its colour as currentColor and
+   disappears on coloured buttons. */
+:focus-visible {
+    outline: 2px solid var(--ui-focus-ring);
     outline-offset: 2px;
 }
 
@@ -313,7 +322,7 @@ hr {
 
 .ui-segmented__option:not(:first-of-type) { border-inline-start: 1px solid var(--ui-primary); }
 .ui-segmented__input:checked + .ui-segmented__option { background: var(--ui-primary); color: var(--ui-primary-contrast); }
-.ui-segmented__input:focus-visible + .ui-segmented__option { outline: 2px solid var(--ui-primary); outline-offset: -2px; }
+.ui-segmented__input:focus-visible + .ui-segmented__option { outline: 2px solid var(--ui-focus-ring); outline-offset: -2px; }
 
 .ui-table-scroll { overflow-x: auto; }
 
@@ -333,7 +342,7 @@ hr {
 .ui-table tbody tr:hover { background: var(--ui-surface-2); }
 
 .ui-input:focus {
-    outline: 2px solid var(--ui-primary);
+    outline: 2px solid var(--ui-focus-ring);
     outline-offset: 1px;
 }
 
