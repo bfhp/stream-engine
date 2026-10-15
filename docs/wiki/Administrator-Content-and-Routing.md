@@ -74,9 +74,13 @@ does not exist.
 | Image URL | Existing image URL. The upload button beside the content editor inserts an uploaded image into the body instead of filling this field. |
 | Content | Sanitized HTML body edited in the source editor. Preview the result in the active theme after saving. |
 
-After creation, the browser address changes to `/admin/feeds/ID`. Record that
-ID, or read it from the Feeds list, when a page action needs a fixed **Feed
-ID** or another feed needs this record as its parent.
+After creation, the browser address changes to `/admin/feeds/ID`. You do not
+need to note this ID for a page: the page editor finds feeds by title. You
+still need it when another feed uses this record as its parent, because
+**Parent ID** is a numeric field.
+
+The top of the feed form shows the page the feed is bound to, with a link to
+it, or says that the feed is not bound to any page.
 
 > [!CAUTION]
 > The generic feed editor does not currently provide a delete operation.
@@ -129,19 +133,41 @@ post-change checks.
 
 ## Configure a page action
 
-Select the action first. The editor then marks **Feed ID**, **Feed type**,
+Select the action first. The editor then marks **Feed**, **Feed type**,
 **List feed type**, and **Term vocabulary** as required, optional, fixed, or
 unused for that action. Clear values reported as unsupported. Do not copy
 field combinations from a different action.
+
+The **Feed** field pins one feed to the page:
+
+- Type part of a title to search, or enter an ID as `42` or `#42`. If the
+  action accepts only certain feed types, only feeds of those types are
+  listed. Each result shows the title, ID, type, slug and parent. An action
+  that does not restrict the type searches all feeds by full text and needs
+  at least three characters.
+- Select **Create feed** below the field to create a feed with a title,
+  optional slug and type. Only the types the action accepts are offered. Set
+  the parent, content and other fields afterwards in the Feeds editor.
+- Select **Open feed** to edit the selected feed.
+
+A feed can be bound to only one page. The picker lists feeds that are
+already used by another page together with that page's path, but you cannot
+select them, and the server rejects the conflict when you save. Older
+duplicate bindings that are not changed remain saveable, so that you can
+clean them up. To move a feed to a different page, clear the **Feed** field
+on the page that currently uses it first.
+
+The **Feed** column of the Pages list shows the title of the bound feed,
+with its ID and the page's feed type below it.
 
 Common article actions are:
 
 | Action | Use |
 | --- | --- |
-| `article.show-id` | Render one fixed `article` selected by Feed ID. The installed root page uses this action for the welcome article. |
+| `article.show-id` | Render one fixed `article` selected in the **Feed** field. The installed root page uses this action for the welcome article. |
 | `article.show-slug` | Render an `article` selected from a `{slug}` route. Feed type is fixed to `article`. |
 | `articles.list` | Resolve an `article-section` from the route and list its child `article` feeds. |
-| `sections.list` | List `article-section` children under a fixed root Feed ID. |
+| `sections.list` | List `article-section` children under a fixed root feed selected in the **Feed** field. |
 
 Other enabled modules add their own actions. Use the descriptions and field
 validation shown by the editor; unavailable legacy actions may be preserved
@@ -153,23 +179,35 @@ buttons** affect only views and themes that support those features.
 
 ## Worked example: publish `/about/`
 
-This example creates one reusable dynamic article route, publishes an About
-article through it, and adds a navigation link. Perform it on a new or staging
-installation first.
+This example publishes an About article at `/about/` and adds a navigation
+link. It shows two ways to do it:
 
-### 1. Find the content root
+- **Option A: a dynamic article route.** One `{slug}` page serves every
+  public article under the root feed. Choose this option when the site will
+  have several standalone articles.
+- **Option B: a fixed page.** A static `about` page shows exactly one
+  article. Choose this option for a single page, or when articles must not
+  appear at arbitrary top-level slugs.
+
+Both options end with the same verification and navigation steps. Try the
+example on a new or staging installation first.
+
+### 1. Inspect the root page and existing routes
 
 1. Open **Administration → Pages**.
-2. Find page `#1`, the root page.
-3. Record the Feed ID displayed for it. Call this value `ROOT_FEED_ID` in the
-   following steps.
-4. Search the page list for action `article.show-slug`.
+2. Find page `#1`, the root page. The **Feed** column shows the title of its
+   feed, with the feed ID below it, for example `Welcome` and `#1 · article`.
+   Call this feed ID `ROOT_FEED_ID`. Select the title to open the feed.
+3. Search the page list for `about` and for the action `article.show-slug`.
 
-If that action already exists, do not create another page with the same
-action. Inspect the existing page and use the parent feed and URL hierarchy it
+If a page with the pattern `about` already exists, edit that page instead of
+creating another one. If an `article.show-slug` page already exists, Option A
+is already partly set up: skip step A2 and use the URL hierarchy that page
 defines.
 
-### 2. Create the article feed
+### Option A: a dynamic article route
+
+#### A1. Create the article feed
 
 Open **Administration → Feeds → New feed** and enter:
 
@@ -180,72 +218,117 @@ Open **Administration → Feeds → New feed** and enter:
 | Slug | `about` |
 | Parent ID | `ROOT_FEED_ID` |
 | Visibility | `public` |
-| Position | `0` or the desired order among sibling articles |
+| Position | `0`, or the desired order among sibling articles |
 | Description | A short public summary |
 | Content | The About page body as valid HTML |
 
-Save the feed. Confirm that it now has an ID and remains attached to the
-expected parent. The parent matters: `article.show-slug` resolves the article
-inside the feed hierarchy anchored by the nearest ancestor page.
+Save the feed. Check that it now has an ID and is still attached to the
+expected parent. The parent matters: `article.show-slug` looks up the article
+in the feed hierarchy of the nearest ancestor page.
 
-### 3. Create the dynamic page once
+The quick-create form in the page editor sets only the title, slug and type,
+so it cannot set a parent. Use the Feeds editor for this step.
 
-Skip this step if the required `article.show-slug` page already exists.
-Otherwise, open **Administration → Pages → New page** and enter:
+#### A2. Create the dynamic page once
+
+Skip this step if an `article.show-slug` page already exists. Otherwise, open
+**Administration → Pages → New page** and enter:
 
 | Field | Value |
 | --- | --- |
 | Pattern | `{slug}` |
 | Action | `article.show-slug` |
 | Page name | `Article` |
-| Parent ID | `#1`, the root page |
-| Feed type | `article` (filled or restricted by the action contract) |
+| Parent | `#1`, the root page |
+| Feed type | `article` (filled automatically from the action contract) |
 | List feed type | empty |
 | Term vocabulary | empty |
-| Feed ID | empty |
+| Feed | empty |
 | Change frequency | `monthly` |
 | Access | `public` |
 
-Choose the desired content width, comments, and share buttons, then save. Do
-not enter the About feed ID: this route selects articles by slug and can serve
-all public `article` children of `ROOT_FEED_ID`.
+Choose the content width and whether to show comments and share buttons, then
+save. Leave **Feed** empty. This route finds articles by their slug and serves
+all public `article` children of `ROOT_FEED_ID`. Pinning the About feed here
+would replace the slug lookup with that one article.
 
-### 4. Verify the URL before adding navigation
+To publish more articles, create another `article` feed under `ROOT_FEED_ID`
+with a unique slug. Each one reuses the same `{slug}` page.
+
+### Option B: a fixed page
+
+Open **Administration → Pages → New page** and enter:
+
+| Field | Value |
+| --- | --- |
+| Pattern | `about` |
+| Action | `article.show-id` |
+| Page name | `About` |
+| Parent | `#1`, the root page |
+| Change frequency | `monthly` |
+| Access | `public` |
+
+Then pick the feed:
+
+- **If the About article already exists**, start typing its title in the
+  **Feed** field, or enter its ID as `42` or `#42`. Only feeds of the type the
+  action accepts (`article`) are listed. Each result shows the title, ID,
+  type and slug.
+- **If it does not exist yet**, select **Create feed** below the field. Enter
+  the title `About` and, optionally, a slug. The type is fixed to `article`.
+  The new feed is selected as soon as it is created.
+
+Save the page. Then select **Open feed** below the field and fill in the
+description and content of the article in the Feeds editor. The top of the
+feed form shows which page the feed is bound to, with a link back to it.
+
+A feed can be bound to only one page. If a feed is already used by another
+page, the picker shows that page's path and does not let you select the feed.
+The server rejects the same conflict when you save. To move a feed to a
+different page, first clear the **Feed** field on the page that currently
+uses it.
+
+### 2. Verify the URL before adding navigation
 
 Open `https://example.com/about/`, replacing the host with the site's
 canonical host. Confirm all of the following:
 
 - the request returns the About article rather than a 404 or another page;
-- the title, description, body, and images render correctly;
+- the title, description, body and images render correctly;
 - the canonical URL uses the expected HTTPS host and path;
 - comments and share controls match the page settings; and
 - the same URL works in a private browser window.
 
-Also revisit existing top-level URLs. The static routes should still win over
-`{slug}`, but this smoke test detects a misplaced parent or conflicting route.
+With Option A, also revisit the existing top-level URLs. Static routes should
+still take precedence over `{slug}`, but this check catches a misplaced parent
+or a conflicting route.
 
-### 5. Add navigation
+In **Administration → Pages**, the **Feed** column of the page now shows the
+title `About` instead of a bare ID.
+
+### 3. Add navigation
 
 Open **Administration → Menus → New menu item** and enter:
 
 | Field | Value |
 | --- | --- |
 | Menu group | `top` |
-| Type | `external` |
+| Type | `internal` for Option B; `external` for Option A |
 | Label | `About` |
 | Parent item | empty for a top-level item, or the desired item in the same group |
-| URL | `/about/` |
+| Page | Option B only: the `about` page |
+| URL | Option A only: `/about/` |
 | Access | `public` |
 | Enabled | on |
 
-The relative URL keeps the link on the canonical site. This example uses the
-`external` menu type because the target page is dynamic and the menu editor
-cannot bind the fixed `about` slug to an `internal` page reference. Save the
-item, inspect the menu preview, then open the public site and test the link.
+With Option B the menu item refers to a concrete page, so it keeps working if
+the page's pattern changes later. Option A needs the `external` type: the
+target page is dynamic, and the menu editor cannot bind the fixed `about`
+slug to an `internal` page reference. A relative URL keeps the link on the
+canonical site.
 
-Further articles need only another `article` feed under `ROOT_FEED_ID` with a
-unique slug. They reuse the same `{slug}` page. Add a menu item only when that
-article belongs in persistent navigation.
+Save the item, check the menu preview, then open the public site and test the
+link. Add menu items only for articles that belong in persistent navigation.
 
 ## Access has three layers
 
