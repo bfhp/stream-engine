@@ -561,6 +561,11 @@
 .msgr-msg-name {
     font-size: 13px;
     font-weight: 600;
+    color: var(--msgr-name-dark, var(--msgr-text));
+}
+
+[data-color-mode="light"] .msgr-msg-name {
+    color: var(--msgr-name-light, var(--msgr-text));
 }
 
 .msgr-msg-time-inline {

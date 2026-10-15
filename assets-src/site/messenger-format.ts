@@ -20,9 +20,18 @@ import { formatDateValue, formatTimeValue } from "../shared/date-time-format";
    in `messages.ts`.
    ========================================================================== */
 
+/* Avatar backgrounds carry white initials, so every colour is dark enough
+   for 4.5:1 against #fff (WCAG 1.4.3). The same colour colours the sender's
+   name in light mode; NAME_COLORS_DARK is the matching light shade for the
+   name on the dark canvas. Keep the two lists the same length and order. */
 export const AVATAR_COLORS = [
-    '#3b82f6', '#a855f7', '#ec4899', '#f59e0b',
-    '#8b5cf6', '#f43f5e', '#10b981', '#06b6d4',
+    '#1d4ed8', '#7e22ce', '#be185d', '#b45309',
+    '#6d28d9', '#be123c', '#047857', '#0e7490',
+];
+
+export const NAME_COLORS_DARK = [
+    '#60a5fa', '#c084fc', '#f472b6', '#fbbf24',
+    '#a78bfa', '#fb7185', '#34d399', '#22d3ee',
 ];
 
 export const WEEKDAYS_SHORT = Array.from({ length: 7 }, (_, day) => trans(`js.date.weekday_short.${day}`));
@@ -148,6 +157,16 @@ export function formatDayLabel(unixSeconds: number, now: Date = new Date()): str
  */
 export function avatarColor(id: number): string {
     return AVATAR_COLORS[Math.abs(id) % AVATAR_COLORS.length];
+}
+
+/**
+ * Inline custom properties for a sender's name: `messages.css` picks the
+ * light-mode or dark-mode shade, so the name stays readable in both.
+ */
+export function nameColorStyle(id: number): string {
+    const index = Math.abs(id) % AVATAR_COLORS.length;
+
+    return `--msgr-name-light:${AVATAR_COLORS[index]};--msgr-name-dark:${NAME_COLORS_DARK[index]}`;
 }
 
 /**

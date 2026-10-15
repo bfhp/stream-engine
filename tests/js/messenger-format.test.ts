@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
     AVATAR_COLORS,
+    NAME_COLORS_DARK,
     avatarColor,
     computeReadStatus,
     daysBetween,
@@ -10,6 +11,7 @@ import {
     formatTime,
     hardenMessageLinks,
     initialsFromName,
+    nameColorStyle,
     pad,
     startOfDay,
     stripTags,
@@ -185,6 +187,45 @@ describe("avatarColor()", () => {
         // `Math.abs` - without it a negative id indexes off the front of the
         // array and the avatar renders with `background:undefined`.
         expect(AVATAR_COLORS).toContain(avatarColor(-3));
+    });
+});
+
+function luminance(hex: string): number {
+    const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255)
+        .map(c => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+function contrast(a: string, b: string): number {
+    const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+
+    return (hi + 0.05) / (lo + 0.05);
+}
+
+describe("messenger palette contrast (WCAG 1.4.3)", () => {
+    it("keeps white initials readable on every avatar", () => {
+        for (const colour of AVATAR_COLORS) {
+            expect(contrast(colour, "#ffffff"), colour).toBeGreaterThanOrEqual(4.5);
+        }
+    });
+
+    it("keeps sender names readable on both canvases", () => {
+        expect(NAME_COLORS_DARK).toHaveLength(AVATAR_COLORS.length);
+        for (const colour of AVATAR_COLORS) {
+            expect(contrast(colour, "#f8fafc"), colour).toBeGreaterThanOrEqual(4.5);
+        }
+        for (const colour of NAME_COLORS_DARK) {
+            expect(contrast(colour, "#0b0d12"), colour).toBeGreaterThanOrEqual(4.5);
+        }
+    });
+});
+
+describe("nameColorStyle()", () => {
+    it("gives the light- and dark-mode shades of the same palette slot", () => {
+        expect(nameColorStyle(AVATAR_COLORS.length + 2)).toBe(
+            `--msgr-name-light:${AVATAR_COLORS[2]};--msgr-name-dark:${NAME_COLORS_DARK[2]}`,
+        );
     });
 });
 

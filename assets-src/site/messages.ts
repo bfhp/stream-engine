@@ -7,6 +7,7 @@ import { bytesToLabel } from "../shared/bytes";
 import { trans, transChoiceWithCount } from "../shared/i18n";
 import {
     avatarColor,
+    nameColorStyle,
     computeReadStatus as deriveReadStatus,
     formatConvTime,
     formatDayLabel,
@@ -935,7 +936,7 @@ export function initMessages() {
                 <div class="msgr-msg-row">
                     <div class="msgr-msg-avatar-slot">${avatarHtml}</div>
                     <div class="msgr-msg-col">
-                        ${showName ? `<div class="msgr-msg-name-row"><span class="msgr-msg-name" style="color:${avatarColor(m.user_id)}"><bdi>${cms.escapeHtml(senderName)}</bdi></span></div>` : ''}
+                        ${showName ? `<div class="msgr-msg-name-row"><span class="msgr-msg-name" style="${nameColorStyle(m.user_id)}"><bdi>${cms.escapeHtml(senderName)}</bdi></span></div>` : ''}
                         <div class="msgr-bubble${isImageAttachment ? ' has-attachment-image' : ''}">
                             ${renderBubbleContent(m, isOwn)}
                         </div>

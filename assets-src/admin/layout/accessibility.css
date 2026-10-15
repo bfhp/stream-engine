@@ -40,6 +40,11 @@
     outline-color: var(--mantine-color-blue-4);
 }
 
+/* A Switch draws its ring on the track next to the hidden input. */
+[data-mantine-color-scheme="dark"] .mantine-Switch-input:focus-visible + .mantine-Switch-track {
+    outline-color: var(--mantine-color-blue-4);
+}
+
 [data-mantine-color-scheme="dark"] .mantine-Input-input[data-variant] {
     --input-bd-focus: var(--mantine-color-blue-4);
 }

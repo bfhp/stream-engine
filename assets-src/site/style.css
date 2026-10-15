@@ -137,7 +137,8 @@ div.feedback-hint > .list-group-flush > .list-group-item {
 }
 
 .search-result-kind {
-    color: var(--bs-primary);
+    /* --bs-primary is 3.4:1 on the dark body; the link token passes in both modes. */
+    color: var(--ui-link);
     font-weight: 600;
 }
 

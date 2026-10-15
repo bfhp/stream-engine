@@ -4,8 +4,9 @@ import { expectKeyboardWalk } from "./keyboard";
 
 /*
  * Keyboard operation of the administration panel and the signed-in public
- * site (WCAG 2.1.1, 2.1.2, 2.4.7, 1.4.11). Editors with Monaco are left out:
- * Monaco keeps Tab for indentation by design (Ctrl+M releases it), which is
+ * site (WCAG 2.1.1, 2.1.2, 2.4.7, 1.4.11). Monaco keeps Tab for indentation
+ * by design; the walk leaves it with Monaco's own toggle (Ctrl+M, or
+ * Ctrl+Shift+M on macOS), as the hint next to each editor explains. This is
  * listed as a known limitation in ACCESSIBILITY.md.
  */
 const ADMIN_SCREENS: Array<[id: string, route: string]> = [

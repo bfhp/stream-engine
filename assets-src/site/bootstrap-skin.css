@@ -27,6 +27,15 @@
     --bs-link-hover-color-rgb: var(--ui-link-rgb);
 }
 
+/* .link-danger is Bootstrap's #dc3545: 4.3:1 on the light card and 2.9:1 on
+   the dark one. The skin's danger text colour passes in both (WCAG 1.4.3). */
+.link-danger,
+.link-danger:hover,
+.link-danger:focus {
+    color: var(--ui-danger-text) !important;
+    text-decoration-color: var(--ui-danger-text) !important;
+}
+
 /* Main Colors */
 header {
     background-color: var(--ui-header-bg) !important;

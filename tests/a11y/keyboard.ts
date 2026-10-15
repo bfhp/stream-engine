@@ -131,6 +131,11 @@ async function measureFocus(page: Page, index: number): Promise<FocusStop | null
     }, index);
 }
 
+/** Whether focus is inside a Monaco code editor. */
+async function inCodeEditor(page: Page): Promise<boolean> {
+    return page.evaluate(() => document.activeElement?.closest(".monaco-editor") != null);
+}
+
 /**
  * Walks the page with Tab until focus comes back to where it started.
  * Fails on a keyboard trap (WCAG 2.1.2), on a stop without a visible change
@@ -151,6 +156,7 @@ export async function expectKeyboardWalk(page: Page, maxSteps = 250): Promise<nu
     let previous: string | null = null;
     let repeats = 0;
     let first: string | null = null;
+    let monacoReleased = false;
 
     for (let step = 0; step < maxSteps; step++) {
         await page.keyboard.press("Tab");
@@ -162,6 +168,27 @@ export async function expectKeyboardWalk(page: Page, maxSteps = 250): Promise<nu
         }
         if (marker === first) break;
         first ??= marker;
+
+        // Monaco keeps Tab for indentation; the way out is its "Tab moves
+        // focus" toggle, which the admin explains next to every editor
+        // (WCAG 2.1.2). Use that toggle here, so the walk checks the escape
+        // instead of reporting a trap. The editor's own focus styling is
+        // third-party and listed in ACCESSIBILITY.md, so it is not measured.
+        if (await inCodeEditor(page)) {
+            if (!monacoReleased) {
+                const mac = await page.evaluate(() => /Mac|iPhone|iPad/.test(navigator.userAgent));
+                await page.keyboard.press(mac ? "Control+Shift+M" : "Control+M");
+                monacoReleased = true;
+            }
+            repeats = marker === previous ? repeats + 1 : 0;
+            if (repeats >= 5) {
+                problems.push(`keyboard trap: Tab stays in the code editor marked ${marker} after its focus toggle`);
+                break;
+            }
+            previous = marker;
+            seen.add(marker);
+            continue;
+        }
 
         // Date and time inputs take several Tab presses, one per segment.
         repeats = marker === previous ? repeats + 1 : 0;
