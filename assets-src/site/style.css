@@ -540,7 +540,6 @@ div.feedback-hint > .list-group-flush > .list-group-item {
     min-width: 90px;
     border: 0;
     background: transparent;
-    outline: none;
     font-size: .9rem;
     padding: .2rem;
     color: var(--bs-body-color);
@@ -584,9 +583,12 @@ trix-toolbar .trix-button:hover {
     background-color: var(--bs-secondary-bg);
 }
 
+/* The active state is shown by the tinted background and the coloured icon;
+   the button's own text stays body-coloured so it remains readable on the
+   tint (the primary colour was 2.3-3:1 there, WCAG 1.4.3). */
 trix-toolbar .trix-button.trix-active {
     background-color: rgba(var(--bs-primary-rgb), .25);
-    color: var(--bs-primary);
+    color: var(--bs-body-color);
 }
 
 trix-toolbar .trix-button--icon::before {
@@ -613,10 +615,12 @@ trix-toolbar .trix-input--dialog {
     color: var(--bs-body-color);
 }
 
+/* Focus: the solid ring from base.css (WCAG 2.4.7, 1.4.11); the former
+   20% primary-coloured shadow was 1.2:1. */
 trix-toolbar .trix-input--dialog:focus {
     border-color: var(--bs-primary);
-    outline: none;
-    box-shadow: 0 0 0 .2rem rgba(var(--bs-primary-rgb), .2);
+    outline: 2px solid var(--ui-focus-ring);
+    outline-offset: 2px;
 }
 
 trix-toolbar .trix-button--dialog {
@@ -636,9 +640,9 @@ trix-editor {
 }
 
 trix-editor:focus {
-    outline: none;
     border-color: var(--bs-primary);
-    box-shadow: 0 0 0 .2rem rgba(var(--bs-primary-rgb), .2);
+    outline: 2px solid var(--ui-focus-ring);
+    outline-offset: 2px;
 }
 
 trix-editor a {

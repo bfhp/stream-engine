@@ -142,10 +142,10 @@
             <div class="card-body">
                 <h2 class="h6 card-title mb-2"><i class="bi bi-cloud-arrow-up me-1"></i>{{ trans('view.users.blog.post.form.19') }}</h2>
                 <div class="d-flex justify-content-between small mb-1">
-                    <span class="text-body-secondary">{{ trans('view.users.blog.post.form.20') }}</span>
+                    <span class="text-body-secondary" id="uploadStorageLabel">{{ trans('view.users.blog.post.form.20') }}</span>
                     <span>{{ uploadStorageUsedLabel }} {{ trans('view.forums.topic.list.08') }} {{ uploadStorageLimitLabel }}</span>
                 </div>
-                <div class="progress mb-2" role="progressbar" aria-valuenow="{{ uploadStoragePercent }}" aria-valuemin="0" aria-valuemax="100" style="height: 6px;">
+                <div class="progress mb-2" role="progressbar" aria-labelledby="uploadStorageLabel" aria-valuenow="{{ uploadStoragePercent }}" aria-valuemin="0" aria-valuemax="100" style="height: 6px;">
                     <div class="progress-bar" style="width: {{ uploadStoragePercent }}%"></div>
                 </div>
                 <p class="small text-body-secondary mb-0">{{ trans('view.users.blog.post.form.21') }} {{ uploadStorageRemainingLabel }}.</p>

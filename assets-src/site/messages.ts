@@ -335,7 +335,14 @@ export function initMessages() {
             return;
         }
 
+        // The list is re-rendered on every update; keep keyboard focus on
+        // the row it was on (WCAG 2.4.3).
+        const focusedId = (document.activeElement as HTMLElement | null)?.closest<HTMLElement>('[data-conv-id]')
+            ?.dataset.convId;
         conversationsEl.innerHTML = filtered.map(renderConvRow).join('');
+        if (focusedId) {
+            conversationsEl.querySelector<HTMLElement>(`[data-conv-id="${CSS.escape(focusedId)}"]`)?.focus();
+        }
     }
 
     function renderConvRow(c: ApiConversation): string {
@@ -356,7 +363,8 @@ export function initMessages() {
         }
 
         return `
-            <div class="msgr-conv-row${active ? ' is-active' : ''}" data-conv-id="${c.id}">
+            <div class="msgr-conv-row${active ? ' is-active' : ''}" data-conv-id="${c.id}"
+                 role="button" tabindex="0"${active ? ' aria-current="true"' : ''}>
                 <div class="msgr-conv-avatar-wrap">${avatarHtml}</div>
                 <div class="msgr-conv-body">
                     <div class="msgr-conv-top">
@@ -377,6 +385,16 @@ export function initMessages() {
         if (!row) return;
         const id = parseInt(row.dataset.convId ?? '0', 10);
         if (id) void openConversation(id);
+    });
+
+    // Rows are role="button": Enter and Space open them, as a click does
+    // (WCAG 2.1.1).
+    conversationsEl.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        const row = (event.target as HTMLElement).closest<HTMLElement>('[data-conv-id]');
+        if (!row || row !== event.target) return;
+        event.preventDefault();
+        row.click();
     });
 
     searchInput?.addEventListener('input', () => {

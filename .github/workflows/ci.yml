@@ -216,6 +216,9 @@ jobs:
         env:
           CMS_ADMIN_PASSWORD: ${{ env.A11Y_ADMIN_PASSWORD }}
 
+      - name: Seed demo content
+        run: php bin/seed-demo.php
+
       - name: Start web server
         run: |
           mkdir -p storage/a11y

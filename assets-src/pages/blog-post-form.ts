@@ -5,9 +5,10 @@ import { bytesToLabel } from "../shared/bytes";
 import { getApiErrorMessage } from "../shared/api-errors";
 import { initCoverWidget } from "../shared/cover-widget";
 import { trans, transChoiceWithCount } from "../shared/i18n";
-import { describeImagesWithCaptions } from "../shared/trix-captions";
+import { describeImagesWithCaptions, labelTrixEditors } from "../shared/trix-captions";
 
 describeImagesWithCaptions();
+labelTrixEditors();
 
 /**
  * Trix ships no types, so the two pieces of it this file touches are declared

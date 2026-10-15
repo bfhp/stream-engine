@@ -16,6 +16,17 @@
     border-color: var(--bs-form-invalid-border-color);
 }
 
+/* Link colour. Bootstrap 5.3 colours links from --bs-link-color-rgb and
+   sets it on :root and [data-bs-theme], after base.css has loaded, so the
+   mapping there loses; repeat it here (WCAG 1.4.3). */
+:root,
+[data-bs-theme] {
+    --bs-link-color: var(--ui-link);
+    --bs-link-hover-color: var(--ui-link);
+    --bs-link-color-rgb: var(--ui-link-rgb);
+    --bs-link-hover-color-rgb: var(--ui-link-rgb);
+}
+
 /* Main Colors */
 header {
     background-color: var(--ui-header-bg) !important;

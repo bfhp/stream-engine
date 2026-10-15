@@ -45,8 +45,10 @@
     --msgr-border-soft: #1d212a;
     --msgr-text: #f3f4f6;
     --msgr-text-muted: #9aa3b2;
-    --msgr-text-faint: #6b7280;
-    --msgr-accent: #3b82f6;
+    /* Faint text is still text: 5.4:1 or more on every messenger surface. */
+    --msgr-text-faint: #8b94a3;
+    /* White text sits on the accent (buttons): 5.2:1. */
+    --msgr-accent: #2563eb;
     --msgr-accent-strong: #2563eb;
     --msgr-accent-soft: rgba(59, 130, 246, 0.16);
     --msgr-accent-soft-text: #93c1ef;
@@ -71,8 +73,9 @@
     --msgr-border: #cbd5e1;
     --msgr-border-soft: #e2e8f0;
     --msgr-text: #0f172a;
-    --msgr-text-muted: #64748b;
-    --msgr-text-faint: #94a3b8;
+    /* 5.3:1 even on the highlighted (accent-soft) active row. */
+    --msgr-text-muted: #56627a;
+    --msgr-text-faint: #5b6678;
     --msgr-accent: #2563eb;
     --msgr-accent-strong: #1d4ed8;
     --msgr-accent-soft: rgba(37, 99, 235, 0.12);
@@ -247,6 +250,11 @@
 .msgr-conv-row.is-active {
     border-inline-start-color: var(--msgr-accent);
     background: var(--msgr-accent-soft);
+}
+
+.msgr-conv-row:focus-visible {
+    outline: 2px solid var(--ui-focus-ring);
+    outline-offset: -2px;
 }
 
 .msgr-conv-avatar-wrap {

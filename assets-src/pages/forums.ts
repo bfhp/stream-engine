@@ -20,7 +20,7 @@ import { ui } from "../shared/ui";
 import { bytesToLabel } from "../shared/bytes";
 import { getApiErrorMessage } from "../shared/api-errors";
 import { trans, transChoiceWithCount } from "../shared/i18n";
-import { describeImagesWithCaptions } from "../shared/trix-captions";
+import { describeImagesWithCaptions, labelTrixEditors } from "../shared/trix-captions";
 import { buildRichQuoteInsertionHtml } from "../shared/comment-quotes";
 import { initForumPostActions } from "./forum-post-actions";
 import { initForumTopicDelete } from "./forum-topic-actions";
@@ -32,6 +32,7 @@ import {
 } from "./forum-poll";
 
 describeImagesWithCaptions();
+labelTrixEditors();
 
 const cms = window.CMS;
 

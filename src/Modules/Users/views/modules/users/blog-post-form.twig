@@ -139,10 +139,10 @@
             <div>
                 <h2 class="users-panel__title users-panel__title--tight"><i class="bi bi-cloud-arrow-up"></i> {{ trans('view.users.blog.post.form.19') }}</h2>
                 <div class="blog-post-storage">
-                    <span class="ui-muted">{{ trans('view.users.blog.post.form.20') }}</span>
+                    <span class="ui-muted" id="uploadStorageLabel">{{ trans('view.users.blog.post.form.20') }}</span>
                     <span>{{ uploadStorageUsedLabel }} {{ trans('view.forums.topic.list.08') }} {{ uploadStorageLimitLabel }}</span>
                 </div>
-                <div class="blog-post-storage-bar" role="progressbar" aria-valuenow="{{ uploadStoragePercent }}" aria-valuemin="0" aria-valuemax="100">
+                <div class="blog-post-storage-bar" role="progressbar" aria-labelledby="uploadStorageLabel" aria-valuenow="{{ uploadStoragePercent }}" aria-valuemin="0" aria-valuemax="100">
                     <div class="blog-post-storage-bar__fill" style="width: {{ uploadStoragePercent }}%"></div>
                 </div>
                 <p class="users-note">{{ trans('view.users.blog.post.form.21') }} {{ uploadStorageRemainingLabel }}.</p>

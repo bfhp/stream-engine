@@ -18,6 +18,9 @@ export const OUTPUT_DIR = runLabel ? path.join(OUTPUT_ROOT, "runs", runLabel) : 
 /** Signed-in administrator session, produced by auth.setup.ts; run.mjs reads it too. */
 export const ADMIN_STATE = path.join(OUTPUT_ROOT, "admin-state.json");
 
+/** Section paths by page action, written by auth.setup.ts. */
+export const SITE_MAP = path.join(OUTPUT_ROOT, "site-map.json");
+
 /** Known violations that do not fail the scan. */
 export const BASELINE_FILE = path.join(here, "baseline.json");
 
