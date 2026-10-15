@@ -1,0 +1,158 @@
+# Accessibility Statement
+
+> **Draft.** This statement has not been reviewed or published yet. Items
+> marked **TODO** need a decision or an evaluation before release.
+
+Stream Engine aims to let people use every site built on it, and its
+administration panel, regardless of disability, input method, or assistive
+technology. This document says what the project targets, what it covers, how
+conformance is checked, and where the known gaps are.
+
+## Conformance status
+
+| | |
+| --- | --- |
+| Target standard | [WCAG 2.2](https://www.w3.org/TR/WCAG22/), level AA |
+| Related standard | EN 301 549 v3.2.1 (its web content clauses follow WCAG 2.1 AA) |
+| Current status | **Not evaluated.** No conformance is claimed. |
+| Applies to | Latest release (currently 0.5.x) |
+| Last reviewed | **TODO** |
+
+"Not evaluated" means that no complete audit against the WCAG success
+criteria has been performed. Individual features are designed and reviewed
+against the rules in
+[Localization and accessibility](https://github.com/bfhp/stream-engine/wiki/Developer-Localization-and-Accessibility),
+but that review is not a substitute for an audit, and the project does not
+currently state that any level of WCAG is met.
+
+Once an audit has been done, this section will use the standard WCAG terms:
+**fully conformant** (all criteria met), **partially conformant** (some
+criteria not met), or **non-conformant**.
+
+## Scope
+
+Stream Engine is a CMS: the pages a visitor sees are produced by the engine,
+a theme, site-specific modules, and content written by the site's authors.
+The project can only answer for the parts it ships.
+
+**In scope**
+
+- the administration panel (`assets-src/admin`);
+- the bundled `default` and `bootstrap` themes, unmodified;
+- built-in modules and their shipped templates, such as accounts and
+  registration, profiles, comments, blogs, forums, and feedback;
+- the installer; and
+- all shipped locales, including right-to-left Arabic.
+
+**Out of scope**
+
+- third-party themes and themes changed by a site;
+- site-owned or third-party modules;
+- content written by site authors and users (text, images, video, uploaded
+  documents); and
+- site configuration that changes colours, navigation, or layout.
+
+A site that runs Stream Engine is responsible for the accessibility of its own
+content, theme, and modules, and for publishing its own accessibility
+statement where the law requires one (for example under the European
+Accessibility Act or the EU Web Accessibility Directive). This document can be
+referenced as evidence for the engine's share only.
+
+## What is in place
+
+- `<html lang>` and `<html dir>` follow the selected site locale on public
+  pages and in the administration panel.
+- Layouts use CSS logical properties; mixed-direction user content is isolated
+  with `<bdi>` and `dir="auto"`.
+- Shipped layouts mark the primary region with `<main>`.
+- Light and dark colour modes follow the system preference by default.
+- Feature code is expected to use native HTML controls, associated labels,
+  translated accessible names for icon-only controls, ARIA state updates, and
+  polite live regions for asynchronous status.
+- Vitest covers several ARIA state transitions, keyboard handlers, and
+  direction changes.
+
+## How accessibility is checked
+
+| Method | Status |
+| --- | --- |
+| Design and code review against the developer guide checklist | In use |
+| Component checks with axe-core in Vitest | **TODO**: planned |
+| Page checks with axe-core and Playwright in CI (LTR and RTL, light and dark) | **TODO**: planned |
+| Keyboard-only review of key workflows | **TODO**: not yet systematic |
+| Screen reader review | **TODO**: not yet performed |
+| Zoom to 200% and reflow at 320 CSS px | **TODO**: not yet systematic |
+| Complete WCAG 2.2 AA audit | **TODO**: not yet performed |
+
+Automated tools find only part of the issues WCAG covers. A conformance claim
+will be made only after manual review.
+
+### Test environments
+
+**TODO**: agree on the matrix. Suggested minimum:
+
+| Assistive technology | Browser | Platform |
+| --- | --- | --- |
+| NVDA (current) | Firefox, Chrome | Windows |
+| VoiceOver | Safari | macOS |
+| VoiceOver | Safari | iOS |
+| TalkBack | Chrome | Android |
+| Keyboard only | Any supported browser | Any |
+
+## Known limitations
+
+These are known or likely gaps. Each will either be fixed or confirmed and
+documented with a workaround.
+
+- **No "skip to main content" link.** Shipped layouts do not offer a way to
+  bypass repeated navigation (WCAG 2.4.1).
+- **Reduced motion is not honoured.** Shipped stylesheets do not respond to
+  `prefers-reduced-motion` (WCAG 2.3.3, AAA; recommended).
+- **Third-party editors and widgets.** The administration panel embeds the
+  Monaco code editor, the Chonky file browser, and the Trix rich-text editor.
+  Their keyboard and screen reader support is controlled upstream and has not
+  been evaluated in Stream Engine.
+- **Alternative text for images.** **TODO**: confirm whether the editor and
+  file uploads let authors add alternative text, and whether they prompt for
+  it.
+- **Colour contrast.** Contrast of the bundled themes in both colour modes has
+  not been measured (WCAG 1.4.3, 1.4.11).
+
+## Support for content authors
+
+A CMS also affects whether authors can publish accessible content
+([ATAG 2.0](https://www.w3.org/TR/ATAG20/), part B). **TODO**: evaluate and
+describe, for example:
+
+- whether authors can set alternative text, headings, table headers, link
+  text, and content language;
+- whether the editor produces semantic markup rather than visual-only
+  formatting; and
+- whether any accessibility guidance or checks are shown to authors.
+
+## Reporting a problem
+
+If something in Stream Engine is hard or impossible to use with your
+assistive technology or input method, please
+[open an issue](https://github.com/bfhp/stream-engine/issues/new) with the
+`accessibility` label. **TODO**: create the label and an issue template.
+
+Include as much of the following as you can:
+
+- the version or commit;
+- the page, administration screen, or workflow;
+- what you tried to do and what happened instead;
+- your browser, operating system, and assistive technology with versions; and
+- the site locale, if it matters (for example right-to-left).
+
+If the problem is on a particular site rather than in Stream Engine itself,
+please contact that site's operator first.
+
+Stream Engine is maintained by volunteers, so the timelines below are goals
+rather than guarantees:
+
+- an acknowledgement within 7 days;
+- an assessment, including whether the issue is in the engine, a theme, or
+  site content, within 14 days; and
+- issues that block access, such as an unlabelled control or a keyboard trap,
+  are treated as bugs rather than visual polish.
