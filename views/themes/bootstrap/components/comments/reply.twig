@@ -15,7 +15,7 @@
                 <div class="comment-meta-text min-w-0">
                     <div class="comment-author fw-semibold lh-sm"><a href="{{ reply.authorUrl }}" class="comment-author-link text-reset text-decoration-none" data-slot-attr="href:authorUrl"><bdi data-slot="author">{{ reply.authorDisplayName }}</bdi></a></div>
                     {% if reply.createdAtLabel %}
-                        <time class="comment-date small text-secondary"
+                        <time class="comment-date small text-body-secondary"
                               datetime="{{ reply.createdAt ? reply.createdAt|date('c') : '' }}"
                               {% if reply.createdAtTitle %}title="{{ reply.createdAtTitle }}"{% endif %}
                               data-slot="date"
