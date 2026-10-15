@@ -188,6 +188,7 @@ return [
     'view.nav.profile' => 'Profile',
     'view.nav.administration' => 'Administration',
     'view.nav.logout' => 'Log out',
+    'view.nav.skip_to_content' => 'Skip to main content',
     'view.article.read_aria' => 'Read the article {title}',
     'view.forums.edited_at' => 'Edited {date}',
     'view.profile.email_verified_welcome' => 'Email confirmed! Welcome. Welcome. <br>Fill out the profile to make it easier to recognize you.',
@@ -1047,6 +1048,7 @@ Email: {email}
     'js.admin.nav.file_browser' => 'File Browser',
     'js.admin.nav.users' => 'Users',
     'js.admin.nav.toggle' => 'Toggle navigation',
+    'js.admin.nav.skip_to_content' => 'Skip to main content',
     'js.admin.page_action.admin' => 'Administrator interface',
 
     'js.admin.dashboard.title' => 'Dashboard',

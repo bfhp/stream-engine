@@ -188,6 +188,7 @@ return [
     'view.nav.profile' => 'الملف الشخصي',
     'view.nav.administration' => 'الإدارة',
     'view.nav.logout' => 'تسجيل الخروج',
+    'view.nav.skip_to_content' => 'انتقل إلى المحتوى الرئيسي',
     'view.article.read_aria' => 'قراءة المقال {title}',
     'view.forums.edited_at' => 'تم التعديل {date}',
     'view.profile.email_verified_welcome' => 'تم تأكيد البريد الإلكتروني! أهلًا بك. <br>أكمل الملف الشخصي ليسهل التعرف عليك.',
@@ -1047,6 +1048,7 @@ return [
     'js.admin.nav.file_browser' => 'مدير الملفات',
     'js.admin.nav.users' => 'المستخدمون',
     'js.admin.nav.toggle' => 'إظهار التنقل أو إخفاؤه',
+    'js.admin.nav.skip_to_content' => 'انتقل إلى المحتوى الرئيسي',
     'js.admin.page_action.admin' => 'واجهة الإدارة',
 
     'js.admin.dashboard.title' => 'لوحة التحكم',

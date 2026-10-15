@@ -43,3 +43,15 @@ test("pages linked from the sign-in dialog", async ({ page, baseURL }, testInfo)
         });
     }
 });
+
+test("skip link moves keyboard focus to the main content", async ({ page }) => {
+    await page.goto("/");
+    await page.keyboard.press("Tab");
+
+    const skipLink = page.locator(".ui-skip-link");
+    await expect(skipLink).toBeFocused();
+    await expect(skipLink).toBeInViewport();
+
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#main-content")).toBeFocused();
+});

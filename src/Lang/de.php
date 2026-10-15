@@ -188,6 +188,7 @@ return [
     'view.nav.profile' => 'Profil',
     'view.nav.administration' => 'Administration',
     'view.nav.logout' => 'Abmelden',
+    'view.nav.skip_to_content' => 'Zum Hauptinhalt springen',
     'view.article.read_aria' => 'Artikel „{title}“ lesen',
     'view.forums.edited_at' => 'Bearbeitet {date}',
     'view.profile.email_verified_welcome' => 'E-Mail bestätigt! Willkommen. <br>Vervollständigen Sie Ihr Profil, damit man Sie leichter erkennt.',
@@ -1047,6 +1048,7 @@ E-Mail: {email}
     'js.admin.nav.file_browser' => 'Dateimanager',
     'js.admin.nav.users' => 'Nutzer',
     'js.admin.nav.toggle' => 'Navigation ein- oder ausblenden',
+    'js.admin.nav.skip_to_content' => 'Zum Hauptinhalt springen',
     'js.admin.page_action.admin' => 'Administratoroberfläche',
 
     'js.admin.dashboard.title' => 'Dashboard',

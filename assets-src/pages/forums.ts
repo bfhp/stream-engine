@@ -185,7 +185,8 @@ function insertQuote(button: HTMLElement) {
     editor.editor.setSelectedRange([0, 0]);
     editor.editor.insertHTML(block);
 
-    document.getElementById("reply")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    document.getElementById("reply")?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
     editor.focus();
 }
 

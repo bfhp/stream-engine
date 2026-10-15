@@ -188,6 +188,7 @@ return [
     'view.nav.profile' => '프로필',
     'view.nav.administration' => '관리',
     'view.nav.logout' => '로그아웃',
+    'view.nav.skip_to_content' => '본문으로 건너뛰기',
     'view.article.read_aria' => '“{title}” 글 읽기',
     'view.forums.edited_at' => '{date}에 수정됨',
     'view.profile.email_verified_welcome' => '이메일이 확인되었습니다! 환영합니다. <br>프로필을 작성하면 다른 사람들이 나를 더 쉽게 알아볼 수 있습니다.',
@@ -1047,6 +1048,7 @@ return [
     'js.admin.nav.file_browser' => '파일 관리자',
     'js.admin.nav.users' => '사용자',
     'js.admin.nav.toggle' => '탐색 메뉴 표시 전환',
+    'js.admin.nav.skip_to_content' => '본문으로 건너뛰기',
     'js.admin.page_action.admin' => '관리자 인터페이스',
 
     'js.admin.dashboard.title' => '대시보드',

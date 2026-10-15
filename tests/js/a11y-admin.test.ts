@@ -86,6 +86,17 @@ describe("accessibility: AdminLayout", () => {
         expect(await axeReport(renderLayout())).toBe("");
     });
 
+    it("starts with a skip link to a focusable main region", () => {
+        const root = renderLayout();
+        const first = root.querySelector("a[href], button");
+        const main = root.querySelector("main");
+
+        expect(first?.textContent?.trim()).toBe("Skip to main content");
+        expect(first?.getAttribute("href")).toBe("#admin-main");
+        expect(main?.id).toBe("admin-main");
+        expect(main?.getAttribute("tabindex")).toBe("-1");
+    });
+
     it("names the navigation toggle and exposes its state", () => {
         const toggle = renderLayout().querySelector("header button");
 

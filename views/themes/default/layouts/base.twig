@@ -59,6 +59,10 @@
 
 <body data-auth="{% if user.isGuest %}0{% else %}1{% endif %}">
 
+{% block skip_link %}
+    <a class="ui-skip-link" href="#main-content">{{ trans('view.nav.skip_to_content') }}</a>
+{% endblock %}
+
 {% block layout_header %}
     {% include 'partials/header.twig' %}
 {% endblock %}

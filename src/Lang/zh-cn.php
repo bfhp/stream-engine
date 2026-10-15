@@ -188,6 +188,7 @@ return [
     'view.nav.profile' => '个人资料',
     'view.nav.administration' => '管理',
     'view.nav.logout' => '退出登录',
+    'view.nav.skip_to_content' => '跳到主要内容',
     'view.article.read_aria' => '阅读文章“{title}”',
     'view.forums.edited_at' => '编辑于{date}',
     'view.profile.email_verified_welcome' => '邮箱已验证！欢迎。<br>请完善个人资料，方便大家认识你。',
@@ -1047,6 +1048,7 @@ return [
     'js.admin.nav.file_browser' => '文件管理器',
     'js.admin.nav.users' => '用户',
     'js.admin.nav.toggle' => '显示或隐藏导航',
+    'js.admin.nav.skip_to_content' => '跳到主要内容',
     'js.admin.page_action.admin' => '管理界面',
 
     'js.admin.dashboard.title' => '仪表盘',

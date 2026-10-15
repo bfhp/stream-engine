@@ -203,6 +203,7 @@ return [
     'view.nav.profile' => 'Профиль',
     'view.nav.administration' => 'Администрирование',
     'view.nav.logout' => 'Выйти',
+    'view.nav.skip_to_content' => 'Перейти к основному содержимому',
 
     'view.article.read_aria' => 'Читать статью {title}',
     'view.forums.edited_at' => 'Отредактировано {date}',
@@ -1083,6 +1084,7 @@ return [
     'js.admin.nav.file_browser' => 'Файловый менеджер',
     'js.admin.nav.users' => 'Пользователи',
     'js.admin.nav.toggle' => 'Показать или скрыть навигацию',
+    'js.admin.nav.skip_to_content' => 'Перейти к основному содержимому',
     'js.admin.page_action.admin' => 'Интерфейс администратора',
 
     'js.admin.dashboard.title' => 'Панель управления',

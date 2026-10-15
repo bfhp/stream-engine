@@ -1,0 +1,25 @@
+/* "Skip to main content" (WCAG 2.4.1): off-screen until it has keyboard focus. */
+.admin-skip-link {
+    position: fixed;
+    top: var(--mantine-spacing-xs);
+    inset-inline-start: var(--mantine-spacing-xs);
+    z-index: 1000;
+    padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
+    border-radius: var(--mantine-radius-sm);
+    background: var(--mantine-primary-color-filled);
+    color: var(--mantine-color-white);
+    font-weight: 600;
+    text-decoration: none;
+    transform: translateY(-200%);
+}
+
+.admin-skip-link:focus {
+    transform: none;
+    outline: 2px solid var(--mantine-color-text);
+    outline-offset: 2px;
+}
+
+/* The skip-link target is focused programmatically; it is not a control. */
+#admin-main:focus {
+    outline: none;
+}

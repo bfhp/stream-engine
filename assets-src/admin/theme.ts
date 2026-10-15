@@ -19,11 +19,17 @@ import {
  */
 const green = [...DEFAULT_THEME.colors.green.slice(0, 9), "#237032"] as unknown as MantineColorsTuple;
 
+/* red.9 (#c92a2a) drops to 4.4:1 as light-variant text over a table row's gray. */
+const red = [...DEFAULT_THEME.colors.red.slice(0, 9), "#b52424"] as unknown as MantineColorsTuple;
+
 export const adminTheme = createTheme({
     // Shade 9 is used for filled controls (white text) and, in light mode, for
     // light-variant text on a 10% tint; shade 6 (the default) passes neither.
     primaryShade: { light: 9, dark: 9 },
-    colors: { green },
+    colors: { green, red },
+    // Mantine's own transitions (modals, collapses, loaders) honour the
+    // operating system's reduced-motion setting (WCAG 2.3.3).
+    respectReducedMotion: true,
 });
 
 /*

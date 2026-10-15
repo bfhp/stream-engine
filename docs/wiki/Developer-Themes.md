@@ -235,6 +235,11 @@ Compatible layouts preserve the standard widget placements:
 - `sidebar_top` and `sidebar_bottom`; and
 - `footer_legal` and `footer_contacts`.
 
+Every layout's primary region is `<main id="main-content" tabindex="-1">`: the
+"Skip to main content" link that `base.twig` renders first in `<body>` (block
+`skip_link`) targets that id. A theme that replaces a layout's `layout_main`
+block must keep the id and `tabindex`, or override `skip_link` to match.
+
 Render a placement through `components/widgets/block.twig`. Widget values are
 administrator-managed trusted HTML and that component renders them raw. A
 theme may reposition a placement deliberately, but should not silently omit a

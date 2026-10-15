@@ -341,7 +341,15 @@ and error messages are part of the component contract.
 ## Keyboard and focus
 
 Every interactive path must work without a pointer. Preserve a visible focus
-indicator and a logical DOM/tab order. Do not use a positive `tabindex` to
+indicator and a logical DOM/tab order. The first focusable element on every
+public page and in the administration panel is a "Skip to main content" link;
+keep it first when changing headers or the admin shell.
+
+Motion is optional. Shared stylesheets collapse animations and transitions
+under `prefers-reduced-motion: reduce`, and the admin theme sets Mantine's
+`respectReducedMotion`. Scripts that animate scrolling or other movement
+must check the same media query, because `scrollIntoView({ behavior:
+"smooth" })` ignores CSS. Do not use a positive `tabindex` to
 repair visual ordering; fix the document order.
 
 For dynamic behavior:

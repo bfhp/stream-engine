@@ -188,6 +188,7 @@ return [
     'view.nav.profile' => 'プロフィール',
     'view.nav.administration' => '管理',
     'view.nav.logout' => 'ログアウト',
+    'view.nav.skip_to_content' => 'メインコンテンツへスキップ',
     'view.article.read_aria' => '記事「{title}」を読む',
     'view.forums.edited_at' => '{date}に編集',
     'view.profile.email_verified_welcome' => 'メールアドレスを確認しました！ようこそ。<br>プロフィールを入力すると、あなたを見つけてもらいやすくなります。',
@@ -1047,6 +1048,7 @@ return [
     'js.admin.nav.file_browser' => 'ファイルブラウザー',
     'js.admin.nav.users' => 'ユーザー',
     'js.admin.nav.toggle' => 'ナビゲーションの表示を切り替える',
+    'js.admin.nav.skip_to_content' => 'メインコンテンツへスキップ',
     'js.admin.page_action.admin' => '管理者インターフェース',
 
     'js.admin.dashboard.title' => 'ダッシュボード',

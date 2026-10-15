@@ -64,7 +64,11 @@ referenced as evidence for the engine's share only.
   pages and in the administration panel.
 - Layouts use CSS logical properties; mixed-direction user content is isolated
   with `<bdi>` and `dir="auto"`.
-- Shipped layouts mark the primary region with `<main>`.
+- Shipped layouts mark the primary region with `<main>`, and every public page
+  and the administration panel start with a "Skip to main content" link
+  (WCAG 2.4.1).
+- Animations, transitions, and smooth scrolling are reduced when the system
+  asks for reduced motion (`prefers-reduced-motion`; WCAG 2.3.3).
 - Light and dark colour modes follow the system preference by default.
 - Feature code is expected to use native HTML controls, associated labels,
   translated accessible names for icon-only controls, ARIA state updates, and
@@ -110,10 +114,6 @@ will be made only after manual review.
 These are known or likely gaps. Each will either be fixed or confirmed and
 documented with a workaround.
 
-- **No "skip to main content" link.** Shipped layouts do not offer a way to
-  bypass repeated navigation (WCAG 2.4.1).
-- **Reduced motion is not honoured.** Shipped stylesheets do not respond to
-  `prefers-reduced-motion` (WCAG 2.3.3, AAA; recommended).
 - **Third-party editors and widgets.** The administration panel embeds the
   Monaco code editor, the Chonky file browser, and the Trix rich-text editor.
   Their keyboard and screen reader support is controlled upstream and has not
@@ -121,8 +121,10 @@ documented with a workaround.
 - **Alternative text for images.** **TODO**: confirm whether the editor and
   file uploads let authors add alternative text, and whether they prompt for
   it.
-- **Colour contrast.** Contrast of the bundled themes in both colour modes has
-  not been measured (WCAG 1.4.3, 1.4.11).
+- **Colour contrast.** Text contrast (WCAG 1.4.3) passes the automated scan on
+  the scanned pages of the `default` theme and the administration panel in
+  both colour modes. Non-text contrast (1.4.11), such as borders and focus
+  indicators, is not checked automatically and has not been reviewed.
 
 ## Support for content authors
 

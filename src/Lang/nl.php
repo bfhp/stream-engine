@@ -188,6 +188,7 @@ return [
     'view.nav.profile' => 'Profiel',
     'view.nav.administration' => 'Beheer',
     'view.nav.logout' => 'Uitloggen',
+    'view.nav.skip_to_content' => 'Naar de hoofdinhoud gaan',
     'view.article.read_aria' => 'Lees het artikel {title}',
     'view.forums.edited_at' => 'Bewerkt {date}',
     'view.profile.email_verified_welcome' => 'E-mail bevestigd! Welkom. <br>Vul je profiel in zodat anderen je gemakkelijker herkennen.',
@@ -1047,6 +1048,7 @@ E-mail: {email}
     'js.admin.nav.file_browser' => 'Bestandsbeheer',
     'js.admin.nav.users' => 'Gebruikers',
     'js.admin.nav.toggle' => 'Navigatie tonen of verbergen',
+    'js.admin.nav.skip_to_content' => 'Naar de hoofdinhoud gaan',
     'js.admin.page_action.admin' => 'Beheerinterface',
 
     'js.admin.dashboard.title' => 'Dashboard',
