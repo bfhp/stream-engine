@@ -258,8 +258,7 @@ export default function Settings() {
 
                 notifications.show({
                     color: "green",
-                    message: trans("js.admin.settings.saved"),
-                    autoClose: 2000
+                    message: trans("js.admin.settings.saved")
                 });
                 if (displayFormatChanged || savedIcon || savedLogo) {
                     window.location.reload();
@@ -267,6 +266,7 @@ export default function Settings() {
             })
             .catch(err => {
                 notifications.show({
+                    autoClose: false,
                     color: "red",
                     title: trans("js.admin.error"),
                     message: err.message || trans("js.admin.settings.save_failed")
@@ -294,12 +294,12 @@ export default function Settings() {
                 setSiteIconFile(null);
                 notifications.show({
                     color: "green",
-                    message: trans("js.admin.settings.site_icon_reset"),
-                    autoClose: 2000
+                    message: trans("js.admin.settings.site_icon_reset")
                 });
                 window.location.reload();
             })
             .catch(err => notifications.show({
+                autoClose: false,
                 color: "red",
                 title: trans("js.admin.error"),
                 message: err.message || trans("js.admin.settings.site_icon_reset_failed")
@@ -325,12 +325,12 @@ export default function Settings() {
                 setHeaderLogoFile(null);
                 notifications.show({
                     color: "green",
-                    message: trans("js.admin.settings.header_logo_removed"),
-                    autoClose: 2000
+                    message: trans("js.admin.settings.header_logo_removed")
                 });
                 window.location.reload();
             })
             .catch(err => notifications.show({
+                autoClose: false,
                 color: "red",
                 title: trans("js.admin.error"),
                 message: err.message || trans("js.admin.settings.header_logo_remove_failed")

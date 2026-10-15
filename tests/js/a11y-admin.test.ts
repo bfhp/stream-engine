@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import DashboardCardContent, {
     type CardDefinition, type CardResult
 } from "../../assets-src/admin/components/DashboardCardContent";
-import AdminLayout from "../../assets-src/admin/layout/AdminLayout";
+import AdminLayout, { currentNavItem } from "../../assets-src/admin/layout/AdminLayout";
 import CodeEditorHint, { codeEditorAriaLabel } from "../../assets-src/admin/components/CodeEditorHint";
 import { axeReport, mount } from "./support/axe";
 
@@ -103,6 +103,32 @@ describe("accessibility: AdminLayout", () => {
 
         expect(toggle?.getAttribute("aria-label")).toBe("Toggle navigation");
         expect(toggle?.getAttribute("aria-expanded")).toBe("true");
+    });
+
+    it("marks the current section in the navigation", () => {
+        const current = renderLayout().querySelectorAll('nav [aria-current="page"]');
+
+        expect(current).toHaveLength(1);
+        expect(current[0].getAttribute("href")).toBe("/");
+    });
+});
+
+describe("accessibility: admin screen titles", () => {
+    const items = [
+        { path: "/", labelKey: "dashboard" },
+        { path: "/feeds", labelKey: "feeds" },
+        { path: "/feeds-extra", labelKey: "extra" },
+    ];
+
+    it("finds the section of a screen, including editors below it", () => {
+        expect(currentNavItem(items, "/")?.labelKey).toBe("dashboard");
+        expect(currentNavItem(items, "/feeds")?.labelKey).toBe("feeds");
+        expect(currentNavItem(items, "/feeds/12")?.labelKey).toBe("feeds");
+        expect(currentNavItem(items, "/feeds-extra")?.labelKey).toBe("extra");
+    });
+
+    it("does not file every route under the dashboard", () => {
+        expect(currentNavItem(items, "/unknown")).toBeUndefined();
     });
 });
 

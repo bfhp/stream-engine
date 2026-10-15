@@ -109,9 +109,9 @@ export default function Dashboard() {
             .then(next => {
                 setPayload(next);
                 setCustomizing(false);
-                notifications.show({ color: "green", message: trans("js.admin.dashboard.saved"), autoClose: 2000 });
+                notifications.show({ color: "green", message: trans("js.admin.dashboard.saved") });
             })
-            .catch(saveError => notifications.show({ color: "red", title: trans("js.admin.dashboard.not_saved"), message: saveError.message }))
+            .catch(saveError => notifications.show({ autoClose: false, color: "red", title: trans("js.admin.dashboard.not_saved"), message: saveError.message }))
             .finally(() => setSaving(false));
     }
 
@@ -140,9 +140,9 @@ export default function Dashboard() {
                 setPayload(next);
                 setDraft(next.layout.items);
                 setCustomizing(false);
-                notifications.show({ color: "green", message: trans("js.admin.dashboard.restored"), autoClose: 2000 });
+                notifications.show({ color: "green", message: trans("js.admin.dashboard.restored") });
             })
-            .catch(resetError => notifications.show({ color: "red", title: trans("js.admin.dashboard.not_reset"), message: resetError.message }))
+            .catch(resetError => notifications.show({ autoClose: false, color: "red", title: trans("js.admin.dashboard.not_reset"), message: resetError.message }))
             .finally(() => setSaving(false));
     }
 
@@ -156,7 +156,7 @@ export default function Dashboard() {
             .then(result => setCardOverrides(current => ({ ...current, [id]: result })))
             .catch(refreshError => {
                 setCardOverrides(current => ({ ...current, [id]: { id, status: "error", data: null } }));
-                notifications.show({ color: "red", title: trans("js.admin.dashboard.card_not_refreshed"), message: refreshError.message });
+                notifications.show({ autoClose: false, color: "red", title: trans("js.admin.dashboard.card_not_refreshed"), message: refreshError.message });
             })
             .finally(() => setCardLoading(current => {
                 const next = new Set(current);
@@ -216,7 +216,7 @@ export default function Dashboard() {
                                             moveCard(card.id, event.key === "ArrowUp" ? -1 : 1);
                                         }
                                     }}
-                                    style={{ cursor: "grab", display: "inline-flex" }}><IconGripVertical size={18} /></Box>}
+                                    style={{ cursor: "grab", display: "inline-flex", padding: 3 }}><IconGripVertical size={18} /></Box>}
                                 <Checkbox checked={Boolean(item)} label={trans(card.label)} onChange={event => toggleCard(card, event.currentTarget.checked)} />
                             </Group>
                             {item && <Group wrap="nowrap">

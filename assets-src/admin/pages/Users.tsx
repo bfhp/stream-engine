@@ -127,9 +127,10 @@ export default function Users() {
                 setUsers(current => current.map(user => user.id === saved.id ? saved : user));
                 setEditing(null);
                 setDraft(null);
-                notifications.show({ color: "green", message: trans("js.admin.users.saved"), autoClose: 2000 });
+                notifications.show({ color: "green", message: trans("js.admin.users.saved") });
             })
             .catch(saveError => notifications.show({
+                autoClose: false,
                 color: "red", title: trans("js.admin.users.not_saved"), message: saveError.message || trans("js.admin.users.save_failed")
             }))
             .finally(() => setSaving(false));

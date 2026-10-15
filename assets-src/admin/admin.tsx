@@ -32,7 +32,9 @@ export function mountAdmin(modules: AdminPageModules = {}): void {
                 colorSchemeManager={systemColorSchemeManager}
                 defaultColorScheme="auto"
             >
-                <Notifications />
+                {/* Long enough to read (WCAG 2.2.1); Mantine pauses the timer while
+                    the pointer is over a notification. Errors stay until closed. */}
+                <Notifications autoClose={8000} />
                 <HashRouter>
                     <App moduleAdminPages={createModuleRoutes(modules)} />
                 </HashRouter>

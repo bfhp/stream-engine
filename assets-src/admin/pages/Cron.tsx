@@ -172,9 +172,9 @@ export default function Cron() {
             .then(async response => {
                 if (!response.ok) throw new Error(await response.text() || trans("js.admin.save_failed"));
                 setRefreshKey(key => key + 1);
-                notifications.show({ color: "green", message: trans("js.admin.settings.saved"), autoClose: 2000 });
+                notifications.show({ color: "green", message: trans("js.admin.settings.saved") });
             })
-            .catch(saveError => notifications.show({ color: "red", title: trans("js.admin.error"), message: saveError.message }))
+            .catch(saveError => notifications.show({ autoClose: false, color: "red", title: trans("js.admin.error"), message: saveError.message }))
             .finally(() => setSavingMode(false));
     }
 
@@ -199,12 +199,11 @@ export default function Cron() {
             setRefreshKey(key => key + 1);
             notifications.show({
                 color: "green",
-                message: trans(enabled ? "js.admin.cron.enabled" : "js.admin.cron.disabled", { task: task.task }),
-                autoClose: 2000
+                message: trans(enabled ? "js.admin.cron.enabled" : "js.admin.cron.disabled", { task: task.task })
             });
         } catch (updateError) {
             const message = updateError instanceof Error ? updateError.message : trans("js.admin.cron.update_failed");
-            notifications.show({ color: "red", title: trans("js.admin.error"), message });
+            notifications.show({ autoClose: false, color: "red", title: trans("js.admin.error"), message });
         } finally {
             setTaskPending(task.task, false);
         }
@@ -223,12 +222,12 @@ export default function Cron() {
             });
             if (!response.ok) throw new Error(await errorMessage(response, trans("js.admin.cron.run_failed")));
             accepted = true;
-            notifications.show({ color: "green", message: trans("js.admin.cron.run_accepted", { task: task.task }), autoClose: 2500 });
+            notifications.show({ color: "green", message: trans("js.admin.cron.run_accepted", { task: task.task }) });
             setRefreshKey(key => key + 1);
             window.setTimeout(() => setTaskPending(task.task, false), 500);
         } catch (runError) {
             const message = runError instanceof Error ? runError.message : trans("js.admin.cron.run_failed");
-            notifications.show({ color: "red", title: trans("js.admin.error"), message });
+            notifications.show({ autoClose: false, color: "red", title: trans("js.admin.error"), message });
         } finally {
             if (!accepted) setTaskPending(task.task, false);
         }

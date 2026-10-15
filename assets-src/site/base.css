@@ -399,6 +399,14 @@ body {
 .layout-sidebar__content { min-inline-size: 0; }
 
 /* Header and navigation */
+
+/* Keep focused and anchored elements clear of the sticky header (WCAG
+   2.4.11); sticky-offset.ts sets the header's real height, the fallback
+   covers the first paint and pages without the script. */
+html {
+    scroll-padding-block-start: calc(var(--ui-sticky-offset, 4.5rem) + .5rem);
+}
+
 .site-header {
     position: sticky;
     inset-block-start: 0;

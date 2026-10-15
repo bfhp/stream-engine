@@ -174,11 +174,11 @@ export default function Themes() {
                 } : current);
                 notifications.show({
                     color: "green",
-                    message: trans("js.admin.themes.saved"),
-                    autoClose: 2000
+                    message: trans("js.admin.themes.saved")
                 });
             })
             .catch(err => notifications.show({
+                autoClose: false,
                 color: "red",
                 title: trans("js.admin.error"),
                 message: err.message || trans("js.admin.themes.save_failed")

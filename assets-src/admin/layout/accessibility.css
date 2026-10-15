@@ -21,6 +21,12 @@
     outline-offset: 2px;
 }
 
+/* The fixed admin header (60px) would otherwise cover a control that Tab
+   scrolls into view at the top of the window (WCAG 2.4.11). */
+html {
+    scroll-padding-block-start: calc(60px + var(--mantine-spacing-md));
+}
+
 /* The skip-link target is focused programmatically; it is not a control. */
 #admin-main:focus {
     outline: none;

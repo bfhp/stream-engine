@@ -73,6 +73,7 @@ export default function Registration() {
             .catch(error => {
                 if (error.name !== "AbortError") {
                     notifications.show({
+                        autoClose: false,
                         color: "red",
                         title: trans("js.admin.error"),
                         message: error.message || trans("js.admin.settings.load_failed"),
@@ -139,10 +140,10 @@ export default function Registration() {
                 notifications.show({
                     color: "green",
                     message: trans("js.admin.settings.saved"),
-                    autoClose: 2000,
                 });
             })
             .catch(error => notifications.show({
+                autoClose: false,
                 color: "red",
                 title: trans("js.admin.error"),
                 message: error.message || trans("js.admin.settings.save_failed"),

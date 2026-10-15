@@ -80,6 +80,7 @@ export default function MenuEdit() {
                 setItem(current ?? blankItem(loadedItems));
             })
             .catch(err => notifications.show({
+                autoClose: false,
                 color: "red",
                 title: trans("js.admin.error"),
                 message: err.message || trans("js.admin.menu.item_load_failed")
@@ -133,12 +134,12 @@ export default function MenuEdit() {
             .then(response => responseJson(response, trans("js.admin.menu.item_save_failed")))
             .then(saved => {
                 setItem(saved);
-                notifications.show({ color: "green", message: trans("js.admin.menu.item_saved"), autoClose: 2000 });
+                notifications.show({ color: "green", message: trans("js.admin.menu.item_saved") });
                 if (isNew && saved.id) {
                     navigate(`/menus/${saved.id}`, { replace: true });
                 }
             })
-            .catch(err => notifications.show({ color: "red", title: trans("js.admin.error"), message: err.message }))
+            .catch(err => notifications.show({ autoClose: false, color: "red", title: trans("js.admin.error"), message: err.message }))
             .finally(() => setSaving(false));
     }
 
@@ -151,10 +152,10 @@ export default function MenuEdit() {
         })
             .then(response => responseJson(response, trans("js.admin.menu.item_delete_failed")))
             .then(() => {
-                notifications.show({ color: "green", message: trans("js.admin.menu.item_deleted"), autoClose: 2000 });
+                notifications.show({ color: "green", message: trans("js.admin.menu.item_deleted") });
                 navigate("/menus", { replace: true });
             })
-            .catch(err => notifications.show({ color: "red", title: trans("js.admin.error"), message: err.message }))
+            .catch(err => notifications.show({ autoClose: false, color: "red", title: trans("js.admin.error"), message: err.message }))
             .finally(() => {
                 setDeleting(false);
                 setConfirmDelete(false);

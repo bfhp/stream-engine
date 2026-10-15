@@ -150,6 +150,7 @@ export default function PageEdit() {
             .then(data => setPage(normalizePage(data)))
             .catch(err => {
                 notifications.show({
+                    autoClose: false,
                     color: "red",
                     title: trans("js.admin.error"),
                     message: err.message || trans("js.admin.pages.load_one_failed")
@@ -174,6 +175,7 @@ export default function PageEdit() {
             .catch(err => {
                 if (err.name !== "AbortError") {
                     notifications.show({
+                        autoClose: false,
                         color: "red",
                         title: trans("js.admin.error"),
                         message: err.message || trans("js.admin.pages.actions_load_failed")
@@ -205,6 +207,7 @@ export default function PageEdit() {
             .catch(err => {
                 if (err.name !== "AbortError") {
                     notifications.show({
+                        autoClose: false,
                         color: "red",
                         title: trans("js.admin.error"),
                         message: err.message || trans("js.admin.pages.parents_load_failed")
@@ -364,17 +367,18 @@ export default function PageEdit() {
         }
 
         if (!page.action) {
-            notifications.show({ color: "red", title: trans("js.admin.pages.invalid"), message: trans("js.admin.pages.action_required") });
+            notifications.show({ autoClose: false, color: "red", title: trans("js.admin.pages.invalid"), message: trans("js.admin.pages.action_required") });
             return;
         }
 
         if (parentError) {
-            notifications.show({ color: "red", title: trans("js.admin.pages.invalid_parent"), message: parentError });
+            notifications.show({ autoClose: false, color: "red", title: trans("js.admin.pages.invalid_parent"), message: parentError });
             return;
         }
 
         if (Object.keys(actionErrors).length > 0 || Object.keys(actionSettingErrors).length > 0) {
             notifications.show({
+                autoClose: false,
                 color: "red",
                 title: trans("js.admin.pages.invalid_action"),
                 message: trans("js.admin.pages.review_action_fields")
@@ -405,8 +409,7 @@ export default function PageEdit() {
 
                 notifications.show({
                     color: "green",
-                    message: trans("js.admin.pages.saved"),
-                    autoClose: 2000
+                    message: trans("js.admin.pages.saved")
                 });
 
                 if (isNew && saved.id) {
@@ -415,6 +418,7 @@ export default function PageEdit() {
             })
             .catch(err => {
                 notifications.show({
+                    autoClose: false,
                     color: "red",
                     title: trans("js.admin.error"),
                     message: err.message || trans("js.admin.pages.save_failed")
@@ -443,13 +447,13 @@ export default function PageEdit() {
             .then(() => {
                 notifications.show({
                     color: "green",
-                    message: trans("js.admin.pages.deleted"),
-                    autoClose: 2000
+                    message: trans("js.admin.pages.deleted")
                 });
                 navigate("/pages", { replace: true });
             })
             .catch(err => {
                 notifications.show({
+                    autoClose: false,
                     color: "red",
                     title: trans("js.admin.error"),
                     message: err.message || trans("js.admin.pages.delete_failed")

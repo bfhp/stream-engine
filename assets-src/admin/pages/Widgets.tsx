@@ -182,12 +182,12 @@ export default function Widgets() {
 
                 notifications.show({
                     color: "green",
-                    message: trans("js.admin.widgets.saved"),
-                    autoClose: 2000
+                    message: trans("js.admin.widgets.saved")
                 });
             })
             .catch(err => {
                 notifications.show({
+                    autoClose: false,
                     color: "red",
                     title: trans("js.admin.error"),
                     message: err.message || trans("js.admin.widgets.save_failed")

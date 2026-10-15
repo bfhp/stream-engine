@@ -90,6 +90,7 @@ export default function FeedEdit() {
 
         if (hasMetadataErrors(metadataErrors)) {
             notifications.show({
+                autoClose: false,
                 color: "red",
                 title: trans("js.admin.error"),
                 message: trans("js.admin.feeds.metadata_invalid")
@@ -137,8 +138,7 @@ export default function FeedEdit() {
 
                 notifications.show({
                     color: "green",
-                    message: trans("js.admin.feeds.saved"),
-                    autoClose: 2000
+                    message: trans("js.admin.feeds.saved")
                 });
 
                 if (id === "new") {
@@ -147,6 +147,7 @@ export default function FeedEdit() {
             })
             .catch(err => {
                 notifications.show({
+                    autoClose: false,
                     color: "red",
                     title: trans("js.admin.error"),
                     message: err.message || trans("js.admin.feeds.save_failed")

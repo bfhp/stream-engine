@@ -17,6 +17,7 @@ import "./auth";
 
 import { initMessengerGlobal } from "./messenger-global";
 import { initMentionAutocomplete } from "../shared/mentions-autocomplete";
+import { initStickyOffset } from "./sticky-offset";
 
 // Before DOMContentLoaded: the router has to be listening for popstate /
 // hashchange from the moment the page starts running, not from whenever the
@@ -24,6 +25,7 @@ import { initMentionAutocomplete } from "../shared/mentions-autocomplete";
 CMS.hashRoute.init();
 
 document.addEventListener("DOMContentLoaded", () => {
+    initStickyOffset();
     initMentionAutocomplete();
     initMessengerGlobal(); // Always (nearly)
     CMS.checkAndSetTimezoneCookie();

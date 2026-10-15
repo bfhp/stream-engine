@@ -74,13 +74,13 @@ export default function FeedQuickCreateModal({
             .then((feed: PickerFeed) => {
                 notifications.show({
                     color: "green",
-                    message: trans("js.admin.feed_picker.created", { id: feed.id }),
-                    autoClose: 2000
+                    message: trans("js.admin.feed_picker.created", { id: feed.id })
                 });
                 onCreated(feed);
             })
             .catch(err => {
                 notifications.show({
+                    autoClose: false,
                     color: "red",
                     title: trans("js.admin.error"),
                     message: err.message || trans("js.admin.feed_picker.create_failed")
