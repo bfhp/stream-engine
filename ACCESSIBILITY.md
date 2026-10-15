@@ -122,8 +122,9 @@ documented with a workaround.
   in the file browser: Chonky's file list uses `role="list"` without list
   items (WCAG 1.3.1); it is recorded in `tests/a11y/baseline.json`. Monaco
   uses Tab for indentation, so Tab does not leave the editor until Ctrl+M
-  (Ctrl+Shift+M on macOS) switches that off; the panel does not yet tell
-  users so (WCAG 2.1.2).
+  (Ctrl+Shift+M on macOS) switches that off. The administration panel says
+  so next to each code editor and in the editor's accessible name, which is
+  what WCAG 2.1.2 asks for when the standard keys do not move focus.
 - **Images are described by captions, not alt text.** Authors describe an
   image in the content editors by its caption: the image gets `alt=""` and
   the `<figcaption>` of its `<figure>` carries the description (WCAG 1.1.1).

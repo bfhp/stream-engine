@@ -2,6 +2,7 @@ import { useEffect, useState, ChangeEvent, useRef } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 
 import Editor from "@monaco-editor/react";
+import CodeEditorHint, { codeEditorAriaLabel } from "../components/CodeEditorHint";
 
 import { TextInput, Textarea, Button, Stack, Group, Grid, ActionIcon, Anchor, Text, Select, NumberInput, Fieldset, useComputedColorScheme, Tooltip } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
@@ -396,12 +397,14 @@ export default function FeedEdit() {
                     })
                 }
                 options={{
+                    ariaLabel: codeEditorAriaLabel(trans("js.admin.content")),
                     fontSize: 14,
                     minimap: { enabled: false },
                     wordWrap: "on",
                     automaticLayout: true
                 }}
             />
+            <CodeEditorHint />
 
             <input
                 ref={fileInputRef}

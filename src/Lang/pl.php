@@ -925,6 +925,7 @@ E-mail: {email}
     'js.admin.save_failed' => 'Zapis nie powiódł się',
     'js.admin.cancel' => 'Anuluj',
     'js.admin.close' => 'Zamknij',
+    'js.admin.code_editor.tab_hint' => 'Tab wstawia wcięcie. Naciśnij {shortcut}, aby Tab przechodził do następnego elementu.',
     'js.admin.delete' => 'Usuń',
     'js.admin.back' => 'Wstecz',
     'js.admin.refresh' => 'Odśwież',

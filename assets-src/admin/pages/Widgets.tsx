@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Editor from "@monaco-editor/react";
+import CodeEditorHint, { codeEditorAriaLabel } from "../components/CodeEditorHint";
 import {
     ActionIcon,
     Button,
@@ -250,12 +251,14 @@ export default function Widgets() {
                         [placement]: value || ""
                     }))}
                     options={{
+                        ariaLabel: codeEditorAriaLabel("HTML"),
                         fontSize: 14,
                         minimap: { enabled: false },
                         wordWrap: "on",
                         automaticLayout: true
                     }}
                 />
+                <CodeEditorHint />
             </div>
         </Stack>
     );

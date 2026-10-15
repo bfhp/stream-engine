@@ -925,6 +925,7 @@ return [
     'js.admin.save_failed' => '保存に失敗しました',
     'js.admin.cancel' => 'キャンセル',
     'js.admin.close' => '閉じる',
+    'js.admin.code_editor.tab_hint' => 'Tab でインデントします。{shortcut} を押すと、Tab で次の項目に移動するようになります。',
     'js.admin.delete' => '削除',
     'js.admin.back' => '戻る',
     'js.admin.refresh' => '更新',

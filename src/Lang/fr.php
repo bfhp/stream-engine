@@ -925,6 +925,7 @@ E-mail : {email}
     'js.admin.save_failed' => 'Échec de l’enregistrement',
     'js.admin.cancel' => 'Annuler',
     'js.admin.close' => 'Fermer',
+    'js.admin.code_editor.tab_hint' => 'Tab insère une indentation. Appuyez sur {shortcut} pour que Tab passe à l’élément suivant.',
     'js.admin.delete' => 'Supprimer',
     'js.admin.back' => 'Retour',
     'js.admin.refresh' => 'Actualiser',

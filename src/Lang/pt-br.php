@@ -925,6 +925,7 @@ E-mail: {email}
     'js.admin.save_failed' => 'Falha ao salvar',
     'js.admin.cancel' => 'Cancelar',
     'js.admin.close' => 'Fechar',
+    'js.admin.code_editor.tab_hint' => 'Tab insere recuo. Pressione {shortcut} para que Tab vá para o próximo controle.',
     'js.admin.delete' => 'Excluir',
     'js.admin.back' => 'Voltar',
     'js.admin.refresh' => 'Atualizar',

@@ -961,6 +961,7 @@ return [
     'js.admin.save_failed' => 'Не удалось сохранить',
     'js.admin.cancel' => 'Отмена',
     'js.admin.close' => 'Закрыть',
+    'js.admin.code_editor.tab_hint' => 'Tab вставляет отступ. Нажмите {shortcut}, чтобы Tab переходил к следующему элементу.',
     'js.admin.delete' => 'Удалить',
     'js.admin.back' => 'Назад',
     'js.admin.refresh' => 'Обновить',

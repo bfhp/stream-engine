@@ -925,6 +925,7 @@ E-mail: {email}
     'js.admin.save_failed' => 'Opslaan mislukt',
     'js.admin.cancel' => 'Annuleren',
     'js.admin.close' => 'Sluiten',
+    'js.admin.code_editor.tab_hint' => 'Tab springt in. Druk op {shortcut} om met Tab naar het volgende element te gaan.',
     'js.admin.delete' => 'Verwijderen',
     'js.admin.back' => 'Terug',
     'js.admin.refresh' => 'Vernieuwen',

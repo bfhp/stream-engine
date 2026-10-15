@@ -925,6 +925,7 @@ Email: {email}
     'js.admin.save_failed' => 'Save failed',
     'js.admin.cancel' => 'Cancel',
     'js.admin.close' => 'Close',
+    'js.admin.code_editor.tab_hint' => 'Tab indents. Press {shortcut} to make Tab move to the next control instead.',
     'js.admin.delete' => 'Delete',
     'js.admin.back' => 'Back',
     'js.admin.refresh' => 'Refresh',

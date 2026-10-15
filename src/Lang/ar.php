@@ -925,6 +925,7 @@ return [
     'js.admin.save_failed' => 'فشل الحفظ',
     'js.admin.cancel' => 'إلغاء',
     'js.admin.close' => 'إغلاق',
+    'js.admin.code_editor.tab_hint' => 'يضيف Tab مسافة بادئة. اضغط {shortcut} ليتنقل Tab إلى العنصر التالي بدلًا من ذلك.',
     'js.admin.delete' => 'حذف',
     'js.admin.back' => 'رجوع',
     'js.admin.refresh' => 'تحديث',

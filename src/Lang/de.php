@@ -925,6 +925,7 @@ E-Mail: {email}
     'js.admin.save_failed' => 'Speichern fehlgeschlagen',
     'js.admin.cancel' => 'Abbrechen',
     'js.admin.close' => 'Schließen',
+    'js.admin.code_editor.tab_hint' => 'Tab rückt ein. Drücken Sie {shortcut}, damit Tab stattdessen zum nächsten Element springt.',
     'js.admin.delete' => 'Löschen',
     'js.admin.back' => 'Zurück',
     'js.admin.refresh' => 'Aktualisieren',

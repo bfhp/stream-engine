@@ -925,6 +925,7 @@ E-mail: {email}
     'js.admin.save_failed' => 'Salvataggio non riuscito',
     'js.admin.cancel' => 'Annulla',
     'js.admin.close' => 'Chiudi',
+    'js.admin.code_editor.tab_hint' => 'Tab inserisce un rientro. Premi {shortcut} perché Tab passi al controllo successivo.',
     'js.admin.delete' => 'Elimina',
     'js.admin.back' => 'Indietro',
     'js.admin.refresh' => 'Aggiorna',

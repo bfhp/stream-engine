@@ -925,6 +925,7 @@ return [
     'js.admin.save_failed' => '저장에 실패했습니다',
     'js.admin.cancel' => '취소',
     'js.admin.close' => '닫기',
+    'js.admin.code_editor.tab_hint' => 'Tab은 들여쓰기를 합니다. {shortcut}을(를) 누르면 Tab으로 다음 항목으로 이동합니다.',
     'js.admin.delete' => '삭제',
     'js.admin.back' => '뒤로',
     'js.admin.refresh' => '새로 고침',

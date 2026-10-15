@@ -7,6 +7,7 @@ import DashboardCardContent, {
     type CardDefinition, type CardResult
 } from "../../assets-src/admin/components/DashboardCardContent";
 import AdminLayout from "../../assets-src/admin/layout/AdminLayout";
+import CodeEditorHint, { codeEditorAriaLabel } from "../../assets-src/admin/components/CodeEditorHint";
 import { axeReport, mount } from "./support/axe";
 
 /*
@@ -102,5 +103,15 @@ describe("accessibility: AdminLayout", () => {
 
         expect(toggle?.getAttribute("aria-label")).toBe("Toggle navigation");
         expect(toggle?.getAttribute("aria-expanded")).toBe("true");
+    });
+});
+
+describe("accessibility: code editor hint", () => {
+    it("explains how to leave Monaco with the keyboard (WCAG 2.1.2)", () => {
+        // The provider adds a <style> element; read the hint paragraph only.
+        const hint = mount(renderInProvider(createElement(CodeEditorHint))).querySelector("p")?.textContent ?? "";
+
+        expect(hint).toContain("Ctrl+M");
+        expect(codeEditorAriaLabel("HTML")).toBe(`HTML. ${hint}`);
     });
 });

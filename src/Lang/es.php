@@ -925,6 +925,7 @@ Correo: {email}
     'js.admin.save_failed' => 'Error al guardar',
     'js.admin.cancel' => 'Cancelar',
     'js.admin.close' => 'Cerrar',
+    'js.admin.code_editor.tab_hint' => 'Tab inserta una sangría. Pulsa {shortcut} para que Tab pase al siguiente control.',
     'js.admin.delete' => 'Eliminar',
     'js.admin.back' => 'Volver',
     'js.admin.refresh' => 'Actualizar',

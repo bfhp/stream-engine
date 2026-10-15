@@ -925,6 +925,7 @@ return [
     'js.admin.save_failed' => '保存失败',
     'js.admin.cancel' => '取消',
     'js.admin.close' => '关闭',
+    'js.admin.code_editor.tab_hint' => 'Tab 用于缩进。按 {shortcut} 后，Tab 将改为移到下一个控件。',
     'js.admin.delete' => '删除',
     'js.admin.back' => '返回',
     'js.admin.refresh' => '刷新',
