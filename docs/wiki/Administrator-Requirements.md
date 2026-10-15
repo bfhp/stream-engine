@@ -64,11 +64,14 @@ and keep it for the life of the site.
 
 The installer and the migration command detect the server from its version
 string and adapt the schema automatically; no setting is needed. On MySQL they
-also apply two other adjustments that do not change application behavior:
+also apply three other adjustments that do not change application behavior:
 column defaults such as `unix_timestamp()` are written as MySQL default
-expressions, and the `mentions_exactly_one_target` check constraint is omitted
-because MySQL does not allow a check constraint on a column whose foreign key
-cascades. The application always writes exactly one mention target itself.
+expressions; the generated `feeds.slug_parent_key` column is virtual instead of
+stored, because MySQL does not allow a cascading foreign key on a base column
+of a stored generated column; and the `mentions_exactly_one_target` check
+constraint is omitted because MySQL does not allow a check constraint on a
+column whose foreign key cascades. The application always writes exactly one
+mention target itself.
 
 Both collations are case- and accent-insensitive Unicode collations. MySQL's
 `utf8mb4_0900_ai_ci` is a NO PAD collation, so on MySQL `'abc'` and `'abc '`

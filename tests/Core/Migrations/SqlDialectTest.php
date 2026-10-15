@@ -105,6 +105,20 @@ final class SqlDialectTest extends TestCase
         );
     }
 
+    public function testMySqlMakesStoredGeneratedColumnsVirtual(): void
+    {
+        $dialect = SqlDialect::mySql();
+
+        self::assertSame(
+            'CREATE TABLE `f` (`k` int unsigned GENERATED ALWAYS AS (coalesce(`parent_id`,0)) VIRTUAL, `p` int GENERATED ALWAYS AS (`a` + 1) VIRTUAL)',
+            $dialect->translate('CREATE TABLE `f` (`k` int unsigned GENERATED ALWAYS AS (coalesce(`parent_id`,0)) STORED, `p` int GENERATED ALWAYS AS (`a` + 1) PERSISTENT)'),
+        );
+        self::assertSame(
+            "ALTER TABLE feeds\n  ADD COLUMN k int GENERATED ALWAYS AS (coalesce(parent_id, 0)) VIRTUAL AFTER slug",
+            $dialect->translate("ALTER TABLE feeds\n  ADD COLUMN k int GENERATED ALWAYS AS (coalesce(parent_id, 0)) STORED AFTER slug"),
+        );
+    }
+
     public function testShippedSchemaAndMigrationsHaveNoMariaDbOnlyDdlLeftForMySql(): void
     {
         $root = dirname(__DIR__, 3);
@@ -120,6 +134,7 @@ final class SqlDialectTest extends TestCase
                 self::assertDoesNotMatchRegularExpression('/uca1400/i', $translated, $name);
                 self::assertDoesNotMatchRegularExpression('/DEFAULT\s+unix_timestamp\(\)/i', $translated, $name);
                 self::assertStringNotContainsString('mentions_exactly_one_target', $translated, $name);
+                self::assertDoesNotMatchRegularExpression('/\)\s+(STORED|PERSISTENT)\b/i', $translated, $name);
                 self::assertSame(
                     substr_count($translated, '('),
                     substr_count($translated, ')'),

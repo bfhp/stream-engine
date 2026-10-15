@@ -14,7 +14,7 @@ use Throwable;
  * snapshot is a MariaDB `SHOW CREATE TABLE` dump). The files themselves are
  * never rewritten, so their checksums stay valid; each statement is
  * translated just before execution instead. On MariaDB every statement is
- * returned unchanged. On MySQL 8.4+ three MariaDB-only DDL forms are
+ * returned unchanged. On MySQL 8.4+ four MariaDB-only DDL forms are
  * rewritten:
  *
  * - `utf8mb4_uca1400_*` collations become the matching `utf8mb4_0900_*`
@@ -26,7 +26,11 @@ use Throwable;
  * - a CHECK constraint in CREATE TABLE that uses a column with a foreign-key
  *   referential action (CASCADE, SET NULL, SET DEFAULT) is dropped, because
  *   MySQL rejects that combination (error 3823). The application keeps such
- *   invariants itself.
+ *   invariants itself;
+ * - a STORED (or PERSISTENT) generated column becomes VIRTUAL, because InnoDB
+ *   in MySQL rejects a cascading foreign key on a base column of a stored
+ *   generated column (error 1215), while an indexed virtual column allows it.
+ *   Indexes and unique keys on the column behave the same.
  */
 final readonly class SqlDialect
 {
@@ -116,8 +120,31 @@ final readonly class SqlDialect
             $statement,
         ) ?? $statement;
 
+        $statement = $this->storedGeneratedColumnsAsVirtual($statement);
+
         if (preg_match('/^\s*CREATE\s+TABLE\b/i', $statement)) {
             $statement = $this->dropChecksOnReferentialActionColumns($statement);
+        }
+
+        return $statement;
+    }
+
+    private function storedGeneratedColumnsAsVirtual(string $statement): string
+    {
+        $offset = 0;
+        while (preg_match('/\bGENERATED\s+ALWAYS\s+AS\s*\(/i', $statement, $m, PREG_OFFSET_CAPTURE, $offset)) {
+            $open = $m[0][1] + strlen($m[0][0]) - 1;
+            $close = $this->matchingParenthesis($statement, $open);
+            if ($close === false) {
+                break;
+            }
+
+            $rest = substr($statement, $close + 1);
+            if (preg_match('/^(\s+)(STORED|PERSISTENT)\b/i', $rest, $kind)) {
+                $statement = substr($statement, 0, $close + 1).$kind[1].'VIRTUAL'
+                    .substr($rest, strlen($kind[0]));
+            }
+            $offset = $close + 1;
         }
 
         return $statement;

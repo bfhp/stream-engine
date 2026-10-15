@@ -147,7 +147,12 @@ from `PDO::ATTR_SERVER_VERSION` and, on MySQL only:
 - replaces `utf8mb4_uca1400_ai_ci`, `_as_ci`, and `_as_cs` (including the
   `_nopad` variants) with the matching `utf8mb4_0900_*` collation;
 - wraps a function used as a column default, such as
-  `DEFAULT unix_timestamp()`, in the parentheses MySQL requires; and
+  `DEFAULT unix_timestamp()`, in the parentheses MySQL requires;
+- turns `STORED` (or `PERSISTENT`) generated columns into `VIRTUAL` ones,
+  because MySQL rejects a cascading foreign key on a base column of a stored
+  generated column (error 1215). Indexes and unique keys behave the same, but
+  a generated column must therefore not be part of a primary key, a foreign
+  key, or a `FULLTEXT` index; and
 - drops a `CREATE TABLE` check constraint that uses a column whose foreign key
   has `ON DELETE` or `ON UPDATE` `CASCADE`, `SET NULL`, or `SET DEFAULT`,
   because MySQL rejects it (error 3823). Keep such invariants in the
