@@ -890,6 +890,8 @@ return [
     'js.messenger.unavailable' => '会話は利用できません',
     'js.messenger.read' => '既読',
     'js.messenger.sent' => '送信済み',
+    'js.messenger.status_online' => 'オンライン',
+    'js.messenger.status_offline' => 'オフライン',
     'js.messenger.edited' => '編集済み',
     'js.messenger.new_messages' => '新しいメッセージ',
     'js.messenger.delete_title' => 'メッセージを削除',

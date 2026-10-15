@@ -6,11 +6,11 @@
     <form method="post" action="/profile/security">
         <div class="mb-3">
             <label class="form-label" for="profileEmail">{{ trans('view.profile.tabs.security.01') }}</label>
-            <input id="profileEmail" type="email" name="email" class="form-control" value="{{ user.email }}">
+            <input id="profileEmail" type="email" name="email" autocomplete="email" class="form-control" value="{{ user.email }}">
         </div>
         <div class="mb-3">
             <label class="form-label" for="profilePassword">{{ trans('view.profile.tabs.security.02') }}</label>
-            <input id="profilePassword" type="password" name="password" class="form-control">
+            <input id="profilePassword" type="password" name="password" autocomplete="new-password" class="form-control">
         </div>
         <button class="btn btn-danger">{{ trans('view.profile.tabs.security.03') }}</button>
     </form>

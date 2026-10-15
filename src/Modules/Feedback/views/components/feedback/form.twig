@@ -4,19 +4,19 @@
 
     <div class="ui-field">
         <label for="feedbackInputName" class="ui-label">{{ trans('view.feedback.form.01') }}</label>
-        <input type="text" class="ui-input" name="full_name" required maxlength="100" id="feedbackInputName">
+        <input type="text" class="ui-input" name="full_name" autocomplete="name" required maxlength="100" id="feedbackInputName">
     </div>
 
     <div class="ui-field">
         <label for="feedbackInputEmail" class="ui-label">Email</label>
-        <input type="email" class="ui-input" name="email" required maxlength="200" id="feedbackInputEmail">
+        <input type="email" class="ui-input" name="email" autocomplete="email" required maxlength="200" id="feedbackInputEmail">
     </div>
 
     {# Honeypot: hidden from people, filled by bots. #}
-    <div class="ui-visually-hidden">
+    <div class="ui-visually-hidden" aria-hidden="true">
         <label>
             Website
-            <input type="text" name="website">
+            <input type="text" name="website" tabindex="-1" autocomplete="off">
         </label>
     </div>
 

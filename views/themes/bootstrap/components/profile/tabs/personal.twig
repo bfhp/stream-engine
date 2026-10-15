@@ -26,12 +26,12 @@
 
         <div class="mb-3">
             <label class="form-label" for="profileNick">{{ trans('view.feedback.form.01') }}</label>
-            <input id="profileNick" type="text" name="nick" class="form-control" value="{{ user.nick }}" aria-describedby="profileNickHelp">
+            <input id="profileNick" type="text" name="nick" autocomplete="nickname" class="form-control" value="{{ user.nick }}" aria-describedby="profileNickHelp">
             <div class="form-text" id="profileNickHelp">{{ trans('view.profile.tabs.personal.03') }}</div>
         </div>
         <div class="mb-3">
             <label class="form-label" for="profileHomepage">{{ trans('view.profile.tabs.personal.04') }}</label>
-            <input id="profileHomepage" type="url" name="homepage" class="form-control" value="{{ user.homepage }}" placeholder="https://example.com">
+            <input id="profileHomepage" type="url" name="homepage" autocomplete="url" class="form-control" value="{{ user.homepage }}" placeholder="https://example.com">
         </div>
         <div class="mb-3">
             <label class="form-label" for="profileGender">{{ trans('view.profile.tabs.personal.05') }}</label>
@@ -44,7 +44,7 @@
         </div>
         <div class="mb-3">
             <label class="form-label" for="profileBirthDate">{{ trans('view.profile.tabs.personal.10') }}</label>
-            <input id="profileBirthDate" type="date" name="birth_date" class="form-control" value="{{ user.birthDate }}">
+            <input id="profileBirthDate" type="date" name="birth_date" autocomplete="bday" class="form-control" value="{{ user.birthDate }}">
         </div>
         <div class="mb-3">
             <label class="form-label" for="profileBio">{{ trans('view.profile.tabs.personal.11') }}</label>

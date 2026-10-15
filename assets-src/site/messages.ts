@@ -285,7 +285,10 @@ export function initMessages() {
         // bubbles) unchanged, no dot.
         if (opts.online === undefined || opts.online === null) return inner;
 
-        return `<span class="msgr-avatar-wrap">${inner}<span class="msgr-avatar-status${opts.online ? ' is-online' : ''}"></span></span>`;
+        // The dot alone is colour (WCAG 1.4.1, 1.1.1): offline is drawn as a
+        // ring, and the state is named for screen readers and on hover.
+        const statusLabel = cms.escapeHtml(trans(opts.online ? 'js.messenger.status_online' : 'js.messenger.status_offline'));
+        return `<span class="msgr-avatar-wrap">${inner}<span class="msgr-avatar-status${opts.online ? ' is-online' : ''}" title="${statusLabel}"><span class="ui-visually-hidden">${statusLabel}</span></span></span>`;
     }
 
     function debounce(fn: () => void, wait: number, timerRef: { current: number | null }) {
@@ -839,7 +842,7 @@ export function initMessages() {
                 </a>`;
         }
         if (a.mime.startsWith('audio/')) {
-            return `<audio class="msgr-attachment-audio" controls preload="none" src="${url}"></audio>`;
+            return `<audio class="msgr-attachment-audio" controls preload="none" src="${url}" aria-label="${cms.escapeHtml(a.original_name)}"></audio>`;
         }
         return `
             <a class="msgr-attachment-file" href="${url}" download="${cms.escapeHtml(a.original_name)}" target="_blank" rel="noopener">

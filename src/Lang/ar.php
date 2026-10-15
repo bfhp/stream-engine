@@ -890,6 +890,8 @@ return [
     'js.messenger.unavailable' => 'المحادثة غير متاحة',
     'js.messenger.read' => 'تمت القراءة',
     'js.messenger.sent' => 'تم الإرسال',
+    'js.messenger.status_online' => 'متصل',
+    'js.messenger.status_offline' => 'غير متصل',
     'js.messenger.edited' => 'تم التعديل',
     'js.messenger.new_messages' => 'رسائل جديدة',
     'js.messenger.delete_title' => 'حذف الرسالة',

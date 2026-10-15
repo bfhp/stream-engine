@@ -6,18 +6,18 @@
 
     <div class="mb-3">
         <label for="feedbackInputName" class="form-label">{{ trans('view.feedback.form.01') }}</label>
-        <input type="text" class="form-control" name="full_name" required maxlength="100" id="feedbackInputName">
+        <input type="text" class="form-control" name="full_name" autocomplete="name" required maxlength="100" id="feedbackInputName">
     </div>
 
     <div class="mb-3">
         <label for="feedbackInputEmail" class="form-label">Email</label>
-        <input type="email" class="form-control" name="email" required maxlength="200" id="feedbackInputEmail">
+        <input type="email" class="form-control" name="email" autocomplete="email" required maxlength="200" id="feedbackInputEmail">
     </div>
 
-    <div class="visually-hidden">
+    <div class="visually-hidden" aria-hidden="true">
         <label>
             Website
-            <input type="text" name="website">
+            <input type="text" name="website" tabindex="-1" autocomplete="off">
         </label>
     </div>
 

@@ -890,6 +890,8 @@ return [
     'js.messenger.unavailable' => '对话不可用',
     'js.messenger.read' => '已读',
     'js.messenger.sent' => '已发送',
+    'js.messenger.status_online' => '在线',
+    'js.messenger.status_offline' => '离线',
     'js.messenger.edited' => '已编辑',
     'js.messenger.new_messages' => '新消息',
     'js.messenger.delete_title' => '删除消息',

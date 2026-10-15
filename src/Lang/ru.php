@@ -929,6 +929,8 @@ return [
     'js.messenger.unavailable' => 'Диалог недоступен',
     'js.messenger.read' => 'Прочитано',
     'js.messenger.sent' => 'Отправлено',
+    'js.messenger.status_online' => 'В сети',
+    'js.messenger.status_offline' => 'Не в сети',
     'js.messenger.edited' => 'изменено',
     'js.messenger.new_messages' => 'Новые сообщения',
     'js.messenger.delete_title' => 'Удалить сообщение',

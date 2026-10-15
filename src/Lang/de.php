@@ -890,6 +890,8 @@ E-Mail: {email}
     'js.messenger.unavailable' => 'Unterhaltung nicht verfügbar',
     'js.messenger.read' => 'Gelesen',
     'js.messenger.sent' => 'Gesendet',
+    'js.messenger.status_online' => 'Online',
+    'js.messenger.status_offline' => 'Offline',
     'js.messenger.edited' => 'bearbeitet',
     'js.messenger.new_messages' => 'Neue Nachrichten',
     'js.messenger.delete_title' => 'Nachricht löschen',

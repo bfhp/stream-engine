@@ -890,6 +890,8 @@ Email: {email}
     'js.messenger.unavailable' => 'Conversation unavailable',
     'js.messenger.read' => 'Read',
     'js.messenger.sent' => 'Sent',
+    'js.messenger.status_online' => 'Online',
+    'js.messenger.status_offline' => 'Offline',
     'js.messenger.edited' => 'edited',
     'js.messenger.new_messages' => 'New messages',
     'js.messenger.delete_title' => 'Delete the message',

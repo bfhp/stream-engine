@@ -890,6 +890,8 @@ return [
     'js.messenger.unavailable' => '대화를 사용할 수 없습니다',
     'js.messenger.read' => '읽음',
     'js.messenger.sent' => '전송됨',
+    'js.messenger.status_online' => '온라인',
+    'js.messenger.status_offline' => '오프라인',
     'js.messenger.edited' => '수정됨',
     'js.messenger.new_messages' => '새 메시지',
     'js.messenger.delete_title' => '메시지 삭제',
