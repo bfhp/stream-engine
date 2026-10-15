@@ -847,6 +847,7 @@ return [
     'js.forums.mark_all_failed' => 'تعذر التعليم كمقروء',
     'js.forums.vote_save_failed' => 'تعذر حفظ التصويت',
     'js.forums.uploading' => 'جارٍ الرفع…',
+    'js.editor.image_caption_placeholder' => 'صِف الصورة لمن لا يستطيع رؤيتها',
     'js.forums.upload_failed_status' => 'فشل الرفع',
     'js.forums.uploaded_status' => '{size} · تم الرفع',
     'js.forums.upload_cancel' => 'إلغاء الرفع',

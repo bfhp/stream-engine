@@ -13,6 +13,10 @@ declare module "trix" {
             /** DOMPurify plus Trix's own element/attribute/protocol rules. */
             sanitize(html: string): TrixHTMLSanitizer;
         };
+        config: {
+            /** UI strings; captionPlaceholder is the empty-caption hint. */
+            lang: Record<string, string>;
+        };
     };
 
     export default Trix;

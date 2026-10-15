@@ -847,6 +847,7 @@ return [
     'js.forums.mark_all_failed' => '既読にできませんでした',
     'js.forums.vote_save_failed' => '投票を保存できませんでした',
     'js.forums.uploading' => 'アップロード中…',
+    'js.editor.image_caption_placeholder' => '画像を見られない人のために内容を説明してください',
     'js.forums.upload_failed_status' => 'アップロード失敗',
     'js.forums.uploaded_status' => '{size} · アップロード済み',
     'js.forums.upload_cancel' => 'アップロードをキャンセル',

@@ -847,6 +847,7 @@ Correo: {email}
     'js.forums.mark_all_failed' => 'No se pudo marcar como leído',
     'js.forums.vote_save_failed' => 'No se pudo guardar el voto',
     'js.forums.uploading' => 'subiendo…',
+    'js.editor.image_caption_placeholder' => 'Describe la imagen para quienes no pueden verla',
     'js.forums.upload_failed_status' => 'error al subir',
     'js.forums.uploaded_status' => '{size} · subido',
     'js.forums.upload_cancel' => 'Cancelar la subida',

@@ -166,12 +166,19 @@ export default function FeedEdit() {
         const editor = editorRef.current;
         const selection = editor.getSelection();
 
-        editor.executeEdits("", [
-            {
-                range: selection,
-                text: `<img src="${url}" alt="">`
-            }
-        ]);
+        // A figure with a caption, cursor in the caption: the caption
+        // describes the image (WCAG 1.1.1), as it does for Trix content.
+        // alt stays empty so screen readers do not read both.
+        const before = `<figure>\n    <img src="${url}" alt="">\n    <figcaption>`;
+        const after = "</figcaption>\n</figure>";
+        editor.executeEdits("", [{ range: selection, text: before + after }]);
+
+        const start = selection.getStartPosition();
+        const lines = before.split("\n");
+        const caretLine = start.lineNumber + lines.length - 1;
+        const caretColumn = (lines.length === 1 ? start.column : 1) + lines[lines.length - 1].length;
+        editor.setPosition({ lineNumber: caretLine, column: caretColumn });
+        editor.focus();
     }
 
     if (!feed) {

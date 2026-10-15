@@ -84,6 +84,12 @@ class FeedService
             'https' => true,
         ]);
 
+        // An <img> without alt gets an empty one, not HTMLPurifier's default
+        // of the file name ("4f3a9c.webp"), which screen readers would read
+        // out. Trix writes no alt at all: its images are described by their
+        // caption, the <figcaption> of the <figure> they sit in (WCAG 1.1.1).
+        $config->set('Attr.DefaultImageAlt', '');
+
         $config->set('HTML.DefinitionID', 'stream-engine-html');
         $config->set('HTML.DefinitionRev', 1);
         $config->set('Cache.DefinitionImpl', null);

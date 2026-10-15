@@ -847,6 +847,7 @@ E-mail: {email}
     'js.forums.mark_all_failed' => 'Nie udało się oznaczyć jako przeczytane',
     'js.forums.vote_save_failed' => 'Nie udało się zapisać głosu',
     'js.forums.uploading' => 'przesyłanie…',
+    'js.editor.image_caption_placeholder' => 'Opisz obraz dla osób, które go nie widzą',
     'js.forums.upload_failed_status' => 'przesyłanie nie powiodło się',
     'js.forums.uploaded_status' => '{size} · przesłano',
     'js.forums.upload_cancel' => 'Anuluj przesyłanie',

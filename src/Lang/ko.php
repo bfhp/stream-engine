@@ -847,6 +847,7 @@ return [
     'js.forums.mark_all_failed' => '읽음으로 표시하지 못했습니다',
     'js.forums.vote_save_failed' => '투표를 저장하지 못했습니다',
     'js.forums.uploading' => '업로드 중…',
+    'js.editor.image_caption_placeholder' => '이미지를 볼 수 없는 사람을 위해 설명을 입력하세요',
     'js.forums.upload_failed_status' => '업로드 실패',
     'js.forums.uploaded_status' => '{size} · 업로드됨',
     'js.forums.upload_cancel' => '업로드 취소',

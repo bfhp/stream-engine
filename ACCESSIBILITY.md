@@ -120,9 +120,15 @@ documented with a workaround.
   been evaluated in Stream Engine. The automated scan reports one known issue
   in the file browser: Chonky's file list uses `role="list"` without list
   items (WCAG 1.3.1); it is recorded in `tests/a11y/baseline.json`.
-- **Alternative text for images.** **TODO**: confirm whether the editor and
-  file uploads let authors add alternative text, and whether they prompt for
-  it.
+- **Images are described by captions, not alt text.** Authors describe an
+  image in the content editors by its caption: the image gets `alt=""` and
+  the `<figcaption>` of its `<figure>` carries the description (WCAG 1.1.1).
+  An image published without a caption therefore has no text alternative;
+  the editors prompt for one but do not require it. There is no separate alt
+  text field.
+- **Content saved before version 0.5.2** (**TODO**: confirm the version) may
+  contain images whose alt text is their file name, which the old sanitizer
+  inserted. Re-saving the content does not change existing alt attributes.
 - **Colour contrast.** Text contrast (WCAG 1.4.3) passes the automated scan on
   the scanned pages of the `default` theme and the administration panel in
   both colour modes. Non-text contrast (1.4.11), such as borders and focus
@@ -131,14 +137,17 @@ documented with a workaround.
 ## Support for content authors
 
 A CMS also affects whether authors can publish accessible content
-([ATAG 2.0](https://www.w3.org/TR/ATAG20/), part B). **TODO**: evaluate and
-describe, for example:
+([ATAG 2.0](https://www.w3.org/TR/ATAG20/), part B).
 
-- whether authors can set alternative text, headings, table headers, link
-  text, and content language;
-- whether the editor produces semantic markup rather than visual-only
-  formatting; and
-- whether any accessibility guidance or checks are shown to authors.
+- **Images.** In the rich-text editor (blogs, forums) the caption field of an
+  image asks the author to describe it for people who cannot see it. The
+  administration HTML editor inserts uploaded images as a `<figure>` with an
+  empty `<figcaption>` and places the cursor in it. Images without alt text
+  get an empty one instead of their file name.
+- **TODO**: evaluate and describe whether authors can set headings, table
+  headers, meaningful link text, and content language; whether the editor
+  produces semantic markup rather than visual-only formatting; and whether any
+  further accessibility checks are shown to authors.
 
 ## Reporting a problem
 

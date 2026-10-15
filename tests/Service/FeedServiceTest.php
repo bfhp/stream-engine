@@ -7,6 +7,7 @@ namespace Tests\Service;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
+use ReflectionProperty;
 use StreamEngine\Core\Exceptions\ForbiddenException;
 use StreamEngine\Core\Exceptions\NotFoundException;
 use StreamEngine\Core\Exceptions\ValidationException;
@@ -1050,6 +1051,32 @@ final class FeedServiceTest extends TestCase
         $this->assertStringNotContainsString('<script', $normalized);
         $this->assertStringNotContainsString('javascript:', $normalized);
         $this->assertStringNotContainsString('onclick', $normalized);
+    }
+
+    public function testImagesWithoutAltGetAnEmptyAltInsteadOfTheFileName(): void
+    {
+        $service = $this->makeService(
+            new FeedRepository($this->createStub(PdoDatabase::class)),
+            $this->makeUrlGenerator(),
+        );
+        $purifier = (new ReflectionProperty(FeedService::class, 'purifier'))->getValue($service);
+
+        // Trix serializes an image attachment without alt; the caption is the
+        // description (WCAG 1.1.1).
+        $html = $purifier->purify(
+            '<figure class="attachment"><img src="https://example.com/uploads/4f3a9c.webp">'
+            .'<figcaption class="attachment__caption">A red bicycle</figcaption></figure>'
+        );
+
+        $this->assertStringContainsString('alt=""', $html);
+        $this->assertStringNotContainsString('alt="4f3a9c.webp"', $html);
+        $this->assertStringContainsString('<figcaption class="attachment__caption">A red bicycle</figcaption>', $html);
+
+        // An alt the author wrote is kept.
+        $this->assertStringContainsString(
+            'alt="A red bicycle"',
+            $purifier->purify('<img src="https://example.com/a.webp" alt="A red bicycle">'),
+        );
     }
 
     public function testRichTextCommentRejectsAnEmptyTrixDocument(): void

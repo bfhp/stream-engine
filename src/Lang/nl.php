@@ -847,6 +847,7 @@ E-mail: {email}
     'js.forums.mark_all_failed' => 'Markeren als gelezen mislukt',
     'js.forums.vote_save_failed' => 'De stem kon niet worden opgeslagen',
     'js.forums.uploading' => 'uploaden…',
+    'js.editor.image_caption_placeholder' => 'Beschrijf de afbeelding voor mensen die haar niet kunnen zien',
     'js.forums.upload_failed_status' => 'upload mislukt',
     'js.forums.uploaded_status' => '{size} · geüpload',
     'js.forums.upload_cancel' => 'Upload annuleren',

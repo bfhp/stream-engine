@@ -847,6 +847,7 @@ E-mail : {email}
     'js.forums.mark_all_failed' => 'Impossible de marquer comme lu',
     'js.forums.vote_save_failed' => 'Impossible d’enregistrer le vote',
     'js.forums.uploading' => 'téléversement…',
+    'js.editor.image_caption_placeholder' => 'Décrivez l’image pour les personnes qui ne peuvent pas la voir',
     'js.forums.upload_failed_status' => 'échec du téléversement',
     'js.forums.uploaded_status' => '{size} · téléversé',
     'js.forums.upload_cancel' => 'Annuler le téléversement',

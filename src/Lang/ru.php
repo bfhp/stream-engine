@@ -885,6 +885,7 @@ return [
     'js.forums.mark_all_failed' => 'Не удалось отметить прочитанным',
     'js.forums.vote_save_failed' => 'Не удалось сохранить голос',
     'js.forums.uploading' => 'загружается…',
+    'js.editor.image_caption_placeholder' => 'Опишите изображение для тех, кто его не видит',
     'js.forums.upload_failed_status' => 'ошибка загрузки',
     'js.forums.uploaded_status' => '{size} · загружено',
     'js.forums.upload_cancel' => 'Отменить загрузку',

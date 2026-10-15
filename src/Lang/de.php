@@ -847,6 +847,7 @@ E-Mail: {email}
     'js.forums.mark_all_failed' => 'Das Markieren als gelesen ist fehlgeschlagen',
     'js.forums.vote_save_failed' => 'Die Stimme konnte nicht gespeichert werden',
     'js.forums.uploading' => 'wird hochgeladen…',
+    'js.editor.image_caption_placeholder' => 'Beschreiben Sie das Bild für Menschen, die es nicht sehen können',
     'js.forums.upload_failed_status' => 'Upload fehlgeschlagen',
     'js.forums.uploaded_status' => '{size} · hochgeladen',
     'js.forums.upload_cancel' => 'Upload abbrechen',

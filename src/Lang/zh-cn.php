@@ -847,6 +847,7 @@ return [
     'js.forums.mark_all_failed' => '无法标记为已读',
     'js.forums.vote_save_failed' => '无法保存投票',
     'js.forums.uploading' => '上传中…',
+    'js.editor.image_caption_placeholder' => '为看不到图片的人描述这张图片',
     'js.forums.upload_failed_status' => '上传失败',
     'js.forums.uploaded_status' => '{size} · 已上传',
     'js.forums.upload_cancel' => '取消上传',

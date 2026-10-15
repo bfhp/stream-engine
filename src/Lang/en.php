@@ -847,6 +847,7 @@ Email: {email}
     'js.forums.mark_all_failed' => 'Failed to mark as read',
     'js.forums.vote_save_failed' => 'Failed to save vote',
     'js.forums.uploading' => 'uploading…',
+    'js.editor.image_caption_placeholder' => 'Describe the image for people who can\'t see it',
     'js.forums.upload_failed_status' => 'upload failed',
     'js.forums.uploaded_status' => '{size} · uploaded',
     'js.forums.upload_cancel' => 'Cancel upload',

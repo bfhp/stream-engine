@@ -330,6 +330,15 @@ images use `aria-hidden="true"` or empty `alt`; meaningful images need concise
 alternative text that communicates their purpose, not their filename. Do not
 duplicate nearby visible text in an image's alternative text.
 
+Images in user and author content are described by their caption. Trix writes
+no `alt`; `FeedService`'s sanitizer gives every `<img>` without one an empty
+`alt` (never the file name), and the `<figcaption>` of the surrounding
+`<figure>` carries the description. `describeImagesWithCaptions()` in
+`assets-src/shared/trix-captions.ts` replaces Trix's caption placeholder with a
+prompt to describe the image; call it in any new page script that mounts a
+Trix editor. Code that inserts images into content should produce the same
+`<figure>`/`<figcaption>` structure, as the admin feed editor does.
+
 ARIA supplements semantics; it does not add behavior. If a custom element has
 `role="button"`, it must also be focusable and implement the expected keyboard
 activation. Prefer a real button so the browser supplies those rules.
