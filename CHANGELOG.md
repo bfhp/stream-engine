@@ -16,6 +16,10 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
   (collation `utf8mb4_0900_ai_ci`, MySQL default expressions); CI runs the
   PHP suite on both MariaDB 12 and MySQL 8.4. Existing MariaDB sites are
   unaffected. Moving a site between the two servers is not supported.
+- The admin feed editor now has a Metadata section for viewing and editing a
+  feed's metadata as name/value pairs. Names are validated in the browser with
+  the same rules as the API (`a-z`, `0-9`, `_ . -`, up to 64 characters), and
+  removing a row deletes that key on save.
 
 ### Security
 

@@ -3,16 +3,17 @@ import { Link, useParams, useNavigate } from "react-router-dom";
 
 import Editor from "@monaco-editor/react";
 
-import { TextInput, Button, Stack, Group, Grid, ActionIcon, Anchor, Text, Select, NumberInput, useComputedColorScheme } from "@mantine/core";
+import { TextInput, Textarea, Button, Stack, Group, Grid, ActionIcon, Anchor, Text, Select, NumberInput, Fieldset, useComputedColorScheme } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 
-import { IconFileUpload } from "@tabler/icons-react";
+import { IconFileUpload, IconPlus, IconTrash } from "@tabler/icons-react";
 import { FEED_TYPES } from "../../shared/feed-types";
 import { uploadFile } from "../../shared/uploads";
 import { csrfHeaders } from "../../shared/csrf";
 import { trans } from "../../shared/i18n";
 import { isRtl } from "../lib/direction";
 import { pagesBoundToFeed, type BoundPage, type PickerPage } from "../lib/feed-picker";
+import { hasMetadataErrors, metadataToRows, newMetadataRow, rowsToMetadata, validateMetadataRows, type MetadataRow } from "../lib/feed-metadata";
 
 export default function FeedEdit() {
 
@@ -23,6 +24,7 @@ export default function FeedEdit() {
     const [feed, setFeed] = useState<any>(null);
     const [saving, setSaving] = useState(false);
     const [pages, setPages] = useState<PickerPage[] | null>(null);
+    const [metadataRows, setMetadataRows] = useState<MetadataRow[]>([]);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const editorRef = useRef<any>(null);
@@ -43,12 +45,16 @@ export default function FeedEdit() {
                 imageUrl: "",
                 content: ""
             });
+            setMetadataRows([]);
             return;
         }
 
         fetch(`/api/v1/feeds/${id}`)
             .then(r => r.json())
-            .then(data => setFeed(data));
+            .then(data => {
+                setFeed(data);
+                setMetadataRows(metadataToRows(data?.metadata));
+            });
 
     }, [id]);
 
@@ -73,7 +79,22 @@ export default function FeedEdit() {
 
     const boundPages: BoundPage[] = feed?.id && pages ? pagesBoundToFeed(Number(feed.id), pages) : [];
 
+    const metadataErrors = validateMetadataRows(metadataRows);
+
+    function updateMetadataRow(key: string, patch: Partial<MetadataRow>) {
+        setMetadataRows(rows => rows.map(row => row.key === key ? { ...row, ...patch } : row));
+    }
+
     function save() {
+
+        if (hasMetadataErrors(metadataErrors)) {
+            notifications.show({
+                color: "red",
+                title: trans("js.admin.error"),
+                message: trans("js.admin.feeds.metadata_invalid")
+            });
+            return;
+        }
 
         setSaving(true);
 
@@ -97,7 +118,10 @@ export default function FeedEdit() {
                 // unprotected, and this is their only caller.
                 ...csrfHeaders()
             },
-            body: JSON.stringify(feed)
+            // metadata is replaced as a whole server-side
+            // (FeedMetadataRepository::replaceForFeed), so always send the
+            // full map - a removed row deletes that key.
+            body: JSON.stringify({ ...feed, metadata: rowsToMetadata(metadataRows) })
         })
             .then(async r => {
                 if (!r.ok) {
@@ -108,6 +132,7 @@ export default function FeedEdit() {
             })
             .then(data => {
                 setFeed(data);
+                setMetadataRows(metadataToRows(data?.metadata));
 
                 notifications.show({
                     color: "green",
@@ -272,6 +297,61 @@ export default function FeedEdit() {
                     />
                 </Grid.Col>
             </Grid>
+
+            <Fieldset legend={trans("js.admin.feeds.metadata")}>
+                <Stack gap="xs">
+                    {metadataRows.length === 0 && (
+                        <Text size="sm" c="dimmed">{trans("js.admin.feeds.metadata_empty")}</Text>
+                    )}
+
+                    {metadataRows.map(row => {
+                        const error = metadataErrors[row.key];
+                        return (
+                            <Group key={row.key} align="flex-start" wrap="nowrap" gap="xs">
+                                <TextInput
+                                    style={{ flex: "0 0 30%" }}
+                                    placeholder={trans("js.admin.feeds.metadata_name")}
+                                    aria-label={trans("js.admin.feeds.metadata_name")}
+                                    value={row.name}
+                                    error={error ? trans(`js.admin.feeds.metadata_${error}`) : undefined}
+                                    onChange={(e) => updateMetadataRow(row.key, { name: e.currentTarget.value })}
+                                    ff="monospace"
+                                />
+                                <Textarea
+                                    style={{ flex: 1 }}
+                                    placeholder={trans("js.admin.feeds.metadata_value")}
+                                    aria-label={trans("js.admin.feeds.metadata_value")}
+                                    value={row.content}
+                                    autosize
+                                    minRows={1}
+                                    maxRows={8}
+                                    onChange={(e) => updateMetadataRow(row.key, { content: e.currentTarget.value })}
+                                />
+                                <ActionIcon
+                                    variant="subtle"
+                                    color="red"
+                                    size="lg"
+                                    aria-label={trans("js.admin.feeds.metadata_remove")}
+                                    onClick={() => setMetadataRows(rows => rows.filter(r => r.key !== row.key))}
+                                >
+                                    <IconTrash size={18} />
+                                </ActionIcon>
+                            </Group>
+                        );
+                    })}
+
+                    <Group>
+                        <Button
+                            variant="light"
+                            size="xs"
+                            leftSection={<IconPlus size={14} />}
+                            onClick={() => setMetadataRows(rows => [...rows, newMetadataRow()])}
+                        >
+                            {trans("js.admin.feeds.metadata_add")}
+                        </Button>
+                    </Group>
+                </Stack>
+            </Fieldset>
 
             <Group justify="space-between">
                 <Text fw={500}>{trans("js.admin.content")}</Text>
