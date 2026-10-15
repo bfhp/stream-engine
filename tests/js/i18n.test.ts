@@ -53,6 +53,14 @@ describe("browser translations", () => {
         expect(transChoiceWithCount("js.post", 0)).toBe("0 posts");
     });
 
+    it("chooses the form for the number as displayed", () => {
+        const oneDecimal = { minimumFractionDigits: 1, maximumFractionDigits: 1 };
+
+        expect(transChoice("js.post", 1, {}, oneDecimal)).toBe("posts");
+        expect(transChoiceWithCount("js.post", 1, {}, oneDecimal)).toBe("1.0 posts");
+        expect(transChoiceWithCount("js.post", 1)).toBe("1 post");
+    });
+
     it("returns a non-inflecting unit as is and a missing key as the key", () => {
         expect(transChoice("js.kb", 5)).toBe("KB");
         expect(transChoice("js.missing", 5)).toBe("js.missing");

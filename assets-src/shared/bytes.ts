@@ -24,7 +24,9 @@ import { transChoice } from "./i18n";
 export function bytesToLabel(bytes: number): string {
     if (bytes >= 1024 * 1024) {
         const megabytes = bytes / (1024 * 1024);
-        return `${megabytes.toFixed(1)} ${transChoice("js.common.megabyte", megabytes)}`;
+        // The form follows the one decimal shown: "1.0 megabytes", not "megabyte".
+        const oneDecimal = { minimumFractionDigits: 1, maximumFractionDigits: 1 };
+        return `${megabytes.toFixed(1)} ${transChoice("js.common.megabyte", megabytes, {}, oneDecimal)}`;
     }
     if (bytes >= 1024) {
         const kilobytes = Math.round(bytes / 1024);

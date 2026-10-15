@@ -1,4 +1,4 @@
-import { selectPluralForm, type PluralForms } from "./plural";
+import { selectPluralForm, type PluralForms, type PluralNumberOptions } from "./plural";
 import catalogs from "virtual:translations";
 
 /** A message, or the plural forms of a noun (keyed by CLDR category, or a legacy list). */
@@ -56,20 +56,40 @@ export function trans(key: string, params: TranslationParams = {}): string {
  * The form of a noun for `count` in the document locale, without the count.
  * A plain string value is a unit that does not inflect ("КБ") and is used as
  * is; a missing key comes back as the key.
+ *
+ * When the count is shown with fixed digits (`toFixed(1)`), pass the same
+ * digits as `numberOptions`: the form depends on the digits shown, so 1 shown
+ * as "1.0" takes "megabytes", not "megabyte".
  */
-export function transChoice(key: string, count: number, params: TranslationParams = {}): string {
+export function transChoice(
+    key: string,
+    count: number,
+    params: TranslationParams = {},
+    numberOptions: PluralNumberOptions = {},
+): string {
     const value = catalog[key];
     const text = typeof value === "string"
         ? value
         : value !== undefined
-            ? selectPluralForm(value, count, resolvedLocale) ?? key
+            ? selectPluralForm(value, count, resolvedLocale, numberOptions) ?? key
             : key;
 
     return interpolate(text, { count, ...params });
 }
 
-export function transChoiceWithCount(key: string, count: number, params: TranslationParams = {}): string {
-    return `${new Intl.NumberFormat(resolvedLocale).format(count)} ${transChoice(key, count, params)}`;
+/**
+ * `transChoice()` with the count in front, formatted in the document locale
+ * with `numberOptions`. The form is chosen for the number as formatted.
+ */
+export function transChoiceWithCount(
+    key: string,
+    count: number,
+    params: TranslationParams = {},
+    numberOptions: PluralNumberOptions = {},
+): string {
+    const formatted = new Intl.NumberFormat(resolvedLocale, numberOptions).format(count);
+
+    return `${formatted} ${transChoice(key, count, params, numberOptions)}`;
 }
 
 /** The normalized CMS locale selected by the server for this document. */

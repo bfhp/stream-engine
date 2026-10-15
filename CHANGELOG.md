@@ -42,6 +42,7 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 - English 21, 101, … took the singular on the server.
 - Arabic 0, 2 and 100+ got the wrong noun form.
 - Russian file sizes in the browser showed the catalog key.
+- File sizes of exactly one megabyte read "1.0 megabyte".
 
 ### Security
 

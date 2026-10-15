@@ -33,6 +33,19 @@ describe("pluralCategory()", () => {
         });
     }
 
+    it("follows the digits shown, not the value", () => {
+        const oneDecimal = { minimumFractionDigits: 1, maximumFractionDigits: 1 };
+
+        expect(pluralCategory(1, "en", oneDecimal)).toBe("other");
+        expect(pluralCategory(1, "ru", oneDecimal)).toBe("other");
+        expect(pluralCategory(2, "ru", oneDecimal)).toBe("other");
+        // French keeps 1,0 singular: its rule looks at the integer part only.
+        expect(pluralCategory(1, "fr", oneDecimal)).toBe("one");
+        // 1.04 rounds to "1.0", and the rule sees the rounded number.
+        expect(pluralCategory(1.04, "en", oneDecimal)).toBe("other");
+        expect(pluralCategory(1, "en")).toBe("one");
+    });
+
     it("chooses the plural for English 21, which the old server rule got wrong", () => {
         expect(pluralCategory(21, "en")).toBe("other");
         expect(pluralCategory(1, "en")).toBe("one");

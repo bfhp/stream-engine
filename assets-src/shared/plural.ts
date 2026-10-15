@@ -16,24 +16,36 @@
 export type PluralCategory = Intl.LDMLPluralRule;
 export type PluralForms = string[] | Partial<Record<PluralCategory, string>>;
 
+/**
+ * How the count is displayed. CLDR rules look at the visible digits, not the
+ * value: "1 megabyte" but "1.0 megabytes". Pass the same digit options the
+ * number is formatted with, so the noun agrees with what the reader sees.
+ */
+export type PluralNumberOptions = Pick<
+    Intl.PluralRulesOptions,
+    "minimumIntegerDigits" | "minimumFractionDigits" | "maximumFractionDigits"
+    | "minimumSignificantDigits" | "maximumSignificantDigits"
+>;
+
 /** Languages whose `other` (fractions) takes the `few` noun. Legacy lists only. */
 const LEGACY_OTHER_AS_FEW = ["be", "pl", "ru", "uk"];
 
 const rulesCache = new Map<string, Intl.PluralRules>();
 
-function rulesFor(locale: string): Intl.PluralRules {
-    let rules = rulesCache.get(locale);
+function rulesFor(locale: string, options: PluralNumberOptions): Intl.PluralRules {
+    const cacheKey = `${locale}|${JSON.stringify(options)}`;
+    let rules = rulesCache.get(cacheKey);
     if (!rules) {
-        rules = new Intl.PluralRules(locale);
-        rulesCache.set(locale, rules);
+        rules = new Intl.PluralRules(locale, options);
+        rulesCache.set(cacheKey, rules);
     }
 
     return rules;
 }
 
-/** The CLDR plural category of `n` in `locale`. */
-export function pluralCategory(n: number, locale: string): PluralCategory {
-    return rulesFor(locale).select(n);
+/** The CLDR plural category of `n` in `locale`, as displayed with `options`. */
+export function pluralCategory(n: number, locale: string, options: PluralNumberOptions = {}): PluralCategory {
+    return rulesFor(locale, options).select(n);
 }
 
 /**
@@ -65,8 +77,13 @@ export function legacyPluralIndex(locale: string, category: PluralCategory, leng
  * Picks the form for `n`, or `undefined` when there is none. A keyed set
  * missing the category falls back to `other`.
  */
-export function selectPluralForm(forms: PluralForms, n: number, locale: string): string | undefined {
-    const category = pluralCategory(n, locale);
+export function selectPluralForm(
+    forms: PluralForms,
+    n: number,
+    locale: string,
+    options: PluralNumberOptions = {},
+): string | undefined {
+    const category = pluralCategory(n, locale, options);
 
     if (Array.isArray(forms)) {
         return forms.length > 0 ? forms[legacyPluralIndex(locale, category, forms.length)] : undefined;

@@ -387,8 +387,9 @@ describe("bytesToLabel()", () => {
         expect(bytesToLabel(1024 * 1024 - 1)).toBe("1024 kilobytes");
     });
 
+    // The noun follows the digits shown: "1.0" is plural in English.
     it("uses one decimal from a megabyte up", () => {
-        expect(bytesToLabel(1024 * 1024)).toBe("1.0 megabyte");
+        expect(bytesToLabel(1024 * 1024)).toBe("1.0 megabytes");
         expect(bytesToLabel(1024 * 1024 * 3 + 512 * 1024)).toBe("3.5 megabytes");
     });
 
@@ -408,7 +409,7 @@ describe("bytesToLabel()", () => {
                 "1 kilobyte",
                 "2 kilobytes",
                 "1024 kilobytes",
-                "1.0 megabyte",
+                "1.0 megabytes",
             ]);
     });
 });

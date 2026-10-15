@@ -204,6 +204,16 @@ style a count separately without duplicating grammar. A plain string value is
 a unit that does not inflect (`'js.common.kilobyte' => 'КБ'`) and is returned
 as is by both runtimes.
 
+The form depends on the digits shown, not only the value: English says
+"1 megabyte" but "1.0 megabytes". When a count is displayed with fixed
+digits, pass the same digit options to `transChoice()` or
+`transChoiceWithCount()`:
+
+```ts
+const oneDecimal = { minimumFractionDigits: 1, maximumFractionDigits: 1 };
+transChoiceWithCount("js.common.megabyte", megabytes, {}, oneDecimal); // "1.0 megabytes"
+```
+
 | Locale | Categories |
 | --- | --- |
 | `de`, `en`, `nl` | `one`, `other` |
