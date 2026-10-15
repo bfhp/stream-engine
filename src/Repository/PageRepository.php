@@ -25,6 +25,9 @@ final readonly class PageRepository
         'access_rule',
     ];
 
+    /** Bound feed columns joined into admin rows so the editor can show titles instead of bare IDs. */
+    private const string ADMIN_FEED_JOIN = ' LEFT JOIN feeds f ON f.id = p.feed_id';
+
     public function __construct(
         private PdoDatabase $db
     ) {
@@ -71,7 +74,7 @@ final readonly class PageRepository
         return array_map(
             $this->mapAdminRow(...),
             $this->db->fetchAll(
-                'SELECT '.implode(', ', self::ADMIN_COLUMNS).' FROM pages ORDER BY id ASC'
+                'SELECT '.$this->adminSelectColumns().' FROM pages p'.self::ADMIN_FEED_JOIN.' ORDER BY p.id ASC'
             )
         );
     }
@@ -79,7 +82,7 @@ final readonly class PageRepository
     public function findForAdminById(int $id): ?array
     {
         $row = $this->db->fetchOne(
-            'SELECT '.implode(', ', self::ADMIN_COLUMNS).' FROM pages WHERE id = ?',
+            'SELECT '.$this->adminSelectColumns().' FROM pages p'.self::ADMIN_FEED_JOIN.' WHERE p.id = ?',
             [$id]
         );
 
@@ -161,7 +164,16 @@ final readonly class PageRepository
             'changefreq' => $row['changefreq'] ?? '',
             'updated' => isset($row['updated']) ? (int) $row['updated'] : null,
             'accessRule' => $row['access_rule'],
+            'feedTitle' => $row['feed_title'] ?? null,
+            'feedSlug' => $row['feed_slug'] ?? null,
+            'feedRecordType' => $row['feed_record_type'] ?? null,
         ];
+    }
+
+    private function adminSelectColumns(): string
+    {
+        return implode(', ', array_map(static fn (string $column): string => 'p.'.$column, self::ADMIN_COLUMNS))
+            .', f.title AS feed_title, f.slug AS feed_slug, f.type AS feed_record_type';
     }
 
     /**

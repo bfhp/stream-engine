@@ -524,6 +524,86 @@ final class AdminControllerTest extends TestCase
         $this->assertNotContains(123, $this->writes[0][1]);
     }
 
+    public function testPageCreateRejectsAFeedAlreadyBoundToAnotherPage(): void
+    {
+        $parent = $this->legacyPageRow();
+        $parent['id'] = 1;
+        $parent['parent'] = null;
+        $parent['feed_id'] = null;
+        $owner = $this->legacyPageRow();
+        $owner['id'] = 5;
+        $owner['feed_id'] = 42;
+        $module = $this->makeModule(rows: [$parent, $owner], feedTypes: [42 => 'article']);
+
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode([
+            'parentId' => 1,
+            'pattern' => 'about',
+            'action' => 'article.show-id',
+            'feedId' => 42,
+            'accessRule' => 'public',
+        ]));
+
+        try {
+            $module->callApi($this->makeApiPage('admin.pages', ['GET', 'POST']));
+            $this->fail('A feed was bound to a second page.');
+        } catch (ValidationException $e) {
+            $this->assertSame('Feed ID 42 is already used by page #5', $e->getMessage());
+            $this->assertSame([], $this->writes);
+        }
+    }
+
+    public function testPageUpdateKeepsAnUnchangedFeedBindingEvenWhenDuplicated(): void
+    {
+        $parent = $this->legacyPageRow();
+        $parent['id'] = 1;
+        $parent['parent'] = null;
+        $parent['feed_id'] = null;
+        $current = $this->legacyPageRow();
+        $current['action'] = 'article.show-id';
+        $current['feed_type'] = null;
+        $current['feed_id'] = 42;
+        $other = $this->legacyPageRow();
+        $other['id'] = 5;
+        $other['feed_id'] = 42;
+        $module = $this->makeModule(
+            rows: [$parent, $current, $other],
+            row: $current,
+            feedTypes: [42 => 'article']
+        );
+
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode([
+            'parentId' => 1,
+            'pattern' => 'renamed',
+            'action' => 'article.show-id',
+            'feedId' => 42,
+            'accessRule' => 'public',
+        ]));
+
+        $this->callAndDecode($module, $this->makeApiPage('admin.page', ['GET', 'PATCH']), ['id' => 9]);
+
+        $this->assertSame('renamed', $this->writes[0][1][1]);
+    }
+
+    public function testPagesListIncludesTheBoundFeedTitle(): void
+    {
+        $page = $this->legacyPageRow();
+        $page['feed_title'] = 'About us';
+        $page['feed_slug'] = 'about';
+        $page['feed_record_type'] = 'article';
+        $module = $this->makeModule(rows: [$page]);
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+
+        $response = $this->callAndDecode($module, $this->makeApiPage('admin.pages', ['GET', 'POST']));
+
+        $this->assertSame('About us', $response['data'][0]['feedTitle']);
+        $this->assertSame('about', $response['data'][0]['feedSlug']);
+        $this->assertSame('article', $response['data'][0]['feedRecordType']);
+    }
+
     public function testPageCannotBeMovedBelowItsDescendant(): void
     {
         $current = $this->legacyPageRow();

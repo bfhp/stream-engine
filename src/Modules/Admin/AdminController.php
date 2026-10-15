@@ -1695,12 +1695,38 @@ class AdminController extends AbstractController implements DashboardCardProvide
         ];
 
         $this->validatePageActionContract($data, $existing);
+        $this->validatePageFeedIsNotBound($data['feedId'], $existing);
 
         if ($currentId !== 1 && $parentId === null) {
             throw new ValidationException($this->tm->trans('admin.error.parent_page_required'));
         }
 
         return $data;
+    }
+
+    /**
+     * A feed can be mounted on one page only: PageTree resolves pages by feed ID,
+     * so a second binding would silently shadow the first one.
+     * Unchanged bindings are left alone so legacy duplicates stay editable.
+     *
+     * @param array<string, mixed>|null $existing
+     * @throws ValidationException
+     */
+    private function validatePageFeedIsNotBound(?int $feedId, ?array $existing): void
+    {
+        if ($feedId === null || $this->optionalInt($existing['feedId'] ?? null) === $feedId) {
+            return;
+        }
+
+        $currentId = isset($existing['id']) ? (int) $existing['id'] : null;
+        foreach ($this->pageRepository->findAllForAdmin() as $page) {
+            if ($page['feedId'] === $feedId && $page['id'] !== $currentId) {
+                throw new ValidationException($this->tm->trans('admin.error.feed_already_bound', [
+                    'id' => $feedId,
+                    'page' => $page['id'],
+                ]));
+            }
+        }
     }
 
     /** @throws ValidationException */

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
     ActionIcon,
+    Anchor,
     Badge,
     Button,
     Group,
@@ -23,6 +24,7 @@ type PageListItem = {
     pageName?: string | null;
     feedType?: string | null;
     feedId?: number | null;
+    feedTitle?: string | null;
     accessRule?: string | null;
 };
 
@@ -78,7 +80,8 @@ export default function Pages() {
             page.action,
             page.pageName,
             page.feedType,
-            page.feedId
+            page.feedId,
+            page.feedTitle
         ].some(value => String(value ?? "").toLowerCase().includes(needle)));
     }, [pages, query]);
 
@@ -150,9 +153,21 @@ export default function Pages() {
                             <Table.Td><Badge variant="light">{page.action || "-"}</Badge></Table.Td>
                             <Table.Td>{page.pageName || "-"}</Table.Td>
                             <Table.Td>
-                                {page.feedType || page.feedId
-                                    ? `${page.feedType || "-"} ${page.feedId ? `#${page.feedId}` : ""}`
-                                    : "-"}
+                                {page.feedId ? (
+                                    <Stack gap={0}>
+                                        <Anchor
+                                            component={Link}
+                                            to={`/feeds/${page.feedId}`}
+                                            size="sm"
+                                            onClick={event => event.stopPropagation()}
+                                        >
+                                            {page.feedTitle?.trim() || trans("js.admin.feeds.item_number", { id: page.feedId })}
+                                        </Anchor>
+                                        <Text size="xs" c="dimmed">
+                                            {[`#${page.feedId}`, page.feedType].filter(Boolean).join(" · ")}
+                                        </Text>
+                                    </Stack>
+                                ) : page.feedType || "-"}
                             </Table.Td>
                             <Table.Td>{page.accessRule ?? "public"}</Table.Td>
                             <Table.Td onClick={event => event.stopPropagation()}>

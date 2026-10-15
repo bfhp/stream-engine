@@ -4,7 +4,6 @@ import {
     Button,
     Group,
     Modal,
-    NumberInput,
     Select,
     SimpleGrid,
     Stack,
@@ -22,6 +21,8 @@ import {
     type PageSettings
 } from "../lib/page-settings";
 import { forbiddenPageParentIds } from "../lib/page-hierarchy";
+import { boundPagesByFeed } from "../lib/feed-picker";
+import FeedPicker from "../components/FeedPicker";
 import {
     buildPageActionSettingOptions,
     buildFeedTypeOptions,
@@ -51,6 +52,7 @@ type EditablePage = {
     listFeedType: string;
     termVocabulary: string;
     feedId: number | "";
+    feedTitle?: string | null;
     changefreq: string;
     accessRule: string;
 };
@@ -61,6 +63,7 @@ type ParentPage = {
     pageName?: string | null;
     action?: string | null;
     pattern?: string | null;
+    feedId?: number | null;
 };
 
 const CHANGEFREQ_OPTIONS = [
@@ -105,6 +108,7 @@ function normalizePage(data: Partial<Omit<EditablePage, "settings">> & { setting
         listFeedType: data.listFeedType ?? "",
         termVocabulary: data.termVocabulary ?? "",
         feedId: data.feedId ?? "",
+        feedTitle: data.feedTitle ?? null,
         changefreq: data.changefreq ?? "",
         accessRule: data.accessRule ?? "public",
     };
@@ -344,6 +348,12 @@ export default function PageEdit() {
         return options;
     }, [forbiddenParentIds, page?.parentId, parentPages]);
 
+    const boundPages = useMemo(
+        () => boundPagesByFeed(parentPages, page?.id),
+        [page?.id, parentPages]
+    );
+    const feedIdTypes = selectedAction?.fields.feedId.feedTypes;
+
     function update<K extends keyof EditablePage>(key: K, value: EditablePage[K]) {
         setPage(current => current ? { ...current, [key]: value } : current);
     }
@@ -570,14 +580,17 @@ export default function PageEdit() {
                     onChange={event => update("termVocabulary", event.currentTarget.value)}
                     disabled={isPageActionFieldDisabled(selectedAction, "termVocabulary", page.termVocabulary)}
                 />
-                <NumberInput
-                    label={trans("js.admin.feed_id")}
+                <FeedPicker
+                    label={trans("js.admin.feed")}
                     description={actionFieldDescription("feedId")}
                     error={actionErrors.feedId}
                     required={isRequired("feedId")}
-                    min={1}
                     value={page.feedId}
-                    onChange={value => update("feedId", value === "" ? "" : Number(value))}
+                    initialTitle={page.feedTitle}
+                    onChange={value => update("feedId", value)}
+                    feedTypes={feedIdTypes}
+                    boundPages={boundPages}
+                    defaultCreateType={page.feedType || undefined}
                     disabled={isPageActionFieldDisabled(selectedAction, "feedId", page.feedId)}
                 />
                 <Select

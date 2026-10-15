@@ -1,9 +1,9 @@
 import { useEffect, useState, ChangeEvent, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 
 import Editor from "@monaco-editor/react";
 
-import { TextInput, Button, Stack, Group, Grid, ActionIcon, Text, Select, NumberInput, useComputedColorScheme } from "@mantine/core";
+import { TextInput, Button, Stack, Group, Grid, ActionIcon, Anchor, Text, Select, NumberInput, useComputedColorScheme } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 
 import { IconFileUpload } from "@tabler/icons-react";
@@ -12,6 +12,7 @@ import { uploadFile } from "../../shared/uploads";
 import { csrfHeaders } from "../../shared/csrf";
 import { trans } from "../../shared/i18n";
 import { isRtl } from "../lib/direction";
+import { pagesBoundToFeed, type BoundPage, type PickerPage } from "../lib/feed-picker";
 
 export default function FeedEdit() {
 
@@ -21,6 +22,7 @@ export default function FeedEdit() {
 
     const [feed, setFeed] = useState<any>(null);
     const [saving, setSaving] = useState(false);
+    const [pages, setPages] = useState<PickerPage[] | null>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const editorRef = useRef<any>(null);
@@ -49,6 +51,27 @@ export default function FeedEdit() {
             .then(data => setFeed(data));
 
     }, [id]);
+
+    useEffect(() => {
+        if (!id || id === "new") {
+            setPages(null);
+            return;
+        }
+
+        const controller = new AbortController();
+        fetch("/api/v1/admin/pages", { signal: controller.signal })
+            .then(response => response.ok ? response.json() : { data: [] })
+            .then(data => setPages(Array.isArray(data.data) ? data.data : []))
+            .catch(err => {
+                if (err.name !== "AbortError") {
+                    setPages([]);
+                }
+            });
+
+        return () => controller.abort();
+    }, [id]);
+
+    const boundPages: BoundPage[] = feed?.id && pages ? pagesBoundToFeed(Number(feed.id), pages) : [];
 
     function save() {
 
@@ -140,6 +163,20 @@ export default function FeedEdit() {
                 >
                     {isRtl() ? "→" : "←"} {trans("js.admin.back")}
                 </Button>
+
+                {pages !== null && (
+                    <Group gap="xs">
+                        <Text size="sm" c="dimmed">{trans("js.admin.feeds.bound_page")}:</Text>
+                        {boundPages.length === 0 && (
+                            <Text size="sm" c="dimmed">{trans("js.admin.feeds.not_bound")}</Text>
+                        )}
+                        {boundPages.map(page => (
+                            <Anchor key={page.id} component={Link} to={`/pages/${page.id}`} size="sm">
+                                {page.pageName ? `${page.path} — ${page.pageName}` : page.path} (#{page.id})
+                            </Anchor>
+                        ))}
+                    </Group>
+                )}
             </Group>
 
             <Grid gutter="md">
