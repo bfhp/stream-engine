@@ -10,13 +10,14 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
+use Twig\TwigFunction;
 
 final class CanonicalTest extends TestCase
 {
     #[DataProvider('pages')]
     public function testHeadContainsOneEscapedCanonicalAndMatchingOpenGraphUrl(array $data, ?string $expected): void
     {
-        $twig = new Environment(new FilesystemLoader(__DIR__.'/../../views/themes/default'));
+        $twig = self::twig();
         $html = $twig->load('layouts/base.twig')->renderBlock('layout_head', $data + [
             'siteUrl' => 'https://example.com',
             'head_ext' => ['<script src="/assets/js/users.js"></script>'],
@@ -35,7 +36,7 @@ final class CanonicalTest extends TestCase
 
     public function testOpenGraphImageUsesConfiguredSiteUrl(): void
     {
-        $twig = new Environment(new FilesystemLoader(__DIR__.'/../../views/themes/default'));
+        $twig = self::twig();
         $html = $twig->load('layouts/base.twig')->renderBlock('layout_head', [
             'siteUrl' => 'https://canonical.example',
             'image' => '/uploads/cover.webp',
@@ -52,7 +53,7 @@ final class CanonicalTest extends TestCase
 
     public function testOpenGraphImageIsOmittedWithoutConfiguredSiteUrl(): void
     {
-        $twig = new Environment(new FilesystemLoader(__DIR__.'/../../views/themes/default'));
+        $twig = self::twig();
         $html = $twig->load('layouts/base.twig')->renderBlock('layout_head', [
             'siteUrl' => null,
             'image' => '/uploads/cover.webp',
@@ -62,6 +63,18 @@ final class CanonicalTest extends TestCase
         $xpath = new DOMXPath($dom);
 
         self::assertCount(0, $xpath->query('//meta[@property="og:image"]'));
+    }
+
+    /**
+     * Twig compiles the whole layout even when one block is rendered, so the
+     * functions used outside <head> (the skip link's trans()) must exist.
+     */
+    private static function twig(): Environment
+    {
+        $twig = new Environment(new FilesystemLoader(__DIR__.'/../../views/themes/default'));
+        $twig->addFunction(new TwigFunction('trans', static fn (string $key): string => $key));
+
+        return $twig;
     }
 
     public static function pages(): array
