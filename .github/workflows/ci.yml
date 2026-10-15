@@ -161,13 +161,19 @@ jobs:
 
     env:
       A11Y_BASE_URL: http://127.0.0.1:8080
+      # The administrator of a throwaway site that exists only for the length
+      # of this job; its password is generated in the first step.
       A11Y_ADMIN_EMAIL: a11y@example.com
-      # A throwaway site that exists only for the length of this job.
-      A11Y_ADMIN_PASSWORD: a11y-scan-password
       A11Y_THEMES: default,bootstrap
       A11Y_LOCALES: en,ar
 
     steps:
+      - name: Generate administrator password
+        run: |
+          password="$(openssl rand -hex 24)"
+          echo "::add-mask::$password"
+          echo "A11Y_ADMIN_PASSWORD=$password" >> "$GITHUB_ENV"
+
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
