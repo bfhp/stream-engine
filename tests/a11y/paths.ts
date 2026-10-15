@@ -6,10 +6,17 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 export const PROJECT_ROOT = path.resolve(here, "../..");
 
 /** Everything the scan writes goes below the git-ignored storage directory. */
-export const OUTPUT_DIR = path.join(PROJECT_ROOT, "storage/a11y");
+const OUTPUT_ROOT = path.join(PROJECT_ROOT, "storage/a11y");
 
-/** Signed-in administrator session, produced by auth.setup.ts. */
-export const ADMIN_STATE = path.join(OUTPUT_DIR, "admin-state.json");
+/**
+ * run.mjs sets A11Y_RUN_LABEL (for example "bootstrap-ar") for each
+ * theme/locale combination, so their reports do not overwrite each other.
+ */
+const runLabel = (process.env.A11Y_RUN_LABEL ?? "").replace(/[^A-Za-z0-9_-]/g, "");
+export const OUTPUT_DIR = runLabel ? path.join(OUTPUT_ROOT, "runs", runLabel) : OUTPUT_ROOT;
+
+/** Signed-in administrator session, produced by auth.setup.ts; run.mjs reads it too. */
+export const ADMIN_STATE = path.join(OUTPUT_ROOT, "admin-state.json");
 
 /** Known violations that do not fail the scan. */
 export const BASELINE_FILE = path.join(here, "baseline.json");

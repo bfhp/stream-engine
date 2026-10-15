@@ -4,16 +4,16 @@ import { ADMIN_STATE, OUTPUT_DIR } from "./paths";
 
 /*
  * Page-level WCAG 2.2 A/AA scan with axe-core in Chromium. It needs a running
- * Stream Engine site: CI installs one per locale (see the Accessibility job
- * in .github/workflows/ci.yml); locally, point A11Y_BASE_URL at the Docker
- * development site.
+ * Stream Engine site; locally, point A11Y_BASE_URL at the Docker development
+ * site. Run it through `npm run test:a11y` (tests/a11y/run.mjs), which can
+ * also switch theme and locale between runs:
  *
  *   A11Y_BASE_URL=http://localhost:5000 \
  *   A11Y_ADMIN_EMAIL=admin@example.com A11Y_ADMIN_PASSWORD=... \
+ *   A11Y_THEMES=default,bootstrap A11Y_LOCALES=en,ar \
  *   npm run test:a11y
  *
- * Every page runs in the light and dark colour schemes. Direction comes from
- * the site locale, so RTL is covered by scanning a site installed in Arabic.
+ * Every page runs in the light and dark colour schemes.
  */
 const schemes = ["light", "dark"] as const;
 

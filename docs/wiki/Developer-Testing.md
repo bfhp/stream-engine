@@ -328,13 +328,22 @@ is the reference suite.
 the home, not-found, and sign-in dialog views, account pages the sign-in
 dialog links to, the built-in administration screens, and the
 administrator's profile, each in the light and dark colour schemes. Direction
-follows the site locale and markup follows the active theme, so CI installs a
-site for each bundled theme in English and in Arabic. Locally, the scan checks
-whatever theme and locale the target site has; switch them in the
-administration panel to cover the others. Public pages follow the light and
-dark projects only when the active theme's **Color mode** setting is
-**System** (the default is **Dark**); CI sets it, and a local run warns when
-a page renders the other scheme.
+follows the site locale and markup follows the active theme. Without further
+settings, `npm run test:a11y` scans the target site as it is configured. Set
+`A11Y_THEMES` and/or `A11Y_LOCALES` to comma-separated lists to scan each
+combination; CI uses both bundled themes in English and Arabic:
+
+```bash
+A11Y_THEMES=default,bootstrap A11Y_LOCALES=en,ar npm run test:a11y
+```
+
+`tests/a11y/run.mjs` then signs in, records the active theme, theme settings
+and site locale, activates each theme with **Color mode** set to **System**
+(public pages follow the light and dark projects only then; the default is
+**Dark**), sets each locale, runs Playwright, and restores the recorded
+settings at the end, also after a failure or Ctrl+C. Reports for each
+combination go to `storage/a11y/runs/<theme>-<locale>/`. A run against a site
+whose theme is not in **System** mode warns locally and fails in CI.
 
 A scan fails only on axe rules that are not listed for that page in
 `tests/a11y/baseline.json`. The baseline is keyed by page and rule, not by
@@ -461,7 +470,7 @@ the behavior itself is intentionally changing.
 | Documentation | PHP 8.3; `php bin/check-wiki-docs.php`. |
 | PHP | Two jobs: PHP 8.3 with MariaDB 12, and PHP 8.3 with MySQL 8.4; Composer install, Pint, PHPUnit with `INSTALL_TEST_DB_*`, and the CSRF audit. |
 | Frontend | PHP 8.3 and Node 20.19; Composer install, `npm ci`, Vitest, TypeScript, and the production Vite build. |
-| Accessibility | Four jobs, the `default` and `bootstrap` themes each in English and Arabic: PHP 8.3, Node 20.19, MariaDB 12, and memcached; production build, `bin/install.php` into a clean database, `theme.active` set for the job's theme, PHP's built-in server with `tests/a11y/router.php`, and the Playwright/axe scan. The report is uploaded as a workflow artifact. |
+| Accessibility | PHP 8.3, Node 20.19, MariaDB 12, and memcached; production build, `bin/install.php` into a clean database, PHP's built-in server with `tests/a11y/router.php`, and the Playwright/axe scan for the `default` and `bootstrap` themes in English and Arabic. The reports are uploaded as a workflow artifact. |
 
 CI intentionally disables PHP coverage for speed. Reproduce its dependency
 installation with the lock files (`composer install`, `npm ci`) when diagnosing
@@ -476,7 +485,7 @@ Differences to consider when a local run is green:
 - CI starts from a clean checkout without ignored local files;
 - frontend dependencies come from `package-lock.json`; and
 - jobs have a 15-minute limit, except the five-minute documentation job and
-  the 20-minute accessibility job.
+  the 25-minute accessibility job.
 
 Inspect the first meaningful failure, reproduce its job locally, and keep the
 fix scoped to the broken contract. A cancelled older workflow run is normal:
