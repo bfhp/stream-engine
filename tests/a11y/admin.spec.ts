@@ -73,7 +73,7 @@ test("admin navigation closes after choosing an item on a narrow screen", async 
 /* WCAG 1.4.10: administration screens at 320 CSS px, with the navigation
    closed. Wide tables may scroll inside their own container (two-dimensional
    content is exempt); the page itself must not. */
-const NARROW_ADMIN_SCREENS = ["/", "/feeds", "/pages", "/settings", "/users", "/cron", "/pages/1"];
+const NARROW_ADMIN_SCREENS = ["/", "/feeds", "/pages", "/menus", "/settings", "/users", "/cron", "/pages/1"];
 
 for (const route of NARROW_ADMIN_SCREENS) {
     test(`admin ${route} at 320 CSS px`, async ({ page }) => {

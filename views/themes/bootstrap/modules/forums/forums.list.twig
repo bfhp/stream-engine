@@ -93,9 +93,10 @@
                                                     </div>
                                                     {% if lastPost %}
                                                         <div class="d-lg-none text-body-secondary text-truncate" style="font-size: .78rem">
-                                                            <i class="bi bi-clock-history me-1"></i><a
-                                                                href="{{ lastPost.topicUrl }}"
-                                                                class="text-decoration-none">{{ lastPost.topicTitle }}</a>
+                                                            {# Underlined: the link sits inside a line of text, and its colour alone
+                                                               is not enough to tell it apart (WCAG 1.4.1). #}
+                                                            <i class="bi bi-clock-history me-1" aria-hidden="true"></i><a
+                                                                href="{{ lastPost.topicUrl }}">{{ lastPost.topicTitle }}</a>
                                                             &mdash; <bdi>{{ lastPost.authorName }}</bdi>, {{ lastPost.when }}
                                                         </div>
                                                     {% endif %}

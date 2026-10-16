@@ -42,6 +42,13 @@ html {
     pointer-events: auto;
 }
 
+/* A Badge clips its label with an ellipsis, and a table cell can squeeze it
+   below its text; with the reader's text spacing (WCAG 1.4.12) the type and
+   status badges lost their last letters. Keep the badge as wide as its text. */
+.mantine-Badge-root {
+    min-inline-size: max-content;
+}
+
 /* The skip-link target is focused programmatically; it is not a control. */
 #admin-main:focus {
     outline: none;

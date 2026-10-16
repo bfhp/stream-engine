@@ -123,6 +123,8 @@ export default function Pages() {
 
             {error && <Text c="red">{error}</Text>}
 
+            {/* Wide table: it scrolls in its own box on narrow screens (1.4.10). */}
+            <Table.ScrollContainer minWidth={900}>
             <Table striped highlightOnHover withTableBorder>
                 <Table.Thead>
                     <Table.Tr>
@@ -193,6 +195,7 @@ export default function Pages() {
                     )}
                 </Table.Tbody>
             </Table>
+            </Table.ScrollContainer>
         </Stack>
     );
 }

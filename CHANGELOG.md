@@ -62,6 +62,10 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- At 320 CSS px the administration pages and menus tables scroll in their
+  own box instead of widening the page; badges keep the width of their text
+  with larger text spacing; the latest-topic link in the `bootstrap` forum
+  list is underlined on narrow screens.
 - Tooltips stay open while the pointer is over them and close with Escape,
   in the administration panel and the `bootstrap` theme; administration
   tooltips also show on keyboard focus.

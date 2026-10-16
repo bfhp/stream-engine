@@ -162,7 +162,7 @@ export default function Menus() {
                             <ActionIcon variant="subtle" disabled={!reorderingEnabled || groupIndex === groupNames.length - 1} onClick={() => moveGroup(name, 1)} aria-label={trans("js.admin.menu.group_down")}><IconArrowDown size={16} /></ActionIcon>
                         </Group>
                     </Group>
-                    <Table striped highlightOnHover><Table.Tbody>
+                    <Table.ScrollContainer minWidth={520}><Table striped highlightOnHover><Table.Tbody>
                         {filteredItems.filter(item => item.menuGroup === name).map(item => {
                             const siblings = orderedItems.filter(candidate => candidate.menuGroup === item.menuGroup && candidate.parentId === item.parentId);
                             const siblingIndex = siblings.findIndex(candidate => candidate.id === item.id);
@@ -179,7 +179,7 @@ export default function Menus() {
                                 </Group></Table.Td>
                             </Table.Tr>;
                         })}
-                    </Table.Tbody></Table>
+                    </Table.Tbody></Table></Table.ScrollContainer>
                 </Paper>)}
                 {!loading && filteredItems.length === 0 && <Text c="dimmed" ta="center">{trans("js.admin.menu.empty")}</Text>}
             </Stack>
