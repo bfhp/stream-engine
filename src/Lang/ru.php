@@ -481,7 +481,6 @@ return [
     'view.profile.email.unsubscribe.01' => 'Готово. Вы больше не будете получать email-уведомления.',
     'view.profile.email.unsubscribe.02' => 'Вы уверены, что хотите отказаться от всех email-уведомлений?',
     'view.profile.email.unsubscribe.03' => 'Ссылка для отписки недействительна.',
-    'view.profile.tabs.avatars.01' => 'Загрузить',
     'view.profile.tabs.forum.01' => 'Подпись на форуме',
     'view.profile.tabs.forum.02' => 'Показывается под каждым вашим сообщением на форуме. Можно использовать',
     'view.profile.tabs.forum.03' => '— картинка масштабируется до 60 px по высоте. Остальные теги вырезаются.',

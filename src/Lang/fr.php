@@ -459,7 +459,6 @@ E-mail : {email}
     'view.profile.email.unsubscribe.01' => 'C’est fait. Vous ne recevrez plus de notifications par e-mail.',
     'view.profile.email.unsubscribe.02' => 'Voulez-vous vraiment vous désabonner de toutes les notifications par e-mail ?',
     'view.profile.email.unsubscribe.03' => 'Le lien de désabonnement est invalide.',
-    'view.profile.tabs.avatars.01' => 'Téléverser',
     'view.profile.tabs.forum.01' => 'Signature sur le forum',
     'view.profile.tabs.forum.02' => 'S’affiche sous chacun de vos messages sur le forum. Vous pouvez utiliser :',
     'view.profile.tabs.forum.03' => 'L’image est redimensionnée à 60 px de hauteur. Les autres balises sont supprimées.',

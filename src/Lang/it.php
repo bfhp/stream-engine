@@ -459,7 +459,6 @@ E-mail: {email}
     'view.profile.email.unsubscribe.01' => 'Fatto. Non riceverai più notifiche e-mail.',
     'view.profile.email.unsubscribe.02' => 'Vuoi davvero annullare tutte le notifiche e-mail?',
     'view.profile.email.unsubscribe.03' => 'Il link per annullare l’iscrizione non è valido.',
-    'view.profile.tabs.avatars.01' => 'Carica',
     'view.profile.tabs.forum.01' => 'Firma nel forum',
     'view.profile.tabs.forum.02' => 'Viene mostrata sotto ciascuno dei tuoi messaggi nel forum. Puoi usare:',
     'view.profile.tabs.forum.03' => 'L’immagine viene ridimensionata a 60 px di altezza. Gli altri tag vengono rimossi.',

@@ -459,7 +459,6 @@ return [
     'view.profile.email.unsubscribe.01' => '완료되었습니다. 더 이상 이메일 알림을 받지 않습니다.',
     'view.profile.email.unsubscribe.02' => '모든 이메일 알림 수신을 거부하시겠습니까?',
     'view.profile.email.unsubscribe.03' => '수신 거부 링크가 유효하지 않습니다.',
-    'view.profile.tabs.avatars.01' => '업로드',
     'view.profile.tabs.forum.01' => '포럼 서명',
     'view.profile.tabs.forum.02' => '포럼의 내 모든 게시물 아래에 표시됩니다. 다음을 사용할 수 있습니다:',
     'view.profile.tabs.forum.03' => '이미지는 높이 60px로 축소됩니다. 그 밖의 태그는 제거됩니다.',

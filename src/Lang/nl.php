@@ -459,7 +459,6 @@ E-mail: {email}
     'view.profile.email.unsubscribe.01' => 'Klaar. Je ontvangt geen e-mailmeldingen meer.',
     'view.profile.email.unsubscribe.02' => 'Weet je zeker dat je je wilt afmelden voor alle e-mailmeldingen?',
     'view.profile.email.unsubscribe.03' => 'De afmeldlink is ongeldig.',
-    'view.profile.tabs.avatars.01' => 'Uploaden',
     'view.profile.tabs.forum.01' => 'Handtekening op het forum',
     'view.profile.tabs.forum.02' => 'Wordt onder elk van je berichten op het forum getoond. Toegestaan:',
     'view.profile.tabs.forum.03' => 'De afbeelding wordt geschaald naar een hoogte van 60 px. Overige tags worden verwijderd.',

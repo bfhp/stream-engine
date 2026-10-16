@@ -459,7 +459,6 @@ E-mail: {email}
     'view.profile.email.unsubscribe.01' => 'Pronto. Você não receberá mais notificações por e-mail.',
     'view.profile.email.unsubscribe.02' => 'Tem certeza de que quer cancelar todas as notificações por e-mail?',
     'view.profile.email.unsubscribe.03' => 'O link de cancelamento é inválido.',
-    'view.profile.tabs.avatars.01' => 'Enviar',
     'view.profile.tabs.forum.01' => 'Assinatura no fórum',
     'view.profile.tabs.forum.02' => 'Aparece abaixo de cada uma das suas mensagens no fórum. Você pode usar:',
     'view.profile.tabs.forum.03' => 'A imagem é redimensionada para 60 px de altura. As demais tags são removidas.',

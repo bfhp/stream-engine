@@ -67,14 +67,6 @@
     object-fit: cover;
 }
 
-.profile-avatar-thumb {
-    display: block;
-    margin-block-end: var(--ui-space-3);
-    padding: var(--ui-space-1);
-    border: 1px solid var(--ui-border);
-    border-radius: var(--ui-radius);
-}
-
 /* Mailings */
 .profile-digest,
 .profile-mailings {

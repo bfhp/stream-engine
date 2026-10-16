@@ -459,7 +459,6 @@ E-Mail: {email}
     'view.profile.email.unsubscribe.01' => 'Erledigt. Sie erhalten keine E-Mail-Benachrichtigungen mehr.',
     'view.profile.email.unsubscribe.02' => 'Möchten Sie wirklich alle E-Mail-Benachrichtigungen abbestellen?',
     'view.profile.email.unsubscribe.03' => 'Der Abmeldelink ist ungültig.',
-    'view.profile.tabs.avatars.01' => 'Hochladen',
     'view.profile.tabs.forum.01' => 'Signatur im Forum',
     'view.profile.tabs.forum.02' => 'Wird unter jedem Ihrer Forenbeiträge angezeigt. Erlaubt sind:',
     'view.profile.tabs.forum.03' => 'Bilder werden auf 60 px Höhe skaliert. Alle anderen Tags werden entfernt.',

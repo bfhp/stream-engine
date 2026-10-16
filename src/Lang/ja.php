@@ -459,7 +459,6 @@ return [
     'view.profile.email.unsubscribe.01' => '完了しました。今後、メール通知は届きません。',
     'view.profile.email.unsubscribe.02' => 'すべてのメール通知の配信を停止してもよろしいですか？',
     'view.profile.email.unsubscribe.03' => '配信停止のリンクが無効です。',
-    'view.profile.tabs.avatars.01' => 'アップロード',
     'view.profile.tabs.forum.01' => 'フォーラムの署名',
     'view.profile.tabs.forum.02' => 'フォーラムでのあなたの各投稿の下に表示されます。次を使用できます:',
     'view.profile.tabs.forum.03' => '画像は高さ60pxに縮小されます。その他のタグは削除されます。',

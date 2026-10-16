@@ -459,7 +459,6 @@ Correo: {email}
     'view.profile.email.unsubscribe.01' => 'Listo. Ya no recibirás notificaciones por correo.',
     'view.profile.email.unsubscribe.02' => '¿Seguro que quieres darte de baja de todas las notificaciones por correo?',
     'view.profile.email.unsubscribe.03' => 'El enlace de baja no es válido.',
-    'view.profile.tabs.avatars.01' => 'Subir',
     'view.profile.tabs.forum.01' => 'Firma en el foro',
     'view.profile.tabs.forum.02' => 'Se muestra bajo cada uno de tus mensajes en el foro. Puedes usar:',
     'view.profile.tabs.forum.03' => 'La imagen se escala a 60 px de alto. El resto de etiquetas se eliminan.',

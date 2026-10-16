@@ -459,7 +459,6 @@ return [
     'view.profile.email.unsubscribe.01' => '已完成。你将不再收到邮件通知。',
     'view.profile.email.unsubscribe.02' => '确定要退订所有邮件通知吗？',
     'view.profile.email.unsubscribe.03' => '退订链接无效。',
-    'view.profile.tabs.avatars.01' => '上传',
     'view.profile.tabs.forum.01' => '论坛签名',
     'view.profile.tabs.forum.02' => '显示在你在论坛中每条帖子的下方。可以使用：',
     'view.profile.tabs.forum.03' => '图片会缩放到60像素高度，其他标签会被移除。',

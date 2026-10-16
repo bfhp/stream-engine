@@ -459,7 +459,6 @@ return [
     'view.profile.email.unsubscribe.01' => 'تم. لن تصلك إشعارات البريد الإلكتروني بعد الآن.',
     'view.profile.email.unsubscribe.02' => 'هل تريد بالتأكيد إلغاء الاشتراك في جميع إشعارات البريد الإلكتروني؟',
     'view.profile.email.unsubscribe.03' => 'رابط إلغاء الاشتراك غير صالح.',
-    'view.profile.tabs.avatars.01' => 'رفع',
     'view.profile.tabs.forum.01' => 'التوقيع في المنتدى',
     'view.profile.tabs.forum.02' => 'يظهر أسفل كل منشور من منشوراتك في المنتدى. يمكن استخدامه.',
     'view.profile.tabs.forum.03' => 'يتم تحجيم الصورة إلى ارتفاع 60 px. وتُحذف بقية الوسوم.',

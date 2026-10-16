@@ -459,7 +459,6 @@ E-mail: {email}
     'view.profile.email.unsubscribe.01' => 'Gotowe. Nie będziesz już otrzymywać powiadomień e-mail.',
     'view.profile.email.unsubscribe.02' => 'Czy na pewno chcesz zrezygnować ze wszystkich powiadomień e-mail?',
     'view.profile.email.unsubscribe.03' => 'Link do wypisania jest nieprawidłowy.',
-    'view.profile.tabs.avatars.01' => 'Prześlij',
     'view.profile.tabs.forum.01' => 'Podpis na forum',
     'view.profile.tabs.forum.02' => 'Wyświetlany pod każdym z twoich wpisów na forum. Dozwolone:',
     'view.profile.tabs.forum.03' => 'Obraz jest skalowany do wysokości 60 px. Pozostałe tagi są usuwane.',

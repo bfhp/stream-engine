@@ -69,6 +69,12 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
   plurals are keyed by category (`['one' => …, 'other' => …]`);
   `Formatter::plural()` is deprecated in favour of `transChoice()`.
 
+### Removed
+
+- The unused profile "avatars" tab templates in both themes. They posted to
+  a `/profile/avatar` route that no longer exists; avatars are uploaded on
+  the Personal tab.
+
 ### Fixed
 
 - Images attached to messages are described for screen readers by their
