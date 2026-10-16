@@ -103,7 +103,7 @@ final class TranslationManagerTest extends TestCase
         // Spot-check a couple of known values are passed through unchanged
         // rather than pinning the entire feed.* set, which would make this
         // test fail every time a new feed.* translation key is added.
-        $this->assertSame('Feed not found', $forJs['feed.not_found']);
+        $this->assertSame('Материал не найден', $forJs['feed.not_found']);
         $this->assertSame('Оценка должна быть от 1 до 5', $forJs['feed.rating_invalid']);
 
         // The filter should be exhaustive: every feed.* key in the full

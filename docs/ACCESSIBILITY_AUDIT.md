@@ -31,8 +31,8 @@ The results use the terms of the
 
 | Result | Criteria |
 | --- | ---: |
-| Supports | 20 |
-| Partially Supports | 11 |
+| Supports | 21 |
+| Partially Supports | 10 |
 | Does Not Support | 0 |
 | Not Applicable | 4 |
 | Not Evaluated, automated checks pass | 7 |
@@ -93,7 +93,7 @@ The results use the terms of the
 | Criterion | Level | Result | Remarks |
 | --- | --- | --- | --- |
 | 3.1.1 Language of Page | A | Supports | `<html lang>` and `dir` follow the site locale in the public layouts, the error page, the administration panel and e-mail. |
-| 3.1.2 Language of Parts | AA | Partially Supports | The administration Scheduler screen is untranslated in eleven locales (all but English and Russian: 66 `js.admin.cron.*` strings), so a screen reader reads English text with the page's voice. Seventeen Russian error messages were untranslated and now are. There is no public language switcher, and the settings name languages in the interface language. Authors cannot mark text in another language in the rich-text editor; to be described in the statement. |
+| 3.1.2 Language of Parts | AA | Supports | The interface is translated in every shipped locale: the administration Scheduler screen (65 strings in eleven locales) and seventeen Russian error messages were translated on 2026-10-16. Untranslated strings left are proper names (Stream Engine Admin, CAPTCHA, Cloudflare Turnstile, hCaptcha) and date-format patterns. There is no public language switcher; the settings name languages in the interface language. Author content is out of scope; the rich-text editor cannot mark text in another language, which the statement should mention. |
 | 3.2.1 On Focus | A | Supports | No focus handler in the source opens a window, submits a form or moves to another page. |
 | 3.2.2 On Input | A | Supports | No change or input handler submits a form or navigates; filters, sorting and settings apply with a button. Choosing a file starts its upload, which changes content, not context. |
 | 3.2.3 Consistent Navigation | AA | Supports | Both themes repeat the same navigation in the same order on every page. |

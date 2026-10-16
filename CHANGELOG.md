@@ -42,6 +42,11 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- The administration Scheduler screen is now translated into every shipped
+  locale (it was English everywhere but Russian), and seventeen Russian error
+  messages that were still in English are translated. Labels that named the
+  same action differently were aligned, and the file browser help mentions
+  Enter as well as double-click.
 - Profile → Email and password saved nothing: the form posted to a route
   that did not exist. It now changes the email and password through
   `POST /api/v1/my/security`, asks for the current password, applies a new
