@@ -500,6 +500,7 @@ return [
     'view.profile.tabs.security.01' => '新しいメールアドレス',
     'view.profile.tabs.security.02' => '新しいパスワード',
     'view.profile.tabs.security.03' => '更新',
+    'view.profile.tabs.security.04' => '10文字以上。現在のパスワードを変更しない場合は空欄のままにしてください。',
     'view.profile.tabs.subscriptions.01' => 'コミュニティ',
     'view.profile.tabs.subscriptions.02' => 'タイトルで検索',
     'view.profile.tabs.subscriptions.03' => 'まだどのコミュニティにも参加していません。',

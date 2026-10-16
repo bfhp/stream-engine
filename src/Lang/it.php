@@ -500,6 +500,7 @@ E-mail: {email}
     'view.profile.tabs.security.01' => 'Nuova e-mail',
     'view.profile.tabs.security.02' => 'Nuova password',
     'view.profile.tabs.security.03' => 'Aggiorna',
+    'view.profile.tabs.security.04' => 'Almeno 10 caratteri. Lascia vuoto per mantenere la password attuale.',
     'view.profile.tabs.subscriptions.01' => 'Community',
     'view.profile.tabs.subscriptions.02' => 'Cerca per titolo',
     'view.profile.tabs.subscriptions.03' => 'Non fai ancora parte di nessuna community.',

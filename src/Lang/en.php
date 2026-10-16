@@ -500,6 +500,7 @@ Email: {email}
     'view.profile.tabs.security.01' => 'New email',
     'view.profile.tabs.security.02' => 'New password',
     'view.profile.tabs.security.03' => 'Update',
+    'view.profile.tabs.security.04' => 'At least 10 characters. Leave empty to keep your current password.',
     'view.profile.tabs.subscriptions.01' => 'Community',
     'view.profile.tabs.subscriptions.02' => 'Search by title',
     'view.profile.tabs.subscriptions.03' => 'You are not in any community yet.',

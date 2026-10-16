@@ -500,6 +500,7 @@ E-mail: {email}
     'view.profile.tabs.security.01' => 'Nieuw e-mailadres',
     'view.profile.tabs.security.02' => 'Nieuw wachtwoord',
     'view.profile.tabs.security.03' => 'Bijwerken',
+    'view.profile.tabs.security.04' => 'Minimaal 10 tekens. Laat leeg om je huidige wachtwoord te behouden.',
     'view.profile.tabs.subscriptions.01' => 'Community',
     'view.profile.tabs.subscriptions.02' => 'Zoeken op titel',
     'view.profile.tabs.subscriptions.03' => 'Je bent nog geen lid van een community.',

@@ -8,7 +8,8 @@
         </div>
         <div class="ui-field">
             <label class="ui-label" for="profilePassword">{{ trans('view.profile.tabs.security.02') }}</label>
-            <input id="profilePassword" type="password" name="password" autocomplete="new-password" class="ui-input">
+            <input id="profilePassword" type="password" name="password" autocomplete="new-password" minlength="10" maxlength="255" class="ui-input" aria-describedby="profilePasswordHelp">
+            <div id="profilePasswordHelp" class="ui-help">{{ trans('view.profile.tabs.security.04') }}</div>
         </div>
         <button class="ui-button ui-button--danger">{{ trans('view.profile.tabs.security.03') }}</button>
     </form>

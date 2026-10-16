@@ -522,6 +522,7 @@ return [
     'view.profile.tabs.security.01' => 'Новый email',
     'view.profile.tabs.security.02' => 'Новый пароль',
     'view.profile.tabs.security.03' => 'Обновить',
+    'view.profile.tabs.security.04' => 'Не менее 10 символов. Оставьте пустым, чтобы не менять текущий пароль.',
     'view.profile.tabs.subscriptions.01' => 'Сообщества',
     'view.profile.tabs.subscriptions.02' => 'Поиск по названию',
     'view.profile.tabs.subscriptions.03' => 'Вы пока не состоите ни в одном сообществе.',

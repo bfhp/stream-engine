@@ -500,6 +500,7 @@ E-mail: {email}
     'view.profile.tabs.security.01' => 'Novo e-mail',
     'view.profile.tabs.security.02' => 'Nova senha',
     'view.profile.tabs.security.03' => 'Atualizar',
+    'view.profile.tabs.security.04' => 'Pelo menos 10 caracteres. Deixe em branco para manter sua senha atual.',
     'view.profile.tabs.subscriptions.01' => 'Comunidade',
     'view.profile.tabs.subscriptions.02' => 'Buscar por título',
     'view.profile.tabs.subscriptions.03' => 'Você ainda não participa de nenhuma comunidade.',

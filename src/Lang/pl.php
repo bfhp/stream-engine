@@ -500,6 +500,7 @@ E-mail: {email}
     'view.profile.tabs.security.01' => 'Nowy adres e-mail',
     'view.profile.tabs.security.02' => 'Nowe hasło',
     'view.profile.tabs.security.03' => 'Zaktualizuj',
+    'view.profile.tabs.security.04' => 'Co najmniej 10 znaków. Pozostaw puste, aby zachować obecne hasło.',
     'view.profile.tabs.subscriptions.01' => 'Społeczność',
     'view.profile.tabs.subscriptions.02' => 'Szukaj według tytułu',
     'view.profile.tabs.subscriptions.03' => 'Nie należysz jeszcze do żadnej społeczności.',

@@ -500,6 +500,7 @@ return [
     'view.profile.tabs.security.01' => '새 이메일',
     'view.profile.tabs.security.02' => '새 비밀번호',
     'view.profile.tabs.security.03' => '업데이트',
+    'view.profile.tabs.security.04' => '10자 이상. 현재 비밀번호를 유지하려면 비워 두세요.',
     'view.profile.tabs.subscriptions.01' => '커뮤니티',
     'view.profile.tabs.subscriptions.02' => '제목으로 검색',
     'view.profile.tabs.subscriptions.03' => '아직 가입한 커뮤니티가 없습니다.',

@@ -500,6 +500,7 @@ return [
     'view.profile.tabs.security.01' => 'بريد إلكتروني جديد',
     'view.profile.tabs.security.02' => 'كلمة مرور جديدة',
     'view.profile.tabs.security.03' => 'تحديث',
+    'view.profile.tabs.security.04' => '10 أحرف على الأقل. اتركه فارغًا للإبقاء على كلمة المرور الحالية.',
     'view.profile.tabs.subscriptions.01' => 'المجتمع',
     'view.profile.tabs.subscriptions.02' => 'البحث بالعنوان',
     'view.profile.tabs.subscriptions.03' => 'لست عضوًا في أي مجتمع بعد.',

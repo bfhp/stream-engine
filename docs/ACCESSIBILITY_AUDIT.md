@@ -32,10 +32,10 @@ The results use the terms of the
 | Result | Criteria |
 | --- | ---: |
 | Supports | 8 |
-| Partially Supports | 9 |
+| Partially Supports | 10 |
 | Does Not Support | 0 |
 | Not Applicable | 4 |
-| Not Evaluated, automated checks pass | 9 |
+| Not Evaluated, automated checks pass | 8 |
 | Not Evaluated | 25 |
 
 ### 1. Perceivable
@@ -100,7 +100,7 @@ The results use the terms of the
 | 3.2.4 Consistent Identification | AA | Not Evaluated | |
 | 3.2.6 Consistent Help | A | Not Evaluated | |
 | 3.3.1 Error Identification | A | Partially Supports | Failed sign-in is covered by the scan. To review: registration, topic form, profile and administration forms (error text, `aria-invalid`, link to the field). |
-| 3.3.2 Labels or Instructions | A | Not Evaluated | Automated checks pass. To review: password rules and required fields are stated up front. |
+| 3.3.2 Labels or Instructions | A | Partially Supports | Registration and password reset state the password rule. The new-password field in the profile had no instructions; it now says "at least 10 characters, leave empty to keep the current password" and is linked to the field. To review: the remaining forms. |
 | 3.3.3 Error Suggestion | AA | Not Evaluated | |
 | 3.3.4 Error Prevention (Legal, Financial, Data) | AA | Not Evaluated | |
 | 3.3.7 Redundant Entry | A | Not Evaluated | |

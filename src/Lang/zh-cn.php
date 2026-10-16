@@ -500,6 +500,7 @@ return [
     'view.profile.tabs.security.01' => '新邮箱',
     'view.profile.tabs.security.02' => '新密码',
     'view.profile.tabs.security.03' => '更新',
+    'view.profile.tabs.security.04' => '至少 10 个字符。留空则保留当前密码。',
     'view.profile.tabs.subscriptions.01' => '社区',
     'view.profile.tabs.subscriptions.02' => '按标题搜索',
     'view.profile.tabs.subscriptions.03' => '你还没有加入任何社区。',
