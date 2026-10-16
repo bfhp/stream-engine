@@ -447,7 +447,7 @@ E-Mail: {email}
     'view.messages.app.11' => 'Anhang',
     'view.messages.app.12' => 'Nachricht schreiben...',
     'view.messages.app.13' => 'Unterhaltung auswählen',
-    'view.messages.app.14' => 'Öffnen Sie links eine bestehende Unterhaltung oder beginnen Sie eine neue.',
+    'view.messages.app.14' => 'Wählen Sie eine Unterhaltung aus der Liste oder beginnen Sie eine neue.',
     'view.messages.app.15' => 'Privatchat',
     'view.messages.app.16' => 'Gruppenname',
     'view.messages.app.17' => 'Kontakte durchsuchen',

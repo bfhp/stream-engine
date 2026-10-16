@@ -31,12 +31,12 @@ The results use the terms of the
 
 | Result | Criteria |
 | --- | ---: |
-| Supports | 15 |
+| Supports | 20 |
 | Partially Supports | 10 |
 | Does Not Support | 0 |
 | Not Applicable | 4 |
 | Not Evaluated, automated checks pass | 7 |
-| Not Evaluated | 19 |
+| Not Evaluated | 14 |
 
 ### 1. Perceivable
 
@@ -50,7 +50,7 @@ The results use the terms of the
 | 1.2.5 Audio Description (Prerecorded) | AA | Not Applicable | As 1.2.2. |
 | 1.3.1 Info and Relationships | A | Not Evaluated | Automated checks pass; profile labels are tied to their fields with `for`/`id` and `aria-describedby`. The bot trap in the feedback form was reachable by screen readers and Tab, so a person could fill it and be rejected as a bot; it is now hidden from both. To review with a screen reader: heading levels, administration tables, field groups. |
 | 1.3.2 Meaningful Sequence | A | Not Evaluated | Check the reading order, especially right-to-left (Arabic) and card grids. |
-| 1.3.3 Sensory Characteristics | A | Not Evaluated | |
+| 1.3.3 Sensory Characteristics | A | Supports | Reviewed against the English strings. The empty messenger said "open a conversation on the left", which is on the right in right-to-left locales and above on a phone; it now says "from the list" in all locales. Remaining "above" and "below" describe reading order next to a link or label. The file browser help says "double-click a file"; check whether Enter opens it too. |
 | 1.3.4 Orientation | AA | Not Evaluated | |
 | 1.3.5 Identify Input Purpose | AA | Supports | `autocomplete` is set on sign-in, registration, password reset and retrieval, feedback (`name`, `email`), profile (`nickname`, `url`, `bday`) and email and password (`email`, `new-password`, `current-password`) in both themes; checked by hand that browsers offer the right values. |
 | 1.4.1 Use of Color | A | Partially Supports | The messenger's online status was colour only; offline is now a hollow ring, and both states are named for screen readers and on hover. To review: links inside text, active tabs and filters, form errors. |
@@ -83,7 +83,7 @@ The results use the terms of the
 | 2.4.11 Focus Not Obscured (Minimum) | AA | Supports | The page scrolls focused elements clear of the sticky header in both themes (the header height is tracked) and of the fixed administration header. Recheck if a cookie banner or another sticky bar is added. |
 | 2.5.1 Pointer Gestures | A | Supports | No function needs a path-based or multipoint gesture. |
 | 2.5.2 Pointer Cancellation | A | Supports | Reviewed in the source. The only action on the down event was choosing a mention suggestion; it now happens on click, so sliding off an option cancels it (covered by a Vitest test). Drag and drop acts on release and is cancelled outside the target; everything else uses native controls and click. The third-party widgets (Mantine, Chonky, Monaco, Trix) were not reviewed in detail. |
-| 2.5.3 Label in Name | A | Not Evaluated | |
+| 2.5.3 Label in Name | A | Supports | Accessible names compared with visible text for every button and link in the templates and the administration panel. The article card's "Read on" link was named "Read the article …"; its name now starts with the visible words ("Read on: <title>"). Icon-only controls and the "×" close buttons have no visible text to match. |
 | 2.5.4 Motion Actuation | A | Supports | No function is operated by device motion. |
 | 2.5.7 Dragging Movements | AA | Partially Supports | Dashboard cards can also be moved with "Move up" and "Move down" buttons. To review: moving files in Chonky without dragging. |
 | 2.5.8 Target Size (Minimum) | AA | Not Evaluated | The dashboard drag handle is now 24 × 24 px. To review: small link buttons (`btn-sm p-0`), the Trix toolbar, icons in messages. |
@@ -94,10 +94,10 @@ The results use the terms of the
 | --- | --- | --- | --- |
 | 3.1.1 Language of Page | A | Supports | `<html lang>` and `dir` follow the site locale in the public layouts, the error page, the administration panel and e-mail. |
 | 3.1.2 Language of Parts | AA | Not Evaluated | There is no public language switcher, and the administration settings name languages in the interface language. Open: authors cannot mark text in another language in the rich-text editor; to be described in the statement. |
-| 3.2.1 On Focus | A | Not Evaluated | |
-| 3.2.2 On Input | A | Not Evaluated | |
+| 3.2.1 On Focus | A | Supports | No focus handler in the source opens a window, submits a form or moves to another page. |
+| 3.2.2 On Input | A | Supports | No change or input handler submits a form or navigates; filters, sorting and settings apply with a button. Choosing a file starts its upload, which changes content, not context. |
 | 3.2.3 Consistent Navigation | AA | Supports | Both themes repeat the same navigation in the same order on every page. |
-| 3.2.4 Consistent Identification | AA | Not Evaluated | |
+| 3.2.4 Consistent Identification | AA | Supports | The same actions use the same names and icons throughout (Delete with a bin, remove and close with a cross, Edit with a pencil; Log out, Sign in). Two stray variants ("Close." and "Send a message.") were aligned. Other locales were not checked for consistency. |
 | 3.2.6 Consistent Help | A | Supports | The feedback link is in the same place on every page. |
 | 3.3.1 Error Identification | A | Partially Supports | Failed sign-in is covered by the scan. To review: registration, topic form, profile and administration forms (error text, `aria-invalid`, link to the field). |
 | 3.3.2 Labels or Instructions | A | Partially Supports | Registration states the password rule. The profile's email and password form and the password reset form did not; they now state the length rule, why the current password is needed and that a new email needs confirming, each linked to its field. To review: the remaining forms. |

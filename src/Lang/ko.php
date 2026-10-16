@@ -447,7 +447,7 @@ return [
     'view.messages.app.11' => '첨부 파일',
     'view.messages.app.12' => '메시지를 입력하세요...',
     'view.messages.app.13' => '대화를 선택하세요',
-    'view.messages.app.14' => '왼쪽에서 기존 대화를 열거나 새 대화를 시작하세요.',
+    'view.messages.app.14' => '목록에서 대화를 선택하거나 새 대화를 시작하세요.',
     'view.messages.app.15' => '개인 채팅',
     'view.messages.app.16' => '그룹 이름',
     'view.messages.app.17' => '연락처 검색',

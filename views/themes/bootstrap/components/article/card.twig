@@ -8,10 +8,9 @@
                 {{ item.description }}
             </p>
 
-            <a href="{{ item.canonicalUrl }}"
-               class="btn btn-primary"
-               aria-label="{{ trans('view.article.read_aria', {title: item.title}) }}">
-                {{ trans('view.article.card.01') }}
+            {# The name starts with the visible words (WCAG 2.5.3); the hidden title tells the links apart. #}
+            <a href="{{ item.canonicalUrl }}" class="btn btn-primary">
+                {{ trans('view.article.card.01') }}<span class="visually-hidden">: {{ item.title }}</span>
             </a>
         </div>
     </div>

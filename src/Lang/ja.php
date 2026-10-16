@@ -447,7 +447,7 @@ return [
     'view.messages.app.11' => '添付ファイル',
     'view.messages.app.12' => 'メッセージを入力...',
     'view.messages.app.13' => '会話を選択してください',
-    'view.messages.app.14' => '左側から既存の会話を開くか、新しい会話を始めてください。',
+    'view.messages.app.14' => '一覧から会話を選ぶか、新しい会話を始めてください。',
     'view.messages.app.15' => '個人チャット',
     'view.messages.app.16' => 'グループ名',
     'view.messages.app.17' => '連絡先を検索',

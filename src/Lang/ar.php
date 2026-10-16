@@ -447,7 +447,7 @@ return [
     'view.messages.app.11' => 'مرفق',
     'view.messages.app.12' => 'اكتب رسالة...',
     'view.messages.app.13' => 'اختر محادثة',
-    'view.messages.app.14' => 'افتح محادثة موجودة على اليسار أو ابدأ محادثة جديدة.',
+    'view.messages.app.14' => 'اختر محادثة من القائمة أو ابدأ محادثة جديدة.',
     'view.messages.app.15' => 'محادثة شخصية',
     'view.messages.app.16' => 'اسم المجموعة',
     'view.messages.app.17' => 'البحث في جهات الاتصال',

@@ -447,7 +447,7 @@ Correo: {email}
     'view.messages.app.11' => 'Adjunto',
     'view.messages.app.12' => 'Escribe un mensaje...',
     'view.messages.app.13' => 'Selecciona una conversación',
-    'view.messages.app.14' => 'Abre una conversación existente a la izquierda o inicia una nueva.',
+    'view.messages.app.14' => 'Elige una conversación de la lista o inicia una nueva.',
     'view.messages.app.15' => 'Chat personal',
     'view.messages.app.16' => 'Nombre del grupo',
     'view.messages.app.17' => 'Buscar contactos',

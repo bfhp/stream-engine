@@ -447,7 +447,7 @@ E-mail: {email}
     'view.messages.app.11' => 'Bijlage',
     'view.messages.app.12' => 'Schrijf een bericht...',
     'view.messages.app.13' => 'Kies een gesprek',
-    'view.messages.app.14' => 'Open links een bestaand gesprek of begin een nieuw gesprek.',
+    'view.messages.app.14' => 'Kies een gesprek uit de lijst of begin een nieuw gesprek.',
     'view.messages.app.15' => 'Privéchat',
     'view.messages.app.16' => 'Groepsnaam',
     'view.messages.app.17' => 'Contacten zoeken',

@@ -447,7 +447,7 @@ return [
     'view.messages.app.11' => '附件',
     'view.messages.app.12' => '输入消息...',
     'view.messages.app.13' => '选择一个对话',
-    'view.messages.app.14' => '在左侧打开已有对话，或开始新的对话。',
+    'view.messages.app.14' => '从列表中选择一个对话，或开始新的对话。',
     'view.messages.app.15' => '私聊',
     'view.messages.app.16' => '群组名称',
     'view.messages.app.17' => '搜索联系人',
