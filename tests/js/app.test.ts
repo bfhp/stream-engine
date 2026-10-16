@@ -551,3 +551,19 @@ describe("opaque ids on the CMS surface", () => {
         expect(CMS.decodeId("zzzzzzzzz")).toBeNull();
     });
 });
+
+describe("initShare()", () => {
+    it("names each icon-only share link and hides its icon", () => {
+        document.body.innerHTML = '<div data-share data-url="https://example.com/p" data-title="Post"></div>';
+        CMS.initShare();
+
+        const links = [...document.querySelectorAll<HTMLAnchorElement>("[data-share] a")];
+        expect(links.length).toBeGreaterThan(0);
+        for (const link of links) {
+            expect(link.getAttribute("aria-label")).toBe(`Share on ${link.dataset.uiTooltip} (opens in a new tab)`);
+            expect(link.dataset.uiTooltip).not.toBe("");
+            expect(link.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
+        }
+        expect(links.find(link => link.classList.contains("telegram"))?.dataset.uiTooltip).toBe("Telegram");
+    });
+});

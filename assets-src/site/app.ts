@@ -193,11 +193,22 @@ const CMS = (() => {
         threads: siThreads
     };
 
+    const SHARE_NETWORK_NAMES: Record<string, string> = {
+        vk: "VK",
+        telegram: "Telegram",
+        whatsapp: "WhatsApp",
+        viber: "Viber",
+        facebook: "Facebook",
+        x: "X",
+        ok: "OK",
+        threads: "Threads",
+    };
+
     function getShareIcon(name: string): string {
         const icon = shareIcons[name as keyof typeof shareIcons];
         if (!icon) return "";
 
-        return `<svg viewBox="0 0 24 24" fill="currentColor">
+        return `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
         <path d="${icon.path}"/>
     </svg>`;
     }
@@ -221,16 +232,24 @@ const CMS = (() => {
             threads: `https://www.threads.net/intent/post?text=${encodedTitle}%20${encodedUrl}`
         };
 
+        // The icon is the only content, so each link is named for screen
+        // readers ("Share on Telegram (opens in a new tab)", 2.4.4, 4.1.2);
+        // the tooltip shows the network's name.
         container.innerHTML = Object.entries(links)
-            .map(([name, link]) => `
+            .map(([name, link]) => {
+                const network = SHARE_NETWORK_NAMES[name] ?? name;
+                const label = trans("js.share.on", { network });
+                return `
         <a href="${link}"
            target="_blank"
            rel="noopener"
            class="share-btn ${name}"
-           data-ui-tooltip="${name.toUpperCase()}">
+           aria-label="${escapeHtml(label)}"
+           data-ui-tooltip="${escapeHtml(network)}">
             ${getShareIcon(name)}
         </a>
-    `)
+    `;
+            })
             .join("");
     }
 

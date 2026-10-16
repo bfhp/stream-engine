@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { expectNoNewViolations, waitForAdminScreen } from "./scan";
-import { adminDialog, closeWithEscape, expectNoHorizontalScroll, open } from "./states";
+import { adminDialog, closeWithEscape, expectNoHorizontalScroll, expectTextSpacingFits, open } from "./states";
 import { expectFocusContained } from "./keyboard";
 
 /** Built-in administration screens, as routed by the admin HashRouter. */
@@ -70,6 +70,32 @@ test("admin navigation closes after choosing an item on a narrow screen", async 
     await expect(page.locator("#admin-main")).toBeFocused();
 });
 
+/* WCAG 1.4.10: administration screens at 320 CSS px, with the navigation
+   closed. Wide tables may scroll inside their own container (two-dimensional
+   content is exempt); the page itself must not. */
+const NARROW_ADMIN_SCREENS = ["/", "/feeds", "/pages", "/settings", "/users", "/cron", "/pages/1"];
+
+for (const route of NARROW_ADMIN_SCREENS) {
+    test(`admin ${route} at 320 CSS px`, async ({ page }) => {
+        await page.setViewportSize({ width: 320, height: 640 });
+        await page.goto(`/admin/#${route}`);
+        await waitForAdminScreen(page);
+        const toggle = page.locator("header button[aria-expanded]");
+        if (await toggle.getAttribute("aria-expanded") === "true") await toggle.click();
+        await expect(toggle).toHaveAttribute("aria-expanded", "false");
+        await expectNoHorizontalScroll(page);
+    });
+}
+
+/* WCAG 1.4.12 on screens with cards, forms and tables. */
+for (const route of ["/", "/settings", "/feeds"]) {
+    test(`admin ${route} with text spacing`, async ({ page }) => {
+        await page.goto(`/admin/#${route}`);
+        await waitForAdminScreen(page);
+        await expectTextSpacingFits(page);
+    });
+}
+
 test("admin skip link moves keyboard focus to the main region", async ({ page }) => {
     await page.goto("/admin/#/");
     await waitForAdminScreen(page);
@@ -135,6 +161,19 @@ test.describe("admin open states", () => {
         const input = page.locator("main .mantine-Select-input").first();
         await open(input, listbox);
         await expectNoNewViolations(page, "admin/settings-select", testInfo);
+
+        // The baseline accepts axe's scrollable-region-focusable here: focus
+        // stays in the input and the arrow keys move through the options.
+        // Check that claim (2.1.1): every option the arrows reach scrolls
+        // into view inside the list.
+        const options = listbox.locator('[role="option"]');
+        const count = await options.count();
+        for (let step = 0; step < count; step++) {
+            await page.keyboard.press("ArrowDown");
+            const selected = listbox.locator("[data-combobox-selected]");
+            await expect(selected, `option reached with ArrowDown ${step + 1}`).toBeInViewport();
+            await expect(input).toBeFocused();
+        }
         await closeWithEscape(page, listbox, input);
     });
 

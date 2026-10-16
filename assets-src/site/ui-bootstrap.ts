@@ -88,10 +88,56 @@ export const bootstrapAdapter: UiAdapter = {
         root.querySelectorAll<HTMLElement>("[data-ui-tooltip], [data-bs-toggle=\"tooltip\"]").forEach((el) => {
             if (Tooltip.getInstance(el)) return;
             if (el.dataset.uiTooltip && !el.dataset.bsTitle) el.dataset.bsTitle = el.dataset.uiTooltip;
-            new Tooltip(el, { placement: "top", trigger: "hover focus" });
+            new Tooltip(el, { placement: "top", trigger: "hover focus", delay: { show: 0, hide: TOOLTIP_HIDE_DELAY_MS } });
+            bindTooltip(el);
         });
     },
 };
+
+/*
+ * WCAG 1.4.13 (Content on Hover or Focus). Bootstrap hides a tooltip as soon
+ * as the pointer leaves its trigger, even onto the tooltip itself, and has
+ * no key to close it. Here a tooltip stays open while the pointer is over
+ * it, and Escape closes every open one.
+ */
+const TOOLTIP_HIDE_DELAY_MS = 150;
+const openTooltips = new Set<HTMLElement>();
+const hoveredTips = new WeakSet<HTMLElement>();
+let dismissing = false;
+
+function tipOf(el: HTMLElement): HTMLElement | null {
+    const id = el.getAttribute("aria-describedby");
+    return id ? document.getElementById(id) : null;
+}
+
+function bindTooltip(el: HTMLElement): void {
+    el.addEventListener("inserted.bs.tooltip", () => {
+        const tip = tipOf(el);
+        if (!tip || tip.dataset.uiTooltipBound) return;
+        tip.dataset.uiTooltipBound = "1";
+        tip.addEventListener("mouseenter", () => hoveredTips.add(tip));
+        tip.addEventListener("mouseleave", () => {
+            hoveredTips.delete(tip);
+            if (!el.matches(":hover, :focus")) Tooltip.getInstance(el)?.hide();
+        });
+    });
+    el.addEventListener("shown.bs.tooltip", () => openTooltips.add(el));
+    el.addEventListener("hidden.bs.tooltip", () => openTooltips.delete(el));
+    el.addEventListener("hide.bs.tooltip", (event) => {
+        const tip = tipOf(el);
+        if (!dismissing && tip && hoveredTips.has(tip)) event.preventDefault();
+    });
+}
+
+document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" || openTooltips.size === 0) return;
+    dismissing = true;
+    try {
+        openTooltips.forEach((el) => Tooltip.getInstance(el)?.hide());
+    } finally {
+        dismissing = false;
+    }
+});
 
 ui.register(bootstrapAdapter);
 

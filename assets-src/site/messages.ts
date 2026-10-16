@@ -14,6 +14,7 @@ import {
     formatTime,
     hardenMessageLinks,
     initialsFromName,
+    messageAnnouncementText,
     stripTags,
 } from "./messenger-format";
 
@@ -175,6 +176,7 @@ export function initMessages() {
 
     const messagesListEl = root.querySelector<HTMLElement>('[data-messages-list]')!;
     const typingEl = root.querySelector<HTMLElement>('[data-messages-typing]')!;
+    const announceEl = root.querySelector<HTMLElement>('[data-messages-announce]');
     const inputEl = root.querySelector<HTMLTextAreaElement>('[data-message-input]')!;
     const sendBtn = root.querySelector<HTMLButtonElement>('[data-messages-send]')!;
 
@@ -706,6 +708,7 @@ export function initMessages() {
 
         if (fresh.length) {
             appendMessages(fresh);
+            announceIncoming(fresh);
             fresh.forEach(m => {
                 if (m.id > lastMessageId) lastMessageId = m.id;
                 renderedMessages.set(m.id, m);
@@ -735,6 +738,24 @@ export function initMessages() {
         }
 
         renderTyping(data.typing);
+    }
+
+    /*
+     * Screen readers are not told about messages that appear in the open
+     * conversation (WCAG 4.1.3); the live region says who wrote and what.
+     * Own messages are left out: the sender knows. Only the latest few are
+     * read, so a burst does not turn into a long recital.
+     */
+    function announceIncoming(messages: ApiMessage[]) {
+        if (!announceEl) return;
+        const lines = messages
+            .filter(m => m.user_id !== currentUserId)
+            .slice(-3)
+            .map(m => trans('js.messenger.announce_message', {
+                name: activeParticipants[m.user_id]?.displayName ?? '',
+                text: messageAnnouncementText(m),
+            }));
+        if (lines.length) announceEl.textContent = lines.join(' ');
     }
 
     function buildMessagesHtml(messages: ApiMessage[], unreadFromId: number): string {

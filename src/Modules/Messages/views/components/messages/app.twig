@@ -62,6 +62,8 @@
                 <div class="msgr-messages" data-messages-list></div>
 
                 <div class="msgr-typing" data-messages-typing hidden></div>
+                {# Announces messages that arrive while the conversation is open (WCAG 4.1.3). #}
+                <div class="ui-visually-hidden" role="status" aria-live="polite" data-messages-announce></div>
 
                 <footer class="msgr-composer">
                     <div class="msgr-edit-preview" data-edit-preview hidden>

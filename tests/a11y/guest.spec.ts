@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { SIGN_IN_BUTTON } from "./paths";
 import { expectNoNewViolations } from "./scan";
-import { expectNoHorizontalScroll } from "./states";
+import { expectNoHorizontalScroll, expectTextSpacingFits } from "./states";
 
 test("home page", async ({ page }, testInfo) => {
     await page.goto("/");
@@ -90,5 +90,20 @@ test.describe("narrow viewport", () => {
         await expectNoHorizontalScroll(page);
         await expectNoNewViolations(page, "guest/sign-in-dialog-narrow", testInfo,
             builder => builder.include("#authFormModal"));
+    });
+});
+
+/* WCAG 1.4.12: no text is cut off with the reader's own text spacing. */
+test.describe("text spacing", () => {
+    test("home page", async ({ page }) => {
+        await page.goto("/");
+        await expectTextSpacingFits(page);
+    });
+
+    test("sign-in dialog", async ({ page }) => {
+        await page.goto("/");
+        await page.locator(SIGN_IN_BUTTON).first().click();
+        await expect(page.locator("#authFormModal")).toBeVisible();
+        await expectTextSpacingFits(page);
     });
 });

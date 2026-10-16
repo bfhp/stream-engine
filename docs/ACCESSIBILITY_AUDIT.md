@@ -31,12 +31,12 @@ The results use the terms of the
 
 | Result | Criteria |
 | --- | ---: |
-| Supports | 33 |
+| Supports | 35 |
 | Partially Supports | 7 |
 | Does Not Support | 0 |
 | Not Applicable | 4 |
 | Not Evaluated, automated checks pass | 6 |
-| Not Evaluated | 5 |
+| Not Evaluated | 3 |
 
 ### 1. Perceivable
 
@@ -51,23 +51,23 @@ The results use the terms of the
 | 1.3.1 Info and Relationships | A | Not Evaluated | Automated checks pass; profile labels are tied to their fields with `for`/`id` and `aria-describedby`. The bot trap in the feedback form was reachable by screen readers and Tab, so a person could fill it and be rejected as a bot; it is now hidden from both. To review with a screen reader: heading levels, administration tables, field groups. |
 | 1.3.2 Meaningful Sequence | A | Not Evaluated | Check the reading order, especially right-to-left (Arabic) and card grids. |
 | 1.3.3 Sensory Characteristics | A | Supports | Reviewed against the English strings. The empty messenger said "open a conversation on the left", which is on the right in right-to-left locales and above on a phone; it now says "from the list" in all locales. The file browser help now names Enter as well as double-click. Remaining "above" and "below" describe reading order next to a link or label. |
-| 1.3.4 Orientation | AA | Not Evaluated | |
+| 1.3.4 Orientation | AA | Supports | Nothing locks the orientation: no `orientation` media queries, no `screen.orientation.lock()`, no manifest `orientation`. Layouts are responsive in both themes and the administration panel. |
 | 1.3.5 Identify Input Purpose | AA | Supports | `autocomplete` is set on sign-in, registration, password reset and retrieval, feedback (`name`, `email`), profile (`nickname`, `url`, `bday`) and email and password (`email`, `new-password`, `current-password`) in both themes; checked by hand that browsers offer the right values. |
 | 1.4.1 Use of Color | A | Partially Supports | The messenger's online status was colour only; offline is now a hollow ring, and both states are named for screen readers and on hover. To review: links inside text, active tabs and filters, form errors. |
 | 1.4.2 Audio Control | A | Supports | Nothing plays on its own. The player resumes on the next page only the track the person started, and only if that page lists it; its pause button is visible, named and keyboard-operable. |
 | 1.4.3 Contrast (Minimum) | AA | Not Evaluated | Automated checks pass for both themes, light and dark, English and Arabic, including content pages of a seeded site. To review: hover and disabled states, placeholders, pages outside the scan. |
 | 1.4.4 Resize Text | AA | Supports | Checked at 200% zoom. The administration navigation did not scroll, so items below the sixth were out of reach and Tab moved focus off screen; the panel now scrolls, and a Playwright test focuses every item in a 640 × 360 window. |
 | 1.4.5 Images of Text | AA | Supports | No text is shown as an image in the interface. |
-| 1.4.10 Reflow | AA | Partially Supports | Only some public pages and the profile are checked at 320 CSS px. Not yet reviewed: administration panel, messages, forums, editors. |
+| 1.4.10 Reflow | AA | Partially Supports | Checked at 320 CSS px by the scan: home, sign-in dialog, profile, forum list, forum, topic, blog post, messages (inbox and a conversation), and seven administration screens with the navigation closed (dashboard, feeds, pages, settings, users, scheduler, page editor); wide tables may scroll in their own container. Not yet reviewed: editors other than the page editor, community pages. |
 | 1.4.11 Non-text Contrast | AA | Partially Supports | Focus indicators are checked for 3:1 in the keyboard walk. Not yet reviewed: field borders, checkboxes, switch tracks, icons without text, dashboard charts. |
-| 1.4.12 Text Spacing | AA | Not Evaluated | |
-| 1.4.13 Content on Hover or Focus | AA | Not Evaluated | The mention popup closes with Escape. To review: Mantine and Bootstrap tooltips are dismissible, hoverable and persistent. |
+| 1.4.12 Text Spacing | AA | Not Evaluated | A scan check applies the WCAG spacing (line height 1.5, paragraph spacing 2, letter 0.12, word 0.16) and looks for clipped text on the home page, sign-in dialog, a forum topic, a blog post, and the administration dashboard, settings and feeds. Clamped excerpts are skipped: the full text is one link away. |
+| 1.4.13 Content on Hover or Focus | AA | Supports | Administration tooltips (Mantine) close with Escape and now stay open while the pointer is over them; they also show on keyboard focus. The `bootstrap` theme's tooltips (share buttons) now close with Escape and stay open while hovered; the `default` theme uses the browser's own `title` tooltips. The mention popup closes with Escape. Menus and popovers open on click, not hover. |
 
 ### 2. Operable
 
 | Criterion | Level | Result | Remarks |
 | --- | --- | --- | --- |
-| 2.1.1 Keyboard | A | Partially Supports | The keyboard walk passes on ten administration screens and the profile. Known: the settings select list is not keyboard-scrollable (`scrollable-region-focusable`, in `tests/a11y/baseline.json`). The Chonky file browser opens files with Enter but moves between them only with Tab, not the arrow keys; that meets the criterion but is slow in large folders. To review: audio player, Trix. |
+| 2.1.1 Keyboard | A | Partially Supports | The keyboard walk passes on ten administration screens and the profile. The settings select list is flagged by axe (`scrollable-region-focusable`, in `tests/a11y/baseline.json`), but focus stays in the input and the arrow keys reach every option; a scan check now confirms each option scrolls into view. The Chonky file browser opens files with Enter but moves between them only with Tab, not the arrow keys; that meets the criterion but is slow in large folders. To review: audio player, Trix. |
 | 2.1.2 No Keyboard Trap | A | Not Evaluated | Automated checks pass. Tab leaves Monaco after Ctrl+M (Ctrl+Shift+M on macOS), as the hint next to each editor says; the keyboard walk uses that toggle. To review: Trix, audio player. |
 | 2.1.4 Character Key Shortcuts | A | Supports | Key handlers use Enter, Escape, Tab, Backspace and arrows. The only character key, the comma in the tag field, works only while that field has focus. Trix and Monaco shortcuts use Ctrl/Cmd and work only inside the editor. |
 | 2.2.1 Timing Adjustable | A | Supports | Sessions last 30 days. Administration notifications stay 8 s, pause while hovered, and errors stay until closed. Site notifications in both themes now do the same (they closed after 5 s, errors included, and did not pause in the `default` theme). |
@@ -76,7 +76,7 @@ The results use the terms of the
 | 2.4.1 Bypass Blocks | A | Supports | "Skip to main content" on public pages (both themes) and in the administration panel; covered by automated tests. |
 | 2.4.2 Page Titled | A | Supports | Public pages set their title in the `meta_title` block. Each administration screen sets its own window title ("Section · site title"), and the navigation marks the current item with `aria-current="page"`. |
 | 2.4.3 Focus Order | A | Not Evaluated | Automated checks pass: focus stays in dialogs and returns to the control that opened them. To review: overall order, focus after deleting an item. |
-| 2.4.4 Link Purpose (In Context) | A | Supports | Links name their target through their text or context. Fixed: the forum pagination arrows had no name (now "Previous"/"Next", both themes), the group-chat "Remove" button now names the member, and "Read on" includes the article title for screen readers. |
+| 2.4.4 Link Purpose (In Context) | A | Supports | Links name their target through their text or context. Fixed: the forum pagination arrows had no name (now "Previous"/"Next", both themes), the group-chat "Remove" button now names the member, and "Read on" includes the article title for screen readers. The share buttons in the `bootstrap` theme were icons with no name; each is now named ("Share on Telegram (opens in a new tab)"). |
 | 2.4.5 Multiple Ways | AA | Supports | Pages are reachable through the menus, search and the sitemap. |
 | 2.4.6 Headings and Labels | AA | Supports | Reviewed in the source against the English strings: headings name their section, labels name their field. The "Email" label on sign-in and feedback was not translated and now uses `view.common.email`; English labels and headings lost stray trailing full stops. The empty headings in the topic form belong to the preview, which fills them with the topic title. Translations in the other twelve locales have not been reviewed by native speakers. |
 | 2.4.7 Focus Visible | AA | Not Evaluated | Automated checks pass: every stop of the keyboard walk changes visibly. To review: pages outside the walk, Trix, Chonky. |
@@ -111,7 +111,7 @@ The results use the terms of the
 | Criterion | Level | Result | Remarks |
 | --- | --- | --- | --- |
 | 4.1.2 Name, Role, Value | A | Partially Supports | Automated checks pass except Chonky's file list (`aria-required-children`, in `tests/a11y/baseline.json`), so the file browser screen does not meet the criterion. To review with a screen reader: tabs, menus, switches, Trix, audio player. |
-| 4.1.3 Status Messages | AA | Not Evaluated | Search announces progress with `role="status"`; save messages on every profile tab now do too. To review: administration notifications, new messages, upload errors. |
+| 4.1.3 Status Messages | AA | Not Evaluated | Administration notifications are `role="alert"`; site toasts sit in a live region in both themes; search progress and the save messages on every profile tab use `role="status"`. Messages that arrive in the open conversation were not announced; a live region now reads the sender and text (up to three at a time, own messages left out). To confirm with a screen reader. |
 
 ## Updating this report
 

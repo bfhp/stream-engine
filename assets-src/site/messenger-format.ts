@@ -226,3 +226,13 @@ export function computeReadStatus(
 
     return otherIds.every(id => (readStates[id] ?? 0) >= message.id);
 }
+
+const ANNOUNCEMENT_MAX_CHARS = 200;
+
+/** A message as one line of plain text for a live region: its text, cut at
+ *  200 characters, or the attachment's file name when there is no text. */
+export function messageAnnouncementText(m: { text: string; attachment: { original_name: string } | null }): string {
+    const text = stripTags(m.text).replace(/\s+/g, ' ').trim();
+    if (!text) return m.attachment?.original_name ?? '';
+    return text.length > ANNOUNCEMENT_MAX_CHARS ? `${text.slice(0, ANNOUNCEMENT_MAX_CHARS - 1)}…` : text;
+}

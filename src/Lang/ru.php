@@ -746,6 +746,7 @@ return [
 
     'js.comment.quote_header' => '{author} писал(а):',
     'js.notification.new_message' => 'Новое сообщение: {message}',
+    'js.share.on' => 'Поделиться в {network} (откроется в новой вкладке)',
 
     'js.cover.formats' => 'JPG, PNG, WebP · до 8 МБ',
     'js.cover.upload_failed' => 'Не удалось загрузить изображение. Проверьте подключение и попробуйте ещё раз.',
@@ -940,6 +941,7 @@ return [
     'js.messenger.delete_confirm' => 'Сообщение будет удалено без возможности восстановления.',
     'js.messenger.delete_failed' => 'Не удалось удалить сообщение',
     'js.messenger.typing_one' => '{names} печатает…',
+    'js.messenger.announce_message' => 'Новое сообщение от {name}: {text}',
     'js.messenger.typing_many' => '{names} печатают…',
     'js.messenger.file_upload_failed' => 'Не удалось загрузить файл',
     'js.messenger.save_failed' => 'Не удалось сохранить изменения',

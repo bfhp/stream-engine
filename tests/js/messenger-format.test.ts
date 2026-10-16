@@ -13,6 +13,7 @@ import {
     initialsFromName,
     nameColorStyle,
     pad,
+    messageAnnouncementText,
     startOfDay,
     stripTags,
 } from "../../assets-src/site/messenger-format";
@@ -452,5 +453,22 @@ describe("bytesToLabel()", () => {
                 "1024 kilobytes",
                 "1.0 megabytes",
             ]);
+    });
+});
+
+describe("messageAnnouncementText()", () => {
+    it("reads the text without markup and with spaces collapsed", () => {
+        expect(messageAnnouncementText({ text: 'See <a href="https://example.com">this</a>\n  now', attachment: null }))
+            .toBe("See this now");
+    });
+
+    it("falls back to the attachment's file name", () => {
+        expect(messageAnnouncementText({ text: "", attachment: { original_name: "photo.jpg" } })).toBe("photo.jpg");
+    });
+
+    it("cuts long text at 200 characters", () => {
+        const text = messageAnnouncementText({ text: "a".repeat(300), attachment: null });
+        expect(text).toHaveLength(200);
+        expect(text.endsWith("…")).toBe(true);
     });
 });

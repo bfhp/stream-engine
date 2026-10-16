@@ -9,6 +9,12 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Messages that arrive in the open conversation are announced to screen
+  readers (sender and text).
+- The accessibility scan checks text spacing (WCAG 1.4.12), seven
+  administration screens, the forum list and messages at 320 CSS px, and
+  that the arrow keys reach every option of a settings select.
+
 - Password fields have a "Show password" button (sign-in, registration,
   password reset, profile), so a new password is entered once: password reset
   no longer asks for it twice.
@@ -55,6 +61,12 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
   `Formatter::plural()` is deprecated in favour of `transChoice()`.
 
 ### Fixed
+
+- Tooltips stay open while the pointer is over them and close with Escape,
+  in the administration panel and the `bootstrap` theme; administration
+  tooltips also show on keyboard focus.
+- The share buttons in the `bootstrap` theme are named for screen readers
+  ("Share on Telegram (opens in a new tab)") instead of being unlabelled icons.
 
 - The administration navigation scrolls when its items do not fit, as at
   200% zoom; the items below the sixth were out of reach before.

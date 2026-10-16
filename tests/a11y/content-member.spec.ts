@@ -1,6 +1,7 @@
 import { expect, test, type Page, type TestInfo } from "@playwright/test";
 import { expectNoNewViolations } from "./scan";
 import { expectKeyboardWalk } from "./keyboard";
+import { expectNoHorizontalScroll } from "./states";
 import { requireParentWithChild, requireSection } from "./content";
 
 /*
@@ -78,6 +79,22 @@ test("messages inbox and a conversation", async ({ page }, testInfo) => {
     await page.keyboard.press("Enter");
     await expect(conversation).toHaveAttribute("aria-current", "true");
     await expectNoNewViolations(page, "member/messages-conversation", testInfo);
+});
+
+/* WCAG 1.4.10: the inbox and an open conversation at 320 CSS px. */
+test("messages at 320 CSS px", async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 320, height: 640 });
+    await page.goto(requireSection("messages.inbox"));
+    await expectNoHorizontalScroll(page);
+    await expectNoNewViolations(page, "member/messages-narrow", testInfo);
+
+    const conversation = page.locator("[data-conv-id]").first();
+    await conversation.waitFor({ timeout: 5_000 }).catch(() => undefined);
+    test.skip(await conversation.count() === 0, "No conversation to open.");
+    await conversation.click();
+    await expect(conversation).toHaveAttribute("aria-current", "true");
+    await expectNoHorizontalScroll(page);
+    await expectNoNewViolations(page, "member/messages-conversation-narrow", testInfo);
 });
 
 test("community as a member", async ({ page }, testInfo) => {

@@ -36,6 +36,12 @@ html {
     overscroll-behavior: contain;
 }
 
+/* Mantine tooltips ignore the pointer, so moving onto one closed it; with
+   pointer events the tooltip stays open while hovered (WCAG 1.4.13). */
+.mantine-Tooltip-tooltip {
+    pointer-events: auto;
+}
+
 /* The skip-link target is focused programmatically; it is not a control. */
 #admin-main:focus {
     outline: none;

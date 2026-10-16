@@ -4,6 +4,7 @@ import {
     Menu,
     Modal,
     Popover,
+    Tooltip,
     createTheme,
     type CSSVariablesResolver,
     type MantineColorsTuple,
@@ -58,6 +59,13 @@ export const adminTheme = createTheme({
         // Popover, unlike Modal, Drawer and Menu, leaves focus where it was
         // when it closes, which is inside the removed dropdown (2.4.3).
         Popover: Popover.extend({ defaultProps: { returnFocus: true } }),
+        // Tooltips (1.4.13): they close with Escape already; the close delay
+        // lets the pointer move onto the tooltip, which then stays open
+        // (pointer-events are restored in accessibility.css), and keyboard
+        // focus shows the same text as hovering.
+        Tooltip: Tooltip.extend({
+            defaultProps: { closeDelay: 150, events: { hover: true, focus: true, touch: false } },
+        }),
     },
 });
 
