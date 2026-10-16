@@ -1118,7 +1118,7 @@ return [
     'js.admin.cron.last_success' => 'Last success',
     'js.admin.cron.next_run' => 'Next run',
     'js.admin.cron.duration' => 'Last duration',
-    'js.admin.cron.enabled_column' => 'Enabled',
+    'js.admin.cron.enabled_column' => '사용',
     'js.admin.cron.actions' => 'Actions',
     'js.admin.cron.run_now' => 'Run now',
     'js.admin.cron.run_confirm_title' => 'Run cron task',
@@ -1372,7 +1372,7 @@ return [
     'js.admin.widgets.saved' => '위젯이 저장되었습니다',
 
     'js.admin.file_browser.title' => '파일 관리자',
-    'js.admin.file_browser.help' => '설정된 uploads 디렉터리의 파일을 탐색합니다. 파일을 두 번 클릭하면 열립니다.',
+    'js.admin.file_browser.help' => '설정된 uploads 디렉터리의 파일을 탐색합니다. 파일을 열려면 두 번 클릭하거나 선택한 뒤 Enter 키를 누르세요.',
     'js.admin.file_browser.load_failed' => '파일을 불러오지 못했습니다',
     'js.admin.file_browser.upload_failed' => '파일을 업로드하지 못했습니다',
     'js.admin.file_browser.new_folder' => '새 폴더',

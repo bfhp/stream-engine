@@ -1118,7 +1118,7 @@ E-mail: {email}
     'js.admin.cron.last_success' => 'Last success',
     'js.admin.cron.next_run' => 'Next run',
     'js.admin.cron.duration' => 'Last duration',
-    'js.admin.cron.enabled_column' => 'Enabled',
+    'js.admin.cron.enabled_column' => 'Attivato',
     'js.admin.cron.actions' => 'Actions',
     'js.admin.cron.run_now' => 'Run now',
     'js.admin.cron.run_confirm_title' => 'Run cron task',
@@ -1372,7 +1372,7 @@ E-mail: {email}
     'js.admin.widgets.saved' => 'Widget salvato',
 
     'js.admin.file_browser.title' => 'Gestione file',
-    'js.admin.file_browser.help' => 'Sfoglia i file nella directory uploads configurata. Fai doppio clic per aprire un file.',
+    'js.admin.file_browser.help' => 'Sfoglia i file nella directory uploads configurata. Per aprire un file, fai doppio clic oppure selezionalo e premi Invio.',
     'js.admin.file_browser.load_failed' => 'Impossibile caricare i file',
     'js.admin.file_browser.upload_failed' => 'Impossibile caricare il file',
     'js.admin.file_browser.new_folder' => 'Nuova cartella',

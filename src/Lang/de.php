@@ -1118,7 +1118,7 @@ E-Mail: {email}
     'js.admin.cron.last_success' => 'Last success',
     'js.admin.cron.next_run' => 'Next run',
     'js.admin.cron.duration' => 'Last duration',
-    'js.admin.cron.enabled_column' => 'Enabled',
+    'js.admin.cron.enabled_column' => 'Aktiviert',
     'js.admin.cron.actions' => 'Actions',
     'js.admin.cron.run_now' => 'Run now',
     'js.admin.cron.run_confirm_title' => 'Run cron task',
@@ -1372,7 +1372,7 @@ E-Mail: {email}
     'js.admin.widgets.saved' => 'Widget gespeichert',
 
     'js.admin.file_browser.title' => 'Dateimanager',
-    'js.admin.file_browser.help' => 'Dateien im konfigurierten Upload-Verzeichnis durchsuchen. Ein Doppelklick öffnet eine Datei.',
+    'js.admin.file_browser.help' => 'Dateien im konfigurierten Upload-Verzeichnis durchsuchen. Eine Datei öffnet ein Doppelklick oder Auswählen und Enter.',
     'js.admin.file_browser.load_failed' => 'Dateien konnten nicht geladen werden',
     'js.admin.file_browser.upload_failed' => 'Datei konnte nicht hochgeladen werden',
     'js.admin.file_browser.new_folder' => 'Neuer Ordner',

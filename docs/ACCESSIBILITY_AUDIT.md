@@ -32,11 +32,11 @@ The results use the terms of the
 | Result | Criteria |
 | --- | ---: |
 | Supports | 20 |
-| Partially Supports | 10 |
+| Partially Supports | 11 |
 | Does Not Support | 0 |
 | Not Applicable | 4 |
 | Not Evaluated, automated checks pass | 7 |
-| Not Evaluated | 14 |
+| Not Evaluated | 13 |
 
 ### 1. Perceivable
 
@@ -50,7 +50,7 @@ The results use the terms of the
 | 1.2.5 Audio Description (Prerecorded) | AA | Not Applicable | As 1.2.2. |
 | 1.3.1 Info and Relationships | A | Not Evaluated | Automated checks pass; profile labels are tied to their fields with `for`/`id` and `aria-describedby`. The bot trap in the feedback form was reachable by screen readers and Tab, so a person could fill it and be rejected as a bot; it is now hidden from both. To review with a screen reader: heading levels, administration tables, field groups. |
 | 1.3.2 Meaningful Sequence | A | Not Evaluated | Check the reading order, especially right-to-left (Arabic) and card grids. |
-| 1.3.3 Sensory Characteristics | A | Supports | Reviewed against the English strings. The empty messenger said "open a conversation on the left", which is on the right in right-to-left locales and above on a phone; it now says "from the list" in all locales. Remaining "above" and "below" describe reading order next to a link or label. The file browser help says "double-click a file"; check whether Enter opens it too. |
+| 1.3.3 Sensory Characteristics | A | Supports | Reviewed against the English strings. The empty messenger said "open a conversation on the left", which is on the right in right-to-left locales and above on a phone; it now says "from the list" in all locales. The file browser help now names Enter as well as double-click. Remaining "above" and "below" describe reading order next to a link or label. |
 | 1.3.4 Orientation | AA | Not Evaluated | |
 | 1.3.5 Identify Input Purpose | AA | Supports | `autocomplete` is set on sign-in, registration, password reset and retrieval, feedback (`name`, `email`), profile (`nickname`, `url`, `bday`) and email and password (`email`, `new-password`, `current-password`) in both themes; checked by hand that browsers offer the right values. |
 | 1.4.1 Use of Color | A | Partially Supports | The messenger's online status was colour only; offline is now a hollow ring, and both states are named for screen readers and on hover. To review: links inside text, active tabs and filters, form errors. |
@@ -67,7 +67,7 @@ The results use the terms of the
 
 | Criterion | Level | Result | Remarks |
 | --- | --- | --- | --- |
-| 2.1.1 Keyboard | A | Partially Supports | The keyboard walk passes on ten administration screens and the profile. Known: the settings select list is not keyboard-scrollable (`scrollable-region-focusable`, in `tests/a11y/baseline.json`). To review: Chonky file browser, audio player, Trix. |
+| 2.1.1 Keyboard | A | Partially Supports | The keyboard walk passes on ten administration screens and the profile. Known: the settings select list is not keyboard-scrollable (`scrollable-region-focusable`, in `tests/a11y/baseline.json`). The Chonky file browser opens files with Enter but moves between them only with Tab, not the arrow keys; that meets the criterion but is slow in large folders. To review: audio player, Trix. |
 | 2.1.2 No Keyboard Trap | A | Not Evaluated | Automated checks pass. Tab leaves Monaco after Ctrl+M (Ctrl+Shift+M on macOS), as the hint next to each editor says; the keyboard walk uses that toggle. To review: Trix, audio player. |
 | 2.1.4 Character Key Shortcuts | A | Not Evaluated | No single-character shortcuts were found outside text fields in the source. |
 | 2.2.1 Timing Adjustable | A | Not Evaluated | Automated checks pass. Sessions last 30 days. Administration notifications stay 8 s, pause while hovered, and errors stay until closed (they used to close after 2 s). |
@@ -93,11 +93,11 @@ The results use the terms of the
 | Criterion | Level | Result | Remarks |
 | --- | --- | --- | --- |
 | 3.1.1 Language of Page | A | Supports | `<html lang>` and `dir` follow the site locale in the public layouts, the error page, the administration panel and e-mail. |
-| 3.1.2 Language of Parts | AA | Not Evaluated | There is no public language switcher, and the administration settings name languages in the interface language. Open: authors cannot mark text in another language in the rich-text editor; to be described in the statement. |
+| 3.1.2 Language of Parts | AA | Partially Supports | The administration Scheduler screen is untranslated in eleven locales (all but English and Russian: 66 `js.admin.cron.*` strings), so a screen reader reads English text with the page's voice. Seventeen Russian error messages were untranslated and now are. There is no public language switcher, and the settings name languages in the interface language. Authors cannot mark text in another language in the rich-text editor; to be described in the statement. |
 | 3.2.1 On Focus | A | Supports | No focus handler in the source opens a window, submits a form or moves to another page. |
 | 3.2.2 On Input | A | Supports | No change or input handler submits a form or navigates; filters, sorting and settings apply with a button. Choosing a file starts its upload, which changes content, not context. |
 | 3.2.3 Consistent Navigation | AA | Supports | Both themes repeat the same navigation in the same order on every page. |
-| 3.2.4 Consistent Identification | AA | Supports | The same actions use the same names and icons throughout (Delete with a bin, remove and close with a cross, Edit with a pencil; Log out, Sign in). Two stray variants ("Close." and "Send a message.") were aligned. Other locales were not checked for consistency. |
+| 3.2.4 Consistent Identification | AA | Supports | The same actions use the same names and icons throughout (Delete with a bin, Remove and close with a cross, Edit with a pencil; Log out, Sign in). Checked across all thirteen locales by comparing strings that share an English text: "Remove" controls were labelled "Delete" in English, the untranslated "Disabled" and "Enabled" now reuse each locale's words, and stray full stops were removed from Arabic, Dutch and Polish labels. |
 | 3.2.6 Consistent Help | A | Supports | The feedback link is in the same place on every page. |
 | 3.3.1 Error Identification | A | Partially Supports | Failed sign-in is covered by the scan. To review: registration, topic form, profile and administration forms (error text, `aria-invalid`, link to the field). |
 | 3.3.2 Labels or Instructions | A | Partially Supports | Registration states the password rule. The profile's email and password form and the password reset form did not; they now state the length rule, why the current password is needed and that a new email needs confirming, each linked to its field. To review: the remaining forms. |

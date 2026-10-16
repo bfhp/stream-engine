@@ -1118,7 +1118,7 @@ return [
     'js.admin.cron.last_success' => 'Last success',
     'js.admin.cron.next_run' => 'Next run',
     'js.admin.cron.duration' => 'Last duration',
-    'js.admin.cron.enabled_column' => 'Enabled',
+    'js.admin.cron.enabled_column' => '有効',
     'js.admin.cron.actions' => 'Actions',
     'js.admin.cron.run_now' => 'Run now',
     'js.admin.cron.run_confirm_title' => 'Run cron task',
@@ -1372,7 +1372,7 @@ return [
     'js.admin.widgets.saved' => 'ウィジェットを保存しました',
 
     'js.admin.file_browser.title' => 'ファイルブラウザー',
-    'js.admin.file_browser.help' => '設定された uploads ディレクトリ内のファイルを参照します。ダブルクリックでファイルを開きます。',
+    'js.admin.file_browser.help' => '設定された uploads ディレクトリ内のファイルを参照します。ファイルを開くには、ダブルクリックするか、選択して Enter キーを押します。',
     'js.admin.file_browser.load_failed' => 'ファイルを読み込めませんでした',
     'js.admin.file_browser.upload_failed' => 'ファイルをアップロードできませんでした',
     'js.admin.file_browser.new_folder' => '新しいフォルダー',
