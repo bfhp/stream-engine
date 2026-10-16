@@ -14,7 +14,7 @@ conformance is checked, and where the known gaps are.
 | --- | --- |
 | Target standard | [WCAG 2.2](https://www.w3.org/TR/WCAG22/), level AA |
 | Related standard | EN 301 549 v3.2.1 (its web content clauses follow WCAG 2.1 AA) |
-| Current status | **Not evaluated.** No conformance is claimed. |
+| Current status | **Not evaluated.** No conformance is claimed. An audit is in progress: [results per criterion](docs/ACCESSIBILITY_AUDIT.md). |
 | Applies to | Latest release (currently 0.5.x) |
 | Last reviewed | **TODO** |
 
@@ -88,7 +88,7 @@ referenced as evidence for the engine's share only.
 | Keyboard-only review of key workflows by a person | **TODO**: not yet systematic |
 | Screen reader review | **TODO**: not yet performed |
 | Zoom to 200% and reflow at 320 CSS px | **TODO**: not yet systematic |
-| Complete WCAG 2.2 AA audit | **TODO**: not yet performed |
+| Complete WCAG 2.2 AA audit | In progress; results per criterion in [`docs/ACCESSIBILITY_AUDIT.md`](docs/ACCESSIBILITY_AUDIT.md) |
 
 Both automated checks run the axe-core rules for WCAG 2.0, 2.1, and 2.2 at
 levels A and AA. They cover both bundled themes, `default` and
@@ -135,9 +135,9 @@ documented with a workaround.
   which earlier versions of the sanitizer inserted. It is not migrated, and
   re-saving the content does not change existing alt attributes.
 - **Colour contrast.** Text contrast (WCAG 1.4.3) passes the automated scan on
-  the scanned pages of the `default` theme and the administration panel in
-  both colour modes. Non-text contrast (1.4.11), such as borders and focus
-  indicators, is not checked automatically and has not been reviewed.
+  the scanned pages of both bundled themes and the administration panel, in
+  both colour modes. For non-text contrast (1.4.11) only focus indicators are
+  checked automatically; borders, switches and icons have not been reviewed.
 
 ## Support for content authors
 
