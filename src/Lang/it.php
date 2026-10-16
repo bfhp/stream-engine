@@ -174,6 +174,7 @@ return [
     'view.profile.empty' => 'L’utente non ha ancora raccontato nulla di sé.',
     'view.profile.rating_empty' => 'La valutazione dell’utente non è ancora stata calcolata.',
     'view.common.statistics' => 'Statistiche',
+    'view.common.email' => 'Email',
     'view.common.rating' => 'Valutazione',
     'view.common.rate_aria' => 'Valuta {rating} su 5',
     'view.common.unread_topics' => '{count} discussioni non lette',

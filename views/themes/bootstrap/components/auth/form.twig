@@ -21,7 +21,7 @@
 
                                     {% block auth_field_email %}
                                         <div class="mb-3">
-                                            <label for="authEmail" class="form-label">Email</label>
+                                            <label for="authEmail" class="form-label">{{ trans('view.common.email') }}</label>
                                             <input autocomplete="email" type="email" class="form-control" id="authEmail" name="email" required>
                                         </div>
                                     {% endblock %}

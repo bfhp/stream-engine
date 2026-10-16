@@ -174,6 +174,7 @@ return [
     'view.profile.empty' => 'De gebruiker heeft nog niets over zichzelf verteld.',
     'view.profile.rating_empty' => 'De beoordeling van de gebruiker is nog niet berekend.',
     'view.common.statistics' => 'Statistieken',
+    'view.common.email' => 'E-mail',
     'view.common.rating' => 'Beoordeling',
     'view.common.rate_aria' => 'Beoordeel met {rating} van 5',
     'view.common.unread_topics' => '{count} ongelezen onderwerpen',

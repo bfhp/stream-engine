@@ -174,6 +174,7 @@ return [
     'view.profile.empty' => '사용자가 아직 자기소개를 작성하지 않았습니다.',
     'view.profile.rating_empty' => '사용자 평점이 아직 계산되지 않았습니다.',
     'view.common.statistics' => '통계',
+    'view.common.email' => '이메일',
     'view.common.rating' => '평점',
     'view.common.rate_aria' => '5점 만점에 {rating}점으로 평가',
     'view.common.unread_topics' => '읽지 않은 주제 {count}개',

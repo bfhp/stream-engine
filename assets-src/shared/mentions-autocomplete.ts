@@ -174,13 +174,18 @@ export function initMentionAutocomplete(): void {
         }
     });
 
+    // mousedown only keeps focus in the editor; the choice is made on click,
+    // so pressing on the wrong option and sliding off cancels it (WCAG 2.5.2).
     popup.addEventListener('mousedown', event => {
         event.preventDefault();
+    });
+
+    popup.addEventListener('click', event => {
         const option = (event.target as HTMLElement).closest<HTMLElement>('[data-index]');
         if (option) choose(Number(option.dataset.index));
     });
 
-    document.addEventListener('mousedown', event => {
+    document.addEventListener('click', event => {
         if (event.target !== input && !popup.contains(event.target as Node)) close();
     });
     window.addEventListener('resize', position);

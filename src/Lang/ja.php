@@ -174,6 +174,7 @@ return [
     'view.profile.empty' => 'このユーザーはまだ自己紹介をしていません。',
     'view.profile.rating_empty' => 'ユーザーの評価はまだ集計されていません。',
     'view.common.statistics' => '統計',
+    'view.common.email' => 'メールアドレス',
     'view.common.rating' => '評価',
     'view.common.rate_aria' => '5点満点中{rating}点で評価',
     'view.common.unread_topics' => '未読のトピック{count}件',

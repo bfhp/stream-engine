@@ -174,6 +174,7 @@ return [
     'view.profile.empty' => 'Użytkownik nie napisał jeszcze nic o sobie.',
     'view.profile.rating_empty' => 'Ocena użytkownika nie została jeszcze obliczona.',
     'view.common.statistics' => 'Statystyki',
+    'view.common.email' => 'E-mail',
     'view.common.rating' => 'Ocena',
     'view.common.rate_aria' => 'Oceń na {rating} z 5',
     'view.common.unread_topics' => 'Nieprzeczytane tematy: {count}',

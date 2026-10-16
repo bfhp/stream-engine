@@ -174,6 +174,7 @@ return [
     'view.profile.empty' => 'Der Nutzer hat noch nichts über sich erzählt.',
     'view.profile.rating_empty' => 'Die Bewertung des Nutzers wurde noch nicht berechnet.',
     'view.common.statistics' => 'Statistik',
+    'view.common.email' => 'E-Mail',
     'view.common.rating' => 'Bewertung',
     'view.common.rate_aria' => 'Mit {rating} von 5 bewerten',
     'view.common.unread_topics' => '{count} ungelesene Themen',

@@ -72,4 +72,32 @@ describe("mention autocomplete", () => {
         element.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
         expect(text).toBe("Hi @alice ");
     });
+
+    it("chooses a suggestion on click, not on press (WCAG 2.5.2)", async () => {
+        vi.useFakeTimers();
+        vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({ data: [{ id: 42, username: "alice", displayName: "Alice" }] }),
+        }));
+        document.body.innerHTML = '<textarea name="content">Hi @ali</textarea>';
+        const textarea = document.querySelector("textarea")!;
+        textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+        initMentionAutocomplete();
+
+        textarea.dispatchEvent(new Event("input", { bubbles: true }));
+        await vi.advanceTimersByTimeAsync(150);
+        await Promise.resolve();
+        await Promise.resolve();
+
+        const option = document.querySelector<HTMLElement>("[data-index]")!;
+        const press = new MouseEvent("mousedown", { bubbles: true, cancelable: true });
+        option.dispatchEvent(press);
+        // The press keeps focus in the editor but changes nothing yet, so
+        // sliding off the option before releasing cancels the choice.
+        expect(press.defaultPrevented).toBe(true);
+        expect(textarea.value).toBe("Hi @ali");
+
+        option.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+        expect(textarea.value).toBe("Hi @alice ");
+    });
 });

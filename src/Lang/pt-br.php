@@ -174,6 +174,7 @@ return [
     'view.profile.empty' => 'O usuário ainda não contou nada sobre si.',
     'view.profile.rating_empty' => 'A avaliação do usuário ainda não foi calculada.',
     'view.common.statistics' => 'Estatísticas',
+    'view.common.email' => 'E-mail',
     'view.common.rating' => 'Avaliação',
     'view.common.rate_aria' => 'Avaliar com {rating} de 5',
     'view.common.unread_topics' => '{count} tópicos não lidos',

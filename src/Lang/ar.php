@@ -174,6 +174,7 @@ return [
     'view.profile.empty' => 'لم يكتب المستخدم أي شيء عن نفسه بعد.',
     'view.profile.rating_empty' => 'لم يتم احتساب تقييم المستخدم بعد.',
     'view.common.statistics' => 'الإحصائيات',
+    'view.common.email' => 'البريد الإلكتروني',
     'view.common.rating' => 'التقييم',
     'view.common.rate_aria' => 'قيّم بـ {rating} من 5',
     'view.common.unread_topics' => '{count} مواضيع غير مقروءة',

@@ -189,6 +189,8 @@ return [
     'view.profile.rating_empty' => 'Рейтинг пользователя пока не рассчитывается.',
 
     'view.common.statistics' => 'Статистика',
+
+    'view.common.email' => 'Электронная почта',
     'view.common.rating' => 'Рейтинг',
     'view.common.rate_aria' => 'Поставить оценку {rating} из 5',
     'view.common.unread_topics' => '{count} непрочитанных тем',

@@ -31,12 +31,12 @@ The results use the terms of the
 
 | Result | Criteria |
 | --- | ---: |
-| Supports | 4 |
+| Supports | 8 |
 | Partially Supports | 9 |
 | Does Not Support | 0 |
 | Not Applicable | 4 |
 | Not Evaluated, automated checks pass | 9 |
-| Not Evaluated | 29 |
+| Not Evaluated | 25 |
 
 ### 1. Perceivable
 
@@ -72,19 +72,19 @@ The results use the terms of the
 | 2.1.4 Character Key Shortcuts | A | Not Evaluated | No single-character shortcuts were found outside text fields in the source. |
 | 2.2.1 Timing Adjustable | A | Not Evaluated | Automated checks pass. Sessions last 30 days. Administration notifications stay 8 s, pause while hovered, and errors stay until closed (they used to close after 2 s). |
 | 2.2.2 Pause, Stop, Hide | A | Not Evaluated | |
-| 2.3.1 Three Flashes or Below Threshold | A | Not Evaluated | |
+| 2.3.1 Three Flashes or Below Threshold | A | Supports | Nothing in the interface flashes. |
 | 2.4.1 Bypass Blocks | A | Supports | "Skip to main content" on public pages (both themes) and in the administration panel; covered by automated tests. |
 | 2.4.2 Page Titled | A | Supports | Public pages set their title in the `meta_title` block. Each administration screen sets its own window title ("Section · site title"), and the navigation marks the current item with `aria-current="page"`. |
 | 2.4.3 Focus Order | A | Not Evaluated | Automated checks pass: focus stays in dialogs and returns to the control that opened them. To review: overall order, focus after deleting an item. |
 | 2.4.4 Link Purpose (In Context) | A | Not Evaluated | |
 | 2.4.5 Multiple Ways | AA | Not Evaluated | |
-| 2.4.6 Headings and Labels | AA | Not Evaluated | |
+| 2.4.6 Headings and Labels | AA | Supports | Reviewed in the source against the English strings: headings name their section, labels name their field. The "Email" label on sign-in and feedback was not translated and now uses `view.common.email`; English labels and headings lost stray trailing full stops. The empty headings in the topic form belong to the preview, which fills them with the topic title. Translations in the other twelve locales have not been reviewed by native speakers. |
 | 2.4.7 Focus Visible | AA | Not Evaluated | Automated checks pass: every stop of the keyboard walk changes visibly. To review: pages outside the walk, Trix, Chonky. |
 | 2.4.11 Focus Not Obscured (Minimum) | AA | Supports | The page scrolls focused elements clear of the sticky header in both themes (the header height is tracked) and of the fixed administration header. Recheck if a cookie banner or another sticky bar is added. |
 | 2.5.1 Pointer Gestures | A | Not Evaluated | |
-| 2.5.2 Pointer Cancellation | A | Not Evaluated | |
+| 2.5.2 Pointer Cancellation | A | Supports | Reviewed in the source. The only action on the down event was choosing a mention suggestion; it now happens on click, so sliding off an option cancels it (covered by a Vitest test). Drag and drop acts on release and is cancelled outside the target; everything else uses native controls and click. The third-party widgets (Mantine, Chonky, Monaco, Trix) were not reviewed in detail. |
 | 2.5.3 Label in Name | A | Not Evaluated | |
-| 2.5.4 Motion Actuation | A | Not Evaluated | |
+| 2.5.4 Motion Actuation | A | Supports | No function is operated by device motion. |
 | 2.5.7 Dragging Movements | AA | Partially Supports | Dashboard cards can also be moved with "Move up" and "Move down" buttons. To review: moving files in Chonky without dragging. |
 | 2.5.8 Target Size (Minimum) | AA | Not Evaluated | The dashboard drag handle is now 24 × 24 px. To review: small link buttons (`btn-sm p-0`), the Trix toolbar, icons in messages. |
 

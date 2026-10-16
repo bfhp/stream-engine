@@ -174,6 +174,7 @@ return [
     'view.profile.empty' => 'L’utilisateur n’a encore rien dit sur lui-même.',
     'view.profile.rating_empty' => 'La note de l’utilisateur n’est pas encore calculée.',
     'view.common.statistics' => 'Statistiques',
+    'view.common.email' => 'E-mail',
     'view.common.rating' => 'Note',
     'view.common.rate_aria' => 'Noter {rating} sur 5',
     'view.common.unread_topics' => '{count} sujets non lus',

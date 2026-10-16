@@ -174,6 +174,7 @@ return [
     'view.profile.empty' => '该用户还没有介绍自己。',
     'view.profile.rating_empty' => '该用户的评分尚未计算。',
     'view.common.statistics' => '统计',
+    'view.common.email' => '电子邮箱',
     'view.common.rating' => '评分',
     'view.common.rate_aria' => '评分：{rating}分（满分5分）',
     'view.common.unread_topics' => '{count}个未读主题',
