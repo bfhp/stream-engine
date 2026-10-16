@@ -11,6 +11,7 @@ import {
     formatTime,
     hardenMessageLinks,
     initialsFromName,
+    meaningfulImageName,
     nameColorStyle,
     pad,
     messageAnnouncementText,
@@ -470,5 +471,28 @@ describe("messageAnnouncementText()", () => {
         const text = messageAnnouncementText({ text: "a".repeat(300), attachment: null });
         expect(text).toHaveLength(200);
         expect(text.endsWith("…")).toBe(true);
+    });
+});
+
+describe("meaningfulImageName()", () => {
+    it.each([
+        ["floor-plan_v2.png", "floor plan v2"],
+        ["Отпуск в горах.jpg", "Отпуск в горах"],
+        ["menu.webp", "menu"],
+    ])("keeps a descriptive name: %s", (file, expected) => {
+        expect(meaningfulImageName(file)).toBe(expected);
+    });
+
+    it.each([
+        "IMG_2041.JPG",
+        "PXL_20261016_101112.jpg",
+        "Screenshot 2026-10-16 at 10.11.12.png",
+        "Снимок экрана 2026-10-16 в 10.11.12.png",
+        "photo_5.jpg",
+        "WhatsApp Image 2026-10-16 at 10.11.12.jpeg",
+        "1697450000123.png",
+        "3f2b9c1e-7a4d-4e1b-9c2a-0d5e6f7a8b9c.jpg",
+    ])("drops a generic name: %s", (file) => {
+        expect(meaningfulImageName(file)).toBe("");
     });
 });

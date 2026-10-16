@@ -62,6 +62,9 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Images attached to messages are described for screen readers by their
+  sender and a meaningful file name ("Image from Anna: floor plan") instead
+  of the raw file name such as `IMG_2041.JPG`.
 - At 320 CSS px the administration pages and menus tables scroll in their
   own box instead of widening the page; badges keep the width of their text
   with larger text spacing; the latest-topic link in the `bootstrap` forum

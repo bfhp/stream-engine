@@ -236,3 +236,18 @@ export function messageAnnouncementText(m: { text: string; attachment: { origina
     if (!text) return m.attachment?.original_name ?? '';
     return text.length > ANNOUNCEMENT_MAX_CHARS ? `${text.slice(0, ANNOUNCEMENT_MAX_CHARS - 1)}…` : text;
 }
+
+/*
+ * Camera, phone and screenshot names ("IMG_2041", "PXL_20261016_101112",
+ * "Screenshot 2026-10-16 at 10.11.12", "photo_5", a hash) say nothing about
+ * the picture, so they are left out of its text alternative.
+ */
+const GENERIC_IMAGE_NAME = /^(?:(?:img|image|dsc[fn]?|dcim|pxl|mvimg|photo|pic|picture|scan|screenshot|screen shot|снимок экрана|скриншот|фото|изображение|whatsapp image|telegram|signal)[\s_\-.]*)?(?:[\d\s_\-.:()]|at|в)*$|^[0-9a-f-]{12,}$/iu;
+
+/** The file name of an image as words ("floor-plan_v2.png" -> "floor plan v2"),
+ *  or "" when the name is generic. */
+export function meaningfulImageName(fileName: string): string {
+    const base = fileName.replace(/\.[a-z0-9]{2,5}$/i, '').trim();
+    if (!base || GENERIC_IMAGE_NAME.test(base)) return '';
+    return base.replace(/[_\-]+/g, ' ').replace(/\s+/g, ' ').trim();
+}

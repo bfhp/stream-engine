@@ -14,6 +14,7 @@ import {
     formatTime,
     hardenMessageLinks,
     initialsFromName,
+    meaningfulImageName,
     messageAnnouncementText,
     stripTags,
 } from "./messenger-format";
@@ -852,14 +853,32 @@ export function initMessages() {
         data.deleted_ids.forEach(id => removeMessageFromView(id));
     }
 
-    function renderAttachment(a: ApiAttachment): string {
+    /*
+     * Text alternative of an image in a message (WCAG 1.1.1). Asking people
+     * to describe every picture in a private chat is too much, so it names
+     * what can be known: who sent it, and the file name when that says
+     * something ("Image from Anna: floor plan"); camera names like
+     * "IMG_2041" are left out. The image is the link that opens it, so the
+     * text also says it opens in a new tab.
+     */
+    function imageAttachmentAlt(a: ApiAttachment, m: ApiMessage): string {
+        const file = meaningfulImageName(a.original_name);
+        const own = m.user_id === currentUserId;
+        const name = activeParticipants[m.user_id]?.displayName ?? '';
+        const key = own
+            ? (file ? 'js.messenger.image_own_named' : 'js.messenger.image_own')
+            : (file ? 'js.messenger.image_from_named' : 'js.messenger.image_from');
+        return trans(key, { name, file });
+    }
+
+    function renderAttachment(a: ApiAttachment, m: ApiMessage): string {
         // Server-built (`/uploads/` + a generated path), but this is an
         // attribute in a template string, so escape it like everything else.
         const url = cms.escapeHtml(a.url);
         if (a.mime.startsWith('image/')) {
             return `
                 <a class="msgr-attachment-image-link" href="${url}" target="_blank" rel="noopener">
-                    <img class="msgr-attachment-image" src="${url}" alt="${cms.escapeHtml(a.original_name)}" loading="lazy">
+                    <img class="msgr-attachment-image" src="${url}" alt="${cms.escapeHtml(imageAttachmentAlt(a, m))}" loading="lazy">
                 </a>`;
         }
         if (a.mime.startsWith('audio/')) {
@@ -924,7 +943,7 @@ export function initMessages() {
             ? `<i class="bi msgr-read-status ${readStatus ? 'bi-check-all is-read' : 'bi-check'}" data-read-status title="${trans(readStatus ? 'js.messenger.read' : 'js.messenger.sent')}"></i>`
             : '';
 
-        const attachmentHtml = m.attachment ? renderAttachment(m.attachment) : '';
+        const attachmentHtml = m.attachment ? renderAttachment(m.attachment, m) : '';
 
         return `
             ${renderMessageActions(m, isOwn)}

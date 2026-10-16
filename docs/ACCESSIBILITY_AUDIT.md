@@ -35,14 +35,14 @@ The results use the terms of the
 | Partially Supports | 7 |
 | Does Not Support | 0 |
 | Not Applicable | 4 |
-| Not Evaluated, automated checks pass | 6 |
-| Not Evaluated | 3 |
+| Not Evaluated, automated checks pass | 7 |
+| Not Evaluated | 2 |
 
 ### 1. Perceivable
 
 | Criterion | Level | Result | Remarks |
 | --- | --- | --- | --- |
-| 1.1.1 Non-text Content | A | Not Evaluated | Automated checks pass. Icon-only controls have translated names. Images in posts are described by their caption and get `alt=""`. Audio attachments in messages are named after the file. Open: image attachments in messages use the file name as `alt` and have no caption; avatars, covers and the CAPTCHA need review; older content may keep file-name `alt` text. |
+| 1.1.1 Non-text Content | A | Not Evaluated | Automated checks pass. Icon-only controls have translated names. Images in posts are described by their caption and get `alt=""`. Audio attachments in messages are named after the file. Images attached to messages are described by their sender and, when it says something, the file name ("Image from Anna: floor plan"); camera and screenshot names are left out, and people are not asked to caption images in private messages. Open: avatars, covers and the CAPTCHA need review; older content may keep file-name `alt` text. |
 | 1.2.1 Audio-only and Video-only (Prerecorded) | A | Supports | Audio in blogs and communities is music, for which the track title is the alternative; the player shows it (file name or post title). Reading artist and title from ID3 tags is planned in `docs/TODO.md`. Audio attached to messages is user content. |
 | 1.2.2 Captions (Prerecorded) | A | Not Applicable | There is no video player, and the HTML sanitizer removes `<video>`, `<iframe>` and `<embed>`. Message attachments are images, audio, or downloadable files. Revisit if video or embeds are added. |
 | 1.2.3 Audio Description or Media Alternative (Prerecorded) | A | Not Applicable | As 1.2.2. |
@@ -60,14 +60,14 @@ The results use the terms of the
 | 1.4.5 Images of Text | AA | Supports | No text is shown as an image in the interface. |
 | 1.4.10 Reflow | AA | Partially Supports | Checked at 320 CSS px by the scan: home, sign-in dialog, profile, forum list, forum, topic, blog post, messages (inbox and a conversation), and seven administration screens with the navigation closed (dashboard, feeds, pages, settings, users, scheduler, page editor); wide tables may scroll in their own container. Not yet reviewed: editors other than the page editor, community pages. Fixed: the pages and menus tables in the administration panel widened the whole page at 320 px; they now scroll in their own box. |
 | 1.4.11 Non-text Contrast | AA | Partially Supports | Focus indicators are checked for 3:1 in the keyboard walk. Not yet reviewed: field borders, checkboxes, switch tracks, icons without text, dashboard charts. |
-| 1.4.12 Text Spacing | AA | Not Evaluated | A scan check applies the WCAG spacing (line height 1.5, paragraph spacing 2, letter 0.12, word 0.16) and looks for clipped text on the home page, sign-in dialog, a forum topic, a blog post, and the administration dashboard, settings and feeds. Clamped excerpts are skipped: the full text is one link away. First run found the type and visibility badges in the feeds list losing their last letters; badges now keep the width of their text. |
+| 1.4.12 Text Spacing | AA | Not Evaluated | Automated checks pass. A scan check applies the WCAG spacing (line height 1.5, paragraph spacing 2, letter 0.12, word 0.16) and looks for clipped text on the home page, sign-in dialog, a forum topic, a blog post, and the administration dashboard, settings and feeds. Clamped excerpts are skipped: the full text is one link away. First run found the type and visibility badges in the feeds list losing their last letters; badges now keep the width of their text. |
 | 1.4.13 Content on Hover or Focus | AA | Supports | Administration tooltips (Mantine) close with Escape and now stay open while the pointer is over them; they also show on keyboard focus. The `bootstrap` theme's tooltips (share buttons) now close with Escape and stay open while hovered; the `default` theme uses the browser's own `title` tooltips. The mention popup closes with Escape. Menus and popovers open on click, not hover. |
 
 ### 2. Operable
 
 | Criterion | Level | Result | Remarks |
 | --- | --- | --- | --- |
-| 2.1.1 Keyboard | A | Partially Supports | The keyboard walk passes on ten administration screens and the profile. The settings select list is flagged by axe (`scrollable-region-focusable`, in `tests/a11y/baseline.json`), but focus stays in the input and the arrow keys reach every option; a scan check now confirms each option scrolls into view. The Chonky file browser opens files with Enter but moves between them only with Tab, not the arrow keys; that meets the criterion but is slow in large folders. To review: audio player, Trix. |
+| 2.1.1 Keyboard | A | Partially Supports | The keyboard walk passes on ten administration screens and the profile. The settings select list is flagged by axe (`scrollable-region-focusable`, in `tests/a11y/baseline.json`), but focus stays in the input and the arrow keys reach every option; a scan check now confirms each option scrolls into view. The Chonky file browser opens files with Enter but moves between them only with Tab, not the arrow keys; that meets the criterion but is slow in large folders. To review: audio player, Trix. Arrow keys and list roles for the file browser are planned in `docs/TODO.md`. |
 | 2.1.2 No Keyboard Trap | A | Not Evaluated | Automated checks pass. Tab leaves Monaco after Ctrl+M (Ctrl+Shift+M on macOS), as the hint next to each editor says; the keyboard walk uses that toggle. To review: Trix, audio player. |
 | 2.1.4 Character Key Shortcuts | A | Supports | Key handlers use Enter, Escape, Tab, Backspace and arrows. The only character key, the comma in the tag field, works only while that field has focus. Trix and Monaco shortcuts use Ctrl/Cmd and work only inside the editor. |
 | 2.2.1 Timing Adjustable | A | Supports | Sessions last 30 days. Administration notifications stay 8 s, pause while hovered, and errors stay until closed. Site notifications in both themes now do the same (they closed after 5 s, errors included, and did not pause in the `default` theme). |
@@ -110,7 +110,7 @@ The results use the terms of the
 
 | Criterion | Level | Result | Remarks |
 | --- | --- | --- | --- |
-| 4.1.2 Name, Role, Value | A | Partially Supports | Automated checks pass except Chonky's file list (`aria-required-children`, in `tests/a11y/baseline.json`), so the file browser screen does not meet the criterion. To review with a screen reader: tabs, menus, switches, Trix, audio player. |
+| 4.1.2 Name, Role, Value | A | Partially Supports | Automated checks pass except Chonky's file list (`aria-required-children`, in `tests/a11y/baseline.json`), so the file browser screen does not meet the criterion. To review with a screen reader: tabs, menus, switches, Trix, audio player. Arrow keys and list roles for the file browser are planned in `docs/TODO.md`. |
 | 4.1.3 Status Messages | AA | Not Evaluated | Administration notifications are `role="alert"`; site toasts sit in a live region in both themes; search progress and the save messages on every profile tab use `role="status"`. Messages that arrive in the open conversation were not announced; a live region now reads the sender and text (up to three at a time, own messages left out). To confirm with a screen reader. |
 
 ## Updating this report
