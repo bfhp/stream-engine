@@ -3430,10 +3430,10 @@ class UsersController extends AbstractController
         if ($token) {
             $row = $this->userService->getPasswordResetToken($token);
             if (!$row) {
-                throw new NotFoundException('Invalid token');
+                throw new NotFoundException($this->tm->trans('user.password_reset_invalid'));
             }
             if ($row['created_at'] < time() - 3600) {
-                throw new NotFoundException('Token expired');
+                throw new NotFoundException($this->tm->trans('user.password_reset_expired'));
             }
 
         }

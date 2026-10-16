@@ -29,6 +29,13 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- Error messages now say what to do next in every locale: an expired session
+  asks to reload the page, stale password-reset and confirmation links ask for
+  a new one, failed sign-ins suggest checking or resetting the password,
+  upload and permission errors name the remedy, and the site's fallback
+  messages for failed requests suggest checking the connection. The password
+  reset page no longer answers in English only ("Invalid token", "Token
+  expired").
 - Global moderators can now read, edit and delete all content regardless of
   visibility — members-only community posts, friends-only blog posts, and
   private posts and drafts — and are exempt from the 24-hour edit window,

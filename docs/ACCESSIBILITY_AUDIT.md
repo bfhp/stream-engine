@@ -32,11 +32,11 @@ The results use the terms of the
 | Result | Criteria |
 | --- | ---: |
 | Supports | 21 |
-| Partially Supports | 10 |
+| Partially Supports | 11 |
 | Does Not Support | 0 |
 | Not Applicable | 4 |
 | Not Evaluated, automated checks pass | 7 |
-| Not Evaluated | 13 |
+| Not Evaluated | 12 |
 
 ### 1. Perceivable
 
@@ -101,7 +101,7 @@ The results use the terms of the
 | 3.2.6 Consistent Help | A | Supports | The feedback link is in the same place on every page. |
 | 3.3.1 Error Identification | A | Partially Supports | Failed sign-in is covered by the scan. To review: registration, topic form, profile and administration forms (error text, `aria-invalid`, link to the field). |
 | 3.3.2 Labels or Instructions | A | Partially Supports | Registration states the password rule. The profile's email and password form and the password reset form did not; they now state the length rule, why the current password is needed and that a new email needs confirming, each linked to its field. To review: the remaining forms. |
-| 3.3.3 Error Suggestion | AA | Not Evaluated | |
+| 3.3.3 Error Suggestion | AA | Partially Supports | Error messages say what to do next, in all locales: an expired session (CSRF) asks to reload the page, invalid or expired reset and confirmation links ask for a new link (the reset page no longer shows English-only "Invalid token"/"Token expired"), a failed sign-in suggests checking or resetting the password, upload errors name the remedy, temporary failures say to try later, and the site's 29 fallback messages for failed requests suggest checking the connection. Field validation messages already state the rule. Not changed yet: administration messages; to review: the remaining forms. |
 | 3.3.4 Error Prevention (Legal, Financial, Data) | AA | Not Evaluated | |
 | 3.3.7 Redundant Entry | A | Supports | Nothing asks again for information given earlier in the same process. Password reset no longer asks for the new password twice; a "Show password" button catches typos instead. |
 | 3.3.8 Accessible Authentication (Minimum) | AA | Partially Supports | Sign-in allows pasting and password managers, and every password field has a "Show password" button. Changing the email or password asks for the current password, which a password manager fills in. Registration can use a CAPTCHA: Turnstile usually needs no task, hCaptcha may show an image puzzle. Decide whether to recommend Turnstile or document the alternative. |

@@ -383,7 +383,7 @@ final class UsersControllerAuthPagesTest extends TestCase
         $db->method('fetchOne')->willReturn(null);
 
         $this->expectException(NotFoundException::class);
-        $this->expectExceptionMessage('Invalid token');
+        $this->expectExceptionMessage((new TranslationManager('ru', 'en'))->trans('user.password_reset_invalid'));
 
         $this->makeModule($db)->show($this->page('user.retrieve'));
     }
@@ -400,7 +400,7 @@ final class UsersControllerAuthPagesTest extends TestCase
         $db->method('fetchOne')->willReturn(['created_at' => time() - 3601]);
 
         $this->expectException(NotFoundException::class);
-        $this->expectExceptionMessage('Token expired');
+        $this->expectExceptionMessage((new TranslationManager('ru', 'en'))->trans('user.password_reset_expired'));
 
         $this->makeModule($db)->show($this->page('user.retrieve'));
     }

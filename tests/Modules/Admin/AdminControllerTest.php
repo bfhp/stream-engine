@@ -2365,7 +2365,7 @@ final class AdminControllerTest extends TestCase
         $_FILES['file'] = ['error' => UPLOAD_ERR_OK];
 
         $this->expectException(ValidationException::class);
-        $this->expectExceptionMessage('CSRF missing');
+        $this->expectExceptionMessage((new TranslationManager('en', 'en'))->trans('security.csrf_missing'));
 
         $this->makeModule()->callApi($this->makeApiPage('admin.file-browser', ['GET', 'POST']));
     }

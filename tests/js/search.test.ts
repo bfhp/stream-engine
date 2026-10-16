@@ -308,7 +308,7 @@ describe("failures", () => {
         await load("магия");
 
         expect(toast).toHaveBeenCalledWith(
-            expect.objectContaining({ type: "warning", message: "Too many requests." })
+            expect.objectContaining({ type: "warning", message: "Too many searches in a short time. Wait a moment and try again." })
         );
     });
 
@@ -318,14 +318,14 @@ describe("failures", () => {
         await load("магия");
 
         expect(toast).toHaveBeenCalledWith(
-            expect.objectContaining({ type: "danger", message: "Search error" })
+            expect.objectContaining({ type: "danger", message: "Search failed. Try again later." })
         );
     });
 
     it("offers retry instead of leaving the loading placeholder after failure", async () => {
         fetchMock.mockResolvedValue({ ok: false, status: 500 });
         await load("магия");
-        expect(results().textContent).toContain("Unable to download the results");
+        expect(results().textContent).toContain("The results could not be loaded.");
         expect(document.querySelector("button")?.textContent).toBe("Try again");
     });
 
@@ -336,7 +336,7 @@ describe("failures", () => {
         await load("магия");
 
         expect(toast).toHaveBeenCalledWith(
-            expect.objectContaining({ type: "danger", message: "Network error" })
+            expect.objectContaining({ type: "danger", message: "Network error. Check your connection and try again." })
         );
         expect(logged).toHaveBeenCalled();
     });
