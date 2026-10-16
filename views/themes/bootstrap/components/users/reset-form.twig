@@ -6,7 +6,6 @@
     <input type="hidden" name="token" value="{{ token }}">
 
     {% set passwordId = 'resetPassword' %}
-    {% set password2Id = 'resetPassword2' %}
 
     {% block reset_password %}
         <div class="mb-4">
@@ -22,29 +21,15 @@
                     required
                     autocomplete="new-password"
                     minlength="10"
-                    placeholder="{{ trans('view.users.reset.form.01') }}"
+                    maxlength="255"
+                    aria-describedby="resetPasswordHelp"
             >
+            <div id="resetPasswordHelp" class="form-text">{{ trans('view.users.register.form.04') }}</div>
         </div>
     {% endblock %}
 
-    {% block reset_password_confirm %}
-        <div class="mb-4">
-            <label for="{{ password2Id }}" class="form-label">
-                {{ trans('view.users.reset.form.02') }}
-            </label>
-
-            <input
-                    class="form-control"
-                    type="password"
-                    id="{{ password2Id }}"
-                    name="password2"
-                    required
-                    autocomplete="new-password"
-                    minlength="10"
-                    placeholder="{{ trans('view.users.reset.form.02') }}"
-            >
-        </div>
-    {% endblock %}
+    {# No second field: the "Show password" button catches typos (shared/password-toggle.ts). #}
+    {% block reset_password_confirm %}{% endblock %}
 
     {% block reset_submit %}
         <button type="submit" class="btn btn-primary">

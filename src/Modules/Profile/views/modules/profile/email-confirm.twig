@@ -1,0 +1,20 @@
+{% extends "layouts/simple.twig" %}
+
+{% block content %}
+    <div class="{% block email_confirm_container_class %}ui-container{% endblock %}">
+        <h1 class="{% block email_confirm_title_class %}profile-unsubscribe-title{% endblock %}">{{ trans('profile.email_confirm_title') }}</h1>
+
+        {% if confirmedEmail %}
+            <p role="status">{{ trans('view.profile.email.confirm.02', {email: confirmedEmail}) }}</p>
+        {% elseif error %}
+            <p role="alert">{{ error }}</p>
+        {% elseif pendingEmail %}
+            <p>{{ trans('view.profile.email.confirm.01', {email: pendingEmail}) }}</p>
+            <form method="post">
+                <button type="submit" class="{% block email_confirm_button_class %}ui-button ui-button--primary{% endblock %}">{{ trans('view.profile.email.confirm.04') }}</button>
+            </form>
+        {% else %}
+            <p>{{ trans('view.profile.email.confirm.03') }}</p>
+        {% endif %}
+    </div>
+{% endblock %}

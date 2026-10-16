@@ -67,6 +67,28 @@ final readonly class UserSessionRepository
     }
 
     /**
+     * Ends every session of a member except, optionally, the one making the
+     * request - used after a password change, so a device that knew the old
+     * password is signed out while the person changing it stays signed in.
+     *
+     * Uses index: user_id (user_id)
+     */
+    public function deleteForUserExcept(int $userId, ?string $keepTokenHash): int
+    {
+        if ($keepTokenHash === null) {
+            return $this->db->execute(
+                'DELETE FROM user_sessions WHERE user_id = ?',
+                [$userId]
+            );
+        }
+
+        return $this->db->execute(
+            'DELETE FROM user_sessions WHERE user_id = ? AND token_hash <> ?',
+            [$userId, $keepTokenHash]
+        );
+    }
+
+    /**
      * Marks a session as still in use - the write half of presence, and the
      * only thing that keeps its owner inside
      * UserService::ONLINE_WINDOW_SECONDS.

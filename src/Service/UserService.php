@@ -26,6 +26,9 @@ use Twig\Error\SyntaxError;
 final class UserService
 {
     private const int MIN_PASSWORD_LENGTH = 10;
+
+    /** How long a link confirming a new email address stays valid. */
+    public const int EMAIL_CHANGE_TTL_SECONDS = 86400;
     private const int PUBLIC_USERS_PER_PAGE = 20;
 
     /**
@@ -475,6 +478,7 @@ final class UserService
         FROM email_verifications
         WHERE token_hash = ?
           AND expires_at > UNIX_TIMESTAMP()
+          AND new_email IS NULL
         ',
             [$hash]
         );
@@ -624,6 +628,206 @@ final class UserService
         } catch (Exception|LoaderError|RuntimeError|SyntaxError $e) {
             throw new RuntimeException("Unable to reset password: " . $e->getMessage());
         }
+    }
+
+    // ---------------------------------------------------------------
+    // Changing a member's own email and password (Profile → Email and
+    // password). Both need the current password: without it anyone at an
+    // unattended, signed-in browser could take the account over. A new
+    // email is applied only after its owner follows the link sent to it.
+    // ---------------------------------------------------------------
+
+    /**
+     * Validates everything first and writes nothing on a validation error, so
+     * a typo in the new email does not leave the password half-changed.
+     *
+     * An empty $newEmail, or the current address, leaves the email alone; an
+     * empty $newPassword leaves the password alone. At least one of them must
+     * change.
+     *
+     * Changing the password ends the member's other sessions (all but
+     * $keepSessionTokenHash) and their pending password reset links, and
+     * tells them by email.
+     *
+     * @return array{passwordChanged: bool, emailChangeRequestedFor: ?string}
+     * @throws ValidationException
+     */
+    public function updateCredentials(
+        User $user,
+        string $currentPassword,
+        string $newEmail,
+        string $newPassword,
+        ?string $keepSessionTokenHash = null,
+    ): array {
+        if ($user->isGuest()) {
+            throw new ValidationException($this->tm->trans('profile.unauthorized'));
+        }
+
+        $newEmail = trim(mb_strtolower($newEmail));
+        $changeEmail = $newEmail !== '' && $newEmail !== mb_strtolower($user->email);
+        $changePassword = $newPassword !== '';
+
+        if (! $changeEmail && ! $changePassword) {
+            throw new ValidationException($this->tm->trans('profile.security_nothing_to_change'));
+        }
+
+        if ($currentPassword === '') {
+            throw new ValidationException($this->tm->trans('profile.current_password_required'));
+        }
+
+        $row = $this->userRepository->findByEmail($user->email);
+        if ($row === null
+            || (int) $row['id'] !== $user->id
+            || ! password_verify($currentPassword, (string) $row['password_hash'])
+        ) {
+            throw new ValidationException($this->tm->trans('profile.current_password_invalid'));
+        }
+
+        if ($changePassword) {
+            $this->validatePassword($newPassword);
+        }
+
+        $siteUrl = null;
+        if ($changeEmail) {
+            $this->validateEmail($newEmail);
+
+            if ($this->userRepository->emailBelongsToAnotherUser($newEmail, $user->id)) {
+                throw new ValidationException($this->tm->trans('user.email_already_used'));
+            }
+
+            $siteUrl = $this->requireSiteUrl();
+        }
+
+        if ($changePassword) {
+            $this->db->execute(
+                'UPDATE users SET password_hash = ? WHERE id = ?',
+                [password_hash($newPassword, PASSWORD_DEFAULT), $user->id]
+            );
+            // A reset link mailed before the change would undo it.
+            $this->db->execute('DELETE FROM password_resets WHERE user_id = ?', [$user->id]);
+            $this->sessionRepository->deleteForUserExcept($user->id, $keepSessionTokenHash);
+
+            // The change has happened; a mail failure must not report it as
+            // failed, so it is logged instead of thrown.
+            try {
+                $this->mailService->send(
+                    to: $user->email,
+                    subject: $this->tm->trans('user.mail.password_changed_subject'),
+                    template: 'users/reset',
+                );
+            } catch (Exception|LoaderError|RuntimeError|SyntaxError|RuntimeException $e) {
+                error_log('Password change notice not sent: '.$e->getMessage());
+            }
+        }
+
+        if ($changeEmail) {
+            try {
+                $token = bin2hex(random_bytes(32));
+            } catch (RandomException $e) {
+                throw new RuntimeException('Unable to generate a confirmation code: '.$e->getMessage());
+            }
+
+            // Stored next to registration confirmations; `new_email` tells
+            // the two apart. One pending change per member: the newest wins.
+            $this->db->execute(
+                'DELETE FROM email_verifications WHERE user_id = ? AND new_email IS NOT NULL',
+                [$user->id]
+            );
+            $this->db->execute(
+                'INSERT INTO email_verifications (user_id, new_email, token_hash, expires_at, created_at)
+                 VALUES (?, ?, ?, UNIX_TIMESTAMP() + ?, UNIX_TIMESTAMP())',
+                [$user->id, $newEmail, hash('sha256', $token), self::EMAIL_CHANGE_TTL_SECONDS]
+            );
+
+            try {
+                $this->mailService->send(
+                    to: $newEmail,
+                    subject: $this->tm->trans('user.mail.email_change_subject'),
+                    template: 'users/email-change',
+                    context: [
+                        'confirmLink' => $siteUrl.'/confirm-email/?token='.rawurlencode($token),
+                        'email' => $newEmail,
+                    ]
+                );
+            } catch (Exception|LoaderError|RuntimeError|SyntaxError $e) {
+                throw new RuntimeException('Unable to send mail: '.$e->getMessage());
+            }
+        }
+
+        return [
+            'passwordChanged' => $changePassword,
+            'emailChangeRequestedFor' => $changeEmail ? $newEmail : null,
+        ];
+    }
+
+    /**
+     * The pending email change a confirmation link points to, if it is still
+     * valid.
+     *
+     * Uses index: token_hash (token_hash)
+     *
+     * @return array{user_id: int, new_email: string}|null
+     */
+    public function findEmailChange(string $token): ?array
+    {
+        if ($token === '') {
+            return null;
+        }
+
+        $row = $this->db->fetchOne(
+            'SELECT user_id, new_email FROM email_verifications
+             WHERE token_hash = ? AND expires_at > UNIX_TIMESTAMP() AND new_email IS NOT NULL',
+            [hash('sha256', $token)]
+        );
+
+        return $row ? ['user_id' => (int) $row['user_id'], 'new_email' => (string) $row['new_email']] : null;
+    }
+
+    /**
+     * Applies a pending email change and tells the old address. Returns the
+     * new address.
+     *
+     * Password reset links sent to the old address stop working, because
+     * that address no longer belongs to the account.
+     *
+     * @throws ValidationException
+     */
+    public function confirmEmailChange(string $token): string
+    {
+        $change = $this->findEmailChange($token);
+        if ($change === null) {
+            throw new ValidationException($this->tm->trans('user.email_change_invalid'));
+        }
+
+        $userId = $change['user_id'];
+        $newEmail = $change['new_email'];
+
+        // Someone may have registered with the address since the request.
+        if ($this->userRepository->emailBelongsToAnotherUser($newEmail, $userId)) {
+            $this->db->execute('DELETE FROM email_verifications WHERE user_id = ? AND new_email IS NOT NULL', [$userId]);
+            throw new ValidationException($this->tm->trans('user.email_already_used'));
+        }
+
+        $oldEmail = $this->userRepository->findById($userId)?->email;
+
+        $this->db->execute('UPDATE users SET email = ? WHERE id = ?', [$newEmail, $userId]);
+        $this->db->execute('DELETE FROM email_verifications WHERE user_id = ? AND new_email IS NOT NULL', [$userId]);
+        $this->db->execute('DELETE FROM password_resets WHERE user_id = ?', [$userId]);
+
+        if ($oldEmail !== null && $oldEmail !== '' && mb_strtolower($oldEmail) !== $newEmail) {
+            try {
+                $this->mailService->send(
+                    to: $oldEmail,
+                    subject: $this->tm->trans('user.mail.email_changed_subject'),
+                    template: 'users/email-changed',
+                    context: ['email' => $newEmail],
+                );
+            } catch (Exception|LoaderError|RuntimeError|SyntaxError|RuntimeException $e) {
+                error_log('Email change notice not sent: '.$e->getMessage());
+            }
+        }
+
+        return $newEmail;
     }
 
     // ---------------------------------------------------------------

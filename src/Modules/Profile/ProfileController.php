@@ -19,6 +19,7 @@ use StreamEngine\Repository\FeedRepository;
 use StreamEngine\Repository\MembershipRepository;
 use StreamEngine\Repository\UserRepository;
 use StreamEngine\Service\AccessService;
+use StreamEngine\Service\AuthService;
 use StreamEngine\Service\NotificationService;
 use StreamEngine\Service\UserService;
 use StreamEngine\View\ViewModel;
@@ -68,6 +69,10 @@ class ProfileController extends AbstractController
         PageTree $pageTree,
         UrlGenerator $urlGenerator,
         private readonly NotificationService $notifications,
+        // Optional so tests that never touch the security tab can build the
+        // controller without them; ControllerFactory always passes both.
+        private readonly ?UserService $userService = null,
+        private readonly ?AuthService $authService = null,
     ) {
         parent::__construct($db, $context);
 
@@ -110,6 +115,7 @@ class ProfileController extends AbstractController
         return match ($page->action) {
             'profile.show' => $this->showProfilePage($page),
             'profile.email.unsubscribe' => $this->showEmailUnsubscribePage($page),
+            'profile.email.confirm' => $this->showEmailConfirmPage($page),
             default => throw new ForbiddenException('Unknown page action'),
         };
     }
@@ -195,11 +201,80 @@ class ProfileController extends AbstractController
             'profile.forum.update' => $this->handleForumProfileUpdateRequest(),
             'profile.privacy.update' => $this->handlePrivacyUpdateRequest(),
             'profile.mailings.update' => $this->handleMailingsUpdateRequest(),
+            'profile.security.update' => $this->handleSecurityUpdateRequest(),
             'profile.friends' => $this->handleFriendsRequest(),
             'profile.friend.reject' => $this->handleFriendRejectRequest((int) ($args['id'] ?? 0)),
             'profile.subscriptions' => $this->handleSubscriptionsRequest(),
             default => throw new ValidationException('Unknown action'),
         };
+    }
+
+    /**
+     * /confirm-email/?token=... - the link mailed to a new address (see
+     * UserService::updateCredentials()). Like the unsubscribe page, GET only
+     * shows what will happen and the change is applied by the POST its
+     * button sends: mail scanners that open links must not change an
+     * account. No sign-in is needed; the token proves the address.
+     */
+    private function showEmailConfirmPage(Page $page): ViewModel
+    {
+        $users = $this->requireUserService();
+        $token = $this->context->query->string('token');
+        $pending = $users->findEmailChange($token);
+        $confirmedEmail = null;
+        $error = null;
+
+        if ($pending !== null && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+            try {
+                $confirmedEmail = $users->confirmEmailChange($token);
+            } catch (ValidationException $e) {
+                $error = $e->getMessage();
+                http_response_code(409);
+            }
+        } elseif ($pending === null) {
+            http_response_code(404);
+        }
+
+        return ViewModel::fromPage(
+            $page,
+            'modules/profile/email-confirm.twig',
+            [
+                'title' => $this->tm->trans('profile.email_confirm_title'),
+                'pendingEmail' => $pending['new_email'] ?? null,
+                'confirmedEmail' => $confirmedEmail,
+                'error' => $error,
+            ]
+        );
+    }
+
+    /**
+     * POST /api/v1/my/security - the "Email and password" tab. Needs the
+     * current password; see UserService::updateCredentials() for what each
+     * change does.
+     *
+     * @throws ForbiddenException
+     * @throws ValidationException
+     */
+    private function handleSecurityUpdateRequest(): void
+    {
+        $data = $this->verifiedProfileInput();
+        $text = static fn (mixed $value): string => is_string($value) ? $value : '';
+
+        $result = $this->requireUserService()->updateCredentials(
+            $this->context->user,
+            $text($data['current_password'] ?? null),
+            $text($data['email'] ?? null),
+            $text($data['password'] ?? null),
+            $this->authService?->currentSessionTokenHash(),
+        );
+
+        echo Formatter::json(['success' => true] + $result);
+    }
+
+    private function requireUserService(): UserService
+    {
+        return $this->userService
+            ?? throw new \RuntimeException('UserService is not available to the profile module.');
     }
 
     /**
@@ -515,6 +590,25 @@ class ProfileController extends AbstractController
             )
         );
 
+        // The link that confirms a new email address. Public: it is opened
+        // from a mailbox, often on another device.
+        $pageTree->add(
+            new Page(
+                id: $pageTree->getMaxPageId(),
+                parentId: 1,
+                pattern: 'confirm-email',
+                pageName: 'Confirm email',
+                settings: null,
+                feedType: null,
+                listFeedType: null,
+                feedId: null,
+                requestMethods: ['GET', 'POST'],
+                responseType: 'html',
+                accessRule: AccessService::ACCESS_PUBLIC,
+                action: 'profile.email.confirm',
+            )
+        );
+
         $pageId = $pageTree->getMaxPageId();
         $pageTree->add(
             Page::api(
@@ -556,6 +650,17 @@ class ProfileController extends AbstractController
                 pattern: 'mailings',
                 requestMethods: ['POST'],
                 action: 'profile.mailings.update'
+            )
+        );
+
+        $securityPageId = $pageTree->getMaxPageId();
+        $pageTree->add(
+            Page::api(
+                id: $securityPageId,
+                parentId: $pageId,
+                pattern: 'security',
+                requestMethods: ['POST'],
+                action: 'profile.security.update'
             )
         );
 

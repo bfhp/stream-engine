@@ -5,6 +5,32 @@ import { TAB_SHOWN, ui, type SlotData } from "../shared/ui";
 
 const cms = window.CMS;
 
+/**
+ * What a successful save says. The security tab reports what actually
+ * happened: a new password is in force at once, a new email only after its
+ * owner confirms it from the mail just sent.
+ */
+export function savedMessage(form: HTMLFormElement, result: unknown): string {
+    if (!form.hasAttribute("data-profile-security-form") || !result || typeof result !== "object") {
+        return trans("js.profile.saved");
+    }
+
+    const { passwordChanged, emailChangeRequestedFor } = result as {
+        passwordChanged?: boolean;
+        emailChangeRequestedFor?: string | null;
+    };
+    const parts: string[] = [];
+
+    if (passwordChanged) {
+        parts.push(trans("js.profile.password_changed"));
+    }
+    if (emailChangeRequestedFor) {
+        parts.push(trans("js.profile.email_change_sent", { email: emailChangeRequestedFor }));
+    }
+
+    return parts.length > 0 ? parts.join(" ") : trans("js.profile.saved");
+}
+
 function bindProfileForm(form: HTMLFormElement) {
     const status = form.querySelector('[data-profile-status], [data-profile-personal-status]') as HTMLElement | null;
     const tabButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-bs-toggle="pill"]'));
@@ -99,14 +125,24 @@ function bindProfileForm(form: HTMLFormElement) {
         setStatus(trans("js.common.saving"));
 
         try {
-            await cms.api(form.action, {
+            const result = await cms.api(form.action, {
                 method: "POST",
                 data,
             });
 
+            // Passwords are never kept in the form after a successful save.
+            form.querySelectorAll<HTMLInputElement>("[data-profile-clear-on-save]").forEach((input) => {
+                input.value = "";
+            });
+            // A new email is pending until confirmed, so the field goes back to
+            // the address the account still has.
+            form.querySelectorAll<HTMLInputElement>("[data-profile-reset-on-save]").forEach((input) => {
+                input.value = input.defaultValue;
+            });
+
             snapshot = new FormData(form);
             dirty = false;
-            setStatus(trans("js.profile.saved"), "success");
+            setStatus(savedMessage(form, result), "success");
         } catch (error: any) {
             setStatus(getApiErrorMessage(error, trans("js.profile.save_failed")), "danger");
         } finally {

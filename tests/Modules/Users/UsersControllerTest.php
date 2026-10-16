@@ -3796,6 +3796,9 @@ final class UsersControllerTest extends TestCase
 
         $this->assertStringContainsString('DELETE u', $captured[1]);
         $this->assertStringContainsString('INNER JOIN email_verifications', $captured[1]);
+        // A pending email change of a deactivated member is not an unfinished
+        // registration: that account must survive the sweep.
+        $this->assertStringContainsString('ev.new_email IS NULL', $captured[1]);
         $this->assertStringContainsString('u.is_active = 0', $captured[1]);
         $this->assertStringContainsString(
             'u.created_at < UNIX_TIMESTAMP() - 24 * 60 * 60',

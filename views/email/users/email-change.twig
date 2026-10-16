@@ -1,0 +1,12 @@
+{% extends "layout.twig" %}
+
+{% block content %}
+    <h1>{{ trans('mail.user.greeting') }}</h1>
+    <p>{{ trans('mail.user.email_change_intro', {email: email}) }}</p>
+    <p>
+        <a href="{{ confirmLink }}" class="btn">
+            {{ trans('mail.user.email_change_confirm') }}
+        </a>
+    </p>
+    <p>{{ trans('mail.user.email_change_ignore') }}</p>
+{% endblock %}

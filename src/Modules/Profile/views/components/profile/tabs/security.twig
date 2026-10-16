@@ -1,16 +1,25 @@
 {% extends 'components/ui/tab-pane.twig' %}
 
 {% block tab_content %}
-    <form method="post" action="/profile/security">
+    <form method="post" action="/api/v1/my/security" data-profile-form data-profile-security-form>
         <div class="ui-field">
             <label class="ui-label" for="profileEmail">{{ trans('view.profile.tabs.security.01') }}</label>
-            <input id="profileEmail" type="email" name="email" autocomplete="email" class="ui-input" value="{{ user.email }}">
+            <input id="profileEmail" type="email" name="email" autocomplete="email" maxlength="255" class="ui-input" value="{{ user.email }}" aria-describedby="profileEmailHelp" data-profile-reset-on-save>
+            <div id="profileEmailHelp" class="ui-help">{{ trans('view.profile.tabs.security.07') }}</div>
         </div>
         <div class="ui-field">
             <label class="ui-label" for="profilePassword">{{ trans('view.profile.tabs.security.02') }}</label>
-            <input id="profilePassword" type="password" name="password" autocomplete="new-password" minlength="10" maxlength="255" class="ui-input" aria-describedby="profilePasswordHelp">
+            <input id="profilePassword" type="password" name="password" autocomplete="new-password" minlength="10" maxlength="255" class="ui-input" aria-describedby="profilePasswordHelp" data-profile-clear-on-save>
             <div id="profilePasswordHelp" class="ui-help">{{ trans('view.profile.tabs.security.04') }}</div>
         </div>
-        <button class="ui-button ui-button--danger">{{ trans('view.profile.tabs.security.03') }}</button>
+        <div class="ui-field">
+            <label class="ui-label" for="profileCurrentPassword">{{ trans('view.profile.tabs.security.05') }}</label>
+            <input id="profileCurrentPassword" type="password" name="current_password" autocomplete="current-password" maxlength="255" class="ui-input" required aria-describedby="profileCurrentPasswordHelp" data-profile-clear-on-save>
+            <div id="profileCurrentPasswordHelp" class="ui-help">{{ trans('view.profile.tabs.security.06') }}</div>
+        </div>
+        <div class="profile-actions">
+            <button class="ui-button ui-button--primary" type="submit">{{ trans('view.profile.tabs.security.03') }}</button>
+            <span class="profile-status" role="status" data-profile-status></span>
+        </div>
     </form>
 {% endblock %}

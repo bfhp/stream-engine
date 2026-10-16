@@ -28,17 +28,10 @@ function fieldValue(form: HTMLFormElement, name: string): string {
 
             if (submitBtn.disabled) return;
 
+            // One password field: the "Show password" button (see
+            // shared/password-toggle.ts) is how a typo gets caught.
             const password = fieldValue(form, 'password');
-            const password2 = fieldValue(form, 'password2');
             const token = fieldValue(form, 'token');
-
-            if (password !== password2) {
-                cms.toast({
-                    message: trans("js.auth.passwords_mismatch"),
-                    type: "danger"
-                });
-                return;
-            }
 
             submitBtn.disabled = true;
 

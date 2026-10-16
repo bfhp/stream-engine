@@ -109,6 +109,18 @@ final class AuthService
         setcookie(self::COOKIE_NAME, '', time() - 3600, '/');
     }
 
+    /**
+     * The hash of this request's session token, or null without one - lets a
+     * caller end a member's other sessions while keeping this one (see
+     * UserSessionRepository::deleteForUserExcept()).
+     */
+    public function currentSessionTokenHash(): ?string
+    {
+        $token = $_COOKIE[self::COOKIE_NAME] ?? null;
+
+        return is_string($token) && $token !== '' ? hash('sha256', $token) : null;
+    }
+
     public function currentUser(): User
     {
         if (!isset($_COOKIE[self::COOKIE_NAME])) {

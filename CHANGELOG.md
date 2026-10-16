@@ -9,6 +9,9 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Password fields have a "Show password" button (sign-in, registration,
+  password reset, profile), so a new password is entered once: password reset
+  no longer asks for it twice.
 - Comment and reply author names now link to the author's profile page,
   including comments loaded without a page reload.
 - MySQL 8.4 LTS or newer is now supported alongside MariaDB 10.10 or newer.
@@ -39,6 +42,16 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Profile → Email and password saved nothing: the form posted to a route
+  that did not exist. It now changes the email and password through
+  `POST /api/v1/my/security`, asks for the current password, applies a new
+  email only after the link mailed to it is followed (`/confirm-email/`; pending
+  changes are stored in `email_verifications`, which gains a `new_email`
+  column in migration `20261016000000_add_email_verification_new_email`), tells
+  the old address, and after a password change signs out the member's other
+  devices and voids pending reset links. The new-password fields now state the
+  length rule (WCAG 3.3.2), and profile save messages are announced to screen
+  readers (`role="status"`, WCAG 4.1.3).
 - English 21, 101, … took the singular on the server.
 - Arabic 0, 2 and 100+ got the wrong noun form.
 - Russian file sizes in the browser showed the catalog key.

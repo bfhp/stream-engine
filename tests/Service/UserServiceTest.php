@@ -765,6 +765,238 @@ final class UserServiceTest extends TestCase
     }
 
     /* ------------------------------------------------------------------ */
+    /* Changing email and password from the profile                        */
+    /* ------------------------------------------------------------------ */
+
+    private const string CURRENT_PASSWORD = 'current-password-1';
+
+    private function member(): User
+    {
+        return new User(7, 'user@example.com');
+    }
+
+    /** The row findByEmail() reads for the signed-in member. */
+    private function memberRow(): array
+    {
+        return [
+            'id' => 7,
+            'email' => 'user@example.com',
+            'password_hash' => password_hash(self::CURRENT_PASSWORD, PASSWORD_DEFAULT),
+            'role' => 'user',
+            'is_active' => 1,
+        ];
+    }
+
+    public function testUpdateCredentialsAsksForTheCurrentPasswordFirst(): void
+    {
+        $userDb = $this->createMock(PdoDatabase::class);
+        $userDb->expects($this->never())->method('fetchOne');
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects($this->never())->method('execute');
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage($this->trans('profile.current_password_required'));
+
+        $this->makeService($userDb, $db)->updateCredentials($this->member(), '', '', 'new-password-123');
+    }
+
+    public function testUpdateCredentialsRefusesAWrongCurrentPasswordAndWritesNothing(): void
+    {
+        $userDb = $this->createMock(PdoDatabase::class);
+        $userDb->method('fetchOne')->willReturn($this->memberRow());
+        $userDb->expects($this->never())->method('execute');
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects($this->never())->method('execute');
+        $sessionDb = $this->createMock(PdoDatabase::class);
+        $sessionDb->expects($this->never())->method('execute');
+        $mailService = $this->createMock(MailService::class);
+        $mailService->expects($this->never())->method('send');
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage($this->trans('profile.current_password_invalid'));
+
+        $this->makeService($userDb, $db, $mailService, sessionDb: $sessionDb)
+            ->updateCredentials($this->member(), 'not-the-password', 'new@example.com', 'new-password-123');
+    }
+
+    public function testUpdateCredentialsNeedsANewEmailOrPassword(): void
+    {
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage($this->trans('profile.security_nothing_to_change'));
+
+        // The tab shows the current address in the email field; sending it
+        // back unchanged is not a change.
+        $this->makeService()->updateCredentials($this->member(), self::CURRENT_PASSWORD, ' USER@example.com ', '');
+    }
+
+    public function testUpdateCredentialsValidatesTheNewPasswordBeforeWriting(): void
+    {
+        $userDb = $this->createStub(PdoDatabase::class);
+        $userDb->method('fetchOne')->willReturn($this->memberRow());
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects($this->never())->method('execute');
+
+        $this->expectException(ValidationException::class);
+
+        $this->makeService($userDb, $db)->updateCredentials($this->member(), self::CURRENT_PASSWORD, '', 'short');
+    }
+
+    public function testPasswordChangeStoresTheHashEndsOtherSessionsAndTellsTheMember(): void
+    {
+        $userDb = $this->createStub(PdoDatabase::class);
+        $userDb->method('fetchOne')->willReturn($this->memberRow());
+        $db = $this->createMock(PdoDatabase::class);
+        $sessionDb = $this->createMock(PdoDatabase::class);
+        $mailService = $this->createMock(MailService::class);
+
+        $writes = [];
+        $db->expects($this->exactly(2))->method('execute')->willReturnCallback(
+            function (string $sql, array $params = []) use (&$writes): int {
+                $writes[] = [$sql, $params];
+
+                return 1;
+            }
+        );
+        $sessionDb->expects($this->once())->method('execute')->with(
+            'DELETE FROM user_sessions WHERE user_id = ? AND token_hash <> ?',
+            [7, 'keep-this-session']
+        )->willReturn(2);
+        $mailService->expects($this->once())->method('send')->with(
+            'user@example.com',
+            $this->trans('user.mail.password_changed_subject'),
+            'users/reset'
+        );
+
+        $result = $this->makeService($userDb, $db, $mailService, sessionDb: $sessionDb)->updateCredentials(
+            $this->member(),
+            self::CURRENT_PASSWORD,
+            'user@example.com',
+            'new-password-123',
+            'keep-this-session',
+        );
+
+        $this->assertSame(['passwordChanged' => true, 'emailChangeRequestedFor' => null], $result);
+        $this->assertSame('UPDATE users SET password_hash = ? WHERE id = ?', $writes[0][0]);
+        $this->assertTrue(password_verify('new-password-123', $writes[0][1][0]));
+        $this->assertSame(7, $writes[0][1][1]);
+        // A reset link mailed earlier would otherwise undo the change.
+        $this->assertSame(['DELETE FROM password_resets WHERE user_id = ?', [7]], $writes[1]);
+    }
+
+    public function testEmailChangeIsPendingUntilTheNewAddressConfirmsIt(): void
+    {
+        $userDb = $this->createMock(PdoDatabase::class);
+        $userDb->method('fetchOne')->willReturnCallback(
+            fn (string $sql): ?array => str_contains($sql, 'id <> ?') ? null : $this->memberRow()
+        );
+        // The account keeps its address for now.
+        $userDb->expects($this->never())->method('execute');
+        $db = $this->createMock(PdoDatabase::class);
+        $mailService = $this->createMock(MailService::class);
+
+        $writes = [];
+        $db->expects($this->exactly(2))->method('execute')->willReturnCallback(
+            function (string $sql, array $params = []) use (&$writes): int {
+                $writes[] = [$sql, $params];
+
+                return 1;
+            }
+        );
+        $mailService->expects($this->once())->method('send')->with(
+            'new@example.com',
+            $this->trans('user.mail.email_change_subject'),
+            'users/email-change',
+            $this->callback(static fn (array $context): bool => $context['email'] === 'new@example.com'
+                && str_starts_with($context['confirmLink'], 'https://example.com/confirm-email/?token='))
+        );
+
+        $result = $this->makeService($userDb, $db, $mailService)->updateCredentials(
+            $this->member(),
+            self::CURRENT_PASSWORD,
+            ' New@Example.com ',
+            '',
+        );
+
+        $this->assertSame(['passwordChanged' => false, 'emailChangeRequestedFor' => 'new@example.com'], $result);
+        // Only this member's pending change is replaced, never a
+        // registration confirmation.
+        $this->assertSame(['DELETE FROM email_verifications WHERE user_id = ? AND new_email IS NOT NULL', [7]], $writes[0]);
+        $this->assertStringContainsString('INSERT INTO email_verifications (user_id, new_email', $writes[1][0]);
+        $this->assertSame(7, $writes[1][1][0]);
+        $this->assertSame('new@example.com', $writes[1][1][1]);
+        // Only the hash of the mailed token is stored.
+        $this->assertMatchesRegularExpression('/^[0-9a-f]{64}$/', $writes[1][1][2]);
+        $this->assertSame(UserService::EMAIL_CHANGE_TTL_SECONDS, $writes[1][1][3]);
+    }
+
+    public function testEmailChangeRefusesAnAddressAnotherAccountUses(): void
+    {
+        $userDb = $this->createStub(PdoDatabase::class);
+        $userDb->method('fetchOne')->willReturnCallback(
+            fn (string $sql): ?array => str_contains($sql, 'id <> ?') ? ['1' => 1] : $this->memberRow()
+        );
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects($this->never())->method('execute');
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage($this->trans('user.email_already_used'));
+
+        $this->makeService($userDb, $db)->updateCredentials($this->member(), self::CURRENT_PASSWORD, 'taken@example.com', '');
+    }
+
+    public function testConfirmEmailChangeAppliesTheAddressAndTellsTheOldOne(): void
+    {
+        $userDb = $this->createStub(PdoDatabase::class);
+        $userDb->method('fetchOne')->willReturnCallback(
+            fn (string $sql): ?array => str_contains($sql, 'id <> ?')
+                ? null
+                : ['id' => 7, 'email' => 'user@example.com', 'role' => 'user']
+        );
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects($this->once())->method('fetchOne')->with(
+            $this->stringContains('new_email IS NOT NULL'),
+            [hash('sha256', 'mailed-token')]
+        )->willReturn(['user_id' => '7', 'new_email' => 'new@example.com']);
+
+        $writes = [];
+        $db->expects($this->exactly(3))->method('execute')->willReturnCallback(
+            function (string $sql, array $params = []) use (&$writes): int {
+                $writes[] = [$sql, $params];
+
+                return 1;
+            }
+        );
+        $mailService = $this->createMock(MailService::class);
+        $mailService->expects($this->once())->method('send')->with(
+            'user@example.com',
+            $this->trans('user.mail.email_changed_subject'),
+            'users/email-changed',
+            ['email' => 'new@example.com']
+        );
+
+        $email = $this->makeService($userDb, $db, $mailService)->confirmEmailChange('mailed-token');
+
+        $this->assertSame('new@example.com', $email);
+        $this->assertSame([
+            ['UPDATE users SET email = ? WHERE id = ?', ['new@example.com', 7]],
+            ['DELETE FROM email_verifications WHERE user_id = ? AND new_email IS NOT NULL', [7]],
+            ['DELETE FROM password_resets WHERE user_id = ?', [7]],
+        ], $writes);
+    }
+
+    public function testConfirmEmailChangeRefusesAnUnknownOrExpiredToken(): void
+    {
+        $db = $this->createMock(PdoDatabase::class);
+        $db->method('fetchOne')->willReturn(null);
+        $db->expects($this->never())->method('execute');
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage($this->trans('user.email_change_invalid'));
+
+        $this->makeService(db: $db)->confirmEmailChange('stale-token');
+    }
+
+    /* ------------------------------------------------------------------ */
     /* Presence - "who is online right now" (see UserService's own note)   */
     /* ------------------------------------------------------------------ */
 

@@ -3,16 +3,25 @@
 {# Bootstrap markup of the Profile module's security.twig; same hooks (data-*, names, ids). #}
 
 {% block tab_content %}
-    <form method="post" action="/profile/security">
+    <form method="post" action="/api/v1/my/security" data-profile-form data-profile-security-form>
         <div class="mb-3">
             <label class="form-label" for="profileEmail">{{ trans('view.profile.tabs.security.01') }}</label>
-            <input id="profileEmail" type="email" name="email" autocomplete="email" class="form-control" value="{{ user.email }}">
+            <input id="profileEmail" type="email" name="email" autocomplete="email" maxlength="255" class="form-control" value="{{ user.email }}" aria-describedby="profileEmailHelp" data-profile-reset-on-save>
+            <div id="profileEmailHelp" class="form-text">{{ trans('view.profile.tabs.security.07') }}</div>
         </div>
         <div class="mb-3">
             <label class="form-label" for="profilePassword">{{ trans('view.profile.tabs.security.02') }}</label>
-            <input id="profilePassword" type="password" name="password" autocomplete="new-password" minlength="10" maxlength="255" class="form-control" aria-describedby="profilePasswordHelp">
+            <input id="profilePassword" type="password" name="password" autocomplete="new-password" minlength="10" maxlength="255" class="form-control" aria-describedby="profilePasswordHelp" data-profile-clear-on-save>
             <div id="profilePasswordHelp" class="form-text">{{ trans('view.profile.tabs.security.04') }}</div>
         </div>
-        <button class="btn btn-danger">{{ trans('view.profile.tabs.security.03') }}</button>
+        <div class="mb-3">
+            <label class="form-label" for="profileCurrentPassword">{{ trans('view.profile.tabs.security.05') }}</label>
+            <input id="profileCurrentPassword" type="password" name="current_password" autocomplete="current-password" maxlength="255" class="form-control" required aria-describedby="profileCurrentPasswordHelp" data-profile-clear-on-save>
+            <div id="profileCurrentPasswordHelp" class="form-text">{{ trans('view.profile.tabs.security.06') }}</div>
+        </div>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            <button class="btn btn-primary" type="submit">{{ trans('view.profile.tabs.security.03') }}</button>
+            <span class="small profile-status" role="status" data-profile-status></span>
+        </div>
     </form>
 {% endblock %}

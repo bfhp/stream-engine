@@ -58,7 +58,6 @@ const FORMS = `
     <form id="resetPasswordForm" action="/api/v1/retrieve">
         <input name="token" value="reset-token">
         <input name="password" value="0123456789">
-        <input name="password2" value="0123456789">
         <button type="submit">Сохранить пароль</button>
     </form>
 
@@ -118,7 +117,7 @@ beforeAll(async () => {
         "website",
         "message",
     ]);
-    assertFields("resetPasswordForm", ["token", "password", "password2"]);
+    assertFields("resetPasswordForm", ["token", "password"]);
     assertFields("forgotPasswordForm", ["email"]);
 
     const cms = { api, toast, escapeHtml: (value: unknown) => String(value ?? "") };
@@ -183,7 +182,6 @@ beforeEach(() => {
     (form("registerForm").elements.namedItem("password") as HTMLInputElement).value = "0123456789";
     (form("feedbackForm").elements.namedItem("message") as HTMLTextAreaElement).value = "д".repeat(40);
     (form("resetPasswordForm").elements.namedItem("password") as HTMLInputElement).value = "0123456789";
-    (form("resetPasswordForm").elements.namedItem("password2") as HTMLInputElement).value = "0123456789";
     (form("forgotPasswordForm").elements.namedItem("email") as HTMLInputElement).value = "anya@example.com";
     form("registerForm").dataset.successUrl = "#registration-complete";
     form("registerForm").dataset.registrationMode = "email";
@@ -397,8 +395,6 @@ describe("retrieve.ts - the reset form", () => {
 
         expect(url.endsWith("/api/v1/retrieve")).toBe(true);
         expect(options.method).toBe("PUT");
-        // password2 is a client-side confirmation and has no business being
-        // sent; the server would ignore it, but it would sit in the request log.
         expect(options.data).toEqual({ token: "reset-token", password: "0123456789" });
     });
 
@@ -413,15 +409,6 @@ describe("retrieve.ts - the reset form", () => {
         );
     });
 
-    it("refuses mismatched passwords without calling the API", async () => {
-        (form("resetPasswordForm").elements.namedItem("password2") as HTMLInputElement).value = "другой";
-
-        await submit("resetPasswordForm");
-
-        expect(api).not.toHaveBeenCalled();
-        // And the button is left alone, since nothing was sent.
-        expect(button("resetPasswordForm").disabled).toBe(false);
-    });
 });
 
 describe("retrieve.ts - the forgot form", () => {

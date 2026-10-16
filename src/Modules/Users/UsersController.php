@@ -3850,7 +3850,7 @@ class UsersController extends AbstractController
         $this->db->execute(
             "DELETE u
              FROM users u
-             INNER JOIN email_verifications ev ON ev.user_id = u.id
+             INNER JOIN email_verifications ev ON ev.user_id = u.id AND ev.new_email IS NULL
              WHERE u.is_active = 0
                AND u.created_at < UNIX_TIMESTAMP() - 24 * 60 * 60
                AND ev.expires_at <= UNIX_TIMESTAMP()",

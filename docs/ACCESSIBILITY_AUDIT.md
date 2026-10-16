@@ -31,12 +31,12 @@ The results use the terms of the
 
 | Result | Criteria |
 | --- | ---: |
-| Supports | 8 |
+| Supports | 15 |
 | Partially Supports | 10 |
 | Does Not Support | 0 |
 | Not Applicable | 4 |
-| Not Evaluated, automated checks pass | 8 |
-| Not Evaluated | 25 |
+| Not Evaluated, automated checks pass | 7 |
+| Not Evaluated | 19 |
 
 ### 1. Perceivable
 
@@ -52,12 +52,12 @@ The results use the terms of the
 | 1.3.2 Meaningful Sequence | A | Not Evaluated | Check the reading order, especially right-to-left (Arabic) and card grids. |
 | 1.3.3 Sensory Characteristics | A | Not Evaluated | |
 | 1.3.4 Orientation | AA | Not Evaluated | |
-| 1.3.5 Identify Input Purpose | AA | Not Evaluated | Automated checks pass. `autocomplete` is set on sign-in, registration, password reset and retrieval, feedback (`name`, `email`), profile (`nickname`, `url`, `bday`) and security (`email`, `new-password`) in both themes. To confirm: browsers offer the right values. |
+| 1.3.5 Identify Input Purpose | AA | Supports | `autocomplete` is set on sign-in, registration, password reset and retrieval, feedback (`name`, `email`), profile (`nickname`, `url`, `bday`) and email and password (`email`, `new-password`, `current-password`) in both themes; checked by hand that browsers offer the right values. |
 | 1.4.1 Use of Color | A | Partially Supports | The messenger's online status was colour only; offline is now a hollow ring, and both states are named for screen readers and on hover. To review: links inside text, active tabs and filters, form errors. |
 | 1.4.2 Audio Control | A | Not Evaluated | The audio player resumes playback on the next page. Check that its pause button is visible and keyboard-operable straight away. |
 | 1.4.3 Contrast (Minimum) | AA | Not Evaluated | Automated checks pass for both themes, light and dark, English and Arabic, including content pages of a seeded site. To review: hover and disabled states, placeholders, pages outside the scan. |
 | 1.4.4 Resize Text | AA | Not Evaluated | |
-| 1.4.5 Images of Text | AA | Not Evaluated | |
+| 1.4.5 Images of Text | AA | Supports | No text is shown as an image in the interface. |
 | 1.4.10 Reflow | AA | Partially Supports | Only some public pages and the profile are checked at 320 CSS px. Not yet reviewed: administration panel, messages, forums, editors. |
 | 1.4.11 Non-text Contrast | AA | Partially Supports | Focus indicators are checked for 3:1 in the keyboard walk. Not yet reviewed: field borders, checkboxes, switch tracks, icons without text, dashboard charts. |
 | 1.4.12 Text Spacing | AA | Not Evaluated | |
@@ -77,11 +77,11 @@ The results use the terms of the
 | 2.4.2 Page Titled | A | Supports | Public pages set their title in the `meta_title` block. Each administration screen sets its own window title ("Section · site title"), and the navigation marks the current item with `aria-current="page"`. |
 | 2.4.3 Focus Order | A | Not Evaluated | Automated checks pass: focus stays in dialogs and returns to the control that opened them. To review: overall order, focus after deleting an item. |
 | 2.4.4 Link Purpose (In Context) | A | Not Evaluated | |
-| 2.4.5 Multiple Ways | AA | Not Evaluated | |
+| 2.4.5 Multiple Ways | AA | Supports | Pages are reachable through the menus, search and the sitemap. |
 | 2.4.6 Headings and Labels | AA | Supports | Reviewed in the source against the English strings: headings name their section, labels name their field. The "Email" label on sign-in and feedback was not translated and now uses `view.common.email`; English labels and headings lost stray trailing full stops. The empty headings in the topic form belong to the preview, which fills them with the topic title. Translations in the other twelve locales have not been reviewed by native speakers. |
 | 2.4.7 Focus Visible | AA | Not Evaluated | Automated checks pass: every stop of the keyboard walk changes visibly. To review: pages outside the walk, Trix, Chonky. |
 | 2.4.11 Focus Not Obscured (Minimum) | AA | Supports | The page scrolls focused elements clear of the sticky header in both themes (the header height is tracked) and of the fixed administration header. Recheck if a cookie banner or another sticky bar is added. |
-| 2.5.1 Pointer Gestures | A | Not Evaluated | |
+| 2.5.1 Pointer Gestures | A | Supports | No function needs a path-based or multipoint gesture. |
 | 2.5.2 Pointer Cancellation | A | Supports | Reviewed in the source. The only action on the down event was choosing a mention suggestion; it now happens on click, so sliding off an option cancels it (covered by a Vitest test). Drag and drop acts on release and is cancelled outside the target; everything else uses native controls and click. The third-party widgets (Mantine, Chonky, Monaco, Trix) were not reviewed in detail. |
 | 2.5.3 Label in Name | A | Not Evaluated | |
 | 2.5.4 Motion Actuation | A | Supports | No function is operated by device motion. |
@@ -96,22 +96,22 @@ The results use the terms of the
 | 3.1.2 Language of Parts | AA | Not Evaluated | There is no public language switcher, and the administration settings name languages in the interface language. Open: authors cannot mark text in another language in the rich-text editor; to be described in the statement. |
 | 3.2.1 On Focus | A | Not Evaluated | |
 | 3.2.2 On Input | A | Not Evaluated | |
-| 3.2.3 Consistent Navigation | AA | Not Evaluated | |
+| 3.2.3 Consistent Navigation | AA | Supports | Both themes repeat the same navigation in the same order on every page. |
 | 3.2.4 Consistent Identification | AA | Not Evaluated | |
-| 3.2.6 Consistent Help | A | Not Evaluated | |
+| 3.2.6 Consistent Help | A | Supports | The feedback link is in the same place on every page. |
 | 3.3.1 Error Identification | A | Partially Supports | Failed sign-in is covered by the scan. To review: registration, topic form, profile and administration forms (error text, `aria-invalid`, link to the field). |
-| 3.3.2 Labels or Instructions | A | Partially Supports | Registration and password reset state the password rule. The new-password field in the profile had no instructions; it now says "at least 10 characters, leave empty to keep the current password" and is linked to the field. To review: the remaining forms. |
+| 3.3.2 Labels or Instructions | A | Partially Supports | Registration states the password rule. The profile's email and password form and the password reset form did not; they now state the length rule, why the current password is needed and that a new email needs confirming, each linked to its field. To review: the remaining forms. |
 | 3.3.3 Error Suggestion | AA | Not Evaluated | |
 | 3.3.4 Error Prevention (Legal, Financial, Data) | AA | Not Evaluated | |
-| 3.3.7 Redundant Entry | A | Not Evaluated | |
-| 3.3.8 Accessible Authentication (Minimum) | AA | Partially Supports | Sign-in allows pasting and password managers. Registration can use a CAPTCHA: Turnstile usually needs no task, hCaptcha may show an image puzzle. Decide whether to recommend Turnstile or document the alternative. |
+| 3.3.7 Redundant Entry | A | Supports | Nothing asks again for information given earlier in the same process. Password reset no longer asks for the new password twice; a "Show password" button catches typos instead. |
+| 3.3.8 Accessible Authentication (Minimum) | AA | Partially Supports | Sign-in allows pasting and password managers, and every password field has a "Show password" button. Changing the email or password asks for the current password, which a password manager fills in. Registration can use a CAPTCHA: Turnstile usually needs no task, hCaptcha may show an image puzzle. Decide whether to recommend Turnstile or document the alternative. |
 
 ### 4. Robust
 
 | Criterion | Level | Result | Remarks |
 | --- | --- | --- | --- |
 | 4.1.2 Name, Role, Value | A | Partially Supports | Automated checks pass except Chonky's file list (`aria-required-children`, in `tests/a11y/baseline.json`), so the file browser screen does not meet the criterion. To review with a screen reader: tabs, menus, switches, Trix, audio player. |
-| 4.1.3 Status Messages | AA | Not Evaluated | Search announces progress with `role="status"`. To review: administration notifications, new messages, upload errors. |
+| 4.1.3 Status Messages | AA | Not Evaluated | Search announces progress with `role="status"`; save messages on every profile tab now do too. To review: administration notifications, new messages, upload errors. |
 
 ## Updating this report
 
