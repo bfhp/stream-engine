@@ -37,6 +37,39 @@ test("own profile", async ({ page }, testInfo) => {
     await expectNoNewViolations(page, "member/profile", testInfo);
 });
 
+/* WCAG 1.4.4: a 1280 x 720 window at 200% zoom. Every navigation item must
+   be reachable; the panel scrolls when its items do not fit. */
+test("admin navigation at 200% zoom", async ({ page }) => {
+    await page.setViewportSize({ width: 640, height: 360 });
+    await page.goto("/admin/#/");
+    await waitForAdminScreen(page);
+    const links = page.locator(".admin-navbar a");
+    await expect(links.last()).toBeVisible();
+    const count = await links.count();
+    expect(count, "navigation items").toBeGreaterThan(6);
+    for (let index = 0; index < count; index++) {
+        const link = links.nth(index);
+        await link.focus();
+        await expect(link, `navigation item ${index + 1} on screen`).toBeInViewport();
+    }
+});
+
+/* At the same size the open navigation covers the screen: choosing an item
+   closes it and moves focus to the screen that opened. */
+test("admin navigation closes after choosing an item on a narrow screen", async ({ page }) => {
+    await page.setViewportSize({ width: 640, height: 360 });
+    await page.goto("/admin/#/");
+    await waitForAdminScreen(page);
+    const toggle = page.locator("header button[aria-expanded]");
+    await expect(toggle).toHaveAttribute("aria-expanded", "true");
+
+    await page.locator('.admin-navbar a[href$="/pages"]').click();
+    await expect(page).toHaveURL(/#\/pages$/);
+    await expect(toggle).toHaveAttribute("aria-expanded", "false");
+    await expect(page.locator(".admin-navbar")).not.toBeInViewport();
+    await expect(page.locator("#admin-main")).toBeFocused();
+});
+
 test("admin skip link moves keyboard focus to the main region", async ({ page }) => {
     await page.goto("/admin/#/");
     await waitForAdminScreen(page);

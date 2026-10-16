@@ -16,6 +16,18 @@ function skipToMain(event: MouseEvent<HTMLAnchorElement>): void {
     document.getElementById(ADMIN_MAIN_ID)?.focus();
 }
 
+/*
+ * Below Mantine's "sm" breakpoint (48em) the open navigation covers the whole
+ * screen, so a screen chosen from it would open unseen underneath. Mantine
+ * switches layouts at max-width: calc(48em - 0.1px).
+ */
+const NAV_OVERLAY_QUERY = "(max-width: 47.99375em)";
+
+export function navCoversContent(): boolean {
+    return typeof window !== "undefined" && typeof window.matchMedia === "function"
+        && window.matchMedia(NAV_OVERLAY_QUERY).matches;
+}
+
 /** The title the server rendered (site and admin name); screen titles go before it. */
 const BASE_TITLE = typeof document === "undefined" ? "" : document.title;
 
@@ -61,6 +73,15 @@ export default function AdminLayout({ moduleAdminPages }: AdminLayoutProps) {
         document.title = screenLabel && BASE_TITLE ? `${screenLabel} · ${BASE_TITLE}` : (screenLabel || BASE_TITLE);
     }, [screenLabel]);
 
+    // On a narrow screen, close the navigation once an item is chosen and put
+    // focus on the screen that opened, so keyboard and screen reader users
+    // land on it instead of on a link that is now hidden.
+    const closeIfCovering = () => {
+        if (!navCoversContent()) return;
+        setOpened(false);
+        requestAnimationFrame(() => document.getElementById(ADMIN_MAIN_ID)?.focus());
+    };
+
     return (
         <>
             <a className="admin-skip-link" href={`#${ADMIN_MAIN_ID}`} onClick={skipToMain}>
@@ -87,12 +108,13 @@ export default function AdminLayout({ moduleAdminPages }: AdminLayoutProps) {
                     </Group>
                 </AppShell.Header>
 
-                <AppShell.Navbar p="md">
+                <AppShell.Navbar p="md" className="admin-navbar">
                     {items.map(({ path, labelKey }) => {
                         const active = current?.path === path;
                         return (
                             <NavLink key={path} component={Link} to={path} label={trans(labelKey)}
-                                active={active} aria-current={active ? "page" : undefined} />
+                                active={active} aria-current={active ? "page" : undefined}
+                                onClick={closeIfCovering} />
                         );
                     })}
                 </AppShell.Navbar>

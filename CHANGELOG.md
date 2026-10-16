@@ -56,6 +56,11 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- The administration navigation scrolls when its items do not fit, as at
+  200% zoom; the items below the sixth were out of reach before.
+- On narrow screens, where the open administration navigation covers the
+  page, choosing an item now closes it and moves focus to the screen that
+  opened; the screen used to open unseen underneath.
 - Buttons on the site are at least 24 × 24 px, including icon-only link
   buttons, and the close button in the `default` theme is larger.
 - The forum pagination arrows are named "Previous" and "Next" for screen

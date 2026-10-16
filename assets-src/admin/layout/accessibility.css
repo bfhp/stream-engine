@@ -27,6 +27,15 @@ html {
     scroll-padding-block-start: calc(60px + var(--mantine-spacing-md));
 }
 
+/* The navigation panel has a fixed height (the window minus the header).
+   With large text or zoom its items no longer fit, and without its own
+   scrolling the last ones were out of reach and Tab moved focus off screen
+   (WCAG 1.4.4, 1.4.10, 2.4.11). */
+.admin-navbar {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
 /* The skip-link target is focused programmatically; it is not a control. */
 #admin-main:focus {
     outline: none;
