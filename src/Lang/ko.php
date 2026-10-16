@@ -717,6 +717,7 @@ return [
     'js.comment.quote_header' => '{author}님이 작성:',
     'js.notification.new_message' => '새 메시지: {message}',
     'js.share.on' => '{network}에 공유 (새 탭에서 열림)',
+    'js.editor.toolbar' => '서식',
     'js.cover.formats' => 'JPG, PNG, WebP · 최대 8 MB',
     'js.cover.upload_failed' => '이미지를 업로드하지 못했습니다. 연결 상태를 확인한 뒤 다시 시도하세요.',
     'js.cover.post_prompt' => '이미지 추가',

@@ -77,6 +77,14 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- The rich-text editor toolbar (Trix) can be used from the keyboard: Tab
+  reaches it, the arrow keys, Home and End move between buttons, and Enter or
+  Space applies the format. Before, its buttons were left out of the Tab
+  order and did not respond to the keyboard.
+- The focus ring on the selected option of segmented switches (profile
+  notification settings, both themes) and on Trix toolbar buttons is now
+  separated from the blue fill by a band of the page colour; it was nearly
+  invisible on the selected option.
 - Images attached to messages are described for screen readers by their
   sender and a meaningful file name ("Image from Anna: floor plan") instead
   of the raw file name such as `IMG_2041.JPG`.

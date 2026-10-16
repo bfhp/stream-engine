@@ -21,6 +21,7 @@ import { bytesToLabel } from "../shared/bytes";
 import { getApiErrorMessage } from "../shared/api-errors";
 import { trans, transChoiceWithCount } from "../shared/i18n";
 import { describeImagesWithCaptions, labelTrixEditors } from "../shared/trix-captions";
+import { installTrixToolbarKeyboard } from "../shared/trix-toolbar";
 import { buildRichQuoteInsertionHtml } from "../shared/comment-quotes";
 import { initForumPostActions } from "./forum-post-actions";
 import { initForumTopicDelete } from "./forum-topic-actions";
@@ -33,6 +34,7 @@ import {
 
 describeImagesWithCaptions();
 labelTrixEditors();
+installTrixToolbarKeyboard();
 
 const cms = window.CMS;
 

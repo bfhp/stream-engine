@@ -717,6 +717,7 @@ return [
     'js.comment.quote_header' => '{author}さんの投稿:',
     'js.notification.new_message' => '新しいメッセージ: {message}',
     'js.share.on' => '{network} で共有（新しいタブで開きます）',
+    'js.editor.toolbar' => '書式',
     'js.cover.formats' => 'JPG、PNG、WebP · 8 MBまで',
     'js.cover.upload_failed' => '画像をアップロードできませんでした。接続を確認して、もう一度お試しください。',
     'js.cover.post_prompt' => '画像を追加',

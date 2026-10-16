@@ -165,7 +165,6 @@ footer,body {
 /* Focus: Bootstrap's focus rings are 25-50% transparent box-shadows, 1.3-2:1
    against the page (WCAG 1.4.11). Use the solid ring from base.css. */
 .btn:focus-visible,
-.btn-check:focus-visible + .btn,
 .btn-close:focus-visible,
 .form-control:focus,
 .form-select:focus,
@@ -178,6 +177,17 @@ footer,body {
     outline: 2px solid var(--ui-focus-ring);
     outline-offset: 2px;
     box-shadow: none;
+}
+
+/* A radio shown as a button in a group (`btn-check`): the neighbouring
+   button may be the selected, blue one, which the outside ring would run
+   over. Draw the ring inside, separated from the fill by a band of the page
+   colour, so it shows on the selected and the unselected button alike. */
+.btn-check:focus-visible + .btn {
+    z-index: 3;
+    outline: 2px solid var(--ui-focus-ring);
+    outline-offset: -2px;
+    box-shadow: inset 0 0 0 4px var(--bs-body-bg);
 }
 
 /* Icon-only buttons such as `btn btn-sm btn-link p-0` shrink to the icon;

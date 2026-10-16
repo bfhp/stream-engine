@@ -717,6 +717,7 @@ E-mail: {email}
     'js.comment.quote_header' => '{author} napisał(a):',
     'js.notification.new_message' => 'Nowa wiadomość: {message}',
     'js.share.on' => 'Udostępnij w {network} (otworzy się w nowej karcie)',
+    'js.editor.toolbar' => 'Formatowanie',
     'js.cover.formats' => 'JPG, PNG, WebP · do 8 MB',
     'js.cover.upload_failed' => 'Nie udało się przesłać obrazu. Sprawdź połączenie i spróbuj ponownie.',
     'js.cover.post_prompt' => 'Dodaj ilustrację.',

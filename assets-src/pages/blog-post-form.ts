@@ -6,9 +6,11 @@ import { getApiErrorMessage } from "../shared/api-errors";
 import { initCoverWidget } from "../shared/cover-widget";
 import { trans, transChoiceWithCount } from "../shared/i18n";
 import { describeImagesWithCaptions, labelTrixEditors } from "../shared/trix-captions";
+import { installTrixToolbarKeyboard } from "../shared/trix-toolbar";
 
 describeImagesWithCaptions();
 labelTrixEditors();
+installTrixToolbarKeyboard();
 
 /**
  * Trix ships no types, so the two pieces of it this file touches are declared

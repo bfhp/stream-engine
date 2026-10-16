@@ -748,6 +748,7 @@ return [
     'js.comment.quote_header' => '{author} писал(а):',
     'js.notification.new_message' => 'Новое сообщение: {message}',
     'js.share.on' => 'Поделиться в {network} (откроется в новой вкладке)',
+    'js.editor.toolbar' => 'Форматирование',
 
     'js.cover.formats' => 'JPG, PNG, WebP · до 8 МБ',
     'js.cover.upload_failed' => 'Не удалось загрузить изображение. Проверьте подключение и попробуйте ещё раз.',

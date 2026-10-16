@@ -717,6 +717,7 @@ return [
     'js.comment.quote_header' => '{author}写道：',
     'js.notification.new_message' => '新消息：{message}',
     'js.share.on' => '分享到 {network}（在新标签页中打开）',
+    'js.editor.toolbar' => '格式',
     'js.cover.formats' => 'JPG、PNG、WebP · 最大8 MB',
     'js.cover.upload_failed' => '无法上传图片。请检查网络连接后重试。',
     'js.cover.post_prompt' => '添加插图',

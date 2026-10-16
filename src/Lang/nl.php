@@ -717,6 +717,7 @@ E-mail: {email}
     'js.comment.quote_header' => '{author} schreef:',
     'js.notification.new_message' => 'Nieuw bericht: {message}',
     'js.share.on' => 'Delen op {network} (opent in een nieuw tabblad)',
+    'js.editor.toolbar' => 'Opmaak',
     'js.cover.formats' => 'JPG, PNG, WebP · tot 8 MB',
     'js.cover.upload_failed' => 'De afbeelding kon niet worden geüpload. Controleer je verbinding en probeer het opnieuw.',
     'js.cover.post_prompt' => 'Een afbeelding toevoegen.',

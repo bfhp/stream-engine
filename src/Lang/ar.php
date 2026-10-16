@@ -717,6 +717,7 @@ return [
     'js.comment.quote_header' => 'كتب {author}:',
     'js.notification.new_message' => 'رسالة جديدة: {message}',
     'js.share.on' => 'المشاركة على {network} (يفتح في علامة تبويب جديدة)',
+    'js.editor.toolbar' => 'التنسيق',
     'js.cover.formats' => 'JPG وPNG وWebP · حتى 8 ميغابايت',
     'js.cover.upload_failed' => 'تعذر رفع الصورة. تحقق من الاتصال وحاول مرة أخرى.',
     'js.cover.post_prompt' => 'أضف صورة توضيحية.',

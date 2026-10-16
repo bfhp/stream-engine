@@ -717,6 +717,7 @@ Email: {email}
     'js.comment.quote_header' => '{author} wrote:',
     'js.notification.new_message' => 'New message: {message}',
     'js.share.on' => 'Share on {network} (opens in a new tab)',
+    'js.editor.toolbar' => 'Formatting',
     'js.cover.formats' => 'JPG, PNG, WebP · up to 8 MB',
     'js.cover.upload_failed' => 'The image was not uploaded. Check your connection and try again.',
     'js.cover.post_prompt' => 'Add an illustration.',

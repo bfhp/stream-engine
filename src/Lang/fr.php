@@ -717,6 +717,7 @@ E-mail : {email}
     'js.comment.quote_header' => '{author} a écrit :',
     'js.notification.new_message' => 'Nouveau message : {message}',
     'js.share.on' => 'Partager sur {network} (s’ouvre dans un nouvel onglet)',
+    'js.editor.toolbar' => 'Mise en forme',
     'js.cover.formats' => 'JPG, PNG, WebP · jusqu’à 8 Mo',
     'js.cover.upload_failed' => 'Impossible de téléverser l’image. Vérifiez votre connexion et réessayez.',
     'js.cover.post_prompt' => 'Ajouter une illustration',

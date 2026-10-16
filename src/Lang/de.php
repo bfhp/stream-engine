@@ -717,6 +717,7 @@ E-Mail: {email}
     'js.comment.quote_header' => '{author} schrieb:',
     'js.notification.new_message' => 'Neue Nachricht: {message}',
     'js.share.on' => 'Auf {network} teilen (öffnet in einem neuen Tab)',
+    'js.editor.toolbar' => 'Formatierung',
     'js.cover.formats' => 'JPG, PNG, WebP · bis zu 8 MB',
     'js.cover.upload_failed' => 'Das Bild konnte nicht hochgeladen werden. Prüfe deine Verbindung und versuche es erneut.',
     'js.cover.post_prompt' => 'Bild hinzufügen',
