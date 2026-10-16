@@ -515,6 +515,7 @@ export default function PageEdit() {
             <SimpleGrid cols={{ base: 1, md: 2 }}>
                 <TextInput
                     label={trans("js.admin.pattern")}
+                    description={page.id === 1 ? undefined : trans("js.admin.pages.pattern_help")}
                     value={page.pattern}
                     onChange={event => update("pattern", event.currentTarget.value)}
                     disabled={page.id === 1}

@@ -30,7 +30,7 @@
                 <input
                     type="text"
                     class="ui-input users-input-lg blog-post-title-input"
-                    id="postTitle"
+                    id="postTitle" aria-required="true"
                     name="title"
                     placeholder="{{ trans('view.users.blog.post.form.03') }}"
                     maxlength="200"
@@ -151,11 +151,11 @@
 
         <div class="ui-card users-panel">
             <div>
-                <h2 class="users-panel__title"><i class="bi bi-tags"></i> {{ trans('view.users.blog.post.form.22') }}</h2>
+                <h2 class="users-panel__title" id="postTagsTitle"><i class="bi bi-tags" aria-hidden="true"></i> {{ trans('view.users.blog.post.form.22') }}</h2>
                 <div class="blog-post-tag-wrap" data-tag-wrap>
-                    <input type="text" class="blog-post-tag-field" data-tag-field placeholder="{{ trans('view.users.blog.post.form.23') }}">
+                    <input type="text" class="blog-post-tag-field" data-tag-field maxlength="50" aria-labelledby="postTagsTitle" aria-describedby="postTagsHelp" placeholder="{{ trans('view.users.blog.post.form.23') }}">
                 </div>
-                <p class="users-note users-note--after">{{ trans('view.users.blog.post.form.24') }}</p>
+                <p class="users-note users-note--after" id="postTagsHelp">{{ trans('view.users.blog.post.form.24') }}</p>
             </div>
         </div>
 

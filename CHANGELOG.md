@@ -35,6 +35,15 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- Forms state their rules up front: the feedback message length, the
+  homepage format, tag limits, accepted file formats and sizes (the cover
+  hint said 8 MB; uploads allow 50 MB), and in the administration panel the
+  page pattern format and the username rule.
+- Error messages name the limit or the fix: length and count limits, file
+  formats and sizes, and administration conflicts (another name or parent,
+  another administrator first, both CAPTCHA keys, valid JSON); failed
+  requests in the administration panel say to check the connection or
+  reload the page. Garbled English messages were rewritten.
 - Site notifications stay 8 s instead of 5 s and pause while hovered or
   focused in both themes; errors and warnings stay until closed.
 - The administration Scheduler screen has an "Auto-refresh" switch to stop

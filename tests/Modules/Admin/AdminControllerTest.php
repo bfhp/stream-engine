@@ -693,7 +693,7 @@ final class AdminControllerTest extends TestCase
             $module->callApi($this->makeApiPage('admin.pages', ['GET', 'POST']));
             $this->fail('A non-root page without a parent was saved.');
         } catch (ValidationException $e) {
-            $this->assertSame('A parent page is required', $e->getMessage());
+            $this->assertSame('Choose a parent page.', $e->getMessage());
             $this->assertSame([], $this->writes);
         }
     }
@@ -715,7 +715,7 @@ final class AdminControllerTest extends TestCase
             $module->callApi($this->makeApiPage('admin.page', ['GET', 'PATCH']), ['id' => 9]);
             $this->fail('A non-root page was detached from its parent.');
         } catch (ValidationException $e) {
-            $this->assertSame('A parent page is required', $e->getMessage());
+            $this->assertSame('Choose a parent page.', $e->getMessage());
             $this->assertSame([], $this->writes);
         }
     }

@@ -29,7 +29,8 @@
         </div>
         <div class="ui-field">
             <label class="ui-label" for="profileHomepage">{{ trans('view.profile.tabs.personal.04') }}</label>
-            <input id="profileHomepage" type="url" name="homepage" autocomplete="url" class="ui-input" value="{{ user.homepage }}" placeholder="https://example.com">
+            <input id="profileHomepage" type="url" name="homepage" autocomplete="url" class="ui-input" value="{{ user.homepage }}" placeholder="https://example.com" aria-describedby="profileHomepageHelp">
+            <div class="ui-help" id="profileHomepageHelp">{{ trans('view.profile.tabs.personal.help_homepage') }}</div>
         </div>
         <div class="ui-field">
             <label class="ui-label" for="profileGender">{{ trans('view.profile.tabs.personal.05') }}</label>

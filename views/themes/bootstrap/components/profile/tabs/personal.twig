@@ -31,7 +31,8 @@
         </div>
         <div class="mb-3">
             <label class="form-label" for="profileHomepage">{{ trans('view.profile.tabs.personal.04') }}</label>
-            <input id="profileHomepage" type="url" name="homepage" autocomplete="url" class="form-control" value="{{ user.homepage }}" placeholder="https://example.com">
+            <input id="profileHomepage" type="url" name="homepage" autocomplete="url" class="form-control" value="{{ user.homepage }}" placeholder="https://example.com" aria-describedby="profileHomepageHelp">
+            <div class="form-text" id="profileHomepageHelp">{{ trans('view.profile.tabs.personal.help_homepage') }}</div>
         </div>
         <div class="mb-3">
             <label class="form-label" for="profileGender">{{ trans('view.profile.tabs.personal.05') }}</label>

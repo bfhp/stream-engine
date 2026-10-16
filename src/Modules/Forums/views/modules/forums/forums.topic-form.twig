@@ -46,7 +46,7 @@
           data-author-name="{{ user.displayName }}" data-author-avatar="{{ authorAvatarUrl }}">
         <section class="ui-card ui-card__body forums-form__card">
             <label class="ui-label forums-form__label" for="topicTitle">{{ trans('view.forums.topic.form.03') }}</label>
-            <input type="text" class="ui-input forums-form__title" id="topicTitle" name="title"
+            <input type="text" class="ui-input forums-form__title" id="topicTitle" aria-required="true" name="title"
                    maxlength="200" placeholder="{{ trans('view.forums.topic.form.04') }}"
                    value="{{ isEdit ? topic.title : '' }}">
             <div class="ui-error" hidden data-topic-title-error></div>

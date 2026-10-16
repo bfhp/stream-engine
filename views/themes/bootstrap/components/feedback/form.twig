@@ -23,7 +23,8 @@
 
     <div class="mb-3">
         <label for="feedbackInputMessage" class="form-label">{{ trans('view.ui.message') }}</label>
-        <textarea minlength="30" class="form-control" name="message" rows="6" required maxlength="2000" id="feedbackInputMessage"></textarea>
+        <textarea minlength="30" class="form-control" name="message" rows="6" required maxlength="2000" id="feedbackInputMessage" aria-describedby="feedbackMessageHelp"></textarea>
+        <div class="form-text" id="feedbackMessageHelp">{{ trans('view.feedback.form.help_message') }}</div>
     </div>
 
     <button type="submit" class="btn btn-primary">

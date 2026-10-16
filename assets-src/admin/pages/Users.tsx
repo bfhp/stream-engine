@@ -216,7 +216,7 @@ export default function Users() {
                     <TextInput label={trans("js.admin.email")} value={draft.email} onChange={event => updateDraft("email", event.currentTarget.value)} />
                     <TextInput label={trans("js.admin.display_name")} maxLength={50} value={draft.nick}
                         onChange={event => updateDraft("nick", event.currentTarget.value)} />
-                    <TextInput label={trans("js.admin.username")} maxLength={30} value={draft.username}
+                    <TextInput label={trans("js.admin.username")} description={trans("js.admin.users.username_help")} maxLength={30} value={draft.username}
                         onChange={event => updateDraft("username", event.currentTarget.value)} />
                     <Select label={trans("js.admin.role")} data={ROLE_OPTIONS} value={draft.role} disabled={selfTargeted || systemTargeted}
                         onChange={value => value && updateDraft("role", value as UserRole)} allowDeselect={false} />

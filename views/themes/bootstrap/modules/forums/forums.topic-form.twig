@@ -47,7 +47,7 @@
         <div class="card mb-3">
             <div class="card-body">
                 <label class="form-label small text-uppercase text-body-secondary fw-semibold" for="topicTitle">{{ trans('view.forums.topic.form.03') }}</label>
-                <input type="text" class="form-control form-control-lg mb-1" id="topicTitle" name="title"
+                <input type="text" class="form-control form-control-lg mb-1" id="topicTitle" aria-required="true" name="title"
                        maxlength="200" placeholder="{{ trans('view.forums.topic.form.04') }}" style="font-size: 1.4rem; font-weight: 600"
                        value="{{ isEdit ? topic.title : '' }}">
                 <div class="invalid-feedback d-block mb-3" hidden data-topic-title-error></div>
