@@ -77,6 +77,12 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- In the administration panel, Tab leaves a select whose list is open and
+  the list closes. Searchable selects (page action and parent, feed type)
+  sent focus back into the field; plain ones (access, change frequency)
+  left their list open over the next field.
+- The keyboard focus ring of a theme card in the administration panel goes
+  around the whole card; it was clipped to a line above "Preview".
 - The rich-text editor toolbar (Trix) can be used from the keyboard: Tab
   reaches it, the arrow keys, Home and End move between buttons, and Enter or
   Space applies the format. Before, its buttons were left out of the Tab

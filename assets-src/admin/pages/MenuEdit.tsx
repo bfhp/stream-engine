@@ -6,18 +6,18 @@ import {
     Group,
     Modal,
     Radio,
-    Select,
     SimpleGrid,
     Stack,
     Text,
     TextInput,
-    Switch
+    Switch,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { IconTrash } from "@tabler/icons-react";
 import { csrfHeaders } from "../../shared/csrf";
 import { type MenuItemRecord } from "../lib/menu";
 import { trans } from "../../shared/i18n";
+import AdminSelect from "../components/AdminSelect";
 
 type PageOption = { id: number; pattern?: string; action?: string; pageName?: string };
 
@@ -203,7 +203,7 @@ export default function MenuEdit() {
                         } : current);
                     }}
                 />
-                <Select
+                <AdminSelect
                     label={trans("js.admin.type")}
                     required
                     data={[
@@ -225,7 +225,7 @@ export default function MenuEdit() {
                         onChange={event => update("label", event.currentTarget.value)}
                     />
                 )}
-                <Select
+                <AdminSelect
                     label={trans("js.admin.menu.parent_item")}
                     description={trans("js.admin.menu.parent_help")}
                     placeholder={trans("js.admin.menu.top_level")}
@@ -236,7 +236,7 @@ export default function MenuEdit() {
                     searchable
                 />
                 {needsPage && (
-                    <Select
+                    <AdminSelect
                         label={trans("js.admin.page")}
                         required
                         searchable
@@ -255,7 +255,7 @@ export default function MenuEdit() {
                     />
                 )}
                 {item.type === "action" && (
-                    <Select
+                    <AdminSelect
                         label={trans("js.admin.menu.frontend_action")}
                         description={trans("js.admin.menu.frontend_action_help")}
                         required
@@ -265,7 +265,7 @@ export default function MenuEdit() {
                         allowDeselect={false}
                     />
                 )}
-                <Select
+                <AdminSelect
                     label={trans("js.admin.access")}
                     data={[
                         { value: "public", label: trans("js.admin.access_public") },

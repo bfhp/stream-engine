@@ -5,17 +5,17 @@ import {
     ActionIcon,
     Button,
     Group,
-    Select,
     Stack,
     Text,
     Tooltip,
-    useComputedColorScheme
+    useComputedColorScheme,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { IconDeviceFloppy, IconRefresh } from "@tabler/icons-react";
 import { csrfHeaders } from "../../shared/csrf";
 import { formatTimestamp } from "../lib/format";
 import { trans } from "../../shared/i18n";
+import AdminSelect from "../components/AdminSelect";
 
 type Setting = {
     key: string;
@@ -230,7 +230,7 @@ export default function Widgets() {
 
             {error && <Text c="red">{error}</Text>}
 
-            <Select
+            <AdminSelect
                 label={trans("js.admin.widgets.placement")}
                 description={currentWidget.description}
                 data={placementOptions}

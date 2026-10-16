@@ -1,9 +1,10 @@
-import { ActionIcon, Button, Group, PasswordInput, Select, Stack, Text, TextInput, Tooltip } from "@mantine/core";
+import { ActionIcon, Button, Group, PasswordInput, Stack, Text, TextInput, Tooltip } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { IconDeviceFloppy, IconRefresh } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { csrfHeaders } from "../../shared/csrf";
 import { trans } from "../../shared/i18n";
+import AdminSelect from "../components/AdminSelect";
 
 const DEFAULT_FIELD = "contact_reference";
 const DEFAULT_MODE = "email";
@@ -176,7 +177,7 @@ export default function Registration() {
                 </Group>
             </Group>
 
-            <Select
+            <AdminSelect
                 label={trans("js.admin.registration.mode")}
                 description={trans("js.admin.registration.mode_description")}
                 data={[
@@ -198,7 +199,7 @@ export default function Registration() {
                 onChange={event => setField(event.currentTarget.value)}
             />
 
-            <Select
+            <AdminSelect
                 label={trans("js.admin.registration.captcha")}
                 description={trans("js.admin.registration.captcha_description")}
                 data={[

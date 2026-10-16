@@ -1,7 +1,17 @@
 import { useEffect, useState } from "react";
 import {
-    ActionIcon, Badge, Button, Group, Modal, Pagination, Select, Stack, Switch,
-    Table, Text, TextInput, Tooltip
+    ActionIcon,
+    Badge,
+    Button,
+    Group,
+    Modal,
+    Pagination,
+    Stack,
+    Switch,
+    Table,
+    Text,
+    TextInput,
+    Tooltip,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { IconEdit, IconRefresh } from "@tabler/icons-react";
@@ -9,6 +19,7 @@ import { csrfHeaders } from "../../shared/csrf";
 import { formatTimestamp } from "../lib/format";
 import { userListParams, userListState } from "../lib/users";
 import { trans, transChoiceWithCount } from "../../shared/i18n";
+import AdminSelect from "../components/AdminSelect";
 
 type UserRole = "user" | "moderator" | "admin";
 type AdminUser = {
@@ -157,9 +168,9 @@ export default function Users() {
             <Group align="end" grow>
                 <TextInput label={trans("js.admin.search")} placeholder={trans("js.admin.users.search_placeholder")} value={query}
                     onChange={event => { setPage(1); setQuery(event.currentTarget.value); }} />
-                <Select label={trans("js.admin.role")} placeholder={trans("js.admin.users.all_roles")} data={ROLE_OPTIONS} value={role}
+                <AdminSelect label={trans("js.admin.role")} placeholder={trans("js.admin.users.all_roles")} data={ROLE_OPTIONS} value={role}
                     onChange={value => resetAndSet(setRole, value)} clearable />
-                <Select label={trans("js.admin.status")} placeholder={trans("js.admin.users.all_statuses")} data={STATUS_OPTIONS} value={status}
+                <AdminSelect label={trans("js.admin.status")} placeholder={trans("js.admin.users.all_statuses")} data={STATUS_OPTIONS} value={status}
                     onChange={value => resetAndSet(setStatus, value)} clearable />
             </Group>
 
@@ -218,7 +229,7 @@ export default function Users() {
                         onChange={event => updateDraft("nick", event.currentTarget.value)} />
                     <TextInput label={trans("js.admin.username")} description={trans("js.admin.users.username_help")} maxLength={30} value={draft.username}
                         onChange={event => updateDraft("username", event.currentTarget.value)} />
-                    <Select label={trans("js.admin.role")} data={ROLE_OPTIONS} value={draft.role} disabled={selfTargeted || systemTargeted}
+                    <AdminSelect label={trans("js.admin.role")} data={ROLE_OPTIONS} value={draft.role} disabled={selfTargeted || systemTargeted}
                         onChange={value => value && updateDraft("role", value as UserRole)} allowDeselect={false} />
                     <Switch label={trans("js.admin.users.account_active")}
                         description={trans(selfTargeted ? "js.admin.users.self_active_help" : "js.admin.users.active_help")}

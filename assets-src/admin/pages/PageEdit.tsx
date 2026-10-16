@@ -4,12 +4,11 @@ import {
     Button,
     Group,
     Modal,
-    Select,
     SimpleGrid,
     Stack,
     Switch,
     Text,
-    TextInput
+    TextInput,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { IconTrash } from "@tabler/icons-react";
@@ -40,6 +39,7 @@ import { csrfHeaders } from "../../shared/csrf";
 import { getApiResponseError } from "../../shared/api-errors";
 import { FEED_TYPE_LABELS } from "../../shared/feed-types";
 import { trans } from "../../shared/i18n";
+import AdminSelect from "../components/AdminSelect";
 
 type EditablePage = {
     id?: number;
@@ -520,7 +520,7 @@ export default function PageEdit() {
                     onChange={event => update("pattern", event.currentTarget.value)}
                     disabled={page.id === 1}
                 />
-                <Select
+                <AdminSelect
                     label={trans("js.admin.action")}
                     required
                     searchable
@@ -536,7 +536,7 @@ export default function PageEdit() {
                     value={page.pageName}
                     onChange={event => update("pageName", event.currentTarget.value)}
                 />
-                <Select
+                <AdminSelect
                     label={trans("js.admin.parent_id")}
                     error={parentError}
                     required={page.id !== 1}
@@ -548,7 +548,7 @@ export default function PageEdit() {
                     nothingFoundMessage={trans("js.admin.pages.no_parents")}
                     allowDeselect={false}
                 />
-                <Select
+                <AdminSelect
                     label={trans("js.admin.feed_type")}
                     description={actionFieldDescription("feedType")}
                     error={actionErrors.feedType}
@@ -562,7 +562,7 @@ export default function PageEdit() {
                     clearable={!fixedFeedType}
                     nothingFoundMessage={trans("js.admin.pages.no_feed_types")}
                 />
-                <Select
+                <AdminSelect
                     label={trans("js.admin.list_feed_type")}
                     description={actionFieldDescription("listFeedType")}
                     error={actionErrors.listFeedType}
@@ -598,14 +598,14 @@ export default function PageEdit() {
                     defaultCreateType={page.feedType || undefined}
                     disabled={isPageActionFieldDisabled(selectedAction, "feedId", page.feedId)}
                 />
-                <Select
+                <AdminSelect
                     label={trans("js.admin.changefreq")}
                     data={CHANGEFREQ_OPTIONS}
                     value={page.changefreq}
                     onChange={value => update("changefreq", value || "")}
                     allowDeselect={false}
                 />
-                <Select
+                <AdminSelect
                     label={trans("js.admin.access")}
                     data={[
                         {value: "public", label: trans("js.admin.access_public")},
@@ -639,7 +639,7 @@ export default function PageEdit() {
                     const currentValue = page.settings[key];
 
                     return (
-                        <Select
+                        <AdminSelect
                             key={key}
                             label={trans(descriptor.label)}
                             required={descriptor.required}
@@ -657,7 +657,7 @@ export default function PageEdit() {
                     );
                 })}
                 {supportsFeedContentWidth(page.action) && (
-                    <Select
+                    <AdminSelect
                         label={trans("js.admin.feed_content_width_label")}
                         description={trans("js.admin.feed_content_width_description")}
                         data={[

@@ -49,6 +49,23 @@ html {
     min-inline-size: max-content;
 }
 
+/* Theme cards clip their content (overflow: hidden), so the focus ring of
+   the card's select button showed only as a line above "Preview". Draw it
+   around the whole card instead (WCAG 2.4.7), outside the 2px border that
+   marks the selected theme. */
+.admin-theme-card:has(.admin-theme-card__select:focus-visible) {
+    outline: 2px solid var(--mantine-primary-color-filled);
+    outline-offset: 2px;
+}
+
+[data-mantine-color-scheme="dark"] .admin-theme-card:has(.admin-theme-card__select:focus-visible) {
+    outline-color: var(--mantine-color-blue-4);
+}
+
+.admin-theme-card__select:focus-visible {
+    outline: none;
+}
+
 /* The skip-link target is focused programmatically; it is not a control. */
 #admin-main:focus {
     outline: none;

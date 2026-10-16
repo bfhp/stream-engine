@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Anchor, Group, Select, Stack, Text, type ComboboxItem } from "@mantine/core";
+import { Anchor, Group, Stack, Text, type ComboboxItem } from "@mantine/core";
 import { useDebouncedValue } from "@mantine/hooks";
 import { IconExternalLink, IconPlus } from "@tabler/icons-react";
 import { Link } from "react-router-dom";
@@ -17,6 +17,7 @@ import {
     type PickerFeed
 } from "../lib/feed-picker";
 import FeedQuickCreateModal from "./FeedQuickCreateModal";
+import AdminSelect from "./AdminSelect";
 
 type Props = {
     value: number | "";
@@ -189,7 +190,7 @@ export default function FeedPicker({
 
     return (
         <Stack gap={4}>
-            <Select
+            <AdminSelect
                 label={label}
                 description={description}
                 error={error ?? (currentBinding ? boundPageLabel(currentBinding) : undefined)}

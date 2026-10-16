@@ -6,18 +6,18 @@ import {
     FileInput,
     Group,
     NumberInput,
-    Select,
     SimpleGrid,
     Stack,
     Text,
     TextInput,
-    Tooltip
+    Tooltip,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { IconDeviceFloppy, IconPhoto, IconRefresh, IconRestore } from "@tabler/icons-react";
 import { csrfHeaders } from "../../shared/csrf";
 import { formatTimestamp } from "../lib/format";
 import { getAvailableLocales, getLocale, trans } from "../../shared/i18n";
+import AdminSelect from "../components/AdminSelect";
 
 type Setting = {
     key: string;
@@ -381,7 +381,7 @@ export default function Settings() {
                     onChange={event => updateDraft("site_name", event.currentTarget.value)}
                 />
 
-                <Select
+                <AdminSelect
                     label={trans("js.admin.settings.locale")}
                     description={trans("js.admin.settings.key", { key: "locale" })}
                     data={LOCALE_OPTIONS}
@@ -390,7 +390,7 @@ export default function Settings() {
                     allowDeselect={false}
                 />
 
-                <Select
+                <AdminSelect
                     label={trans("js.admin.settings.date_format")}
                     description={trans("js.admin.settings.key", { key: "date_format" })}
                     data={DATE_FORMAT_OPTIONS}
@@ -399,7 +399,7 @@ export default function Settings() {
                     allowDeselect={false}
                 />
 
-                <Select
+                <AdminSelect
                     label={trans("js.admin.settings.time_format")}
                     description={trans("js.admin.settings.key", { key: "time_format" })}
                     data={TIME_FORMAT_OPTIONS}

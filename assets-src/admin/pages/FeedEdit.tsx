@@ -4,7 +4,7 @@ import { Link, useParams, useNavigate } from "react-router-dom";
 import Editor from "@monaco-editor/react";
 import CodeEditorHint, { codeEditorAriaLabel } from "../components/CodeEditorHint";
 
-import { TextInput, Textarea, Button, Stack, Group, Grid, ActionIcon, Anchor, Text, Select, NumberInput, Fieldset, useComputedColorScheme, Tooltip } from "@mantine/core";
+import { TextInput, Textarea, Button, Stack, Group, Grid, ActionIcon, Anchor, Text, NumberInput, Fieldset, useComputedColorScheme, Tooltip } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 
 import { IconFileUpload, IconPlus, IconTrash } from "@tabler/icons-react";
@@ -15,6 +15,7 @@ import { trans } from "../../shared/i18n";
 import { isRtl } from "../lib/direction";
 import { pagesBoundToFeed, type BoundPage, type PickerPage } from "../lib/feed-picker";
 import { hasMetadataErrors, metadataToRows, newMetadataRow, rowsToMetadata, validateMetadataRows, type MetadataRow } from "../lib/feed-metadata";
+import AdminSelect from "../components/AdminSelect";
 
 export default function FeedEdit() {
 
@@ -225,7 +226,7 @@ export default function FeedEdit() {
                 </Grid.Col>
 
                 <Grid.Col span={{ base: 12, sm: 6, md: 4 }}>
-                    <Select
+                    <AdminSelect
                         label={trans("js.admin.type")}
                         data={FEED_TYPES}
                         value={feed.type || ""}
@@ -261,7 +262,7 @@ export default function FeedEdit() {
                 </Grid.Col>
 
                 <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
-                    <Select
+                    <AdminSelect
                         label={trans("js.admin.visibility")}
                         data={["public", "members", "private"]}
                         value={feed.visibility || "public"}

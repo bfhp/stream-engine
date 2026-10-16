@@ -1,7 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-    ActionIcon, Alert, Box, Button, Card, Checkbox, Grid, Group, Modal, Select, SimpleGrid,
-    Skeleton, Stack, Text, Tooltip
+    ActionIcon,
+    Alert,
+    Box,
+    Button,
+    Card,
+    Checkbox,
+    Grid,
+    Group,
+    Modal,
+    SimpleGrid,
+    Skeleton,
+    Stack,
+    Text,
+    Tooltip,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { IconArrowDown, IconArrowUp, IconGripVertical, IconRefresh, IconSettings } from "@tabler/icons-react";
@@ -14,6 +26,7 @@ import DashboardCardContent, {
     type CardDefinition, type CardResult
 } from "../components/DashboardCardContent";
 import { trans } from "../../shared/i18n";
+import AdminSelect from "../components/AdminSelect";
 
 type DashboardPayload = {
     version: number; catalog: CardDefinition[];
@@ -220,7 +233,7 @@ export default function Dashboard() {
                                 <Checkbox checked={Boolean(item)} label={trans(card.label)} onChange={event => toggleCard(card, event.currentTarget.checked)} />
                             </Group>
                             {item && <Group wrap="nowrap">
-                                <Select size="xs" w={120} data={card.sizes} value={item.size} allowDeselect={false}
+                                <AdminSelect size="xs" w={120} data={card.sizes} value={item.size} allowDeselect={false}
                                     aria-label={trans("js.admin.dashboard.card_size", { label: trans(card.label) })}
                                     onChange={value => value && setDraft(current => current.map(candidate => candidate.id === card.id ? { ...candidate, size: value as DashboardSize } : candidate))} />
                                 <ActionIcon variant="subtle" aria-label={trans("js.admin.move_up", { label: trans(card.label) })} onClick={() => moveCard(card.id, -1)}><IconArrowUp size={16} /></ActionIcon>

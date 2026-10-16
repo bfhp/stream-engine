@@ -96,6 +96,27 @@ for (const route of ["/", "/settings", "/feeds"]) {
     });
 }
 
+/* WCAG 2.1.2 and 2.4.3: Tab leaves a select whose list is open, and the list
+   closes. A theme-wide Popover returnFocus once sent focus back into the
+   field; plain (non-searchable) Mantine selects left their list open. */
+for (const route of ["/pages/new", "/feeds/new"]) {
+    test(`Tab leaves an open select on ${route}`, async ({ page }) => {
+        await page.goto(`/admin/#${route}`);
+        await waitForAdminScreen(page);
+        const inputs = page.locator("main .mantine-Select-input:not([disabled])");
+        const count = await inputs.count();
+        expect(count, "selects on the screen").toBeGreaterThan(0);
+        for (let index = 0; index < count; index++) {
+            const input = inputs.nth(index);
+            await input.click();
+            await expect(page.locator('[role="listbox"]:visible')).toHaveCount(1);
+            await page.keyboard.press("Tab");
+            await expect(input, `select ${index + 1} lets Tab move on`).not.toBeFocused();
+            await expect(page.locator('[role="listbox"]:visible')).toHaveCount(0);
+        }
+    });
+}
+
 test("admin skip link moves keyboard focus to the main region", async ({ page }) => {
     await page.goto("/admin/#/");
     await waitForAdminScreen(page);

@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ActionIcon, Badge, Button, Group, Paper, Select, SimpleGrid, Stack, Table, Text, TextInput, Tooltip } from "@mantine/core";
+import { ActionIcon, Badge, Button, Group, Paper, SimpleGrid, Stack, Table, Text, TextInput, Tooltip } from "@mantine/core";
 import { IconArrowDown, IconArrowUp, IconCornerDownLeft, IconCornerDownRight, IconEdit, IconEye, IconPlus, IconRefresh } from "@tabler/icons-react";
 import { Link, useNavigate } from "react-router-dom";
 import { csrfHeaders } from "../../shared/csrf";
 import { menuDepth, type MenuItemRecord, type MenuPreviewGroup, type MenuPreviewItem } from "../lib/menu";
 import { trans } from "../../shared/i18n";
 import { isRtl } from "../lib/direction";
+import AdminSelect from "../components/AdminSelect";
 
 async function responseJson(response: Response, fallback: string) {
     const body = await response.json().catch(() => null);
@@ -149,7 +150,7 @@ export default function Menus() {
         </Group>
         <Group align="end" grow>
             <TextInput label={trans("js.admin.search")} placeholder={trans("js.admin.menu.search_placeholder")} value={query} onChange={event => setQuery(event.currentTarget.value)} />
-            <Select label={trans("js.admin.menu.group")} placeholder={trans("js.admin.menu.all_groups")} data={groupNames.map(value => ({ value, label: value }))} value={group} onChange={setGroup} clearable />
+            <AdminSelect label={trans("js.admin.menu.group")} placeholder={trans("js.admin.menu.all_groups")} data={groupNames.map(value => ({ value, label: value }))} value={group} onChange={setGroup} clearable />
         </Group>
         {error && <Text c="red">{error}</Text>}
         <SimpleGrid cols={{ base: 1, xl: 3 }}>

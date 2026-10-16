@@ -1,7 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-    ActionIcon, Alert, Badge, Button, Card, Drawer, Group, Modal, Select, SimpleGrid, Skeleton, Stack,
-    Switch, Table, Text, Tooltip, UnstyledButton
+    ActionIcon,
+    Alert,
+    Badge,
+    Button,
+    Card,
+    Drawer,
+    Group,
+    Modal,
+    SimpleGrid,
+    Skeleton,
+    Stack,
+    Switch,
+    Table,
+    Text,
+    Tooltip,
+    UnstyledButton,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { IconAlertTriangle, IconDeviceFloppy, IconPlayerPlay, IconRefresh } from "@tabler/icons-react";
@@ -11,6 +25,7 @@ import {
     cronStatusColors, formatCronInterval, formatDuration, type CronStatus, type SchedulerStatus
 } from "../lib/cron";
 import { trans } from "../../shared/i18n";
+import AdminSelect from "../components/AdminSelect";
 
 type CronTask = {
     task: string;
@@ -271,7 +286,7 @@ export default function Cron() {
                 <Card withBorder>
                     <Text c="dimmed" size="sm">{trans("js.admin.cron.mode")}</Text>
                     <Group mt="xs" wrap="nowrap" align="end">
-                        <Select
+                        <AdminSelect
                             flex={1}
                             aria-label={trans("js.admin.cron.mode")}
                             value={modeDraft}
@@ -312,7 +327,7 @@ export default function Cron() {
             </SimpleGrid>
 
             <Group justify="flex-end">
-                <Select
+                <AdminSelect
                     clearable
                     w={240}
                     aria-label={trans("js.admin.status")}

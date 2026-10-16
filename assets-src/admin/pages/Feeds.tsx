@@ -8,7 +8,6 @@ import {
     List,
     NumberInput,
     Popover,
-    Select,
     Stack,
     Table,
     Text,
@@ -28,6 +27,7 @@ import { FEED_TYPES } from "../../shared/feed-types";
 import { makeFeedLabel } from "../lib/feed-label";
 import { formatNumber, formatTimestamp } from "../lib/format";
 import { trans, transChoiceWithCount } from "../../shared/i18n";
+import AdminSelect from "../components/AdminSelect";
 
 type FeedListItem = {
     id: number;
@@ -338,7 +338,7 @@ export default function Feeds() {
                         onChange={(event) => setId(numericValue(event.currentTarget.value))}
                         w={110}
                     />
-                    <Select
+                    <AdminSelect
                         label={trans("js.admin.type")}
                         placeholder={trans("js.admin.all")}
                         data={FEED_TYPES}
@@ -366,7 +366,7 @@ export default function Feeds() {
                         onChange={(event) => setParentId(numericValue(event.currentTarget.value))}
                         w={120}
                     />
-                    <Select
+                    <AdminSelect
                         label={trans("js.admin.sort")}
                         data={sortOptions}
                         value={sort}
@@ -390,7 +390,10 @@ export default function Feeds() {
                         outside the target: it forwards only its own handlers, so
                         the other way round the button lost aria-haspopup,
                         aria-expanded and aria-controls. */}
-                    <Popover shadow="md" width={220} trapFocus position="bottom-end">
+                    {/* returnFocus here, not as a theme default: Select and other
+                        comboboxes are Popovers too, and returning focus when
+                        Tab closed their list kept focus in the field (2.1.2). */}
+                    <Popover shadow="md" width={220} trapFocus returnFocus position="bottom-end">
                         <Tooltip label={trans("js.admin.columns")}>
                             <Popover.Target>
                                 <ActionIcon aria-label={trans("js.admin.columns")} variant="default" size="lg">
@@ -416,7 +419,7 @@ export default function Feeds() {
                         was disabled, so a Menu left keyboard focus nowhere and
                         Escape could not close it. The heading takes initial
                         focus so it is announced and Escape works. */}
-                    <Popover shadow="md" width={240} trapFocus position="bottom-end">
+                    <Popover shadow="md" width={240} trapFocus returnFocus position="bottom-end">
                         <Tooltip label={trans("js.admin.feeds.placeholders")}>
                             <Popover.Target>
                                 <ActionIcon aria-label={trans("js.admin.feeds.placeholders")} variant="default" size="lg">

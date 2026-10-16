@@ -8,20 +8,20 @@ import {
     Card,
     ColorInput,
     Group,
-    Select,
     SimpleGrid,
     Stack,
     Switch,
     Text,
     TextInput,
     Tooltip,
-    UnstyledButton
+    UnstyledButton,
 } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { IconDeviceFloppy, IconExternalLink, IconRefresh } from "@tabler/icons-react";
 import { csrfHeaders } from "../../shared/csrf";
 import { trans } from "../../shared/i18n";
+import AdminSelect from "../components/AdminSelect";
 
 type ThemeSetting = {
     type: "select" | "color" | "string" | "boolean";
@@ -223,6 +223,7 @@ export default function Themes() {
                     return (
                         <Card
                             key={theme.id}
+                            className="admin-theme-card"
                             withBorder
                             padding={0}
                             shadow={selected ? "md" : "xs"}
@@ -233,6 +234,7 @@ export default function Themes() {
                             }}
                         >
                             <UnstyledButton
+                                className="admin-theme-card__select"
                                 aria-pressed={selected}
                                 aria-label={trans("js.admin.themes.select", { name: theme.name })}
                                 onClick={() => selectTheme(theme.id)}
@@ -281,7 +283,7 @@ export default function Themes() {
                     ) : <SimpleGrid cols={{ base: 1, md: 2 }}>
                         {Object.entries(selectedTheme.settings).map(([key, definition]) => {
                         if (definition.type === "select") {
-                            return <Select
+                            return <AdminSelect
                                 key={key}
                                 label={definition.label}
                                 data={Object.entries(definition.options).map(([value, label]) => ({ value, label }))}

@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { Button, Group, Modal, Select, Stack, TextInput } from "@mantine/core";
+import { Button, Group, Modal, Stack, TextInput } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { csrfHeaders } from "../../shared/csrf";
 import { getApiResponseError } from "../../shared/api-errors";
 import { FEED_TYPE_LABELS, FEED_TYPES } from "../../shared/feed-types";
 import { trans } from "../../shared/i18n";
 import type { PickerFeed } from "../lib/feed-picker";
+import AdminSelect from "./AdminSelect";
 
 type Props = {
     opened: boolean;
@@ -111,7 +112,7 @@ export default function FeedQuickCreateModal({
                         value={slug}
                         onChange={event => setSlug(event.currentTarget.value)}
                     />
-                    <Select
+                    <AdminSelect
                         label={trans("js.admin.type")}
                         required
                         searchable
