@@ -216,6 +216,10 @@ hr {
     line-height: 1.25;
     text-decoration: none;
     cursor: pointer;
+    /* Icon-only link buttons have no padding; keep every target at least
+       24 x 24 CSS px (WCAG 2.5.8). */
+    min-inline-size: 1.5rem;
+    min-block-size: 1.5rem;
 }
 
 .ui-button:hover { filter: brightness(1.1); }
@@ -668,6 +672,13 @@ html {
 .auth-footer { margin: var(--ui-space-3) 0 0; text-align: center; }
 
 .ui-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /* The "×" glyph alone is about 13 px wide (WCAG 2.5.8 asks for 24). */
+    min-inline-size: 2rem;
+    min-block-size: 2rem;
+    padding: 0;
     border: 0;
     background: none;
     color: var(--ui-muted);

@@ -120,11 +120,21 @@ documented with a workaround.
   Their keyboard and screen reader support is controlled upstream and has not
   been evaluated in Stream Engine. The automated scan reports one known issue
   in the file browser: Chonky's file list uses `role="list"` without list
-  items (WCAG 1.3.1); it is recorded in `tests/a11y/baseline.json`. Monaco
+  items (WCAG 1.3.1); it is recorded in `tests/a11y/baseline.json`. In the file browser Tab moves
+  between files and Enter opens one; the arrow keys do nothing, and files are
+  moved with Cut and Paste in the Actions menu rather than by dragging. Monaco
   uses Tab for indentation, so Tab does not leave the editor until Ctrl+M
   (Ctrl+Shift+M on macOS) switches that off. The administration panel says
   so next to each code editor and in the editor's accessible name, which is
   what WCAG 2.1.2 asks for when the standard keys do not move focus.
+- **CAPTCHA on registration.** A site can require a CAPTCHA when people
+  register. Cloudflare Turnstile, the recommended option, usually needs no
+  action. hCaptcha may show an image puzzle, which blind people and some
+  people with cognitive disabilities cannot solve without hCaptcha's separate
+  accessibility sign-up; the administration panel says so next to the setting.
+- **Language of parts.** Authors cannot mark a passage in another language in
+  the rich-text editor, so screen readers read it with the page's voice
+  (WCAG 3.1.2 applies to that content).
 - **Images are described by captions, not alt text.** Authors describe an
   image in the content editors by its caption: the image gets `alt=""` and
   the `<figcaption>` of its `<figure>` carries the description (WCAG 1.1.1).

@@ -88,6 +88,9 @@ export default function Cron() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
+    // The table refreshes itself; this lets people stop that while they read
+    // or work through it (WCAG 2.2.2). The refresh button still works.
+    const [autoRefresh, setAutoRefresh] = useState(true);
     const [status, setStatus] = useState<string | null>(null);
     const [modeDraft, setModeDraft] = useState<CronMode>("os");
     const [savingMode, setSavingMode] = useState(false);
@@ -124,10 +127,11 @@ export default function Cron() {
     }, [refreshKey]);
 
     useEffect(() => {
+        if (!autoRefresh) return;
         const refreshEvery = payload?.data.some(task => task.status === "queued" || task.status === "running") ? 2_000 : 30_000;
         const timer = window.setInterval(() => setRefreshKey(key => key + 1), refreshEvery);
         return () => window.clearInterval(timer);
-    }, [payload]);
+    }, [payload, autoRefresh]);
 
     useEffect(() => {
         if (!historyTask) return undefined;
@@ -239,11 +243,18 @@ export default function Cron() {
                 <Text fw={700} size="xl">{trans("js.admin.cron.title")}</Text>
                 <Text c="dimmed" size="sm">{trans("js.admin.cron.subtitle")}</Text>
             </div>
-            <Tooltip label={trans("js.admin.refresh")}>
-                <ActionIcon aria-label={trans("js.admin.refresh")} variant="default" loading={loading} onClick={() => setRefreshKey(key => key + 1)}>
-                    <IconRefresh size={18} />
-                </ActionIcon>
-            </Tooltip>
+            <Group gap="md" wrap="nowrap">
+                <Switch
+                    label={trans("js.admin.cron.auto_refresh")}
+                    checked={autoRefresh}
+                    onChange={event => setAutoRefresh(event.currentTarget.checked)}
+                />
+                <Tooltip label={trans("js.admin.refresh")}>
+                    <ActionIcon aria-label={trans("js.admin.refresh")} variant="default" loading={loading} onClick={() => setRefreshKey(key => key + 1)}>
+                        <IconRefresh size={18} />
+                    </ActionIcon>
+                </Tooltip>
+            </Group>
         </Group>
 
         {error && <Alert color="red" title={trans("js.admin.cron.unavailable")}>{error}</Alert>}

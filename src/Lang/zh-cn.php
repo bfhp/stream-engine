@@ -1100,6 +1100,8 @@ return [
    'js.admin.dashboard.failed_deliveries' => '发送失败',
 
     'js.admin.cron.title' => '计划任务',
+
+    'js.admin.cron.auto_refresh' => '自动刷新',
     'js.admin.cron.subtitle' => '已注册的 cron 任务及其最近一次执行状态',
     'js.admin.cron.unavailable' => '计划任务不可用',
     'js.admin.cron.load_failed' => '无法加载计划任务状态',
@@ -1299,7 +1301,7 @@ return [
     'js.admin.registration.honeypot_description' => '用于检测自动提交的隐藏注册字段。',
     'js.admin.registration.honeypot_invalid' => '请使用 3–64 个拉丁字母、数字或下划线，并以字母开头。',
     'js.admin.registration.captcha' => 'CAPTCHA',
-    'js.admin.registration.captcha_description' => '创建账户时要求进行防机器人验证。',
+    'js.admin.registration.captcha_description' => '创建账户时要求进行防机器人验证。Cloudflare Turnstile 通常不需要访客操作；hCaptcha 可能要求完成图片验证，这对盲人和部分残障人士来说很困难。',
     'js.admin.registration.captcha_none' => '已停用',
     'js.admin.registration.captcha_turnstile' => 'Cloudflare Turnstile',
     'js.admin.registration.captcha_hcaptcha' => 'hCaptcha',

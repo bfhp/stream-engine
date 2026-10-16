@@ -420,9 +420,9 @@
                     <ul class="pagination mb-0">
                         <li class="page-item {{ pagination.current <= 1 ? 'disabled' : '' }}">
                             {% if pagination.current > 1 %}
-                                <a class="page-link" href="{{ pagination.baseUrl }}{{ pagination.current > 2 ? '?page=' ~ (pagination.current - 1) : '' }}"><i class="bi bi-chevron-left"></i></a>
+                                <a class="page-link" href="{{ pagination.baseUrl }}{{ pagination.current > 2 ? '?page=' ~ (pagination.current - 1) : '' }}"><i class="bi bi-chevron-left" aria-hidden="true"></i><span class="visually-hidden">{{ trans('js.pagination.previous') }}</span></a>
                             {% else %}
-                                <span class="page-link"><i class="bi bi-chevron-left"></i></span>
+                                <span class="page-link"><i class="bi bi-chevron-left" aria-hidden="true"></i><span class="visually-hidden">{{ trans('js.pagination.previous') }}</span></span>
                             {% endif %}
                         </li>
                         {% for p in 1..pagination.total %}
@@ -432,9 +432,9 @@
                         {% endfor %}
                         <li class="page-item {{ pagination.current >= pagination.total ? 'disabled' : '' }}">
                             {% if pagination.current < pagination.total %}
-                                <a class="page-link" href="{{ pagination.baseUrl }}?page={{ pagination.current + 1 }}"><i class="bi bi-chevron-right"></i></a>
+                                <a class="page-link" href="{{ pagination.baseUrl }}?page={{ pagination.current + 1 }}"><i class="bi bi-chevron-right" aria-hidden="true"></i><span class="visually-hidden">{{ trans('js.pagination.next') }}</span></a>
                             {% else %}
-                                <span class="page-link"><i class="bi bi-chevron-right"></i></span>
+                                <span class="page-link"><i class="bi bi-chevron-right" aria-hidden="true"></i><span class="visually-hidden">{{ trans('js.pagination.next') }}</span></span>
                             {% endif %}
                         </li>
                     </ul>

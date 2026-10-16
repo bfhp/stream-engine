@@ -16,7 +16,7 @@
    ========================================================================== */
 
 import { Modal, Toast, Tooltip } from "bootstrap";
-import { MODAL_CLOSED, TAB_SHOWN, ui, type UiAdapter } from "../shared/ui";
+import { MODAL_CLOSED, TAB_SHOWN, TOAST_DELAY_MS, toastStaysOpen, ui, type UiAdapter } from "../shared/ui";
 
 const bound = new WeakSet<HTMLElement>();
 
@@ -77,7 +77,11 @@ export const bootstrapAdapter: UiAdapter = {
 
     toastShow(el, type) {
         el.className = "toast align-items-center border-0 text-bg-" + type;
-        Toast.getOrCreateInstance(el, { delay: 5000 }).show();
+        // Same timing rule as the framework-free adapter (shared/ui.ts);
+        // Bootstrap pauses the timer on hover and focus itself. The options
+        // only apply to a new instance, so the old one goes first.
+        Toast.getInstance(el)?.dispose();
+        new Toast(el, { autohide: !toastStaysOpen(type), delay: TOAST_DELAY_MS }).show();
     },
 
     tooltipInit(root) {

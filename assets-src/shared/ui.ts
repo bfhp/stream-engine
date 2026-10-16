@@ -41,7 +41,11 @@ export interface UiAdapter {
 
 export type SlotData = Record<string, string | number | null | undefined>;
 
-const TOAST_DELAY_MS = 5000;
+/* Long enough to read (WCAG 2.2.1). The timer pauses while the pointer or
+   focus is on the toast, and errors and warnings stay until closed, since
+   they usually say what to do next. Bootstrap's adapter follows the same rule. */
+export const TOAST_DELAY_MS = 8000;
+export const toastStaysOpen = (type: string): boolean => type === "danger" || type === "warning";
 const TOOLTIP_SELECTOR = "[data-ui-tooltip], [data-bs-toggle=\"tooltip\"]";
 const OPEN_MODAL_SELECTOR = "dialog[open], [data-ui-open], .modal";
 
@@ -51,6 +55,8 @@ function dispatchClosed(el: HTMLElement): void {
 
 const nativeBound = new WeakSet<HTMLElement>();
 const toastTimers = new WeakMap<HTMLElement, ReturnType<typeof setTimeout>>();
+/** The current toast's "start the timer" function, for the bound listeners. */
+const toastResume = new WeakMap<HTMLElement, () => void>();
 
 function bindNativeModal(el: HTMLElement): void {
     if (nativeBound.has(el)) return;
@@ -111,10 +117,30 @@ export const nativeAdapter: UiAdapter = {
 
         clearTimeout(toastTimers.get(el));
         const hide = () => {
+            clearTimeout(toastTimers.get(el));
             el.hidden = true;
             el.removeAttribute("data-ui-open");
         };
-        toastTimers.set(el, setTimeout(hide, TOAST_DELAY_MS));
+        const start = () => {
+            clearTimeout(toastTimers.get(el));
+            if (!toastStaysOpen(el.dataset.uiType ?? "")) {
+                toastTimers.set(el, setTimeout(hide, TOAST_DELAY_MS));
+            }
+        };
+        // Bound once per element: the toast element is reused for every message.
+        if (!el.hasAttribute("data-ui-toast-bound")) {
+            el.setAttribute("data-ui-toast-bound", "");
+            const pause = () => clearTimeout(toastTimers.get(el));
+            const resume = () => {
+                if (!el.hidden) toastResume.get(el)?.();
+            };
+            el.addEventListener("mouseenter", pause);
+            el.addEventListener("focusin", pause);
+            el.addEventListener("mouseleave", resume);
+            el.addEventListener("focusout", resume);
+        }
+        toastResume.set(el, start);
+        start();
 
         el.querySelectorAll<HTMLElement>("[data-ui-dismiss=\"toast\"], [data-bs-dismiss=\"toast\"]")
             .forEach((button) => { button.onclick = hide; });

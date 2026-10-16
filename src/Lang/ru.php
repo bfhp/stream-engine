@@ -1137,6 +1137,8 @@ return [
     'js.admin.dashboard.failed_deliveries' => 'Ошибки доставки',
 
     'js.admin.cron.title' => 'Планировщик',
+
+    'js.admin.cron.auto_refresh' => 'Обновлять автоматически',
     'js.admin.cron.subtitle' => 'Зарегистрированные cron-задачи и состояние их последних запусков',
     'js.admin.cron.unavailable' => 'Планировщик недоступен',
     'js.admin.cron.load_failed' => 'Не удалось загрузить состояние планировщика',
@@ -1338,7 +1340,7 @@ return [
     'js.admin.registration.honeypot_description' => 'Скрытое поле регистрации для отсеивания автоматических отправок.',
     'js.admin.registration.honeypot_invalid' => 'Используйте от 3 до 64 латинских букв, цифр или подчёркиваний; первый символ — буква.',
     'js.admin.registration.captcha' => 'CAPTCHA',
-    'js.admin.registration.captcha_description' => 'Антибот-проверка при создании аккаунта.',
+    'js.admin.registration.captcha_description' => 'Антибот-проверка при создании аккаунта. Cloudflare Turnstile обычно не требует действий от посетителя; hCaptcha может попросить решить задачу с картинками, а это трудно незрячим и некоторым людям с инвалидностью.',
     'js.admin.registration.captcha_none' => 'Отключено',
     'js.admin.registration.captcha_turnstile' => 'Cloudflare Turnstile',
     'js.admin.registration.captcha_hcaptcha' => 'hCaptcha',

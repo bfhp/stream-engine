@@ -185,7 +185,7 @@ export default function Dashboard() {
                     <Card withBorder h="100%">
                         <Group justify="space-between" mb="md">
                             <Text fw={600}>{trans(definition.label)}</Text>
-                            <Tooltip label={trans("js.admin.dashboard.refresh_card")}><ActionIcon variant="subtle" size="sm"
+                            <Tooltip label={trans("js.admin.dashboard.refresh_card")}><ActionIcon variant="subtle"
                                 loading={cardLoading.has(item.id)} aria-label={trans("js.admin.dashboard.refresh_named", { label: trans(definition.label) })}
                                 onClick={() => refreshCard(item.id)}><IconRefresh size={15} /></ActionIcon></Tooltip>
                         </Group>

@@ -179,3 +179,10 @@ footer,body {
     outline-offset: 2px;
     box-shadow: none;
 }
+
+/* Icon-only buttons such as `btn btn-sm btn-link p-0` shrink to the icon;
+   keep every button at least 24 x 24 CSS px (WCAG 2.5.8). */
+.btn {
+    min-inline-size: 1.5rem;
+    min-block-size: 1.5rem;
+}

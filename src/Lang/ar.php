@@ -1100,6 +1100,8 @@ return [
    'js.admin.dashboard.failed_deliveries' => 'عمليات التسليم الفاشلة',
 
     'js.admin.cron.title' => 'المجدول',
+
+    'js.admin.cron.auto_refresh' => 'تحديث تلقائي',
     'js.admin.cron.subtitle' => 'مهام cron المسجلة وحالة آخر تشغيل لها',
     'js.admin.cron.unavailable' => 'المجدول غير متاح',
     'js.admin.cron.load_failed' => 'تعذر تحميل حالة المجدول',
@@ -1299,7 +1301,7 @@ return [
     'js.admin.registration.honeypot_description' => 'حقل تسجيل مخفي يُستخدم لاكتشاف عمليات الإرسال الآلية.',
     'js.admin.registration.honeypot_invalid' => 'استخدم من 3 إلى 64 حرفًا لاتينيًا أو رقمًا أو شرطة سفلية، بدءًا بحرف.',
     'js.admin.registration.captcha' => 'CAPTCHA',
-    'js.admin.registration.captcha_description' => 'اطلب فحصًا مضادًا للروبوتات عند إنشاء حساب.',
+    'js.admin.registration.captcha_description' => 'اطلب فحصًا مضادًا للروبوتات عند إنشاء حساب. عادةً لا يتطلب Cloudflare Turnstile أي إجراء من الزائر؛ أما hCaptcha فقد يطلب حل لغز بالصور، وهو أمر صعب على المكفوفين وبعض ذوي الإعاقة.',
     'js.admin.registration.captcha_none' => 'معطّل',
     'js.admin.registration.captcha_turnstile' => 'Cloudflare Turnstile',
     'js.admin.registration.captcha_hcaptcha' => 'hCaptcha',

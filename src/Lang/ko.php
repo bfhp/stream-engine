@@ -1100,6 +1100,8 @@ return [
    'js.admin.dashboard.failed_deliveries' => '실패한 발송',
 
     'js.admin.cron.title' => '스케줄러',
+
+    'js.admin.cron.auto_refresh' => '자동 새로고침',
     'js.admin.cron.subtitle' => '등록된 cron 작업과 최근 실행 상태',
     'js.admin.cron.unavailable' => '스케줄러를 사용할 수 없습니다',
     'js.admin.cron.load_failed' => '스케줄러 상태를 불러오지 못했습니다',
@@ -1299,7 +1301,7 @@ return [
     'js.admin.registration.honeypot_description' => '자동 제출을 감지하는 숨겨진 가입 필드입니다.',
     'js.admin.registration.honeypot_invalid' => '문자로 시작하는 3~64자의 영문자, 숫자 또는 밑줄을 사용하세요.',
     'js.admin.registration.captcha' => 'CAPTCHA',
-    'js.admin.registration.captcha_description' => '계정 생성 시 봇 방지 확인을 요구합니다.',
+    'js.admin.registration.captcha_description' => '계정 생성 시 봇 방지 확인을 요구합니다. Cloudflare Turnstile은 보통 방문자의 조작이 필요 없습니다. hCaptcha는 이미지 퍼즐을 요구할 수 있어 시각장애인과 일부 장애인에게 어렵습니다.',
     'js.admin.registration.captcha_none' => '사용 안 함',
     'js.admin.registration.captcha_turnstile' => 'Cloudflare Turnstile',
     'js.admin.registration.captcha_hcaptcha' => 'hCaptcha',

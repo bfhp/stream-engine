@@ -1100,6 +1100,8 @@ E-mail: {email}
    'js.admin.dashboard.failed_deliveries' => 'Envios com falha',
 
     'js.admin.cron.title' => 'Agendador',
+
+    'js.admin.cron.auto_refresh' => 'Atualizar automaticamente',
     'js.admin.cron.subtitle' => 'Tarefas cron registradas e o estado da última execução',
     'js.admin.cron.unavailable' => 'Agendador indisponível',
     'js.admin.cron.load_failed' => 'Não foi possível carregar o estado do agendador',
@@ -1299,7 +1301,7 @@ E-mail: {email}
     'js.admin.registration.honeypot_description' => 'Campo de cadastro oculto usado para detectar envios automatizados.',
     'js.admin.registration.honeypot_invalid' => 'Use de 3 a 64 letras latinas, números ou sublinhados, começando por uma letra.',
     'js.admin.registration.captcha' => 'CAPTCHA',
-    'js.admin.registration.captcha_description' => 'Exija uma verificação antibot ao criar uma conta.',
+    'js.admin.registration.captcha_description' => 'Exija uma verificação antibot ao criar uma conta. O Cloudflare Turnstile geralmente não exige nada do visitante; o hCaptcha pode pedir um quebra-cabeça de imagens, difícil para pessoas cegas e com algumas deficiências.',
     'js.admin.registration.captcha_none' => 'Desativado',
     'js.admin.registration.captcha_turnstile' => 'Cloudflare Turnstile',
     'js.admin.registration.captcha_hcaptcha' => 'hCaptcha',

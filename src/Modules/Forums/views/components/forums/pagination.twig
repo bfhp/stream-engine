@@ -11,9 +11,9 @@
         <ul class="forums-pages">
             <li>
                 {% if pagination.current > 1 %}
-                    <a class="forums-pages__link" href="{{ pagination.baseUrl }}{{ pagination.current > 2 ? '?page=' ~ (pagination.current - 1) : '' }}"><i class="bi bi-chevron-left"></i></a>
+                    <a class="forums-pages__link" href="{{ pagination.baseUrl }}{{ pagination.current > 2 ? '?page=' ~ (pagination.current - 1) : '' }}"><i class="bi bi-chevron-left" aria-hidden="true"></i><span class="ui-visually-hidden">{{ trans('js.pagination.previous') }}</span></a>
                 {% else %}
-                    <span class="forums-pages__link" aria-disabled="true"><i class="bi bi-chevron-left"></i></span>
+                    <span class="forums-pages__link" aria-disabled="true"><i class="bi bi-chevron-left" aria-hidden="true"></i><span class="ui-visually-hidden">{{ trans('js.pagination.previous') }}</span></span>
                 {% endif %}
             </li>
             {% for p in 1..pagination.total %}
@@ -23,9 +23,9 @@
             {% endfor %}
             <li>
                 {% if pagination.current < pagination.total %}
-                    <a class="forums-pages__link" href="{{ pagination.baseUrl }}?page={{ pagination.current + 1 }}"><i class="bi bi-chevron-right"></i></a>
+                    <a class="forums-pages__link" href="{{ pagination.baseUrl }}?page={{ pagination.current + 1 }}"><i class="bi bi-chevron-right" aria-hidden="true"></i><span class="ui-visually-hidden">{{ trans('js.pagination.next') }}</span></a>
                 {% else %}
-                    <span class="forums-pages__link" aria-disabled="true"><i class="bi bi-chevron-right"></i></span>
+                    <span class="forums-pages__link" aria-disabled="true"><i class="bi bi-chevron-right" aria-hidden="true"></i><span class="ui-visually-hidden">{{ trans('js.pagination.next') }}</span></span>
                 {% endif %}
             </li>
         </ul>

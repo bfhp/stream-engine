@@ -1100,6 +1100,8 @@ return [
    'js.admin.dashboard.failed_deliveries' => '失敗した配信',
 
     'js.admin.cron.title' => 'スケジューラー',
+
+    'js.admin.cron.auto_refresh' => '自動で更新',
     'js.admin.cron.subtitle' => '登録済みの cron タスクと直近の実行状態',
     'js.admin.cron.unavailable' => 'スケジューラーを利用できません',
     'js.admin.cron.load_failed' => 'スケジューラーの状態を読み込めませんでした',
@@ -1299,7 +1301,7 @@ return [
     'js.admin.registration.honeypot_description' => '自動送信を検出するための非表示の登録フィールドです。',
     'js.admin.registration.honeypot_invalid' => '先頭を英字にして、3～64文字の英字、数字、またはアンダースコアを使用してください。',
     'js.admin.registration.captcha' => 'CAPTCHA',
-    'js.admin.registration.captcha_description' => 'アカウント作成時にボット対策チェックを要求します。',
+    'js.admin.registration.captcha_description' => 'アカウント作成時にボット対策チェックを要求します。Cloudflare Turnstile は通常、訪問者の操作を必要としません。hCaptcha は画像パズルを求めることがあり、視覚障害のある人や一部の障害のある人には難しい場合があります。',
     'js.admin.registration.captcha_none' => '無効',
     'js.admin.registration.captcha_turnstile' => 'Cloudflare Turnstile',
     'js.admin.registration.captcha_hcaptcha' => 'hCaptcha',

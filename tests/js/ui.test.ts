@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { MODAL_CLOSED, TAB_SHOWN, nativeAdapter, ui, type UiAdapter } from "../../assets-src/shared/ui";
+import { MODAL_CLOSED, TAB_SHOWN, TOAST_DELAY_MS, nativeAdapter, ui, type UiAdapter } from "../../assets-src/shared/ui";
 
 afterEach(() => {
     ui.register(nativeAdapter);
@@ -82,11 +82,39 @@ describe("native adapter", () => {
         const el = document.createElement("div");
         el.hidden = true;
 
-        ui.toast.show(el, "danger");
+        ui.toast.show(el, "success");
         expect(el.hidden).toBe(false);
-        expect(el.dataset.uiType).toBe("danger");
+        expect(el.dataset.uiType).toBe("success");
 
-        vi.advanceTimersByTime(5000);
+        vi.advanceTimersByTime(TOAST_DELAY_MS - 1);
+        expect(el.hidden).toBe(false);
+        vi.advanceTimersByTime(1);
+        expect(el.hidden).toBe(true);
+    });
+
+    it("keeps errors open until they are closed (WCAG 2.2.1)", () => {
+        vi.useFakeTimers();
+        const el = document.createElement("div");
+        el.hidden = true;
+
+        ui.toast.show(el, "danger");
+        vi.advanceTimersByTime(60_000);
+
+        expect(el.hidden).toBe(false);
+    });
+
+    it("pauses the timer while the pointer is on the toast", () => {
+        vi.useFakeTimers();
+        const el = document.createElement("div");
+        el.hidden = true;
+
+        ui.toast.show(el, "success");
+        el.dispatchEvent(new MouseEvent("mouseenter"));
+        vi.advanceTimersByTime(TOAST_DELAY_MS * 2);
+        expect(el.hidden).toBe(false);
+
+        el.dispatchEvent(new MouseEvent("mouseleave"));
+        vi.advanceTimersByTime(TOAST_DELAY_MS);
         expect(el.hidden).toBe(true);
     });
 

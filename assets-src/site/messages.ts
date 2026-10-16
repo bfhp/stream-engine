@@ -1577,7 +1577,7 @@ export function initMessages() {
                     <div class="msgr-member-body">
                         <div class="msgr-member-name">${cms.escapeHtml(p.displayName)}${isMe ? trans('js.messenger.you_parenthetical') : ''}</div>
                     </div>
-                    ${!isMe && detail.can_manage_participants ? `<button type="button" class="msgr-member-remove" data-remove-member="${p.id}" title="${trans('js.common.remove')}"><i class="bi bi-x-lg"></i></button>` : ''}
+                    ${!isMe && detail.can_manage_participants ? `<button type="button" class="msgr-member-remove" data-remove-member="${p.id}" title="${trans('js.common.remove')}" aria-label="${cms.escapeHtml(`${trans('js.common.remove')}: ${p.displayName}`)}"><i class="bi bi-x-lg" aria-hidden="true"></i></button>` : ''}
                 </div>`;
         }).join('');
     }

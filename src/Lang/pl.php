@@ -1100,6 +1100,8 @@ E-mail: {email}
    'js.admin.dashboard.failed_deliveries' => 'Nieudane wysyłki',
 
     'js.admin.cron.title' => 'Harmonogram',
+
+    'js.admin.cron.auto_refresh' => 'Odświeżaj automatycznie',
     'js.admin.cron.subtitle' => 'Zarejestrowane zadania cron i stan ich ostatniego uruchomienia',
     'js.admin.cron.unavailable' => 'Harmonogram niedostępny',
     'js.admin.cron.load_failed' => 'Nie udało się wczytać stanu harmonogramu',
@@ -1299,7 +1301,7 @@ E-mail: {email}
     'js.admin.registration.honeypot_description' => 'Ukryte pole rejestracji służące do wykrywania automatycznych zgłoszeń.',
     'js.admin.registration.honeypot_invalid' => 'Użyj od 3 do 64 liter łacińskich, cyfr lub podkreśleń, zaczynając od litery.',
     'js.admin.registration.captcha' => 'CAPTCHA',
-    'js.admin.registration.captcha_description' => 'Wymagaj kontroli antybotowej podczas tworzenia konta.',
+    'js.admin.registration.captcha_description' => 'Wymagaj kontroli antybotowej podczas tworzenia konta. Cloudflare Turnstile zwykle nie wymaga od odwiedzającego żadnej czynności; hCaptcha może poprosić o rozwiązanie zagadki obrazkowej, co jest trudne dla osób niewidomych i niektórych osób z niepełnosprawnościami.',
     'js.admin.registration.captcha_none' => 'Wyłączone',
     'js.admin.registration.captcha_turnstile' => 'Cloudflare Turnstile',
     'js.admin.registration.captcha_hcaptcha' => 'hCaptcha',

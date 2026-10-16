@@ -29,6 +29,13 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- Site notifications stay 8 s instead of 5 s and pause while hovered or
+  focused in both themes; errors and warnings stay until closed.
+- The administration Scheduler screen has an "Auto-refresh" switch to stop
+  the table from updating on its own.
+- The registration CAPTCHA help recommends Turnstile as the more accessible
+  option; hCaptcha may show image tasks.
+
 - Error messages now say what to do next in every locale: an expired session
   asks to reload the page, stale password-reset and confirmation links ask for
   a new one, failed sign-ins suggest checking or resetting the password,
@@ -48,6 +55,11 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
   `Formatter::plural()` is deprecated in favour of `transChoice()`.
 
 ### Fixed
+
+- Buttons on the site are at least 24 × 24 px, including icon-only link
+  buttons, and the close button in the `default` theme is larger.
+- The forum pagination arrows are named "Previous" and "Next" for screen
+  readers, and the group-chat "Remove" button names the member.
 
 - The administration Scheduler screen is now translated into every shipped
   locale (it was English everywhere but Russian), and seventeen Russian error
