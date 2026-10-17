@@ -85,7 +85,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
   around the whole card; it was clipped to a line above "Preview".
 - The rich-text editor toolbar (Trix) can be used from the keyboard: Tab
   reaches it, the arrow keys, Home and End move between buttons, and Enter or
-  Space applies the format. Before, its buttons were left out of the Tab
+  Space applies the format; format buttons report whether they are on
+  (`aria-pressed`). Before, its buttons were left out of the Tab
   order and did not respond to the keyboard.
 - The focus ring on the selected option of segmented switches (profile
   notification settings, both themes) and on Trix toolbar buttons is now

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { enableToolbarKeyboard, syncToolbarTabStop } from "../../assets-src/shared/trix-toolbar";
+import { enableToolbarKeyboard, syncPressedState, syncToolbarTabStop } from "../../assets-src/shared/trix-toolbar";
 
 /*
  * Trix renders its toolbar buttons with tabindex="-1"; the module makes the
@@ -12,7 +12,7 @@ function toolbar(): HTMLElement {
         <trix-toolbar id="tb">
             <div class="trix-button-row">
                 <span class="trix-button-group">
-                    <button type="button" tabindex="-1" data-name="bold">B</button>
+                    <button type="button" tabindex="-1" data-name="bold" data-trix-attribute="bold">B</button>
                     <button type="button" tabindex="-1" data-name="italic">I</button>
                 </span>
                 <span class="trix-button-group">
@@ -95,5 +95,16 @@ describe("Trix toolbar keyboard", () => {
         syncToolbarTabStop(tb);
 
         expect(tabStops()).toEqual(["italic"]);
+    });
+
+    it("exposes the applied format as aria-pressed on format buttons only", () => {
+        const tb = toolbar();
+        enableToolbarKeyboard(tb);
+        expect(button("bold").getAttribute("aria-pressed")).toBe("false");
+        expect(button("undo").hasAttribute("aria-pressed")).toBe(false);
+
+        button("bold").classList.add("trix-active");
+        syncPressedState(tb);
+        expect(button("bold").getAttribute("aria-pressed")).toBe("true");
     });
 });

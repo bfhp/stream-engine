@@ -29,6 +29,19 @@ export function syncToolbarTabStop(toolbar: HTMLElement, preferred?: HTMLButtonE
     buttons.forEach(button => { button.tabIndex = button === current ? 0 : -1; });
 }
 
+/*
+ * Trix shows an applied format (bold, a heading, a list) only by the
+ * `trix-active` class, so a screen reader cannot tell it is on (WCAG 4.1.2).
+ * Format buttons (data-trix-attribute) become toggle buttons with
+ * aria-pressed; action buttons (undo, attach) are left as they are.
+ */
+export function syncPressedState(toolbar: HTMLElement): void {
+    toolbar.querySelectorAll<HTMLButtonElement>(`${BUTTON_SELECTOR}[data-trix-attribute]`).forEach((button) => {
+        const pressed = String(button.classList.contains("trix-active"));
+        if (button.getAttribute("aria-pressed") !== pressed) button.setAttribute("aria-pressed", pressed);
+    });
+}
+
 export function enableToolbarKeyboard(toolbar: HTMLElement): void {
     if (bound.has(toolbar)) return;
     bound.add(toolbar);
@@ -78,10 +91,15 @@ export function enableToolbarKeyboard(toolbar: HTMLElement): void {
         if (target instanceof HTMLButtonElement && target.matches(BUTTON_SELECTOR)) syncToolbarTabStop(toolbar, target);
     });
 
+    syncPressedState(toolbar);
+
     // Trix disables Undo/Redo and toggles other buttons as the selection
-    // changes; keep the Tab stop on a button that can take focus.
-    new MutationObserver(() => syncToolbarTabStop(toolbar))
-        .observe(toolbar, { subtree: true, attributes: true, attributeFilter: ["disabled", "hidden"] });
+    // changes; keep the Tab stop on a button that can take focus, and the
+    // pressed state of format buttons in step with their highlight.
+    new MutationObserver(() => {
+        syncToolbarTabStop(toolbar);
+        syncPressedState(toolbar);
+    }).observe(toolbar, { subtree: true, attributes: true, attributeFilter: ["disabled", "hidden", "class"] });
 }
 
 type TrixEditorElement = HTMLElement & { toolbarElement?: HTMLElement | null };
