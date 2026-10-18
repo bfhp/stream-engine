@@ -68,6 +68,8 @@ export const adminTheme = createTheme({
 /*
  * - `c="dimmed"` defaults to gray.6 (3.3:1 on white) and dark.2 (3.5:1 on
  *   dark.6).
+ * - Placeholders default to gray.5 (2.1:1 on white) and dark.3 (2.5:1 on
+ *   dark.6); they take the dimmed colour, 5.3:1 and 5.6:1.
  * - Validation errors default to red.6 (3.3:1 on white) and red.8 (3.0:1 on
  *   dark.6).
  */
@@ -75,10 +77,12 @@ export const adminCssVariablesResolver: CSSVariablesResolver = () => ({
     variables: {},
     light: {
         "--mantine-color-dimmed": "#666d75",
+        "--mantine-color-placeholder": "#666d75",
         "--mantine-color-error": "#b52424",
     },
     dark: {
         "--mantine-color-dimmed": "#a6a6a6",
+        "--mantine-color-placeholder": "#a6a6a6",
         "--mantine-color-error": "#ff8787",
     },
 });

@@ -81,6 +81,17 @@ export default defineConfig({
                 postBanner: "/*! Third-party licenses: /assets/THIRD_PARTY_LICENSES.md */",
                 entryFileNames: "js/[name].js",
                 chunkFileNames: "js/chunks/[name].js",
+                // Templates link two shared stylesheets by name
+                // (/assets/css/trix.css, /assets/css/custom-content.css).
+                // A chunk is named after its first module, so a new shared
+                // module could rename them (trix-toolbar.css, keep-focus.css)
+                // and the links broke. Pin those chunks' names.
+                codeSplitting: {
+                    groups: [
+                        { name: "trix", test: /node_modules[\\/]trix[\\/]/ },
+                        { name: "custom-content", test: /shared[\\/]custom-content\.css$/ },
+                    ],
+                },
                 assetFileNames: (assetInfo) => {
                     const name = assetInfo.names?.[0] ?? "";
                     if (name.endsWith(".css")) {

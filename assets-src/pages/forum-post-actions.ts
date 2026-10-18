@@ -22,7 +22,7 @@ export type ForumPostActionsDependencies = {
     toast: (options: ToastOptions) => void;
     trans: (key: string) => string;
     onEditSaved: (post: HTMLElement | null) => void;
-    onReplyDeleted: () => void;
+    onReplyDeleted: (post: HTMLElement | null) => void;
     onQuote: (button: HTMLElement) => void;
 };
 
@@ -124,7 +124,7 @@ export function initForumPostActions(
             message: dependencies.trans("js.forums.message_delete_confirm"),
             onConfirm: () => {
                 dependencies.api(`/api/v1/comments/${topicId}/${commentId}`, { method: "DELETE" })
-                    .then(dependencies.onReplyDeleted)
+                    .then(() => dependencies.onReplyDeleted(deleteButton.closest('li[id^="post-"]')))
                     .catch((error) => {
                         dependencies.toast({
                             message: getApiErrorMessage(

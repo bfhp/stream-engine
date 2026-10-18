@@ -12,6 +12,9 @@ import App from "./App";
 import { isRtl } from "./lib/direction";
 import { adminCssVariablesResolver, adminTheme } from "./theme";
 import { createModuleRoutes, type AdminPageModules } from "./module-pages";
+import { installFocusKeeper } from "../shared/keep-focus";
+
+installFocusKeeper();
 
 const systemColorSchemeManager: MantineColorSchemeManager = {
     get: () => "auto",

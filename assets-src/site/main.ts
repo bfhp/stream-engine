@@ -19,6 +19,7 @@ import { initMessengerGlobal } from "./messenger-global";
 import { initMentionAutocomplete } from "../shared/mentions-autocomplete";
 import { initStickyOffset } from "./sticky-offset";
 import { initPasswordToggles } from "../shared/password-toggle";
+import { installFocusKeeper } from "../shared/keep-focus";
 
 // Before DOMContentLoaded: the router has to be listening for popstate /
 // hashchange from the moment the page starts running, not from whenever the
@@ -28,6 +29,7 @@ CMS.hashRoute.init();
 document.addEventListener("DOMContentLoaded", () => {
     initStickyOffset();
     initPasswordToggles();
+    installFocusKeeper();
     initMentionAutocomplete();
     initMessengerGlobal(); // Always (nearly)
     CMS.checkAndSetTimezoneCookie();

@@ -284,6 +284,19 @@ hr {
     font: inherit;
 }
 
+/* Browsers draw placeholders in #757575: 4.4:1 on the light page and 3.9:1
+   on the dark one (WCAG 1.4.3). The muted text colour is 5.6:1 and 6.9:1.
+   Bootstrap's .form-control sets its own, which already passes. */
+::placeholder {
+    color: var(--ui-muted);
+    opacity: 1;
+}
+
+/* Trix draws its placeholder in the system grey text colour. */
+trix-editor:empty:not(:focus)::before {
+    color: var(--ui-muted);
+}
+
 .ui-input--sm { padding: .25rem .5rem; font-size: .875rem; }
 
 .ui-select {

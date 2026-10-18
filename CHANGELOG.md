@@ -77,6 +77,18 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- The build names the shared Trix and custom-content stylesheets
+  explicitly, so `/assets/css/trix.css` and `/assets/css/custom-content.css`
+  exist again; new shared modules had renamed them.
+- Keyboard focus returns to a button that was disabled while it worked
+  ("Save", "Send") once it is enabled again; it used to fall back to the
+  page.
+- After adding, editing or deleting a forum post, focus goes to that post
+  or its neighbour instead of the top of the page, and a new reply's link
+  points at the reply itself (it used the post count as the anchor).
+- Placeholder text in form fields meets 4.5:1 contrast on the site (it was
+  the browser default, 3.9-4.4:1) and in the administration panel (Mantine's
+  default, 2.1-2.5:1).
 - The administration panel adapts to phones: its page had no viewport meta
   tag, so phones showed the desktop layout scaled down. E-mails got the tag
   and a fluid width too.

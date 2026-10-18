@@ -31,18 +31,18 @@ The results use the terms of the
 
 | Result | Criteria |
 | --- | ---: |
-| Supports | 44 |
+| Supports | 46 |
 | Partially Supports | 1 |
 | Does Not Support | 0 |
 | Not Applicable | 4 |
-| Not Evaluated, automated checks pass | 4 |
+| Not Evaluated, automated checks pass | 2 |
 | Not Evaluated | 2 |
 
 ### 1. Perceivable
 
 | Criterion | Level | Result | Remarks |
 | --- | --- | --- | --- |
-| 1.1.1 Non-text Content | A | Not Evaluated | Automated checks pass. Icon-only controls have translated names. Images in posts are described by their caption and get `alt=""`. Audio attachments in messages are named after the file. Images attached to messages are described by their sender and, when it says something, the file name ("Image from Anna: floor plan"); camera and screenshot names are left out, and people are not asked to caption images in private messages. Open: avatars, covers and the CAPTCHA need review; older content may keep file-name `alt` text. Post covers in cards keep `alt=""` on purpose: the title is the next element, and repeating it in `alt` would make screen readers read it twice. |
+| 1.1.1 Non-text Content | A | Supports | Automated checks pass and a manual review found no gaps. Icon-only controls have translated names. Images in posts are described by their caption and get `alt=""`. Audio attachments in messages are named after the file. Images attached to messages are described by their sender and, when it says something, the file name ("Image from Anna: floor plan"); camera and screenshot names are left out, and people are not asked to caption images in private messages. Post covers in cards keep `alt=""` on purpose: the title is the next element, and repeating it in `alt` would make screen readers read it twice. Checked by hand: avatars, covers, the CAPTCHA widget and older content. |
 | 1.2.1 Audio-only and Video-only (Prerecorded) | A | Supports | Audio in blogs and communities is music, for which the track title is the alternative; the player shows it (file name or post title). Reading artist and title from ID3 tags is planned in `docs/TODO.md`. Audio attached to messages is user content. |
 | 1.2.2 Captions (Prerecorded) | A | Not Applicable | There is no video player, and the HTML sanitizer removes `<video>`, `<iframe>` and `<embed>`. Message attachments are images, audio, or downloadable files. Revisit if video or embeds are added. |
 | 1.2.3 Audio Description or Media Alternative (Prerecorded) | A | Not Applicable | As 1.2.2. |
@@ -55,7 +55,7 @@ The results use the terms of the
 | 1.3.5 Identify Input Purpose | AA | Supports | `autocomplete` is set on sign-in, registration, password reset and retrieval, feedback (`name`, `email`), profile (`nickname`, `url`, `bday`) and email and password (`email`, `new-password`, `current-password`) in both themes; checked by hand that browsers offer the right values. |
 | 1.4.1 Use of Color | A | Supports | The messenger's online status was colour only; offline is now a hollow ring, and both states are named for screen readers and on hover. To review: links inside text, active tabs and filters, form errors. The latest-topic link in the `bootstrap` forum list on narrow screens was colour only (1.03:1 against the text); it is underlined now. Checked by hand: links inside text, active tabs and filters, form errors. |
 | 1.4.2 Audio Control | A | Supports | Nothing plays on its own. The player resumes on the next page only the track the person started, and only if that page lists it; its pause button is visible, named and keyboard-operable. |
-| 1.4.3 Contrast (Minimum) | AA | Not Evaluated | Automated checks pass for both themes, light and dark, English and Arabic, including content pages of a seeded site. To review: hover and disabled states, placeholders, pages outside the scan. |
+| 1.4.3 Contrast (Minimum) | AA | Supports | Automated checks pass for both themes, light and dark, English and Arabic, including content pages of a seeded site. Checked by hand: hover states, placeholders, disabled controls, pages outside the scan. Found by hand: placeholders were below 4.5:1 (site 4.4:1 light and 3.9:1 dark, browser default #757575; administration 2.1:1 light and 2.5:1 dark, Mantine defaults); they now use the muted text colour (5.3:1 or more). Disabled buttons (for example "Create a group" before members are chosen, a disabled "Save") are below 4.5:1, which the criterion allows for inactive controls. |
 | 1.4.4 Resize Text | AA | Supports | Checked at 200% zoom. The administration navigation did not scroll, so items below the sixth were out of reach and Tab moved focus off screen; the panel now scrolls, and a Playwright test focuses every item in a 640 × 360 window. |
 | 1.4.5 Images of Text | AA | Supports | No text is shown as an image in the interface. |
 | 1.4.10 Reflow | AA | Supports | The scan checks 320 CSS px on public pages (home, sign-in, forums, topic, blog post, profile with the audio player, messages) and eight administration screens with the navigation closed, and that the viewport meta tag is present. Checked by hand on a phone and at 320 px: editors, communities, the rest of the administration panel. Fixed on the way: the administration panel had no viewport meta tag and was shown scaled down; the pages and menus tables widened the page; sidebar content (the audio player) widened the column; track titles now wrap instead of being cut. |
@@ -75,7 +75,7 @@ The results use the terms of the
 | 2.3.1 Three Flashes or Below Threshold | A | Supports | Nothing in the interface flashes. |
 | 2.4.1 Bypass Blocks | A | Supports | "Skip to main content" on public pages (both themes) and in the administration panel; covered by automated tests. |
 | 2.4.2 Page Titled | A | Supports | Public pages set their title in the `meta_title` block. Each administration screen sets its own window title ("Section · site title"), and the navigation marks the current item with `aria-current="page"`. |
-| 2.4.3 Focus Order | A | Not Evaluated | Automated checks pass: focus stays in dialogs and returns to the control that opened them. To review: overall order, focus after deleting an item. |
+| 2.4.3 Focus Order | A | Not Evaluated | Automated checks pass: focus stays in dialogs and returns to the control that opened them. To review: overall order, focus after deleting an item. Checked by hand: tab order on the main pages and focus after deleting items is right, except two places, now fixed: a button disabled while it saved lost focus to the page (focus now returns to it once it is enabled again, site and administration panel), and after adding, editing or deleting a forum post the reloaded page started from the top (focus now goes to that post or its neighbour; replies were also linked to a wrong anchor). To recheck these two. |
 | 2.4.4 Link Purpose (In Context) | A | Supports | Links name their target through their text or context. Fixed: the forum pagination arrows had no name (now "Previous"/"Next", both themes), the group-chat "Remove" button now names the member, and "Read on" includes the article title for screen readers. The share buttons in the `bootstrap` theme were icons with no name; each is now named ("Share on Telegram (opens in a new tab)"). |
 | 2.4.5 Multiple Ways | AA | Supports | Pages are reachable through the menus, search and the sitemap. |
 | 2.4.6 Headings and Labels | AA | Supports | Reviewed in the source against the English strings: headings name their section, labels name their field. The "Email" label on sign-in and feedback was not translated and now uses `view.common.email`; English labels and headings lost stray trailing full stops. The empty headings in the topic form belong to the preview, which fills them with the topic title. Translations in the other twelve locales have not been reviewed by native speakers. |

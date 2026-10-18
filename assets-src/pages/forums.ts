@@ -145,14 +145,17 @@ function initQuickReplyForm() {
         // (notifying the topic's followers, see
         // ForumsController::notifyTopicFollowers()) is Forums-specific.
         cms.api(`/api/v1/forums/${parentId}/reply`, { method: "POST", data: { content } })
-            .then(() => {
+            .then((created: { id?: number } | null) => {
                 const totalPosts = parseInt(form.dataset.totalPosts || "0", 10) || 0;
                 const perPage = parseInt(form.dataset.perPage || "20", 10) || 20;
                 const newTotal = totalPosts + 1;
                 const lastPage = Math.max(1, Math.ceil(newTotal / perPage));
                 const topicUrl = form.dataset.topicUrl || "";
                 const target = topicUrl + (lastPage > 1 ? `?page=${lastPage}` : "");
-                const hash = `post-${newTotal}`;
+                // Posts are anchored by their feed id (id="post-<id>"), not
+                // by their position; the anchor also gets focus after the
+                // reload (focusLinkedPost()).
+                const hash = created?.id ? `post-${created.id}` : "reply";
 
                 // A reply almost always lands on the page already open (a
                 // new page only appears once POSTS_PER_PAGE is crossed) -
@@ -212,8 +215,32 @@ function initPostActions() {
             if (post) window.location.hash = post.id;
             window.location.reload();
         },
-        onReplyDeleted: () => window.location.reload(),
+        onReplyDeleted: (post) => {
+            // Land on the neighbouring post after the reload instead of the
+            // top of the page (WCAG 2.4.3): the next one, else the previous
+            // one, else the reply form.
+            const neighbour = [post?.nextElementSibling, post?.previousElementSibling]
+                .find((node): node is HTMLElement => node instanceof HTMLElement && /^post-\d+$/.test(node.id));
+            window.location.hash = neighbour?.id ?? "reply";
+            window.location.reload();
+        },
     });
+}
+
+/*
+ * After a reply is added, edited or deleted the page reloads with the
+ * affected post (or its neighbour) in the address. The browser scrolls to
+ * it, but focus stayed at the top of the document, so the next Tab and a
+ * screen reader started from the page header (WCAG 2.4.3). Put focus on
+ * that post.
+ */
+export function focusLinkedPost(hash: string = window.location.hash): void {
+    const id = decodeURIComponent(hash.replace(/^#/, ""));
+    if (!/^post-\d+$/.test(id) && id !== "reply") return;
+    const target = document.getElementById(id);
+    if (!target) return;
+    if (!target.hasAttribute("tabindex")) target.tabIndex = -1;
+    target.focus({ preventScroll: true });
 }
 
 function initTopicDelete() {
@@ -1079,4 +1106,5 @@ document.addEventListener("DOMContentLoaded", () => {
     initMarkAllRead();
     initTopicForm();
     initPoll();
+    focusLinkedPost();
 });
