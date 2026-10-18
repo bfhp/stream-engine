@@ -31,11 +31,11 @@ The results use the terms of the
 
 | Result | Criteria |
 | --- | ---: |
-| Supports | 46 |
+| Supports | 47 |
 | Partially Supports | 1 |
 | Does Not Support | 0 |
 | Not Applicable | 4 |
-| Not Evaluated, automated checks pass | 2 |
+| Not Evaluated, automated checks pass | 1 |
 | Not Evaluated | 2 |
 
 ### 1. Perceivable
@@ -75,7 +75,7 @@ The results use the terms of the
 | 2.3.1 Three Flashes or Below Threshold | A | Supports | Nothing in the interface flashes. |
 | 2.4.1 Bypass Blocks | A | Supports | "Skip to main content" on public pages (both themes) and in the administration panel; covered by automated tests. |
 | 2.4.2 Page Titled | A | Supports | Public pages set their title in the `meta_title` block. Each administration screen sets its own window title ("Section · site title"), and the navigation marks the current item with `aria-current="page"`. |
-| 2.4.3 Focus Order | A | Not Evaluated | Automated checks pass: focus stays in dialogs and returns to the control that opened them. To review: overall order, focus after deleting an item. Checked by hand: tab order on the main pages and focus after deleting items is right, except two places, now fixed: a button disabled while it saved lost focus to the page (focus now returns to it once it is enabled again, site and administration panel), and after adding, editing or deleting a forum post the reloaded page started from the top (focus now goes to that post or its neighbour; replies were also linked to a wrong anchor). To recheck these two. |
+| 2.4.3 Focus Order | A | Supports | Automated checks pass: focus stays in dialogs and returns to the control that opened them. Checked by hand: tab order on the main pages and focus after deleting items. Fixed on the way: a button disabled while it saved lost focus to the page (focus now returns to it, site and administration panel); after adding, editing or deleting a forum post the reloaded page started from the top (focus now goes to that post or its neighbour); in the administration panel Tab could not leave an open select. |
 | 2.4.4 Link Purpose (In Context) | A | Supports | Links name their target through their text or context. Fixed: the forum pagination arrows had no name (now "Previous"/"Next", both themes), the group-chat "Remove" button now names the member, and "Read on" includes the article title for screen readers. The share buttons in the `bootstrap` theme were icons with no name; each is now named ("Share on Telegram (opens in a new tab)"). |
 | 2.4.5 Multiple Ways | AA | Supports | Pages are reachable through the menus, search and the sitemap. |
 | 2.4.6 Headings and Labels | AA | Supports | Reviewed in the source against the English strings: headings name their section, labels name their field. The "Email" label on sign-in and feedback was not translated and now uses `view.common.email`; English labels and headings lost stray trailing full stops. The empty headings in the topic form belong to the preview, which fills them with the topic title. Translations in the other twelve locales have not been reviewed by native speakers. |
