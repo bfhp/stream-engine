@@ -2,10 +2,11 @@
 <html lang="{{ locale }}" dir="{{ dir|default('ltr') }}">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ subject }}</title>
     <style>
         body { font-family: Arial, sans-serif; background:#f4f4f4; }
-        .container { width:600px; margin:0 auto; background:#ffffff; padding:20px; }
+        .container { box-sizing:border-box; width:100%; max-width:600px; margin:0 auto; background:#ffffff; padding:20px; }
         .btn {
             display:inline-block;
             padding:10px 18px;

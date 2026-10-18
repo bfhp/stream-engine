@@ -400,6 +400,10 @@ body {
 
 .layout-sidebar {
     display: grid;
+    /* One column on narrow screens; minmax(0, …) so unbreakable content in
+       the sidebar (a long title, the audio player) cannot widen it past the
+       screen (WCAG 1.4.10). */
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--ui-space-4);
 }
 
@@ -408,7 +412,8 @@ body {
     .sidebar-sticky { position: sticky; inset-block-start: 5rem; }
 }
 
-.layout-sidebar__content { min-inline-size: 0; }
+.layout-sidebar__content,
+.layout-sidebar__aside { min-inline-size: 0; }
 
 /* "Show password" button inside password fields (shared/password-toggle.ts).
    Logical properties keep it at the end of the field in right-to-left

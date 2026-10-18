@@ -84,6 +84,9 @@ for (const route of NARROW_ADMIN_SCREENS) {
         if (await toggle.getAttribute("aria-expanded") === "true") await toggle.click();
         await expect(toggle).toHaveAttribute("aria-expanded", "false");
         await expectNoHorizontalScroll(page);
+        // The emulated window ignores the viewport meta tag, so check it is
+        // there: without it phones scale the whole panel down instead.
+        await expect(page.locator('meta[name="viewport"]')).toHaveAttribute("content", /width=device-width/);
     });
 }
 

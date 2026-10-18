@@ -80,6 +80,7 @@ test.describe("narrow viewport", () => {
     test("home page", async ({ page }, testInfo) => {
         await page.goto("/");
         await expectNoHorizontalScroll(page);
+        await expect(page.locator('meta[name="viewport"]')).toHaveAttribute("content", /width=device-width/);
         await expectNoNewViolations(page, "guest/home-narrow", testInfo);
     });
 

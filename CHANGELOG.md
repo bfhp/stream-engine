@@ -77,6 +77,12 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- The administration panel adapts to phones: its page had no viewport meta
+  tag, so phones showed the desktop layout scaled down. E-mails got the tag
+  and a fluid width too.
+- The audio player and other sidebar content no longer make pages wider
+  than a 320 px screen.
+- Forum poll options show the keyboard focus ring.
 - In the administration panel, Tab leaves a select whose list is open and
   the list closes. Searchable selects (page action and parent, feed type)
   sent focus back into the field; plain ones (access, change frequency)

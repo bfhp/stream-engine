@@ -517,7 +517,21 @@ a.users-person:hover {
     gap: var(--ui-space-2);
 }
 
-/* Audio player (components/users/audio-player.twig) */
+/* Audio player (components/users/audio-player.twig).
+   Its rows hold unbreakable text (track and post titles, cut with an
+   ellipsis) and a range input; their min-content width pushed the sidebar
+   column, and the page, past 320 CSS px (WCAG 1.4.10). Size the card by
+   its container only. */
+.audio-player-card {
+    contain: inline-size;
+    min-inline-size: 0;
+}
+
+.audio-player-card .audio-player-track,
+.audio-player-card .audio-player-range {
+    min-inline-size: 0;
+    max-inline-size: 100%;
+}
 .audio-player-controls,
 .audio-player-progress {
     display: flex;
@@ -539,12 +553,14 @@ a.users-person:hover {
     min-inline-size: 0;
 }
 
+/* Titles wrap instead of being cut with an ellipsis: track names are often
+   long file names, and a cut name is lost to readers who enlarge text or
+   letter spacing (WCAG 1.4.12) or zoom (1.4.4). */
 .audio-player-title,
 .audio-player-post,
-.audio-player-track__title {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+.audio-player-track__title,
+.audio-player-wrap {
+    overflow-wrap: anywhere;
 }
 
 .audio-player-title {

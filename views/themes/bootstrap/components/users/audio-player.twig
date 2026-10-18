@@ -15,11 +15,11 @@
                 </button>
 
                 <div class="min-w-0 flex-grow-1">
-                    <div class="small fw-semibold text-truncate" data-audio-title>{{ firstTrack.title }}</div>
+                    <div class="small fw-semibold audio-player-wrap" data-audio-title>{{ firstTrack.title }}</div>
                     {% if firstTrack.postUrl %}
-                        <a href="{{ firstTrack.postUrl }}" class="small text-body-secondary text-truncate d-block text-decoration-none" data-audio-post>{{ firstTrack.postTitle ?: trans('view.users.audio.player.04') }}</a>
+                        <a href="{{ firstTrack.postUrl }}" class="small text-body-secondary audio-player-wrap d-block text-decoration-none" data-audio-post>{{ firstTrack.postTitle ?: trans('view.users.audio.player.04') }}</a>
                     {% else %}
-                        <span class="small text-body-secondary text-truncate d-block" data-audio-post>{{ firstTrack.postTitle ?: trans('view.users.audio.player.04') }}</span>
+                        <span class="small text-body-secondary audio-player-wrap d-block" data-audio-post>{{ firstTrack.postTitle ?: trans('view.users.audio.player.04') }}</span>
                     {% endif %}
                 </div>
             </div>
@@ -38,7 +38,7 @@
                         data-audio-track-index="{{ loop.index0 }}"
                         title="{{ track.title }}"
                     >
-                        <span class="text-truncate"><bdi>{{ track.title }}</bdi></span>
+                        <span class="audio-player-wrap"><bdi>{{ track.title }}</bdi></span>
                     </button>
                 {% endfor %}
             </div>

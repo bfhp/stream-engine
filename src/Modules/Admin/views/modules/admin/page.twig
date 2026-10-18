@@ -3,6 +3,9 @@
 <head>
     <title>{{ title }}</title>
     <meta charset="utf-8">
+    {# Without it phones lay the panel out at ~980px and scale it down, so
+       Mantine's narrow layout never applies (WCAG 1.4.10). #}
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light dark">
     <script>
         try {

@@ -43,6 +43,8 @@ test("users: list, profile and blog post", async ({ page }, testInfo) => {
     await scanPage(page, profile, "content/user-profile", testInfo);
     await scanPage(page, post, "content/blog-post", testInfo);
     await scanNarrow(page, post, "content/blog-post-narrow", testInfo);
+    // The profile sidebar carries the audio player when the user has tracks.
+    await scanNarrow(page, profile, "content/user-profile-narrow", testInfo);
 });
 
 test("communities: list, community and post", async ({ page }, testInfo) => {
