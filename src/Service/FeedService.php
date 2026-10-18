@@ -2002,6 +2002,9 @@ class FeedService
         $this->decorateFeedMentions($feed);
 
         $feed->authorUrl = $this->urlGenerator->action('user.show', ['username' => $feed->authorUsername]);
+        // Authors without their own picture get the default one, so every
+        // view and API response built from a decorated feed has an image.
+        $feed->authorAvatarUrl = UserService::resolveAvatarUrl($feed->authorAvatarUrl);
 
         if ($feed->createdAt === null) {
             return;

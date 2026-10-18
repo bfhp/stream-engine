@@ -26,6 +26,7 @@ use StreamEngine\Service\AccessService;
 use StreamEngine\Service\MailService;
 use StreamEngine\Service\MessageService;
 use StreamEngine\Service\NotificationService;
+use StreamEngine\Service\UserService;
 use Tests\Support\ArrayCache;
 use Tests\Support\FakeFeedRepository;
 use Tests\Support\PhpInputStreamMock;
@@ -352,6 +353,18 @@ final class ProfileControllerTest extends TestCase
             'no date at all' => [['birth_date' => '']],
             'a nested avatar path' => [['avatar_url' => '/uploads/2026/08/a.png']],
         ];
+    }
+
+    public function testTheDefaultAvatarIsStoredAsNoAvatar(): void
+    {
+        $writes = [];
+
+        // The form sends back the default picture it was shown.
+        $this->post($this->validPayload(['avatar_url' => UserService::DEFAULT_AVATAR_URL]), $writes);
+
+        $this->assertCount(1, $writes);
+        // avatar_url is the sixth column.
+        $this->assertSame('', $writes[0][1][5]);
     }
 
     public function testAnEmptyBirthDateIsStoredAsNullRatherThanAnEmptyString(): void

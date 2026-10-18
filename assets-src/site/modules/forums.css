@@ -80,7 +80,10 @@
 }
 
 .forums-participants__list { display: inline-flex; align-items: center; }
-.forums-participants__list > .forums-avatar { margin-inline-end: -6px; border: 2px solid var(--ui-surface); }
+/* Avatars overlap by 6px; the last one keeps its full width, and none
+   shrinks below the size it is drawn at. */
+.forums-participants__list > .forums-avatar { flex-shrink: 0; border: 2px solid var(--ui-surface); }
+.forums-participants__list > .forums-avatar:not(:last-child) { margin-inline-end: -6px; }
 .forums-participants__more { margin-inline-start: var(--ui-space-2); }
 
 /* Sections (cards with a header) */

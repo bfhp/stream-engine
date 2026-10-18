@@ -68,6 +68,25 @@ function bindProfileForm(form: HTMLFormElement) {
     const sameValues = (a: FormDataEntryValue[], b: FormDataEntryValue[]) =>
         a.length === b.length && a.every((value, index) => value === b[index]);
 
+    /*
+     * Browsers fill saved credentials into the email and current-password
+     * fields on their own, sometimes after this snapshot. That is not an
+     * edit, and counting it showed "unsaved changes" and a leave warning on
+     * an untouched page. Fields the browser autofilled are left out.
+     */
+    const isAutofilled = (name: string) => {
+        const field = form.elements.namedItem(name);
+        if (!(field instanceof HTMLElement)) return false;
+        for (const selector of [":autofill", ":-webkit-autofill"]) {
+            try {
+                if (field.matches(selector)) return true;
+            } catch {
+                // Selector not supported by this browser.
+            }
+        }
+        return false;
+    };
+
     const isDirty = () => {
         const current = new FormData(form);
         const keys = new Set<string>([
@@ -76,6 +95,7 @@ function bindProfileForm(form: HTMLFormElement) {
         ]);
 
         for (const key of keys) {
+            if (isAutofilled(key)) continue;
             if (!sameValues(snapshot.getAll(key), current.getAll(key))) {
                 return true;
             }

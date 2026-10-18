@@ -31,6 +31,7 @@ use StreamEngine\Repository\MentionRepository;
 use StreamEngine\Service\AccessService;
 use StreamEngine\Service\FeedService;
 use StreamEngine\Service\MentionService;
+use StreamEngine\Service\UserService;
 use Tests\Support\ArrayCache;
 use Tests\Support\FakeFeedRepository;
 
@@ -813,7 +814,8 @@ final class FeedServiceTest extends TestCase
                         'position' => 2,
                         'created_at' => $rootTwoCreatedAt,
                         'nick' => 'Author 1',
-                        'avatar_url' => '/uploads/avatar-1.webp',
+                        // An author without their own picture.
+                        'avatar_url' => '',
                         'total_count' => 3,
                     ],
                     [
@@ -893,6 +895,8 @@ final class FeedServiceTest extends TestCase
             $result['items'][0]->createdAtLabel
         );
         $this->assertNotEmpty($result['items'][1]->createdAtLabel);
+        $this->assertSame('/uploads/avatar-1.webp', $result['items'][0]->authorAvatarUrl);
+        $this->assertSame(UserService::DEFAULT_AVATAR_URL, $result['items'][1]->authorAvatarUrl);
 
         $children = $result['items'][0]->children;
 

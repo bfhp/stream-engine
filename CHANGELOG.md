@@ -77,6 +77,14 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Comments by users without their own picture show the default avatar (the
+  image had an empty `src`): feeds resolve their author's avatar when they
+  are decorated for a view; comment avatars have `alt=""`, as the author's
+  name is next to them.
+- Saving the profile's Personal tab without a picture of one's own no longer
+  fails with "Incorrect avatar URL", and browser-filled email and password
+  fields no longer count as unsaved changes.
+- The last avatar in a forum topic's participant list keeps its full width.
 - The build names the shared Trix and custom-content stylesheets
   explicitly, so `/assets/css/trix.css` and `/assets/css/custom-content.css`
   exist again; new shared modules had renamed them.

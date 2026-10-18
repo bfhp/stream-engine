@@ -403,6 +403,12 @@ class ProfileController extends AbstractController
         $gender = trim((string) ($data['gender'] ?? ''));
         $birthDate = trim((string) ($data['birth_date'] ?? ''));
         $avatarUrl = trim((string) ($data['avatar_url'] ?? ''));
+        // The page shows the current user with the default picture filled in
+        // (StreamEngine resolves it), so a person who never uploaded one sends
+        // that path back. It means "no picture of my own", not a new URL.
+        if ($avatarUrl === UserService::DEFAULT_AVATAR_URL) {
+            $avatarUrl = '';
+        }
 
         if (mb_strlen($nick) > 50) {
             throw new ValidationException($this->tm->trans('profile.name_too_long'));

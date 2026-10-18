@@ -24,7 +24,7 @@ final class Feed
         public ?string $canonicalUrl,
         public readonly ?int $updatedAt = null,
         public readonly string $authorDisplayName = '',
-        public readonly string $authorAvatarUrl = '',
+        public string $authorAvatarUrl = '',
         public array $metadata = [],
         public ?string $createdAtLabel = null,
         public ?string $createdAtTitle = null,
@@ -104,10 +104,8 @@ final class Feed
             // joined in at query time - see FeedRepository::baseSelect()),
             // possibly empty. Falling back to a default image is a
             // presentation concern, not something this Domain object
-            // decides - callers resolve it via Service\UserService::
-            // resolveAvatarUrl() when building a view (see
-            // UsersController::buildCommunityPostCards()/
-            // showBlogPostPage()/showCommunityPostPage()).
+            // decides - FeedService::decorateFeed() resolves it, with the
+            // other view fields, via Service\UserService::resolveAvatarUrl().
             authorAvatarUrl: (string) ($row['avatar_url'] ?? ''),
             ratingSum: (int) ($row['rating_sum'] ?? 0),
             ratingCount: (int) ($row['rating_count'] ?? 0),
