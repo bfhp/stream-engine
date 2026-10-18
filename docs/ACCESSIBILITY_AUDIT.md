@@ -31,12 +31,12 @@ The results use the terms of the
 
 | Result | Criteria |
 | --- | ---: |
-| Supports | 48 |
+| Supports | 49 |
 | Partially Supports | 1 |
 | Does Not Support | 0 |
 | Not Applicable | 4 |
 | Not Evaluated, automated checks pass | 0 |
-| Not Evaluated | 2 |
+| Not Evaluated | 1 |
 
 ### 1. Perceivable
 
@@ -111,7 +111,7 @@ The results use the terms of the
 | Criterion | Level | Result | Remarks |
 | --- | --- | --- | --- |
 | 4.1.2 Name, Role, Value | A | Partially Supports | Automated checks pass except Chonky's file list (`aria-required-children`, in `tests/a11y/baseline.json`), so the file browser screen does not meet the criterion. To review with a screen reader: tabs, menus, switches, Trix, audio player. Arrow keys and list roles for the file browser are planned in `docs/TODO.md`. |
-| 4.1.3 Status Messages | AA | Not Evaluated | Administration notifications are `role="alert"`; search progress and the save messages on every profile tab use `role="status"`. Messages that arrive in the open conversation were not announced; a live region now reads the sender and text (up to three at a time, own messages left out). To confirm with a screen reader. Found with VoiceOver: site toasts were not read in either theme (the toast is hidden until shown, and VoiceOver reads neither a live region that appears nor text written into a hidden one); they are now announced through two live regions that are always present (polite, and assertive for errors), and the visible toast has no live role of its own. |
+| 4.1.3 Status Messages | AA | Supports | Administration notifications are `role="alert"`; search progress and the save messages on every profile tab use `role="status"`. Messages that arrive in the open conversation were not announced; a live region now reads the sender and text (up to three at a time, own messages left out). To confirm with a screen reader. Found with VoiceOver: site toasts were not read in either theme (the toast is hidden until shown, and VoiceOver reads neither a live region that appears nor text written into a hidden one); they are now announced through two live regions that are always present (polite, and assertive for errors), and the visible toast has no live role of its own. Checked again with VoiceOver: toasts, administration notifications, search, profile saves and new messages are read. |
 
 ## Updating this report
 
