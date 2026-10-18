@@ -77,7 +77,8 @@ const cms = window.CMS;
                 message: trans(form.dataset.registrationMode === "open"
                     ? "js.auth.registration_success_open"
                     : "js.auth.registration_success"),
-                type: "success"
+                type: "success",
+                keep: true,
             });
 
             setTimeout(() => {

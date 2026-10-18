@@ -290,6 +290,8 @@ type TrixEditorElement = HTMLElement & {
             cms.toast({
                 message: trans(isDraft ? 'js.blog.draft_saved' : 'js.blog.published'),
                 type: 'success',
+                // Every case but re-saving a draft moves on to another page.
+                keep: !(isDraft && isEdit),
             });
 
             // Editing a draft: nothing to navigate to - the form already

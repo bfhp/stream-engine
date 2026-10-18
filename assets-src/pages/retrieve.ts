@@ -43,7 +43,8 @@ function fieldValue(form: HTMLFormElement, name: string): string {
 
                 cms.toast({
                     message: trans("js.auth.password_changed"),
-                    type: "success"
+                    type: "success",
+                    keep: true,
                 });
 
                 setTimeout(() => {

@@ -20,6 +20,7 @@ import { initMentionAutocomplete } from "../shared/mentions-autocomplete";
 import { initStickyOffset } from "./sticky-offset";
 import { initPasswordToggles } from "../shared/password-toggle";
 import { installFocusKeeper } from "../shared/keep-focus";
+import { ui } from "../shared/ui";
 
 // Before DOMContentLoaded: the router has to be listening for popstate /
 // hashchange from the moment the page starts running, not from whenever the
@@ -28,6 +29,10 @@ CMS.hashRoute.init();
 
 document.addEventListener("DOMContentLoaded", () => {
     initStickyOffset();
+    // Live regions for toasts must be in the page before the first message.
+    ui.toast.prepare();
+    // A toast cut short by a reload or a redirect is shown again here.
+    CMS.showPendingToast();
     initPasswordToggles();
     installFocusKeeper();
     initMentionAutocomplete();

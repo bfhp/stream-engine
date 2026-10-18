@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { MODAL_CLOSED, TAB_SHOWN, TOAST_DELAY_MS, nativeAdapter, ui, type UiAdapter } from "../../assets-src/shared/ui";
+import { ANNOUNCE_DELAY_MS, MODAL_CLOSED, TAB_SHOWN, TOAST_DELAY_MS, nativeAdapter, ui, type UiAdapter } from "../../assets-src/shared/ui";
 
 afterEach(() => {
     ui.register(nativeAdapter);
@@ -90,6 +90,28 @@ describe("native adapter", () => {
         expect(el.hidden).toBe(false);
         vi.advanceTimersByTime(1);
         expect(el.hidden).toBe(true);
+    });
+
+    it("reads a toast out through an always-present live region (WCAG 4.1.3)", () => {
+        vi.useFakeTimers();
+        ui.toast.prepare();
+        const polite = document.querySelector<HTMLElement>('[data-ui-announcer="polite"]');
+        const assertive = document.querySelector<HTMLElement>('[data-ui-announcer="assertive"]');
+        expect(polite?.getAttribute("role")).toBe("status");
+        expect(assertive?.getAttribute("role")).toBe("alert");
+
+        const el = document.createElement("div");
+        el.hidden = true;
+        el.innerHTML = '<div class="ui-toast__body">  Saved \n </div><button>×</button>';
+        ui.toast.show(el, "success");
+        expect(polite?.textContent).toBe("");
+        vi.advanceTimersByTime(ANNOUNCE_DELAY_MS);
+        expect(polite?.textContent).toBe("Saved");
+
+        el.querySelector(".ui-toast__body")!.textContent = "Not saved";
+        ui.toast.show(el, "danger");
+        vi.advanceTimersByTime(ANNOUNCE_DELAY_MS);
+        expect(assertive?.textContent).toBe("Not saved");
     });
 
     it("keeps errors open until they are closed (WCAG 2.2.1)", () => {

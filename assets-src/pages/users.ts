@@ -378,6 +378,7 @@ function initBlogPostDelete() {
                 cms.toast({
                     message: trans('js.users.post_deleted'),
                     type: 'success',
+                    keep: true,
                 });
 
                 // Same 800ms delay as auth.ts's login/logout toasts before
@@ -465,6 +466,7 @@ function initCommunityCreateForm() {
             cms.toast({
                 message: trans('js.users.community_created'),
                 type: 'success',
+                keep: true,
             });
 
             setTimeout(() => {
@@ -654,7 +656,7 @@ function initCommunityManageMembers() {
             return;
         }
 
-        cms.toast({ message: successMessage, type: 'success' });
+        cms.toast({ message: successMessage, type: 'success', keep: true });
 
         // Reload rather than hand-move the row between the two lists
         // (subscribers -> members, or member -> back to subscribers) -

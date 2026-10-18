@@ -26,7 +26,8 @@ if (authForm) {
             });
             CMS.toast({
                 message: trans("js.auth.welcome"),
-                type: "success"
+                type: "success",
+                keep: true,
             });
             setTimeout(() => location.reload(), 800);
 
@@ -60,7 +61,8 @@ logoutButtons.forEach(btn => {
 
                     CMS.toast({
                         message: trans("js.auth.logged_out"),
-                        type: "info"
+                        type: "info",
+                        keep: true,
                     });
 
                     setTimeout(() => location.reload(), 800);

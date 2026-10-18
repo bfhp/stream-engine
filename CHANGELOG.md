@@ -77,6 +77,13 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Screen readers read site toasts in both themes; they went unannounced.
+  Messages now go through live regions that are always on the page.
+- Toasts shown right before the page reloads or moves on (sign-in,
+  sign-out, registration, password change, feedback, saving or deleting a
+  post, creating a topic or community) are shown again on the next page, so
+  they can be read in full instead of vanishing after 0.8 s. Other toasts
+  are not carried over.
 - Comments by users without their own picture show the default avatar (the
   image had an empty `src`): feeds resolve their author's avatar when they
   are decorated for a view; comment avatars have `alt=""`, as the author's

@@ -1080,7 +1080,7 @@ function initTopicForm() {
         try {
             const topic = await cms.api(apiUrl, { method: apiMethod, data: payload });
 
-            cms.toast({ message: trans(isEdit ? "js.forums.topic_updated" : "js.forums.topic_created"), type: "success" });
+            cms.toast({ message: trans(isEdit ? "js.forums.topic_updated" : "js.forums.topic_created"), type: "success", keep: true });
 
             setTimeout(() => {
                 if (topic.canonicalUrl) {

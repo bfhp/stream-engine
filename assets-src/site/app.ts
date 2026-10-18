@@ -104,15 +104,55 @@ const CMS = (() => {
     /* ===============================
        Toast
     =============================== */
-    function toastMessage({ message, type = "success", html = false }: {
+    /*
+     * Some actions show a toast and then reload or leave the page 0.8 s later
+     * (sign-in, saving or deleting a post), too soon to read it or for a
+     * screen reader to finish (WCAG 2.2.1, 4.1.3). Such a toast is shown
+     * with `keep: true`: it is also kept in this tab's sessionStorage and
+     * shown again, once, on the page that loads next.
+     */
+    const PENDING_TOAST_KEY = "cms.pendingToast";
+    const PENDING_TOAST_MAX_AGE_MS = 30_000;
+
+    function keepToastForNextPage(message: string, type: string, html: boolean): void {
+        try {
+            sessionStorage.setItem(PENDING_TOAST_KEY, JSON.stringify({ message, type, html, shownAt: Date.now() }));
+        } catch {
+            // Storage unavailable (blocked by the browser): the toast is simply not carried over.
+        }
+    }
+
+    function showPendingToast(): void {
+        let raw: string | null = null;
+        try {
+            raw = sessionStorage.getItem(PENDING_TOAST_KEY);
+            sessionStorage.removeItem(PENDING_TOAST_KEY);
+        } catch {
+            return;
+        }
+        if (!raw) return;
+        try {
+            const pending = JSON.parse(raw);
+            if (typeof pending?.message !== "string" || Date.now() - Number(pending.shownAt) > PENDING_TOAST_MAX_AGE_MS) return;
+            toastMessage({ message: pending.message, type: String(pending.type || "success"), html: pending.html === true });
+        } catch {
+            // A malformed entry is dropped.
+        }
+    }
+
+    function toastMessage({ message, type = "success", html = false, keep = false }: {
         message: unknown;
         type?: string;
         html?: boolean;
+        /** The page reloads or moves on right after: show the toast again there. */
+        keep?: boolean;
     }): void {
         const toastEl = document.getElementById('globalToast');
         const toastBody = document.getElementById('globalToastBody');
 
         if (!toastEl || !toastBody) return;
+
+        if (keep) keepToastForNextPage(String(message ?? ""), type, html);
 
         if (html) {
             toastBody.innerHTML = String(message ?? "");
@@ -970,6 +1010,7 @@ const CMS = (() => {
     return {
         api,
         toast: toastMessage,
+        showPendingToast,
         confirm,
         // Framework-neutral modal/toast/tooltip behavior; themes register
         // their adapter with CMS.ui.register(). See shared/ui.ts.

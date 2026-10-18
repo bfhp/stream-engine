@@ -1,6 +1,8 @@
-{# Global toast - filled and shown by CMS.toast() (site/app.ts). #}
-<div class="ui-toast-region" aria-live="polite">
-    <div id="globalToast" class="ui-toast" role="status" hidden>
+{# Global toast - filled and shown by CMS.toast() (site/app.ts). Screen
+   readers hear it through the announcer in shared/ui.ts, so it has no live
+   role of its own. #}
+<div class="ui-toast-region">
+    <div id="globalToast" class="ui-toast" hidden>
         <div class="ui-toast__body" id="globalToastBody">
             {{ trans('view.ui.message') }}
         </div>

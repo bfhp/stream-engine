@@ -31,11 +31,11 @@ The results use the terms of the
 
 | Result | Criteria |
 | --- | ---: |
-| Supports | 47 |
+| Supports | 48 |
 | Partially Supports | 1 |
 | Does Not Support | 0 |
 | Not Applicable | 4 |
-| Not Evaluated, automated checks pass | 1 |
+| Not Evaluated, automated checks pass | 0 |
 | Not Evaluated | 2 |
 
 ### 1. Perceivable
@@ -48,7 +48,7 @@ The results use the terms of the
 | 1.2.3 Audio Description or Media Alternative (Prerecorded) | A | Not Applicable | As 1.2.2. |
 | 1.2.4 Captions (Live) | AA | Not Applicable | The engine has no live media. |
 | 1.2.5 Audio Description (Prerecorded) | AA | Not Applicable | As 1.2.2. |
-| 1.3.1 Info and Relationships | A | Not Evaluated | Automated checks pass; profile labels are tied to their fields with `for`/`id` and `aria-describedby`. The bot trap in the feedback form was reachable by screen readers and Tab, so a person could fill it and be rejected as a bot; it is now hidden from both. To review with a screen reader: heading levels, administration tables, field groups. |
+| 1.3.1 Info and Relationships | A | Supports | Automated checks pass; profile labels are tied to their fields with `for`/`id` and `aria-describedby`. The bot trap in the feedback form was reachable by screen readers and Tab, so a person could fill it and be rejected as a bot; it is now hidden from both. Checked with VoiceOver: headings, landmarks, administration tables, form fields and groups, lists. |
 | 1.3.2 Meaningful Sequence | A | Not Evaluated | Check the reading order, especially right-to-left (Arabic) and card grids. |
 | 1.3.3 Sensory Characteristics | A | Supports | Reviewed against the English strings. The empty messenger said "open a conversation on the left", which is on the right in right-to-left locales and above on a phone; it now says "from the list" in all locales. The file browser help now names Enter as well as double-click. Remaining "above" and "below" describe reading order next to a link or label. |
 | 1.3.4 Orientation | AA | Supports | Nothing locks the orientation: no `orientation` media queries, no `screen.orientation.lock()`, no manifest `orientation`. Layouts are responsive in both themes and the administration panel. |
@@ -70,7 +70,7 @@ The results use the terms of the
 | 2.1.1 Keyboard | A | Supports | The keyboard walk passes on ten administration screens and the profile. The settings select list is flagged by axe (`scrollable-region-focusable`, in `tests/a11y/baseline.json`), but focus stays in the input and the arrow keys reach every option, which a scan check confirms. Found by hand: the Trix toolbar could not be reached with Tab (Trix renders its buttons with `tabindex="-1"`), and Enter or Space did nothing; it is now a toolbar with one Tab stop, arrow keys, Home and End (`shared/trix-toolbar.ts`). Checked by hand: the audio player. The Chonky file browser opens files with Enter and moves between them with Tab, which meets the criterion; arrow keys are planned in `docs/TODO.md`. |
 | 2.1.2 No Keyboard Trap | A | Supports | Tab leaves Monaco after Ctrl+M (Ctrl+Shift+M on macOS), as the hint next to each editor says; the keyboard walk uses that toggle. Checked by hand: Trix, the audio player. Found by hand: in the administration panel Tab could not leave a select (page action, parent, feed type) while its list was open; a theme-wide Popover setting returned focus to the field as the list closed. It is now set only on the two popovers that need it, and a scan check presses Tab in open selects. |
 | 2.1.4 Character Key Shortcuts | A | Supports | Key handlers use Enter, Escape, Tab, Backspace and arrows. The only character key, the comma in the tag field, works only while that field has focus. Trix and Monaco shortcuts use Ctrl/Cmd and work only inside the editor. |
-| 2.2.1 Timing Adjustable | A | Supports | Sessions last 30 days. Administration notifications stay 8 s, pause while hovered, and errors stay until closed. Site notifications in both themes now do the same (they closed after 5 s, errors included, and did not pause in the `default` theme). |
+| 2.2.1 Timing Adjustable | A | Supports | Sessions last 30 days. Notifications on the site and in the administration panel stay 8 s, pause while hovered or focused, and errors stay until closed; a toast shown just before the page reloads or moves on (sign-in, saving a post and the like) is shown again on the next page. Site toasts used to close after 5 s, errors included. |
 | 2.2.2 Pause, Stop, Hide | A | Supports | Only loading and "typing…" indicators move; they are short and stop with `prefers-reduced-motion`. The message list updates as messages arrive, which is essential to a chat. The Scheduler table refreshed every 2–30 s with no way to stop it; it now has an "Auto-refresh" switch. |
 | 2.3.1 Three Flashes or Below Threshold | A | Supports | Nothing in the interface flashes. |
 | 2.4.1 Bypass Blocks | A | Supports | "Skip to main content" on public pages (both themes) and in the administration panel; covered by automated tests. |
@@ -111,7 +111,7 @@ The results use the terms of the
 | Criterion | Level | Result | Remarks |
 | --- | --- | --- | --- |
 | 4.1.2 Name, Role, Value | A | Partially Supports | Automated checks pass except Chonky's file list (`aria-required-children`, in `tests/a11y/baseline.json`), so the file browser screen does not meet the criterion. To review with a screen reader: tabs, menus, switches, Trix, audio player. Arrow keys and list roles for the file browser are planned in `docs/TODO.md`. |
-| 4.1.3 Status Messages | AA | Not Evaluated | Administration notifications are `role="alert"`; site toasts sit in a live region in both themes; search progress and the save messages on every profile tab use `role="status"`. Messages that arrive in the open conversation were not announced; a live region now reads the sender and text (up to three at a time, own messages left out). To confirm with a screen reader. |
+| 4.1.3 Status Messages | AA | Not Evaluated | Administration notifications are `role="alert"`; search progress and the save messages on every profile tab use `role="status"`. Messages that arrive in the open conversation were not announced; a live region now reads the sender and text (up to three at a time, own messages left out). To confirm with a screen reader. Found with VoiceOver: site toasts were not read in either theme (the toast is hidden until shown, and VoiceOver reads neither a live region that appears nor text written into a hidden one); they are now announced through two live regions that are always present (polite, and assertive for errors), and the visible toast has no live role of its own. |
 
 ## Updating this report
 

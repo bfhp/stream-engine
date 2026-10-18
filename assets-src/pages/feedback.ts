@@ -71,7 +71,8 @@ const cms = window.CMS;
 
             cms.toast({
                 message: trans("js.feedback.sent"),
-                type: "success"
+                type: "success",
+                keep: true,
             });
             setTimeout(() => {
                 window.location.href = successUrl;

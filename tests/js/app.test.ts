@@ -179,6 +179,32 @@ describe("toast()", () => {
      * so does messenger-global.ts's DM preview, where the text is server-
      * sanitized HTML that deliberately permits `<a href>`.
      */
+    it("shows a kept toast once more on the next page", () => {
+        fixture();
+        sessionStorage.clear();
+
+        CMS.toast({ message: "Вы вошли", type: "success", keep: true });
+
+        // The next page.
+        const next = fixture();
+        CMS.showPendingToast();
+        expect(next.body.textContent).toBe("Вы вошли");
+        // Shown once only.
+        next.body.textContent = "";
+        CMS.showPendingToast();
+        expect(next.body.textContent).toBe("");
+    });
+
+    it("does not carry over an ordinary toast", () => {
+        fixture();
+        sessionStorage.clear();
+        CMS.toast({ message: "Сохранено" });
+
+        const next = fixture();
+        CMS.showPendingToast();
+        expect(next.body.textContent).toBe("");
+    });
+
     it("renders the message as text by default", () => {
         const { body } = fixture();
 

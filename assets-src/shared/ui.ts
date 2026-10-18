@@ -45,6 +45,12 @@ export type SlotData = Record<string, string | number | null | undefined>;
    focus is on the toast, and errors and warnings stay until closed, since
    they usually say what to do next. Bootstrap's adapter follows the same rule. */
 export const TOAST_DELAY_MS = 8000;
+
+/** The message of a toast, without its close button. */
+export function toastText(el: HTMLElement): string {
+    const body = el.querySelector<HTMLElement>(".ui-toast__body, .toast-body") ?? el;
+    return (body.textContent ?? "").replace(/\s+/g, " ").trim();
+}
 export const toastStaysOpen = (type: string): boolean => type === "danger" || type === "warning";
 const TOOLTIP_SELECTOR = "[data-ui-tooltip], [data-bs-toggle=\"tooltip\"]";
 const OPEN_MODAL_SELECTOR = "dialog[open], [data-ui-open], .modal";
@@ -158,6 +164,53 @@ export const nativeAdapter: UiAdapter = {
 
 let adapter: UiAdapter = nativeAdapter;
 
+/*
+ * Screen readers did not read toasts in either theme (WCAG 4.1.3): the toast
+ * waits hidden in the page, gets its text, then is shown - and VoiceOver
+ * reads neither a live region that appears nor text written into one while
+ * it is hidden. Toasts are announced through two live regions that are
+ * always present and never hidden: a polite one, and an assertive one for
+ * errors and warnings. The visible toast carries no live role, so nothing is
+ * read twice. The regions hide themselves inline, so no theme stylesheet is
+ * needed for them.
+ */
+export const ANNOUNCE_DELAY_MS = 100;
+const announcers = new Map<boolean, HTMLElement>();
+const VISUALLY_HIDDEN = "position:absolute;inline-size:1px;block-size:1px;margin:-1px;padding:0;"
+    + "overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0";
+
+function announcer(urgent: boolean): HTMLElement {
+    let region = announcers.get(urgent);
+    if (region?.isConnected) return region;
+    region = document.createElement("div");
+    region.setAttribute("style", VISUALLY_HIDDEN);
+    region.setAttribute("role", urgent ? "alert" : "status");
+    region.setAttribute("aria-live", urgent ? "assertive" : "polite");
+    region.setAttribute("aria-atomic", "true");
+    region.dataset.uiAnnouncer = urgent ? "assertive" : "polite";
+    document.body.append(region);
+    announcers.set(urgent, region);
+    return region;
+}
+
+/** Puts both regions in the page ahead of time: a region added together with its text is often not read. */
+export function prepareAnnouncers(): void {
+    if (!document.body) return;
+    announcer(false);
+    announcer(true);
+}
+
+/** Reads `text` out to screen readers; `urgent` interrupts (errors). */
+export function announce(text: string, urgent = false): void {
+    const message = text.replace(/\s+/g, " ").trim();
+    if (!message || !document.body) return;
+    const region = announcer(urgent);
+    // Clear, then set after a beat, so the same message twice in a row is
+    // read again.
+    region.textContent = "";
+    setTimeout(() => { region.textContent = message; }, ANNOUNCE_DELAY_MS);
+}
+
 function targetOf(trigger: HTMLElement): HTMLElement | null {
     const selector = trigger.dataset.uiTarget;
     if (!selector) return null;
@@ -264,6 +317,11 @@ export const ui = {
     toast: {
         show(el: HTMLElement, type = "success"): void {
             adapter.toastShow(el, type);
+            announce(toastText(el), toastStaysOpen(type));
+        },
+        /** Called once the page is ready (site/main.ts). */
+        prepare(): void {
+            prepareAnnouncers();
         },
     },
 
