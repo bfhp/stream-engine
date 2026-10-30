@@ -115,3 +115,22 @@ export function moveInFileList(event: KeyboardEvent, root: HTMLElement): boolean
     focusItem(next);
     return true;
 }
+
+/**
+ * Chonky puts role="list" on its outer wrapper, but between that wrapper and
+ * the files sit the virtualized list's scroller (focusable, tabindex="0"),
+ * the drop zone and the loading status, which a list may not contain
+ * (axe `aria-required-children`, WCAG 4.1.2). The role moves to the element
+ * that holds the rows, so the scroller sits outside the list. Idempotent:
+ * run it again whenever Chonky re-renders.
+ */
+export function fixFileListRoles(root: HTMLElement, label: string): void {
+    root.querySelectorAll<HTMLElement>(".chonky-fileListWrapper[role=\"list\"]").forEach((wrapper) => {
+        wrapper.removeAttribute("role");
+    });
+    root.querySelectorAll<HTMLElement>("[data-testid=\"virtuoso-item-list\"], .virtuoso-grid-list").forEach((list) => {
+        if (!list.querySelector(ITEM)) return;
+        if (list.getAttribute("role") !== "list") list.setAttribute("role", "list");
+        if (list.getAttribute("aria-label") !== label) list.setAttribute("aria-label", label);
+    });
+}

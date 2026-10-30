@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { moveInFileList } from "../../assets-src/admin/lib/file-list-keyboard";
+import { fixFileListRoles, moveInFileList } from "../../assets-src/admin/lib/file-list-keyboard";
 
 /*
  * jsdom has no layout: each file gets a rectangle from its data-x / data-y
@@ -89,5 +89,31 @@ describe("file list arrow keys", () => {
         expect(press(root, "ArrowDown", { shiftKey: true })).toBe(false);
         expect(press(root, "a")).toBe(false);
         expect(document.activeElement).toBe(box(0));
+    });
+});
+
+describe("file list roles", () => {
+    it("moves the list role from Chonky's wrapper to the element holding the rows", () => {
+        document.body.innerHTML = `
+            <div id="root">
+                <div class="chonky-fileListWrapper" role="list" aria-busy="false">
+                    <div class="drop-zone"></div>
+                    <div data-testid="virtuoso-scroller" tabindex="0">
+                        <div data-testid="virtuoso-item-list">
+                            <div data-index="0"><div role="listitem" data-chonky-context-file-id="f0"><input type="checkbox"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        const root = document.getElementById("root")!;
+
+        fixFileListRoles(root, "File Browser");
+        fixFileListRoles(root, "File Browser");
+
+        expect(root.querySelector(".chonky-fileListWrapper")!.hasAttribute("role")).toBe(false);
+        const list = root.querySelector("[data-testid=\"virtuoso-item-list\"]")!;
+        expect(list.getAttribute("role")).toBe("list");
+        expect(list.getAttribute("aria-label")).toBe("File Browser");
+        expect(root.querySelectorAll("[role=\"list\"]")).toHaveLength(1);
     });
 });

@@ -17,7 +17,7 @@ import { ChonkyIconFA } from "@samuelncui/chonky-icon-fontawesome";
 import { getApiResponseError } from "../../shared/api-errors";
 import { csrfHeaders } from "../../shared/csrf";
 import { getLocale, trans } from "../../shared/i18n";
-import { moveInFileList } from "../lib/file-list-keyboard";
+import { fixFileListRoles, moveInFileList } from "../lib/file-list-keyboard";
 import {
     parentUploadPath,
     toBrowserFile,
@@ -40,6 +40,19 @@ async function responseJson(response: Response): Promise<UploadBrowserPayload> {
 
 export default function FileBrowser() {
     const fileInput = useRef<HTMLInputElement>(null);
+    const browserBox = useRef<HTMLDivElement>(null);
+
+    // Chonky re-renders its virtualized rows while scrolling; keep the list
+    // role on the element that holds them (see fixFileListRoles()).
+    useEffect(() => {
+        const root = browserBox.current;
+        if (!root) return undefined;
+        const repair = () => fixFileListRoles(root, trans("js.admin.file_browser.title"));
+        repair();
+        const observer = new MutationObserver(repair);
+        observer.observe(root, { childList: true, subtree: true });
+        return () => observer.disconnect();
+    }, []);
     const colorScheme = useComputedColorScheme("light");
     const [path, setPath] = useState("");
     const [payload, setPayload] = useState<UploadBrowserPayload | null>(null);
@@ -520,6 +533,7 @@ export default function FileBrowser() {
 
             {/* Arrow keys between files, on top of Chonky's one Tab stop per file. */}
             <Box
+                ref={browserBox}
                 flex={1}
                 mih={0}
                 style={{ opacity: loading && payload ? 0.65 : 1 }}
