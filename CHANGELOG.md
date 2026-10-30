@@ -77,6 +77,11 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- The audio player is a named region with a named playlist (the current track
+  is marked), and its title line reads "Current track: …". The position slider reads "1 min 14 sec of 3 min 20 sec" instead
+  of "1:14", which VoiceOver read as hours, and no longer announces every second
+  while it has focus. The rating card reads "4.5 out of 5" instead of a row of
+  stars.
 - Blog post cards are named articles in a list. Screen readers read "Reading
   time: 2 min", "Comments: 3" and "Rating: 4.5 out of 5" instead of bare
   numbers, and tags as a list named "Tags".

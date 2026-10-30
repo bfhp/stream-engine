@@ -192,6 +192,7 @@ return [
 
     'view.common.email' => 'Электронная почта',
     'view.common.rating' => 'Рейтинг',
+    'view.common.out_of_five' => 'из 5',
     'view.common.rate_aria' => 'Поставить оценку {rating} из 5',
     'view.common.unread_topics' => '{count} непрочитанных тем',
     'view.ui.message' => 'Сообщение',
@@ -715,6 +716,12 @@ return [
 
     'js.audio.pause' => 'Пауза',
     'js.audio.play' => 'Воспроизвести',
+    'js.audio.current_track' => 'Текущий трек:',
+    'js.audio.player' => 'Аудиоплеер',
+    'js.audio.playlist' => 'Плейлист',
+    'js.audio.time_minutes' => '{minutes} мин {seconds} сек',
+    'js.audio.time_seconds' => '{seconds} сек',
+    'js.audio.position' => '{current} из {duration}',
     'js.audio.listen' => 'Слушать',
     'js.audio.listen_attached' => 'Слушать прикреплённый трек',
     'js.audio.pause_attached' => 'Пауза: прикреплённый трек',

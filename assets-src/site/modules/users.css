@@ -588,6 +588,9 @@ a.users-person:hover {
 }
 
 .audio-player-card .audio-player-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
     margin-block-start: var(--ui-space-2);
 }
 

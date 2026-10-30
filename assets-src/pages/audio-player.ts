@@ -126,10 +126,35 @@ export function initAudioPlayers() {
             }
         }
 
+        /** "1 min 14 sec": a screen reader reads "1:14" as a clock time. */
+        function spokenTime(seconds: number): string {
+            const total = Number.isFinite(seconds) && seconds > 0 ? Math.floor(seconds) : 0;
+            const minutes = Math.floor(total / 60);
+            const rest = total % 60;
+
+            return minutes > 0
+                ? trans("js.audio.time_minutes", { minutes: String(minutes), seconds: String(rest) })
+                : trans("js.audio.time_seconds", { seconds: String(rest) });
+        }
+
+        function seekValueText(position: number): string {
+            return Number.isFinite(playerAudio.duration) && playerAudio.duration > 0
+                ? trans("js.audio.position", { current: spokenTime(position), duration: spokenTime(playerAudio.duration) })
+                : spokenTime(position);
+        }
+
+        function renderSeek(): void {
+            const ratio = playerAudio.duration > 0 ? playerAudio.currentTime / playerAudio.duration : 0;
+            playerSeek.value = String(Math.round(ratio * 1000));
+            playerSeek.setAttribute("aria-valuetext", seekValueText(playerAudio.currentTime));
+        }
+
         function updateProgress(): void {
-            if (!isSeeking) {
-                const ratio = playerAudio.duration > 0 ? playerAudio.currentTime / playerAudio.duration : 0;
-                playerSeek.value = String(Math.round(ratio * 1000));
+            // A screen reader reads out every change of a focused slider's
+            // value, so while it has focus it only moves when the user moves
+            // it; the time beside it keeps running.
+            if (!isSeeking && document.activeElement !== playerSeek) {
+                renderSeek();
             }
 
             if (current) current.textContent = formatTime(playerAudio.currentTime);
@@ -181,10 +206,14 @@ export function initAudioPlayers() {
             }
 
             trackButtons.forEach((button) => {
-                button.classList.toggle("is-active", Number(button.dataset.audioTrackIndex) === activeIndex);
+                const active = Number(button.dataset.audioTrackIndex) === activeIndex;
+                button.classList.toggle("is-active", active);
+                if (active) button.setAttribute("aria-current", "true");
+                else button.removeAttribute("aria-current");
             });
 
             playerSeek.value = "0";
+            renderSeek();
             updateProgress();
         }
 
@@ -262,7 +291,7 @@ export function initAudioPlayers() {
 
             const button = target.closest<HTMLButtonElement>("[data-audio-play-track-id]");
             const trackId = button?.dataset.audioPlayTrackId;
-            if (!trackId) return;
+            if (!trackId || !root.isConnected) return;
 
             if (playlist[activeIndex]?.id === trackId && !playerAudio.paused) {
                 event.preventDefault();
@@ -278,7 +307,12 @@ export function initAudioPlayers() {
 
         playerSeek.addEventListener("input", () => {
             isSeeking = true;
+            const target = Number(playerSeek.value) / 1000 * (playerAudio.duration || 0);
+            playerSeek.setAttribute("aria-valuetext", seekValueText(target));
         });
+
+        // Brings the slider up to date when it gets focus, then it holds still.
+        playerSeek.addEventListener("focus", renderSeek);
 
         playerSeek.addEventListener("change", () => {
             const ratio = Number(playerSeek.value) / 1000;
@@ -287,6 +321,7 @@ export function initAudioPlayers() {
                 saveCurrentPosition();
             }
             isSeeking = false;
+            renderSeek();
             updateProgress();
         });
 
@@ -319,7 +354,14 @@ export function initAudioPlayers() {
         window.addEventListener("pagehide", saveStateBeforePageExit);
         window.addEventListener("beforeunload", saveStateBeforePageExit);
 
-        new MutationObserver(syncPlayButtons).observe(document.body, { childList: true, subtree: true });
+        const buttonObserver = new MutationObserver(() => {
+            if (!root.isConnected) {
+                buttonObserver.disconnect();
+                return;
+            }
+            syncPlayButtons();
+        });
+        buttonObserver.observe(document.body, { childList: true, subtree: true });
 
         const storedState = readState();
         const storedIndex = storedState.trackId !== null
