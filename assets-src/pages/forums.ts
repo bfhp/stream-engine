@@ -21,6 +21,7 @@ import { bytesToLabel } from "../shared/bytes";
 import { getApiErrorMessage } from "../shared/api-errors";
 import { trans, transChoiceWithCount } from "../shared/i18n";
 import { describeImagesWithCaptions, labelTrixEditors } from "../shared/trix-captions";
+import { useSectionHeadings } from "../shared/trix-headings";
 import { installTrixToolbarKeyboard } from "../shared/trix-toolbar";
 import { buildRichQuoteInsertionHtml } from "../shared/comment-quotes";
 import { initForumPostActions } from "./forum-post-actions";
@@ -33,6 +34,7 @@ import {
 } from "./forum-poll";
 
 describeImagesWithCaptions();
+useSectionHeadings();
 labelTrixEditors();
 installTrixToolbarKeyboard();
 

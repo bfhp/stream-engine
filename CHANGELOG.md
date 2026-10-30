@@ -9,6 +9,11 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- An "Accessibility problem" issue form, linked from the accessibility
+  statement, which asks for the details needed to reproduce a report and adds
+  the `accessibility` label. The statement describes what the editors let
+  authors do for accessible content (headings, tables, link text, language,
+  images).
 - Messages that arrive in the open conversation are announced to screen
   readers (sender and text).
 - The accessibility scan checks text spacing (WCAG 1.4.12), seven
@@ -35,6 +40,10 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- The heading button of the rich-text editor (blogs, communities, forums)
+  writes `<h2>` instead of `<h1>`, so a heading in a post sits under the page
+  title. Older posts keep their `<h1>` until edited; the editor converts it
+  when it opens them.
 - The accessibility statement now claims full conformance with WCAG 2.2 AA
   (and so 2.1 AA) for 0.5.x, after the audit in `docs/ACCESSIBILITY_AUDIT.md`
   was completed with a manual keyboard and VoiceOver review. The README lists

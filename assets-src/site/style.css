@@ -786,3 +786,10 @@ a.mention {
 )::before {
     transform: scaleX(-1);
 }
+
+/* The Trix heading button writes <h2> (shared/trix-headings.ts); sized like
+   Trix's own <h1>, which older content still has. */
+.trix-content h2 {
+    font-size: 1.2em;
+    line-height: 1.2;
+}

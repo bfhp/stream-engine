@@ -16,6 +16,8 @@ declare module "trix" {
         config: {
             /** UI strings; captionPlaceholder is the empty-caption hint. */
             lang: Record<string, string>;
+            /** Block formats by name; heading1.tagName is set in trix-headings.ts. */
+            blockAttributes: Record<string, { tagName?: string }>;
         };
     };
 

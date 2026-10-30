@@ -1,9 +1,5 @@
 # Accessibility Statement
 
-> **Draft.** The conformance status below is final for 0.5.x. Items marked
-> **TODO** (support for content authors, the issue label) still need a
-> decision before this statement is published.
-
 Stream Engine aims to let people use every site built on it, and its
 administration panel, regardless of disability, input method, or assistive
 technology. This document says what the project targets, what it covers, how
@@ -164,24 +160,49 @@ documented with a workaround.
 ## Support for content authors
 
 A CMS also affects whether authors can publish accessible content
-([ATAG 2.0](https://www.w3.org/TR/ATAG20/), part B).
+([ATAG 2.0](https://www.w3.org/TR/ATAG20/), part B). This section describes
+what the shipped editors allow; no conformance with ATAG is claimed.
 
-- **Images.** In the rich-text editor (blogs, forums) the caption field of an
-  image asks the author to describe it for people who cannot see it. The
-  administration HTML editor inserts uploaded images as a `<figure>` with an
-  empty `<figcaption>` and places the cursor in it. Images without alt text
-  get an empty one instead of their file name.
-- **TODO**: evaluate and describe whether authors can set headings, table
-  headers, meaningful link text, and content language; whether the editor
-  produces semantic markup rather than visual-only formatting; and whether any
-  further accessibility checks are shown to authors.
+Stream Engine has three kinds of editor:
+
+- the **rich-text editor** (Trix) for blog posts, community posts and forum
+  topics and replies;
+- the **HTML editor** (Monaco) in the administration panel, for articles
+  and other feed content, which takes HTML as written;
+- **plain text** fields for comments and messages; links in them become
+  links, nothing else is formatted.
+
+Whatever the editor, stored HTML goes through HTML Purifier, which keeps
+semantic markup and drops scripts and inline event handlers.
+
+| | Rich-text editor | HTML editor |
+| --- | --- | --- |
+| Structure | Real elements, not visual formatting: one heading level, quotes, code blocks, bulleted and numbered lists, bold (`<strong>`), italic (`<em>`), strikethrough (`<del>`) | Any element the sanitizer keeps, including `<h1>`–`<h6>`, lists, `<figure>` and `<blockquote>` |
+| Headings | One level, `<h2>` | All levels |
+| Tables | Not available | Available, with `<th>`, `scope` and `<caption>` |
+| Link text | The selected text becomes the link; the author chooses it | As written |
+| Language of a passage | Not available | `lang` on any element is kept |
+| Images | The caption field asks the author to describe the image; it is not required | The image button inserts a `<figure>` with an empty `<figcaption>` and puts the cursor in it |
+
+- **Images.** An image is described by its caption: it gets `alt=""` and the
+  caption is its text alternative (see [Known limitations](#known-limitations)).
+  An image without alt text gets an empty one instead of its file name.
+- **Checks.** Apart from the caption prompt, neither editor checks content
+  for accessibility problems (an empty link, a skipped heading level, a
+  table without headers); authors are responsible for them.
+- **Headings in the rich-text editor.** Its one heading is stored as `<h2>`,
+  a section under the page title. Content saved when it was still `<h1>`
+  keeps that until it is next edited. Authors who need more levels or tables
+  write the content in the HTML editor.
 
 ## Reporting a problem
 
 If something in Stream Engine is hard or impossible to use with your
 assistive technology or input method, please
 [open an issue](https://github.com/bfhp/stream-engine/issues/new) with the
-`accessibility` label. **TODO**: create the label and an issue template.
+`accessibility` label; the
+[accessibility issue form](https://github.com/bfhp/stream-engine/issues/new?template=accessibility.yml)
+asks for the details below and adds the label.
 
 Include as much of the following as you can:
 

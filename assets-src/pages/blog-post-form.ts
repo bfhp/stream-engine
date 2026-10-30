@@ -6,10 +6,12 @@ import { getApiErrorMessage } from "../shared/api-errors";
 import { initCoverWidget } from "../shared/cover-widget";
 import { trans, transChoiceWithCount } from "../shared/i18n";
 import { describeImagesWithCaptions, labelTrixEditors } from "../shared/trix-captions";
+import { useSectionHeadings } from "../shared/trix-headings";
 import { installTrixToolbarKeyboard } from "../shared/trix-toolbar";
 import { announce } from "../shared/ui";
 
 describeImagesWithCaptions();
+useSectionHeadings();
 labelTrixEditors();
 installTrixToolbarKeyboard();
 

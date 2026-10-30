@@ -1,0 +1,52 @@
+name: Accessibility problem
+description: Something is hard or impossible to use with assistive technology, the keyboard, zoom, or another input method.
+title: "[Accessibility]: "
+labels: ["accessibility"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting this. See the [accessibility statement](https://github.com/bfhp/stream-engine/blob/main/ACCESSIBILITY.md) for what the project covers.
+        If the problem is on a particular site rather than in Stream Engine itself (its own content, theme or modules), please contact that site's operator first.
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: "0.5.2, or a commit hash"
+    validations:
+      required: false
+  - type: input
+    id: where
+    attributes:
+      label: Page, administration screen, or workflow
+      placeholder: "Messages: starting a group conversation"
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What you tried to do, and what happened instead
+      description: Steps help. If a screen reader read something, quote what it said.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Browser, operating system, and assistive technology, with versions
+      placeholder: "Firefox 131, Windows 11, NVDA 2024.4"
+    validations:
+      required: true
+  - type: input
+    id: locale
+    attributes:
+      label: Site language, if it matters
+      description: For example a right-to-left language such as Arabic.
+    validations:
+      required: false
+  - type: input
+    id: wcag
+    attributes:
+      label: WCAG success criterion, if you know it
+      placeholder: "2.4.7 Focus Visible"
+    validations:
+      required: false
