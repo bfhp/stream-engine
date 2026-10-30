@@ -26,6 +26,7 @@ use StreamEngine\Core\GuestFeedReadStore;
 use StreamEngine\Core\GuestFeedViewStore;
 use StreamEngine\Core\ModuleRegistry;
 use StreamEngine\Core\PageTree;
+use StreamEngine\Core\PageTreeAssembler;
 use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Core\QueryParams;
 use StreamEngine\Core\RequestContext;
@@ -715,69 +716,15 @@ class StreamEngine
 
     private function initCronAndApi(): void
     {
-        $apiPageId = $this->pageTree->getMaxPageId();
-        $this->pageTree->add(
-            Page::api(
-                id: $apiPageId,
-                parentId: 1,
-                pattern: 'api',
-                requestMethods: ['GET'],
-                action: 'api.index',
-            )
-        );
-        $this->controllerFactory->registerAction('api.index', 'API');
-
-        $apiV1PageId = $this->pageTree->getMaxPageId();
-        $this->pageTree->add(
-            Page::api(
-                id: $apiV1PageId,
-                parentId: $apiPageId,
-                pattern: 'v1',
-                requestMethods: ['GET'],
-                action: 'api.v1.index',
-            )
-        );
-        $this->controllerFactory->registerAction('api.v1.index', 'API');
-        $adminPageId = $this->pageTree->getMaxPageId();
-        $this->pageTree->add(
-            new Page(
-                id: $adminPageId,
-                parentId: 1,
-                pattern: 'admin',
-                pageName: 'Administrator interface',
-                settings: null,
-                feedType: null,
-                listFeedType: null,
-                feedId: null,
-                requestMethods: ['GET'],
-                responseType: 'html',
-                accessRule: AccessService::ACCESS_ADMIN,
-                action: 'admin.index',
-            )
+        (new PageTreeAssembler($this->modules, $this->tm))->registerApiPages(
+            $this->pageTree,
+            $this->controllerFactory->registerAction(...),
         );
 
-        // Actions the pages already carry (DB pages + the hardcoded ones above)
-        // are handled via pageActions()/explicit registration; everything a controller
-        // adds in registerApi() below is an API action owned by that controller.
-        $seenIds = array_fill_keys(array_map(static fn (Page $p) => $p->id, $this->pageTree->all()), true);
-
-        foreach ($this->modules->entries() as ['id' => $id, 'controllerClass' => $controllerClass]) {
-            if (! is_subclass_of($controllerClass, ControllerInterface::class)) {
-                continue;
+        foreach ($this->modules->entries() as ['controllerClass' => $controllerClass]) {
+            if (is_subclass_of($controllerClass, ControllerInterface::class)) {
+                $controllerClass::registerCron($this->cronRegistry);
             }
-            $controllerClass::registerApi($apiV1PageId, $this->pageTree);
-
-            foreach ($this->pageTree->all() as $page) {
-                if (isset($seenIds[$page->id])) {
-                    continue;
-                }
-                $seenIds[$page->id] = true;
-                if ($page->action !== null) {
-                    $this->controllerFactory->registerAction($page->action, $id);
-                }
-            }
-
-            $controllerClass::registerCron($this->cronRegistry);
         }
     }
 

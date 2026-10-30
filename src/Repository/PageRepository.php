@@ -43,25 +43,53 @@ final readonly class PageRepository
     {
         $rows = $this->db->fetchAll('SELECT * FROM pages');
 
-        return array_map(
-            static fn (array $row) => new Page(
-                id: (int) $row['id'],
-                parentId: $row['parent'] !== null ? (int) $row['parent'] : null,
-                pattern: $row['pattern'],
-                pageName: $row['page_name'] ?? null,
-                settings: $row['settings'] ? (object) json_decode($row['settings'], true) : null,
-                feedType: $row['feed_type'] ?? null,
-                listFeedType: $row['list_feed_type'] ?? null,
-                feedId: $row['feed_id'] !== null ? (int) $row['feed_id'] : null,
-                requestMethods: ['GET'],
-                responseType: 'html',
-                accessRule: $row['access_rule'],
-                action: $row['action'] ?? null,
-                changefreq: $row['changefreq'] ?? null,
-                updated: isset($row['updated']) ? (int) $row['updated'] : null,
-                termVocabulary: $row['term_vocabulary'] ?? null,
-            ),
-            $rows
+        return array_map(self::hydrate(...), $rows);
+    }
+
+    /**
+     * Build the runtime Page the next boot would load for an admin write.
+     * Lets the administration API check an edit against the complete tree
+     * before it is persisted.
+     *
+     * @param array<string, mixed> $data validated admin page data
+     */
+    public static function pageFromAdminData(int $id, array $data): Page
+    {
+        return self::hydrate([
+            'id' => $id,
+            'parent' => $data['parentId'],
+            'pattern' => $data['pattern'],
+            'page_name' => $data['pageName'],
+            'settings' => $data['settings'],
+            'feed_type' => $data['feedType'],
+            'list_feed_type' => $data['listFeedType'],
+            'feed_id' => $data['feedId'],
+            'access_rule' => $data['accessRule'],
+            'action' => $data['action'],
+            'changefreq' => $data['changefreq'],
+            'term_vocabulary' => $data['termVocabulary'],
+        ]);
+    }
+
+    /** @param array<string, mixed> $row */
+    private static function hydrate(array $row): Page
+    {
+        return new Page(
+            id: (int) $row['id'],
+            parentId: $row['parent'] !== null ? (int) $row['parent'] : null,
+            pattern: $row['pattern'],
+            pageName: $row['page_name'] ?? null,
+            settings: $row['settings'] ? (object) json_decode($row['settings'], true) : null,
+            feedType: $row['feed_type'] ?? null,
+            listFeedType: $row['list_feed_type'] ?? null,
+            feedId: $row['feed_id'] !== null ? (int) $row['feed_id'] : null,
+            requestMethods: ['GET'],
+            responseType: 'html',
+            accessRule: $row['access_rule'],
+            action: $row['action'] ?? null,
+            changefreq: $row['changefreq'] ?? null,
+            updated: isset($row['updated']) ? (int) $row['updated'] : null,
+            termVocabulary: $row['term_vocabulary'] ?? null,
         );
     }
 

@@ -1477,6 +1477,7 @@ E-mail: {email}
     'admin.error.page_cycle' => 'A hierarquia de páginas pai contém um ciclo',
     'admin.error.unknown_page_action' => "Ação de página desconhecida '{action}'",
     'admin.error.singleton_page_action' => "Já existe uma página com a ação '{action}'",
+    'admin.error.page_tree_conflict' => 'Esta alteração deixaria a árvore de páginas inválida e o site não conseguiria iniciar: {reason}',
     'admin.error.unknown_action_fields' => "Os campos de configuração da ação de página desconhecida '{action}' não podem ser alterados",
     'admin.error.action_field_unsupported' => "{label} não é compatível com a ação de página '{action}'",
     'admin.error.action_field_required' => "{label} é obrigatório para a ação de página '{action}'",

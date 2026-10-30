@@ -1477,6 +1477,7 @@ E-mail : {email}
     'admin.error.page_cycle' => 'La hiérarchie des pages parentes contient un cycle',
     'admin.error.unknown_page_action' => "Action de page inconnue « {action} »",
     'admin.error.singleton_page_action' => "Une page avec l’action « {action} » existe déjà",
+    'admin.error.page_tree_conflict' => 'Cette modification rendrait l\'arborescence des pages invalide et le site ne pourrait pas démarrer : {reason}',
     'admin.error.unknown_action_fields' => "Les champs de configuration de l’action de page inconnue « {action} » ne peuvent pas être modifiés",
     'admin.error.action_field_unsupported' => "{label} n’est pas pris en charge par l’action de page « {action} »",
     'admin.error.action_field_required' => "{label} est obligatoire pour l’action de page « {action} »",

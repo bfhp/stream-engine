@@ -96,11 +96,15 @@ self-parenting, descendant cycles, a missing parent, moving the root, deleting
 the root, deleting a page with persisted children, and deleting a page still
 referenced by a menu.
 
-The complete-tree checks run at application boot. The administration API does
-not currently simulate every duplicate-pattern and duplicate-action conflict
-before writing, so a structurally conflicting edit may make the next request
-fail during bootstrap. Treat page-tree changes as configuration migrations and
-test them on a staging copy.
+The complete-tree checks run at application boot. Before writing, the
+administration API assembles the same tree the next boot would build with the
+edit applied (persisted pages, module runtime pages, the `api`/`api/v1`/`admin`
+entry points and every page from `registerApi()`; see `PageTreeAssembler`) and
+runs `PageTree::validateDefinitions()` on it. A duplicate static sibling
+pattern, a second dynamic sibling or a duplicate singleton action is rejected
+with a validation error and nothing is saved. Direct database edits and
+migrations bypass this check, so still treat them as configuration migrations
+and test them on a staging copy.
 
 ## Static and dynamic patterns
 

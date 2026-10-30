@@ -772,6 +772,136 @@ final class AdminControllerTest extends TestCase
         ];
     }
 
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function rootAndLegacyRows(): array
+    {
+        $root = $this->legacyPageRow();
+        $root['id'] = 1;
+        $root['parent'] = null;
+        $root['pattern'] = '';
+        $root['action'] = 'feedback.show';
+        $root['feed_type'] = null;
+        $root['feed_id'] = null;
+
+        return [$root, $this->legacyPageRow()];
+    }
+
+    #[DataProvider('pageTreeConflicts')]
+    public function testPageCreateRejectsAChangeThatWouldBreakTheBootTree(
+        array $extraRows,
+        array $input,
+        string $reason,
+    ): void {
+        $module = $this->makeModule(rows: [...$this->rootAndLegacyRows(), ...$extraRows]);
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode($input + [
+            'parentId' => 1,
+            'action' => 'feedback.show',
+            'accessRule' => 'public',
+        ]));
+
+        try {
+            $module->callApi($this->makeApiPage('admin.pages', ['GET', 'POST']));
+            $this->fail('A conflicting page was saved.');
+        } catch (ValidationException $e) {
+            $this->assertSame(
+                'This change would make the page tree invalid and the site would fail to start: '.$reason,
+                $e->getMessage()
+            );
+            $this->assertSame([], $this->writes);
+        }
+    }
+
+    public static function pageTreeConflicts(): array
+    {
+        $forums = [
+            'id' => 20, 'parent' => 1, 'pattern' => 'forums', 'action' => 'forums.list',
+            'page_name' => null, 'settings' => null, 'feed_type' => null, 'list_feed_type' => null,
+            'term_vocabulary' => null, 'feed_id' => null, 'changefreq' => null, 'updated' => 1,
+            'access_rule' => 'public',
+        ];
+        $dynamic = ['id' => 21, 'pattern' => '{slug}'] + $forums;
+        $dynamic['parent'] = 9;
+        $dynamic['action'] = 'feedback.show';
+
+        return [
+            'duplicate persisted static sibling' => [
+                [],
+                ['pattern' => 'legacy'],
+                "Duplicate static page pattern 'legacy' under parent '1'",
+            ],
+            'shadows the hardcoded admin entry point' => [
+                [],
+                ['pattern' => 'admin'],
+                "Duplicate static page pattern 'admin' under parent '1'",
+            ],
+            'second persisted dynamic sibling' => [
+                [$dynamic],
+                ['parentId' => 9, 'pattern' => '{id:\d+}'],
+                "Ambiguous dynamic page patterns '{slug}' and '{id:\d+}' under parent '9'",
+            ],
+            'collides with a module runtime page' => [
+                [$forums],
+                ['parentId' => 20, 'pattern' => '{topic}'],
+                "Ambiguous dynamic page patterns '{topic}' and '{slug}' under parent '20'",
+            ],
+        ];
+    }
+
+    public function testPageUpdateRejectsMovingAPageOntoAnOccupiedPattern(): void
+    {
+        $rows = $this->rootAndLegacyRows();
+        $other = $this->legacyPageRow();
+        $other['id'] = 10;
+        $other['pattern'] = 'about';
+        $other['action'] = 'feedback.show';
+        $other['feed_type'] = null;
+        $other['feed_id'] = null;
+        $module = $this->makeModule(rows: [...$rows, $other], row: $other);
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode([
+            'parentId' => 1,
+            'pattern' => 'legacy',
+            'action' => 'feedback.show',
+            'accessRule' => 'public',
+        ]));
+
+        try {
+            $module->callApi($this->makeApiPage('admin.page', ['GET', 'PATCH']), ['id' => 10]);
+            $this->fail('A page was moved onto an occupied pattern.');
+        } catch (ValidationException $e) {
+            $this->assertStringContainsString("Duplicate static page pattern 'legacy'", $e->getMessage());
+            $this->assertSame([], $this->writes);
+        }
+    }
+
+    public function testPageUpdateMayKeepItsOwnPattern(): void
+    {
+        $rows = $this->rootAndLegacyRows();
+        $current = $rows[1];
+        $current['action'] = 'feedback.show';
+        $current['feed_type'] = null;
+        $current['feed_id'] = null;
+        $module = $this->makeModule(rows: [$rows[0], $current], row: $current);
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode([
+            'parentId' => 1,
+            'pattern' => 'legacy',
+            'action' => 'feedback.show',
+            'pageName' => 'Renamed',
+            'accessRule' => 'public',
+        ]));
+
+        $this->callAndDecode($module, $this->makeApiPage('admin.page', ['GET', 'PATCH']), ['id' => 9]);
+
+        $this->assertStringContainsString('UPDATE pages SET', $this->writes[0][0]);
+    }
+
     public function testExistingSingletonMountPageCanBeUpdated(): void
     {
         $parent = $this->legacyPageRow();

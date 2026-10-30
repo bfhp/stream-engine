@@ -1477,6 +1477,7 @@ E-Mail: {email}
     'admin.error.page_cycle' => 'Die Hierarchie der übergeordneten Seiten enthält einen Zyklus',
     'admin.error.unknown_page_action' => "Unbekannte Seitenaktion '{action}'",
     'admin.error.singleton_page_action' => "Eine Seite mit der Aktion '{action}' existiert bereits",
+    'admin.error.page_tree_conflict' => 'Diese Änderung würde den Seitenbaum ungültig machen, und die Website könnte nicht starten: {reason}',
     'admin.error.unknown_action_fields' => "Die Konfigurationsfelder der unbekannten Seitenaktion '{action}' können nicht geändert werden",
     'admin.error.action_field_unsupported' => "{label} wird von der Seitenaktion '{action}' nicht unterstützt",
     'admin.error.action_field_required' => "{label} ist für die Seitenaktion '{action}' erforderlich",

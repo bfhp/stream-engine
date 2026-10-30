@@ -1483,6 +1483,7 @@ Email: {email}
     'admin.error.page_cycle' => 'Parent page hierarchy contains a cycle',
     'admin.error.unknown_page_action' => "Unknown page action '{action}'",
     'admin.error.singleton_page_action' => "A page with action '{action}' already exists",
+    'admin.error.page_tree_conflict' => 'This change would make the page tree invalid and the site would fail to start: {reason}',
     'admin.error.unknown_action_fields' => "Configuration fields of unknown page action '{action}' cannot be changed",
     'admin.error.action_field_unsupported' => "{label} is not supported by page action '{action}'",
     'admin.error.action_field_required' => "{label} is required for page action '{action}'",

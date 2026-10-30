@@ -1477,6 +1477,7 @@ return [
     'admin.error.page_cycle' => '親ページの階層に循環があります',
     'admin.error.unknown_page_action' => "不明なページアクション '{action}'",
     'admin.error.singleton_page_action' => "ページアクション '{action}' を使用するページは既に存在します",
+    'admin.error.page_tree_conflict' => 'この変更によりページツリーが無効になり、サイトが起動できなくなります: {reason}',
     'admin.error.unknown_action_fields' => "不明なページアクション '{action}' の設定項目は変更できません",
     'admin.error.action_field_unsupported' => "{label}はページアクション '{action}' では対応していません",
     'admin.error.action_field_required' => "{label}はページアクション '{action}' で必須です",

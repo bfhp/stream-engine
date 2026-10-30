@@ -59,20 +59,8 @@ final readonly class ControllerFactory
      */
     public function registerRuntimePages(PageTree $pageTree, TranslationManager $tm): void
     {
-        foreach ($this->modules->entries() as ['id' => $id, 'controllerClass' => $controllerClass]) {
-            $offset = $pageTree->definitionCount();
-            $controllerClass::registerRuntimePages($pageTree, $tm);
-
-            foreach ($pageTree->definitionsSince($offset) as $page) {
-                if ($page->action === null) {
-                    throw new RuntimeException(
-                        "Runtime page '{$page->pattern}' declared by $id must have an action"
-                    );
-                }
-
-                $this->registerAction($page->action, $id);
-            }
-        }
+        (new PageTreeAssembler($this->modules, $tm))
+            ->registerRuntimePages($pageTree, $this->registerAction(...));
     }
 
     /**

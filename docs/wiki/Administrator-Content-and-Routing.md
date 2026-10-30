@@ -124,12 +124,14 @@ otherwise unmatched segment can reach the dynamic page.
   page tree. Other actions may be reused by multiple concrete pages.
 
 The editor prevents invalid parent cycles and validates action-specific fields.
-The current release does not reject every duplicate pattern before writing it
-to the database. The runtime validates the complete tree on the next request
-and may fail to start if a conflict was saved.
-Always search the Pages list for the intended pattern and action before
-creating a page, and keep the database backup until the site has passed its
-post-change checks.
+Before saving, it also checks the complete page tree the site will load,
+including pages added by modules (for example forum topics under the forums
+page) and the built-in `api` and `admin` paths. A change that would break any of
+the rules above is rejected with an error and is not saved.
+Changes made directly in the database are not checked: the runtime validates
+the complete tree on the next request and may fail to start if such a change
+conflicts. Keep the database backup until the site has passed its post-change
+checks.
 
 ## Configure a page action
 

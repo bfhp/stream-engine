@@ -1477,6 +1477,7 @@ E-mail: {email}
     'admin.error.page_cycle' => 'La gerarchia delle pagine padre contiene un ciclo',
     'admin.error.unknown_page_action' => "Azione di pagina sconosciuta '{action}'",
     'admin.error.singleton_page_action' => "Esiste già una pagina con l’azione '{action}'",
+    'admin.error.page_tree_conflict' => 'Questa modifica renderebbe non valido l\'albero delle pagine e il sito non potrebbe avviarsi: {reason}',
     'admin.error.unknown_action_fields' => "I campi di configurazione dell’azione di pagina sconosciuta '{action}' non possono essere modificati",
     'admin.error.action_field_unsupported' => "{label} non è supportato dall’azione di pagina '{action}'",
     'admin.error.action_field_required' => "{label} è obbligatorio per l’azione di pagina '{action}'",

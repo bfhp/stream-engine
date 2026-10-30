@@ -1477,6 +1477,7 @@ return [
     'admin.error.page_cycle' => '上级页面层级中存在循环',
     'admin.error.unknown_page_action' => "未知的页面动作“{action}”",
     'admin.error.singleton_page_action' => "已存在使用页面动作“{action}”的页面",
+    'admin.error.page_tree_conflict' => '此更改会使页面树无效，导致站点无法启动：{reason}',
     'admin.error.unknown_action_fields' => "未知页面动作“{action}”的配置字段不能修改",
     'admin.error.action_field_unsupported' => "页面动作“{action}”不支持{label}",
     'admin.error.action_field_required' => "页面动作“{action}”必须填写{label}",

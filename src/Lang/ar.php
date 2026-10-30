@@ -1477,6 +1477,7 @@ return [
     'admin.error.page_cycle' => 'التسلسل الهرمي للصفحات الأصلية يحتوي على حلقة',
     'admin.error.unknown_page_action' => "إجراء الصفحة '{action}' غير معروف",
     'admin.error.singleton_page_action' => "توجد صفحة بالإجراء '{action}' بالفعل",
+    'admin.error.page_tree_conflict' => 'سيؤدي هذا التغيير إلى جعل شجرة الصفحات غير صالحة وسيتعذر تشغيل الموقع: {reason}',
     'admin.error.unknown_action_fields' => "لا يمكن تغيير حقول الإعداد الخاصة بإجراء الصفحة غير المعروف '{action}'",
     'admin.error.action_field_unsupported' => "{label} غير مدعوم في إجراء الصفحة '{action}'",
     'admin.error.action_field_required' => "{label} مطلوب في إجراء الصفحة '{action}'",

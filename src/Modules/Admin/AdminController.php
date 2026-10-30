@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace StreamEngine\Modules\Admin;
 
+use RuntimeException;
 use Throwable;
 use StreamEngine\Core\AbstractController;
 use StreamEngine\Core\Config;
@@ -19,6 +20,7 @@ use StreamEngine\Core\FileProcessing\MimeDetector;
 use StreamEngine\Core\Formatter;
 use StreamEngine\Core\ModuleRegistry;
 use StreamEngine\Core\PageTree;
+use StreamEngine\Core\PageTreeAssembler;
 use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Core\QueryParams;
 use StreamEngine\Core\RequestContext;
@@ -1067,6 +1069,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
             Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
 
             $data = $this->validatedPageData($this->jsonBody());
+            $this->validatePageTreeAfterWrite(null, $data);
 
             echo Formatter::json($this->pageRepository->createFromAdminData($data));
 
@@ -1112,11 +1115,10 @@ class AdminController extends AbstractController implements DashboardCardProvide
             Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
 
             $existing = $this->pageRepository->findForAdminById($id);
+            $data = $this->validatedPageData($this->jsonBody(), $existing);
+            $this->validatePageTreeAfterWrite($id, $data);
 
-            echo Formatter::json($this->pageRepository->updateFromAdminData(
-                $id,
-                $this->validatedPageData($this->jsonBody(), $existing)
-            ));
+            echo Formatter::json($this->pageRepository->updateFromAdminData($id, $data));
 
             return;
         }
@@ -1702,6 +1704,38 @@ class AdminController extends AbstractController implements DashboardCardProvide
         }
 
         return $data;
+    }
+
+    /**
+     * Assemble the complete runtime tree the next boot would build with this
+     * write applied (persisted pages, module runtime pages, api/admin entry
+     * points) and run the boot-time checks on it. A conflict such as a duplicate
+     * static sibling pattern, a second dynamic sibling or a duplicate singleton
+     * action is rejected here instead of breaking the next request.
+     *
+     * @param int|null $id page being updated, null for a new page
+     * @param array<string, mixed> $data validated admin page data
+     * @throws ValidationException
+     */
+    private function validatePageTreeAfterWrite(?int $id, array $data): void
+    {
+        $pages = [];
+        $maxId = 0;
+        foreach ($this->pageRepository->findAll() as $page) {
+            $maxId = max($maxId, $page->id);
+            if ($page->id !== $id) {
+                $pages[] = $page;
+            }
+        }
+        $pages[] = PageRepository::pageFromAdminData($id ?? $maxId + 1, $data);
+
+        try {
+            (new PageTreeAssembler($this->modules, $this->tm))->check($pages);
+        } catch (RuntimeException $e) {
+            throw new ValidationException(
+                $this->tm->trans('admin.error.page_tree_conflict', ['reason' => $e->getMessage()])
+            );
+        }
     }
 
     /**

@@ -1520,6 +1520,7 @@ return [
     'admin.error.page_cycle' => 'Иерархия родительских страниц содержит цикл',
     'admin.error.unknown_page_action' => 'Неизвестное действие страницы «{action}»',
     'admin.error.singleton_page_action' => 'Страница с действием «{action}» уже существует',
+    'admin.error.page_tree_conflict' => 'Это изменение сделает дерево страниц некорректным, и сайт не запустится: {reason}',
     'admin.error.unknown_action_fields' => 'Поля неизвестного действия страницы «{action}» нельзя изменять',
     'admin.error.action_field_unsupported' => 'Поле «{label}» не поддерживается действием «{action}»',
     'admin.error.action_field_required' => 'Поле «{label}» обязательно для действия «{action}»',
