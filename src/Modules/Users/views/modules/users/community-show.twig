@@ -31,11 +31,11 @@
            community.main, but the endpoint is scoped to this community. #}
         <div id="community-show-feed" data-posts-api-url="{{ postsApiUrl }}">
             {% if hasPosts %}
-                <div class="users-feed" id="community-show-feed-posts">
+                <ul class="users-feed" id="community-show-feed-posts" role="list">
                     {% for post in posts %}
                         {% include 'components/users/post-card.twig' with {post: post, showAuthor: true} only %}
                     {% endfor %}
-                </div>
+                </ul>
 
                 {% if nextCursor is not null %}
                     <div class="users-more" data-community-show-feed-load-more-wrapper>

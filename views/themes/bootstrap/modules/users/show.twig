@@ -22,13 +22,13 @@
            rather than reloading the page. #}
         <div id="blog-feed" data-posts-api-url="{{ postsApiUrl }}">
             {% if hasPosts %}
-                <div class="d-flex flex-column gap-3" id="blog-feed-posts">
+                <ul class="d-flex flex-column gap-3 list-unstyled mb-0" id="blog-feed-posts" role="list">
                     {% for post in posts %}
                         {% block blog_feed_item %}
                             {% include 'components/users/post-card.twig' with {post: post} only %}
                         {% endblock %}
                     {% endfor %}
-                </div>
+                </ul>
 
                 {% if nextCursor is not null %}
                     <div class="text-center mt-3" data-blog-feed-load-more-wrapper>

@@ -220,6 +220,9 @@ a.users-person:hover {
 .users-feed {
     display: grid;
     gap: var(--ui-space-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
 }
 
 .users-empty {
@@ -626,6 +629,9 @@ a.users-person:hover {
 .users-grid {
     display: grid;
     gap: var(--ui-space-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
 }
 
 @media (min-width: 576px) {
@@ -680,6 +686,9 @@ a.users-person:hover {
 }
 
 .users-card__name {
+    margin: 0;
+    font-size: inherit;
+    line-height: inherit;
     font-weight: 600;
 }
 

@@ -140,6 +140,24 @@ export function initAudioPlayers() {
             playerToggleIcon.className = `bi ${isPlaying ? "bi-pause-fill" : "bi-play-fill"}`;
             playerToggle.title = isPlaying ? trans("js.audio.pause") : trans("js.audio.play");
             playerToggle.setAttribute("aria-label", playerToggle.title);
+            syncPlayButtons();
+        }
+
+        /** The "Listen" buttons on posts toggle their own track: "Pause" while it plays. */
+        function syncPlayButtons(): void {
+            const activeId = playlist[activeIndex]?.id;
+            const playing = !playerAudio.paused;
+            document.querySelectorAll<HTMLButtonElement>("[data-audio-play-track-id]").forEach((button) => {
+                const on = playing && button.dataset.audioPlayTrackId === activeId;
+                button.setAttribute("aria-label", trans(on ? "js.audio.pause_attached" : "js.audio.listen_attached"));
+                const label = button.querySelector<HTMLElement>("[data-audio-play-label]");
+                const text = trans(on ? "js.audio.pause" : "js.audio.listen");
+                // Only on change: the observer below would see every rewrite.
+                if (label && label.textContent !== text) label.textContent = text;
+                const icon = button.querySelector<HTMLElement>("[data-audio-play-icon]");
+                icon?.classList.toggle("bi-play-fill", !on);
+                icon?.classList.toggle("bi-pause-fill", on);
+            });
         }
 
         function renderTrack(): void {
@@ -246,6 +264,13 @@ export function initAudioPlayers() {
             const trackId = button?.dataset.audioPlayTrackId;
             if (!trackId) return;
 
+            if (playlist[activeIndex]?.id === trackId && !playerAudio.paused) {
+                event.preventDefault();
+                shouldResumePlayback = false;
+                playerAudio.pause();
+                return;
+            }
+
             if (playTrackById(trackId)) {
                 event.preventDefault();
             }
@@ -293,6 +318,8 @@ export function initAudioPlayers() {
 
         window.addEventListener("pagehide", saveStateBeforePageExit);
         window.addEventListener("beforeunload", saveStateBeforePageExit);
+
+        new MutationObserver(syncPlayButtons).observe(document.body, { childList: true, subtree: true });
 
         const storedState = readState();
         const storedIndex = storedState.trackId !== null

@@ -37,8 +37,9 @@
             {% if currentPostAudioTrackId or canDelete or editUrl %}
                 <div class="blog-post-actions">
                     {% if currentPostAudioTrackId %}
-                        <button type="button" class="ui-button ui-button--secondary ui-button--sm" data-audio-play-track-id="{{ currentPostAudioTrackId }}">
-                            <i class="bi bi-play-fill" aria-hidden="true"></i> {{ trans('view.users.post.card.02') }}
+                        <button type="button" class="ui-button ui-button--secondary ui-button--sm" data-audio-play-track-id="{{ currentPostAudioTrackId }}"
+                                aria-label="{{ trans('js.audio.listen_attached') }}">
+                            <i data-audio-play-icon class="bi bi-play-fill" aria-hidden="true"></i> <span data-audio-play-label>{{ trans('js.audio.listen') }}</span>
                         </button>
                     {% endif %}
                     {% if editUrl %}

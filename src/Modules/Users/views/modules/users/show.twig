@@ -20,13 +20,13 @@
            to #blog-feed-posts, rather than reloading the page. #}
         <div id="blog-feed" data-posts-api-url="{{ postsApiUrl }}">
             {% if hasPosts %}
-                <div class="users-feed" id="blog-feed-posts">
+                <ul class="users-feed" id="blog-feed-posts" role="list">
                     {% for post in posts %}
                         {% block blog_feed_item %}
                             {% include 'components/users/post-card.twig' with {post: post} only %}
                         {% endblock %}
                     {% endfor %}
-                </div>
+                </ul>
 
                 {% if nextCursor is not null %}
                     <div class="users-more" data-blog-feed-load-more-wrapper>

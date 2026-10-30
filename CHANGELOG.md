@@ -77,6 +77,15 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Blog post cards are named articles in a list. Screen readers read "Reading
+  time: 2 min", "Comments: 3" and "Rating: 4.5 out of 5" instead of bare
+  numbers, and tags as a list named "Tags".
+- The "Listen" button on a post card now also pauses its track ("Pause"),
+  and is named "Listen to the attached track" so it is not taken for
+  reading the post aloud.
+- The users list is a list for screen readers ("list, 12 items"), each name is
+  a heading, the filter form is a search landmark, and "no users found" is
+  announced.
 - Screen readers no longer read decorative icons as empty groups: every
   Bootstrap Icons glyph is hidden from them, and the forum read/unread icons
   are named images. Icon-only buttons (messenger, forum section toggles) are

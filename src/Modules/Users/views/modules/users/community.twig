@@ -29,13 +29,13 @@
            cards to #community-feed-posts, rather than reloading the page. #}
         <div id="community-feed" data-posts-api-url="{{ postsApiUrl }}">
             {% if hasPosts %}
-                <div class="users-feed" id="community-feed-posts">
+                <ul class="users-feed" id="community-feed-posts" role="list">
                     {% for post in posts %}
                         {% block community_feed_item %}
                             {% include 'components/users/post-card.twig' with {post: post, showAuthor: true} only %}
                         {% endblock %}
                     {% endfor %}
-                </div>
+                </ul>
 
                 {% if nextCursor is not null %}
                     <div class="users-more" data-community-feed-load-more-wrapper>

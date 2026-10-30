@@ -4,7 +4,7 @@
     <div class="ui-container">
         <h1>{{ title }}</h1>
 
-        <form class="users-filter" method="get" action="{{ listUrl }}">
+        <form class="users-filter" method="get" action="{{ listUrl }}" role="search" aria-label="{{ trans('view.users.list.10') }}">
             <div class="users-filter__query">
                 <label class="ui-label" for="users-filter-q">{{ trans('view.users.list.01') }}</label>
                 <input
@@ -49,10 +49,11 @@
             data-page-url="{{ listUrl }}"
         >
             {% block users_list_grid %}
-                <div class="users-grid" data-users-grid></div>
+                {# role="list": Safari drops list semantics from a list without bullets. #}
+                <ul class="users-grid" role="list" aria-label="{{ title }}" data-users-grid></ul>
             {% endblock %}
             <div data-users-pager></div>
-            <div class="users-message" data-users-message>{{ trans('view.users.list.09') }}</div>
+            <div class="users-message" role="status" data-users-message>{{ trans('view.users.list.09') }}</div>
         </div>
 
         <template data-ui="user-card">
