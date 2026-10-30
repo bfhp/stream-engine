@@ -23,15 +23,15 @@
             <div class="d-flex flex-wrap gap-2 mt-auto">
                 <a href="#" class="btn btn-sm btn-outline-secondary"
                    data-slot-optional="manageUrl" data-slot-attr="href:manageUrl">
-                    <i class="bi bi-gear"></i> {{ trans('js.profile.manage') }}
+                    <i class="bi bi-gear" aria-hidden="true"></i> {{ trans('js.profile.manage') }}
                 </a>
                 <button type="button" class="btn btn-sm btn-outline-danger" data-community-leave
                         data-slot-optional="leaveUrl" data-slot-attr="data-action-url:leaveUrl data-title:title data-status:status">
-                    <i class="bi bi-box-arrow-left"></i> {{ trans('js.users.unsubscribe') }}
+                    <i class="bi bi-box-arrow-left" aria-hidden="true"></i> {{ trans('js.users.unsubscribe') }}
                 </button>
                 <button type="button" class="btn btn-sm btn-outline-danger" data-community-leave
                         data-slot-optional="cancelUrl" data-slot-attr="data-action-url:cancelUrl data-title:title data-status:status">
-                    <i class="bi bi-box-arrow-left"></i> {{ trans('js.profile.cancel_request') }}
+                    <i class="bi bi-box-arrow-left" aria-hidden="true"></i> {{ trans('js.profile.cancel_request') }}
                 </button>
             </div>
         </div>

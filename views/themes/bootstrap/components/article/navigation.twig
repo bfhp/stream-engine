@@ -7,7 +7,7 @@
                 {% if siblings.prev %}
                     <a class="btn btn-primary"
                        href="{{ siblings.prev.canonicalUrl }}">
-                        <i class="bi bi-arrow-left"></i>
+                        <i class="bi bi-arrow-left" aria-hidden="true"></i>
                         {{ siblings.prev.title }}
                     </a>
                 {% endif %}
@@ -16,7 +16,7 @@
                     <a class="btn btn-primary float-end"
                        href="{{ siblings.next.canonicalUrl }}">
                         {{ siblings.next.title }}
-                        <i class="bi bi-arrow-right"></i>
+                        <i class="bi bi-arrow-right" aria-hidden="true"></i>
                     </a>
                 {% endif %}
 

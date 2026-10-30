@@ -25,7 +25,7 @@
             {% endif %}
             {% if not post.imageUrl or asTemplate %}
                 <div class="d-flex align-items-center justify-content-center h-100 bg-body-secondary text-body-tertiary" style="min-height: 150px;" data-slot-optional="noImage">
-                    <i class="bi bi-image fs-2"></i>
+                    <i class="bi bi-image fs-2" aria-hidden="true"></i>
                 </div>
             {% endif %}
         </div>
@@ -40,15 +40,15 @@
                         {% if not post.authorUrl or asTemplate %}
                             <span class="fw-semibold" data-slot-optional="authorText"><bdi data-slot="authorName">{{ post.authorName }}</bdi></span>
                         {% endif %}
-                        {% if post.dateLabel or asTemplate %}<span data-slot-optional="date">&middot;</span><span data-slot="date" data-slot-optional="date">{{ post.dateLabel }}</span>{% endif %}
-                        {% if post.readTimeLabel or asTemplate %}<span data-slot-optional="readTime">&middot;</span><span data-slot="readTime" data-slot-optional="readTime">{{ post.readTimeLabel }}</span>{% endif %}
+                        {% if post.dateLabel or asTemplate %}<span data-slot-optional="date" aria-hidden="true">&middot;</span><span data-slot="date" data-slot-optional="date">{{ post.dateLabel }}</span>{% endif %}
+                        {% if post.readTimeLabel or asTemplate %}<span data-slot-optional="readTime" aria-hidden="true">&middot;</span><span data-slot="readTime" data-slot-optional="readTime">{{ post.readTimeLabel }}</span>{% endif %}
                     </div>
                 {% elseif post.dateLabel or post.readTimeLabel or asTemplate %}
                     <div class="d-flex align-items-center gap-2 text-body-secondary small mb-2" data-slot-optional="hasMeta">
                         {% if post.dateLabel or asTemplate %}
-                            <i class="bi bi-calendar3" data-slot-optional="date"></i><span data-slot="date" data-slot-optional="date">{{ post.dateLabel }}</span>
+                            <i class="bi bi-calendar3" data-slot-optional="date" aria-hidden="true"></i><span data-slot="date" data-slot-optional="date">{{ post.dateLabel }}</span>
                         {% endif %}
-                        {% if (post.dateLabel and post.readTimeLabel) or asTemplate %}<span data-slot-optional="dateAndRead">&middot;</span>{% endif %}
+                        {% if (post.dateLabel and post.readTimeLabel) or asTemplate %}<span data-slot-optional="dateAndRead" aria-hidden="true">&middot;</span>{% endif %}
                         {% if post.readTimeLabel or asTemplate %}<span data-slot="readTime" data-slot-optional="readTime">{{ post.readTimeLabel }}</span>{% endif %}
                     </div>
                 {% endif %}
@@ -70,17 +70,17 @@
                 {% endif %}
 
                 <div class="d-flex flex-wrap align-items-center gap-3 text-body-secondary small">
-                    <span><i class="bi bi-chat-left-text me-1"></i><span data-slot="comments">{{ post.commentCount }}</span></span>
+                    <span><i class="bi bi-chat-left-text me-1" aria-hidden="true"></i><span data-slot="comments">{{ post.commentCount }}</span></span>
                     {% if post.ratingCount > 0 or asTemplate %}
-                        <span data-slot-optional="rating"><i class="bi bi-star-fill me-1" style="color:#f5a623;"></i><span data-slot="rating">{{ post.ratingAverage|number_format(1) }}</span></span>
+                        <span data-slot-optional="rating"><i class="bi bi-star-fill me-1" style="color:#f5a623;" aria-hidden="true"></i><span data-slot="rating">{{ post.ratingAverage|number_format(1) }}</span></span>
                     {% endif %}
                     {% if not (post.ratingCount > 0) or asTemplate %}
-                        <span data-slot-optional="noRating"><i class="bi bi-star me-1"></i>{{ trans('view.users.post.card.01') }}</span>
+                        <span data-slot-optional="noRating"><i class="bi bi-star me-1" aria-hidden="true"></i>{{ trans('view.users.post.card.01') }}</span>
                     {% endif %}
                     {% if post.audioTrackId or asTemplate %}
                         <button type="button" class="btn btn-sm btn-outline-primary position-relative z-1" data-audio-play-track-id="{{ post.audioTrackId }}"
                                 data-slot-optional="audioTrackId" data-slot-attr="data-audio-play-track-id:audioTrackId">
-                            <i class="bi bi-play-fill me-1"></i>{{ trans('view.users.post.card.02') }}
+                            <i class="bi bi-play-fill me-1" aria-hidden="true"></i>{{ trans('view.users.post.card.02') }}
                         </button>
                     {% endif %}
                 </div>

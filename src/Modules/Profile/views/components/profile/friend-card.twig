@@ -26,24 +26,24 @@
     <div class="profile-item__actions">
         <button type="button" class="ui-button ui-button--primary ui-button--sm" data-friend-accept
                 data-slot-optional="acceptUrl" data-slot-attr="data-action-url:acceptUrl">
-            <i class="bi bi-person-check"></i> {{ trans('js.profile.accept') }}
+            <i class="bi bi-person-check" aria-hidden="true"></i> {{ trans('js.profile.accept') }}
         </button>
         <button type="button" class="ui-button ui-button--secondary ui-button--sm"
                 data-message-user="" data-messages-url="{{ action_url('messages.inbox') }}"
                 data-slot-attr="data-message-user:id">
-            <i class="bi bi-chat-dots"></i> {{ trans('js.profile.write_message') }}
+            <i class="bi bi-chat-dots" aria-hidden="true"></i> {{ trans('js.profile.write_message') }}
         </button>
         <button type="button" class="ui-button ui-button--danger ui-button--sm" data-friend-reject
                 data-slot-optional="rejectUrl" data-slot-attr="data-action-url:rejectUrl data-display-name:displayName">
-            <i class="bi bi-person-x"></i> {{ trans('js.profile.reject') }}
+            <i class="bi bi-person-x" aria-hidden="true"></i> {{ trans('js.profile.reject') }}
         </button>
         <button type="button" class="ui-button ui-button--danger ui-button--sm" data-friend-remove data-status="friends"
                 data-slot-optional="removeUrl" data-slot-attr="data-action-url:removeUrl data-display-name:displayName">
-            <i class="bi bi-person-dash"></i> {{ trans('js.users.remove_friend') }}
+            <i class="bi bi-person-dash" aria-hidden="true"></i> {{ trans('js.users.remove_friend') }}
         </button>
         <button type="button" class="ui-button ui-button--danger ui-button--sm" data-friend-remove data-status="subscribed"
                 data-slot-optional="cancelUrl" data-slot-attr="data-action-url:cancelUrl data-display-name:displayName">
-            <i class="bi bi-person-dash"></i> {{ trans('js.profile.cancel_request') }}
+            <i class="bi bi-person-dash" aria-hidden="true"></i> {{ trans('js.profile.cancel_request') }}
         </button>
     </div>
 </div>

@@ -58,7 +58,7 @@ export function renderCommentQuoteBlockHtml(author: string, quotedText: string):
     const safeText = escapeCommentText(quotedText).replace(/\n/g, "<br>");
 
     return `<blockquote class="comment-quote mb-3 px-3 py-2 rounded-2">`
-        + `<div class="text-body-secondary mb-1 comment-quote-author"><i class="bi bi-quote me-1"></i>${trans("js.comment.quote_header", { author: safeAuthor })}</div>`
+        + `<div class="text-body-secondary mb-1 comment-quote-author"><i class="bi bi-quote me-1" aria-hidden="true"></i>${trans("js.comment.quote_header", { author: safeAuthor })}</div>`
         + `<div class="text-body-secondary comment-quote-text">${safeText}</div>`
         + `</blockquote>`;
 }

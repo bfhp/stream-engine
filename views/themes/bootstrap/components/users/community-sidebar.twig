@@ -98,7 +98,7 @@
                 {% if manageUrl %}
                     <div class="d-grid gap-2 mt-3">
                         <a href="{{ manageUrl }}" class="btn btn-outline-secondary">
-                            <i class="bi bi-gear me-1"></i>{{ trans('view.users.community.sidebar.02') }}
+                            <i class="bi bi-gear me-1" aria-hidden="true"></i>{{ trans('view.users.community.sidebar.02') }}
                         </a>
                     </div>
                 {% endif %}
@@ -125,23 +125,23 @@
         <div class="card-body">
             {% if isGuest %}
                 <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#authFormModal">
-                    <i class="bi bi-person-plus"></i> {{ trans('view.users.community.sidebar.03') }}
+                    <i class="bi bi-person-plus" aria-hidden="true"></i> {{ trans('view.users.community.sidebar.03') }}
                 </button>
             {% elseif relationshipStatus == 'owner' %}
                 <p class="card-text text-body-secondary small mb-0">
-                    <i class="bi bi-patch-check"></i> {{ trans('view.users.community.sidebar.04') }}
+                    <i class="bi bi-patch-check" aria-hidden="true"></i> {{ trans('view.users.community.sidebar.04') }}
                 </p>
             {% elseif relationshipStatus in ['none', 'pending', 'member', 'moderator'] %}
                 {% set membershipState = relationshipStatus == 'moderator' ? 'member' : relationshipStatus %}
                 <div class="d-grid" data-membership-action data-membership-url="{{ membershipActionUrl }}" data-status="{{ relationshipStatus }}">
                     <button type="button" class="btn btn-primary w-100" data-membership-state="none" data-action="add" {% if membershipState != 'none' %}hidden{% endif %}>
-                        <i class="bi bi-person-plus"></i> {{ trans('view.users.community.sidebar.03') }}
+                        <i class="bi bi-person-plus" aria-hidden="true"></i> {{ trans('view.users.community.sidebar.03') }}
                     </button>
                     <button type="button" class="btn btn-outline-secondary w-100" data-membership-state="pending" data-action="remove" {% if membershipState != 'pending' %}hidden{% endif %}>
-                        <i class="bi bi-hourglass-split"></i> {{ trans('view.users.community.sidebar.05') }}
+                        <i class="bi bi-hourglass-split" aria-hidden="true"></i> {{ trans('view.users.community.sidebar.05') }}
                     </button>
                     <button type="button" class="btn btn-outline-secondary w-100" data-membership-state="member" data-action="remove" {% if membershipState != 'member' %}hidden{% endif %}>
-                        <i class="bi bi-box-arrow-right"></i> {{ trans('view.users.community.sidebar.07') }}
+                        <i class="bi bi-box-arrow-right" aria-hidden="true"></i> {{ trans('view.users.community.sidebar.07') }}
                     </button>
                 </div>
                 {% if relationshipStatus == 'pending' %}
@@ -149,7 +149,7 @@
                 {% endif %}
             {% else %}
                 <button type="button" class="btn btn-primary w-100" disabled title="{{ trans('view.users.community.sidebar.08') }}">
-                    <i class="bi bi-person-plus"></i> {{ trans('view.users.community.sidebar.03') }}
+                    <i class="bi bi-person-plus" aria-hidden="true"></i> {{ trans('view.users.community.sidebar.03') }}
                 </button>
             {% endif %}
         </div>

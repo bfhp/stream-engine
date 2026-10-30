@@ -20,11 +20,11 @@
                 width="40"
                 height="40"
             >
-            <h1 class="h4 mb-0">{{ trans('view.users.community.manage.01') }}{{ community.title }}»</h1>
+            <h1 class="h4 mb-0">{{ trans('view.users.community.manage.01') }} «{{ community.title }}»</h1>
         </div>
         {% if cancelUrl %}
             <a href="{{ cancelUrl }}" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-arrow-left me-1"></i>{{ trans('view.users.community.manage.02') }}
+                <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>{{ trans('view.users.community.manage.02') }}
             </a>
         {% endif %}
     </div>

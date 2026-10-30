@@ -16,13 +16,13 @@
                 {% if user.isGuest %}
                     <button type="button" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2"
                             disabled title="{{ trans('view.forums.list.01') }}">
-                        <i class="bi bi-check2-all"></i>
+                        <i class="bi bi-check2-all" aria-hidden="true"></i>
                         <span>{{ trans('view.forums.list.02') }}</span>
                     </button>
                 {% else %}
                     <button type="button" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2"
                             data-forum-mark-all-read>
-                        <i class="bi bi-check2-all"></i>
+                        <i class="bi bi-check2-all" aria-hidden="true"></i>
                         <span>{{ trans('view.forums.list.02') }}</span>
                     </button>
                 {% endif %}
@@ -31,10 +31,10 @@
 
         <div class="d-flex align-items-center gap-3 mb-3 px-1 text-body-secondary" style="font-size: .8rem">
             <span class="d-inline-flex align-items-center gap-2">
-                <i class="bi bi-chat-square-text-fill text-primary"></i> {{ trans('view.forums.list.03') }}
+                <i class="bi bi-chat-square-text-fill text-primary" aria-hidden="true"></i> {{ trans('view.forums.list.03') }}
             </span>
             <span class="d-inline-flex align-items-center gap-2">
-                <i class="bi bi-chat-square-text text-body-secondary"></i> {{ trans('view.forums.list.04') }}
+                <i class="bi bi-chat-square-text text-body-secondary" aria-hidden="true"></i> {{ trans('view.forums.list.04') }}
             </span>
         </div>
 
@@ -45,8 +45,8 @@
                         <button class="btn btn-sm btn-link p-0 text-body-secondary text-decoration-none lh-1"
                                 type="button" data-bs-toggle="collapse"
                                 data-bs-target="#forum-group-{{ forum.id }}" aria-expanded="true"
-                                title="{{ trans('view.forums.list.05') }}">
-                            <i class="bi bi-chevron-down"></i>
+                                title="{{ trans('view.forums.list.05') }}" aria-label="{{ trans('view.forums.list.05') }}">
+                            <i class="bi bi-chevron-down" aria-hidden="true"></i>
                         </button>
                         <div class="flex-grow-1" style="min-width: 0">
                             <h2 class="h6 mb-0 fw-semibold d-flex align-items-center gap-2">
@@ -73,10 +73,10 @@
                                             <div class="d-flex align-items-start gap-3 flex-grow-1" style="min-width: 0">
                                                 {% if unreadCount > 0 %}
                                                     <i class="bi bi-chat-square-text-fill text-primary"
-                                                       style="font-size: 1.35rem; line-height: 1.4" title="{{ trans('view.common.unread_topics', {count: unreadCount}) }}"></i>
+                                                       style="font-size: 1.35rem; line-height: 1.4" title="{{ trans('view.common.unread_topics', {count: unreadCount}) }}" role="img" aria-label="{{ trans('view.common.unread_topics', {count: unreadCount}) }}"></i>
                                                 {% else %}
                                                     <i class="bi bi-chat-square-text text-body-secondary"
-                                                       style="font-size: 1.35rem; line-height: 1.4" title="{{ trans('view.forums.list.06') }}"></i>
+                                                       style="font-size: 1.35rem; line-height: 1.4" title="{{ trans('view.forums.list.06') }}" role="img" aria-label="{{ trans('view.forums.list.06') }}"></i>
                                                 {% endif %}
                                                 <div style="min-width: 0">
                                                     <a href="{{ subForum.canonicalUrl }}" class="text-decoration-none"
@@ -178,7 +178,7 @@
                    as members. #}
                 <div class="border-top border-secondary-subtle pt-3" style="font-size: .82rem">
                     <div class="text-body-secondary mb-1">
-                        <i class="bi bi-broadcast me-1"></i>{{ trans('view.forums.list.16') }}
+                        <i class="bi bi-broadcast me-1" aria-hidden="true"></i>{{ trans('view.forums.list.16') }}
                         <span class="fw-semibold text-body" style="font-variant-numeric: tabular-nums">{{ onlineNow.total }}</span>
                         {{ onlineNow.totalLabel }},
                         <span class="fw-semibold text-body" style="font-variant-numeric: tabular-nums">{{ onlineNow.guests }}</span>

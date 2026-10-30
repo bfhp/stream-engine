@@ -18,13 +18,13 @@
                 {% if user.isGuest %}
                     <button type="button" class="ui-button ui-button--secondary ui-button--sm"
                             disabled title="{{ trans('view.forums.list.01') }}">
-                        <i class="bi bi-check2-all"></i>
+                        <i class="bi bi-check2-all" aria-hidden="true"></i>
                         <span>{{ trans('view.forums.list.02') }}</span>
                     </button>
                 {% else %}
                     <button type="button" class="ui-button ui-button--secondary ui-button--sm"
                             data-forum-mark-all-read>
-                        <i class="bi bi-check2-all"></i>
+                        <i class="bi bi-check2-all" aria-hidden="true"></i>
                         <span>{{ trans('view.forums.list.02') }}</span>
                     </button>
                 {% endif %}
@@ -33,10 +33,10 @@
 
         <div class="forums-legend">
             <span class="forums-legend__item">
-                <i class="bi bi-chat-square-text-fill forums-icon--unread"></i> {{ trans('view.forums.list.03') }}
+                <i class="bi bi-chat-square-text-fill forums-icon--unread" aria-hidden="true"></i> {{ trans('view.forums.list.03') }}
             </span>
             <span class="forums-legend__item">
-                <i class="bi bi-chat-square-text forums-icon--read"></i> {{ trans('view.forums.list.04') }}
+                <i class="bi bi-chat-square-text forums-icon--read" aria-hidden="true"></i> {{ trans('view.forums.list.04') }}
             </span>
         </div>
 
@@ -46,8 +46,8 @@
                     <div class="forums-section__header">
                         <button class="forums-section__toggle" type="button" data-ui-toggle="collapse"
                                 data-ui-target="#forum-group-{{ forum.id }}" aria-expanded="true"
-                                title="{{ trans('view.forums.list.05') }}">
-                            <i class="bi bi-chevron-down"></i>
+                                title="{{ trans('view.forums.list.05') }}" aria-label="{{ trans('view.forums.list.05') }}">
+                            <i class="bi bi-chevron-down" aria-hidden="true"></i>
                         </button>
                         <div class="forums-section__text">
                             <h2 class="forums-section__heading">
@@ -73,10 +73,10 @@
                                         <div class="forums-row__main">
                                             {% if unreadCount > 0 %}
                                                 <i class="bi bi-chat-square-text-fill forums-row__icon forums-icon--unread"
-                                                   title="{{ trans('view.common.unread_topics', {count: unreadCount}) }}"></i>
+                                                   title="{{ trans('view.common.unread_topics', {count: unreadCount}) }}" role="img" aria-label="{{ trans('view.common.unread_topics', {count: unreadCount}) }}"></i>
                                             {% else %}
                                                 <i class="bi bi-chat-square-text forums-row__icon forums-icon--read"
-                                                   title="{{ trans('view.forums.list.06') }}"></i>
+                                                   title="{{ trans('view.forums.list.06') }}" role="img" aria-label="{{ trans('view.forums.list.06') }}"></i>
                                             {% endif %}
                                             <div class="forums-row__text">
                                                 <a href="{{ subForum.canonicalUrl }}" class="forums-row__title"><bdi>{{ subForum.title }}</bdi></a>
@@ -91,7 +91,7 @@
                                                 </div>
                                                 {% if lastPost %}
                                                     <div class="forums-row__meta forums-row__meta--below-lg">
-                                                        <i class="bi bi-clock-history"></i>
+                                                        <i class="bi bi-clock-history" aria-hidden="true"></i>
                                                         <a href="{{ lastPost.topicUrl }}">{{ lastPost.topicTitle }}</a>
                                                         &mdash; <bdi>{{ lastPost.authorName }}</bdi>, {{ lastPost.when }}
                                                     </div>
@@ -168,7 +168,7 @@
                    as members. #}
                 <div class="forums-online">
                     <div class="forums-online__line">
-                        <i class="bi bi-broadcast"></i> {{ trans('view.forums.list.16') }}
+                        <i class="bi bi-broadcast" aria-hidden="true"></i> {{ trans('view.forums.list.16') }}
                         <span class="forums-online__number">{{ onlineNow.total }}</span>
                         {{ onlineNow.totalLabel }},
                         <span class="forums-online__number">{{ onlineNow.guests }}</span>

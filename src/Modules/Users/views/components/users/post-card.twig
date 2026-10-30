@@ -25,7 +25,7 @@
             {% endif %}
             {% if not post.imageUrl or asTemplate %}
                 <div class="post-card__placeholder" data-slot-optional="noImage">
-                    <i class="bi bi-image"></i>
+                    <i class="bi bi-image" aria-hidden="true"></i>
                 </div>
             {% endif %}
         </div>
@@ -40,15 +40,15 @@
                         {% if not post.authorUrl or asTemplate %}
                             <span class="post-card__author" data-slot-optional="authorText"><bdi data-slot="authorName">{{ post.authorName }}</bdi></span>
                         {% endif %}
-                        {% if post.dateLabel or asTemplate %}<span data-slot-optional="date">&middot;</span><span data-slot="date" data-slot-optional="date">{{ post.dateLabel }}</span>{% endif %}
-                        {% if post.readTimeLabel or asTemplate %}<span data-slot-optional="readTime">&middot;</span><span data-slot="readTime" data-slot-optional="readTime">{{ post.readTimeLabel }}</span>{% endif %}
+                        {% if post.dateLabel or asTemplate %}<span data-slot-optional="date" aria-hidden="true">&middot;</span><span data-slot="date" data-slot-optional="date">{{ post.dateLabel }}</span>{% endif %}
+                        {% if post.readTimeLabel or asTemplate %}<span data-slot-optional="readTime" aria-hidden="true">&middot;</span><span data-slot="readTime" data-slot-optional="readTime">{{ post.readTimeLabel }}</span>{% endif %}
                     </div>
                 {% elseif post.dateLabel or post.readTimeLabel or asTemplate %}
                     <div class="post-card__meta" data-slot-optional="hasMeta">
                         {% if post.dateLabel or asTemplate %}
-                            <i class="bi bi-calendar3" data-slot-optional="date"></i><span data-slot="date" data-slot-optional="date">{{ post.dateLabel }}</span>
+                            <i class="bi bi-calendar3" data-slot-optional="date" aria-hidden="true"></i><span data-slot="date" data-slot-optional="date">{{ post.dateLabel }}</span>
                         {% endif %}
-                        {% if (post.dateLabel and post.readTimeLabel) or asTemplate %}<span data-slot-optional="dateAndRead">&middot;</span>{% endif %}
+                        {% if (post.dateLabel and post.readTimeLabel) or asTemplate %}<span data-slot-optional="dateAndRead" aria-hidden="true">&middot;</span>{% endif %}
                         {% if post.readTimeLabel or asTemplate %}<span data-slot="readTime" data-slot-optional="readTime">{{ post.readTimeLabel }}</span>{% endif %}
                     </div>
                 {% endif %}
@@ -70,17 +70,17 @@
                 {% endif %}
 
                 <div class="post-card__stats">
-                    <span><i class="bi bi-chat-left-text"></i><span data-slot="comments">{{ post.commentCount }}</span></span>
+                    <span><i class="bi bi-chat-left-text" aria-hidden="true"></i><span data-slot="comments">{{ post.commentCount }}</span></span>
                     {% if post.ratingCount > 0 or asTemplate %}
-                        <span data-slot-optional="rating"><i class="bi bi-star-fill post-card__star"></i><span data-slot="rating">{{ post.ratingAverage|number_format(1) }}</span></span>
+                        <span data-slot-optional="rating"><i class="bi bi-star-fill post-card__star" aria-hidden="true"></i><span data-slot="rating">{{ post.ratingAverage|number_format(1) }}</span></span>
                     {% endif %}
                     {% if not (post.ratingCount > 0) or asTemplate %}
-                        <span data-slot-optional="noRating"><i class="bi bi-star"></i>{{ trans('view.users.post.card.01') }}</span>
+                        <span data-slot-optional="noRating"><i class="bi bi-star" aria-hidden="true"></i>{{ trans('view.users.post.card.01') }}</span>
                     {% endif %}
                     {% if post.audioTrackId or asTemplate %}
                         <button type="button" class="ui-button ui-button--secondary ui-button--sm post-card__play" data-audio-play-track-id="{{ post.audioTrackId }}"
                                 data-slot-optional="audioTrackId" data-slot-attr="data-audio-play-track-id:audioTrackId">
-                            <i class="bi bi-play-fill"></i> {{ trans('view.users.post.card.02') }}
+                            <i class="bi bi-play-fill" aria-hidden="true"></i> {{ trans('view.users.post.card.02') }}
                         </button>
                     {% endif %}
                 </div>

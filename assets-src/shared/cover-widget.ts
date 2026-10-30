@@ -49,7 +49,7 @@ export function initCoverWidget(options: CoverWidgetOptions): void {
     function renderDrop(): void {
         slot!.innerHTML = `
             <div class="blog-post-cover-drop" data-cover-drop>
-                <i class="bi bi-card-image blog-post-cover-icon"></i>
+                <i class="bi bi-card-image blog-post-cover-icon" aria-hidden="true"></i>
                 <div>
                     <div>${prompt}</div>
                     <div class="blog-post-cover-hint">${trans('js.cover.formats')}</div>
@@ -73,7 +73,7 @@ export function initCoverWidget(options: CoverWidgetOptions): void {
                 <div class="blog-post-cover-fileinfo">
                     <div class="blog-post-cover-filename">${safeName}</div>
                 </div>
-                <button type="button" class="blog-post-cover-remove" aria-label="${trans('js.common.remove_aria')}"><i class="bi bi-x-lg"></i></button>
+                <button type="button" class="blog-post-cover-remove" aria-label="${trans('js.common.remove_aria')}"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
             </div>
         `;
         urlInput!.value = url;

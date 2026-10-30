@@ -9,7 +9,7 @@
             <h1 class="h2 mb-0">{{ trans('community.page_title') }}</h1>
             {% if isGuest or newPostUrl %}
                 <a href="{{ isGuest ? '#authFormModal' : newPostUrl }}" {% if isGuest %}data-bs-toggle="modal" data-bs-target="#authFormModal"{% endif %} class="btn btn-primary btn-sm">
-                    <i class="bi bi-plus-lg me-1"></i>{{ trans('view.users.community.01') }}
+                    <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{{ trans('view.users.community.01') }}
                 </a>
             {% endif %}
         </div>
@@ -61,7 +61,7 @@
             {% if isEmpty %}
                 <div class="card">
                     <div class="card-body text-center text-body-secondary py-5">
-                        <i class="bi bi-journal-text fs-1 d-block mb-2"></i>
+                        <i class="bi bi-journal-text fs-1 d-block mb-2" aria-hidden="true"></i>
                         {% if activeTag %}
                             <p class="mb-0 text-body">{{ trans('view.users.community.04') }}</p>
                         {% else %}
@@ -83,18 +83,18 @@
         <div class="d-grid gap-2 mb-3">
             {% if isGuest %}
                 <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#authFormModal">
-                    <i class="bi bi-people me-1"></i>{{ trans('view.users.community.create.04') }}
+                    <i class="bi bi-people me-1" aria-hidden="true"></i>{{ trans('view.users.community.create.04') }}
                 </button>
             {% elseif createCommunityUrl %}
                 <a href="{{ createCommunityUrl }}" class="btn btn-outline-secondary">
-                    <i class="bi bi-people me-1"></i>{{ trans('view.users.community.create.04') }}
+                    <i class="bi bi-people me-1" aria-hidden="true"></i>{{ trans('view.users.community.create.04') }}
                 </a>
             {% else %}
                 {# Falls back to a disabled stub if community.create
                    isn't registered in `pages` (e.g. its migration hasn't
                    run yet) rather than linking to a 404. #}
                 <button type="button" class="btn btn-outline-secondary" disabled>
-                    <i class="bi bi-people me-1"></i>{{ trans('view.users.community.create.04') }}
+                    <i class="bi bi-people me-1" aria-hidden="true"></i>{{ trans('view.users.community.create.04') }}
                 </button>
             {% endif %}
         </div>

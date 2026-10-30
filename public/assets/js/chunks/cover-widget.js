@@ -1,7 +1,7 @@
 /*! Third-party licenses: /assets/THIRD_PARTY_LICENSES.md */
 import{r as e}from"./i18n.js";import{t}from"./uploads.js";import{t as n}from"./api-errors.js";function r(r){let{slot:i,urlInput:a,uploadsApiUrl:o,prompt:s,onError:c}=r;if(!i||!a)return;function l(){i.innerHTML=`
             <div class="blog-post-cover-drop" data-cover-drop>
-                <i class="bi bi-card-image blog-post-cover-icon"></i>
+                <i class="bi bi-card-image blog-post-cover-icon" aria-hidden="true"></i>
                 <div>
                     <div>${s}</div>
                     <div class="blog-post-cover-hint">${e(`js.cover.formats`)}</div>
@@ -14,6 +14,6 @@ import{r as e}from"./i18n.js";import{t}from"./uploads.js";import{t as n}from"./a
                 <div class="blog-post-cover-fileinfo">
                     <div class="blog-post-cover-filename">${r}</div>
                 </div>
-                <button type="button" class="blog-post-cover-remove" aria-label="${e(`js.common.remove_aria`)}"><i class="bi bi-x-lg"></i></button>
+                <button type="button" class="blog-post-cover-remove" aria-label="${e(`js.common.remove_aria`)}"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
             </div>
         `,a.value=t,d()}function d(){let r=i.querySelector(`[data-cover-drop]`),a=i.querySelector(`[data-cover-file]`),s=i.querySelector(`.blog-post-cover-remove`);r?.addEventListener(`click`,()=>a?.click()),a?.addEventListener(`change`,async()=>{let r=a.files?.[0];if(r)try{u((await t(o,r)).url,r.name)}catch(t){c(n(t,e(`js.cover.upload_failed`)))}}),s?.addEventListener(`click`,l)}d()}export{r as t};

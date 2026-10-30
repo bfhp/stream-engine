@@ -16,15 +16,15 @@
                 {% endif %}
                 <h1 class="forums-header__title" dir="auto"><bdi>{{ feed.title }}</bdi></h1>
                 <div class="forums-topic-meta">
-                    <span><i class="bi bi-person"></i><bdi>{{ feed.authorDisplayName }}</bdi></span>
+                    <span><i class="bi bi-person" aria-hidden="true"></i><bdi>{{ feed.authorDisplayName }}</bdi></span>
                     {% if feed.createdAtTitle %}
-                        <span title="{{ feed.createdAtTitle }}"><i class="bi bi-calendar3"></i>{{ feed.createdAtLabel }}</span>
+                        <span title="{{ feed.createdAtTitle }}"><i class="bi bi-calendar3" aria-hidden="true"></i>{{ feed.createdAtLabel }}</span>
                     {% endif %}
-                    <span><i class="bi bi-chat-square-text"></i><span class="forums-number">{{ topicTotals.posts }}</span> {{ trans_choice('forums.post_unit', topicTotals.posts) }}</span>
-                    <span><i class="bi bi-people"></i><span class="forums-number">{{ topicTotals.participants }}</span> {{ trans_choice('forums.participant', topicTotals.participants) }}</span>
-                    <span><i class="bi bi-eye"></i><span class="forums-number">{{ topicTotals.views }}</span> {{ trans_choice('forums.view_unit', topicTotals.views) }}</span>
+                    <span><i class="bi bi-chat-square-text" aria-hidden="true"></i><span class="forums-number">{{ topicTotals.posts }}</span> {{ trans_choice('forums.post_unit', topicTotals.posts) }}</span>
+                    <span><i class="bi bi-people" aria-hidden="true"></i><span class="forums-number">{{ topicTotals.participants }}</span> {{ trans_choice('forums.participant', topicTotals.participants) }}</span>
+                    <span><i class="bi bi-eye" aria-hidden="true"></i><span class="forums-number">{{ topicTotals.views }}</span> {{ trans_choice('forums.view_unit', topicTotals.views) }}</span>
                     {% if poll %}
-                        <a href="#topic-poll" class="link-quiet"><i class="bi bi-bar-chart-line"></i>{{ trans('view.forums.topic.form.10') }}</a>
+                        <a href="#topic-poll" class="link-quiet"><i class="bi bi-bar-chart-line" aria-hidden="true"></i>{{ trans('view.forums.topic.form.10') }}</a>
                     {% endif %}
                 </div>
             </div>
@@ -58,14 +58,14 @@
                    a topic those would refuse. #}
                 {% if canEditTopic and topicEditUrl %}
                     <a href="{{ topicEditUrl }}" class="ui-button ui-button--secondary ui-button--sm">
-                        <i class="bi bi-pencil-square"></i><span>{{ trans('view.forums.topic.view.06') }}</span>
+                        <i class="bi bi-pencil-square" aria-hidden="true"></i><span>{{ trans('view.forums.topic.view.06') }}</span>
                     </a>
                 {% endif %}
                 {% if canDeleteTopic %}
                     <button type="button" class="ui-button ui-button--secondary ui-button--sm forums-danger-link"
                             data-forum-topic-delete data-topic-id="{{ feed.id }}"
                             data-redirect-url="{{ parentForum ? parentForum.canonicalUrl : forumsListUrl }}">
-                        <i class="bi bi-trash"></i><span>{{ trans('view.forums.topic.view.34') }}</span>
+                        <i class="bi bi-trash" aria-hidden="true"></i><span>{{ trans('view.forums.topic.view.34') }}</span>
                     </button>
                 {% endif %}
                 {# Generic feed favoriting widget repurposed as "follow this
@@ -86,19 +86,19 @@
                     {% if user.isGuest %}
                         <button type="button" class="ui-button ui-button--secondary ui-button--sm"
                                 data-ui-toggle="modal" data-ui-target="#authFormModal">
-                            <i class="bi bi-bell"></i><span>{{ trans('view.forums.topic.view.08') }}</span>
+                            <i class="bi bi-bell" aria-hidden="true"></i><span>{{ trans('view.forums.topic.view.08') }}</span>
                         </button>
                     {% else %}
                         <button type="button" class="ui-button ui-button--secondary ui-button--sm"
                                 data-favorite-toggle aria-pressed="{{ isFollowing ? 'true' : 'false' }}">
-                            <i class="bi {{ isFollowing ? 'bi-bell-fill' : 'bi-bell' }}"></i>
+                            <i class="bi {{ isFollowing ? 'bi-bell-fill' : 'bi-bell' }}" aria-hidden="true"></i>
                             <span data-favorite-label>{{ isFollowing ? trans('view.forums.topic.view.07') : trans('view.forums.topic.view.08') }}</span>
                         </button>
                     {% endif %}
                 </div>
                 <button type="button" class="ui-button ui-button--secondary ui-button--sm"
                         data-forum-mark-topic-read data-topic-id="{{ feed.id }}">
-                    <i class="bi bi-check2-all"></i><span>{{ trans('view.forums.topic.view.10') }}</span>
+                    <i class="bi bi-check2-all" aria-hidden="true"></i><span>{{ trans('view.forums.topic.view.10') }}</span>
                 </button>
             </div>
         </div>
@@ -112,7 +112,7 @@
             <section class="ui-card forums-section forums-poll" id="topic-poll" data-poll-feed-id="{{ feed.id }}">
                 <div class="forums-section__header">
                     <div class="forums-poll__title">
-                        <i class="bi bi-bar-chart-line"></i>
+                        <i class="bi bi-bar-chart-line" aria-hidden="true"></i>
                         <h2 class="forums-section__heading">{{ trans('view.forums.topic.view.11') }}</h2>
                         {% if poll.isClosed %}
                             <span class="ui-badge">{{ trans('view.forums.topic.view.12') }}</span>
@@ -122,7 +122,7 @@
                     </div>
                     {% if poll.deadlineText %}
                         <div class="forums-poll__deadline">
-                            <i class="bi bi-clock"></i><span>{{ poll.deadlineText }}</span>
+                            <i class="bi bi-clock" aria-hidden="true"></i><span>{{ poll.deadlineText }}</span>
                         </div>
                     {% endif %}
                 </div>
@@ -143,14 +143,14 @@
                                        {{ opt.checked ? 'checked' : '' }} data-poll-option-input>
                                 <i class="bi {{ poll.isMultiple
                                     ? (opt.checked ? 'bi-check-square-fill' : 'bi-square')
-                                    : (opt.checked ? 'bi-record-circle' : 'bi-circle') }}" data-poll-option-icon></i>
+                                    : (opt.checked ? 'bi-record-circle' : 'bi-circle') }}" data-poll-option-icon aria-hidden="true"></i>
                                 <span>{{ opt.text }}</span>
                             </label>
                         {% endfor %}
                         <div class="forums-poll__actions">
                             <button type="button" class="ui-button ui-button--primary"
                                     data-poll-submit {{ poll.submitDisabled ? 'disabled' : '' }}>
-                                <i class="bi bi-check2"></i><span>{{ trans('view.forums.topic.view.14') }}</span>
+                                <i class="bi bi-check2" aria-hidden="true"></i><span>{{ trans('view.forums.topic.view.14') }}</span>
                             </button>
                             <button type="button" class="ui-button ui-button--secondary" hidden data-poll-cancel-change>{{ trans('view.comments.cancel') }}</button>
                             <span class="forums-poll__selection" data-poll-selection-hint>{{ poll.selectionHint }}</span>
@@ -163,7 +163,7 @@
                                 <div class="forums-poll__result-head">
                                     <span class="forums-poll__result-text">
                                         <i class="bi {{ opt.checked ? 'bi-check-circle-fill' : 'bi-dot' }}"
-                                           data-poll-option-result-icon data-option-id="{{ opt.id }}"></i><span>{{ opt.text }}</span>
+                                           data-poll-option-result-icon data-option-id="{{ opt.id }}" aria-hidden="true"></i><span>{{ opt.text }}</span>
                                     </span>
                                     <span class="forums-poll__stat"
                                           data-poll-option-stat data-option-id="{{ opt.id }}">{{ opt.statText }}</span>
@@ -178,25 +178,25 @@
 
                     {% if poll.showHiddenNote %}
                         <div class="forums-poll__note" data-poll-hidden-note>
-                            <i class="bi bi-eye-slash"></i><span>{{ poll.hiddenNoteText }}</span>
+                            <i class="bi bi-eye-slash" aria-hidden="true"></i><span>{{ poll.hiddenNoteText }}</span>
                         </div>
                     {% endif %}
 
                     <div class="forums-poll__footer">
                         <div class="forums-poll__totals">
                             <span {{ poll.showResults ? '' : 'hidden' }} data-poll-total-votes>
-                                <i class="bi bi-check2-square"></i><span class="forums-number" data-poll-count>{{ poll.totalVotesText }}</span>
+                                <i class="bi bi-check2-square" aria-hidden="true"></i><span class="forums-number" data-poll-count>{{ poll.totalVotesText }}</span>
                             </span>
                             <span {{ poll.showResults ? '' : 'hidden' }} data-poll-voters>
-                                <i class="bi bi-people"></i><span class="forums-number" data-poll-count>{{ poll.votersText }}</span>
+                                <i class="bi bi-people" aria-hidden="true"></i><span class="forums-number" data-poll-count>{{ poll.votersText }}</span>
                             </span>
                             <span class="forums-poll__voted" {{ poll.hasVoted ? '' : 'hidden' }} data-poll-voted-note>
-                                <i class="bi bi-check-circle"></i><span>{{ trans('view.forums.topic.view.15') }}</span>
+                                <i class="bi bi-check-circle" aria-hidden="true"></i><span>{{ trans('view.forums.topic.view.15') }}</span>
                             </span>
                         </div>
                         <button type="button" class="ui-button ui-button--link ui-button--sm" {{ poll.canChangeVote ? '' : 'hidden' }}
                                 data-poll-change-vote>
-                            <i class="bi bi-arrow-repeat"></i>{{ trans('view.forums.topic.view.16') }}
+                            <i class="bi bi-arrow-repeat" aria-hidden="true"></i>{{ trans('view.forums.topic.view.16') }}
                         </button>
                     </div>
 
@@ -260,14 +260,14 @@
                                                             data-ui-toggle="modal"
                                                             data-ui-target="#authFormModal"
                                                             aria-label="{{ trans('view.common.rate_aria', {rating: i}) }}">
-                                                        <i class="bi bi-star"></i>
+                                                        <i class="bi bi-star" aria-hidden="true"></i>
                                                     </button>
                                                 {% else %}
                                                     <button type="button"
                                                             class="rating-star"
                                                             data-value="{{ i }}"
                                                             aria-label="{{ trans('view.common.rate_aria', {rating: i}) }}">
-                                                        <i class="bi {{ post.userRating and i <= post.userRating ? 'bi-star-fill' : 'bi-star' }}"></i>
+                                                        <i class="bi {{ post.userRating and i <= post.userRating ? 'bi-star-fill' : 'bi-star' }}" aria-hidden="true"></i>
                                                     </button>
                                                 {% endif %}
                                             {% endfor %}
@@ -301,7 +301,7 @@
                                     <div class="forums-attachments">
                                         {% for attachment in post.attachments %}
                                             <a href="{{ attachment.url }}" target="_blank" rel="noopener" class="forums-attachment">
-                                                <i class="bi {{ attachment.icon }} forums-attachment__icon"></i>
+                                                <i class="bi {{ attachment.icon }} forums-attachment__icon" aria-hidden="true"></i>
                                                 <div class="forums-attachment__text">
                                                     <div class="forums-attachment__name">{{ attachment.name }}</div>
                                                     <div class="forums-attachment__size">{{ attachment.sizeLabel }}</div>
@@ -322,7 +322,7 @@
                                 {% endif %}
                                 {% if post.wasEdited %}
                                     <div class="forums-post__edited" title="{{ trans('view.forums.edited_at', {date: post.editedAtTitle}) }}">
-                                        <i class="bi bi-pencil"></i>{{ trans('view.forums.topic.view.29') }}
+                                        <i class="bi bi-pencil" aria-hidden="true"></i>{{ trans('view.forums.topic.view.29') }}
                                     </div>
                                 {% endif %}
                                 {% if post.canEdit %}
@@ -341,37 +341,37 @@
                                 <div class="forums-post__footer">
                                     <div class="post-actions">
                                         {% if user.isGuest %}
-                                            <a href="#authFormModal" data-ui-toggle="modal" data-ui-target="#authFormModal" class="ui-button ui-button--link ui-button--sm"><i class="bi bi-reply"></i>{{ trans('view.comments.reply') }}</a>
+                                            <a href="#authFormModal" data-ui-toggle="modal" data-ui-target="#authFormModal" class="ui-button ui-button--link ui-button--sm"><i class="bi bi-reply" aria-hidden="true"></i>{{ trans('view.comments.reply') }}</a>
                                         {% else %}
-                                            <a href="#reply" class="ui-button ui-button--link ui-button--sm"><i class="bi bi-reply"></i>{{ trans('view.comments.reply') }}</a>
+                                            <a href="#reply" class="ui-button ui-button--link ui-button--sm"><i class="bi bi-reply" aria-hidden="true"></i>{{ trans('view.comments.reply') }}</a>
                                         {% endif %}
                                         {% if not user.isGuest %}
                                             <button type="button" class="ui-button ui-button--link ui-button--sm"
                                                     data-quote-toggle
                                                     data-quote-author="{{ postFeed.authorDisplayName }}"
                                                     data-quote-content="{{ post.quoteText }}">
-                                                <i class="bi bi-quote"></i>{{ trans('view.forums.topic.view.31') }}
+                                                <i class="bi bi-quote" aria-hidden="true"></i>{{ trans('view.forums.topic.view.31') }}
                                             </button>
                                         {% else %}
                                             <button type="button" class="ui-button ui-button--link ui-button--sm"
                                                     data-ui-toggle="modal" data-ui-target="#authFormModal">
-                                                <i class="bi bi-quote"></i>{{ trans('view.forums.topic.view.31') }}
+                                                <i class="bi bi-quote" aria-hidden="true"></i>{{ trans('view.forums.topic.view.31') }}
                                             </button>
                                         {% endif %}
                                         {% if post.canEdit or post.canDelete %}
-                                            <span class="post-actions-sep">&middot;</span>
+                                            <span class="post-actions-sep" aria-hidden="true">&middot;</span>
                                         {% endif %}
                                         {% if post.canEdit %}
                                             <button type="button" class="ui-button ui-button--link ui-button--sm"
                                                     data-comment-edit-toggle data-comment-id="{{ postFeed.id }}"
                                                     title="{{ trans('view.forums.topic.view.32') }}">
-                                                <i class="bi bi-pencil"></i>{{ trans('view.forums.topic.view.33') }}
+                                                <i class="bi bi-pencil" aria-hidden="true"></i>{{ trans('view.forums.topic.view.33') }}
                                             </button>
                                         {% endif %}
                                         {% if post.canDelete %}
                                             <button type="button" class="ui-button ui-button--link ui-button--sm forums-danger-link"
                                                     data-comment-delete data-comment-id="{{ postFeed.id }}" data-parent-id="{{ feed.id }}">
-                                                <i class="bi bi-trash"></i>{{ trans('view.forums.topic.view.34') }}
+                                                <i class="bi bi-trash" aria-hidden="true"></i>{{ trans('view.forums.topic.view.34') }}
                                             </button>
                                         {% endif %}
                                     </div>
@@ -419,9 +419,9 @@
                                      data-forum-quick-reply-editor></trix-editor>
                         <div class="ui-error" hidden data-forum-quick-reply-error></div>
                         <div class="forums-reply__actions">
-                            <button type="submit" class="ui-button ui-button--primary"><i class="bi bi-send"></i><span>{{ trans('view.forums.topic.view.40') }}</span></button>
+                            <button type="submit" class="ui-button ui-button--primary"><i class="bi bi-send" aria-hidden="true"></i><span>{{ trans('view.forums.topic.view.40') }}</span></button>
                             <button type="button" class="ui-button ui-button--secondary ui-button--sm forums-reply__preview-toggle"
-                                    data-forum-quick-reply-preview-toggle><i class="bi bi-eye"></i><span>{{ trans('view.forums.topic.form.43') }}</span></button>
+                                    data-forum-quick-reply-preview-toggle><i class="bi bi-eye" aria-hidden="true"></i><span>{{ trans('view.forums.topic.form.43') }}</span></button>
                         </div>
                     </form>
                 </div>
@@ -432,7 +432,7 @@
             <div>
                 {% if parentForum %}
                     <a href="{{ user.isGuest ? '#authFormModal' : topicNewUrl }}" {% if user.isGuest %}data-ui-toggle="modal" data-ui-target="#authFormModal"{% endif %} class="ui-button ui-button--primary">
-                        <i class="bi bi-pencil-square"></i>
+                        <i class="bi bi-pencil-square" aria-hidden="true"></i>
                         <span>{{ trans('forums.topic_new') }}</span>
                     </a>
                 {% endif %}

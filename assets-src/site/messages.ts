@@ -280,7 +280,7 @@ export function initMessages() {
     function renderAvatar(opts: { isGroup: boolean; id?: number; name?: string; size?: 'sm' | 'md' | 'lg'; online?: boolean | null }): string {
         const sizeClass = opts.size ? ` msgr-avatar-${opts.size}` : '';
         const inner = opts.isGroup
-            ? `<span class="msgr-avatar msgr-avatar-group${sizeClass}"><i class="bi bi-people-fill"></i></span>`
+            ? `<span class="msgr-avatar msgr-avatar-group${sizeClass}"><i class="bi bi-people-fill" aria-hidden="true"></i></span>`
             : `<span class="msgr-avatar${sizeClass}" style="background:${avatarColor(opts.id ?? 0)}">${cms.escapeHtml(initialsFromName(opts.name ?? ''))}</span>`;
 
         // online is only passed where presence is meaningful (direct chats,
@@ -815,6 +815,7 @@ export function initMessages() {
 
             el.className = `bi msgr-read-status ${read ? 'bi-check-all is-read' : 'bi-check'}`;
             el.title = trans(read ? 'js.messenger.read' : 'js.messenger.sent');
+            el.setAttribute('aria-label', el.title);
         });
     }
 
@@ -886,7 +887,7 @@ export function initMessages() {
         }
         return `
             <a class="msgr-attachment-file" href="${url}" download="${cms.escapeHtml(a.original_name)}" target="_blank" rel="noopener">
-                <i class="bi bi-file-earmark-arrow-down-fill"></i>
+                <i class="bi bi-file-earmark-arrow-down-fill" aria-hidden="true"></i>
                 <span class="msgr-attachment-file-body">
                     <span class="msgr-attachment-file-name"><bdi>${cms.escapeHtml(a.original_name)}</bdi></span>
                     <span class="msgr-attachment-file-size">${bytesToLabel(a.size)}</span>
@@ -904,16 +905,16 @@ export function initMessages() {
 
         return `
             <div class="msgr-msg-actions">
-                <button type="button" class="msgr-msg-action-btn" data-reply-to="${m.id}" title="${trans('js.common.reply')}">
-                    <i class="bi bi-reply-fill"></i>
+                <button type="button" class="msgr-msg-action-btn" data-reply-to="${m.id}" title="${trans('js.common.reply')}" aria-label="${trans('js.common.reply')}">
+                    <i class="bi bi-reply-fill" aria-hidden="true"></i>
                 </button>
                 ${canEdit ? `
-                <button type="button" class="msgr-msg-action-btn" data-edit-message="${m.id}" title="${trans('js.common.edit')}">
-                    <i class="bi bi-pencil-fill"></i>
+                <button type="button" class="msgr-msg-action-btn" data-edit-message="${m.id}" title="${trans('js.common.edit')}" aria-label="${trans('js.common.edit')}">
+                    <i class="bi bi-pencil-fill" aria-hidden="true"></i>
                 </button>` : ''}
                 ${isOwn ? `
-                <button type="button" class="msgr-msg-action-btn msgr-msg-action-btn-danger" data-delete-message="${m.id}" title="${trans('js.common.delete')}">
-                    <i class="bi bi-trash-fill"></i>
+                <button type="button" class="msgr-msg-action-btn msgr-msg-action-btn-danger" data-delete-message="${m.id}" title="${trans('js.common.delete')}" aria-label="${trans('js.common.delete')}">
+                    <i class="bi bi-trash-fill" aria-hidden="true"></i>
                 </button>` : ''}
             </div>`;
     }
@@ -940,7 +941,7 @@ export function initMessages() {
 
         const readStatus = isOwn ? computeReadStatus(m) : null;
         const readStatusHtml = readStatus !== null
-            ? `<i class="bi msgr-read-status ${readStatus ? 'bi-check-all is-read' : 'bi-check'}" data-read-status title="${trans(readStatus ? 'js.messenger.read' : 'js.messenger.sent')}"></i>`
+            ? `<i class="bi msgr-read-status ${readStatus ? 'bi-check-all is-read' : 'bi-check'}" data-read-status title="${trans(readStatus ? 'js.messenger.read' : 'js.messenger.sent')}" role="img" aria-label="${trans(readStatus ? 'js.messenger.read' : 'js.messenger.sent')}"></i>`
             : '';
 
         const attachmentHtml = m.attachment ? renderAttachment(m.attachment, m) : '';
@@ -1231,6 +1232,7 @@ export function initMessages() {
         } else {
             thumb = document.createElement('i');
             thumb.className = 'bi bi-file-earmark-fill';
+            thumb.setAttribute('aria-hidden', 'true');
         }
         attachPreviewThumbEl.replaceChildren(thumb);
         attachPreviewNameEl.textContent = pendingAttachment.name;
@@ -1462,7 +1464,7 @@ export function initMessages() {
         } else {
             newGroupChipsEl.hidden = false;
             newGroupChipsEl.innerHTML = Array.from(selectedGroupIds.entries()).map(([id, name]) => `
-                <span class="msgr-chip" data-chip-id="${id}"><bdi>${cms.escapeHtml(name)}</bdi><i class="bi bi-x-lg"></i></span>
+                <span class="msgr-chip" data-chip-id="${id}"><bdi>${cms.escapeHtml(name)}</bdi><i class="bi bi-x-lg" aria-hidden="true"></i></span>
             `).join('');
         }
         newGroupCreateBtn.disabled = selectedGroupIds.size === 0;
@@ -1509,7 +1511,7 @@ export function initMessages() {
                 <div class="msgr-contact-body">
                     <div class="msgr-contact-name">${cms.escapeHtml(c.displayName)}</div>
                 </div>
-                ${selected ? '<i class="bi bi-check-circle-fill msgr-contact-check"></i>' : ''}
+                ${selected ? '<i class="bi bi-check-circle-fill msgr-contact-check" aria-hidden="true"></i>' : ''}
             </div>`;
     }
 

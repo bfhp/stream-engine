@@ -7,7 +7,7 @@
             <h2>{{ trans('view.users.show.01') }}</h2>
             {% if isOwnProfile and newPostUrl %}
                 <a href="{{ newPostUrl }}" class="ui-button ui-button--primary ui-button--sm">
-                    <i class="bi bi-plus-lg"></i> {{ trans('blog.new_post') }}
+                    <i class="bi bi-plus-lg" aria-hidden="true"></i> {{ trans('blog.new_post') }}
                 </a>
             {% endif %}
         </div>
@@ -50,12 +50,12 @@
 
             {% if isEmpty %}
                 <div class="ui-card users-empty">
-                    <i class="bi bi-journal-text users-empty__icon"></i>
+                    <i class="bi bi-journal-text users-empty__icon" aria-hidden="true"></i>
                     {% if isOwnProfile %}
                         <p class="users-empty__title">{{ trans('view.users.show.02') }}</p>
                         <p class="users-empty__text">{{ trans('view.users.show.03') }}</p>
                         {% if newPostUrl %}
-                            <a href="{{ newPostUrl }}" class="ui-button ui-button--primary users-empty__action"><i class="bi bi-plus-lg"></i> {{ trans('view.users.community.show.03') }}</a>
+                            <a href="{{ newPostUrl }}" class="ui-button ui-button--primary users-empty__action"><i class="bi bi-plus-lg" aria-hidden="true"></i> {{ trans('view.users.community.show.03') }}</a>
                         {% endif %}
                     {% else %}
                         <p class="users-empty__title">{{ trans('view.users.show.04') }}</p>

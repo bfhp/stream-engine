@@ -137,7 +137,7 @@ type TrixEditorElement = HTMLElement & {
         if (!visibilityNote) return;
         const note = VISIBILITY_NOTES[visibilitySelect.value as keyof typeof VISIBILITY_NOTES]
             ?? VISIBILITY_NOTES.public;
-        visibilityNote.innerHTML = `<i class="bi ${note[0]}"></i> ${note[1]}`;
+        visibilityNote.innerHTML = `<i class="bi ${note[0]}" aria-hidden="true"></i> ${note[1]}`;
     };
     visibilitySelect.addEventListener('change', syncVisibilityNote);
     syncVisibilityNote();
@@ -170,12 +170,12 @@ type TrixEditorElement = HTMLElement & {
         trackAddBtn.hidden = true;
         trackSlot.innerHTML = `
             <div class="blog-post-track-row">
-                <span class="blog-post-track-play"><i class="bi bi-music-note"></i></span>
+                <span class="blog-post-track-play"><i class="bi bi-music-note" aria-hidden="true"></i></span>
                 <div class="blog-post-track-meta">
                     <div class="blog-post-track-name"></div>
                     <div class="blog-post-track-sub"></div>
                 </div>
-                <button type="button" class="blog-post-track-remove" aria-label="${trans('js.common.remove_aria')}"><i class="bi bi-x-lg"></i></button>
+                <button type="button" class="blog-post-track-remove" aria-label="${trans('js.common.remove_aria')}"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
             </div>
         `;
         // The file name is the visitor's, so it goes in as text rather than

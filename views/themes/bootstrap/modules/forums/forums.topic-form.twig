@@ -23,11 +23,11 @@
 {% block content %}
     <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
         <h1 class="h3 mb-0">{{ isEdit ? trans('forums.topic_edit') : trans('forums.topic_new') }}</h1>
-        <span class="text-body-secondary" style="font-size: .82rem"><i class="bi bi-folder2-open me-1"></i><bdi>{{ feed.title }}</bdi></span>
+        <span class="text-body-secondary" style="font-size: .82rem"><i class="bi bi-folder2-open me-1" aria-hidden="true"></i><bdi>{{ feed.title }}</bdi></span>
     </div>
 
     <div class="alert alert-secondary d-flex align-items-start gap-2 mb-3" style="border-color: var(--bs-border-color-translucent); font-size: .85rem">
-        <i class="bi bi-info-circle mt-1"></i>
+        <i class="bi bi-info-circle mt-1" aria-hidden="true"></i>
         {% if isEdit %}
             <span>{{ trans('view.forums.topic.form.01') }}</span>
         {% else %}
@@ -74,8 +74,8 @@
         <div class="card mb-3">
             <div class="card-header d-flex align-items-center gap-2 bg-body-secondary border-secondary-subtle">
                 <button type="button" class="btn btn-sm btn-link p-0 text-body-secondary text-decoration-none lh-1"
-                        title="{{ trans('view.forums.topic.form.09') }}" data-poll-toggle {{ pollLocked ? 'disabled' : '' }}>
-                    <i class="bi bi-chevron-right"></i>
+                        title="{{ trans('view.forums.topic.form.09') }}" data-poll-toggle {{ pollLocked ? 'disabled' : '' }} aria-label="{{ trans('view.forums.topic.form.09') }}">
+                    <i class="bi bi-chevron-right" aria-hidden="true"></i>
                 </button>
                 <div class="flex-grow-1" style="min-width: 0">
                     <h2 class="h6 mb-0 fw-semibold">{{ trans('view.forums.topic.form.10') }}</h2>
@@ -89,10 +89,10 @@
                 </div>
                 {% if not pollLocked %}
                     <button type="button" class="btn btn-sm btn-link px-0 d-inline-flex align-items-center gap-1 text-decoration-none" data-poll-toggle>
-                        <i class="bi bi-plus-lg"></i><span>{{ trans('view.forums.topic.form.13') }}</span>
+                        <i class="bi bi-plus-lg" aria-hidden="true"></i><span>{{ trans('view.forums.topic.form.13') }}</span>
                     </button>
                 {% else %}
-                    <span class="badge text-bg-secondary" style="font-size: .66rem"><i class="bi bi-lock me-1"></i>{{ trans('view.forums.topic.form.14') }}</span>
+                    <span class="badge text-bg-secondary" style="font-size: .66rem"><i class="bi bi-lock me-1" aria-hidden="true"></i>{{ trans('view.forums.topic.form.14') }}</span>
                 {% endif %}
             </div>
             {# The locked case renders the poll read-only rather than hiding the
@@ -118,7 +118,7 @@
                     <div class="d-flex flex-column gap-2" data-poll-options></div>
                     <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
                         <button type="button" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2" data-poll-add-option>
-                            <i class="bi bi-plus-lg"></i><span>{{ trans('view.forums.topic.form.18') }}</span>
+                            <i class="bi bi-plus-lg" aria-hidden="true"></i><span>{{ trans('view.forums.topic.form.18') }}</span>
                         </button>
                         <span class="text-body-secondary font-monospace" style="font-size: .78rem" data-poll-option-count></span>
                     </div>
@@ -148,10 +148,10 @@
 
         <div class="card mb-3">
             <div class="card-body">
-                <h2 class="h6 card-title mb-2"><i class="bi bi-paperclip me-1"></i>{{ trans('view.forums.topic.form.25') }}</h2>
+                <h2 class="h6 card-title mb-2"><i class="bi bi-paperclip me-1" aria-hidden="true"></i>{{ trans('view.forums.topic.form.25') }}</h2>
                 <div class="d-flex align-items-center gap-3 p-3 mb-3" style="border: 1.5px dashed var(--bs-border-color); border-radius: .5rem; cursor: pointer"
                      data-attachments-drop>
-                    <i class="bi bi-cloud-arrow-up fs-4"></i>
+                    <i class="bi bi-cloud-arrow-up fs-4" aria-hidden="true"></i>
                     <div>
                         <div>{{ trans('view.forums.topic.form.26') }}</div>
                         <div class="small text-body-secondary">{{ trans('view.forums.topic.form.27') }}</div>
@@ -178,7 +178,7 @@
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="topicPreviewModalLabel"><i class="bi bi-eye me-1"></i>{{ trans('view.forums.topic.form.29') }}</h5>
+                    <h5 class="modal-title" id="topicPreviewModalLabel"><i class="bi bi-eye me-1" aria-hidden="true"></i>{{ trans('view.forums.topic.form.29') }}</h5>
                     <button type="button" class="btn-close" data-ui-dismiss="modal" aria-label="{{ trans('view.forums.topic.form.30') }}"></button>
                 </div>
                 <div class="modal-body" id="topicPreviewBody"></div>
@@ -190,20 +190,20 @@
         <div class="input-group">
             <span class="input-group-text font-monospace text-body-secondary" data-poll-option-number>1</span>
             <input type="text" class="form-control" maxlength="255" placeholder="{{ trans('js.forums.poll_option_placeholder') }}" data-poll-option-text>
-            <button type="button" class="btn btn-outline-secondary" aria-label="{{ trans('js.forums.poll_option_remove') }}" data-poll-option-remove><i class="bi bi-x-lg"></i></button>
+            <button type="button" class="btn btn-outline-secondary" aria-label="{{ trans('js.forums.poll_option_remove') }}" data-poll-option-remove><i class="bi bi-x-lg" aria-hidden="true"></i></button>
         </div>
     </template>
 
     <template data-ui="forum-attachment-upload">
         <div class="d-flex align-items-center gap-3 p-2" style="border: 1px solid var(--bs-border-color); border-radius: .5rem">
-            <div style="width: 40px; height: 40px; flex: 0 0 auto; border-radius: 6px; background-color: var(--bs-secondary-bg); display: inline-flex; align-items: center; justify-content: center; color: #8ea3c0"><i data-slot-attr="class:iconClass"></i></div>
+            <div style="width: 40px; height: 40px; flex: 0 0 auto; border-radius: 6px; background-color: var(--bs-secondary-bg); display: inline-flex; align-items: center; justify-content: center; color: #8ea3c0"><i data-slot-attr="class:iconClass" aria-hidden="true"></i></div>
             <div style="flex: 1; min-width: 0">
                 <div class="text-truncate" style="font-size: .86rem; font-weight: 600"><bdi data-slot="name"></bdi></div>
                 <div class="text-body-secondary" style="font-size: .78rem" data-slot="status"></div>
                 <div class="progress mt-1" style="height: 4px" data-slot-optional="uploading"><div class="progress-bar" style="width: 0%" data-attachment-progress></div></div>
             </div>
             <button type="button" class="btn btn-sm btn-link px-0 text-body-secondary" data-slot-attr="aria-label:removeLabel" data-attachment-remove>
-                <i class="bi bi-x-lg"></i>
+                <i class="bi bi-x-lg" aria-hidden="true"></i>
             </button>
         </div>
     </template>
@@ -223,7 +223,7 @@
                 <div class="d-flex flex-column gap-2 mt-3" style="max-width: 28rem" data-slot-optional="hasAttachments" data-preview-attachments></div>
                 <div class="card mt-3 bg-body-tertiary border-secondary-subtle" data-slot-optional="hasPoll">
                     <div class="card-body">
-                        <h2 class="h6 card-title mb-2"><i class="bi bi-bar-chart me-1"></i><span data-slot="pollQuestion"></span></h2>
+                        <h2 class="h6 card-title mb-2"><i class="bi bi-bar-chart me-1" aria-hidden="true"></i><span data-slot="pollQuestion"></span></h2>
                         <div class="d-flex flex-column gap-2" data-preview-poll-options></div>
                         <div class="text-body-secondary" style="font-size: .85rem" data-slot="pollOptionsEmpty" data-slot-optional="pollOptionsEmpty"></div>
                         <div class="text-body-secondary mt-2" style="font-size: .78rem" data-slot="pollDuration"></div>
@@ -235,7 +235,7 @@
 
     <template data-ui="forum-preview-attachment">
         <div class="d-flex align-items-center gap-2 p-2" style="border: 1px solid var(--bs-border-color); border-radius: .5rem">
-            <span class="fs-5 text-body-secondary"><i data-slot-attr="class:iconClass"></i></span>
+            <span class="fs-5 text-body-secondary"><i data-slot-attr="class:iconClass" aria-hidden="true"></i></span>
             <div style="min-width: 0">
                 <div class="text-truncate" style="font-size: .85rem"><bdi data-slot="name"></bdi></div>
                 <div class="text-body-secondary" style="font-size: .76rem" data-slot="size"></div>
@@ -255,30 +255,30 @@
             <div class="card-body">
                 <h2 class="h6 card-title mb-3">
                     {%- if isEdit -%}
-                        <i class="bi bi-pencil-square me-1"></i>{{ trans('view.forums.topic.form.31') }}
+                        <i class="bi bi-pencil-square me-1" aria-hidden="true"></i>{{ trans('view.forums.topic.form.31') }}
                     {%- else -%}
-                        <i class="bi bi-send me-1"></i>{{ trans('view.forums.topic.form.32') }}
+                        <i class="bi bi-send me-1" aria-hidden="true"></i>{{ trans('view.forums.topic.form.32') }}
                     {%- endif -%}
                 </h2>
                 {% if isEdit %}
                     <p class="small text-body-secondary mb-3">
-                        <i class="bi bi-clock-history me-1"></i>{{ trans('view.forums.topic.form.33') }}
+                        <i class="bi bi-clock-history me-1" aria-hidden="true"></i>{{ trans('view.forums.topic.form.33') }}
                     </p>
                 {% else %}
                     <p class="small text-body-secondary mb-3">
-                        <i class="bi bi-people me-1"></i>{{ trans('view.forums.topic.form.34') }} {{ forumTotals.topics }} {{ trans_choice('forums.topic_unit', forumTotals.topics) }} {{ trans('view.forums.topic.form.36') }} {{ forumTotals.posts }} {{ trans_choice('forums.post_unit', forumTotals.posts) }}.
+                        <i class="bi bi-people me-1" aria-hidden="true"></i>{{ trans('view.forums.topic.form.34') }} {{ forumTotals.topics }} {{ trans_choice('forums.topic_unit', forumTotals.topics) }} {{ trans('view.forums.topic.form.36') }} {{ forumTotals.posts }} {{ trans_choice('forums.post_unit', forumTotals.posts) }}.
                     </p>
                 {% endif %}
                 <div class="d-grid gap-2">
                     <button class="btn btn-primary" type="button" id="btnCreateTopic">
-                        <i class="bi {{ isEdit ? 'bi-check2' : 'bi-pencil-square' }} me-1"></i><span id="btnCreateTopicLabel">{{ isEdit ? trans('view.forums.topic.form.41') : trans('view.forums.topic.form.42') }}</span>
+                        <i class="bi {{ isEdit ? 'bi-check2' : 'bi-pencil-square' }} me-1" aria-hidden="true"></i><span id="btnCreateTopicLabel">{{ isEdit ? trans('view.forums.topic.form.41') : trans('view.forums.topic.form.42') }}</span>
                     </button>
                     <button class="btn btn-outline-secondary btn-sm" type="button" id="btnPreviewTopic">
-                        <i class="bi bi-eye me-1"></i>{{ trans('view.forums.topic.form.43') }}
+                        <i class="bi bi-eye me-1" aria-hidden="true"></i>{{ trans('view.forums.topic.form.43') }}
                     </button>
                     {% if cancelUrl %}
                         <a href="{{ cancelUrl }}" class="btn btn-link text-body-secondary">
-                            <i class="bi bi-x-lg me-1"></i>{{ trans('view.comments.cancel') }}
+                            <i class="bi bi-x-lg me-1" aria-hidden="true"></i>{{ trans('view.comments.cancel') }}
                         </a>
                     {% endif %}
                 </div>
@@ -292,7 +292,7 @@
         {% if not isEdit %}
             <div class="card mb-3">
                 <div class="card-body">
-                    <h2 class="h6 card-title mb-3"><i class="bi bi-bell me-1"></i>{{ trans('view.forums.topic.form.44') }}</h2>
+                    <h2 class="h6 card-title mb-3"><i class="bi bi-bell me-1" aria-hidden="true"></i>{{ trans('view.forums.topic.form.44') }}</h2>
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" role="switch" id="topicSubscribe" checked>
                         <label class="form-check-label" for="topicSubscribe">{{ trans('view.forums.topic.form.45') }}</label>
@@ -304,7 +304,7 @@
 
         <div class="card bg-body-tertiary border-secondary-subtle">
             <div class="card-body">
-                <h2 class="h6 card-title mb-2"><i class="bi bi-info-circle me-1"></i>{{ trans('view.forums.topic.form.47') }}</h2>
+                <h2 class="h6 card-title mb-2"><i class="bi bi-info-circle me-1" aria-hidden="true"></i>{{ trans('view.forums.topic.form.47') }}</h2>
                 <ul class="mb-0 text-body-secondary" style="font-size: .82rem; padding-inline-start: 1.1rem; line-height: 1.7">
                     <li>{{ trans('view.forums.topic.form.48') }}</li>
                     <li>{{ trans('view.forums.topic.form.49') }}</li>

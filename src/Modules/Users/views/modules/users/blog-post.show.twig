@@ -38,12 +38,12 @@
                 <div class="blog-post-actions">
                     {% if currentPostAudioTrackId %}
                         <button type="button" class="ui-button ui-button--secondary ui-button--sm" data-audio-play-track-id="{{ currentPostAudioTrackId }}">
-                            <i class="bi bi-play-fill"></i> {{ trans('view.users.post.card.02') }}
+                            <i class="bi bi-play-fill" aria-hidden="true"></i> {{ trans('view.users.post.card.02') }}
                         </button>
                     {% endif %}
                     {% if editUrl %}
                         <a href="{{ editUrl }}" class="ui-button ui-button--secondary ui-button--sm">
-                            <i class="bi bi-pencil"></i> {{ trans('view.forums.topic.view.06') }}
+                            <i class="bi bi-pencil" aria-hidden="true"></i> {{ trans('view.forums.topic.view.06') }}
                         </a>
                     {% endif %}
                     {% if canDelete %}
@@ -54,7 +54,7 @@
                             data-feed-id="{{ feed.id }}"
                             data-redirect-url="{{ deleteRedirectUrl }}"
                         >
-                            <i class="bi bi-trash"></i> {{ trans('view.forums.topic.view.34') }}
+                            <i class="bi bi-trash" aria-hidden="true"></i> {{ trans('view.forums.topic.view.34') }}
                         </button>
                     {% endif %}
                 </div>
@@ -99,14 +99,14 @@
                                         data-ui-toggle="modal"
                                         data-ui-target="#authFormModal"
                                         aria-label="{{ trans('view.common.rate_aria', {rating: i}) }}">
-                                    <i class="bi bi-star"></i>
+                                    <i class="bi bi-star" aria-hidden="true"></i>
                                 </button>
                             {% else %}
                                 <button type="button"
                                         class="rating-star"
                                         data-value="{{ i }}"
                                         aria-label="{{ trans('view.common.rate_aria', {rating: i}) }}">
-                                    <i class="bi {{ userRating and i <= userRating ? 'bi-star-fill' : 'bi-star' }}"></i>
+                                    <i class="bi {{ userRating and i <= userRating ? 'bi-star-fill' : 'bi-star' }}" aria-hidden="true"></i>
                                 </button>
                             {% endif %}
                         {% endfor %}

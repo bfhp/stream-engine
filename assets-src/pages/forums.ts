@@ -81,7 +81,7 @@ function initQuickReplyPreview(form: HTMLFormElement): () => void {
         if (!button || !contentInput || !editor || !previewEl) return;
         previewEl.hidden = true;
         editor.hidden = false;
-        button.innerHTML = `<i class="bi bi-eye"></i><span>${trans("js.forums.preview")}</span>`;
+        button.innerHTML = `<i class="bi bi-eye" aria-hidden="true"></i><span>${trans("js.forums.preview")}</span>`;
     };
 
     if (!button || !contentInput || !editor || !previewEl) return showEditor;
@@ -105,7 +105,7 @@ function initQuickReplyPreview(form: HTMLFormElement): () => void {
         }
         editor.hidden = true;
         previewEl.hidden = false;
-        button.innerHTML = `<i class="bi bi-pencil"></i><span>${trans("js.common.edit")}</span>`;
+        button.innerHTML = `<i class="bi bi-pencil" aria-hidden="true"></i><span>${trans("js.common.edit")}</span>`;
     });
 
     return showEditor;

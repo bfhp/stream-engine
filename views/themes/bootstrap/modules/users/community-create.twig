@@ -50,7 +50,7 @@
 
         <div class="card mb-3">
             <div class="card-body">
-                <h2 class="h6 card-title mb-3"><i class="bi bi-person-check me-1"></i>{{ trans('view.users.community.manage.settings.03') }}</h2>
+                <h2 class="h6 card-title mb-3"><i class="bi bi-person-check me-1" aria-hidden="true"></i>{{ trans('view.users.community.manage.settings.03') }}</h2>
 
                 <div class="form-check mb-2">
                     <input
@@ -83,11 +83,11 @@
 
                 <div class="d-grid gap-2">
                     <button class="btn btn-primary" type="button" id="btnCreateCommunity" form="communityCreateForm">
-                        <i class="bi bi-people me-1"></i>{{ trans('view.users.community.create.04') }}
+                        <i class="bi bi-people me-1" aria-hidden="true"></i>{{ trans('view.users.community.create.04') }}
                     </button>
                     {% if cancelUrl %}
                         <a href="{{ cancelUrl }}" class="btn btn-link text-body-secondary">
-                            <i class="bi bi-x-lg me-1"></i>{{ trans('view.comments.cancel') }}
+                            <i class="bi bi-x-lg me-1" aria-hidden="true"></i>{{ trans('view.comments.cancel') }}
                         </a>
                     {% endif %}
                 </div>
@@ -96,11 +96,11 @@
 
         <div class="card mb-3">
             <div class="card-body">
-                <h2 class="h6 card-title mb-2"><i class="bi bi-card-image me-1"></i>{{ trans('view.users.community.manage.settings.08') }}</h2>
+                <h2 class="h6 card-title mb-2"><i class="bi bi-card-image me-1" aria-hidden="true"></i>{{ trans('view.users.community.manage.settings.08') }}</h2>
                 <input type="hidden" id="coverImageUrl" data-cover-url value="">
                 <div id="coverSlot" data-cover-slot>
                     <div class="blog-post-cover-drop" data-cover-drop>
-                        <i class="bi bi-card-image fs-4"></i>
+                        <i class="bi bi-card-image fs-4" aria-hidden="true"></i>
                         <div>
                             <div>{{ trans('view.users.community.manage.settings.10') }}</div>
                             <div class="small text-body-secondary">{{ trans('view.users.community.manage.settings.11') }}</div>

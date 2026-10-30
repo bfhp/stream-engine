@@ -23,11 +23,11 @@
 {% block content %}
     <div class="forums-header">
         <h1 class="forums-header__title">{{ isEdit ? trans('forums.topic_edit') : trans('forums.topic_new') }}</h1>
-        <span class="forums-form__forum"><i class="bi bi-folder2-open"></i> <bdi>{{ feed.title }}</bdi></span>
+        <span class="forums-form__forum"><i class="bi bi-folder2-open" aria-hidden="true"></i> <bdi>{{ feed.title }}</bdi></span>
     </div>
 
     <div class="ui-alert ui-alert--info forums-form__notice">
-        <i class="bi bi-info-circle"></i>
+        <i class="bi bi-info-circle" aria-hidden="true"></i>
         {% if isEdit %}
             <span>{{ trans('view.forums.topic.form.01') }}</span>
         {% else %}
@@ -72,8 +72,8 @@
         <section class="ui-card forums-section forums-form__card">
             <div class="forums-section__header">
                 <button type="button" class="forums-section__toggle"
-                        title="{{ trans('view.forums.topic.form.09') }}" data-poll-toggle {{ pollLocked ? 'disabled' : '' }}>
-                    <i class="bi bi-chevron-right"></i>
+                        title="{{ trans('view.forums.topic.form.09') }}" data-poll-toggle {{ pollLocked ? 'disabled' : '' }} aria-label="{{ trans('view.forums.topic.form.09') }}">
+                    <i class="bi bi-chevron-right" aria-hidden="true"></i>
                 </button>
                 <div class="forums-section__text">
                     <h2 class="forums-section__heading">{{ trans('view.forums.topic.form.10') }}</h2>
@@ -87,10 +87,10 @@
                 </div>
                 {% if not pollLocked %}
                     <button type="button" class="ui-button ui-button--link ui-button--sm" data-poll-toggle>
-                        <i class="bi bi-plus-lg"></i><span>{{ trans('view.forums.topic.form.13') }}</span>
+                        <i class="bi bi-plus-lg" aria-hidden="true"></i><span>{{ trans('view.forums.topic.form.13') }}</span>
                     </button>
                 {% else %}
-                    <span class="ui-badge"><i class="bi bi-lock"></i> {{ trans('view.forums.topic.form.14') }}</span>
+                    <span class="ui-badge"><i class="bi bi-lock" aria-hidden="true"></i> {{ trans('view.forums.topic.form.14') }}</span>
                 {% endif %}
             </div>
             {# The locked case renders the poll read-only rather than hiding the
@@ -118,7 +118,7 @@
                     <div class="forums-form__options" data-poll-options></div>
                     <div class="forums-form__add-option">
                         <button type="button" class="ui-button ui-button--secondary ui-button--sm" data-poll-add-option>
-                            <i class="bi bi-plus-lg"></i><span>{{ trans('view.forums.topic.form.18') }}</span>
+                            <i class="bi bi-plus-lg" aria-hidden="true"></i><span>{{ trans('view.forums.topic.form.18') }}</span>
                         </button>
                         <span class="forums-number ui-muted" data-poll-option-count></span>
                     </div>
@@ -143,9 +143,9 @@
         </section>
 
         <section class="ui-card ui-card__body forums-form__card">
-            <h2 class="ui-card__title"><i class="bi bi-paperclip"></i> {{ trans('view.forums.topic.form.25') }}</h2>
+            <h2 class="ui-card__title"><i class="bi bi-paperclip" aria-hidden="true"></i> {{ trans('view.forums.topic.form.25') }}</h2>
             <div class="forums-dropzone" data-attachments-drop>
-                <i class="bi bi-cloud-arrow-up"></i>
+                <i class="bi bi-cloud-arrow-up" aria-hidden="true"></i>
                 <div>
                     <div>{{ trans('view.forums.topic.form.26') }}</div>
                     <div class="ui-help">{{ trans('view.forums.topic.form.27') }}</div>
@@ -167,7 +167,7 @@
        guarantee. #}
     <dialog class="ui-modal forums-preview-modal" id="topicPreviewModal" aria-labelledby="topicPreviewModalLabel">
         <div class="ui-modal__header">
-            <h2 class="ui-modal__title" id="topicPreviewModalLabel"><i class="bi bi-eye"></i> {{ trans('view.forums.topic.form.29') }}</h2>
+            <h2 class="ui-modal__title" id="topicPreviewModalLabel"><i class="bi bi-eye" aria-hidden="true"></i> {{ trans('view.forums.topic.form.29') }}</h2>
             <button type="button" class="ui-close" data-ui-dismiss="modal" aria-label="{{ trans('view.forums.topic.form.30') }}">&times;</button>
         </div>
         <div class="ui-modal__body" id="topicPreviewBody"></div>
@@ -180,7 +180,7 @@
             <div class="forums-form__option">
                 <span class="forums-form__option-number forums-number" data-poll-option-number>1</span>
                 <input type="text" class="ui-input" maxlength="255" placeholder="{{ trans('js.forums.poll_option_placeholder') }}" data-poll-option-text>
-                <button type="button" class="ui-button ui-button--secondary" aria-label="{{ trans('js.forums.poll_option_remove') }}" data-poll-option-remove><i class="bi bi-x-lg"></i></button>
+                <button type="button" class="ui-button ui-button--secondary" aria-label="{{ trans('js.forums.poll_option_remove') }}" data-poll-option-remove><i class="bi bi-x-lg" aria-hidden="true"></i></button>
             </div>
         </template>
 
@@ -188,7 +188,7 @@
            progress, its bar is data-attachment-progress), removeLabel. #}
         <template data-ui="forum-attachment-upload">
             <div class="forums-upload">
-                <span class="forums-attachment__icon"><i data-slot-attr="class:iconClass"></i></span>
+                <span class="forums-attachment__icon"><i data-slot-attr="class:iconClass" aria-hidden="true"></i></span>
                 <div class="forums-upload__text">
                     <div class="forums-attachment__name"><bdi data-slot="name"></bdi></div>
                     <div class="forums-attachment__size" data-slot="status"></div>
@@ -197,7 +197,7 @@
                     </div>
                 </div>
                 <button type="button" class="ui-button ui-button--link ui-button--sm" data-slot-attr="aria-label:removeLabel" data-attachment-remove>
-                    <i class="bi bi-x-lg"></i>
+                    <i class="bi bi-x-lg" aria-hidden="true"></i>
                 </button>
             </div>
         </template>
@@ -220,7 +220,7 @@
                     <div class="content forums-post__content" data-slot-html="contentHtml" data-slot-attr="data-empty:contentEmpty"></div>
                     <div class="forums-attachments" data-slot-optional="hasAttachments" data-preview-attachments></div>
                     <div class="forums-preview__poll" data-slot-optional="hasPoll">
-                        <h2 class="forums-poll__question"><i class="bi bi-bar-chart"></i> <span data-slot="pollQuestion"></span></h2>
+                        <h2 class="forums-poll__question"><i class="bi bi-bar-chart" aria-hidden="true"></i> <span data-slot="pollQuestion"></span></h2>
                         <div class="forums-preview__options" data-preview-poll-options></div>
                         <p class="ui-help" data-slot="pollOptionsEmpty" data-slot-optional="pollOptionsEmpty"></p>
                         <p class="ui-help" data-slot="pollDuration"></p>
@@ -231,7 +231,7 @@
 
         <template data-ui="forum-preview-attachment">
             <div class="forums-attachment">
-                <span class="forums-attachment__icon"><i data-slot-attr="class:iconClass"></i></span>
+                <span class="forums-attachment__icon"><i data-slot-attr="class:iconClass" aria-hidden="true"></i></span>
                 <span class="forums-attachment__text">
                     <span class="forums-attachment__name"><bdi data-slot="name"></bdi></span>
                     <span class="forums-attachment__size" data-slot="size"></span>
@@ -251,30 +251,30 @@
         <section class="ui-card ui-card__body">
             <h2 class="ui-card__title">
                 {%- if isEdit -%}
-                    <i class="bi bi-pencil-square"></i> {{ trans('view.forums.topic.form.31') }}
+                    <i class="bi bi-pencil-square" aria-hidden="true"></i> {{ trans('view.forums.topic.form.31') }}
                 {%- else -%}
-                    <i class="bi bi-send"></i> {{ trans('view.forums.topic.form.32') }}
+                    <i class="bi bi-send" aria-hidden="true"></i> {{ trans('view.forums.topic.form.32') }}
                 {%- endif -%}
             </h2>
             {% if isEdit %}
                 <p class="ui-help">
-                    <i class="bi bi-clock-history"></i> {{ trans('view.forums.topic.form.33') }}
+                    <i class="bi bi-clock-history" aria-hidden="true"></i> {{ trans('view.forums.topic.form.33') }}
                 </p>
             {% else %}
                 <p class="ui-help">
-                    <i class="bi bi-people"></i> {{ trans('view.forums.topic.form.34') }} {{ forumTotals.topics }} {{ trans_choice('forums.topic_unit', forumTotals.topics) }} {{ trans('view.forums.topic.form.36') }} {{ forumTotals.posts }} {{ trans_choice('forums.post_unit', forumTotals.posts) }}.
+                    <i class="bi bi-people" aria-hidden="true"></i> {{ trans('view.forums.topic.form.34') }} {{ forumTotals.topics }} {{ trans_choice('forums.topic_unit', forumTotals.topics) }} {{ trans('view.forums.topic.form.36') }} {{ forumTotals.posts }} {{ trans_choice('forums.post_unit', forumTotals.posts) }}.
                 </p>
             {% endif %}
             <div class="forums-form__submit">
                 <button class="ui-button ui-button--primary ui-button--block" type="button" id="btnCreateTopic">
-                    <i class="bi {{ isEdit ? 'bi-check2' : 'bi-pencil-square' }}"></i><span id="btnCreateTopicLabel">{{ isEdit ? trans('view.forums.topic.form.41') : trans('view.forums.topic.form.42') }}</span>
+                    <i class="bi {{ isEdit ? 'bi-check2' : 'bi-pencil-square' }}" aria-hidden="true"></i><span id="btnCreateTopicLabel">{{ isEdit ? trans('view.forums.topic.form.41') : trans('view.forums.topic.form.42') }}</span>
                 </button>
                 <button class="ui-button ui-button--secondary ui-button--sm ui-button--block" type="button" id="btnPreviewTopic">
-                    <i class="bi bi-eye"></i> {{ trans('view.forums.topic.form.43') }}
+                    <i class="bi bi-eye" aria-hidden="true"></i> {{ trans('view.forums.topic.form.43') }}
                 </button>
                 {% if cancelUrl %}
                     <a href="{{ cancelUrl }}" class="ui-button ui-button--link ui-button--block">
-                        <i class="bi bi-x-lg"></i> {{ trans('view.comments.cancel') }}
+                        <i class="bi bi-x-lg" aria-hidden="true"></i> {{ trans('view.comments.cancel') }}
                     </a>
                 {% endif %}
             </div>
@@ -286,7 +286,7 @@
            for the same reason (see handleTopicUpdateRequest()). #}
         {% if not isEdit %}
             <section class="ui-card ui-card__body">
-                <h2 class="ui-card__title"><i class="bi bi-bell"></i> {{ trans('view.forums.topic.form.44') }}</h2>
+                <h2 class="ui-card__title"><i class="bi bi-bell" aria-hidden="true"></i> {{ trans('view.forums.topic.form.44') }}</h2>
                 <label class="ui-check">
                     <input class="ui-check__input" type="checkbox" role="switch" id="topicSubscribe" checked>
                     <span class="ui-check__label">{{ trans('view.forums.topic.form.45') }}</span>
@@ -296,7 +296,7 @@
         {% endif %}
 
         <section class="ui-card ui-card__body">
-            <h2 class="ui-card__title"><i class="bi bi-info-circle"></i> {{ trans('view.forums.topic.form.47') }}</h2>
+            <h2 class="ui-card__title"><i class="bi bi-info-circle" aria-hidden="true"></i> {{ trans('view.forums.topic.form.47') }}</h2>
             <ul class="forums-form__tips">
                 <li>{{ trans('view.forums.topic.form.48') }}</li>
                 <li>{{ trans('view.forums.topic.form.49') }}</li>

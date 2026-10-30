@@ -60,23 +60,23 @@
 
         <div class="ui-card users-panel">
             <div>
-                <h2 class="users-panel__title"><i class="bi bi-gear"></i> {{ trans('view.forums.topic.form.32') }}</h2>
+                <h2 class="users-panel__title"><i class="bi bi-gear" aria-hidden="true"></i> {{ trans('view.forums.topic.form.32') }}</h2>
                 <label class="ui-label users-caps" for="postVisibility">{{ trans('view.users.blog.post.form.06') }}</label>
                 <select class="ui-select users-gap-sm" id="postVisibility" name="visibility">
                     <option value="public" {% if not isEdit or post.visibility != 'members' %}selected{% endif %}>{{ trans('view.users.blog.post.form.07') }}</option>
                     <option value="members" {% if isEdit and post.visibility == 'members' %}selected{% endif %}>{{ isCommunityPost ? trans('view.users.blog.post.form.08') : trans('view.users.blog.post.form.09') }}</option>
                 </select>
-                <p class="users-note users-gap" id="visibilityNote"><i class="bi bi-globe"></i> {{ trans('view.users.blog.post.form.10') }}</p>
+                <p class="users-note users-gap" id="visibilityNote"><i class="bi bi-globe" aria-hidden="true"></i> {{ trans('view.users.blog.post.form.10') }}</p>
                 <div class="users-stack">
                     <button class="ui-button ui-button--primary" type="button" id="btnPublish" form="blogPostForm">
-                        <i class="bi bi-send"></i> {{ isEdit ? trans('view.forums.topic.form.41') : trans('view.users.blog.post.form.11') }}
+                        <i class="bi bi-send" aria-hidden="true"></i> {{ isEdit ? trans('view.forums.topic.form.41') : trans('view.users.blog.post.form.11') }}
                     </button>
                     <button class="ui-button ui-button--secondary" type="button" id="btnDraft" form="blogPostForm">
-                        <i class="bi bi-file-earmark-text"></i> {{ trans('view.users.blog.post.form.12') }}
+                        <i class="bi bi-file-earmark-text" aria-hidden="true"></i> {{ trans('view.users.blog.post.form.12') }}
                     </button>
                     {% if cancelUrl %}
                         <a href="{{ cancelUrl }}" class="ui-button ui-button--link users-cancel">
-                            <i class="bi bi-x-lg"></i> {{ trans('view.comments.cancel') }}
+                            <i class="bi bi-x-lg" aria-hidden="true"></i> {{ trans('view.comments.cancel') }}
                         </a>
                     {% endif %}
                 </div>
@@ -85,7 +85,7 @@
 
         <div class="ui-card users-panel">
             <div>
-                <h2 class="users-panel__title users-panel__title--tight"><i class="bi bi-card-image"></i> {{ trans('view.users.blog.post.form.13') }}</h2>
+                <h2 class="users-panel__title users-panel__title--tight"><i class="bi bi-card-image" aria-hidden="true"></i> {{ trans('view.users.blog.post.form.13') }}</h2>
                 <input type="hidden" id="coverImageUrl" data-cover-url value="{{ isEdit ? post.imageUrl : '' }}">
                 <div id="coverSlot" data-cover-slot>
                     {% if isEdit and post.imageUrl %}
@@ -94,11 +94,11 @@
                             <div class="blog-post-cover-fileinfo">
                                 <div class="blog-post-cover-filename">{{ post.imageUrl|split('/')|last }}</div>
                             </div>
-                            <button type="button" class="blog-post-cover-remove" aria-label="{{ trans('view.forums.topic.view.34') }}"><i class="bi bi-x-lg"></i></button>
+                            <button type="button" class="blog-post-cover-remove" aria-label="{{ trans('view.forums.topic.view.34') }}"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
                         </div>
                     {% else %}
                         <div class="blog-post-cover-drop" data-cover-drop>
-                            <i class="bi bi-card-image blog-post-cover-icon"></i>
+                            <i class="bi bi-card-image blog-post-cover-icon" aria-hidden="true"></i>
                             <div>
                                 <div>{{ trans('view.users.blog.post.form.14') }}</div>
                                 <div class="blog-post-cover-hint">{{ trans('view.users.community.manage.settings.11') }}</div>
@@ -107,29 +107,29 @@
                         <input type="file" hidden accept="image/*" data-cover-file>
                     {% endif %}
                 </div>
-                <p class="users-note users-note--after"><i class="bi bi-share"></i> {{ trans('view.users.blog.post.form.15') }}</p>
+                <p class="users-note users-note--after"><i class="bi bi-share" aria-hidden="true"></i> {{ trans('view.users.blog.post.form.15') }}</p>
             </div>
         </div>
 
         <div class="ui-card users-panel">
             <div>
-                <h2 class="users-panel__title users-panel__title--tight"><i class="bi bi-music-note-beamed"></i> {{ trans('view.users.blog.post.form.16') }}</h2>
+                <h2 class="users-panel__title users-panel__title--tight"><i class="bi bi-music-note-beamed" aria-hidden="true"></i> {{ trans('view.users.blog.post.form.16') }}</h2>
                 <input type="hidden" id="trackUploadId" data-track-id value="{{ isEdit and trackUploadId ? trackUploadId : '' }}">
                 <div class="users-people users-gap-sm" id="trackSlot" data-track-slot>
                     {% if isEdit and track %}
                         <div class="blog-post-track-row">
-                            <span class="blog-post-track-play"><i class="bi bi-music-note"></i></span>
+                            <span class="blog-post-track-play"><i class="bi bi-music-note" aria-hidden="true"></i></span>
                             <div class="blog-post-track-meta">
                                 <div class="blog-post-track-name"><bdi>{{ track.originalName }}</bdi></div>
                                 <div class="blog-post-track-sub">{{ trackSizeLabel }}</div>
                             </div>
-                            <button type="button" class="blog-post-track-remove" aria-label="{{ trans('view.forums.topic.view.34') }}"><i class="bi bi-x-lg"></i></button>
+                            <button type="button" class="blog-post-track-remove" aria-label="{{ trans('view.forums.topic.view.34') }}"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
                         </div>
                     {% endif %}
                 </div>
                 <p class="users-note users-gap-sm" data-track-empty {% if isEdit and track %}hidden{% endif %}>{{ trans('view.users.blog.post.form.17') }}</p>
                 <button class="ui-button ui-button--secondary ui-button--sm ui-button--block" type="button" data-track-add {% if isEdit and track %}hidden{% endif %}>
-                    <i class="bi bi-plus-lg"></i> {{ trans('view.users.blog.post.form.18') }}
+                    <i class="bi bi-plus-lg" aria-hidden="true"></i> {{ trans('view.users.blog.post.form.18') }}
                 </button>
                 <input type="file" hidden accept="audio/*" data-track-file>
             </div>
@@ -137,7 +137,7 @@
 
         <div class="ui-card users-panel">
             <div>
-                <h2 class="users-panel__title users-panel__title--tight"><i class="bi bi-cloud-arrow-up"></i> {{ trans('view.users.blog.post.form.19') }}</h2>
+                <h2 class="users-panel__title users-panel__title--tight"><i class="bi bi-cloud-arrow-up" aria-hidden="true"></i> {{ trans('view.users.blog.post.form.19') }}</h2>
                 <div class="blog-post-storage">
                     <span class="ui-muted" id="uploadStorageLabel">{{ trans('view.users.blog.post.form.20') }}</span>
                     <span>{{ uploadStorageUsedLabel }} {{ trans('view.forums.topic.list.08') }} {{ uploadStorageLimitLabel }}</span>

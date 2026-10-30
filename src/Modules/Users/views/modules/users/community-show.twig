@@ -19,7 +19,7 @@
             <h2>{{ trans('view.users.community.show.01') }}</h2>
             {% if user.isGuest or newPostUrl %}
                 <a href="{{ user.isGuest ? '#authFormModal' : newPostUrl }}" {% if user.isGuest %}data-ui-toggle="modal" data-ui-target="#authFormModal"{% endif %} class="ui-button ui-button--primary ui-button--sm">
-                    <i class="bi bi-plus-lg"></i> {{ trans('blog.new_post') }}
+                    <i class="bi bi-plus-lg" aria-hidden="true"></i> {{ trans('blog.new_post') }}
                 </a>
             {% endif %}
         </div>
@@ -58,10 +58,10 @@
 
             {% if isEmpty %}
                 <div class="ui-card users-empty">
-                    <i class="bi bi-journal-text users-empty__icon"></i>
+                    <i class="bi bi-journal-text users-empty__icon" aria-hidden="true"></i>
                     <p class="users-empty__title">{{ trans('view.users.community.show.02') }}</p>
                     {% if user.isGuest or newPostUrl %}
-                        <a href="{{ user.isGuest ? '#authFormModal' : newPostUrl }}" {% if user.isGuest %}data-ui-toggle="modal" data-ui-target="#authFormModal"{% endif %} class="ui-button ui-button--primary users-empty__action"><i class="bi bi-plus-lg"></i> {{ trans('view.users.community.show.03') }}</a>
+                        <a href="{{ user.isGuest ? '#authFormModal' : newPostUrl }}" {% if user.isGuest %}data-ui-toggle="modal" data-ui-target="#authFormModal"{% endif %} class="ui-button ui-button--primary users-empty__action"><i class="bi bi-plus-lg" aria-hidden="true"></i> {{ trans('view.users.community.show.03') }}</a>
                     {% endif %}
                 </div>
             {% endif %}

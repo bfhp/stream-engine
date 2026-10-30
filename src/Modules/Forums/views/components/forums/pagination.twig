@@ -2,7 +2,7 @@
    Expects (with `only`): pagination {current, total, baseUrl}, label (aria). #}
 <div class="forums-pagination">
     <div class="forums-pagination__position">
-        <i class="bi bi-chat-square-text"></i>
+        <i class="bi bi-chat-square-text" aria-hidden="true"></i>
         {{ trans('view.forums.topic.list.07') }}
         <strong class="forums-pagination__number">{{ pagination.current }}</strong>
         {{ trans('view.forums.topic.list.08') }} <span class="forums-pagination__number">{{ pagination.total }}</span>

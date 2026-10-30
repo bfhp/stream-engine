@@ -18,7 +18,7 @@
         <div class="card mb-3">
             <div class="card-body">
                 <h2 class="h6 card-title mb-3">
-                    <i class="bi bi-hourglass-split me-1"></i>{{ trans('view.users.community.manage.members.01') }}
+                    <i class="bi bi-hourglass-split me-1" aria-hidden="true"></i>{{ trans('view.users.community.manage.members.01') }}
                     {% if subscribersTotal %}<span class="text-body-secondary">({{ subscribersTotal }})</span>{% endif %}
                 </h2>
 
@@ -30,7 +30,7 @@
                                 <span class="small"><bdi>{{ subscriber.displayName }}</bdi></span>
                             </a>
                             <button type="button" class="btn btn-sm btn-outline-success" data-manage-approve>
-                                <i class="bi bi-check-lg me-1"></i>{{ trans('view.users.community.manage.members.02') }}
+                                <i class="bi bi-check-lg me-1" aria-hidden="true"></i>{{ trans('view.users.community.manage.members.02') }}
                             </button>
                         </div>
                     {% else %}
@@ -43,7 +43,7 @@
         <div class="card mb-3">
             <div class="card-body">
                 <h2 class="h6 card-title mb-3">
-                    <i class="bi bi-people me-1"></i>{{ trans('community.manage_members') }}
+                    <i class="bi bi-people me-1" aria-hidden="true"></i>{{ trans('community.manage_members') }}
                     {% if membersTotal %}<span class="text-body-secondary">({{ membersTotal }})</span>{% endif %}
                 </h2>
 
@@ -57,7 +57,7 @@
                             </a>
                             {% if member.id != community.ownerId %}
                                 <button type="button" class="btn btn-sm btn-outline-danger" data-manage-remove>
-                                    <i class="bi bi-x-lg me-1"></i>{{ trans('view.users.community.manage.members.04') }}
+                                    <i class="bi bi-x-lg me-1" aria-hidden="true"></i>{{ trans('view.users.community.manage.members.04') }}
                                 </button>
                             {% endif %}
                         </div>

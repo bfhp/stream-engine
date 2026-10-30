@@ -45,7 +45,7 @@
 
         <div class="card mb-3">
             <div class="card-body">
-                <h2 class="h6 card-title mb-3"><i class="bi bi-person-check me-1"></i>{{ trans('view.users.community.manage.settings.03') }}</h2>
+                <h2 class="h6 card-title mb-3"><i class="bi bi-person-check me-1" aria-hidden="true"></i>{{ trans('view.users.community.manage.settings.03') }}</h2>
 
                 <div class="form-check mb-2">
                     <input
@@ -81,7 +81,7 @@
 
         <div class="card mb-3">
             <div class="card-body">
-                <h2 class="h6 card-title mb-2"><i class="bi bi-card-image me-1"></i>{{ trans('view.users.community.manage.settings.08') }}</h2>
+                <h2 class="h6 card-title mb-2"><i class="bi bi-card-image me-1" aria-hidden="true"></i>{{ trans('view.users.community.manage.settings.08') }}</h2>
                 <input type="hidden" id="communityManageCoverImageUrl" data-cover-url value="{{ community.imageUrl }}">
                 <div id="communityManageCoverSlot" data-cover-slot>
                     {% if community.imageUrl %}
@@ -90,11 +90,11 @@
                             <div class="blog-post-cover-fileinfo">
                                 <div class="blog-post-cover-filename">{{ trans('view.users.community.manage.settings.09') }}</div>
                             </div>
-                            <button type="button" class="blog-post-cover-remove" aria-label="{{ trans('view.forums.topic.view.34') }}"><i class="bi bi-x-lg"></i></button>
+                            <button type="button" class="blog-post-cover-remove" aria-label="{{ trans('view.forums.topic.view.34') }}"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
                         </div>
                     {% else %}
                         <div class="blog-post-cover-drop" data-cover-drop>
-                            <i class="bi bi-card-image fs-4"></i>
+                            <i class="bi bi-card-image fs-4" aria-hidden="true"></i>
                             <div>
                                 <div>{{ trans('view.users.community.manage.settings.10') }}</div>
                                 <div class="small text-body-secondary">{{ trans('view.users.community.manage.settings.11') }}</div>
@@ -108,7 +108,7 @@
 
         <div class="d-flex flex-wrap align-items-center gap-2">
             <button class="btn btn-primary" type="button" id="btnSaveCommunitySettings">
-                <i class="bi bi-check-lg me-1"></i>{{ trans('view.forums.topic.form.41') }}
+                <i class="bi bi-check-lg me-1" aria-hidden="true"></i>{{ trans('view.forums.topic.form.41') }}
             </button>
             <span class="small users-status" data-community-manage-settings-status></span>
         </div>

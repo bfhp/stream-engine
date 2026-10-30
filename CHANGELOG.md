@@ -77,6 +77,13 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Screen readers no longer read decorative icons as empty groups: every
+  Bootstrap Icons glyph is hidden from them, and the forum read/unread icons
+  are named images. Icon-only buttons (messenger, forum section toggles) are
+  named with `aria-label`, not only `title`, which VoiceOver skips in
+  "read all". The messenger's attach and send buttons say what they do. The
+  accessibility scan fails on an unhidden icon or a control named only by
+  `title`.
 - Screen readers read site toasts in both themes; they went unannounced.
   Messages now go through live regions that are always on the page.
 - Toasts shown right before the page reloads or moves on (sign-in,

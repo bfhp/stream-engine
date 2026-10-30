@@ -7,7 +7,7 @@
             <h1 class="users-heading__title">{{ trans('community.page_title') }}</h1>
             {% if isGuest or newPostUrl %}
                 <a href="{{ isGuest ? '#authFormModal' : newPostUrl }}" {% if isGuest %}data-ui-toggle="modal" data-ui-target="#authFormModal"{% endif %} class="ui-button ui-button--primary ui-button--sm">
-                    <i class="bi bi-plus-lg"></i> {{ trans('view.users.community.01') }}
+                    <i class="bi bi-plus-lg" aria-hidden="true"></i> {{ trans('view.users.community.01') }}
                 </a>
             {% endif %}
         </div>
@@ -58,7 +58,7 @@
 
             {% if isEmpty %}
                 <div class="ui-card users-empty">
-                    <i class="bi bi-journal-text users-empty__icon"></i>
+                    <i class="bi bi-journal-text users-empty__icon" aria-hidden="true"></i>
                     {% if activeTag %}
                         <p class="users-empty__title">{{ trans('view.users.community.04') }}</p>
                     {% else %}
@@ -79,18 +79,18 @@
         <div class="users-sidebar-actions">
             {% if isGuest %}
                 <button type="button" class="ui-button ui-button--secondary" data-ui-toggle="modal" data-ui-target="#authFormModal">
-                    <i class="bi bi-people"></i> {{ trans('view.users.community.create.04') }}
+                    <i class="bi bi-people" aria-hidden="true"></i> {{ trans('view.users.community.create.04') }}
                 </button>
             {% elseif createCommunityUrl %}
                 <a href="{{ createCommunityUrl }}" class="ui-button ui-button--secondary">
-                    <i class="bi bi-people"></i> {{ trans('view.users.community.create.04') }}
+                    <i class="bi bi-people" aria-hidden="true"></i> {{ trans('view.users.community.create.04') }}
                 </a>
             {% else %}
                 {# Falls back to a disabled stub if community.create
                    isn't registered in `pages` (e.g. its migration hasn't
                    run yet) rather than linking to a 404. #}
                 <button type="button" class="ui-button ui-button--secondary" disabled>
-                    <i class="bi bi-people"></i> {{ trans('view.users.community.create.04') }}
+                    <i class="bi bi-people" aria-hidden="true"></i> {{ trans('view.users.community.create.04') }}
                 </button>
             {% endif %}
         </div>

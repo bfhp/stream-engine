@@ -19,11 +19,11 @@
                 <span class="rating-card__stars">
                     {% for i in 1..5 %}
                         {% if i <= fullStars %}
-                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill" aria-hidden="true"></i>
                         {% elseif i == fullStars + 1 and hasHalfStar %}
-                            <i class="bi bi-star-half"></i>
+                            <i class="bi bi-star-half" aria-hidden="true"></i>
                         {% else %}
-                            <i class="bi bi-star"></i>
+                            <i class="bi bi-star" aria-hidden="true"></i>
                         {% endif %}
                     {% endfor %}
                 </span>

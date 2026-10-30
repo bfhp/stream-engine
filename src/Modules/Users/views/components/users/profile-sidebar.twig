@@ -43,7 +43,7 @@
 
                 {% if isOwnProfile and profileUrl %}
                     <a class="ui-button ui-button--secondary ui-button--block" href="{{ profileUrl }}">
-                        <i class="bi bi-pencil"></i> {{ trans('view.profile.edit') }}
+                        <i class="bi bi-pencil" aria-hidden="true"></i> {{ trans('view.profile.edit') }}
                     </a>
                 {% else %}
                     {# relationshipStatus/friendActionUrl are only in context
@@ -72,7 +72,7 @@
                     <div class="profile-card__actions">
                         {% if user.isGuest %}
                             <button type="button" class="ui-button ui-button--primary" data-ui-toggle="modal" data-ui-target="#authFormModal">
-                                <i class="bi bi-person-plus"></i> {{ trans('view.profile.add_friend') }}
+                                <i class="bi bi-person-plus" aria-hidden="true"></i> {{ trans('view.profile.add_friend') }}
                             </button>
                         {% elseif relationshipStatus is defined and relationshipStatus is not null %}
                             {# One button per state; users.ts initFriendButton() shows the
@@ -81,34 +81,34 @@
                             {% set friendState = relationshipStatus in ['friends', 'subscribed'] ? relationshipStatus : 'none' %}
                             <div class="profile-friend-action" data-friend-action data-friend-url="{{ friendActionUrl }}">
                                 <button type="button" class="ui-button ui-button--secondary" data-friend-state="friends" data-action="remove" {% if friendState != 'friends' %}hidden{% endif %}>
-                                    <i class="bi bi-person-check"></i> {{ trans('view.profile.remove_friend') }}
+                                    <i class="bi bi-person-check" aria-hidden="true"></i> {{ trans('view.profile.remove_friend') }}
                                 </button>
                                 <button type="button" class="ui-button ui-button--secondary" data-friend-state="subscribed" data-action="remove" {% if friendState != 'subscribed' %}hidden{% endif %}>
-                                    <i class="bi bi-person-dash"></i> {{ trans('view.profile.unsubscribe') }}
+                                    <i class="bi bi-person-dash" aria-hidden="true"></i> {{ trans('view.profile.unsubscribe') }}
                                 </button>
                                 <button type="button" class="ui-button ui-button--primary" data-friend-state="none" data-action="add" {% if friendState != 'none' %}hidden{% endif %}>
-                                    <i class="bi bi-person-plus"></i> {{ trans('view.profile.add_friend') }}
+                                    <i class="bi bi-person-plus" aria-hidden="true"></i> {{ trans('view.profile.add_friend') }}
                                 </button>
                             </div>
                         {% else %}
                             <button type="button" class="ui-button ui-button--primary" disabled title="{{ trans('view.profile.coming_soon') }}">
-                                <i class="bi bi-person-plus"></i> {{ trans('view.profile.add_friend') }}
+                                <i class="bi bi-person-plus" aria-hidden="true"></i> {{ trans('view.profile.add_friend') }}
                             </button>
                         {% endif %}
                         {% if user.isGuest %}
                             <button type="button" class="ui-button ui-button--secondary" data-ui-toggle="modal" data-ui-target="#authFormModal">
-                                <i class="bi bi-envelope"></i> {{ trans('view.profile.message') }}
+                                <i class="bi bi-envelope" aria-hidden="true"></i> {{ trans('view.profile.message') }}
                             </button>
                         {% else %}
                             <button type="button" class="ui-button ui-button--secondary"
                                     data-message-user="{{ profileUser.id }}"
                                     data-messages-url="{{ messagesUrl }}">
-                                <i class="bi bi-envelope"></i> {{ trans('view.profile.message') }}
+                                <i class="bi bi-envelope" aria-hidden="true"></i> {{ trans('view.profile.message') }}
                             </button>
                         {% endif %}
                     </div>
                     {% if relationshipStatus == 'incoming' %}
-                        <p class="ui-muted ui-small profile-card__hint"><i class="bi bi-info-circle"></i> {{ trans('view.profile.incoming_friend_request', {name: profileUser.getDisplayName()}) }}</p>
+                        <p class="ui-muted ui-small profile-card__hint"><i class="bi bi-info-circle" aria-hidden="true"></i> {{ trans('view.profile.incoming_friend_request', {name: profileUser.getDisplayName()}) }}</p>
                     {% elseif relationshipStatus != 'friends' %}
                         <p class="ui-muted ui-small profile-card__hint">{{ trans('view.profile.friend_request_subscription_hint') }}</p>
                     {% endif %}
@@ -128,20 +128,20 @@
 
                 <ul class="profile-info ui-muted ui-small">
                     {% if (canViewProfileGender is not defined or canViewProfileGender) and profileUser.gender == 'male' %}
-                        <li><i class="bi bi-person"></i> {{ trans('view.profile.gender_male') }}</li>
+                        <li><i class="bi bi-person" aria-hidden="true"></i> {{ trans('view.profile.gender_male') }}</li>
                     {% elseif (canViewProfileGender is not defined or canViewProfileGender) and profileUser.gender == 'female' %}
-                        <li><i class="bi bi-person"></i> {{ trans('view.profile.gender_female') }}</li>
+                        <li><i class="bi bi-person" aria-hidden="true"></i> {{ trans('view.profile.gender_female') }}</li>
                     {% elseif (canViewProfileGender is not defined or canViewProfileGender) and profileUser.gender == 'other' %}
-                        <li><i class="bi bi-person"></i> {{ trans('view.profile.gender_other') }}</li>
+                        <li><i class="bi bi-person" aria-hidden="true"></i> {{ trans('view.profile.gender_other') }}</li>
                     {% endif %}
 
                     {% if (canViewProfileBirthDate is not defined or canViewProfileBirthDate) and profileUser.birthDate %}
-                        <li><i class="bi bi-cake2"></i> {{ trans('view.profile.birth_date', {date: profileBirthDateLabel}) }}</li>
+                        <li><i class="bi bi-cake2" aria-hidden="true"></i> {{ trans('view.profile.birth_date', {date: profileBirthDateLabel}) }}</li>
                     {% endif %}
 
                     {% if (canViewProfileHomepage is not defined or canViewProfileHomepage) and profileUser.homepage %}
                         <li>
-                            <i class="bi bi-link-45deg"></i>
+                            <i class="bi bi-link-45deg" aria-hidden="true"></i>
                             <a href="{{ profileUser.homepage }}" target="_blank" rel="noopener noreferrer nofollow">{{ profileUser.homepage }}</a>
                         </li>
                     {% endif %}

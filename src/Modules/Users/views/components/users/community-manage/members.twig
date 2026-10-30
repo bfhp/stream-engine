@@ -16,7 +16,7 @@
         <div class="ui-card users-panel">
             <div>
                 <h2 class="users-panel__title">
-                    <i class="bi bi-hourglass-split"></i> {{ trans('view.users.community.manage.members.01') }}
+                    <i class="bi bi-hourglass-split" aria-hidden="true"></i> {{ trans('view.users.community.manage.members.01') }}
                     {% if subscribersTotal %}<span class="ui-muted">({{ subscribersTotal }})</span>{% endif %}
                 </h2>
 
@@ -28,7 +28,7 @@
                                 <span class="users-person__name"><bdi>{{ subscriber.displayName }}</bdi></span>
                             </a>
                             <button type="button" class="ui-button ui-button--success ui-button--sm" data-manage-approve>
-                                <i class="bi bi-check-lg"></i> {{ trans('view.users.community.manage.members.02') }}
+                                <i class="bi bi-check-lg" aria-hidden="true"></i> {{ trans('view.users.community.manage.members.02') }}
                             </button>
                         </div>
                     {% else %}
@@ -41,7 +41,7 @@
         <div class="ui-card users-panel">
             <div>
                 <h2 class="users-panel__title">
-                    <i class="bi bi-people"></i> {{ trans('community.manage_members') }}
+                    <i class="bi bi-people" aria-hidden="true"></i> {{ trans('community.manage_members') }}
                     {% if membersTotal %}<span class="ui-muted">({{ membersTotal }})</span>{% endif %}
                 </h2>
 
@@ -55,7 +55,7 @@
                             </a>
                             {% if member.id != community.ownerId %}
                                 <button type="button" class="ui-button ui-button--danger ui-button--sm" data-manage-remove>
-                                    <i class="bi bi-x-lg"></i> {{ trans('view.users.community.manage.members.04') }}
+                                    <i class="bi bi-x-lg" aria-hidden="true"></i> {{ trans('view.users.community.manage.members.04') }}
                                 </button>
                             {% endif %}
                         </div>

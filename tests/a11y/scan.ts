@@ -81,7 +81,38 @@ export async function expectNoNewViolations(
     }
 
     const fresh = results.violations.filter(violation => !known.has(violation.id));
+    await expectNamedIconsOnly(page, pageId);
     expect(formatViolations(fresh), `New accessibility violations on ${pageId}`).toBe("");
+}
+
+/**
+ * Two things axe accepts but VoiceOver reads badly (WCAG 1.1.1, 4.1.2):
+ * an icon-font glyph (`.bi`) that is neither hidden nor an image with a name
+ * is read as an empty "group", and a control named only by `title` loses its
+ * name in "read all" (VO+A). Checks the whole document, templates included.
+ */
+async function expectNamedIconsOnly(page: Page, pageId: string): Promise<void> {
+    const problems = await page.evaluate(() => {
+        const describe = (el: Element) => el.outerHTML.slice(0, 160);
+        const roots: ParentNode[] = [document, ...[...document.querySelectorAll("template")].map(t => t.content)];
+        const found: string[] = [];
+        for (const root of roots) {
+            root.querySelectorAll("i.bi, i[class^='bi-'], i[class*=' bi-']").forEach((icon) => {
+                const hidden = icon.closest("[aria-hidden='true']") !== null;
+                const named = icon.getAttribute("role") === "img" && (icon.getAttribute("aria-label") ?? "").trim() !== "";
+                if (!hidden && !named) found.push(`icon: ${describe(icon)}`);
+            });
+            root.querySelectorAll("button, a[href], [role='button']").forEach((control) => {
+                if (!control.hasAttribute("title")) return;
+                if (control.hasAttribute("aria-label") || control.hasAttribute("aria-labelledby")) return;
+                if ((control.textContent ?? "").trim() !== "") return;
+                if ([...control.querySelectorAll("img[alt]")].some(img => img.getAttribute("alt")!.trim() !== "")) return;
+                found.push(`named only by title: ${describe(control)}`);
+            });
+        }
+        return found;
+    });
+    expect(problems.join("\n"), `Unnamed icons or title-only controls on ${pageId}`).toBe("");
 }
 
 /**
