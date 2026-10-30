@@ -9,226 +9,61 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- An "Accessibility problem" issue form, linked from the accessibility
-  statement, which asks for the details needed to reproduce a report and adds
-  the `accessibility` label. The statement describes what the editors let
-  authors do for accessible content (headings, tables, link text, language,
-  images).
-- Messages that arrive in the open conversation are announced to screen
-  readers (sender and text).
-- The accessibility scan checks text spacing (WCAG 1.4.12), seven
-  administration screens, the forum list and messages at 320 CSS px, and
-  that the arrow keys reach every option of a settings select.
-
-- Password fields have a "Show password" button (sign-in, registration,
-  password reset, profile), so a new password is entered once: password reset
-  no longer asks for it twice.
-- Comment and reply author names now link to the author's profile page,
-  including comments loaded without a page reload.
-- MySQL 8.4 LTS or newer is now supported alongside MariaDB 10.10 or newer.
-  The installer and migrations detect the server and adapt the schema
-  (collation `utf8mb4_0900_ai_ci`, MySQL default expressions); CI runs the
-  PHP suite on both MariaDB 12 and MySQL 8.4. Existing MariaDB sites are
-  unaffected. Moving a site between the two servers is not supported.
-- The admin feed editor now has a Metadata section for viewing and editing a
-  feed's metadata as name/value pairs. Names are validated in the browser with
-  the same rules as the API (`a-z`, `0-9`, `_ . -`, up to 64 characters), and
-  removing a row deletes that key on save.
-- The page editor's Feed ID input is now a feed picker with search by title
-  or ID and in-place feed creation. The Pages list shows feed titles, and the
-  feed editor links back to its page.
+- MySQL 8.4 LTS or newer is supported alongside MariaDB 10.10 or newer; the
+  installer and migrations adapt the schema to the server. Moving a site
+  between the two is not supported.
+- Feed editor: a Metadata section for name/value pairs. Page editor: a feed
+  picker with search and in-place feed creation.
+- "Show password" buttons on password fields; password reset asks for the new
+  password once.
+- Comment author names link to the author's profile.
+- An "Accessibility problem" issue form linked from the accessibility
+  statement.
 
 ### Changed
 
-- The heading button of the rich-text editor (blogs, communities, forums)
-  writes `<h2>` instead of `<h1>`, so a heading in a post sits under the page
-  title. Older posts keep their `<h1>` until edited; the editor converts it
-  when it opens them.
-- The accessibility statement now claims full conformance with WCAG 2.2 AA
-  (and so 2.1 AA) for 0.5.x, after the audit in `docs/ACCESSIBILITY_AUDIT.md`
-  was completed with a manual keyboard and VoiceOver review. The README lists
-  accessibility among the current capabilities.
-- Forms state their rules up front: the feedback message length, the
-  homepage format, tag limits, accepted file formats and sizes (the cover
-  hint said 8 MB; uploads allow 50 MB), and in the administration panel the
-  page pattern format and the username rule.
-- Error messages name the limit or the fix: length and count limits, file
-  formats and sizes, and administration conflicts (another name or parent,
-  another administrator first, both CAPTCHA keys, valid JSON); failed
-  requests in the administration panel say to check the connection or
-  reload the page. Garbled English messages were rewritten.
-- Site notifications stay 8 s instead of 5 s and pause while hovered or
-  focused in both themes; errors and warnings stay until closed.
-- The administration Scheduler screen has an "Auto-refresh" switch to stop
-  the table from updating on its own.
-- The registration CAPTCHA help recommends Turnstile as the more accessible
-  option; hCaptcha may show image tasks.
-
-- Error messages now say what to do next in every locale: an expired session
-  asks to reload the page, stale password-reset and confirmation links ask for
-  a new one, failed sign-ins suggest checking or resetting the password,
-  upload and permission errors name the remedy, and the site's fallback
-  messages for failed requests suggest checking the connection. The password
-  reset page no longer answers in English only ("Invalid token", "Token
-  expired").
-- Global moderators can now read, edit and delete all content regardless of
-  visibility — members-only community posts, friends-only blog posts, and
-  private posts and drafts — and are exempt from the 24-hour edit window,
-  matching administrators. They still have no access to Administration, the
-  admin API, uploads management or private messages.
+- The administration API checks the complete page tree the next boot will
+  load (persisted pages, module runtime pages, `api`/`admin` paths) before
+  saving a page, and rejects duplicate patterns, ambiguous dynamic siblings and
+  duplicate singleton actions instead of letting the site fail to start.
+- WCAG 2.2 AA conformance for 0.5.x: screen-reader names and announcements,
+  keyboard access (including the Trix toolbar and administration selects),
+  focus handling, contrast, target sizes and 320 px layouts across both themes
+  and the administration panel. See `docs/ACCESSIBILITY_AUDIT.md`.
+- Forms state their rules up front, and error messages in every locale name
+  the limit or the fix. Site notifications stay longer and pause on hover or
+  focus; errors stay until closed.
+- Global moderators can read, edit and delete all content regardless of
+  visibility, like administrators, but still have no access to
+  Administration, uploads or private messages.
 - A feed can be bound to only one page; existing duplicates stay saveable
   until their feed is changed.
-- Plural forms follow CLDR via ICU on both server and browser. Catalog
-  plurals are keyed by category (`['one' => …, 'other' => …]`);
-  `Formatter::plural()` is deprecated in favour of `transChoice()`.
+- Plurals follow CLDR via ICU on server and browser; catalog plurals are keyed
+  by category. `Formatter::plural()` is deprecated in favour of
+  `transChoice()`.
+- The rich-text heading button writes `<h2>` instead of `<h1>`.
 
 ### Removed
 
-- The unused profile "avatars" tab templates in both themes. They posted to
-  a `/profile/avatar` route that no longer exists; avatars are uploaded on
-  the Personal tab.
+- Unused profile "avatars" tab templates in both themes.
 
 ### Fixed
 
-- The administration file browser moves between files with the arrow keys
-  (in the list and the grid view), Home and End, besides Tab. Its file list
-  is a valid list for screen readers (the list role sat on a wrapper around
-  a focusable scroller, WCAG 4.1.2); the baseline entry is gone.
-- Community members are read with their role ("Anton, Owner"). The forum
-  icon legend is hidden from screen readers, which hear each row's icon by
-  name instead.
-- Messenger, for screen readers: each message starts with who sent it and
-  when, and its actions come after the text; the conversation list reads
-  dates in words ("18 October 2026", not "10/18/26") and no longer repeats
-  initials. Opening a conversation moves focus to its title, "New message"
-  to the contact search, and Back to where it came from. Contacts and the
-  picked members are buttons (reachable with Tab), "Direct / Group" is a
-  named pair of toggle buttons.
-- The tag field says under it to press Enter (screen readers skipped the
-  placeholder), announces each tag added, removed, refused as a duplicate or
-  over the limit, and names each remove button after its tag. The topic title
-  counter reads "12 of 200 characters used" instead of "12 slash 200".
-  Cancelling a comment reply returns focus to its Reply button.
-- The audio player is a named region with a named playlist (the current track
-  is marked), and its title line reads "Current track: …". The position slider reads "1 min 14 sec of 3 min 20 sec" instead
-  of "1:14", which VoiceOver read as hours, and no longer announces every second
-  while it has focus. The rating card reads "4.5 out of 5" instead of a row of
-  stars.
-- Blog post cards are named articles in a list. Screen readers read "Reading
-  time: 2 min", "Comments: 3" and "Rating: 4.5 out of 5" instead of bare
-  numbers, and tags as a list named "Tags".
-- The "Listen" button on a post card now also pauses its track ("Pause"),
-  and is named "Listen to the attached track" so it is not taken for
-  reading the post aloud.
-- The users list is a list for screen readers ("list, 12 items"), each name is
-  a heading, the filter form is a search landmark, and "no users found" is
-  announced.
-- Screen readers no longer read decorative icons as empty groups: every
-  Bootstrap Icons glyph is hidden from them, and the forum read/unread icons
-  are named images. Icon-only buttons (messenger, forum section toggles) are
-  named with `aria-label`, not only `title`, which VoiceOver skips in
-  "read all". The messenger's attach and send buttons say what they do. The
-  accessibility scan fails on an unhidden icon or a control named only by
-  `title`.
-- Screen readers read site toasts in both themes; they went unannounced.
-  Messages now go through live regions that are always on the page.
-- Toasts shown right before the page reloads or moves on (sign-in,
-  sign-out, registration, password change, feedback, saving or deleting a
-  post, creating a topic or community) are shown again on the next page, so
-  they can be read in full instead of vanishing after 0.8 s. Other toasts
-  are not carried over.
-- Comments by users without their own picture show the default avatar (the
-  image had an empty `src`): feeds resolve their author's avatar when they
-  are decorated for a view; comment avatars have `alt=""`, as the author's
-  name is next to them.
-- Saving the profile's Personal tab without a picture of one's own no longer
-  fails with "Incorrect avatar URL", and browser-filled email and password
-  fields no longer count as unsaved changes.
-- The last avatar in a forum topic's participant list keeps its full width.
-- The build names the shared Trix and custom-content stylesheets
-  explicitly, so `/assets/css/trix.css` and `/assets/css/custom-content.css`
-  exist again; new shared modules had renamed them.
-- Keyboard focus returns to a button that was disabled while it worked
-  ("Save", "Send") once it is enabled again; it used to fall back to the
-  page.
-- After adding, editing or deleting a forum post, focus goes to that post
-  or its neighbour instead of the top of the page, and a new reply's link
-  points at the reply itself (it used the post count as the anchor).
-- Placeholder text in form fields meets 4.5:1 contrast on the site (it was
-  the browser default, 3.9-4.4:1) and in the administration panel (Mantine's
-  default, 2.1-2.5:1).
-- The administration panel adapts to phones: its page had no viewport meta
-  tag, so phones showed the desktop layout scaled down. E-mails got the tag
-  and a fluid width too.
-- The audio player and other sidebar content no longer make pages wider
-  than a 320 px screen.
-- Forum poll options show the keyboard focus ring.
-- In the administration panel, Tab leaves a select whose list is open and
-  the list closes. Searchable selects (page action and parent, feed type)
-  sent focus back into the field; plain ones (access, change frequency)
-  left their list open over the next field.
-- The keyboard focus ring of a theme card in the administration panel goes
-  around the whole card; it was clipped to a line above "Preview".
-- The rich-text editor toolbar (Trix) can be used from the keyboard: Tab
-  reaches it, the arrow keys, Home and End move between buttons, and Enter or
-  Space applies the format; format buttons report whether they are on
-  (`aria-pressed`). Before, its buttons were left out of the Tab
-  order and did not respond to the keyboard.
-- The focus ring on the selected option of segmented switches (profile
-  notification settings, both themes) and on Trix toolbar buttons is now
-  separated from the blue fill by a band of the page colour; it was nearly
-  invisible on the selected option.
-- Images attached to messages are described for screen readers by their
-  sender and a meaningful file name ("Image from Anna: floor plan") instead
-  of the raw file name such as `IMG_2041.JPG`.
-- At 320 CSS px the administration pages and menus tables scroll in their
-  own box instead of widening the page; badges keep the width of their text
-  with larger text spacing; the latest-topic link in the `bootstrap` forum
-  list is underlined on narrow screens.
-- Tooltips stay open while the pointer is over them and close with Escape,
-  in the administration panel and the `bootstrap` theme; administration
-  tooltips also show on keyboard focus.
-- The share buttons in the `bootstrap` theme are named for screen readers
-  ("Share on Telegram (opens in a new tab)") instead of being unlabelled icons.
-
-- The administration navigation scrolls when its items do not fit, as at
-  200% zoom; the items below the sixth were out of reach before.
-- On narrow screens, where the open administration navigation covers the
-  page, choosing an item now closes it and moves focus to the screen that
-  opened; the screen used to open unseen underneath.
-- Buttons on the site are at least 24 × 24 px, including icon-only link
-  buttons, and the close button in the `default` theme is larger.
-- The forum pagination arrows are named "Previous" and "Next" for screen
-  readers, and the group-chat "Remove" button names the member.
-
-- The administration Scheduler screen is now translated into every shipped
-  locale (it was English everywhere but Russian), and seventeen Russian error
-  messages that were still in English are translated. Labels that named the
-  same action differently were aligned, and the file browser help mentions
-  Enter as well as double-click.
-- Profile → Email and password saved nothing: the form posted to a route
-  that did not exist. It now changes the email and password through
-  `POST /api/v1/my/security`, asks for the current password, applies a new
-  email only after the link mailed to it is followed (`/confirm-email/`; pending
-  changes are stored in `email_verifications`, which gains a `new_email`
-  column in migration `20261016000000_add_email_verification_new_email`), tells
-  the old address, and after a password change signs out the member's other
-  devices and voids pending reset links. The new-password fields now state the
-  length rule (WCAG 3.3.2), and profile save messages are announced to screen
-  readers (`role="status"`, WCAG 4.1.3).
-- English 21, 101, … took the singular on the server.
-- Arabic 0, 2 and 100+ got the wrong noun form.
-- Russian file sizes in the browser showed the catalog key.
-- File sizes of exactly one megabyte read "1.0 megabyte".
+- Profile → Email and password saved nothing; it now works through
+  `POST /api/v1/my/security` with email confirmation (migration
+  `20261016000000_add_email_verification_new_email`).
+- The navigation burger is no longer shown when the top menu is empty.
+- Translation gaps (Scheduler screen, Russian errors) and plural forms in
+  English, Arabic and Russian.
+- Smaller fixes: default avatars on comments, profile save without a picture,
+  restored `trix.css` and `custom-content.css` build outputs, forum post
+  anchors and layout glitches.
 
 ### Security
 
-- All responses now send `X-Content-Type-Options: nosniff`, so browsers no
-  longer guess a different content type than the server declared. PHP sets the
-  header for application responses; the Nginx examples set it for static files
-  and `/uploads/`. Existing Nginx installations should add
-  `add_header X-Content-Type-Options nosniff always;` to their `/uploads/` and
-  `/` locations.
+- All responses send `X-Content-Type-Options: nosniff`. Existing Nginx
+  installations should add `add_header X-Content-Type-Options nosniff always;`
+  to their `/uploads/` and `/` locations.
 
 ## [0.5.1] - 2026-10-12
 
