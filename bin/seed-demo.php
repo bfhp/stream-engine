@@ -5,7 +5,8 @@ declare(strict_types=1);
 /*
  * Demo content for a fresh installation: section pages, a forum with a topic
  * and replies, a blog post with comments, a community with a post, a second
- * member and a conversation between the two users.
+ * member, a conversation between the two users, and a folder and two small
+ * images in the uploads directory (so the file browser has something to list).
  *
  *   php bin/seed-demo.php
  *
@@ -108,6 +109,28 @@ try {
         service($engine, 'cache')->flush();
         $engine = new StreamEngine();
         $db = service($engine, 'db');
+    }
+
+    // 1b. Uploads for the file browser: a folder and two 1 x 1 images.
+    //     Like the pages, only what is missing is added; nothing is
+    //     overwritten.
+    $uploads = service($engine, 'config')->uploadsPath($root);
+    if ($uploads !== '') {
+        $pixel = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', true);
+        foreach (['demo-folder' => null, 'demo-image-1.png' => $pixel, 'demo-image-2.png' => $pixel] as $name => $content) {
+            $target = $uploads.DIRECTORY_SEPARATOR.$name;
+            if (file_exists($target)) {
+                continue;
+            }
+            if (! is_dir($uploads) && ! mkdir($uploads, 0775, true) && ! is_dir($uploads)) {
+                throw new RuntimeException("Cannot create the uploads directory {$uploads}.");
+            }
+            $made = $content === null ? mkdir($target, 0775) : file_put_contents($target, $content) !== false;
+            if (! $made) {
+                throw new RuntimeException("Cannot create {$target}.");
+            }
+            say("Added uploads/{$name}.");
+        }
     }
 
     /** @var \StreamEngine\Service\SettingsService $settings */

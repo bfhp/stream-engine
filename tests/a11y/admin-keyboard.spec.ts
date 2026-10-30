@@ -36,7 +36,9 @@ test("own profile can be walked with Tab", async ({ page }) => {
 });
 
 /* The file browser's arrow keys (assets-src/admin/lib/file-list-keyboard.ts).
-   Uses whatever the uploads folder holds; nothing is created. */
+   Uses whatever the uploads folder holds (in CI, bin/seed-demo.php adds a
+   folder and two images); nothing is created here. "Next" is ArrowRight,
+   or ArrowLeft in a right-to-left locale. */
 test("admin file browser moves between files with the arrow keys", async ({ page }) => {
     await page.goto("/admin/#/file-browser");
     await waitForAdminScreen(page);
@@ -52,7 +54,8 @@ test("admin file browser moves between files with the arrow keys", async ({ page
     const start = await focusedFileId();
     expect(start).not.toBeNull();
 
-    await page.keyboard.press("ArrowRight");
+    const rtl = await page.evaluate(() => document.documentElement.dir === "rtl");
+    await page.keyboard.press(rtl ? "ArrowLeft" : "ArrowRight");
     const next = await focusedFileId();
     expect(next).not.toBeNull();
     expect(next).not.toBe(start);
