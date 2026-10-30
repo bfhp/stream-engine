@@ -77,6 +77,11 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- The tag field says under it to press Enter (screen readers skipped the
+  placeholder), announces each tag added, removed, refused as a duplicate or
+  over the limit, and names each remove button after its tag. The topic title
+  counter reads "12 of 200 characters used" instead of "12 slash 200".
+  Cancelling a comment reply returns focus to its Reply button.
 - The audio player is a named region with a named playlist (the current track
   is marked), and its title line reads "Current track: …". The position slider reads "1 min 14 sec of 3 min 20 sec" instead
   of "1:14", which VoiceOver read as hours, and no longer announces every second

@@ -7,6 +7,7 @@ import { initCoverWidget } from "../shared/cover-widget";
 import { trans, transChoiceWithCount } from "../shared/i18n";
 import { describeImagesWithCaptions, labelTrixEditors } from "../shared/trix-captions";
 import { installTrixToolbarKeyboard } from "../shared/trix-toolbar";
+import { announce } from "../shared/ui";
 
 describeImagesWithCaptions();
 labelTrixEditors();
@@ -216,12 +217,17 @@ type TrixEditorElement = HTMLElement & {
             // track name above.
             const remove = document.createElement('button');
             remove.type = 'button';
-            remove.setAttribute('aria-label', trans('js.common.remove_aria'));
+            remove.setAttribute('aria-label', trans('js.tags.remove', { tag }));
             remove.textContent = '\u00d7';
             chip.append(`#${tag} `, remove);
             remove.addEventListener('click', () => {
+                // Into the field before the button goes: a screen reader
+                // whose cursor sits on a removed element falls back to the
+                // top of the page, even if focus moves right after.
+                tagField.focus();
                 tags.splice(index, 1);
                 renderTags();
+                announce(trans('js.tags.removed', { tag }));
             });
             tagWrap.insertBefore(chip, tagField);
         });
@@ -234,15 +240,23 @@ type TrixEditorElement = HTMLElement & {
             event.preventDefault();
             const value = tagField.value.trim().replace(/^#/, '');
 
-            if (value && tags.length < 8 && !tags.some((t) => t.toLowerCase() === value.toLowerCase())) {
+            // Each outcome is said out loud: the chip appears out of the
+            // field's reading order, and a refused tag only vanished.
+            if (tags.some((t) => t.toLowerCase() === value.toLowerCase())) {
+                announce(trans('js.tags.duplicate', { tag: value }));
+            } else if (tags.length >= 8) {
+                announce(trans('js.tags.limit'));
+            } else if (value) {
                 tags.push(value);
+                announce(trans('js.tags.added', { tag: value }));
             }
 
             tagField.value = '';
             renderTags();
         } else if (event.key === 'Backspace' && !tagField.value && tags.length) {
-            tags.pop();
+            const removed = tags.pop();
             renderTags();
+            if (removed) announce(trans('js.tags.removed', { tag: removed }));
         }
     });
 

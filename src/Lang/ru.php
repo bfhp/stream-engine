@@ -559,7 +559,7 @@ return [
     'view.users.blog.post.form.21' => 'Осталось',
     'view.users.blog.post.form.22' => 'Теги',
     'view.users.blog.post.form.23' => 'Добавьте тег и нажмите Enter',
-    'view.users.blog.post.form.24' => 'До 8 тегов, каждый до 50 символов. Теги помогают найти запись.',
+    'view.users.blog.post.form.24' => 'Добавьте тег и нажмите Enter. До 8 тегов, каждый до 50 символов. Теги помогают найти запись.',
     'view.users.blog.post.show.01' => 'Оценка записи',
     'view.users.blog.post.show.02' => 'из 5 · Оценок:',
     'view.users.community.01' => 'Написать',
@@ -716,6 +716,11 @@ return [
 
     'js.audio.pause' => 'Пауза',
     'js.audio.play' => 'Воспроизвести',
+    'js.tags.added' => 'Тег добавлен: {tag}',
+    'js.tags.removed' => 'Тег удалён: {tag}',
+    'js.tags.remove' => 'Удалить тег {tag}',
+    'js.tags.limit' => 'Можно добавить не больше 8 тегов.',
+    'js.tags.duplicate' => 'Этот тег уже добавлен: {tag}',
     'js.audio.current_track' => 'Текущий трек:',
     'js.audio.player' => 'Аудиоплеер',
     'js.audio.playlist' => 'Плейлист',
@@ -888,6 +893,7 @@ return [
     'js.admin.locale_ru' => 'Русский (ru)',
 
     'js.forums.preview' => 'Предпросмотр',
+    'js.forums.title_count' => 'Использовано {count} из {max} символов',
     'js.forums.content_empty' => 'Текст ещё не введён',
     'js.forums.reply_required' => 'Введите текст ответа',
     'js.forums.reply_failed' => 'Не удалось отправить ответ. Проверьте подключение и попробуйте ещё раз.',

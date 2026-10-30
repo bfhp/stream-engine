@@ -825,6 +825,9 @@ function initTopicForm() {
 
     const titleInput = document.getElementById("topicTitle") as HTMLInputElement | null;
     const titleCountEl = document.getElementById("topicTitleCount");
+    // The visible "12 / 200" is hidden from screen readers ("12 slash 200");
+    // the field is described by this sentence instead.
+    const titleCountTextEl = document.getElementById("topicTitleCountText");
     const titleErrorEl = form.querySelector<HTMLElement>("[data-topic-title-error]");
     const contentInput = document.getElementById("topicBody") as HTMLInputElement | null;
     const contentEditor = document.getElementById("topicBodyEditor") as (HTMLElement & { editor?: any }) | null;
@@ -839,6 +842,9 @@ function initTopicForm() {
     /* ---------- title counter ---------- */
     const updateTitleCount = () => {
         if (titleCountEl) titleCountEl.textContent = `${titleInput.value.length} / 200`;
+        if (titleCountTextEl) {
+            titleCountTextEl.textContent = trans("js.forums.title_count", { count: String(titleInput.value.length), max: "200" });
+        }
     };
     titleInput.addEventListener("input", updateTitleCount);
     updateTitleCount();

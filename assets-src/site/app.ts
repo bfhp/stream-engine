@@ -642,6 +642,12 @@ const CMS = (() => {
                     form.reset();
                     setCommentFormError(form);
                     toggleCommentForm(form, false);
+                    // Focus would fall to the page with the hidden form
+                    // (WCAG 2.4.3): back to this comment's own Reply button.
+                    const commentEl = form.closest(".comment");
+                    const toggle = [...(commentEl?.querySelectorAll<HTMLElement>("[data-reply-toggle]") ?? [])]
+                        .find(button => button.closest(".comment") === commentEl);
+                    toggle?.focus();
                 }
             }
         });
