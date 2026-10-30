@@ -77,6 +77,9 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- The administration file browser moves between files with the arrow keys
+  (in the list and the grid view), Home and End, besides Tab. Its file list
+  now passes the accessibility scan (WCAG 4.1.2); the baseline entry is gone.
 - Community members are read with their role ("Anton, Owner"). The forum
   icon legend is hidden from screen readers, which hear each row's icon by
   name instead.

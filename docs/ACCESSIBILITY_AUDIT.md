@@ -1,9 +1,8 @@
 # WCAG 2.2 AA audit
 
-> **Every criterion reviewed; one partly met.** 4.1.2 is Partially Supports
-> because of the administration file browser. This report records the state
-> of the audit; it is not a conformance claim. The public statement is
-> [`ACCESSIBILITY.md`](../ACCESSIBILITY.md).
+> **Every criterion reviewed and met** (or not applicable). This report
+> records the state of the audit; it is not a conformance claim. The public
+> statement is [`ACCESSIBILITY.md`](../ACCESSIBILITY.md).
 
 The audit covers every WCAG 2.2 success criterion at levels A and AA (55
 criteria; 4.1.1 Parsing was removed in WCAG 2.2). The scope is the one in
@@ -33,8 +32,8 @@ The results use the terms of the
 
 | Result | Criteria |
 | --- | ---: |
-| Supports | 50 |
-| Partially Supports | 1 |
+| Supports | 51 |
+| Partially Supports | 0 |
 | Does Not Support | 0 |
 | Not Applicable | 4 |
 | Not Evaluated, automated checks pass | 0 |
@@ -69,7 +68,7 @@ The results use the terms of the
 
 | Criterion | Level | Result | Remarks |
 | --- | --- | --- | --- |
-| 2.1.1 Keyboard | A | Supports | The keyboard walk passes on ten administration screens and the profile. The settings select list is flagged by axe (`scrollable-region-focusable`, in `tests/a11y/baseline.json`), but focus stays in the input and the arrow keys reach every option, which a scan check confirms. Found by hand: the Trix toolbar could not be reached with Tab (Trix renders its buttons with `tabindex="-1"`), and Enter or Space did nothing; it is now a toolbar with one Tab stop, arrow keys, Home and End (`shared/trix-toolbar.ts`). Checked by hand: the audio player. The Chonky file browser opens files with Enter and moves between them with Tab, which meets the criterion; arrow keys are planned in `docs/TODO.md`. |
+| 2.1.1 Keyboard | A | Supports | The keyboard walk passes on ten administration screens and the profile. The settings select list is flagged by axe (`scrollable-region-focusable`, in `tests/a11y/baseline.json`), but focus stays in the input and the arrow keys reach every option, which a scan check confirms. Found by hand: the Trix toolbar could not be reached with Tab (Trix renders its buttons with `tabindex="-1"`), and Enter or Space did nothing; it is now a toolbar with one Tab stop, arrow keys, Home and End (`shared/trix-toolbar.ts`). Checked by hand: the audio player. The file browser opens files with Enter and moves between them with Tab and the arrow keys (Home and End to the ends), covered by a keyboard check. |
 | 2.1.2 No Keyboard Trap | A | Supports | Tab leaves Monaco after Ctrl+M (Ctrl+Shift+M on macOS), as the hint next to each editor says; the keyboard walk uses that toggle. Checked by hand: Trix, the audio player. Found by hand: in the administration panel Tab could not leave a select (page action, parent, feed type) while its list was open; a theme-wide Popover setting returned focus to the field as the list closed. It is now set only on the two popovers that need it, and a scan check presses Tab in open selects. |
 | 2.1.4 Character Key Shortcuts | A | Supports | Key handlers use Enter, Escape, Tab, Backspace and arrows. The only character key, the comma in the tag field, works only while that field has focus. Trix and Monaco shortcuts use Ctrl/Cmd and work only inside the editor. |
 | 2.2.1 Timing Adjustable | A | Supports | Sessions last 30 days. Notifications on the site and in the administration panel stay 8 s, pause while hovered or focused, and errors stay until closed; a toast shown just before the page reloads or moves on (sign-in, saving a post and the like) is shown again on the next page. Site toasts used to close after 5 s, errors included. |
@@ -112,7 +111,7 @@ The results use the terms of the
 
 | Criterion | Level | Result | Remarks |
 | --- | --- | --- | --- |
-| 4.1.2 Name, Role, Value | A | Partially Supports | Checked with VoiceOver: tabs, menus, switches, Trix, the audio player, the messenger, users list, profile and community pages. Fixed on the way: about 350 decorative icons were read as empty groups (now hidden; the scan fails on an unhidden one), icon-only buttons were named only by `title`, the messenger contacts and picked members were not buttons, the direct/group choice and the player had no role or name, the position slider and counters were read as clock times or "slash". Still failing: Chonky's file list (`aria-required-children`, in `tests/a11y/baseline.json`), so the file browser screen does not meet the criterion; arrow keys and list roles for it are planned in `docs/TODO.md`. |
+| 4.1.2 Name, Role, Value | A | Supports | Checked with VoiceOver: tabs, menus, switches, Trix, the audio player, the messenger, users list, profile, community pages and the file browser. Fixed on the way: about 350 decorative icons were read as empty groups (now hidden; the scan fails on an unhidden one), icon-only buttons were named only by `title`, the messenger contacts and picked members were not buttons, the direct/group choice and the player had no role or name, the position slider and counters were read as clock times or "slash". The file browser's list had invalid roles (`aria-required-children`); the current Chonky release uses list/listitem with a named checkbox per file, the baseline entry is removed, and the arrow keys, Home and End now move between files. |
 | 4.1.3 Status Messages | AA | Supports | Administration notifications are `role="alert"`; search progress and the save messages on every profile tab use `role="status"`. Messages that arrive in the open conversation were not announced; a live region now reads the sender and text (up to three at a time, own messages left out). To confirm with a screen reader. Found with VoiceOver: site toasts were not read in either theme (the toast is hidden until shown, and VoiceOver reads neither a live region that appears nor text written into a hidden one); they are now announced through two live regions that are always present (polite, and assertive for errors), and the visible toast has no live role of its own. Checked again with VoiceOver: toasts, administration notifications, search, profile saves and new messages are read. |
 
 ## Updating this report

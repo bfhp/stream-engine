@@ -17,6 +17,7 @@ import { ChonkyIconFA } from "@samuelncui/chonky-icon-fontawesome";
 import { getApiResponseError } from "../../shared/api-errors";
 import { csrfHeaders } from "../../shared/csrf";
 import { getLocale, trans } from "../../shared/i18n";
+import { moveInFileList } from "../lib/file-list-keyboard";
 import {
     parentUploadPath,
     toBrowserFile,
@@ -517,7 +518,15 @@ export default function FileBrowser() {
 
             {error && <Alert color="red" title={trans("js.admin.error")}>{error}</Alert>}
 
-            <Box flex={1} mih={0} style={{ opacity: loading && payload ? 0.65 : 1 }}>
+            {/* Arrow keys between files, on top of Chonky's one Tab stop per file. */}
+            <Box
+                flex={1}
+                mih={0}
+                style={{ opacity: loading && payload ? 0.65 : 1 }}
+                onKeyDown={event => {
+                    if (moveInFileList(event.nativeEvent, event.currentTarget)) event.preventDefault();
+                }}
+            >
                 <FullFileBrowser
                     files={files}
                     folderChain={folderChain}

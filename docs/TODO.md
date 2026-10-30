@@ -24,23 +24,6 @@ changelog.
 
 ## P2
 
-### Arrow keys and list roles in the file browser
-
-**Problem.** The administration file browser (Chonky) opens a file with Enter,
-but moves between files only with Tab and Shift+Tab; the arrow keys do
-nothing, which is slow in large folders. Its file list also has the wrong
-roles for a screen reader (axe `aria-required-children`, accepted for
-`admin/file-browser` in `tests/a11y/baseline.json`), so the screen does not
-meet WCAG 4.1.2.
-
-**Outcome.** The arrow keys move focus between files in both the list and
-grid views (Home and End to the first and last), and the list exposes a
-valid structure (a `grid` or `listbox` with `row`/`option` children), either
-through Chonky's options or a thin wrapper. The baseline entry is removed.
-
-**Verification.** The keyboard walk moves through a folder with the arrows;
-the `admin/file-browser` scan passes with no baseline entry.
-
 ### Name audio tracks from their ID3 tags
 
 **Problem.** The audio player on blogs and communities names a track by the

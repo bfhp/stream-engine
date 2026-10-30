@@ -1,4 +1,4 @@
-import { test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { waitForAdminScreen } from "./scan";
 import { expectKeyboardWalk } from "./keyboard";
 
@@ -33,4 +33,30 @@ for (const [id, route] of ADMIN_SCREENS) {
 test("own profile can be walked with Tab", async ({ page }) => {
     await page.goto("/profile");
     await expectKeyboardWalk(page);
+});
+
+/* The file browser's arrow keys (assets-src/admin/lib/file-list-keyboard.ts).
+   Uses whatever the uploads folder holds; nothing is created. */
+test("admin file browser moves between files with the arrow keys", async ({ page }) => {
+    await page.goto("/admin/#/file-browser");
+    await waitForAdminScreen(page);
+    const files = page.locator('[role="listitem"][data-chonky-context-file-id]');
+    await files.first().waitFor({ timeout: 10_000 }).catch(() => undefined);
+    test.skip(await files.count() < 2, "The uploads folder has fewer than two entries.");
+
+    const focusedFileId = () => page.evaluate(() =>
+        document.activeElement?.closest("[data-chonky-context-file-id]")?.getAttribute("data-chonky-context-file-id") ?? null);
+    const first = files.first();
+    const firstTarget = first.locator('input[type="checkbox"]');
+    await ((await firstTarget.count()) ? firstTarget : first).focus();
+    const start = await focusedFileId();
+    expect(start).not.toBeNull();
+
+    await page.keyboard.press("ArrowRight");
+    const next = await focusedFileId();
+    expect(next).not.toBeNull();
+    expect(next).not.toBe(start);
+
+    await page.keyboard.press("Home");
+    await expect.poll(focusedFileId).toBe(start);
 });

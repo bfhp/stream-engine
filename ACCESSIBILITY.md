@@ -88,7 +88,7 @@ referenced as evidence for the engine's share only.
 | Keyboard-only review of key workflows by a person | Done for the October 2026 audit |
 | Screen reader review | Done for the October 2026 audit (VoiceOver on macOS, both themes, English and Arabic) |
 | Zoom to 200% and reflow at 320 CSS px | Done for the October 2026 audit; reflow at 320 CSS px is also checked in CI |
-| Complete WCAG 2.2 AA audit | Done 2026-10-30: 50 criteria supported, 4 not applicable, 1 partially supported (4.1.2, the administration file browser); results per criterion in [`docs/ACCESSIBILITY_AUDIT.md`](docs/ACCESSIBILITY_AUDIT.md) |
+| Complete WCAG 2.2 AA audit | Done 2026-10-30: 51 criteria supported, 4 not applicable; results per criterion in [`docs/ACCESSIBILITY_AUDIT.md`](docs/ACCESSIBILITY_AUDIT.md) |
 
 Both automated checks run the axe-core rules for WCAG 2.0, 2.1, and 2.2 at
 levels A and AA. They cover both bundled themes, `default` and
