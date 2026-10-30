@@ -51,6 +51,11 @@ open-source libraries and infrastructure.
 - Right-to-left support: locale-driven `dir`, a separate Bootstrap RTL build,
   logical CSS properties, mirrored directional icons, and bidi isolation for
   user-generated text on the site and in the administration interface
+- Accessibility: WCAG 2.2 AA (and so 2.1 AA) conformance for the
+  administration panel, both bundled themes, and the built-in modules, from an
+  internal audit with the keyboard and VoiceOver, kept in place by axe-core
+  and keyboard checks in CI in English and Arabic, light and dark; see the
+  [accessibility statement](ACCESSIBILITY.md)
 
 The current backlog and known limitations are tracked in
 [docs/TODO.md](docs/TODO.md).

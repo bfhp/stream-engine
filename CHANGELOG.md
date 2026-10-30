@@ -35,6 +35,10 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- The accessibility statement now claims full conformance with WCAG 2.2 AA
+  (and so 2.1 AA) for 0.5.x, after the audit in `docs/ACCESSIBILITY_AUDIT.md`
+  was completed with a manual keyboard and VoiceOver review. The README lists
+  accessibility among the current capabilities.
 - Forms state their rules up front: the feedback message length, the
   homepage format, tag limits, accepted file formats and sizes (the cover
   hint said 8 MB; uploads allow 50 MB), and in the administration panel the

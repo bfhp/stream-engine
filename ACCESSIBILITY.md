@@ -1,7 +1,8 @@
 # Accessibility Statement
 
-> **Draft.** This statement has not been reviewed or published yet. Items
-> marked **TODO** need a decision or an evaluation before release.
+> **Draft.** The conformance status below is final for 0.5.x. Items marked
+> **TODO** (support for content authors, the issue label) still need a
+> decision before this statement is published.
 
 Stream Engine aims to let people use every site built on it, and its
 administration panel, regardless of disability, input method, or assistive
@@ -14,20 +15,27 @@ conformance is checked, and where the known gaps are.
 | --- | --- |
 | Target standard | [WCAG 2.2](https://www.w3.org/TR/WCAG22/), level AA |
 | Related standard | EN 301 549 v3.2.1 (its web content clauses follow WCAG 2.1 AA) |
-| Current status | **Not evaluated.** No conformance is claimed. An audit is in progress: [results per criterion](docs/ACCESSIBILITY_AUDIT.md). |
+| Current status | **Fully conformant** with WCAG 2.2 level AA: [results per criterion](docs/ACCESSIBILITY_AUDIT.md) |
+| Also meets | WCAG 2.1 level AA. WCAG 2.2 contains every 2.1 criterion except 4.1.1 Parsing, which W3C's 2023 errata for WCAG 2.1 treats as always met for HTML |
 | Applies to | Latest release (currently 0.5.x) |
-| Last reviewed | **TODO** |
+| Last reviewed | 2026-10-30 |
 
-"Not evaluated" means that no complete audit against the WCAG success
-criteria has been performed. Individual features are designed and reviewed
-against the rules in
+Fully conformant means that every WCAG 2.2 success criterion at levels A and
+AA is met, or does not apply, in the parts listed under [Scope](#scope): 51
+criteria are met and 4 do not apply (the remarks in the audit say why). The
+claim rests on an internal audit, not an independent third-party
+evaluation: automated checks, a code review, and a manual review with the
+keyboard and with VoiceOver on macOS, in both bundled themes, in English and
+Arabic, in light and dark mode. It covers what the project ships. Content
+written by a site's authors, site-specific modules, and third-party themes
+are outside it; a site built on Stream Engine conforms only if those parts
+do too.
+
+New features are designed and reviewed against the rules in
 [Localization and accessibility](https://github.com/bfhp/stream-engine/wiki/Developer-Localization-and-Accessibility),
-but that review is not a substitute for an audit, and the project does not
-currently state that any level of WCAG is met.
-
-Once an audit has been done, this section will use the standard WCAG terms:
-**fully conformant** (all criteria met), **partially conformant** (some
-criteria not met), or **non-conformant**.
+and the automated checks below run on every change, so a regression they can
+detect fails CI. A change that affects a criterion they cannot check calls
+for a new manual review of that criterion.
 
 ## Scope
 
@@ -95,38 +103,40 @@ levels A and AA. They cover both bundled themes, `default` and
 `bootstrap`. How they work is described in
 [Accessibility checks](https://github.com/bfhp/stream-engine/wiki/Developer-Testing#accessibility-checks).
 
-Automated tools find only part of the issues WCAG covers. A conformance claim
-will be made only after manual review.
+Automated tools find only part of the issues WCAG covers. The conformance
+claim rests on the manual review in the table above; the automated checks
+keep the result from regressing between audits.
 
 ### Test environments
 
-**TODO**: agree on the matrix. Suggested minimum:
-
-| Assistive technology | Browser | Platform |
-| --- | --- | --- |
-| NVDA (current) | Firefox, Chrome | Windows |
-| VoiceOver | Safari | macOS |
-| VoiceOver | Safari | iOS |
-| TalkBack | Chrome | Android |
-| Keyboard only | Any supported browser | Any |
+| Assistive technology | Browser | Platform | Status |
+| --- | --- | --- | --- |
+| VoiceOver | Safari | macOS | Used for the October 2026 audit |
+| Keyboard only | Desktop browsers | macOS | Used for the October 2026 audit; Chromium also in CI |
+| NVDA (current) | Firefox, Chrome | Windows | Not yet tested |
+| VoiceOver | Safari | iOS | Not yet tested |
+| TalkBack | Chrome | Android | Not yet tested |
 
 ## Known limitations
 
 These are known or likely gaps. Each will either be fixed or confirmed and
 documented with a workaround.
 
+- **Screen readers other than VoiceOver on macOS** (NVDA and JAWS on
+  Windows, VoiceOver on iOS, TalkBack) have not been tested yet; see
+  [Test environments](#test-environments).
 - **Third-party editors and widgets.** The administration panel embeds the
-  Monaco code editor, the Chonky file browser, and the Trix rich-text editor.
-  Their keyboard and screen reader support is controlled upstream and has not
-  been evaluated in Stream Engine. The automated scan reports one known issue
-  in the file browser: Chonky's file list uses `role="list"` without list
-  items (WCAG 1.3.1); it is recorded in `tests/a11y/baseline.json`. In the file browser Tab moves
-  between files and Enter opens one; the arrow keys do nothing, and files are
-  moved with Cut and Paste in the Actions menu rather than by dragging. Monaco
-  uses Tab for indentation, so Tab does not leave the editor until Ctrl+M
-  (Ctrl+Shift+M on macOS) switches that off. The administration panel says
-  so next to each code editor and in the editor's accessible name, which is
-  what WCAG 2.1.2 asks for when the standard keys do not move focus.
+  Monaco code editor, the Chonky file browser, and the Trix rich-text editor,
+  whose behaviour is controlled upstream; Stream Engine adds what they lack,
+  and an update of them can change it. The file browser moves between files
+  with Tab or the arrow keys and opens one with Enter; Stream Engine corrects
+  the list roles Chonky renders. Files are moved with Cut and Paste in the
+  Actions menu rather than by dragging. The Trix toolbar is one Tab stop with
+  the arrow keys, which Stream Engine adds. Monaco uses Tab for indentation,
+  so Tab does not leave the editor until Ctrl+M (Ctrl+Shift+M on macOS)
+  switches that off. The administration panel says so next to each code
+  editor and in the editor's accessible name, which is what WCAG 2.1.2 asks
+  for when the standard keys do not move focus.
 - **CAPTCHA on registration.** A site can require a CAPTCHA when people
   register. Cloudflare Turnstile, the recommended option, usually needs no
   action. hCaptcha may show an image puzzle, which blind people and some
@@ -147,7 +157,9 @@ documented with a workaround.
 - **Colour contrast.** Text contrast (WCAG 1.4.3) passes the automated scan on
   the scanned pages of both bundled themes and the administration panel, in
   both colour modes. For non-text contrast (1.4.11) only focus indicators are
-  checked automatically; borders, switches and icons have not been reviewed.
+  checked automatically; field borders, switches, checkboxes, icons and
+  charts were reviewed by hand for the October 2026 audit. Colours set by a
+  site's own theme settings are the site's responsibility.
 
 ## Support for content authors
 
