@@ -77,6 +77,9 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Community members are read with their role ("Anton, Owner"). The forum
+  icon legend is hidden from screen readers, which hear each row's icon by
+  name instead.
 - Messenger, for screen readers: each message starts with who sent it and
   when, and its actions come after the text; the conversation list reads
   dates in words ("18 October 2026", not "10/18/26") and no longer repeats

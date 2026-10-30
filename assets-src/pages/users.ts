@@ -197,6 +197,8 @@ function renderPersonRow(item: { url: string | null; avatarUrl: string; displayN
         avatar: item.avatarUrl,
         name: item.displayName,
         role: item.roleLabel ?? '',
+        // "Anton, Owner": VoiceOver read the link without the badge in it.
+        label: item.roleLabel ? `${item.displayName}, ${item.roleLabel}` : '',
     });
 }
 

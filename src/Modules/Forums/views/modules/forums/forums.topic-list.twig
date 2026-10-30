@@ -47,7 +47,9 @@
             </div>
         </div>
 
-        <div class="forums-legend">
+        {# The legend explains the icons to sighted readers; each row's icon is
+           itself a named image, so screen readers skip this. #}
+        <div class="forums-legend" aria-hidden="true">
             <span class="forums-legend__item">
                 <i class="bi bi-chat-square-text-fill forums-icon--unread" aria-hidden="true"></i> {{ trans('view.forums.list.03') }}
             </span>

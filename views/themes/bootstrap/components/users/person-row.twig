@@ -1,6 +1,6 @@
 {# Bootstrap markup of the Users module's person-row.twig - same fill points. #}
 {% set asTemplate = asTemplate|default(false) %}
-<a href="{{ row.url ?: '#' }}" class="d-flex align-items-center gap-2 text-body text-decoration-none" data-slot-attr="href:url">
+<a href="{{ row.url ?: '#' }}" class="d-flex align-items-center gap-2 text-body text-decoration-none"{% if row.roleLabel|default(null) %} aria-label="{{ row.displayName }}, {{ row.roleLabel }}"{% endif %} data-slot-attr="href:url aria-label:label">
     <img src="{{ row.avatarUrl }}" alt="" class="rounded-circle bg-body-secondary object-fit-cover flex-shrink-0" width="36" height="36" data-slot-attr="src:avatar">
     <span class="small"><bdi data-slot="name">{{ row.displayName }}</bdi></span>
     {% if row.roleLabel|default(null) or asTemplate %}
