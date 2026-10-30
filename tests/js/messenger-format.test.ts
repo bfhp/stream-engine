@@ -7,6 +7,7 @@ import {
     computeReadStatus,
     daysBetween,
     formatConvTime,
+    formatConvTimeSpoken,
     formatDayLabel,
     formatTime,
     hardenMessageLinks,
@@ -142,6 +143,20 @@ describe("formatConvTime()", () => {
     it("uses the configured date format", () => {
         expect(formatConvTime(at(2007, 1, 5), NOW)).toBe("05.01.2007");
         expect(formatConvTime(at(2000, 12, 31), NOW)).toBe("31.12.2000");
+    });
+});
+
+describe("formatConvTimeSpoken()", () => {
+    it("keeps today's time, which reads as a time", () => {
+        expect(formatConvTimeSpoken(at(2026, 3, 15, 9, 5), NOW)).toBe(formatConvTime(at(2026, 3, 15, 9, 5), NOW));
+    });
+
+    it("spells out the weekday and the date instead of abbreviations and digits", () => {
+        expect(formatConvTimeSpoken(at(2026, 3, 14), NOW)).toMatch(/^saturday$/i);
+        const spoken = formatConvTimeSpoken(at(2026, 3, 8), NOW);
+        expect(spoken).toMatch(/March/);
+        expect(spoken).toMatch(/2026/);
+        expect(spoken).not.toMatch(/[./]/);
     });
 });
 

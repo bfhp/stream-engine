@@ -77,6 +77,13 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Messenger, for screen readers: each message starts with who sent it and
+  when, and its actions come after the text; the conversation list reads
+  dates in words ("18 October 2026", not "10/18/26") and no longer repeats
+  initials. Opening a conversation moves focus to its title, "New message"
+  to the contact search, and Back to where it came from. Contacts and the
+  picked members are buttons (reachable with Tab), "Direct / Group" is a
+  named pair of toggle buttons.
 - The tag field says under it to press Enter (screen readers skipped the
   placeholder), announces each tag added, removed, refused as a duplicate or
   over the limit, and names each remove button after its tag. The topic title

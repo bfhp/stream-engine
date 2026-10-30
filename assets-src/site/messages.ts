@@ -10,6 +10,7 @@ import {
     nameColorStyle,
     computeReadStatus as deriveReadStatus,
     formatConvTime,
+    formatConvTimeSpoken,
     formatDayLabel,
     formatTime,
     hardenMessageLinks,
@@ -280,8 +281,8 @@ export function initMessages() {
     function renderAvatar(opts: { isGroup: boolean; id?: number; name?: string; size?: 'sm' | 'md' | 'lg'; online?: boolean | null }): string {
         const sizeClass = opts.size ? ` msgr-avatar-${opts.size}` : '';
         const inner = opts.isGroup
-            ? `<span class="msgr-avatar msgr-avatar-group${sizeClass}"><i class="bi bi-people-fill" aria-hidden="true"></i></span>`
-            : `<span class="msgr-avatar${sizeClass}" style="background:${avatarColor(opts.id ?? 0)}">${cms.escapeHtml(initialsFromName(opts.name ?? ''))}</span>`;
+            ? `<span class="msgr-avatar msgr-avatar-group${sizeClass}" aria-hidden="true"><i class="bi bi-people-fill" aria-hidden="true"></i></span>`
+            : `<span class="msgr-avatar${sizeClass}" style="background:${avatarColor(opts.id ?? 0)}" aria-hidden="true">${cms.escapeHtml(initialsFromName(opts.name ?? ''))}</span>`;
 
         // online is only passed where presence is meaningful (direct chats,
         // group members) - omitting it keeps existing call sites (message
@@ -359,10 +360,12 @@ export function initMessages() {
         let prefixHtml = '';
         let text = '';
         let timeText = '';
+        let spokenTime = '';
 
         if (c.last_message) {
             text = c.last_message.text;
             timeText = formatConvTime(c.last_message.created_at);
+            spokenTime = formatConvTimeSpoken(c.last_message.created_at);
             const prefix = c.is_group
                 ? `${c.last_message.user_name}: `
                 : (c.last_message.user_id === currentUserId ? trans('js.messenger.you_prefix') : '');
@@ -376,7 +379,7 @@ export function initMessages() {
                 <div class="msgr-conv-body">
                     <div class="msgr-conv-top">
                         <span class="msgr-conv-title"><bdi>${cms.escapeHtml(c.title)}</bdi></span>
-                        <span class="msgr-conv-time">${timeText}</span>
+                        <span class="msgr-conv-time"><span aria-hidden="true">${timeText}</span><span class="ui-visually-hidden">${cms.escapeHtml(spokenTime)}</span></span>
                     </div>
                     <div class="msgr-conv-bottom">
                         <span class="msgr-conv-preview">${prefixHtml}${cms.escapeHtml(stripTags(text))}</span>
@@ -391,7 +394,7 @@ export function initMessages() {
         const row = target.closest<HTMLElement>('[data-conv-id]');
         if (!row) return;
         const id = parseInt(row.dataset.convId ?? '0', 10);
-        if (id) void openConversation(id);
+        if (id) void openConversation(id, null, true);
     });
 
     // Rows are role="button": Enter and Space open them, as a click does
@@ -484,7 +487,12 @@ export function initMessages() {
        Open conversation / chat header
     =============================== */
 
-    async function openConversation(id: number, focusedMessageId: number | null = null) {
+    /**
+     * `moveFocus`: the person picked this conversation, so focus goes to its
+     * title (WCAG 2.4.3) - otherwise it stays on the row, now hidden on small
+     * screens, and a screen reader is left in the list.
+     */
+    async function openConversation(id: number, focusedMessageId: number | null = null, moveFocus = false) {
         activeId = id;
         panel = 'chat';
         setMobileContentVisible(true);
@@ -538,6 +546,7 @@ export function initMessages() {
         detail.participants.forEach(p => { activeParticipants[p.id] = p; });
 
         renderChatHeader(detail);
+        if (moveFocus && focusedMessageId === null) chatTitleEl.focus();
 
         const unreadFromId = detail.last_read_message_id;
 
@@ -637,7 +646,13 @@ export function initMessages() {
         }
     });
 
-    backBtn?.addEventListener('click', () => setMobileContentVisible(false));
+    backBtn?.addEventListener('click', () => {
+        setMobileContentVisible(false);
+        // Back to the row of the conversation just left, not to the page.
+        if (activeId !== null) {
+            conversationsEl.querySelector<HTMLElement>(`[data-conv-id="${activeId}"]`)?.focus();
+        }
+    });
 
     /* ===============================
        Messages
@@ -946,12 +961,14 @@ export function initMessages() {
 
         const attachmentHtml = m.attachment ? renderAttachment(m.attachment, m) : '';
 
+        // Reading order: the message, then its status, then what can be
+        // done with it (the actions are positioned above the bubble).
         return `
-            ${renderMessageActions(m, isOwn)}
             ${replyHtml}
             ${attachmentHtml}
             ${m.text ? `<span class="msgr-bubble-text" dir="auto">${m.text}</span>` : ''}
-            <span class="msgr-bubble-meta">${m.edited ? `<span class="msgr-edited">${trans('js.messenger.edited')}</span>` : ''}<span>${formatTime(m.created_at)}</span>${readStatusHtml}</span>`;
+            <span class="msgr-bubble-meta">${m.edited ? `<span class="msgr-edited">${trans('js.messenger.edited')}</span>` : ''}<span aria-hidden="true">${formatTime(m.created_at)}</span>${readStatusHtml}</span>
+            ${renderMessageActions(m, isOwn)}`;
     }
 
     function renderMessageBlock(m: ApiMessage, isOwn: boolean, startGroup: boolean, dayLabel: string | null, showUnreadSep: boolean): string {
@@ -980,7 +997,8 @@ export function initMessages() {
                 <div class="msgr-msg-row">
                     <div class="msgr-msg-avatar-slot">${avatarHtml}</div>
                     <div class="msgr-msg-col">
-                        ${showName ? `<div class="msgr-msg-name-row"><span class="msgr-msg-name" style="${nameColorStyle(m.user_id)}"><bdi>${cms.escapeHtml(senderName)}</bdi></span></div>` : ''}
+                        <span class="ui-visually-hidden">${cms.escapeHtml(trans('js.messenger.message_by', { name: senderName, time: formatTime(m.created_at) }))}</span>
+                        ${showName ? `<div class="msgr-msg-name-row" aria-hidden="true"><span class="msgr-msg-name" style="${nameColorStyle(m.user_id)}"><bdi>${cms.escapeHtml(senderName)}</bdi></span></div>` : ''}
                         <div class="msgr-bubble${isImageAttachment ? ' has-attachment-image' : ''}">
                             ${renderBubbleContent(m, isOwn)}
                         </div>
@@ -1427,6 +1445,7 @@ export function initMessages() {
         renderNewTabs();
         renderGroupChips();
         loadContacts('', newContactsListEl, 'newconv');
+        newContactsSearchInput.focus();
     }
 
     function closeNewPanel() {
@@ -1434,6 +1453,8 @@ export function initMessages() {
         renderPanels();
         renderConversations();
         if (panel === 'empty') setMobileContentVisible(false);
+        // The Back button just disappeared with its panel.
+        (panel === 'chat' ? chatTitleEl : newOpenBtn)?.focus();
     }
 
     newOpenBtn?.addEventListener('click', () => openNewPanel('direct'));
@@ -1452,6 +1473,7 @@ export function initMessages() {
     function renderNewTabs() {
         newTabButtons.forEach((btn) => {
             btn.classList.toggle('is-active', btn.dataset.newTab === newTab);
+            btn.setAttribute('aria-pressed', String(btn.dataset.newTab === newTab));
         });
         newGroupFields.hidden = newTab !== 'group';
         newGroupFooter.hidden = newTab !== 'group';
@@ -1464,7 +1486,7 @@ export function initMessages() {
         } else {
             newGroupChipsEl.hidden = false;
             newGroupChipsEl.innerHTML = Array.from(selectedGroupIds.entries()).map(([id, name]) => `
-                <span class="msgr-chip" data-chip-id="${id}"><bdi>${cms.escapeHtml(name)}</bdi><i class="bi bi-x-lg" aria-hidden="true"></i></span>
+                <button type="button" class="msgr-chip" data-chip-id="${id}" aria-label="${cms.escapeHtml(trans('js.messenger.chip_remove', { name }))}"><bdi>${cms.escapeHtml(name)}</bdi><i class="bi bi-x-lg" aria-hidden="true"></i></button>
             `).join('');
         }
         newGroupCreateBtn.disabled = selectedGroupIds.size === 0;
@@ -1474,6 +1496,9 @@ export function initMessages() {
         const target = event.target as HTMLElement;
         const chip = target.closest<HTMLElement>('[data-chip-id]');
         if (!chip) return;
+        // Into the search field before the chip goes, or a screen reader
+        // falls back to the top of the page.
+        newContactsSearchInput.focus();
         selectedGroupIds.delete(parseInt(chip.dataset.chipId ?? '0', 10));
         renderGroupChips();
         renderNewContactsList();
@@ -1504,15 +1529,16 @@ export function initMessages() {
         }
     }
 
-    function renderContactRow(c: ApiContact, selected: boolean): string {
+    /** `toggle`: picking members for a group, so the button says whether it is picked. */
+    function renderContactRow(c: ApiContact, selected: boolean, toggle = false): string {
         return `
-            <div class="msgr-contact-row" data-contact-id="${c.id}" data-contact-name="${cms.escapeHtml(c.displayName)}">
-                <div>${renderAvatar({ isGroup: false, id: c.id, name: c.displayName, size: 'md' })}</div>
-                <div class="msgr-contact-body">
-                    <div class="msgr-contact-name">${cms.escapeHtml(c.displayName)}</div>
-                </div>
+            <button type="button" class="msgr-contact-row" data-contact-id="${c.id}" data-contact-name="${cms.escapeHtml(c.displayName)}"${toggle ? ` aria-pressed="${selected}"` : ''}>
+                <span>${renderAvatar({ isGroup: false, id: c.id, name: c.displayName, size: 'md' })}</span>
+                <span class="msgr-contact-body">
+                    <span class="msgr-contact-name"><bdi>${cms.escapeHtml(c.displayName)}</bdi></span>
+                </span>
                 ${selected ? '<i class="bi bi-check-circle-fill msgr-contact-check" aria-hidden="true"></i>' : ''}
-            </div>`;
+            </button>`;
     }
 
     function renderNewContactsList() {
@@ -1520,9 +1546,14 @@ export function initMessages() {
             newContactsListEl.innerHTML = `<div class="msgr-conv-empty">${trans('js.messenger.nobody_found')}</div>`;
             return;
         }
+        // Re-rendered on every pick: keep focus on the contact it was on.
+        const focusedId = (document.activeElement as HTMLElement | null)?.closest<HTMLElement>('[data-contact-id]')?.dataset.contactId;
         newContactsListEl.innerHTML = lastContacts
-            .map(c => renderContactRow(c, newTab === 'group' && selectedGroupIds.has(c.id)))
+            .map(c => renderContactRow(c, newTab === 'group' && selectedGroupIds.has(c.id), newTab === 'group'))
             .join('');
+        if (focusedId) {
+            newContactsListEl.querySelector<HTMLElement>(`[data-contact-id="${CSS.escape(focusedId)}"]`)?.focus();
+        }
     }
 
     newContactsListEl.addEventListener('click', (event) => {
@@ -1556,7 +1587,7 @@ export function initMessages() {
             return;
         }
         await loadConversations();
-        await openConversation(res.conversation_id);
+        await openConversation(res.conversation_id, null, true);
     }
 
     newGroupCreateBtn.addEventListener('click', async () => {
@@ -1575,7 +1606,7 @@ export function initMessages() {
             return;
         }
         await loadConversations();
-        await openConversation(res.conversation_id);
+        await openConversation(res.conversation_id, null, true);
     });
 
     /* ===============================

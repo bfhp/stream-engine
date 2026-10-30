@@ -1,4 +1,4 @@
-import { trans } from "../shared/i18n";
+import { getLocale, trans } from "../shared/i18n";
 import { formatDateValue, formatTimeValue } from "../shared/date-time-format";
 
 /* ==========================================================================
@@ -124,6 +124,21 @@ export function formatConvTime(unixSeconds: number, now: Date = new Date()): str
     if (diff < 7) return WEEKDAYS_SHORT[new Date(unixSeconds * 1000).getDay()];
 
     return formatDateValue(new Date(unixSeconds * 1000), 'short');
+}
+
+/**
+ * formatConvTime() for screen readers. A short date such as "10/18/26" is
+ * read out character by character ("ten slash eighteen slash twenty-six"),
+ * so the weekday and the date are spelled out; today's time stays a time.
+ */
+export function formatConvTimeSpoken(unixSeconds: number, now: Date = new Date()): string {
+    const diff = daysBetween(unixSeconds, now);
+    const date = new Date(unixSeconds * 1000);
+
+    if (diff <= 0) return formatTime(unixSeconds);
+    if (diff < 7) return WEEKDAYS_FULL[date.getDay()];
+
+    return new Intl.DateTimeFormat(getLocale(), { dateStyle: 'long' }).format(date);
 }
 
 /**

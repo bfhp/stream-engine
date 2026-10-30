@@ -40,7 +40,7 @@
                     </button>
                     <div class="msgr-chat-header-avatar" data-chat-avatar></div>
                     <div class="msgr-chat-header-info" data-chat-info-toggle>
-                        <div class="msgr-chat-header-title" data-chat-title></div>
+                        <h2 class="msgr-chat-header-title" data-chat-title tabindex="-1"></h2>
                         <div class="msgr-chat-header-subtitle" data-chat-subtitle></div>
                     </div>
                     <button type="button"
@@ -137,9 +137,9 @@
                     <span>{{ trans('view.messages.app.02') }}</span>
                 </header>
 
-                <div class="msgr-newconv-tabs">
-                    <button type="button" class="msgr-tab is-active" data-new-tab="direct">{{ trans('view.messages.app.15') }}</button>
-                    <button type="button" class="msgr-tab" data-new-tab="group">{{ trans('message.group_chat') }}</button>
+                <div class="msgr-newconv-tabs" role="group" aria-label="{{ trans('view.messages.app.23') }}">
+                    <button type="button" class="msgr-tab is-active" data-new-tab="direct" aria-pressed="true">{{ trans('view.messages.app.15') }}</button>
+                    <button type="button" class="msgr-tab" data-new-tab="group" aria-pressed="false">{{ trans('message.group_chat') }}</button>
                 </div>
 
                 <div class="msgr-newconv-group" data-new-group-fields hidden>
