@@ -8,7 +8,7 @@ development-oriented Docker Compose environment included in the repository.
 
 | Component | Requirement |
 | --- | --- |
-| Stream Engine | Use a tagged release. This guide currently describes the `0.5` release series. |
+| Stream Engine | Use a tagged release. This guide currently describes the `0.6` release series. |
 | PHP | PHP 8.3 or newer, using PHP-FPM or another supported web-server integration. The command-line PHP used for installation, migrations, and scheduled tasks must load the same required extensions. |
 | PHP extensions | `curl`, `dom`, `fileinfo`, `gd`, `intl`, `libxml`, `mbstring`, `memcached`, `pdo`, `pdo_mysql`, `simplexml`, `xmlreader`, and `zip`. |
 | Dependency manager | Composer 2. A release archive may already contain `vendor/`, but Composer is required by the installation and migration commands documented here. |

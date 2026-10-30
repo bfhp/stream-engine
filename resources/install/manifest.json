@@ -1,8 +1,8 @@
 {
     "format": 1,
-    "release": "0.5.1",
+    "release": "0.6.0",
     "schema": "schema.sql",
-    "schema_checksum": "f5e6fbfddf348a5f751df2bbc257db9a81ff51bd952c02a86d1fedcdaed42054",
+    "schema_checksum": "0003d88f696b40c2eb6b986e2df88c10a7e02f34f13a095a15865d0076ca2d73",
     "migrations": [
         {
             "version": "20260912000000_initial",
@@ -88,6 +88,11 @@
             "version": "20261009000000_move_internal_pages_to_runtime",
             "file": "20261009000000_move_internal_pages_to_runtime.sql",
             "checksum": "c49164ffaed80139a1cf99483fc59ec313ad3fdcdebcb91e96c4df4ef6eaeea2"
+        },
+        {
+            "version": "20261016000000_add_email_verification_new_email",
+            "file": "20261016000000_add_email_verification_new_email.sql",
+            "checksum": "f09ab2815e8a7f2a189810301553afe6be03ea6b9186eed820bc7e63c2faf0b9"
         }
     ]
 }

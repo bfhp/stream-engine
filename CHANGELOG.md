@@ -7,6 +7,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-30
+
 ### Added
 
 - MySQL 8.4 LTS or newer is supported alongside MariaDB 10.10 or newer; the
@@ -26,7 +28,7 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
   load (persisted pages, module runtime pages, `api`/`admin` paths) before
   saving a page, and rejects duplicate patterns, ambiguous dynamic siblings and
   duplicate singleton actions instead of letting the site fail to start.
-- WCAG 2.2 AA conformance for 0.5.x: screen-reader names and announcements,
+- WCAG 2.2 AA conformance: screen-reader names and announcements,
   keyboard access (including the Trix toolbar and administration selects),
   focus handling, contrast, target sizes and 320 px layouts across both themes
   and the administration panel. See `docs/ACCESSIBILITY_AUDIT.md`.

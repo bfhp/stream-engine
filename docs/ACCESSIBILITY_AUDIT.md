@@ -13,7 +13,7 @@ installer, and all shipped locales.
 | | |
 | --- | --- |
 | Standard | [WCAG 2.2](https://www.w3.org/TR/WCAG22/), levels A and AA |
-| Version audited | `main`, October 2026 (0.5.x) |
+| Version audited | `main`, October 2026 (0.6.x) |
 | Last updated | 2026-10-30 |
 | Methods | Automated checks (axe-core in Vitest and Playwright, keyboard walk), code review, and manual review with the keyboard and VoiceOver on macOS |
 

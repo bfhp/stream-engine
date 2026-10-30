@@ -9,7 +9,7 @@ reproduces there.
 
 | Version | Supported |
 | --- | --- |
-| Latest release (currently 0.5.x) | Yes |
+| Latest release (currently 0.6.x) | Yes |
 | Anything older | No |
 
 ## Reporting a vulnerability

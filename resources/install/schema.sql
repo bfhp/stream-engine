@@ -81,6 +81,7 @@ CREATE TABLE `cron_tasks` (
 CREATE TABLE `email_verifications` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `user_id` int(10) unsigned NOT NULL,
+  `new_email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `token_hash` char(64) NOT NULL,
   `expires_at` int(10) unsigned NOT NULL,
   `created_at` int(10) unsigned NOT NULL,

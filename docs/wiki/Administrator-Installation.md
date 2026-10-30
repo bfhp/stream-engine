@@ -27,11 +27,11 @@ the database.
 ## Obtain a release
 
 From the parent directory of the intended application path, install the current
-`0.5` release series without development dependencies:
+`0.6` release series without development dependencies:
 
 ```bash
 cd /srv
-composer create-project --no-dev bfhp/stream-engine stream-engine "^0.5"
+composer create-project --no-dev bfhp/stream-engine stream-engine "^0.6"
 cd /srv/stream-engine
 ```
 
@@ -302,7 +302,7 @@ testing the installation flow on a trusted workstation:
 ```bash
 git clone https://github.com/bfhp/stream-engine.git
 cd stream-engine
-git checkout v0.5.1
+git checkout v0.6.0
 docker compose build php
 docker compose run --rm php composer install
 docker compose up -d

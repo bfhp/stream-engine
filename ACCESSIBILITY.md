@@ -13,7 +13,7 @@ conformance is checked, and where the known gaps are.
 | Related standard | EN 301 549 v3.2.1 (its web content clauses follow WCAG 2.1 AA) |
 | Current status | **Fully conformant** with WCAG 2.2 level AA: [results per criterion](docs/ACCESSIBILITY_AUDIT.md) |
 | Also meets | WCAG 2.1 level AA. WCAG 2.2 contains every 2.1 criterion except 4.1.1 Parsing, which W3C's 2023 errata for WCAG 2.1 treats as always met for HTML |
-| Applies to | Latest release (currently 0.5.x) |
+| Applies to | Latest release (currently 0.6.x) |
 | Last reviewed | 2026-10-30 |
 
 Fully conformant means that every WCAG 2.2 success criterion at levels A and

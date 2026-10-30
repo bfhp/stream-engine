@@ -129,10 +129,10 @@ available before writes are stopped.
 ## Stage code and dependencies
 
 Build or download the target release away from the live application root. For
-example, replace `0.5.1` with the reviewed target version:
+example, replace `0.6.0` with the reviewed target version:
 
 ```bash
-target_version='0.5.1'
+target_version='0.6.0'
 composer create-project --no-dev --no-interaction \
   bfhp/stream-engine /srv/stream-engine-next "$target_version"
 cd /srv/stream-engine-next
