@@ -85,10 +85,10 @@ referenced as evidence for the engine's share only.
 | Component checks with axe-core in Vitest (administration components) | In use, every push and pull request |
 | Page checks with axe-core and Playwright in CI (both bundled themes, English and Arabic, light and dark) | In use on every change to templates, styles, scripts or translations, and weekly; known violations are listed in [`tests/a11y/baseline.json`](tests/a11y/baseline.json) |
 | Keyboard checks in CI: Tab walk with focus visibility and indicator contrast, no traps, focus kept in dialogs and returned on close | In use, together with the page checks |
-| Keyboard-only review of key workflows by a person | **TODO**: not yet systematic |
-| Screen reader review | **TODO**: not yet performed |
-| Zoom to 200% and reflow at 320 CSS px | **TODO**: not yet systematic |
-| Complete WCAG 2.2 AA audit | In progress; results per criterion in [`docs/ACCESSIBILITY_AUDIT.md`](docs/ACCESSIBILITY_AUDIT.md) |
+| Keyboard-only review of key workflows by a person | Done for the October 2026 audit |
+| Screen reader review | Done for the October 2026 audit (VoiceOver on macOS, both themes, English and Arabic) |
+| Zoom to 200% and reflow at 320 CSS px | Done for the October 2026 audit; reflow at 320 CSS px is also checked in CI |
+| Complete WCAG 2.2 AA audit | Done 2026-10-30: 50 criteria supported, 4 not applicable, 1 partially supported (4.1.2, the administration file browser); results per criterion in [`docs/ACCESSIBILITY_AUDIT.md`](docs/ACCESSIBILITY_AUDIT.md) |
 
 Both automated checks run the axe-core rules for WCAG 2.0, 2.1, and 2.2 at
 levels A and AA. They cover both bundled themes, `default` and

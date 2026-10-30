@@ -1,7 +1,9 @@
 # WCAG 2.2 AA audit
 
-> **In progress.** This report records the state of the audit; it is not a
-> conformance claim. The public statement is [`ACCESSIBILITY.md`](../ACCESSIBILITY.md).
+> **Every criterion reviewed; one partly met.** 4.1.2 is Partially Supports
+> because of the administration file browser. This report records the state
+> of the audit; it is not a conformance claim. The public statement is
+> [`ACCESSIBILITY.md`](../ACCESSIBILITY.md).
 
 The audit covers every WCAG 2.2 success criterion at levels A and AA (55
 criteria; 4.1.1 Parsing was removed in WCAG 2.2). The scope is the one in
@@ -13,8 +15,8 @@ installer, and all shipped locales.
 | --- | --- |
 | Standard | [WCAG 2.2](https://www.w3.org/TR/WCAG22/), levels A and AA |
 | Version audited | `main`, October 2026 (0.5.x) |
-| Last updated | 2026-10-16 |
-| Methods | Automated checks (axe-core in Vitest and Playwright, keyboard walk) and code review; manual review with assistive technology is in progress |
+| Last updated | 2026-10-30 |
+| Methods | Automated checks (axe-core in Vitest and Playwright, keyboard walk), code review, and manual review with the keyboard and VoiceOver on macOS |
 
 ## Results
 
@@ -31,12 +33,12 @@ The results use the terms of the
 
 | Result | Criteria |
 | --- | ---: |
-| Supports | 49 |
+| Supports | 50 |
 | Partially Supports | 1 |
 | Does Not Support | 0 |
 | Not Applicable | 4 |
 | Not Evaluated, automated checks pass | 0 |
-| Not Evaluated | 1 |
+| Not Evaluated | 0 |
 
 ### 1. Perceivable
 
@@ -49,7 +51,7 @@ The results use the terms of the
 | 1.2.4 Captions (Live) | AA | Not Applicable | The engine has no live media. |
 | 1.2.5 Audio Description (Prerecorded) | AA | Not Applicable | As 1.2.2. |
 | 1.3.1 Info and Relationships | A | Supports | Automated checks pass; profile labels are tied to their fields with `for`/`id` and `aria-describedby`. The bot trap in the feedback form was reachable by screen readers and Tab, so a person could fill it and be rejected as a bot; it is now hidden from both. Checked with VoiceOver: headings, landmarks, administration tables, form fields and groups, lists. |
-| 1.3.2 Meaningful Sequence | A | Not Evaluated | Check the reading order, especially right-to-left (Arabic) and card grids. |
+| 1.3.2 Meaningful Sequence | A | Supports | Checked with VoiceOver in both themes and in Arabic: reading order follows the visual order. Fixed on the way: message actions came before the message text (now after it), and the users list, post feeds, player playlist and tags are lists. Separator dots and the forum icon legend are hidden from screen readers. |
 | 1.3.3 Sensory Characteristics | A | Supports | Reviewed against the English strings. The empty messenger said "open a conversation on the left", which is on the right in right-to-left locales and above on a phone; it now says "from the list" in all locales. The file browser help now names Enter as well as double-click. Remaining "above" and "below" describe reading order next to a link or label. |
 | 1.3.4 Orientation | AA | Supports | Nothing locks the orientation: no `orientation` media queries, no `screen.orientation.lock()`, no manifest `orientation`. Layouts are responsive in both themes and the administration panel. |
 | 1.3.5 Identify Input Purpose | AA | Supports | `autocomplete` is set on sign-in, registration, password reset and retrieval, feedback (`name`, `email`), profile (`nickname`, `url`, `bday`) and email and password (`email`, `new-password`, `current-password`) in both themes; checked by hand that browsers offer the right values. |
@@ -110,7 +112,7 @@ The results use the terms of the
 
 | Criterion | Level | Result | Remarks |
 | --- | --- | --- | --- |
-| 4.1.2 Name, Role, Value | A | Partially Supports | Automated checks pass except Chonky's file list (`aria-required-children`, in `tests/a11y/baseline.json`), so the file browser screen does not meet the criterion. To review with a screen reader: tabs, menus, switches, Trix, audio player. Arrow keys and list roles for the file browser are planned in `docs/TODO.md`. |
+| 4.1.2 Name, Role, Value | A | Partially Supports | Checked with VoiceOver: tabs, menus, switches, Trix, the audio player, the messenger, users list, profile and community pages. Fixed on the way: about 350 decorative icons were read as empty groups (now hidden; the scan fails on an unhidden one), icon-only buttons were named only by `title`, the messenger contacts and picked members were not buttons, the direct/group choice and the player had no role or name, the position slider and counters were read as clock times or "slash". Still failing: Chonky's file list (`aria-required-children`, in `tests/a11y/baseline.json`), so the file browser screen does not meet the criterion; arrow keys and list roles for it are planned in `docs/TODO.md`. |
 | 4.1.3 Status Messages | AA | Supports | Administration notifications are `role="alert"`; search progress and the save messages on every profile tab use `role="status"`. Messages that arrive in the open conversation were not announced; a live region now reads the sender and text (up to three at a time, own messages left out). To confirm with a screen reader. Found with VoiceOver: site toasts were not read in either theme (the toast is hidden until shown, and VoiceOver reads neither a live region that appears nor text written into a hidden one); they are now announced through two live regions that are always present (polite, and assertive for errors), and the visible toast has no live role of its own. Checked again with VoiceOver: toasts, administration notifications, search, profile saves and new messages are read. |
 
 ## Updating this report
