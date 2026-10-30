@@ -1,4 +1,9 @@
+{# Burger is shown only when the top menu has items; otherwise search (if any) is rendered inline. #}
+{% set hasTopMenu = topMenu is not empty %}
+{% set hasSearch = action_url('search.results') is not empty %}
+
 {% block navbar_burger %}
+{% if hasTopMenu %}
     {# BURGER: shown below the desktop breakpoint only (base.css) #}
     <button class="ui-button ui-button--secondary site-nav__burger"
             type="button"
@@ -9,19 +14,24 @@
             aria-label="{{ trans('view.nav.open_menu') }}">
         <i class="bi bi-list" aria-hidden="true"></i>
     </button>
+{% endif %}
 {% endblock %}
 
 {# Menu #}
-<div class="site-nav__collapse" id="mainNavbar" hidden>
+{% if hasTopMenu or hasSearch %}
+{% if hasTopMenu %}<div class="site-nav__collapse" id="mainNavbar" hidden>{% else %}<div class="site-nav__collapse">{% endif %}
     {% block navbar_menu %}
+    {% if hasTopMenu %}
         {% include 'components/nav/menu.twig' with {
             items: topMenu,
             menuClass: 'site-nav__menu',
             itemClass: 'site-nav__link'
         } %}
+    {% endif %}
     {% endblock %}
 
     {% block navbar_search %}
         {% include 'components/nav/search-form.twig' %}
     {% endblock %}
 </div>
+{% endif %}
