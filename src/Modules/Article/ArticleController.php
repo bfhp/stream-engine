@@ -22,6 +22,8 @@ class ArticleController extends AbstractController
 {
     private const int DEFAULT_ARTICLES_PER_PAGE = 20;
 
+    private const int RELATED_ARTICLES_LIMIT = 3;
+
     public static function feedTypes(): array
     {
         return [
@@ -194,6 +196,8 @@ class ArticleController extends AbstractController
             $comments = $this->feedService->getComments($articleFeed->id, null, $this->context->user);
         }
 
+        $relatedArticles = $this->resolveRelatedArticles($articleFeed);
+
         return ViewModel::fromPage(
             $page,
             'modules/article/article.show.twig',
@@ -208,8 +212,33 @@ class ArticleController extends AbstractController
                     : 'contained',
                 'siblings' => $siblings ?? null,
                 'comments' => $comments ?? null,
+                'subFeeds' => $relatedArticles,
             ]
         );
+    }
+
+    /** @return Feed[] */
+    private function resolveRelatedArticles(Feed $article): array
+    {
+        $candidates = $this->feedService->getFeedsByParentAndType(
+            $article->parentId,
+            'article',
+            $this->context->user,
+            self::RELATED_ARTICLES_LIMIT + 1,
+        );
+        $related = [];
+        foreach ($candidates as $candidate) {
+            if ($candidate->id === $article->id) {
+                continue;
+            }
+
+            $related[] = $candidate;
+            if (count($related) === self::RELATED_ARTICLES_LIMIT) {
+                break;
+            }
+        }
+
+        return $related;
     }
 
     /**

@@ -303,6 +303,29 @@ final class ArticleControllerTest extends TestCase
         $this->assertNull($view->data['comments']);
     }
 
+    public function testRelatedArticlesComeFromTheSameParentAndExcludeTheCurrentArticle(): void
+    {
+        $current = $this->makeFeed(12, 'current', parentId: 4);
+        $feedService = $this->createMock(FeedService::class);
+        $feedService->method('getFeedById')->willReturn($current);
+        $feedService->method('getPrevNext')->willReturn(['prev' => null, 'next' => null]);
+        $feedService->expects($this->once())
+            ->method('getFeedsByParentAndType')
+            ->with(4, 'article', $this->isInstanceOf(User::class), 4)
+            ->willReturn([
+                $this->makeFeed(10, 'first', parentId: 4),
+                $current,
+                $this->makeFeed(13, 'second', parentId: 4),
+                $this->makeFeed(14, 'third', parentId: 4),
+            ]);
+
+        $view = $this->makeController($feedService)->show(
+            $this->makePage('article.show-id', feedId: 12, feedType: null),
+        );
+
+        $this->assertSame([10, 13, 14], array_column($view->data['subFeeds'], 'id'));
+    }
+
     /* ===============================
        showSectionsListPage
     =============================== */
