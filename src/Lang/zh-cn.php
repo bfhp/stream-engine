@@ -848,6 +848,8 @@ return [
     'js.admin.feed_content_width_description' => '将文章内容限制在网站容器内，或允许使用全宽布局。',
     'js.admin.feed_content_width_contained' => '容器内',
     'js.admin.feed_content_width_full' => '全宽',
+    'js.admin.related_articles_label' => '显示相关文章',
+    'js.admin.related_articles_description' => '最多显示同一栏目中的三篇其他文章。',
     'js.admin.comments_label' => '显示评论',
     'js.admin.comments_description' => '当页面模板支持时，显示评论区。',
     'js.admin.on' => '开',

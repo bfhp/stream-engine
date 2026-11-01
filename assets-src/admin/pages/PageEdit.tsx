@@ -16,6 +16,7 @@ import {
     feedContentWidth,
     parsePageSettings,
     supportsFeedContentWidth,
+    supportsRelatedArticles,
     type FeedContentWidth,
     type PageSettings
 } from "../lib/page-settings";
@@ -84,7 +85,7 @@ function blankPage(): EditablePage {
         pattern: "",
         action: "",
         pageName: "",
-        settings: { shareButtons: false, commentsEnabled: false },
+        settings: { shareButtons: false, commentsEnabled: false, relatedArticlesEnabled: false },
         feedType: "",
         listFeedType: "",
         termVocabulary: "",
@@ -670,6 +671,19 @@ export default function PageEdit() {
                             feedContentWidth: (value || "contained") as FeedContentWidth
                         })}
                         allowDeselect={false}
+                    />
+                )}
+                {supportsRelatedArticles(page.action) && (
+                    <Switch
+                        label={trans("js.admin.related_articles_label")}
+                        description={trans("js.admin.related_articles_description")}
+                        onLabel={trans("js.admin.on")}
+                        offLabel={trans("js.admin.off")}
+                        checked={page.settings.relatedArticlesEnabled === true}
+                        onChange={event => update("settings", {
+                            ...page.settings,
+                            relatedArticlesEnabled: event.currentTarget.checked
+                        })}
                     />
                 )}
                 <Switch

@@ -848,6 +848,8 @@ Correo: {email}
     'js.admin.feed_content_width_description' => 'Mantiene el contenido dentro del contenedor del sitio o permite un diseño a ancho completo.',
     'js.admin.feed_content_width_contained' => 'En el contenedor',
     'js.admin.feed_content_width_full' => 'Ancho completo',
+    'js.admin.related_articles_label' => 'Mostrar artículos relacionados',
+    'js.admin.related_articles_description' => 'Muestra hasta tres artículos más de la misma sección.',
     'js.admin.comments_label' => 'Mostrar comentarios',
     'js.admin.comments_description' => 'Muestra la sección de comentarios cuando la plantilla de la página lo admite.',
     'js.admin.on' => 'Activado',

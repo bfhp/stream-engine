@@ -848,6 +848,8 @@ E-Mail: {email}
     'js.admin.feed_content_width_description' => 'Artikelinhalt im Website-Container halten oder ein Layout über die volle Breite erlauben.',
     'js.admin.feed_content_width_contained' => 'Im Container',
     'js.admin.feed_content_width_full' => 'Volle Breite',
+    'js.admin.related_articles_label' => 'Ähnliche Artikel anzeigen',
+    'js.admin.related_articles_description' => 'Zeigt bis zu drei weitere Artikel aus demselben Bereich.',
     'js.admin.comments_label' => 'Kommentare anzeigen',
     'js.admin.comments_description' => 'Zeigt den Kommentarbereich an, wenn die Seitenvorlage dies unterstützt.',
     'js.admin.on' => 'Ein',

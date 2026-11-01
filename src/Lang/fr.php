@@ -848,6 +848,8 @@ E-mail : {email}
     'js.admin.feed_content_width_description' => 'Conserve le contenu dans le conteneur du site ou autorise une mise en page pleine largeur.',
     'js.admin.feed_content_width_contained' => 'Dans le conteneur',
     'js.admin.feed_content_width_full' => 'Pleine largeur',
+    'js.admin.related_articles_label' => 'Afficher les articles associés',
+    'js.admin.related_articles_description' => 'Affiche jusqu’à trois autres articles de la même section.',
     'js.admin.comments_label' => 'Afficher les commentaires',
     'js.admin.comments_description' => 'Affiche la section des commentaires lorsque le modèle de la page le permet.',
     'js.admin.on' => 'Activé',

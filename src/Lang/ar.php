@@ -848,6 +848,8 @@ return [
     'js.admin.feed_content_width_description' => 'إبقاء محتوى المقال داخل حاوية الموقع أو السماح بتخطيط بعرض كامل.',
     'js.admin.feed_content_width_contained' => 'داخل الحاوية',
     'js.admin.feed_content_width_full' => 'بعرض كامل',
+    'js.admin.related_articles_label' => 'عرض المقالات ذات الصلة',
+    'js.admin.related_articles_description' => 'يعرض ما يصل إلى ثلاث مقالات أخرى من القسم نفسه.',
     'js.admin.comments_label' => 'عرض التعليقات',
     'js.admin.comments_description' => 'يعرض قسم التعليقات عندما يدعم قالب الصفحة ذلك.',
     'js.admin.on' => 'مفعّل',

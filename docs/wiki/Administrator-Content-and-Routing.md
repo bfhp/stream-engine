@@ -178,9 +178,10 @@ Other enabled modules add their own actions. Use the descriptions and field
 validation shown by the editor; unavailable legacy actions may be preserved
 on an existing page but cannot be selected for a new one.
 
-**Page name** supplies a fallback display name. **Article content width** is
-available for article display actions. **Show comments** and **Show share
-buttons** affect only views and themes that support those features.
+**Page name** supplies a fallback display name. **Article content width** and
+the opt-in **Show related articles** setting are available for article display
+actions. **Show comments** and **Show share buttons** affect only views and
+themes that support those features.
 
 ## Worked example: publish `/about/`
 

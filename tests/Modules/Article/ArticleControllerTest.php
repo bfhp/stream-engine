@@ -320,10 +320,28 @@ final class ArticleControllerTest extends TestCase
             ]);
 
         $view = $this->makeController($feedService)->show(
-            $this->makePage('article.show-id', feedId: 12, feedType: null),
+            $this->makePage(
+                'article.show-id',
+                feedId: 12,
+                feedType: null,
+                settings: (object) ['relatedArticlesEnabled' => true],
+            ),
         );
 
         $this->assertSame([10, 13, 14], array_column($view->data['subFeeds'], 'id'));
+    }
+
+    public function testRelatedArticlesAreDisabledByDefault(): void
+    {
+        $feedService = $this->createMock(FeedService::class);
+        $feedService->method('getFeedById')->willReturn($this->makeFeed(12, 'current'));
+        $feedService->expects($this->never())->method('getFeedsByParentAndType');
+
+        $view = $this->makeController($feedService)->show(
+            $this->makePage('article.show-id', feedId: 12, feedType: null),
+        );
+
+        $this->assertSame([], $view->data['subFeeds']);
     }
 
     /* ===============================

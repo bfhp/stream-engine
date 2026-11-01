@@ -58,6 +58,11 @@ final class Page
         return (bool) ($this->settings->commentsEnabled ?? false);
     }
 
+    public function relatedArticlesEnabled(): bool
+    {
+        return ($this->settings->relatedArticlesEnabled ?? false) === true;
+    }
+
     public static function api(
         int $id,
         int $parentId,

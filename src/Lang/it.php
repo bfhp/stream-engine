@@ -848,6 +848,8 @@ E-mail: {email}
     'js.admin.feed_content_width_description' => 'Mantiene il contenuto nel contenitore del sito o consente un layout a larghezza intera.',
     'js.admin.feed_content_width_contained' => 'Nel contenitore',
     'js.admin.feed_content_width_full' => 'Larghezza intera',
+    'js.admin.related_articles_label' => 'Mostra articoli correlati',
+    'js.admin.related_articles_description' => 'Mostra fino a tre altri articoli della stessa sezione.',
     'js.admin.comments_label' => 'Mostra i commenti',
     'js.admin.comments_description' => 'Mostra la sezione dei commenti quando il template della pagina lo supporta.',
     'js.admin.on' => 'Attivo',

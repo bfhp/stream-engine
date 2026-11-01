@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
     feedContentWidth,
     parsePageSettings,
-    supportsFeedContentWidth
+    supportsFeedContentWidth,
+    supportsRelatedArticles
 } from "../../assets-src/admin/lib/page-settings";
 
 describe("page settings", () => {
@@ -36,6 +37,15 @@ describe("page settings", () => {
         ["sections.list", false],
     ])("scopes feed content width to article pages: %s", (action, expected) => {
         expect(supportsFeedContentWidth(action)).toBe(expected);
+    });
+
+    it.each([
+        ["article.show-id", true],
+        ["article.show-slug", true],
+        ["articles.list-id", false],
+        ["articles.index", false],
+    ])("scopes related articles to article pages: %s", (action, expected) => {
+        expect(supportsRelatedArticles(action)).toBe(expected);
     });
 
     it.each(["{broken", "[]", "true", "42", '"text"'])("rejects invalid settings without discarding them: %s", value => {

@@ -203,7 +203,9 @@ class ArticleController extends AbstractController
             $comments = $this->feedService->getComments($articleFeed->id, null, $this->context->user);
         }
 
-        $relatedArticles = $this->resolveRelatedArticles($articleFeed);
+        $relatedArticles = $page->relatedArticlesEnabled()
+            ? $this->resolveRelatedArticles($articleFeed)
+            : [];
 
         return ViewModel::fromPage(
             $page,

@@ -848,6 +848,8 @@ return [
     'js.admin.feed_content_width_description' => '記事をサイトのコンテナ内に収めるか、全幅レイアウトを許可します。',
     'js.admin.feed_content_width_contained' => 'コンテナ内',
     'js.admin.feed_content_width_full' => '全幅',
+    'js.admin.related_articles_label' => '関連記事を表示',
+    'js.admin.related_articles_description' => '同じセクションの他の記事を最大3件表示します。',
     'js.admin.comments_label' => 'コメントを表示',
     'js.admin.comments_description' => 'ページテンプレートが対応している場合、コメント欄を表示します。',
     'js.admin.on' => 'オン',

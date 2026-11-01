@@ -848,6 +848,8 @@ Email: {email}
     'js.admin.feed_content_width_description' => 'Keep article content inside the site container or allow a full-width layout.',
     'js.admin.feed_content_width_contained' => 'Contained',
     'js.admin.feed_content_width_full' => 'Full width',
+    'js.admin.related_articles_label' => 'Show related articles',
+    'js.admin.related_articles_description' => 'Shows up to three other articles from the same section.',
     'js.admin.comments_label' => 'Show comments',
     'js.admin.comments_description' => 'Shows the comments section when the page template supports it.',
     'js.admin.on' => 'On',

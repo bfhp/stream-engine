@@ -848,6 +848,8 @@ E-mail: {email}
     'js.admin.feed_content_width_description' => 'Umieszcza treść artykułu w kontenerze witryny albo pozwala użyć pełnej szerokości.',
     'js.admin.feed_content_width_contained' => 'W kontenerze',
     'js.admin.feed_content_width_full' => 'Pełna szerokość',
+    'js.admin.related_articles_label' => 'Pokazuj powiązane artykuły',
+    'js.admin.related_articles_description' => 'Wyświetla maksymalnie trzy inne artykuły z tej samej sekcji.',
     'js.admin.comments_label' => 'Pokazuj komentarze',
     'js.admin.comments_description' => 'Pokazuje sekcję komentarzy, jeśli szablon strony ją obsługuje.',
     'js.admin.on' => 'Włączone',

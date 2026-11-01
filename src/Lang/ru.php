@@ -886,6 +886,8 @@ return [
     'js.admin.feed_content_width_description' => 'Ограничить содержимое статьи контейнером сайта или разрешить вёрстку на всю ширину.',
     'js.admin.feed_content_width_contained' => 'В контейнере',
     'js.admin.feed_content_width_full' => 'На всю ширину',
+    'js.admin.related_articles_label' => 'Показывать похожие статьи',
+    'js.admin.related_articles_description' => 'Показывает до трёх других статей из того же раздела.',
     'js.admin.comments_label' => 'Показывать комментарии',
     'js.admin.comments_description' => 'Включает блок комментариев к материалу на странице, если он предусмотрен шаблоном.',
     'js.admin.on' => 'Вкл',

@@ -848,6 +848,8 @@ E-mail: {email}
     'js.admin.feed_content_width_description' => 'Houdt de artikelinhoud binnen de sitecontainer of staat een volledige breedte toe.',
     'js.admin.feed_content_width_contained' => 'In de container',
     'js.admin.feed_content_width_full' => 'Volledige breedte',
+    'js.admin.related_articles_label' => 'Gerelateerde artikelen tonen',
+    'js.admin.related_articles_description' => 'Toont maximaal drie andere artikelen uit dezelfde sectie.',
     'js.admin.comments_label' => 'Reacties tonen',
     'js.admin.comments_description' => 'Toont het reactiegedeelte wanneer de paginasjabloon dit ondersteunt.',
     'js.admin.on' => 'Aan',

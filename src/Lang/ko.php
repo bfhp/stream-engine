@@ -848,6 +848,8 @@ return [
     'js.admin.feed_content_width_description' => '글 콘텐츠를 사이트 컨테이너 안에 유지하거나 전체 너비 레이아웃을 허용합니다.',
     'js.admin.feed_content_width_contained' => '컨테이너 안',
     'js.admin.feed_content_width_full' => '전체 너비',
+    'js.admin.related_articles_label' => '관련 글 표시',
+    'js.admin.related_articles_description' => '같은 섹션의 다른 글을 최대 3개 표시합니다.',
     'js.admin.comments_label' => '댓글 표시',
     'js.admin.comments_description' => '페이지 템플릿이 지원하는 경우 댓글 섹션을 표시합니다.',
     'js.admin.on' => '켬',

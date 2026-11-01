@@ -28,7 +28,11 @@ final class PageTest extends TestCase
 {
     public function testRuntimePageUsesSafeHtmlGetDefaults(): void
     {
-        $settings = (object) ['layout' => 'compact', 'commentsEnabled' => true];
+        $settings = (object) [
+            'layout' => 'compact',
+            'commentsEnabled' => true,
+            'relatedArticlesEnabled' => true,
+        ];
 
         $page = Page::runtime(
             id: 20,
@@ -46,6 +50,7 @@ final class PageTest extends TestCase
         self::assertSame('html', $page->responseType);
         self::assertSame(AccessService::ACCESS_PUBLIC, $page->accessRule);
         self::assertTrue($page->commentsEnabled());
+        self::assertTrue($page->relatedArticlesEnabled());
         self::assertSame('article', $page->feedType);
         self::assertSame('weekly', $page->changefreq);
         self::assertSame($settings, $page->settings);
@@ -74,6 +79,7 @@ final class PageTest extends TestCase
 
     public function testADeclaredMethodIsAllowed(): void
     {
+        $this->assertFalse($this->page(['GET'])->relatedArticlesEnabled());
         $this->assertTrue($this->page(['GET', 'POST'])->allowsMethod('POST'));
     }
 
