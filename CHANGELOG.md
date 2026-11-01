@@ -9,7 +9,7 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- Added `articles.list-id`, `articles.list-slug` and `articles.index` page actions; index page size is configurable.
+- Added `articles.list-id`, `articles.list-slug`, `articles.index` and `articles.by-term` page actions; list page size is configurable.
 
 ## [0.6.0] - 2026-10-30
 

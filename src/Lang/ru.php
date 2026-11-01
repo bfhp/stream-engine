@@ -1586,6 +1586,7 @@ return [
     'admin.page_action.articles.list-slug' => 'Список статей по slug маршрута',
     'admin.page_action.articles.list-id' => 'Список статей закреплённого раздела',
     'admin.page_action.articles.index' => 'Все статьи',
+    'admin.page_action.articles.by-term' => 'Статьи по термину',
     'admin.page_action.sections.list' => 'Список разделов',
     'admin.page_action.users.list' => 'Страница списка пользователей',
     'admin.page_action.user.show' => 'Страница профиля пользователя',

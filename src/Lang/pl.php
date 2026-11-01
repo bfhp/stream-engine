@@ -1543,6 +1543,7 @@ E-mail: {email}
     'admin.page_action.articles.list-slug' => 'Lista artykułów według sluga trasy',
     'admin.page_action.articles.list-id' => 'Lista artykułów z przypiętej sekcji',
     'admin.page_action.articles.index' => 'Wszystkie artykuły',
+    'admin.page_action.articles.by-term' => 'Artykuły według terminu',
     'admin.page_action.sections.list' => 'Lista sekcji',
     'admin.page_action.users.list' => 'Strona listy użytkowników',
     'admin.page_action.user.show' => 'Strona profilu użytkownika',

@@ -1543,6 +1543,7 @@ E-Mail: {email}
     'admin.page_action.articles.list-slug' => 'Artikel anhand des Routen-Slugs auflisten',
     'admin.page_action.articles.list-id' => 'Artikel aus einem festen Bereich auflisten',
     'admin.page_action.articles.index' => 'Alle Artikel',
+    'admin.page_action.articles.by-term' => 'Artikel nach Begriff',
     'admin.page_action.sections.list' => 'Bereiche auflisten',
     'admin.page_action.users.list' => 'Nutzerlistenseite',
     'admin.page_action.user.show' => 'Nutzerprofilseite',

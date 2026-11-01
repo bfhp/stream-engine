@@ -1543,6 +1543,7 @@ E-mail : {email}
     'admin.page_action.articles.list-slug' => 'Lister les articles d’après le slug de la route',
     'admin.page_action.articles.list-id' => 'Lister les articles d’une section fixe',
     'admin.page_action.articles.index' => 'Tous les articles',
+    'admin.page_action.articles.by-term' => 'Articles par terme',
     'admin.page_action.sections.list' => 'Lister les sections',
     'admin.page_action.users.list' => 'Page de liste des utilisateurs',
     'admin.page_action.user.show' => 'Page de profil utilisateur',

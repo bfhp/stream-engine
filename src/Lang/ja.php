@@ -1543,6 +1543,7 @@ return [
     'admin.page_action.articles.list-slug' => 'ルートスラッグの記事一覧',
     'admin.page_action.articles.list-id' => '固定セクションの記事一覧',
     'admin.page_action.articles.index' => 'すべての記事',
+    'admin.page_action.articles.by-term' => 'ターム別の記事',
     'admin.page_action.sections.list' => 'セクションの一覧',
     'admin.page_action.users.list' => 'ユーザー一覧ページ',
     'admin.page_action.user.show' => 'ユーザープロフィールページ',

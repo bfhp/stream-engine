@@ -1543,6 +1543,7 @@ return [
     'admin.page_action.articles.list-slug' => 'قائمة المقالات حسب الاسم المختصر للمسار',
     'admin.page_action.articles.list-id' => 'قائمة مقالات من قسم ثابت',
     'admin.page_action.articles.index' => 'جميع المقالات',
+    'admin.page_action.articles.by-term' => 'المقالات حسب المصطلح',
     'admin.page_action.sections.list' => 'قائمة الأقسام',
     'admin.page_action.users.list' => 'صفحة قائمة المستخدمين',
     'admin.page_action.user.show' => 'صفحة الملف الشخصي للمستخدم',

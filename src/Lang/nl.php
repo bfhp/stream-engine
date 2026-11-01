@@ -1543,6 +1543,7 @@ E-mail: {email}
     'admin.page_action.articles.list-slug' => 'Artikelen op basis van de routeslug',
     'admin.page_action.articles.list-id' => 'Artikelen uit een vaste sectie',
     'admin.page_action.articles.index' => 'Alle artikelen',
+    'admin.page_action.articles.by-term' => 'Artikelen per term',
     'admin.page_action.sections.list' => 'Lijst met secties',
     'admin.page_action.users.list' => 'Pagina met gebruikerslijst',
     'admin.page_action.user.show' => 'Gebruikersprofielpagina',

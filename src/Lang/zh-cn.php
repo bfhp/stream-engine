@@ -1543,6 +1543,7 @@ return [
     'admin.page_action.articles.list-slug' => '按路由别名列出文章',
     'admin.page_action.articles.list-id' => '固定栏目的文章列表',
     'admin.page_action.articles.index' => '所有文章',
+    'admin.page_action.articles.by-term' => '按术语列出文章',
     'admin.page_action.sections.list' => '栏目列表',
     'admin.page_action.users.list' => '用户列表页',
     'admin.page_action.user.show' => '用户个人资料页',

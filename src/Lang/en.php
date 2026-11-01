@@ -1549,6 +1549,7 @@ Email: {email}
     'admin.page_action.articles.list-slug' => 'List articles from the route slug',
     'admin.page_action.articles.list-id' => 'List articles from a fixed section',
     'admin.page_action.articles.index' => 'All articles',
+    'admin.page_action.articles.by-term' => 'Articles by term',
     'admin.page_action.sections.list' => 'List sections',
     'admin.page_action.users.list' => 'Users list page',
     'admin.page_action.user.show' => 'User profile page',

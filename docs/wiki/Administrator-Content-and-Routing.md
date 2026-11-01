@@ -171,6 +171,7 @@ Common article actions are:
 | `articles.list-slug` | Resolve an `article-section` from the route slug and list its child `article` feeds. |
 | `articles.list-id` | List child `article` feeds from a fixed `article-section` selected in the **Feed** field. |
 | `articles.index` | Show all accessible `article` feeds. No feed fields are required; page settings control whether 10, 20 or 50 articles are shown per page. |
+| `articles.by-term` | Resolve a term from the route slug and list its `article` feeds. Term vocabulary and page size are configured in the page editor. |
 | `sections.list` | List `article-section` children under a fixed root feed selected in the **Feed** field. |
 
 Other enabled modules add their own actions. Use the descriptions and field

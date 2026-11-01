@@ -14,6 +14,7 @@ use StreamEngine\Core\RequestContext;
 use StreamEngine\Domain\Feed;
 use StreamEngine\Domain\Page;
 use StreamEngine\Service\FeedService;
+use StreamEngine\Service\TermService;
 use StreamEngine\View\Breadcrumb;
 use StreamEngine\View\ViewModel;
 
@@ -74,6 +75,24 @@ class ArticleController extends AbstractController
                     ],
                 ],
             ],
+            'articles.by-term' => [
+                'label' => 'Articles by term',
+                'fields' => [
+                    'termVocabulary' => 'required',
+                ],
+                'settings' => [
+                    'articlesPerPage' => [
+                        'control' => 'select',
+                        'label' => 'js.admin.article.articles_per_page',
+                        'required' => true,
+                        'options' => [
+                            ['value' => '10', 'label' => '10'],
+                            ['value' => '20', 'label' => '20'],
+                            ['value' => '50', 'label' => '50'],
+                        ],
+                    ],
+                ],
+            ],
             'sections.list' => [
                 'label' => 'List sections',
                 'fields' => [
@@ -88,6 +107,7 @@ class ArticleController extends AbstractController
         RequestContext               $context,
         private readonly FeedService $feedService,
         private readonly PageTree    $pageTree,
+        private readonly TermService $termService,
     ) {
         parent::__construct($db, $context);
     }
@@ -97,6 +117,17 @@ class ArticleController extends AbstractController
      */
     public function getBreadcrumb(Page $page): ?Breadcrumb
     {
+        if ($page->action === 'articles.by-term') {
+            $slug = isset($page->params['slug']) ? (string) $page->params['slug'] : '';
+            $term = $page->termVocabulary !== null
+                ? $this->termService->getTermByVocabularyAndSlug($page->termVocabulary, $slug)
+                : null;
+            if ($term === null) {
+                throw new ForbiddenException('Term not found');
+            }
+
+            return new Breadcrumb($term->name, $term->slug);
+        }
         if ($page->action === 'articles.list-slug' || $page->action === 'article.show-slug') {
             if (key_exists('slug', $page->params)) {
                 $pageFeed = $this->resolveFeedForPage($page, (string) $page->params['slug']);
@@ -125,6 +156,7 @@ class ArticleController extends AbstractController
             'articles.list-slug' => $this->showArticleListPage($page, (string) $args['slug']),
             'articles.list-id' => $this->showArticleListPage($page),
             'articles.index' => $this->showArticleIndexPage($page),
+            'articles.by-term' => $this->showArticlesByTermPage($page, (string) ($args['slug'] ?? '')),
             'sections.list' => $this->showSectionsListPage($page),
             'article.show-id' => $this->showArticlePage($page, $this->resolveArticleById($page)),
             'article.show-slug' => $this->showArticlePage(
@@ -263,17 +295,8 @@ class ArticleController extends AbstractController
      */
     private function showArticleIndexPage(Page $page): ViewModel
     {
-        $articlesPerPage = match ($page->settings->articlesPerPage ?? null) {
-            '10' => 10,
-            '50' => 50,
-            default => self::DEFAULT_ARTICLES_PER_PAGE,
-        };
-        $currentPage = $this->context->query->has('page')
-            ? $this->context->query->int('page')
-            : 1;
-        if ($currentPage < 1 || $currentPage > intdiv(PHP_INT_MAX, $articlesPerPage)) {
-            throw new NotFoundException('Page not found');
-        }
+        $articlesPerPage = $this->articlesPerPage($page);
+        $currentPage = $this->articlePageNumber($articlesPerPage);
 
         $articlesPage = $this->feedService->getFeedsByTypePage(
             'article',
@@ -301,6 +324,83 @@ class ArticleController extends AbstractController
                 ],
             ]
         );
+    }
+
+    /**
+     * @throws NotFoundException
+     */
+    private function showArticlesByTermPage(Page $page, string $slug): ViewModel
+    {
+        if ($page->termVocabulary === null || $slug === '') {
+            throw new NotFoundException('Term not found');
+        }
+
+        $term = $this->termService->getTermByVocabularyAndSlug($page->termVocabulary, $slug);
+        if ($term === null || $term->canonicalUrl === null) {
+            throw new NotFoundException('Term not found');
+        }
+
+        $articlesPerPage = $this->articlesPerPage($page);
+        $currentPage = $this->articlePageNumber($articlesPerPage);
+        $articles = $this->feedService->getFeedsByTerm(
+            $page->termVocabulary,
+            $term->slug,
+            $this->context->user,
+            'article',
+            $articlesPerPage,
+            ($currentPage - 1) * $articlesPerPage,
+        );
+        $counts = $this->feedService->countFeedsGroupedByTermsAndVocabulary(
+            $page->termVocabulary,
+            $this->context->user,
+            'article',
+        );
+        $totalPages = max(1, (int) ceil(($counts[$term->id] ?? 0) / $articlesPerPage));
+        if ($currentPage > $totalPages) {
+            throw new NotFoundException('Page not found');
+        }
+
+        return ViewModel::fromPage(
+            $page,
+            'modules/article/articles.index.twig',
+            [
+                'title' => $term->name,
+                'canonical' => $currentPage > 1
+                    ? $term->canonicalUrl.'?page='.$currentPage
+                    : $term->canonicalUrl,
+                'articles' => $articles,
+                'term' => $term,
+                'pagination' => [
+                    'current' => $currentPage,
+                    'total' => $totalPages,
+                    'baseUrl' => $term->canonicalUrl,
+                ],
+            ]
+        );
+    }
+
+    private function articlesPerPage(Page $page): int
+    {
+        return match ($page->settings->articlesPerPage ?? null) {
+            '10' => 10,
+            '50' => 50,
+            default => self::DEFAULT_ARTICLES_PER_PAGE,
+        };
+    }
+
+    /**
+     * @throws NotFoundException
+     */
+    private function articlePageNumber(int $articlesPerPage): int
+    {
+        $currentPage = $this->context->query->has('page')
+            ? $this->context->query->int('page')
+            : 1;
+        if ($currentPage < 1 || $currentPage > intdiv(PHP_INT_MAX, $articlesPerPage)) {
+            throw new NotFoundException('Page not found');
+        }
+
+        return $currentPage;
     }
 
     /**

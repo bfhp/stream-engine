@@ -972,6 +972,10 @@ final class AdminControllerTest extends TestCase
                 ['action' => 'articles.list-id', 'listFeedType' => 'article'],
                 "Feed ID is required for page action 'articles.list-id'",
             ],
+            'term article list requires a vocabulary' => [
+                ['action' => 'articles.by-term', 'settings' => '{"articlesPerPage":"20"}'],
+                "Term vocabulary is required for page action 'articles.by-term'",
+            ],
         ];
     }
 

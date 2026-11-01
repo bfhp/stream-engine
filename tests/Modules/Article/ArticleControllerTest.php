@@ -13,12 +13,17 @@ use StreamEngine\Core\PageTree;
 use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Core\QueryParams;
 use StreamEngine\Core\RequestContext;
+use StreamEngine\Core\UrlGenerator;
 use StreamEngine\Domain\Feed;
 use StreamEngine\Domain\Page;
 use StreamEngine\Domain\User;
 use StreamEngine\Modules\Article\ArticleController;
+use StreamEngine\Repository\FeedTermRepository;
 use StreamEngine\Service\AccessService;
 use StreamEngine\Service\FeedService;
+use StreamEngine\Service\TermService;
+use Tests\Support\ArrayCache;
+use Tests\Support\FakeFeedRepository;
 
 /**
  * The page renderers behind `article.show-id`, `article.show-slug`,
@@ -42,12 +47,21 @@ final class ArticleControllerTest extends TestCase
         string $role = AccessService::ROLE_USER,
         array $pages = [],
         ?QueryParams $query = null,
+        ?array $termRow = null,
     ): ArticleController {
+        $pageTree = new PageTree($pages);
+        $termDb = $this->createStub(PdoDatabase::class);
+        $termDb->method('fetchOne')->willReturn($termRow);
+
         return new ArticleController(
             $this->createStub(PdoDatabase::class),
             new RequestContext(new User(3, 'a@b.c', $role), new DateTimeZone('UTC'), $query ?? new QueryParams()),
             $feedService,
-            new PageTree($pages),
+            $pageTree,
+            new TermService(
+                new FeedTermRepository($termDb),
+                new UrlGenerator($pageTree, new FakeFeedRepository([]), new ArrayCache()),
+            ),
         );
     }
 
@@ -62,6 +76,7 @@ final class ArticleControllerTest extends TestCase
         ?string $feedType = 'article',
         array $params = [],
         ?object $settings = null,
+        ?string $termVocabulary = null,
     ): Page {
         if ($commentsEnabled) {
             $settings = (object) [...(array) ($settings ?? []), 'commentsEnabled' => true];
@@ -80,6 +95,7 @@ final class ArticleControllerTest extends TestCase
             responseType: 'html',
             accessRule: AccessService::ACCESS_PUBLIC,
             action: $action,
+            termVocabulary: $termVocabulary,
         );
 
         $page->params = $params;
@@ -447,6 +463,60 @@ final class ArticleControllerTest extends TestCase
             $feedService,
             query: new QueryParams(['page' => '2']),
         )->show($this->makePage('articles.index', feedType: null));
+    }
+
+    public function testArticlesByTermResolveTheTermAndPaginateArticles(): void
+    {
+        $feedService = $this->createMock(FeedService::class);
+        $feedService->expects($this->once())
+            ->method('getFeedsByTerm')
+            ->with('tags', 'php', $this->isInstanceOf(User::class), 'article', 10, 10)
+            ->willReturn([$this->makeFeed(21, 'article-21')]);
+        $feedService->expects($this->once())
+            ->method('countFeedsGroupedByTermsAndVocabulary')
+            ->with('tags', $this->isInstanceOf(User::class), 'article')
+            ->willReturn([7 => 21]);
+        $page = $this->makePage(
+            'articles.by-term',
+            pattern: 'articles/{slug}',
+            feedType: null,
+            settings: (object) ['articlesPerPage' => '10'],
+            termVocabulary: 'tags',
+        );
+
+        $controller = $this->makeController(
+            $feedService,
+            pages: [$page],
+            query: new QueryParams(['page' => '2']),
+            termRow: [
+                'id' => 7,
+                'parent_id' => null,
+                'vocabulary' => 'tags',
+                'name' => 'PHP',
+                'slug' => 'php',
+                'updated_at' => 1,
+            ],
+        );
+        $view = $controller->show($page, ['slug' => 'php']);
+
+        $this->assertSame('PHP', $view->data['title']);
+        $this->assertSame('/articles/php/?page=2', $view->data['canonical']);
+        $this->assertSame(21, $view->data['articles'][0]->id);
+        $this->assertSame(
+            ['current' => 2, 'total' => 3, 'baseUrl' => '/articles/php/'],
+            $view->data['pagination'],
+        );
+    }
+
+    public function testArticlesByTermRejectAnUnknownTerm(): void
+    {
+        $this->expectException(NotFoundException::class);
+        $this->expectExceptionMessage('Term not found');
+
+        $this->makeController($this->createStub(FeedService::class))->show(
+            $this->makePage('articles.by-term', feedType: null, termVocabulary: 'tags'),
+            ['slug' => 'unknown'],
+        );
     }
 
     /**

@@ -10,22 +10,33 @@ use StreamEngine\Core\ModuleRegistry;
 use StreamEngine\Core\PageTree;
 use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Core\RequestContext;
+use StreamEngine\Core\UrlGenerator;
 use StreamEngine\Domain\Page;
 use StreamEngine\Domain\User;
 use StreamEngine\Modules\Article\ArticleController;
+use StreamEngine\Repository\FeedTermRepository;
 use StreamEngine\Service\AccessService;
 use StreamEngine\Service\FeedService;
+use StreamEngine\Service\TermService;
+use Tests\Support\ArrayCache;
+use Tests\Support\FakeFeedRepository;
 
 final class ModuleTest extends TestCase
 {
     public function testResolvesThroughControllerFactory(): void
     {
         $modules = new ModuleRegistry();
+        $db = $this->createStub(PdoDatabase::class);
+        $pageTree = new PageTree([]);
         $factory = new ControllerFactory(
             $modules,
-            $this->createStub(PdoDatabase::class),
+            $db,
             $this->createStub(FeedService::class),
-            new PageTree([]),
+            $pageTree,
+            new TermService(
+                new FeedTermRepository($db),
+                new UrlGenerator($pageTree, new FakeFeedRepository([]), new ArrayCache()),
+            ),
         );
         $context = new RequestContext(new User(1, '', AccessService::ROLE_USER), new \DateTimeZone('UTC'));
 

@@ -1543,6 +1543,7 @@ Correo: {email}
     'admin.page_action.articles.list-slug' => 'Listar artículos por el slug de la ruta',
     'admin.page_action.articles.list-id' => 'Listar artículos de una sección fija',
     'admin.page_action.articles.index' => 'Todos los artículos',
+    'admin.page_action.articles.by-term' => 'Artículos por término',
     'admin.page_action.sections.list' => 'Listar secciones',
     'admin.page_action.users.list' => 'Página de lista de usuarios',
     'admin.page_action.user.show' => 'Página de perfil de usuario',

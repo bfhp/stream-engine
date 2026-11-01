@@ -1543,6 +1543,7 @@ return [
     'admin.page_action.articles.list-slug' => '경로 슬러그의 글 목록',
     'admin.page_action.articles.list-id' => '고정 섹션의 글 목록',
     'admin.page_action.articles.index' => '모든 글',
+    'admin.page_action.articles.by-term' => '용어별 글',
     'admin.page_action.sections.list' => '섹션 목록',
     'admin.page_action.users.list' => '사용자 목록 페이지',
     'admin.page_action.user.show' => '사용자 프로필 페이지',

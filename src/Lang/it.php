@@ -1543,6 +1543,7 @@ E-mail: {email}
     'admin.page_action.articles.list-slug' => 'Elenca gli articoli in base allo slug della rotta',
     'admin.page_action.articles.list-id' => 'Elenca gli articoli di una sezione fissa',
     'admin.page_action.articles.index' => 'Tutti gli articoli',
+    'admin.page_action.articles.by-term' => 'Articoli per termine',
     'admin.page_action.sections.list' => 'Elenca le sezioni',
     'admin.page_action.users.list' => 'Pagina dell’elenco utenti',
     'admin.page_action.user.show' => 'Pagina del profilo utente',
