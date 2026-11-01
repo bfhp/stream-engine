@@ -9,7 +9,7 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- Article pages can list articles from a fixed section.
+- Added `articles.list-id`, `articles.list-slug` and `articles.index` page actions; index page size is configurable.
 
 ## [0.6.0] - 2026-10-30
 

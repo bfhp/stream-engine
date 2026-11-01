@@ -1,0 +1,21 @@
+<nav class="ui-container article-pagination"
+     aria-label="{{ trans('js.pagination.page_of', { current: pagination.current, total: pagination.total }) }}">
+    {% if pagination.current > 1 %}
+        <a class="ui-button ui-button--secondary"
+           href="{{ pagination.baseUrl }}{{ pagination.current > 2 ? '?page=' ~ (pagination.current - 1) : '' }}">
+            {{ trans('js.pagination.previous') }}
+        </a>
+    {% else %}
+        <span class="ui-button ui-button--secondary" aria-disabled="true">{{ trans('js.pagination.previous') }}</span>
+    {% endif %}
+
+    <span>{{ trans('js.pagination.page_of', { current: pagination.current, total: pagination.total }) }}</span>
+
+    {% if pagination.current < pagination.total %}
+        <a class="ui-button ui-button--secondary" href="{{ pagination.baseUrl }}?page={{ pagination.current + 1 }}">
+            {{ trans('js.pagination.next') }}
+        </a>
+    {% else %}
+        <span class="ui-button ui-button--secondary" aria-disabled="true">{{ trans('js.pagination.next') }}</span>
+    {% endif %}
+</nav>

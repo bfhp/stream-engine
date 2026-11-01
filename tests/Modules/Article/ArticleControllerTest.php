@@ -11,6 +11,7 @@ use StreamEngine\Core\Exceptions\ForbiddenException;
 use StreamEngine\Core\Exceptions\NotFoundException;
 use StreamEngine\Core\PageTree;
 use StreamEngine\Core\PdoDatabase;
+use StreamEngine\Core\QueryParams;
 use StreamEngine\Core\RequestContext;
 use StreamEngine\Domain\Feed;
 use StreamEngine\Domain\Page;
@@ -40,10 +41,11 @@ final class ArticleControllerTest extends TestCase
         FeedService $feedService,
         string $role = AccessService::ROLE_USER,
         array $pages = [],
+        ?QueryParams $query = null,
     ): ArticleController {
         return new ArticleController(
             $this->createStub(PdoDatabase::class),
-            new RequestContext(new User(3, 'a@b.c', $role), new DateTimeZone('UTC')),
+            new RequestContext(new User(3, 'a@b.c', $role), new DateTimeZone('UTC'), $query ?? new QueryParams()),
             $feedService,
             new PageTree($pages),
         );
@@ -400,6 +402,51 @@ final class ArticleControllerTest extends TestCase
         $this->assertSame('modules/article/articles.list.twig', $view->template);
         $this->assertSame(2, $view->data['feed']->id);
         $this->assertCount(1, $view->data['subFeeds']);
+    }
+
+    public function testArticleIndexListsAllArticlesWithPagination(): void
+    {
+        $feedService = $this->createMock(FeedService::class);
+        $feedService->expects($this->once())
+            ->method('getFeedsByTypePage')
+            ->with('article', $this->isInstanceOf(User::class), 10, 10)
+            ->willReturn([
+                'items' => [$this->makeFeed(21, 'article-21')],
+                'total' => 41,
+            ]);
+        $page = $this->makePage(
+            'articles.index',
+            pattern: 'articles',
+            feedType: null,
+            settings: (object) ['articlesPerPage' => '10'],
+        );
+
+        $view = $this->makeController(
+            $feedService,
+            query: new QueryParams(['page' => '2']),
+        )->show($page);
+
+        $this->assertSame('modules/article/articles.index.twig', $view->template);
+        $this->assertSame(21, $view->data['articles'][0]->id);
+        $this->assertSame('/articles/?page=2', $view->data['canonical']);
+        $this->assertSame(
+            ['current' => 2, 'total' => 5, 'baseUrl' => '/articles/'],
+            $view->data['pagination'],
+        );
+    }
+
+    public function testArticleIndexRejectsAPageBeyondTheLastPage(): void
+    {
+        $feedService = $this->createStub(FeedService::class);
+        $feedService->method('getFeedsByTypePage')->willReturn(['items' => [], 'total' => 20]);
+
+        $this->expectException(NotFoundException::class);
+        $this->expectExceptionMessage('Page not found');
+
+        $this->makeController(
+            $feedService,
+            query: new QueryParams(['page' => '2']),
+        )->show($this->makePage('articles.index', feedType: null));
     }
 
     /**

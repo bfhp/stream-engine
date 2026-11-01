@@ -1,0 +1,17 @@
+{% extends "layouts/simple.twig" %}
+
+{% block content %}
+    {% if articles %}
+        <div class="ui-container article-list">
+            {% for item in articles %}
+                {% include 'components/article/card.twig' with { item: item } %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="ui-container ui-muted">{{ trans('js.search.empty') }}</p>
+    {% endif %}
+
+    {% if pagination.total > 1 %}
+        {% include 'components/article/pagination.twig' with { pagination: pagination } %}
+    {% endif %}
+{% endblock %}

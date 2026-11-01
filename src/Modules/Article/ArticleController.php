@@ -19,6 +19,8 @@ use StreamEngine\View\ViewModel;
 
 class ArticleController extends AbstractController
 {
+    private const int DEFAULT_ARTICLES_PER_PAGE = 20;
+
     public static function feedTypes(): array
     {
         return [
@@ -54,6 +56,22 @@ class ArticleController extends AbstractController
                 'fields' => [
                     'feedId' => ['status' => 'required', 'feedTypes' => ['article-section']],
                     'listFeedType' => ['status' => 'required', 'values' => ['article']],
+                ],
+            ],
+            'articles.index' => [
+                'label' => 'All articles',
+                'singleton' => true,
+                'settings' => [
+                    'articlesPerPage' => [
+                        'control' => 'select',
+                        'label' => 'js.admin.article.articles_per_page',
+                        'required' => true,
+                        'options' => [
+                            ['value' => '10', 'label' => '10'],
+                            ['value' => '20', 'label' => '20'],
+                            ['value' => '50', 'label' => '50'],
+                        ],
+                    ],
                 ],
             ],
             'sections.list' => [
@@ -106,6 +124,7 @@ class ArticleController extends AbstractController
         return match ($page->action) {
             'articles.list-slug' => $this->showArticleListPage($page, (string) $args['slug']),
             'articles.list-id' => $this->showArticleListPage($page),
+            'articles.index' => $this->showArticleIndexPage($page),
             'sections.list' => $this->showSectionsListPage($page),
             'article.show-id' => $this->showArticlePage($page, $this->resolveArticleById($page)),
             'article.show-slug' => $this->showArticlePage(
@@ -235,6 +254,51 @@ class ArticleController extends AbstractController
                 'canonical' => $rootFeed->canonicalUrl,
                 'feed' => $rootFeed,
                 'subFeeds' => $subFeeds ?? null,
+            ]
+        );
+    }
+
+    /**
+     * @throws NotFoundException
+     */
+    private function showArticleIndexPage(Page $page): ViewModel
+    {
+        $articlesPerPage = match ($page->settings->articlesPerPage ?? null) {
+            '10' => 10,
+            '50' => 50,
+            default => self::DEFAULT_ARTICLES_PER_PAGE,
+        };
+        $currentPage = $this->context->query->has('page')
+            ? $this->context->query->int('page')
+            : 1;
+        if ($currentPage < 1 || $currentPage > intdiv(PHP_INT_MAX, $articlesPerPage)) {
+            throw new NotFoundException('Page not found');
+        }
+
+        $articlesPage = $this->feedService->getFeedsByTypePage(
+            'article',
+            $this->context->user,
+            $articlesPerPage,
+            ($currentPage - 1) * $articlesPerPage,
+        );
+        $totalPages = max(1, (int) ceil($articlesPage['total'] / $articlesPerPage));
+        if ($currentPage > $totalPages) {
+            throw new NotFoundException('Page not found');
+        }
+
+        $baseUrl = $this->pageTree->buildPath($page);
+
+        return ViewModel::fromPage(
+            $page,
+            'modules/article/articles.index.twig',
+            [
+                'canonical' => $currentPage > 1 ? $baseUrl.'?page='.$currentPage : $baseUrl,
+                'articles' => $articlesPage['items'],
+                'pagination' => [
+                    'current' => $currentPage,
+                    'total' => $totalPages,
+                    'baseUrl' => $baseUrl,
+                ],
             ]
         );
     }

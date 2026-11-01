@@ -170,6 +170,7 @@ Common article actions are:
 | `article.show-slug` | Render an `article` selected from a `{slug}` route. Feed type is fixed to `article`. |
 | `articles.list-slug` | Resolve an `article-section` from the route slug and list its child `article` feeds. |
 | `articles.list-id` | List child `article` feeds from a fixed `article-section` selected in the **Feed** field. |
+| `articles.index` | Show all accessible `article` feeds. No feed fields are required; page settings control whether 10, 20 or 50 articles are shown per page. |
 | `sections.list` | List `article-section` children under a fixed root feed selected in the **Feed** field. |
 
 Other enabled modules add their own actions. Use the descriptions and field

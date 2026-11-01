@@ -5,6 +5,7 @@
 
 /* Related articles and sections: one column, three from 768px. */
 .article-related,
+.article-list,
 .article-sections {
     display: grid;
     gap: var(--ui-space-3);
@@ -12,9 +13,18 @@
 
 @media (min-width: 768px) {
     .article-related,
+    .article-list,
     .article-sections {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
+}
+
+.article-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ui-space-2);
+    margin-block-start: var(--ui-space-4);
 }
 
 .article-card .ui-card__title {

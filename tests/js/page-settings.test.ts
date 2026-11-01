@@ -31,6 +31,7 @@ describe("page settings", () => {
         ["article.show-id", true],
         ["article.show-slug", true],
         ["articles.list-slug", false],
+        ["articles.index", false],
         ["sections.list", false],
     ])("scopes feed content width to article pages: %s", (action, expected) => {
         expect(supportsFeedContentWidth(action)).toBe(expected);
