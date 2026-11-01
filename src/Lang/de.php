@@ -1539,7 +1539,7 @@ E-Mail: {email}
     'admin.page_action.feedback.show' => 'Kontaktformular',
     'admin.page_action.article.show-id' => 'Einen festgelegten Artikel anzeigen',
     'admin.page_action.article.show-slug' => 'Einen Artikel anhand des Routen-Slugs anzeigen',
-    'admin.page_action.articles.list' => 'Artikel auflisten',
+    'admin.page_action.articles.list-slug' => 'Artikel anhand des Routen-Slugs auflisten',
     'admin.page_action.articles.list-id' => 'Artikel aus einem festen Bereich auflisten',
     'admin.page_action.sections.list' => 'Bereiche auflisten',
     'admin.page_action.users.list' => 'Nutzerlistenseite',

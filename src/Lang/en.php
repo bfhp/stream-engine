@@ -1545,7 +1545,7 @@ Email: {email}
     'admin.page_action.feedback.show' => 'Feedback form',
     'admin.page_action.article.show-id' => 'Show a fixed article',
     'admin.page_action.article.show-slug' => 'Show an article from the route slug',
-    'admin.page_action.articles.list' => 'List articles',
+    'admin.page_action.articles.list-slug' => 'List articles from the route slug',
     'admin.page_action.articles.list-id' => 'List articles from a fixed section',
     'admin.page_action.sections.list' => 'List sections',
     'admin.page_action.users.list' => 'Users list page',

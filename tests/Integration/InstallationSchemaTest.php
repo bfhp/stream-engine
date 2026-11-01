@@ -333,6 +333,26 @@ final class InstallationSchemaTest extends TestCase
         });
     }
 
+    public function testArticleListActionMigrationMakesTheResolverModeExplicit(): void
+    {
+        $root = dirname(__DIR__, 2);
+        $this->withEmptyDatabase(function (PDO $pdo) use ($root): void {
+            $this->executeScript($pdo, $root.'/migrations/20260912000000_initial.sql');
+            $pdo->exec(
+                "INSERT INTO pages
+                 (pattern, action, feed_type, list_feed_type, updated)
+                 VALUES ('{slug}', 'articles.list', 'article-section', 'article', 1)"
+            );
+
+            $this->executeScript($pdo, $root.'/migrations/20261101000000_rename_articles_list_action.sql');
+
+            self::assertSame(
+                'articles.list-slug',
+                $pdo->query("SELECT action FROM pages WHERE pattern = '{slug}'")->fetchColumn(),
+            );
+        });
+    }
+
     public function testRuntimePageMigrationRemovesOnlyTheStandardInternalTrees(): void
     {
         $root = dirname(__DIR__, 2);

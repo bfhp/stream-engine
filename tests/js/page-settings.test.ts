@@ -30,7 +30,7 @@ describe("page settings", () => {
     it.each([
         ["article.show-id", true],
         ["article.show-slug", true],
-        ["articles.list", false],
+        ["articles.list-slug", false],
         ["sections.list", false],
     ])("scopes feed content width to article pages: %s", (action, expected) => {
         expect(supportsFeedContentWidth(action)).toBe(expected);

@@ -1539,7 +1539,7 @@ E-mail : {email}
     'admin.page_action.feedback.show' => 'Formulaire de contact',
     'admin.page_action.article.show-id' => 'Afficher un article fixe',
     'admin.page_action.article.show-slug' => 'Afficher un article d’après le slug de la route',
-    'admin.page_action.articles.list' => 'Lister les articles',
+    'admin.page_action.articles.list-slug' => 'Lister les articles d’après le slug de la route',
     'admin.page_action.articles.list-id' => 'Lister les articles d’une section fixe',
     'admin.page_action.sections.list' => 'Lister les sections',
     'admin.page_action.users.list' => 'Page de liste des utilisateurs',

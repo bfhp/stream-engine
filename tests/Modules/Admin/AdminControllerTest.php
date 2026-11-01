@@ -957,8 +957,8 @@ final class AdminControllerTest extends TestCase
                 "Feed ID is not supported by page action 'admin.index'",
             ],
             'constrained value' => [
-                ['action' => 'articles.list', 'feedType' => 'forum', 'listFeedType' => 'article'],
-                "Invalid Feed type for page action 'articles.list'",
+                ['action' => 'articles.list-slug', 'feedType' => 'forum', 'listFeedType' => 'article'],
+                "Invalid Feed type for page action 'articles.list-slug'",
             ],
             'slug action requires a feed type' => [
                 ['action' => 'article.show-slug'],

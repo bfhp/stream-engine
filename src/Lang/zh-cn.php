@@ -1539,7 +1539,7 @@ return [
     'admin.page_action.feedback.show' => '联系表单',
     'admin.page_action.article.show-id' => '显示固定的文章',
     'admin.page_action.article.show-slug' => '按路由别名显示文章',
-    'admin.page_action.articles.list' => '文章列表',
+    'admin.page_action.articles.list-slug' => '按路由别名列出文章',
     'admin.page_action.articles.list-id' => '固定栏目的文章列表',
     'admin.page_action.sections.list' => '栏目列表',
     'admin.page_action.users.list' => '用户列表页',

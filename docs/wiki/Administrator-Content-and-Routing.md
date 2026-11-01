@@ -168,7 +168,7 @@ Common article actions are:
 | --- | --- |
 | `article.show-id` | Render one fixed `article` selected in the **Feed** field. The installed root page uses this action for the welcome article. |
 | `article.show-slug` | Render an `article` selected from a `{slug}` route. Feed type is fixed to `article`. |
-| `articles.list` | Resolve an `article-section` from the route and list its child `article` feeds. |
+| `articles.list-slug` | Resolve an `article-section` from the route slug and list its child `article` feeds. |
 | `articles.list-id` | List child `article` feeds from a fixed `article-section` selected in the **Feed** field. |
 | `sections.list` | List `article-section` children under a fixed root feed selected in the **Feed** field. |
 

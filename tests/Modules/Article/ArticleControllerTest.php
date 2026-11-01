@@ -21,7 +21,7 @@ use StreamEngine\Service\FeedService;
 
 /**
  * The page renderers behind `article.show-id`, `article.show-slug`,
- * `articles.list`, `articles.list-id` and `sections.list`.
+ * `articles.list-slug`, `articles.list-id` and `sections.list`.
  *
  * They are thin, and that is the point: each one resolves a feed, refuses if it
  * cannot, and hands the rest to a template. So the value here is in the
@@ -350,7 +350,7 @@ final class ArticleControllerTest extends TestCase
         $feedService = $this->createMock(FeedService::class);
         $rootPage = $this->makePage('sections.list', feedId: 1, id: 1);
         $sectionPage = $this->makePage(
-            'articles.list',
+            'articles.list-slug',
             pattern: '{slug}',
             listFeedType: 'article',
             id: 2,
@@ -419,7 +419,7 @@ final class ArticleControllerTest extends TestCase
 
         $view = $this->makeController($feedService)
             ->show(
-                $this->makePage('articles.list', feedType: 'article-section'),
+                $this->makePage('articles.list-slug', feedType: 'article-section'),
                 ['slug' => 'section-a']
             );
 
@@ -437,7 +437,7 @@ final class ArticleControllerTest extends TestCase
         $this->expectExceptionMessage('Root feed not found');
 
         $controller->show(
-            $this->makePage('articles.list', feedType: 'article-section'),
+            $this->makePage('articles.list-slug', feedType: 'article-section'),
             ['slug' => 'нет-такой']
         );
     }
@@ -452,7 +452,7 @@ final class ArticleControllerTest extends TestCase
         $feedService = $this->createMock(FeedService::class);
         $rootPage = $this->makePage('sections.list', pattern: 'articles', feedId: 1, id: 1);
         $sectionPage = $this->makePage(
-            'articles.list',
+            'articles.list-slug',
             pattern: '{slug}',
             id: 2,
             parentId: 1,
@@ -496,7 +496,7 @@ final class ArticleControllerTest extends TestCase
 
     public function testABreadcrumbForAPageWithoutASlugFallsBackToThePageName(): void
     {
-        $page = $this->makePage('articles.list');
+        $page = $this->makePage('articles.list-slug');
 
         $breadcrumb = $this->makeController($this->createStub(FeedService::class))->getBreadcrumb($page);
 

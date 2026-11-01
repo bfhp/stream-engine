@@ -42,8 +42,8 @@ class ArticleController extends AbstractController
                     'feedType' => ['status' => 'required', 'values' => ['article']],
                 ],
             ],
-            'articles.list' => [
-                'label' => 'List articles',
+            'articles.list-slug' => [
+                'label' => 'List articles from the route slug',
                 'fields' => [
                     'feedType' => ['status' => 'required', 'values' => ['article-section']],
                     'listFeedType' => ['status' => 'required', 'values' => ['article']],
@@ -79,7 +79,7 @@ class ArticleController extends AbstractController
      */
     public function getBreadcrumb(Page $page): ?Breadcrumb
     {
-        if ($page->action === 'articles.list' || $page->action === 'article.show-slug') {
+        if ($page->action === 'articles.list-slug' || $page->action === 'article.show-slug') {
             if (key_exists('slug', $page->params)) {
                 $pageFeed = $this->resolveFeedForPage($page, (string) $page->params['slug']);
             } else {
@@ -104,7 +104,7 @@ class ArticleController extends AbstractController
     public function show(Page $page, array $args = []): ?ViewModel
     {
         return match ($page->action) {
-            'articles.list' => $this->showArticleListPage($page, (string) $args['slug']),
+            'articles.list-slug' => $this->showArticleListPage($page, (string) $args['slug']),
             'articles.list-id' => $this->showArticleListPage($page),
             'sections.list' => $this->showSectionsListPage($page),
             'article.show-id' => $this->showArticlePage($page, $this->resolveArticleById($page)),

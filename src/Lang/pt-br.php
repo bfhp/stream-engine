@@ -1539,7 +1539,7 @@ E-mail: {email}
     'admin.page_action.feedback.show' => 'Formulário de contato',
     'admin.page_action.article.show-id' => 'Mostrar um artigo fixo',
     'admin.page_action.article.show-slug' => 'Mostrar um artigo a partir do slug da rota',
-    'admin.page_action.articles.list' => 'Listar artigos',
+    'admin.page_action.articles.list-slug' => 'Listar artigos pelo slug da rota',
     'admin.page_action.articles.list-id' => 'Listar artigos de uma seção fixa',
     'admin.page_action.sections.list' => 'Listar seções',
     'admin.page_action.users.list' => 'Página de lista de usuários',
