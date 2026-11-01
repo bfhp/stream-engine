@@ -1540,6 +1540,7 @@ return [
     'admin.page_action.article.show-id' => 'عرض مقال ثابت',
     'admin.page_action.article.show-slug' => 'عرض مقال من المعرّف النصي في المسار',
     'admin.page_action.articles.list' => 'قائمة المقالات',
+    'admin.page_action.articles.list-id' => 'قائمة مقالات من قسم ثابت',
     'admin.page_action.sections.list' => 'قائمة الأقسام',
     'admin.page_action.users.list' => 'صفحة قائمة المستخدمين',
     'admin.page_action.user.show' => 'صفحة الملف الشخصي للمستخدم',

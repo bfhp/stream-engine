@@ -1540,6 +1540,7 @@ return [
     'admin.page_action.article.show-id' => '固定の記事を表示',
     'admin.page_action.article.show-slug' => 'ルートのスラッグから記事を表示',
     'admin.page_action.articles.list' => '記事の一覧',
+    'admin.page_action.articles.list-id' => '固定セクションの記事一覧',
     'admin.page_action.sections.list' => 'セクションの一覧',
     'admin.page_action.users.list' => 'ユーザー一覧ページ',
     'admin.page_action.user.show' => 'ユーザープロフィールページ',

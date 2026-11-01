@@ -1540,6 +1540,7 @@ return [
     'admin.page_action.article.show-id' => '고정된 글 표시',
     'admin.page_action.article.show-slug' => '라우트 슬러그의 글 표시',
     'admin.page_action.articles.list' => '글 목록',
+    'admin.page_action.articles.list-id' => '고정 섹션의 글 목록',
     'admin.page_action.sections.list' => '섹션 목록',
     'admin.page_action.users.list' => '사용자 목록 페이지',
     'admin.page_action.user.show' => '사용자 프로필 페이지',

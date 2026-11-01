@@ -1540,6 +1540,7 @@ E-mail: {email}
     'admin.page_action.article.show-id' => 'Mostra un articolo fisso',
     'admin.page_action.article.show-slug' => 'Mostra un articolo in base allo slug della rotta',
     'admin.page_action.articles.list' => 'Elenca gli articoli',
+    'admin.page_action.articles.list-id' => 'Elenca gli articoli di una sezione fissa',
     'admin.page_action.sections.list' => 'Elenca le sezioni',
     'admin.page_action.users.list' => 'Pagina dell’elenco utenti',
     'admin.page_action.user.show' => 'Pagina del profilo utente',

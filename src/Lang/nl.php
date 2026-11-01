@@ -1540,6 +1540,7 @@ E-mail: {email}
     'admin.page_action.article.show-id' => 'Een vastgezet artikel tonen',
     'admin.page_action.article.show-slug' => 'Artikel tonen op basis van de routeslug',
     'admin.page_action.articles.list' => 'Lijst met artikelen',
+    'admin.page_action.articles.list-id' => 'Artikelen uit een vaste sectie',
     'admin.page_action.sections.list' => 'Lijst met secties',
     'admin.page_action.users.list' => 'Pagina met gebruikerslijst',
     'admin.page_action.user.show' => 'Gebruikersprofielpagina',

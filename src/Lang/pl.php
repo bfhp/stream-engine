@@ -1540,6 +1540,7 @@ E-mail: {email}
     'admin.page_action.article.show-id' => 'Pokaż przypięty artykuł',
     'admin.page_action.article.show-slug' => 'Pokaż artykuł według sluga trasy',
     'admin.page_action.articles.list' => 'Lista artykułów',
+    'admin.page_action.articles.list-id' => 'Lista artykułów z przypiętej sekcji',
     'admin.page_action.sections.list' => 'Lista sekcji',
     'admin.page_action.users.list' => 'Strona listy użytkowników',
     'admin.page_action.user.show' => 'Strona profilu użytkownika',

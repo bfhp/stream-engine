@@ -1546,6 +1546,7 @@ Email: {email}
     'admin.page_action.article.show-id' => 'Show a fixed article',
     'admin.page_action.article.show-slug' => 'Show an article from the route slug',
     'admin.page_action.articles.list' => 'List articles',
+    'admin.page_action.articles.list-id' => 'List articles from a fixed section',
     'admin.page_action.sections.list' => 'List sections',
     'admin.page_action.users.list' => 'Users list page',
     'admin.page_action.user.show' => 'User profile page',

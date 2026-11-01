@@ -49,6 +49,13 @@ class ArticleController extends AbstractController
                     'listFeedType' => ['status' => 'required', 'values' => ['article']],
                 ],
             ],
+            'articles.list-id' => [
+                'label' => 'List articles from a fixed section',
+                'fields' => [
+                    'feedId' => ['status' => 'required', 'feedTypes' => ['article-section']],
+                    'listFeedType' => ['status' => 'required', 'values' => ['article']],
+                ],
+            ],
             'sections.list' => [
                 'label' => 'List sections',
                 'fields' => [
@@ -98,6 +105,7 @@ class ArticleController extends AbstractController
     {
         return match ($page->action) {
             'articles.list' => $this->showArticleListPage($page, (string) $args['slug']),
+            'articles.list-id' => $this->showArticleListPage($page),
             'sections.list' => $this->showSectionsListPage($page),
             'article.show-id' => $this->showArticlePage($page, $this->resolveArticleById($page)),
             'article.show-slug' => $this->showArticlePage(
@@ -201,7 +209,7 @@ class ArticleController extends AbstractController
     /**
      * @throws ForbiddenException
      */
-    public function showArticleListPage(Page $page, string $slug): ?ViewModel
+    public function showArticleListPage(Page $page, ?string $slug = null): ?ViewModel
     {
         $rootFeed = $this->resolveFeedForPage($page, $slug);
 

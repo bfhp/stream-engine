@@ -968,6 +968,10 @@ final class AdminControllerTest extends TestCase
                 ['action' => 'article.show-id'],
                 "Feed ID is required for page action 'article.show-id'",
             ],
+            'fixed article list requires a feed id' => [
+                ['action' => 'articles.list-id', 'listFeedType' => 'article'],
+                "Feed ID is required for page action 'articles.list-id'",
+            ],
         ];
     }
 

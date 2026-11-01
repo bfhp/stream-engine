@@ -21,7 +21,7 @@ use StreamEngine\Service\FeedService;
 
 /**
  * The page renderers behind `article.show-id`, `article.show-slug`,
- * `articles.list` and `sections.list`.
+ * `articles.list`, `articles.list-id` and `sections.list`.
  *
  * They are thin, and that is the point: each one resolves a feed, refuses if it
  * cannot, and hands the rest to a template. So the value here is in the
@@ -368,6 +368,34 @@ final class ArticleControllerTest extends TestCase
 
         $view = $this->makeController($feedService, pages: [$rootPage])
             ->show($sectionPage, ['slug' => 'section-a']);
+
+        $this->assertSame('modules/article/articles.list.twig', $view->template);
+        $this->assertSame(2, $view->data['feed']->id);
+        $this->assertCount(1, $view->data['subFeeds']);
+    }
+
+    public function testAFixedArticleListResolvesItsSectionByFeedId(): void
+    {
+        $feedService = $this->createMock(FeedService::class);
+        $section = $this->makeFeed(2, 'section-a', parentId: 1, type: 'article-section');
+
+        $feedService->expects($this->once())
+            ->method('getFeedById')
+            ->with(2, $this->isInstanceOf(User::class))
+            ->willReturn($section);
+        $feedService->expects($this->once())
+            ->method('getFeedsByParentAndType')
+            ->with(2, 'article', $this->isInstanceOf(User::class))
+            ->willReturn([$this->makeFeed(3, 'article-a', parentId: 2)]);
+        $feedService->expects($this->never())->method('getFeedByParentAndSlug');
+
+        $view = $this->makeController($feedService)->show($this->makePage(
+            'articles.list-id',
+            pattern: 'section-a',
+            feedId: 2,
+            listFeedType: 'article',
+            feedType: null,
+        ));
 
         $this->assertSame('modules/article/articles.list.twig', $view->template);
         $this->assertSame(2, $view->data['feed']->id);

@@ -1583,6 +1583,7 @@ return [
     'admin.page_action.article.show-id' => 'Показать закреплённую статью',
     'admin.page_action.article.show-slug' => 'Показать статью по slug маршрута',
     'admin.page_action.articles.list' => 'Список статей',
+    'admin.page_action.articles.list-id' => 'Список статей закреплённого раздела',
     'admin.page_action.sections.list' => 'Список разделов',
     'admin.page_action.users.list' => 'Страница списка пользователей',
     'admin.page_action.user.show' => 'Страница профиля пользователя',

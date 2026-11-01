@@ -1540,6 +1540,7 @@ E-mail: {email}
     'admin.page_action.article.show-id' => 'Mostrar um artigo fixo',
     'admin.page_action.article.show-slug' => 'Mostrar um artigo a partir do slug da rota',
     'admin.page_action.articles.list' => 'Listar artigos',
+    'admin.page_action.articles.list-id' => 'Listar artigos de uma seção fixa',
     'admin.page_action.sections.list' => 'Listar seções',
     'admin.page_action.users.list' => 'Página de lista de usuários',
     'admin.page_action.user.show' => 'Página de perfil de usuário',

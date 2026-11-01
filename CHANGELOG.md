@@ -7,6 +7,10 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Article pages can list articles from a fixed section.
+
 ## [0.6.0] - 2026-10-30
 
 ### Added
