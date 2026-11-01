@@ -844,6 +844,7 @@ Email: {email}
     'js.admin.page_settings' => 'Page settings',
     'js.admin.feed_content_width_label' => 'Article content width',
     'js.admin.article.articles_per_page' => 'Articles per page',
+    'js.admin.article.sections_per_page' => 'Sections per page',
     'js.admin.feed_content_width_description' => 'Keep article content inside the site container or allow a full-width layout.',
     'js.admin.feed_content_width_contained' => 'Contained',
     'js.admin.feed_content_width_full' => 'Full width',

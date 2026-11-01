@@ -334,9 +334,12 @@ final class ArticleControllerTest extends TestCase
     {
         $feedService = $this->createStub(FeedService::class);
         $feedService->method('getFeedById')->willReturn($this->makeFeed(1, 'articles'));
+        $feedService->method('getFeedsByParentAndTypePage')->willReturn([
+            'items' => [$this->makeFeed(2, 'section-a', parentId: 1, type: 'article-section')],
+            'total' => 1,
+        ]);
         $feedService->method('getFeedsByParentAndType')->willReturnCallback(
             fn (?int $parentId, string $type): array => match ($type) {
-                'article-section' => [$this->makeFeed(2, 'section-a', parentId: 1)],
                 'article' => [$this->makeFeed(3, 'article-a', parentId: 2)],
                 default => [],
             }
@@ -351,6 +354,35 @@ final class ArticleControllerTest extends TestCase
         // the template renders one list without a second controller round.
         $this->assertCount(1, $view->data['sections'][0]->children);
         $this->assertSame(3, $view->data['sections'][0]->children[0]->id);
+    }
+
+    public function testSectionsListIsPaginated(): void
+    {
+        $feedService = $this->createMock(FeedService::class);
+        $feedService->method('getFeedById')->willReturn($this->makeFeed(1, 'articles'));
+        $feedService->expects($this->once())
+            ->method('getFeedsByParentAndTypePage')
+            ->with(1, 'article-section', $this->isInstanceOf(User::class), 10, 10)
+            ->willReturn([
+                'items' => [$this->makeFeed(12, 'section-12', parentId: 1, type: 'article-section')],
+                'total' => 21,
+            ]);
+        $feedService->method('getFeedsByParentAndType')->willReturn([]);
+
+        $view = $this->makeController(
+            $feedService,
+            query: new QueryParams(['page' => '2']),
+        )->show($this->makePage(
+            'sections.list',
+            feedId: 1,
+            settings: (object) ['sectionsPerPage' => '10'],
+        ));
+
+        $this->assertSame('/articles/articles/?page=2', $view->data['canonical']);
+        $this->assertSame(
+            ['current' => 2, 'total' => 3, 'baseUrl' => '/articles/articles/'],
+            $view->data['pagination'],
+        );
     }
 
     /**
@@ -403,8 +435,9 @@ final class ArticleControllerTest extends TestCase
             ->method('getFeedByParentAndSlug')
             ->with(1, 'section-a', $this->isInstanceOf(User::class), 'article-section')
             ->willReturn($this->makeFeed(2, 'section-a', parentId: 1, type: 'article-section'));
-        $feedService->method('getFeedsByParentAndType')->willReturn([
-            $this->makeFeed(3, 'article-a', parentId: 2),
+        $feedService->method('getFeedsByParentAndTypePage')->willReturn([
+            'items' => [$this->makeFeed(3, 'article-a', parentId: 2)],
+            'total' => 1,
         ]);
 
         $view = $this->makeController($feedService, pages: [$rootPage])
@@ -425,9 +458,12 @@ final class ArticleControllerTest extends TestCase
             ->with(2, $this->isInstanceOf(User::class))
             ->willReturn($section);
         $feedService->expects($this->once())
-            ->method('getFeedsByParentAndType')
-            ->with(2, 'article', $this->isInstanceOf(User::class))
-            ->willReturn([$this->makeFeed(3, 'article-a', parentId: 2)]);
+            ->method('getFeedsByParentAndTypePage')
+            ->with(2, 'article', $this->isInstanceOf(User::class), 20, 0)
+            ->willReturn([
+                'items' => [$this->makeFeed(3, 'article-a', parentId: 2)],
+                'total' => 1,
+            ]);
         $feedService->expects($this->never())->method('getFeedByParentAndSlug');
 
         $view = $this->makeController($feedService)->show($this->makePage(
@@ -441,6 +477,37 @@ final class ArticleControllerTest extends TestCase
         $this->assertSame('modules/article/articles.list.twig', $view->template);
         $this->assertSame(2, $view->data['feed']->id);
         $this->assertCount(1, $view->data['subFeeds']);
+    }
+
+    public function testArticleListIsPaginated(): void
+    {
+        $feedService = $this->createMock(FeedService::class);
+        $section = $this->makeFeed(2, 'section-a', parentId: 1, type: 'article-section');
+        $feedService->method('getFeedById')->willReturn($section);
+        $feedService->expects($this->once())
+            ->method('getFeedsByParentAndTypePage')
+            ->with(2, 'article', $this->isInstanceOf(User::class), 10, 10)
+            ->willReturn([
+                'items' => [$this->makeFeed(13, 'article-13', parentId: 2)],
+                'total' => 21,
+            ]);
+
+        $view = $this->makeController(
+            $feedService,
+            query: new QueryParams(['page' => '2']),
+        )->show($this->makePage(
+            'articles.list-id',
+            feedId: 2,
+            listFeedType: 'article',
+            feedType: null,
+            settings: (object) ['articlesPerPage' => '10'],
+        ));
+
+        $this->assertSame('/articles/section-a/?page=2', $view->data['canonical']);
+        $this->assertSame(
+            ['current' => 2, 'total' => 3, 'baseUrl' => '/articles/section-a/'],
+            $view->data['pagination'],
+        );
     }
 
     public function testArticleIndexListsAllArticlesWithPagination(): void
@@ -553,7 +620,7 @@ final class ArticleControllerTest extends TestCase
         $feedService->method('getFeedByParentAndSlug')->willReturn(
             $this->makeFeed(2, 'section-a', type: 'article-section')
         );
-        $feedService->method('getFeedsByParentAndType')->willThrowException(
+        $feedService->method('getFeedsByParentAndTypePage')->willThrowException(
             new RuntimeException('children should not be fetched without a list_feed_type')
         );
 

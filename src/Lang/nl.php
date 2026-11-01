@@ -844,6 +844,7 @@ E-mail: {email}
     'js.admin.page_settings' => 'Pagina-instellingen',
     'js.admin.feed_content_width_label' => 'Breedte van artikelinhoud',
     'js.admin.article.articles_per_page' => 'Artikelen per pagina',
+    'js.admin.article.sections_per_page' => 'Secties per pagina',
     'js.admin.feed_content_width_description' => 'Houdt de artikelinhoud binnen de sitecontainer of staat een volledige breedte toe.',
     'js.admin.feed_content_width_contained' => 'In de container',
     'js.admin.feed_content_width_full' => 'Volledige breedte',

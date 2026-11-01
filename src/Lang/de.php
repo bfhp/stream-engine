@@ -844,6 +844,7 @@ E-Mail: {email}
     'js.admin.page_settings' => 'Seiteneinstellungen',
     'js.admin.feed_content_width_label' => 'Breite des Artikelinhalts',
     'js.admin.article.articles_per_page' => 'Artikel pro Seite',
+    'js.admin.article.sections_per_page' => 'Bereiche pro Seite',
     'js.admin.feed_content_width_description' => 'Artikelinhalt im Website-Container halten oder ein Layout über die volle Breite erlauben.',
     'js.admin.feed_content_width_contained' => 'Im Container',
     'js.admin.feed_content_width_full' => 'Volle Breite',

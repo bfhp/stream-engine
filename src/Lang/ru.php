@@ -882,6 +882,7 @@ return [
     'js.admin.page_settings' => 'Настройки страницы',
     'js.admin.feed_content_width_label' => 'Ширина содержимого статьи',
     'js.admin.article.articles_per_page' => 'Статей на странице',
+    'js.admin.article.sections_per_page' => 'Разделов на странице',
     'js.admin.feed_content_width_description' => 'Ограничить содержимое статьи контейнером сайта или разрешить вёрстку на всю ширину.',
     'js.admin.feed_content_width_contained' => 'В контейнере',
     'js.admin.feed_content_width_full' => 'На всю ширину',

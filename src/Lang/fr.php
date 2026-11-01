@@ -844,6 +844,7 @@ E-mail : {email}
     'js.admin.page_settings' => 'Paramètres de la page',
     'js.admin.feed_content_width_label' => 'Largeur du contenu de l’article',
     'js.admin.article.articles_per_page' => 'Articles par page',
+    'js.admin.article.sections_per_page' => 'Sections par page',
     'js.admin.feed_content_width_description' => 'Conserve le contenu dans le conteneur du site ou autorise une mise en page pleine largeur.',
     'js.admin.feed_content_width_contained' => 'Dans le conteneur',
     'js.admin.feed_content_width_full' => 'Pleine largeur',

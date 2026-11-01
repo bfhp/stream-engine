@@ -844,6 +844,7 @@ E-mail: {email}
     'js.admin.page_settings' => 'Ustawienia strony',
     'js.admin.feed_content_width_label' => 'Szerokość treści artykułu',
     'js.admin.article.articles_per_page' => 'Artykułów na stronę',
+    'js.admin.article.sections_per_page' => 'Sekcji na stronę',
     'js.admin.feed_content_width_description' => 'Umieszcza treść artykułu w kontenerze witryny albo pozwala użyć pełnej szerokości.',
     'js.admin.feed_content_width_contained' => 'W kontenerze',
     'js.admin.feed_content_width_full' => 'Pełna szerokość',

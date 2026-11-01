@@ -844,6 +844,7 @@ Correo: {email}
     'js.admin.page_settings' => 'Ajustes de la página',
     'js.admin.feed_content_width_label' => 'Ancho del contenido del artículo',
     'js.admin.article.articles_per_page' => 'Artículos por página',
+    'js.admin.article.sections_per_page' => 'Secciones por página',
     'js.admin.feed_content_width_description' => 'Mantiene el contenido dentro del contenedor del sitio o permite un diseño a ancho completo.',
     'js.admin.feed_content_width_contained' => 'En el contenedor',
     'js.admin.feed_content_width_full' => 'Ancho completo',

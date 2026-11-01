@@ -844,6 +844,7 @@ return [
     'js.admin.page_settings' => 'ページ設定',
     'js.admin.feed_content_width_label' => '記事コンテンツの幅',
     'js.admin.article.articles_per_page' => '1ページあたりの記事数',
+    'js.admin.article.sections_per_page' => '1ページあたりのセクション数',
     'js.admin.feed_content_width_description' => '記事をサイトのコンテナ内に収めるか、全幅レイアウトを許可します。',
     'js.admin.feed_content_width_contained' => 'コンテナ内',
     'js.admin.feed_content_width_full' => '全幅',

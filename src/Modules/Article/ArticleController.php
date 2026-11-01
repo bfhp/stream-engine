@@ -22,6 +22,8 @@ class ArticleController extends AbstractController
 {
     private const int DEFAULT_ARTICLES_PER_PAGE = 20;
 
+    private const int DEFAULT_SECTIONS_PER_PAGE = 20;
+
     private const int RELATED_ARTICLES_LIMIT = 3;
 
     public static function feedTypes(): array
@@ -53,6 +55,9 @@ class ArticleController extends AbstractController
                     'feedType' => ['status' => 'required', 'values' => ['article-section']],
                     'listFeedType' => ['status' => 'required', 'values' => ['article']],
                 ],
+                'settings' => [
+                    'articlesPerPage' => self::perPageSetting('js.admin.article.articles_per_page'),
+                ],
             ],
             'articles.list-id' => [
                 'label' => 'List articles from a fixed section',
@@ -60,21 +65,15 @@ class ArticleController extends AbstractController
                     'feedId' => ['status' => 'required', 'feedTypes' => ['article-section']],
                     'listFeedType' => ['status' => 'required', 'values' => ['article']],
                 ],
+                'settings' => [
+                    'articlesPerPage' => self::perPageSetting('js.admin.article.articles_per_page'),
+                ],
             ],
             'articles.index' => [
                 'label' => 'All articles',
                 'singleton' => true,
                 'settings' => [
-                    'articlesPerPage' => [
-                        'control' => 'select',
-                        'label' => 'js.admin.article.articles_per_page',
-                        'required' => true,
-                        'options' => [
-                            ['value' => '10', 'label' => '10'],
-                            ['value' => '20', 'label' => '20'],
-                            ['value' => '50', 'label' => '50'],
-                        ],
-                    ],
+                    'articlesPerPage' => self::perPageSetting('js.admin.article.articles_per_page'),
                 ],
             ],
             'articles.by-term' => [
@@ -83,16 +82,7 @@ class ArticleController extends AbstractController
                     'termVocabulary' => 'required',
                 ],
                 'settings' => [
-                    'articlesPerPage' => [
-                        'control' => 'select',
-                        'label' => 'js.admin.article.articles_per_page',
-                        'required' => true,
-                        'options' => [
-                            ['value' => '10', 'label' => '10'],
-                            ['value' => '20', 'label' => '20'],
-                            ['value' => '50', 'label' => '50'],
-                        ],
-                    ],
+                    'articlesPerPage' => self::perPageSetting('js.admin.article.articles_per_page'),
                 ],
             ],
             'sections.list' => [
@@ -100,6 +90,23 @@ class ArticleController extends AbstractController
                 'fields' => [
                     'feedId' => 'required',
                 ],
+                'settings' => [
+                    'sectionsPerPage' => self::perPageSetting('js.admin.article.sections_per_page'),
+                ],
+            ],
+        ];
+    }
+
+    private static function perPageSetting(string $label): array
+    {
+        return [
+            'control' => 'select',
+            'label' => $label,
+            'required' => true,
+            'options' => [
+                ['value' => '10', 'label' => '10'],
+                ['value' => '20', 'label' => '20'],
+                ['value' => '50', 'label' => '50'],
             ],
         ];
     }
@@ -258,11 +265,20 @@ class ArticleController extends AbstractController
         if (!$rootFeed) {
             throw new ForbiddenException('Root feed not found');
         }
-        $sections = $this->feedService->getFeedsByParentAndType(
+        $sectionsPerPage = $this->sectionsPerPage($page);
+        $currentPage = $this->listingPageNumber($sectionsPerPage);
+        $sectionsPage = $this->feedService->getFeedsByParentAndTypePage(
             $rootFeed->id,
             'article-section',
-            $this->context->user
+            $this->context->user,
+            $sectionsPerPage,
+            ($currentPage - 1) * $sectionsPerPage,
         );
+        $sections = $sectionsPage['items'];
+        $totalPages = max(1, (int) ceil($sectionsPage['total'] / $sectionsPerPage));
+        if ($currentPage > $totalPages) {
+            throw new NotFoundException('Page not found');
+        }
 
         foreach ($sections as $sectionFeed) {
             $sectionFeed->children = $this->feedService->getFeedsByParentAndType(
@@ -272,6 +288,8 @@ class ArticleController extends AbstractController
             );
         }
 
+        $baseUrl = $rootFeed->canonicalUrl ?? $this->pageTree->buildPath($page);
+
         return ViewModel::fromPage(
             $page,
             'modules/article/sections.list.twig',
@@ -279,9 +297,14 @@ class ArticleController extends AbstractController
                 'title' => $rootFeed->title,
                 'description' => $rootFeed->description,
                 'image' => $rootFeed->imageUrl,
-                'canonical' => $rootFeed->canonicalUrl,
+                'canonical' => $currentPage > 1 ? $baseUrl.'?page='.$currentPage : $baseUrl,
                 'feed' => $rootFeed,
                 'sections' => $sections,
+                'pagination' => [
+                    'current' => $currentPage,
+                    'total' => $totalPages,
+                    'baseUrl' => $baseUrl,
+                ],
             ]
         );
     }
@@ -297,12 +320,31 @@ class ArticleController extends AbstractController
             throw new ForbiddenException('Root feed not found');
         }
 
+        $pagination = null;
+        $canonical = $rootFeed->canonicalUrl;
         if (isset($page->listFeedType)) {
-            $subFeeds = $this->feedService->getFeedsByParentAndType(
+            $articlesPerPage = $this->articlesPerPage($page);
+            $currentPage = $this->listingPageNumber($articlesPerPage);
+            $articlesPage = $this->feedService->getFeedsByParentAndTypePage(
                 $rootFeed->id,
-                $page->listFeedType, //TODO
-                $this->context->user
+                $page->listFeedType,
+                $this->context->user,
+                $articlesPerPage,
+                ($currentPage - 1) * $articlesPerPage,
             );
+            $subFeeds = $articlesPage['items'];
+            $totalPages = max(1, (int) ceil($articlesPage['total'] / $articlesPerPage));
+            if ($currentPage > $totalPages) {
+                throw new NotFoundException('Page not found');
+            }
+
+            $baseUrl = $rootFeed->canonicalUrl ?? $this->pageTree->buildPath($page);
+            $canonical = $currentPage > 1 ? $baseUrl.'?page='.$currentPage : $baseUrl;
+            $pagination = [
+                'current' => $currentPage,
+                'total' => $totalPages,
+                'baseUrl' => $baseUrl,
+            ];
         }
 
         return ViewModel::fromPage(
@@ -312,9 +354,10 @@ class ArticleController extends AbstractController
                 'title' => $rootFeed->title,
                 'description' => $rootFeed->description,
                 'image' => $rootFeed->imageUrl,
-                'canonical' => $rootFeed->canonicalUrl,
+                'canonical' => $canonical,
                 'feed' => $rootFeed,
                 'subFeeds' => $subFeeds ?? null,
+                'pagination' => $pagination,
             ]
         );
     }
@@ -325,7 +368,7 @@ class ArticleController extends AbstractController
     private function showArticleIndexPage(Page $page): ViewModel
     {
         $articlesPerPage = $this->articlesPerPage($page);
-        $currentPage = $this->articlePageNumber($articlesPerPage);
+        $currentPage = $this->listingPageNumber($articlesPerPage);
 
         $articlesPage = $this->feedService->getFeedsByTypePage(
             'article',
@@ -370,7 +413,7 @@ class ArticleController extends AbstractController
         }
 
         $articlesPerPage = $this->articlesPerPage($page);
-        $currentPage = $this->articlePageNumber($articlesPerPage);
+        $currentPage = $this->listingPageNumber($articlesPerPage);
         $articles = $this->feedService->getFeedsByTerm(
             $page->termVocabulary,
             $term->slug,
@@ -417,15 +460,24 @@ class ArticleController extends AbstractController
         };
     }
 
+    private function sectionsPerPage(Page $page): int
+    {
+        return match ($page->settings->sectionsPerPage ?? null) {
+            '10' => 10,
+            '50' => 50,
+            default => self::DEFAULT_SECTIONS_PER_PAGE,
+        };
+    }
+
     /**
      * @throws NotFoundException
      */
-    private function articlePageNumber(int $articlesPerPage): int
+    private function listingPageNumber(int $itemsPerPage): int
     {
         $currentPage = $this->context->query->has('page')
             ? $this->context->query->int('page')
             : 1;
-        if ($currentPage < 1 || $currentPage > intdiv(PHP_INT_MAX, $articlesPerPage)) {
+        if ($currentPage < 1 || $currentPage > intdiv(PHP_INT_MAX, $itemsPerPage)) {
             throw new NotFoundException('Page not found');
         }
 

@@ -844,6 +844,7 @@ return [
     'js.admin.page_settings' => '페이지 설정',
     'js.admin.feed_content_width_label' => '글 콘텐츠 너비',
     'js.admin.article.articles_per_page' => '페이지당 글 수',
+    'js.admin.article.sections_per_page' => '페이지당 섹션 수',
     'js.admin.feed_content_width_description' => '글 콘텐츠를 사이트 컨테이너 안에 유지하거나 전체 너비 레이아웃을 허용합니다.',
     'js.admin.feed_content_width_contained' => '컨테이너 안',
     'js.admin.feed_content_width_full' => '전체 너비',

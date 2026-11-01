@@ -844,6 +844,7 @@ return [
     'js.admin.page_settings' => '页面设置',
     'js.admin.feed_content_width_label' => '文章内容宽度',
     'js.admin.article.articles_per_page' => '每页文章数',
+    'js.admin.article.sections_per_page' => '每页栏目数',
     'js.admin.feed_content_width_description' => '将文章内容限制在网站容器内，或允许使用全宽布局。',
     'js.admin.feed_content_width_contained' => '容器内',
     'js.admin.feed_content_width_full' => '全宽',

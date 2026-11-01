@@ -12,6 +12,10 @@
         {% endif %}
     {% endblock %}
 
+    {% if pagination.total > 1 %}
+        {% include 'components/article/pagination.twig' with { pagination: pagination } %}
+    {% endif %}
+
     {% block article_share %}
         {% include 'partials/share-buttons.twig' %}
     {% endblock %}

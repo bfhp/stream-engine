@@ -844,6 +844,7 @@ E-mail: {email}
     'js.admin.page_settings' => 'Impostazioni della pagina',
     'js.admin.feed_content_width_label' => 'Larghezza del contenuto dell’articolo',
     'js.admin.article.articles_per_page' => 'Articoli per pagina',
+    'js.admin.article.sections_per_page' => 'Sezioni per pagina',
     'js.admin.feed_content_width_description' => 'Mantiene il contenuto nel contenitore del sito o consente un layout a larghezza intera.',
     'js.admin.feed_content_width_contained' => 'Nel contenitore',
     'js.admin.feed_content_width_full' => 'Larghezza intera',

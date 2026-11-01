@@ -844,6 +844,7 @@ return [
     'js.admin.page_settings' => 'إعدادات الصفحة',
     'js.admin.feed_content_width_label' => 'عرض محتوى المقال',
     'js.admin.article.articles_per_page' => 'عدد المقالات في الصفحة',
+    'js.admin.article.sections_per_page' => 'عدد الأقسام في الصفحة',
     'js.admin.feed_content_width_description' => 'إبقاء محتوى المقال داخل حاوية الموقع أو السماح بتخطيط بعرض كامل.',
     'js.admin.feed_content_width_contained' => 'داخل الحاوية',
     'js.admin.feed_content_width_full' => 'بعرض كامل',
