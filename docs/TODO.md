@@ -24,22 +24,6 @@ changelog.
 
 ## P2
 
-### Restrict CSS in user-authored HTML
-
-**Problem.** `FeedService` registers `nav.style` with HTMLPurifier as `Text`,
-bypassing CSS validation. A user can publish a fixed-position element covering
-the entire viewport and replace the visible site interface with misleading
-content or links.
-
-**Outcome.** Remove the unrestricted style definition. If inline styles are
-needed, validate them through a restricted CSS policy that prevents
-user-authored content from covering the surrounding interface.
-
-**Verification.** Submit rich-text blog posts and forum content containing
-fixed-position, viewport-sized overlays and external CSS URLs. Inspect the
-stored HTML and rendered page: unsafe styles are removed, site navigation stays
-accessible, and supported formatting still works.
-
 ### Limit authentication attempts and password recovery requests
 
 **Problem.** Login and password recovery have no application rate limits, and

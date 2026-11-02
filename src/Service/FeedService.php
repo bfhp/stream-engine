@@ -83,6 +83,12 @@ class FeedService
             'http' => true,
             'https' => true,
         ]);
+        // Feed HTML is rendered inside the surrounding site chrome. Inline
+        // CSS would let an author cover or imitate that interface (positioned
+        // overlays, viewport-sized blocks) and fetch external CSS resources.
+        // Editor formatting uses semantic markup, so styles are not part of
+        // the user-authored content contract.
+        $config->set('HTML.ForbiddenAttributes', ['style' => true]);
 
         // An <img> without alt gets an empty one, not HTMLPurifier's default
         // of the file name ("4f3a9c.webp"), which screen readers would read
@@ -91,7 +97,7 @@ class FeedService
         $config->set('Attr.DefaultImageAlt', '');
 
         $config->set('HTML.DefinitionID', 'stream-engine-html');
-        $config->set('HTML.DefinitionRev', 1);
+        $config->set('HTML.DefinitionRev', 2);
         $config->set('Cache.DefinitionImpl', null);
         if ($def = $config->maybeGetRawHTMLDefinition()) {
             $def->addAttribute('div', 'class', 'Text');
@@ -130,7 +136,6 @@ class FeedService
                 'Common',   // standard attribute set
                 [
                     'class' => 'Text',
-                    'style' => 'Text',
                     'id' => 'Text',
                 ]
             );

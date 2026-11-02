@@ -333,6 +333,11 @@ write path can reach one of those columns, it must use the same sanitizer.
 Administrator widget HTML and fixed developer-owned `head_ext` tags are
 explicit trusted-author boundaries; never mix request values into them.
 
+Feed HTML uses semantic markup for formatting and rejects inline style
+attributes globally. Do not re-enable author CSS for an individual element:
+positioning, viewport sizing, stacking, or external CSS URLs can let content
+cover or imitate the surrounding trusted interface.
+
 Do not create a one-off regular-expression HTML sanitizer. Extend the relevant
 HTMLPurifier policy, test allowed and forbidden markup, sanitize before storage,
 and keep the renderer's `|raw` comment tied to that invariant.

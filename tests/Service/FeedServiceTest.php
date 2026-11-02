@@ -1074,6 +1074,36 @@ final class FeedServiceTest extends TestCase
         $this->assertStringNotContainsString('onclick', $normalized);
     }
 
+    public function testUserAuthoredHtmlDropsInlineCssAndKeepsSemanticFormatting(): void
+    {
+        $service = $this->makeService(
+            new FeedRepository($this->createStub(PdoDatabase::class)),
+            $this->makeUrlGenerator(),
+        );
+        $purifier = (new ReflectionProperty(FeedService::class, 'purifier'))->getValue($service);
+        $input = '<nav id="contents" class="toc" '
+            .'style="position:fixed;inset:0;z-index:2147483647;width:100vw;height:100vh;'
+            .'background-image:url(https://evil.invalid/overlay.css)">'
+            .'<p style="margin-top:-9999px"><strong>Bold</strong> <em>emphasis</em></p>'
+            .'<ul><li><a href="https://example.test/page">A safe link</a></li></ul>'
+            .'</nav>';
+
+        $postHtml = $purifier->purify($input);
+        $commentHtml = (new ReflectionMethod(FeedService::class, 'normalizeCommentContent'))
+            ->invoke($service, $input, true);
+
+        foreach ([$postHtml, $commentHtml] as $html) {
+            $this->assertStringContainsString('<nav id="contents" class="toc">', $html);
+            $this->assertStringContainsString('<strong>Bold</strong>', $html);
+            $this->assertStringContainsString('<em>emphasis</em>', $html);
+            $this->assertStringContainsString('<ul><li>', $html);
+            $this->assertStringContainsString('href="https://example.test/page"', $html);
+            $this->assertStringNotContainsString('style=', $html);
+            $this->assertStringNotContainsString('position:', $html);
+            $this->assertStringNotContainsString('evil.invalid', $html);
+        }
+    }
+
     public function testCreateCommentRejectsAThirdDiscussionLevelBeforeInsert(): void
     {
         $db = $this->createMock(PdoDatabase::class);
@@ -2376,9 +2406,9 @@ final class FeedServiceTest extends TestCase
             slug: $inputSlug,
             type: 'article',
             parentId: null,
-            description: 'Nice <b>desc</b><script>bad()</script>',
+            description: 'Nice <b style="background-image:url(https://evil.invalid/desc.css)">desc</b><script>bad()</script>',
             imageUrl: '/uploads/feed-covers/photo.jpg',
-            content: '<p>Hello</p><script>alert(1)</script>',
+            content: '<p style="position:fixed;inset:0">Hello</p><script>alert(1)</script>',
             user: $user
         );
 
