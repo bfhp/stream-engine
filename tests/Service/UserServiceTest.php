@@ -672,6 +672,10 @@ final class UserServiceTest extends TestCase
         $db = $this->createMock(PdoDatabase::class);
         $service = $this->makeService(db: $db);
 
+        $db->expects($this->once())->method('begin');
+        $db->expects($this->never())->method('commit');
+        $db->expects($this->once())->method('rollback');
+
         $db
             ->expects($this->once())
             ->method('fetchOne')
@@ -687,6 +691,10 @@ final class UserServiceTest extends TestCase
     {
         $db = $this->createMock(PdoDatabase::class);
         $service = $this->makeService(db: $db);
+
+        $db->expects($this->once())->method('begin');
+        $db->expects($this->never())->method('commit');
+        $db->expects($this->once())->method('rollback');
 
         $db
             ->expects($this->once())
@@ -715,30 +723,25 @@ final class UserServiceTest extends TestCase
         $db
             ->expects($this->once())
             ->method('fetchOne')
-            ->with('SELECT * FROM password_resets WHERE token = ?', ['valid-token'])
+            ->with('SELECT * FROM password_resets WHERE token = ? FOR UPDATE', ['valid-token'])
             ->willReturn([
                 'user_id' => 7,
                 'token' => 'valid-token',
                 'created_at' => time(),
             ]);
 
+        $writes = [];
+        $db->expects($this->once())->method('begin');
+        $db->expects($this->once())->method('commit');
+        $db->expects($this->never())->method('rollback');
         $db
-            ->expects($this->exactly(2))
+            ->expects($this->exactly(3))
             ->method('execute')
-            ->with(
-                $this->logicalOr(
-                    $this->equalTo('UPDATE users SET password_hash = ? WHERE id = ?'),
-                    $this->equalTo('DELETE FROM password_resets WHERE token = ?')
-                ),
-                $this->callback(static function (array $params) use ($plainPassword): bool {
-                    // UPDATE call: [$hash, $userId]; DELETE call: [$token]
-                    if (count($params) === 2) {
-                        return password_verify($plainPassword, $params[0]) && $params[1] === 7;
-                    }
+            ->willReturnCallback(static function (string $sql, array $params) use (&$writes): int {
+                $writes[] = [$sql, $params];
 
-                    return $params === ['valid-token'];
-                })
-            );
+                return 1;
+            });
 
         $userDb
             ->expects($this->once())
@@ -762,6 +765,13 @@ final class UserServiceTest extends TestCase
             );
 
         $service->resetPasswordByToken('valid-token', $plainPassword);
+
+        $this->assertCount(3, $writes);
+        $this->assertSame('UPDATE users SET password_hash = ? WHERE id = ?', $writes[0][0]);
+        $this->assertTrue(password_verify($plainPassword, $writes[0][1][0]));
+        $this->assertSame(7, $writes[0][1][1]);
+        $this->assertSame(['DELETE FROM password_resets WHERE user_id = ?', [7]], $writes[1]);
+        $this->assertSame(['DELETE FROM user_sessions WHERE user_id = ?', [7]], $writes[2]);
     }
 
     /* ------------------------------------------------------------------ */

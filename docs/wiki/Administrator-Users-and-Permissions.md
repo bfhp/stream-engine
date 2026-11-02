@@ -117,7 +117,10 @@ destination. Verify both changes with the account owner before saving them.
 
 The user editor does not change passwords. Direct the account owner to the
 public **Forgot password** flow. A password-reset link is valid for one hour
-and is sent only when SMTP and `SITE_URL` are correctly configured.
+and is sent only when SMTP and `SITE_URL` are correctly configured. A
+successful reset invalidates every outstanding reset link for that account and
+ends all of its existing sessions; the account owner must sign in again on
+every device.
 
 ## Protected accounts and safeguards
 

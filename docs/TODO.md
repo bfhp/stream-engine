@@ -22,61 +22,6 @@ where important, how completion will be verified. Keep diagnostic notes and
 reports about completed work in commits/PRs instead of turning TODO back into a
 changelog.
 
-## P1
-
-### Enforce parent access rules for comments
-
-**Problem.** `FeedService::createComment()` stores comments with the default
-`public` visibility. `getComments()` does not authorize the parent, and generic
-feed lookups and listings authorize only the comment itself. Guests can read
-comments on private or members-only publications, including through
-`GET /api/v1/feeds?type=comment`.
-
-**Outcome.** Comments and nested replies require access to their parent
-publication through every read path. The rule follows the parent's current
-visibility and membership policy, including after a visibility change or
-membership revocation; copying visibility only when a comment is created is
-not sufficient.
-
-**Verification.** Create discussions on public, members-only, and private
-publications. Exercise thread endpoints, direct feed lookups, generic listings,
-and search as a guest, an unrelated member, an allowed reader, and the owner.
-Repeat after changing visibility and revoking membership. Unauthorized readers
-receive no protected comment content.
-
-### Revoke existing access when a password is reset
-
-**Problem.** `UserService::resetPasswordByToken()` changes the password and
-deletes only the submitted reset token. Existing sessions remain authenticated,
-and another outstanding reset link can change the password again. A person
-recovering an account cannot reliably remove an attacker's access.
-
-**Outcome.** Password recovery atomically consumes the submitted token, changes
-the password, invalidates every other reset token for that user, and revokes
-all existing sessions. Concurrent requests cannot reuse a consumed token.
-
-**Verification.** Seed multiple sessions and reset links for one user. After a
-successful reset, every old session and reset link is rejected, the old password
-fails, and the new password works. Concurrent uses of one reset token permit
-only one successful password change.
-
-### Prevent shared caching of personalized responses
-
-**Problem.** `StreamEngine::dispatchHtmlRequest()` sends
-`Cache-Control: public, max-age=60` for every successful HTML response,
-including authenticated profiles and protected content. With a shared HTTP
-cache, one visitor's response may be served to another visitor.
-
-**Outcome.** Personalized and protected responses use `Cache-Control: private,
-no-store`. Apply a consistent policy to HTML, sensitive API responses, and
-errors. Public caching is allowed only for responses whose content is
-independent of the visitor and session.
-
-**Verification.** Assert response headers for guest and authenticated requests,
-including profile and private-publication pages. Use a shared-cache integration
-test to confirm that one user's protected response cannot be reused for a guest
-or another account.
-
 ## P2
 
 ### Restrict CSS in user-authored HTML

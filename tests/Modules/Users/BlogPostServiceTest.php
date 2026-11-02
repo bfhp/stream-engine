@@ -308,7 +308,7 @@ final class BlogPostServiceTest extends TestCase
                     $this->stringContains('f.owner_id = ?'),
                     $this->stringContains('f.type = ?')
                 ),
-                [7, 'blog', 7, 7]
+                [7, 'blog', 7, 7, 7, 7]
             )
             ->willReturn($this->makeBlogFeedRow(900, 7, '#7'));
 

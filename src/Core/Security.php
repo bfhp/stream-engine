@@ -39,7 +39,26 @@ class Security
             return;
         }
 
-        header('X-Content-Type-Options: nosniff');
+        foreach (self::defaultResponseHeaders() as $header) {
+            header($header);
+        }
+    }
+
+    /**
+     * Application responses may contain the current user, protected content,
+     * CSRF state, or private error details. They are therefore non-cacheable
+     * unless a visitor-independent endpoint explicitly replaces this policy
+     * (the sitemap is currently the only such endpoint).
+     *
+     * @return list<string>
+     */
+    private static function defaultResponseHeaders(): array
+    {
+        return [
+            'X-Content-Type-Options: nosniff',
+            'Cache-Control: private, no-store',
+            'Expires: 0',
+        ];
     }
 
     /**

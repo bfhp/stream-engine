@@ -470,6 +470,19 @@ class FeedService
             throw new NotFoundException($this->tm->trans('feed.parent_not_found'));
         }
 
+        // Discussion rendering and repository ACLs support a root comment and
+        // one reply level. Reject a reply to an already nested reply before it
+        // is inserted; otherwise it would be intentionally unreadable through
+        // the bounded ancestor ACL and createComment() could not return it.
+        if ($parent->type === 'comment') {
+            $publication = $parent->parentId !== null
+                ? $this->repository->findById($parent->parentId, $user)
+                : null;
+            if (! $publication || $publication->type === 'comment') {
+                throw new NotFoundException($this->tm->trans('feed.parent_not_found'));
+            }
+        }
+
         $normalizedContent = $this->normalizeCommentContent($content, $richText);
         $this->mentionService?->validate($normalizedContent);
 
@@ -1645,6 +1658,10 @@ class FeedService
             $cursorObject = null; // The first page
         } else {
             $cursorObject = $decodeCursor($cursor);
+        }
+
+        if (! $this->repository->findById($parentFeedId, $user)) {
+            throw new NotFoundException($this->tm->trans('feed.parent_not_found'));
         }
 
         $rootsPage = $this->repository->findCommentsPage(

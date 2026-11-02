@@ -22,6 +22,7 @@ use StreamEngine\Repository\UserSessionRepository;
 use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
+use Throwable;
 
 final class UserService
 {
@@ -594,30 +595,47 @@ final class UserService
     public function resetPasswordByToken(string $token, string $password): void
     {
         $this->validatePassword($password);
-
-        $row = $this->getPasswordResetToken($token);
-        if (!$row) {
-            throw new ValidationException($this->tm->trans('user.password_reset_invalid'));
-        }
-
-        // Checking TTL (1 hour)
-        if ($row['created_at'] < time() - 3600) {
-            throw new ValidationException($this->tm->trans('user.password_reset_expired'));
-        }
-
         $hash = password_hash($password, PASSWORD_DEFAULT);
 
-        $this->db->execute(
-            "UPDATE users SET password_hash = ? WHERE id = ?",
-            [$hash, $row['user_id']]
-        );
+        $this->db->begin();
 
-        $this->db->execute(
-            "DELETE FROM password_resets WHERE token = ?",
-            [$token]
-        );
+        try {
+            // The row lock makes one token single-use even when two reset
+            // requests arrive concurrently. The second request resumes only
+            // after the first commits, then finds no row.
+            $row = $this->db->fetchOne(
+                'SELECT * FROM password_resets WHERE token = ? FOR UPDATE',
+                [$token]
+            );
+            if (! $row) {
+                throw new ValidationException($this->tm->trans('user.password_reset_invalid'));
+            }
 
-        $user = $this->userRepository->findById($row['user_id']);
+            // Checking TTL (1 hour)
+            if ($row['created_at'] < time() - 3600) {
+                throw new ValidationException($this->tm->trans('user.password_reset_expired'));
+            }
+
+            $userId = (int) $row['user_id'];
+
+            $this->db->execute(
+                'UPDATE users SET password_hash = ? WHERE id = ?',
+                [$hash, $userId]
+            );
+            $this->db->execute('DELETE FROM password_resets WHERE user_id = ?', [$userId]);
+            $this->db->execute('DELETE FROM user_sessions WHERE user_id = ?', [$userId]);
+            $this->db->commit();
+        } catch (Throwable $e) {
+            $this->db->rollback();
+            throw $e;
+        }
+
+        $user = $this->userRepository->findById($userId);
+        if ($user === null) {
+            error_log('Password reset notice not sent: user no longer exists.');
+
+            return;
+        }
 
         try {
             $this->mailService->send(
@@ -625,8 +643,8 @@ final class UserService
                 subject: $this->tm->trans('user.mail.password_reset_subject'),
                 template: 'users/reset',
             );
-        } catch (Exception|LoaderError|RuntimeError|SyntaxError $e) {
-            throw new RuntimeException("Unable to reset password: " . $e->getMessage());
+        } catch (Exception|LoaderError|RuntimeError|SyntaxError|RuntimeException $e) {
+            error_log('Password reset notice not sent: '.$e->getMessage());
         }
     }
 

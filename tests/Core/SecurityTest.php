@@ -6,6 +6,7 @@ namespace Tests\Core;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
 use StreamEngine\Core\Exceptions\ValidationException;
 use StreamEngine\Core\Security;
 use StreamEngine\Core\TranslationManager;
@@ -35,6 +36,19 @@ final class SecurityTest extends TestCase
     /* ===============================
        Issuing a token
     =============================== */
+
+    public function testApplicationResponsesDefaultToPrivateNoStore(): void
+    {
+        $headers = (new ReflectionMethod(Security::class, 'defaultResponseHeaders'))->invoke(null);
+
+        $this->assertContains('X-Content-Type-Options: nosniff', $headers);
+        $this->assertContains('Cache-Control: private, no-store', $headers);
+        $this->assertContains('Expires: 0', $headers);
+        $this->assertSame([], array_values(array_filter(
+            $headers,
+            static fn (string $header): bool => str_starts_with($header, 'Cache-Control: public')
+        )));
+    }
 
     /**
      * The half of the mechanism that had no tests at all: verifyCsrf() checks a

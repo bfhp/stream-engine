@@ -6,7 +6,10 @@ namespace Tests\Repository;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use PDO;
+use ReflectionClass;
 use ReflectionMethod;
+use ReflectionProperty;
 use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Domain\User;
 use StreamEngine\Repository\FeedRepository;
@@ -68,16 +71,22 @@ final class FeedRepositoryTest extends TestCase
     {
         [$sql, $params] = $this->aclCondition($this->user(7));
 
-        // Own rows, public rows, or rows in a container they belong to.
+        // Ordinary feeds: own rows, public rows, or rows in a container they
+        // belong to. Comments instead repeat that policy for their root post.
+        $this->assertStringContainsString("f.type <> 'comment'", $sql);
         $this->assertStringContainsString('f.owner_id = ?', $sql);
         $this->assertStringContainsString("f.visibility = 'public'", $sql);
+        $this->assertStringContainsString("f.type = 'comment'", $sql);
+        $this->assertStringContainsString('FROM feeds acl_parent', $sql);
+        $this->assertStringContainsString('LEFT JOIN feeds acl_root', $sql);
+        $this->assertStringContainsString("CASE WHEN acl_parent.type = 'comment' THEN acl_root.owner_id ELSE acl_parent.owner_id END = ?", $sql);
         $this->assertStringContainsString('FROM memberships m', $sql);
         $this->assertStringContainsString('m.user_id = ?', $sql);
         $this->assertStringContainsString('mr.role_level >= 1', $sql);
 
-        // Two placeholders, same id, in that order - the pair the ordering
-        // tests below expect to find at the end of every query's params.
-        $this->assertSame([7, 7], $params);
+        // Two placeholders for the feed and two for the resolved comment
+        // subject, in SQL order.
+        $this->assertSame([7, 7, 7, 7], $params);
     }
 
     /**
@@ -92,7 +101,7 @@ final class FeedRepositoryTest extends TestCase
     {
         [, $params] = $this->aclCondition($this->user(0, role: AccessService::ROLE_USER));
 
-        $this->assertSame([0, 0], $params);
+        $this->assertSame([0, 0, 0, 0], $params);
     }
 
     public function testGlobalModeratorBypassesContentVisibility(): void
@@ -106,13 +115,103 @@ final class FeedRepositoryTest extends TestCase
     {
         [$sql, $params] = $this->aclCondition($this->user(0, AccessService::ROLE_MODERATOR));
         $this->assertNotSame('1=1', $sql);
-        $this->assertSame([0, 0], $params);
+        $this->assertSame([0, 0, 0, 0], $params);
+    }
+
+    public function testCommentsFollowTheirRootPostsCurrentAccessPolicy(): void
+    {
+        if (! extension_loaded('pdo_sqlite')) {
+            $this->markTestSkipped('pdo_sqlite is required for the ACL behavior test.');
+        }
+
+        $pdo = new PDO('sqlite::memory:');
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        $pdo->exec(<<<'SQL'
+            CREATE TABLE users (
+                id INTEGER PRIMARY KEY,
+                nick TEXT,
+                avatar_url TEXT,
+                username TEXT
+            );
+            CREATE TABLE feeds (
+                id INTEGER PRIMARY KEY,
+                parent_id INTEGER,
+                owner_id INTEGER NOT NULL,
+                type TEXT NOT NULL,
+                slug TEXT,
+                title TEXT,
+                content TEXT,
+                description TEXT,
+                image_url TEXT,
+                container_id INTEGER,
+                container_type TEXT,
+                visibility TEXT NOT NULL,
+                position INTEGER NOT NULL DEFAULT 0,
+                created_at INTEGER,
+                updated_at INTEGER,
+                rating_sum INTEGER NOT NULL DEFAULT 0,
+                rating_count INTEGER NOT NULL DEFAULT 0,
+                views INTEGER NOT NULL DEFAULT 0,
+                rating_avg REAL NOT NULL DEFAULT 0
+            );
+            CREATE TABLE membership_roles (
+                id INTEGER PRIMARY KEY,
+                role_level INTEGER NOT NULL
+            );
+            CREATE TABLE memberships (
+                container_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL,
+                membership_role_id INTEGER NOT NULL,
+                PRIMARY KEY (container_id, user_id)
+            );
+            SQL);
+
+        $pdo->exec("INSERT INTO membership_roles (id, role_level) VALUES (1, 1), (2, 2)");
+        $pdo->exec("INSERT INTO users (id, nick, username) VALUES (2, 'Owner', 'owner'), (3, 'Reader', 'reader'), (4, 'Member', 'member'), (9, 'Commenter', 'commenter')");
+        $pdo->exec(<<<'SQL'
+            INSERT INTO feeds (id, parent_id, owner_id, type, title, content, container_id, visibility, created_at) VALUES
+                (10, NULL, 2, 'article', 'Public', 'public post', NULL, 'public', 10),
+                (11, 10,   9, 'comment', '', 'public comment', NULL, 'public', 11),
+                (20, NULL, 2, 'article', 'Private', 'private post', 200, 'private', 20),
+                (21, 20,   9, 'comment', '', 'private root comment', NULL, 'public', 21),
+                (22, 21,   9, 'comment', '', 'private nested reply', NULL, 'public', 22),
+                (30, NULL, 2, 'article', 'Members', 'members post', 300, 'members', 30),
+                (31, 30,   9, 'comment', '', 'members comment', NULL, 'public', 31)
+            SQL);
+        $pdo->exec('INSERT INTO memberships (container_id, user_id, membership_role_id) VALUES (200, 3, 2), (300, 4, 1)');
+
+        $database = (new ReflectionClass(PdoDatabase::class))->newInstanceWithoutConstructor();
+        (new ReflectionProperty(PdoDatabase::class, 'pdo'))->setValue($database, $pdo);
+        $repository = new FeedRepository($database);
+
+        $guest = $this->user(0);
+        $this->assertNotNull($repository->findById(11, $guest));
+        $this->assertNull($repository->findById(21, $guest));
+        $this->assertNull($repository->findById(22, $guest));
+        $this->assertNull($repository->findById(31, $guest));
+        $this->assertSame([11], array_map(
+            static fn ($feed): int => $feed->id,
+            $repository->list($guest, type: 'comment')
+        ));
+
+        $this->assertNotNull($repository->findById(21, $this->user(3)));
+        $this->assertNotNull($repository->findById(22, $this->user(3)));
+        $this->assertNotNull($repository->findById(31, $this->user(4)));
+
+        $pdo->exec('DELETE FROM memberships WHERE container_id = 200 AND user_id = 3');
+        $this->assertNull($repository->findById(21, $this->user(3)));
+        $this->assertNull($repository->findById(22, $this->user(3)));
+
+        $pdo->exec("UPDATE feeds SET visibility = 'public' WHERE id = 20");
+        $this->assertNotNull($repository->findById(21, $guest));
+        $this->assertNotNull($repository->findById(22, $guest));
     }
 
     /**
      * The invariant that matters, and the reason this is worth testing at all:
-     * applyAcl() *appends* its two params, so for a non-admin they are the
-     * last two of every query. Get the order wrong and nothing errors - the
+     * applyAcl() appends its params, so for a non-admin they are the last four
+     * of every query. Get the order wrong and nothing errors - the
      * query still runs, comparing an owner id against a slug, and returns rows
      * the caller was never allowed to see.
      *
@@ -141,7 +240,7 @@ final class FeedRepositoryTest extends TestCase
 
         $call(new FeedRepository($db), $this->user(7));
 
-        $this->assertSame([...$ownParams, 7, 7], $captured);
+        $this->assertSame([...$ownParams, 7, 7, 7, 7], $captured);
     }
 
     /** @return array<string, array{callable, list<mixed>}> */
@@ -389,7 +488,7 @@ final class FeedRepositoryTest extends TestCase
                     && str_contains($sql, 'JOIN feed_terms')
                     && str_contains($sql, 'f.created_at < ?')
                     && ! str_contains($sql, 'OFFSET')),
-                ['blog-post', 'php', 1_700_000_000, 1_700_000_000, 42, 7, 7]
+                ['blog-post', 'php', 1_700_000_000, 1_700_000_000, 42, 7, 7, 7, 7]
             )
             ->willReturn([]);
 
@@ -408,7 +507,7 @@ final class FeedRepositoryTest extends TestCase
      * "is at the end" rule does not hold. Pinned separately so that fixing one
      * doesn't silently break the other.
      */
-    public function testSearchBindsTheCursorAfterTheAclPair(): void
+    public function testSearchBindsTheCursorAfterTheAclParams(): void
     {
         $captured = null;
         $db = $this->createStub(PdoDatabase::class);
@@ -428,7 +527,10 @@ final class FeedRepositoryTest extends TestCase
         );
 
         // Ranking and eligibility parameters, then ACL, then the complete cursor.
-        $this->assertSame(['книга', 'книга', 'книга', 'книга', 'книга', 'книга', 7, 7, 1, '2.500000', 58], $captured);
+        $this->assertSame(
+            ['книга', 'книга', 'книга', 'книга', 'книга', 'книга', 7, 7, 7, 7, 1, '2.500000', 58],
+            $captured
+        );
     }
 
     public function testListOrdersByPrimaryKey(): void

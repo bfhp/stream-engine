@@ -621,8 +621,6 @@ class StreamEngine
         }*/
 
         header('Last-Modified: '.gmdate('D, d M Y H:i:s', $lastModified).' GMT');
-        header('Cache-Control: public, max-age=60');
-        header('Expires: 0');
         echo $content;
     }
 

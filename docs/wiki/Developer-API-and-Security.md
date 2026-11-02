@@ -170,6 +170,12 @@ Passwords are verified with `password_verify()` and newly saved with
 10–255 characters. Do not add a second hashing scheme, log credentials, return
 password hashes, or compare a password yourself.
 
+Password recovery locks the submitted reset token and changes the password,
+deletes every reset token for the account, and deletes every existing session
+in one database transaction. Keep all four operations on the same connection;
+moving session revocation outside that transaction would restore the account
+takeover window the flow is designed to close.
+
 Controllers receive identity through immutable `RequestContext`; use
 `$this->context->user`, not a user ID supplied by the browser. A guest is a
 `User` with ID `0`. `requireAuthenticatedUser()` rejects a guest, but it says
@@ -207,6 +213,12 @@ references.
 Repository queries that list content must enforce visibility in the query or
 through one bounded policy-aware service operation. Filtering an unrestricted
 result in Twig or JavaScript leaks data and wastes work.
+
+Comments do not define an independent audience. Repository ACL checks resolve
+a root comment to its parent publication and a nested reply to the publication
+above its parent comment. Keep direct lookup, lists, search, and discussion
+queries on that shared predicate so publication visibility changes and
+membership revocations take effect immediately.
 
 ## CSRF protection
 
@@ -325,12 +337,15 @@ Do not create a one-off regular-expression HTML sanitizer. Extend the relevant
 HTMLPurifier policy, test allowed and forbidden markup, sanitize before storage,
 and keep the renderer's `|raw` comment tied to that invariant.
 
-The regular application currently relies on the deployment for headers such as
-HSTS, `X-Content-Type-Options`, framing restrictions, referrer policy, and any
-site-wide Content Security Policy; only the installer sets its own restrictive
-CSP and `nosniff`. Coordinate new inline or third-party scripts with the actual
-web-server policy. Do not claim an application-wide CSP until normal responses
-set and test one.
+Every application response starts with `X-Content-Type-Options: nosniff` and
+`Cache-Control: private, no-store`; this covers HTML, JSON, and error paths.
+Only endpoints whose representation is independent of identity and session may
+replace that cache policy. The sitemap is the current explicit public-cache
+exception. The regular application still relies on the deployment for HSTS,
+framing restrictions, referrer policy, and any site-wide Content Security
+Policy; only the installer sets its own restrictive CSP. Coordinate new inline
+or third-party scripts with the actual web-server policy. Do not claim an
+application-wide CSP until normal responses set and test one.
 
 ## Uploads and filesystem input
 
