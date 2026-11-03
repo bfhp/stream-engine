@@ -29,6 +29,7 @@ use StreamEngine\Repository\UploadRepository;
 use StreamEngine\Repository\UserRepository;
 use StreamEngine\Repository\UserSessionRepository;
 use StreamEngine\Service\AccessService;
+use StreamEngine\Service\AuthenticationRateLimiter;
 use StreamEngine\Service\AuthService;
 use StreamEngine\Service\FeedService;
 use StreamEngine\Service\MailService;
@@ -37,6 +38,7 @@ use StreamEngine\Service\NotificationService;
 use StreamEngine\Service\PollService;
 use StreamEngine\Service\SettingsService;
 use StreamEngine\Service\UploadService;
+use Tests\Support\InMemoryRateLimitStore;
 use Tests\Support\PhpInputStreamMock;
 
 final class APIControllerTest extends TestCase
@@ -57,7 +59,11 @@ final class APIControllerTest extends TestCase
         $db = $this->createStub(PdoDatabase::class);
         $authService = new AuthService(
             new UserRepository($db),
-            new UserSessionRepository($db)
+            new UserSessionRepository($db),
+            new AuthenticationRateLimiter(
+                new InMemoryRateLimitStore(),
+                new TranslationManager('ru', 'en'),
+            ),
         );
         $uploadService = new UploadService(
             new UploadRepository($db),

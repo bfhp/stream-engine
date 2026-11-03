@@ -241,6 +241,7 @@ return [
     'feedback.notification' => "Новое обращение через форму обратной связи\nИмя: {name}\nEmail: {email}\n\n{message}",
 
     'auth.credentials_invalid' => 'Неверный email или пароль. Проверьте их и попробуйте ещё раз или восстановите пароль.',
+    'auth.rate_limited' => 'Слишком много попыток. Подождите и повторите позже.',
 
     'friend.cannot_add_self' => 'Нельзя добавить себя в друзья',
     'friend.new_request' => '{name} хочет добавить вас в друзья и подписался на ваш блог.',

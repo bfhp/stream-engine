@@ -54,11 +54,13 @@ use StreamEngine\Repository\NotificationPreferenceRepository;
 use StreamEngine\Repository\PageRepository;
 use StreamEngine\Repository\ParticipantRepository;
 use StreamEngine\Repository\PollRepository;
+use StreamEngine\Repository\RateLimitRepository;
 use StreamEngine\Repository\SettingsRepository;
 use StreamEngine\Repository\UploadRepository;
 use StreamEngine\Repository\UserRepository;
 use StreamEngine\Repository\UserSessionRepository;
 use StreamEngine\Service\AccessService;
+use StreamEngine\Service\AuthenticationRateLimiter;
 use StreamEngine\Service\AuthService;
 use StreamEngine\Service\BreadcrumbsService;
 use StreamEngine\Service\FeedService;
@@ -230,10 +232,15 @@ class StreamEngine
 
         $userRepository = new UserRepository($this->db);
         $sessionRepository = new UserSessionRepository($this->db);
+        $authenticationRateLimiter = new AuthenticationRateLimiter(
+            new RateLimitRepository($this->db),
+            $this->tm,
+        );
 
         $this->authService = new AuthService(
             $userRepository,
-            $sessionRepository
+            $sessionRepository,
+            $authenticationRateLimiter,
         );
 
         $this->mailService = new MailService(
@@ -286,6 +293,7 @@ class StreamEngine
             $this->notificationService,
             $sessionRepository,
             $this->config,
+            $authenticationRateLimiter,
         );
 
         $uploadRepository = new UploadRepository($this->db);

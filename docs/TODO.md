@@ -24,23 +24,6 @@ changelog.
 
 ## P2
 
-### Limit authentication attempts and password recovery requests
-
-**Problem.** Login and password recovery have no application rate limits, and
-the bundled Nginx configuration supplies none. Callers can repeatedly attempt
-passwords or trigger reset emails and token creation. CSRF protection does not
-bound requests from a caller using its own valid token.
-
-**Outcome.** Add bounded policies for login attempts and reset requests keyed
-by account and client IP. Define their windows, storage, trusted-proxy handling,
-and failure behavior. Rejected requests must not create reset tokens or send
-mail, and recovery responses must not disclose whether an account exists.
-
-**Verification.** Exercise repeated requests for one account, multiple accounts
-from one IP, and one account from multiple IPs. Verify enforcement, expiry of
-the limit, consistent account-existence responses, and the absence of mail or
-token writes for rejected requests.
-
 ### Protect attachments in private conversations
 
 **Problem.** `MessageService::mapMessage()` returns attachment URLs below

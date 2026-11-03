@@ -225,6 +225,7 @@ Email: {email}
 
 {message}',
     'auth.credentials_invalid' => 'Incorrect email or password. Check them and try again, or reset your password.',
+    'auth.rate_limited' => 'Too many attempts. Wait and try again later.',
     'friend.cannot_add_self' => 'You can\'t add yourself to your friends.',
     'friend.new_request' => '{name} wants to add you as a friend and has subscribed to your blog.',
     'friend.became_mutual' => '{name} accepted your request — you are now friends!',

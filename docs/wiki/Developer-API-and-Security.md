@@ -414,11 +414,27 @@ server. CAPTCHA verification follows this pattern with fixed provider
 endpoints; CAPTCHA and honeypots are abuse controls, not replacements for
 authorization or CSRF.
 
-There is no centralized application rate limiter today. Abuse-sensitive work
-therefore needs an explicit bounded policy at the reverse proxy, provider, or
-feature layer. Document its identity key, window, response, storage, proxy-IP
-trust assumptions, and failure behavior; do not return `429` without an
-implemented limit.
+Login and password recovery use a database-backed fixed-window limiter. Login
+allows five attempts per normalized account and 50 per client IP in 15 minutes.
+Password recovery allows three requests per normalized account and 10 per
+client IP in one hour. Account and packed-IP identities are stored only as
+SHA-256 hashes in `auth_rate_limits`; expired rows are removed by the hourly
+`users:cleanup` task.
+
+Both buckets are consumed before a request is rejected. A successful login
+clears its account bucket, but not its IP bucket. Password recovery consumes
+the same buckets before account lookup, including for unknown addresses, and a
+rejected request does not create a token or send mail. Exceeding either policy
+returns `429` with error code `rate_limited`. A database error fails closed
+instead of silently disabling the protection.
+
+Only `REMOTE_ADDR` identifies the client. The application deliberately ignores
+`X-Forwarded-For` and similar caller-controlled headers. A trusted reverse
+proxy must replace `REMOTE_ADDR` with the verified client address before PHP
+runs; never pass an untrusted forwarding value through as the remote address.
+New abuse-sensitive features still need an explicit bounded policy documenting
+their identity key, window, response, storage, proxy assumptions, and failure
+behavior.
 
 ## Security testing
 

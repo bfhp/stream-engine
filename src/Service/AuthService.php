@@ -20,7 +20,8 @@ final class AuthService
 
     public function __construct(
         private readonly UserRepository        $userRepository,
-        private readonly UserSessionRepository $sessionRepository
+        private readonly UserSessionRepository $sessionRepository,
+        private readonly ?AuthenticationRateLimiter $rateLimiter = null,
     ) {
 
     }
@@ -30,6 +31,12 @@ final class AuthService
      */
     public function login(string $email, string $password): bool
     {
+        if ($this->rateLimiter === null) {
+            throw new RuntimeException('Authentication rate limiter is not configured');
+        }
+
+        $this->rateLimiter->consumeLogin($email, $this->clientIp());
+
         $row = $this->userRepository->findByEmail($email);
 
         if (!$row) {
@@ -48,6 +55,7 @@ final class AuthService
             return false;
         }
 
+        $this->rateLimiter?->loginSucceeded($email);
         $this->createSession((int)$row['id']);
 
         return true;
@@ -94,6 +102,15 @@ final class AuthService
                 'samesite' => 'Lax'
             ]
         );
+    }
+
+    /**
+     * Forwarding headers are intentionally ignored: they are caller-controlled
+     * unless a trusted reverse proxy has already rewritten REMOTE_ADDR.
+     */
+    private function clientIp(): string
+    {
+        return is_string($_SERVER['REMOTE_ADDR'] ?? null) ? $_SERVER['REMOTE_ADDR'] : '';
     }
 
     public function logout(): void

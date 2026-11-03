@@ -225,6 +225,7 @@ return [
 
 {message}',
     'auth.credentials_invalid' => '이메일 또는 비밀번호가 올바르지 않습니다. 확인 후 다시 시도하거나 비밀번호를 재설정하세요.',
+    'auth.rate_limited' => '시도 횟수가 너무 많습니다. 잠시 후 다시 시도하세요.',
     'friend.cannot_add_self' => '자기 자신을 친구로 추가할 수 없습니다.',
     'friend.new_request' => '{name}님이 나를 친구로 추가하려 하며 내 블로그를 구독했습니다.',
     'friend.became_mutual' => '{name}님이 요청을 수락했습니다. 이제 친구입니다!',

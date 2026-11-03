@@ -225,6 +225,7 @@ E-mail: {email}
 
 {message}',
     'auth.credentials_invalid' => 'E-mail ou senha incorretos. Verifique e tente novamente, ou redefina sua senha.',
+    'auth.rate_limited' => 'Muitas tentativas. Aguarde e tente novamente mais tarde.',
     'friend.cannot_add_self' => 'Você não pode adicionar a si mesmo como amigo.',
     'friend.new_request' => '{name} quer adicionar você como amigo e se inscreveu no seu blog.',
     'friend.became_mutual' => '{name} aceitou sua solicitação – vocês agora são amigos!',

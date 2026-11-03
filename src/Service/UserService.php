@@ -154,6 +154,7 @@ final class UserService
         // Only for appSecret(), which signs the anonymous visit cookie -
         // see recordGuestPresence().
         private readonly Config $config,
+        private readonly ?AuthenticationRateLimiter $rateLimiter = null,
     ) {
     }
 
@@ -533,6 +534,13 @@ final class UserService
 
     public function createPasswordResetToken(string $email): void
     {
+        if ($this->rateLimiter === null) {
+            throw new RuntimeException('Authentication rate limiter is not configured');
+        }
+
+        $clientIp = is_string($_SERVER['REMOTE_ADDR'] ?? null) ? $_SERVER['REMOTE_ADDR'] : '';
+        $this->rateLimiter->consumePasswordReset($email, $clientIp);
+
         $user = $this->userRepository->findByEmail($email);
 
         if (!$user) {

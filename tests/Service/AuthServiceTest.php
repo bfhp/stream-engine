@@ -10,8 +10,11 @@ use StreamEngine\Domain\User;
 use StreamEngine\Repository\UserRepository;
 use StreamEngine\Repository\UserSessionRepository;
 use StreamEngine\Service\AccessService;
+use StreamEngine\Service\AuthenticationRateLimiter;
 use StreamEngine\Service\AuthService;
 use StreamEngine\Service\UserService;
+use StreamEngine\Core\TranslationManager;
+use Tests\Support\InMemoryRateLimitStore;
 
 final class AuthServiceTest extends TestCase
 {
@@ -40,11 +43,78 @@ final class AuthServiceTest extends TestCase
     private function makeService(
         ?PdoDatabase $userDb = null,
         ?PdoDatabase $sessionDb = null,
+        ?AuthenticationRateLimiter $rateLimiter = null,
     ): AuthService {
+        $rateLimiter ??= new AuthenticationRateLimiter(
+            new InMemoryRateLimitStore(),
+            new TranslationManager('en', 'en'),
+        );
+
         return new AuthService(
             new UserRepository($userDb ?? $this->createStub(PdoDatabase::class)),
             new UserSessionRepository($sessionDb ?? $this->createStub(PdoDatabase::class)),
+            $rateLimiter,
         );
+    }
+
+    public function testLoginFailsClosedWhenRateLimiterIsNotConfigured(): void
+    {
+        $userDb = $this->createMock(PdoDatabase::class);
+        $userDb->expects($this->never())->method('fetchOne');
+
+        $service = new AuthService(
+            new UserRepository($userDb),
+            new UserSessionRepository($this->createStub(PdoDatabase::class)),
+        );
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('rate limiter is not configured');
+
+        $service->login('user@example.com', 'irrelevant');
+    }
+
+    public function testRateLimitedLoginDoesNotLookUpUserOrCreateSession(): void
+    {
+        $store = new InMemoryRateLimitStore();
+        $limiter = new AuthenticationRateLimiter($store, new TranslationManager('en', 'en'));
+        for ($attempt = 1; $attempt <= AuthenticationRateLimiter::LOGIN_ACCOUNT_LIMIT; $attempt++) {
+            $limiter->consumeLogin('user@example.com', '192.0.2.'.$attempt);
+        }
+
+        $_SERVER['REMOTE_ADDR'] = '198.51.100.9';
+        $_SERVER['HTTP_X_FORWARDED_FOR'] = '203.0.113.77';
+        $userDb = $this->createMock(PdoDatabase::class);
+        $sessionDb = $this->createMock(PdoDatabase::class);
+        $userDb->expects($this->never())->method('fetchOne');
+        $sessionDb->expects($this->never())->method('execute');
+
+        $this->expectException(\StreamEngine\Core\Exceptions\ValidationException::class);
+        $this->expectExceptionMessage('Too many attempts');
+
+        $this->makeService($userDb, $sessionDb, $limiter)
+            ->login('user@example.com', 'irrelevant');
+    }
+
+    public function testLoginRateLimitUsesRemoteAddressAndIgnoresForwardedFor(): void
+    {
+        $store = new InMemoryRateLimitStore();
+        $limiter = new AuthenticationRateLimiter($store, new TranslationManager('en', 'en'));
+        for ($attempt = 1; $attempt <= AuthenticationRateLimiter::LOGIN_IP_LIMIT; $attempt++) {
+            $limiter->consumeLogin('user'.$attempt.'@example.com', '198.51.100.9');
+        }
+
+        $_SERVER['REMOTE_ADDR'] = '198.51.100.9';
+        $_SERVER['HTTP_X_FORWARDED_FOR'] = '203.0.113.77';
+        $userDb = $this->createMock(PdoDatabase::class);
+        $sessionDb = $this->createMock(PdoDatabase::class);
+        $userDb->expects($this->never())->method('fetchOne');
+        $sessionDb->expects($this->never())->method('execute');
+
+        $this->expectException(\StreamEngine\Core\Exceptions\ValidationException::class);
+        $this->expectExceptionMessage('Too many attempts');
+
+        $this->makeService($userDb, $sessionDb, $limiter)
+            ->login('fresh@example.com', 'irrelevant');
     }
 
     public function testLoginReturnsFalseWhenUserDoesNotExist(): void

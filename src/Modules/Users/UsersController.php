@@ -3840,6 +3840,10 @@ class UsersController extends AbstractController
     public function cleanupUsers(): void
     {
         $this->db->execute(
+            'DELETE FROM auth_rate_limits WHERE window_ends_at <= UNIX_TIMESTAMP()',
+        );
+
+        $this->db->execute(
             "DELETE FROM password_resets WHERE created_at < UNIX_TIMESTAMP() - 60 * 60",
         );
 

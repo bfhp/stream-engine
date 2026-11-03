@@ -225,6 +225,7 @@ E-mail : {email}
 
 {message}',
     'auth.credentials_invalid' => 'Adresse e-mail ou mot de passe incorrect. Vérifiez-les et réessayez, ou réinitialisez votre mot de passe.',
+    'auth.rate_limited' => 'Trop de tentatives. Attendez et réessayez plus tard.',
     'friend.cannot_add_self' => 'Vous ne pouvez pas vous ajouter vous-même en ami.',
     'friend.new_request' => '{name} souhaite vous ajouter en ami et s’est abonné à votre blog.',
     'friend.became_mutual' => '{name} a accepté votre demande – vous êtes maintenant amis !',

@@ -225,6 +225,7 @@ return [
 
 {message}',
     'auth.credentials_invalid' => '电子邮箱或密码不正确。请检查后重试，或重置密码。',
+    'auth.rate_limited' => '尝试次数过多。请稍候再试。',
     'friend.cannot_add_self' => '不能添加自己为好友。',
     'friend.new_request' => '{name}想添加你为好友，并已订阅你的博客。',
     'friend.became_mutual' => '{name}接受了你的请求——你们现在是好友了！',

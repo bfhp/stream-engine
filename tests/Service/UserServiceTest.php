@@ -22,9 +22,11 @@ use StreamEngine\Repository\UserSessionRepository;
 use StreamEngine\Service\MailService;
 use StreamEngine\Service\MessageService;
 use StreamEngine\Service\NotificationService;
+use StreamEngine\Service\AuthenticationRateLimiter;
 use StreamEngine\Service\UserService;
 use Tests\Support\FakePdoDatabase;
 use Tests\Support\FakeSessionDatabase;
+use Tests\Support\InMemoryRateLimitStore;
 
 final class UserServiceTest extends TestCase
 {
@@ -92,7 +94,13 @@ final class UserServiceTest extends TestCase
         ?MessageService $messageService = null,
         ?PdoDatabase $sessionDb = null,
         ?Config $config = null,
+        ?AuthenticationRateLimiter $rateLimiter = null,
     ): UserService {
+        $rateLimiter ??= new AuthenticationRateLimiter(
+            new InMemoryRateLimitStore(),
+            new TranslationManager('en', 'en'),
+        );
+
         return new UserService(
             new UserRepository($userDb ?? $this->createStub(PdoDatabase::class)),
             $db ?? $this->createStub(PdoDatabase::class),
@@ -114,7 +122,37 @@ final class UserServiceTest extends TestCase
                 'APP_SECRET' => 'test-secret',
                 'SITE_URL' => 'https://example.com',
             ]),
+            $rateLimiter,
         );
+    }
+
+    public function testPasswordResetFailsClosedWhenRateLimiterIsNotConfigured(): void
+    {
+        $userDb = $this->createMock(PdoDatabase::class);
+        $userDb->expects($this->never())->method('fetchOne');
+
+        $service = new UserService(
+            new UserRepository($userDb),
+            $this->createStub(PdoDatabase::class),
+            $this->makeMailServiceStub(),
+            new TranslationManager('en', 'en'),
+            new NotificationService(
+                $this->makeMessageServiceStub(),
+                new NotificationDeliveryRepository(new FakePdoDatabase()),
+                new NotificationPreferenceRepository(new FakePdoDatabase()),
+                new UserRepository(new FakePdoDatabase()),
+                $this->makeMailServiceStub(),
+                translationManager: new TranslationManager('en', 'en'),
+                config: new Config(['SITE_URL' => 'https://example.test']),
+            ),
+            new UserSessionRepository($this->createStub(PdoDatabase::class)),
+            new Config(['APP_SECRET' => 'test-secret', 'SITE_URL' => 'https://example.test']),
+        );
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('rate limiter is not configured');
+
+        $service->createPasswordResetToken('user@example.com');
     }
 
     /**
@@ -514,6 +552,76 @@ final class UserServiceTest extends TestCase
         $service->createPasswordResetToken('missing@example.com');
 
         $this->assertTrue(true);
+    }
+
+    public function testRateLimitedPasswordResetDoesNotLookupWriteOrSendMail(): void
+    {
+        $store = new InMemoryRateLimitStore();
+        $limiter = new AuthenticationRateLimiter($store, new TranslationManager('en', 'en'));
+        for ($attempt = 1; $attempt <= AuthenticationRateLimiter::RESET_ACCOUNT_LIMIT; $attempt++) {
+            $limiter->consumePasswordReset('user@example.com', '192.0.2.'.$attempt);
+        }
+
+        $_SERVER['REMOTE_ADDR'] = '198.51.100.9';
+        $_SERVER['HTTP_X_FORWARDED_FOR'] = '203.0.113.77';
+        $userDb = $this->createMock(PdoDatabase::class);
+        $db = $this->createMock(PdoDatabase::class);
+        $mail = $this->createMock(MailService::class);
+        $userDb->expects($this->never())->method('fetchOne');
+        $db->expects($this->never())->method('execute');
+        $mail->expects($this->never())->method('send');
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('Too many attempts');
+
+        $this->makeService($userDb, $db, $mail, rateLimiter: $limiter)
+            ->createPasswordResetToken('user@example.com');
+    }
+
+    public function testPasswordResetRateLimitUsesRemoteAddressAndIgnoresForwardedFor(): void
+    {
+        $store = new InMemoryRateLimitStore();
+        $limiter = new AuthenticationRateLimiter($store, new TranslationManager('en', 'en'));
+        for ($attempt = 1; $attempt <= AuthenticationRateLimiter::RESET_IP_LIMIT; $attempt++) {
+            $limiter->consumePasswordReset('user'.$attempt.'@example.com', '198.51.100.9');
+        }
+
+        $_SERVER['REMOTE_ADDR'] = '198.51.100.9';
+        $_SERVER['HTTP_X_FORWARDED_FOR'] = '203.0.113.77';
+        $userDb = $this->createMock(PdoDatabase::class);
+        $db = $this->createMock(PdoDatabase::class);
+        $mail = $this->createMock(MailService::class);
+        $userDb->expects($this->never())->method('fetchOne');
+        $db->expects($this->never())->method('execute');
+        $mail->expects($this->never())->method('send');
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('Too many attempts');
+
+        $this->makeService($userDb, $db, $mail, rateLimiter: $limiter)
+            ->createPasswordResetToken('fresh@example.com');
+    }
+
+    public function testUnknownPasswordResetEmailConsumesTheSameRateLimitBuckets(): void
+    {
+        $store = new InMemoryRateLimitStore();
+        $limiter = new AuthenticationRateLimiter($store, new TranslationManager('en', 'en'));
+        $_SERVER['REMOTE_ADDR'] = '192.0.2.15';
+        $userDb = $this->createStub(PdoDatabase::class);
+        $userDb->method('fetchOne')->willReturn(null);
+        $service = $this->makeService(userDb: $userDb, rateLimiter: $limiter);
+
+        $service->createPasswordResetToken('missing@example.com');
+
+        $this->assertCount(2, $store->buckets);
+        $this->assertCount(1, array_filter(
+            array_keys($store->buckets),
+            static fn (string $key): bool => str_starts_with($key, 'reset-account:')
+        ));
+        $this->assertCount(1, array_filter(
+            array_keys($store->buckets),
+            static fn (string $key): bool => str_starts_with($key, 'reset-ip:')
+        ));
     }
 
     public function testCreatePasswordResetTokenPersistsTokenAndSendsMail(): void

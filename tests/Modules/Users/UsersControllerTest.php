@@ -3788,28 +3788,31 @@ final class UsersControllerTest extends TestCase
         $module = $this->makeUsersModule($db);
         $module->runCron('users:cleanup');
 
-        $this->assertCount(3, $captured);
-        $this->assertStringContainsString('DELETE FROM password_resets', $captured[0]);
+        $this->assertCount(4, $captured);
+        $this->assertStringContainsString('DELETE FROM auth_rate_limits', $captured[0]);
+        $this->assertStringContainsString('window_ends_at <= UNIX_TIMESTAMP()', $captured[0]);
+
+        $this->assertStringContainsString('DELETE FROM password_resets', $captured[1]);
         // An hour old, not "all of them" - a reset link that was issued a
         // minute ago must survive the sweep that runs every hour.
-        $this->assertStringContainsString('created_at < UNIX_TIMESTAMP() - 60 * 60', $captured[0]);
+        $this->assertStringContainsString('created_at < UNIX_TIMESTAMP() - 60 * 60', $captured[1]);
 
-        $this->assertStringContainsString('DELETE u', $captured[1]);
-        $this->assertStringContainsString('INNER JOIN email_verifications', $captured[1]);
+        $this->assertStringContainsString('DELETE u', $captured[2]);
+        $this->assertStringContainsString('INNER JOIN email_verifications', $captured[2]);
         // A pending email change of a deactivated member is not an unfinished
         // registration: that account must survive the sweep.
-        $this->assertStringContainsString('ev.new_email IS NULL', $captured[1]);
-        $this->assertStringContainsString('u.is_active = 0', $captured[1]);
+        $this->assertStringContainsString('ev.new_email IS NULL', $captured[2]);
+        $this->assertStringContainsString('u.is_active = 0', $captured[2]);
         $this->assertStringContainsString(
             'u.created_at < UNIX_TIMESTAMP() - 24 * 60 * 60',
-            $captured[1],
+            $captured[2],
         );
-        $this->assertStringContainsString('ev.expires_at <= UNIX_TIMESTAMP()', $captured[1]);
+        $this->assertStringContainsString('ev.expires_at <= UNIX_TIMESTAMP()', $captured[2]);
 
         // Run after the user deletion: that query needs the verification row
         // to distinguish an unfinished registration from a disabled account.
-        $this->assertStringContainsString('DELETE FROM email_verifications', $captured[2]);
-        $this->assertStringContainsString('expires_at <= UNIX_TIMESTAMP()', $captured[2]);
+        $this->assertStringContainsString('DELETE FROM email_verifications', $captured[3]);
+        $this->assertStringContainsString('expires_at <= UNIX_TIMESTAMP()', $captured[3]);
     }
 
     public function testSessionsCleanupTaskDelegatesToTheService(): void

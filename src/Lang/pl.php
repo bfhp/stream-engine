@@ -225,6 +225,7 @@ E-mail: {email}
 
 {message}',
     'auth.credentials_invalid' => 'Nieprawidłowy e-mail lub hasło. Sprawdź dane i spróbuj ponownie albo zresetuj hasło.',
+    'auth.rate_limited' => 'Zbyt wiele prób. Poczekaj i spróbuj ponownie później.',
     'friend.cannot_add_self' => 'Nie możesz dodać siebie do znajomych.',
     'friend.new_request' => '{name} chce dodać cię do znajomych i subskrybuje twój blog.',
     'friend.became_mutual' => '{name} przyjął(ęła) twoje zaproszenie — jesteście teraz znajomymi!',

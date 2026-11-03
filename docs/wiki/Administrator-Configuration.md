@@ -334,6 +334,22 @@ CAPTCHA requires outbound HTTPS access to the selected provider. Turnstile
 also checks that the provider response hostname matches the host in `SITE_URL`
 and that the challenge action is `registration`.
 
+## Authentication rate limits
+
+Login and password recovery are protected by database-backed limits. Login
+allows five attempts per account and 50 per client IP in 15 minutes. Password
+recovery allows three requests per account and 10 per client IP in one hour.
+An exceeded limit returns HTTP `429`; a database failure rejects the request
+rather than disabling the protection. The hourly `users:cleanup` scheduler task
+removes expired limiter rows, so keep the scheduler running.
+
+The application uses only PHP's `REMOTE_ADDR` and ignores forwarding headers.
+When Stream Engine is behind a reverse proxy or load balancer, configure that
+trusted proxy and the PHP-facing web server so `REMOTE_ADDR` contains the
+verified original client address. Do not copy arbitrary `X-Forwarded-For`
+values into it: a client could then evade per-IP limits or consume another
+client's allowance.
+
 ## Settings not managed by the UI
 
 Do not expect the administration interface to update these deployment values:

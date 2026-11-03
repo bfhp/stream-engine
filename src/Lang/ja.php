@@ -225,6 +225,7 @@ return [
 
 {message}',
     'auth.credentials_invalid' => 'メールアドレスまたはパスワードが正しくありません。確認してもう一度お試しいただくか、パスワードを再設定してください。',
+    'auth.rate_limited' => '試行回数が多すぎます。しばらく待ってからもう一度お試しください。',
     'friend.cannot_add_self' => '自分自身をフレンドに追加することはできません。',
     'friend.new_request' => '{name}さんがあなたをフレンドに追加したいと考え、あなたのブログを購読しました。',
     'friend.became_mutual' => '{name}さんがリクエストを承認しました。フレンドになりました！',

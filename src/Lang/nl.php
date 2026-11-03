@@ -225,6 +225,7 @@ E-mail: {email}
 
 {message}',
     'auth.credentials_invalid' => 'Onjuist e-mailadres of wachtwoord. Controleer ze en probeer het opnieuw, of stel je wachtwoord opnieuw in.',
+    'auth.rate_limited' => 'Te veel pogingen. Wacht en probeer het later opnieuw.',
     'friend.cannot_add_self' => 'Je kunt jezelf niet als vriend toevoegen.',
     'friend.new_request' => '{name} wil je als vriend toevoegen en is geabonneerd op je blog.',
     'friend.became_mutual' => '{name} heeft je verzoek geaccepteerd — jullie zijn nu vrienden!',
