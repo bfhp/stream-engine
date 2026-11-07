@@ -31,6 +31,8 @@ class FileStorage
     {
         $ext = $this->getExtension($mime);
 
+        // Conversation attachments grant access by secret URL; keep names
+        // unpredictable even when the original name or contents are known.
         $name = bin2hex(random_bytes(16)).'.'.$ext;
 
         $dir = $this->basePath.'/'.$userId;

@@ -92,7 +92,9 @@ server {
 
     location /uploads/ {
         alias /srv/stream-engine/storage/uploads/;
+        autoindex off;
         add_header X-Content-Type-Options nosniff always;
+        add_header Referrer-Policy no-referrer always;
     }
 
     location / {

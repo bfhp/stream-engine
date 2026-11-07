@@ -243,6 +243,24 @@ feed edit and delete checks, and the 24-hour edit window. A local container
 moderator may edit content only in that container. Private messages are not
 feeds and are never covered by these overrides.
 
+## Conversation attachments
+
+Conversation membership controls access to message history. Attachments use
+secret URLs with random filenames: anyone who knows the complete URL can
+download the file without signing in. A participant can share that URL with
+another person.
+
+Leaving or being removed from a group prevents subsequent message retrieval,
+but does not revoke previously obtained attachment URLs. Logging out or deleting
+a message does not revoke its attachment URL either. If the same upload is
+attached in several conversations or a public post, it keeps the same URL.
+
+Deleting the file or changing its path through the administrator File Browser
+disables the old URL for future requests to the origin server, but also breaks
+every message or post using it. Downloaded or cached copies cannot be recalled.
+Treat attachment URLs as secrets and redact them from support reports and
+screenshots when access should not be shared.
+
 ## Community membership roles
 
 Community roles are local to one community and are separate from global

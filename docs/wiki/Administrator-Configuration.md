@@ -99,6 +99,14 @@ Stream Engine currently stores runtime uploads locally through `FileStorage`.
 The object-storage boundary and the currently inactive S3-compatible client
 are described below. Keep local uploads in the backup set.
 
+Conversation attachments use secret URLs: anyone who knows the URL can download
+the file without signing in, even after leaving or being removed from the
+conversation. Keep `autoindex off` and `Referrer-Policy: no-referrer` in the
+Nginx `/uploads/` location, as shown in the installation guide. For an existing
+deployment, update that location, run `nginx -t`, and reload Nginx. See
+[Conversation attachments](https://github.com/bfhp/stream-engine/wiki/Administrator-Users-and-Permissions#conversation-attachments)
+for the sharing and revocation semantics.
+
 ## Current object-storage integration
 
 Object storage is not a selectable runtime backend in the current release.

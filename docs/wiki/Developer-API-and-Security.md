@@ -378,10 +378,37 @@ integer upload ID is not proof of ownership. Administrator file-browser paths
 must remain below the configured uploads root, reject absolute/traversal/control
 segments, and avoid following a symlink out of that root.
 
-Standard uploads are served publicly below `/uploads/`. Do not put secrets,
-private documents, or authorization-dependent bytes there without designing a
-private download controller and storage policy. The reference object-storage
-client is not part of the active upload authorization lifecycle.
+Standard uploads are served directly below `/uploads/`, without session or
+membership checks on download. The reference object-storage client is not part
+of the active upload lifecycle.
+
+### Conversation attachment URLs
+
+The messenger deliberately grants download access by possession of a secret
+URL. `FileStorage::storeUserFile()` generates a filename from 16 random bytes
+(128 bits), independent of the original filename and file contents. Preserve
+this unpredictability; do not replace it with a sequential ID, timestamp, or
+content hash.
+
+`POST /api/v1/uploads` requires authentication and CSRF and returns only the
+newly created upload. Attaching an upload requires sender ownership and
+conversation membership. Message retrieval checks current membership before
+resolving attachment URLs. Keep those checks on every message read path,
+including polling and loading history around a message ID.
+
+Once issued, a URL can be used by anyone, including guests and former
+participants. Logout, participant removal, and message deletion do not revoke
+it. Reusing an upload in another conversation or public post shares the same
+URL; it does not create a separate access grant. There are no file ACLs,
+expiring signatures, or authenticated download routes in this model. Files
+requiring identity checks on every download need a separate storage and access
+design.
+
+The supplied Nginx `/uploads/` location explicitly disables directory listing
+and sends `Referrer-Policy: no-referrer` even on error responses. The policy
+limits disclosure through the Referer header when an attachment is opened in a
+browser; it does not hide URLs from browser history, server logs, or recipients.
+Do not publish attachment URL lists or include complete URLs in diagnostics.
 
 ## Secrets and external services
 

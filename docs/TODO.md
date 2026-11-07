@@ -24,23 +24,6 @@ changelog.
 
 ## P2
 
-### Protect attachments in private conversations
-
-**Problem.** `MessageService::mapMessage()` returns attachment URLs below
-`/uploads/`, which Nginx serves directly without authorization. Anyone who
-obtains a URL can download the attachment regardless of conversation membership;
-removing access to the conversation does not revoke that URL.
-
-**Outcome.** Define separate public and private upload policies. Serve private
-conversation attachments from storage outside the public alias through a
-download endpoint that checks the current user's access. Define revocation and
-shared-file behavior while preserving intentionally public uploads.
-
-**Verification.** An authorized participant can download an attachment; guests,
-unrelated accounts, and removed participants cannot. Direct static paths cannot
-bypass authorization. Verify the defined revocation behavior and that public
-blog and forum attachments continue to work.
-
 ### Resolve the deepmerge advisory in the Chonky dependency chain
 
 **Problem.** `package-lock.json` includes `deepmerge` 4.3.1 through
