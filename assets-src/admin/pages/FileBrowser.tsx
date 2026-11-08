@@ -541,6 +541,8 @@ export default function FileBrowser() {
                     if (moveInFileList(event.nativeEvent, event.currentTarget)) event.preventDefault();
                 }}
             >
+                {/* Keep API data in the mapped file props; never spread it into
+                    theme/muiThemeOptions. See SECURITY.md (deepmerge advisory). */}
                 <FullFileBrowser
                     files={files}
                     folderChain={folderChain}

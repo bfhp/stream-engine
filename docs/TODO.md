@@ -24,24 +24,6 @@ changelog.
 
 ## P2
 
-### Resolve the deepmerge advisory in the Chonky dependency chain
-
-**Problem.** `package-lock.json` includes `deepmerge` 4.3.1 through
-`@samuelncui/chonky` and `@samuelncui/chonky-icon-fontawesome`. npm reports
-[GHSA-gcqx-w48m-w2h4](https://github.com/advisories/GHSA-gcqx-w48m-w2h4), a
-low-severity prototype-poisoning issue. The packages are used by the
-administration file browser, so their development-dependency classification
-does not establish that shipped frontend code is unaffected.
-
-**Outcome.** Assess whether untrusted file-browser data can reach the affected
-merge operation and resolve the risk with an upstream fix, a maintained
-replacement, or a reviewed mitigation. Keep the dependency and lockfile changes
-reproducible.
-
-**Verification.** Run the dependency audit and exercise the file browser after
-the change. Cover the reachable malicious object shape if applicable; any
-remaining advisory must have a documented, verified mitigation.
-
 ### Name audio tracks from their ID3 tags
 
 **Problem.** The audio player on blogs and communities names a track by the
