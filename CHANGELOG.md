@@ -10,6 +10,21 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 ### Added
 
 - Added `articles.list-id`, `articles.list-slug`, `articles.index` and `articles.by-term` page actions; list page size is configurable and related articles are opt-in.
+- Audio uploads store title and artist tags; the player and its accessible label
+  use them, falling back to the post title and filename.
+
+### Fixed
+
+- Module discovery no longer loads global vendor classes that can terminate PHP.
+
+### Security
+
+- Rate-limited login and password recovery; password resets are atomic and
+  invalidate existing sessions.
+- Enforced parent-content access for comments, disabled caching of private
+  responses, and restricted CSS in user-authored content.
+- Hardened upload response headers and documented secret-URL access for private
+  attachments; verified isolation of file-browser data from vulnerable theme merges.
 
 ## [0.6.0] - 2026-10-30
 
