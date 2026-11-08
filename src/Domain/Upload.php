@@ -15,6 +15,8 @@ class Upload
         public string $originalName,
         public int $createdAt,
         public ?string $purpose = null,
+        public ?string $audioTitle = null,
+        public ?string $audioArtist = null,
     ) {
     }
 }

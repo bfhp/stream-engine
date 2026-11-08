@@ -25,6 +25,30 @@ final class ModuleRegistryTest extends TestCase
     private const string FIRST = 'RegistryFixtures\First\FirstController';
     private const string SECOND = 'RegistryFixtures\Second\SecondController';
 
+    public function testDiscoveryDoesNotAutoloadGlobalClasses(): void
+    {
+        $class = 'UnrelatedVendorParser';
+        $loader = new \Composer\Autoload\ClassLoader(__DIR__.'/unrelated-vendor');
+        $loader->addClassMap([$class => __FILE__]);
+        $attempted = false;
+        $guard = static function (string $name) use ($class, &$attempted): void {
+            if ($name === $class) {
+                $attempted = true;
+                throw new RuntimeException('Unrelated vendor class was autoloaded');
+            }
+        };
+        $loader->register(true);
+        spl_autoload_register($guard, true, true);
+        try {
+            $registry = new ModuleRegistry();
+            self::assertFalse($attempted);
+            self::assertSame(ForumsController::class, $registry->controllerClassFor('Forums'));
+        } finally {
+            spl_autoload_unregister($guard);
+            $loader->unregister();
+        }
+    }
+
     public function testDuplicateActionsNameBothModules(): void
     {
         try {

@@ -985,7 +985,8 @@ class UsersController extends AbstractController
                 'postTitle' => $post->title,
                 'postUrl' => $post->canonicalUrl,
                 'trackUploadId' => $upload->id,
-                'title' => $upload->originalName !== '' ? $upload->originalName : (string) $post->title,
+                'title' => implode(' — ', array_filter([$upload->audioArtist, $upload->audioTitle], static fn (?string $value): bool => $value !== null && trim($value) !== ''))
+                    ?: (trim((string) $post->title) !== '' ? (string) $post->title : $upload->originalName),
                 'url' => '/uploads/'.$upload->path,
                 'mime' => $upload->mime,
                 'size' => $upload->size,

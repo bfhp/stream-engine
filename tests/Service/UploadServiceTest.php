@@ -177,6 +177,8 @@ class UploadServiceTest extends TestCase
                 'mime' => 'image/jpeg',
                 'size' => 900,
                 'original_name' => 'Photo.JPG',
+                'audio_title' => null,
+                'audio_artist' => null,
             ])
             ->willReturn($created);
 

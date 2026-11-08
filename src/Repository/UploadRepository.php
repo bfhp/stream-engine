@@ -21,8 +21,8 @@ readonly class UploadRepository
     public function create(array $data): Upload
     {
         $this->db->execute(
-            "INSERT INTO uploads (user_id, path, mime, size, original_name, purpose, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, UNIX_TIMESTAMP())",
+            "INSERT INTO uploads (user_id, path, mime, size, original_name, purpose, audio_title, audio_artist, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, UNIX_TIMESTAMP())",
             [
                 $data['user_id'],
                 $data['path'],
@@ -30,6 +30,8 @@ readonly class UploadRepository
                 $data['size'],
                 $data['original_name'],
                 $data['purpose'] ?? null,
+                $data['audio_title'] ?? null,
+                $data['audio_artist'] ?? null,
             ]
         );
 
@@ -44,6 +46,8 @@ readonly class UploadRepository
             $data['original_name'],
             time(),
             $data['purpose'] ?? null,
+            $data['audio_title'] ?? null,
+            $data['audio_artist'] ?? null,
         );
     }
 
@@ -53,7 +57,7 @@ readonly class UploadRepository
     public function findById(int $id): ?Upload
     {
         $row = $this->db->fetchOne(
-            "SELECT id, user_id, path, mime, size, original_name, created_at, purpose FROM uploads WHERE id = ?",
+            "SELECT id, user_id, path, mime, size, original_name, created_at, purpose, audio_title, audio_artist FROM uploads WHERE id = ?",
             [$id]
         );
 
@@ -70,6 +74,8 @@ readonly class UploadRepository
             (string)($row['original_name'] ?? ''),
             (int)$row['created_at'],
             isset($row['purpose']) ? (string) $row['purpose'] : null,
+            $row['audio_title'] ?? null,
+            $row['audio_artist'] ?? null,
         );
     }
 
@@ -89,7 +95,7 @@ readonly class UploadRepository
 
         $placeholders = implode(', ', array_fill(0, count($ids), '?'));
         $rows = $this->db->fetchAll(
-            "SELECT id, user_id, path, mime, size, original_name, created_at, purpose FROM uploads WHERE id IN ($placeholders)",
+            "SELECT id, user_id, path, mime, size, original_name, created_at, purpose, audio_title, audio_artist FROM uploads WHERE id IN ($placeholders)",
             $ids
         );
 
@@ -104,6 +110,8 @@ readonly class UploadRepository
                 (string)($row['original_name'] ?? ''),
                 (int)$row['created_at'],
                 isset($row['purpose']) ? (string) $row['purpose'] : null,
+                $row['audio_title'] ?? null,
+                $row['audio_artist'] ?? null,
             );
             $result[$upload->id] = $upload;
         }
@@ -267,8 +275,8 @@ readonly class UploadRepository
     {
         if (! $directory) {
             $this->db->execute(
-                "INSERT INTO uploads (user_id, path, mime, size, original_name, created_at)
-                 SELECT user_id, ?, mime, size, original_name, UNIX_TIMESTAMP()
+                "INSERT INTO uploads (user_id, path, mime, size, original_name, audio_title, audio_artist, created_at)
+                 SELECT user_id, ?, mime, size, original_name, audio_title, audio_artist, UNIX_TIMESTAMP()
                  FROM uploads WHERE path = ?",
                 [$to, $from]
             );
@@ -277,8 +285,8 @@ readonly class UploadRepository
         }
 
         $this->db->execute(
-            "INSERT INTO uploads (user_id, path, mime, size, original_name, created_at)
-             SELECT user_id, CONCAT(?, SUBSTRING(path, ?)), mime, size, original_name, UNIX_TIMESTAMP()
+            "INSERT INTO uploads (user_id, path, mime, size, original_name, audio_title, audio_artist, created_at)
+             SELECT user_id, CONCAT(?, SUBSTRING(path, ?)), mime, size, original_name, audio_title, audio_artist, UNIX_TIMESTAMP()
              FROM uploads
              WHERE path = ? OR LEFT(path, ?) = CONCAT(?, '/')",
             [$to, strlen($from) + 1, $from, strlen($from) + 1, $from]

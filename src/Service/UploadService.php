@@ -80,6 +80,7 @@ class UploadService
             [$tmpFile, $mime] = $this->images->process($tmpFile, $mime);
         }
 
+        $audioTags = (new AudioMetadataReader())->read($tmpFile, $mime);
         $result = $this->storage->storeUserFile($user->id, $tmpFile, $mime);
 
         return $this->uploads->create([
@@ -88,6 +89,8 @@ class UploadService
             'mime' => $mime,
             'size' => $result['size'],
             'original_name' => $file['name'],
+            'audio_title' => $audioTags['title'],
+            'audio_artist' => $audioTags['artist'],
             'purpose' => $purpose,
         ]);
     }
@@ -104,6 +107,7 @@ class UploadService
         $mime = $this->mime->detect($file['tmp_name']);
         $this->validateFile((int) $file['size'], $mime);
 
+        $audioTags = (new AudioMetadataReader())->read($file['tmp_name'], $mime);
         $result = $this->storage->storeNamedFile(
             $directory,
             $file['tmp_name'],
@@ -117,6 +121,8 @@ class UploadService
             'mime' => $mime,
             'size' => $result['size'],
             'original_name' => $file['name'],
+            'audio_title' => $audioTags['title'],
+            'audio_artist' => $audioTags['artist'],
         ]);
     }
 

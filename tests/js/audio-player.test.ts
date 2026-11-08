@@ -53,6 +53,14 @@ beforeEach(() => localStorage.clear());
 afterEach(() => { document.body.innerHTML = ""; });
 
 describe("audio player", () => {
+    it("uses the visible track title as the audio label after switching tracks", () => {
+        const { audio, listen } = mountPlayer();
+        expect(audio.getAttribute("aria-label")).toBe("First");
+        listen.click();
+        expect(audio.getAttribute("aria-label")).toBe("Second");
+        expect(document.querySelector("[data-audio-title]")?.textContent).toBe("Second");
+    });
+
     it("reads the position in words, not as a clock time", () => {
         const { audio, seek } = mountPlayer();
         audio.currentTime = 74;

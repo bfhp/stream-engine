@@ -98,8 +98,10 @@ The controller contract exposes these contribution points:
 
 The controller's location is not discovered by scanning `modules/`. Instead,
 `ModuleRegistry` examines the classmaps registered with Composer and selects
-instantiable `ControllerInterface` implementations. Abstract controllers and
-unloadable optional integration classes are ignored.
+instantiable, namespaced `ControllerInterface` implementations. Global class
+names are skipped before autoloading: module identity requires a namespace, and
+unrelated vendor files may execute initialization code when loaded. Abstract
+controllers and unloadable optional integration classes are ignored.
 
 ## Configure discovery
 

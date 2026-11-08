@@ -193,6 +193,7 @@ export function initAudioPlayers() {
             currentMediaItemId = item.id;
             hasRenderedTrack = true;
             playerTitle.textContent = item.title || trans("js.common.untitled");
+            playerAudio.setAttribute("aria-label", playerTitle.textContent);
 
             if (post) {
                 post.textContent = item.postTitle || trans("js.common.post");

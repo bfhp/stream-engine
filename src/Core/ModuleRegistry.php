@@ -55,6 +55,13 @@ final class ModuleRegistry
         $registrations = [];
         foreach (\Composer\Autoload\ClassLoader::getRegisteredLoaders() as $loader) {
             foreach (array_keys($loader->getClassMap()) as $class) {
+                // Autoloading arbitrary vendor classes can execute file-level
+                // code (including exit). Module ids require a namespace, so
+                // global classes cannot be valid module controllers.
+                if (! str_contains($class, '\\')) {
+                    continue;
+                }
+
                 try {
                     $isController = is_subclass_of($class, ControllerInterface::class);
                 } catch (\Throwable) {

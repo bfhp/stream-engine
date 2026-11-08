@@ -2061,7 +2061,7 @@ final class UsersControllerTest extends TestCase
 
             if (str_contains($sql, 'FROM uploads')) {
                 return [
-                    ['id' => 55, 'user_id' => 7, 'path' => '7/song.mp3', 'mime' => 'audio/mpeg', 'size' => 4096, 'original_name' => 'song.mp3', 'created_at' => 1_700_000_000],
+                    ['id' => 55, 'user_id' => 7, 'path' => '7/song.mp3', 'mime' => 'audio/mpeg', 'size' => 4096, 'original_name' => 'song.mp3', 'audio_title' => 'Song', 'audio_artist' => 'Artist', 'created_at' => 1_700_000_000],
                     ['id' => 66, 'user_id' => 7, 'path' => '7/picture.webp', 'mime' => 'image/webp', 'size' => 2048, 'original_name' => 'picture.webp', 'created_at' => 1_700_000_001],
                 ];
             }
@@ -2118,6 +2118,7 @@ final class UsersControllerTest extends TestCase
         $this->assertSame(902, $decoded['items'][0]['postId']);
         $this->assertSame(55, $decoded['items'][0]['trackUploadId']);
         $this->assertSame('/uploads/7/song.mp3', $decoded['items'][0]['url']);
+        $this->assertSame('Artist — Song', $decoded['items'][0]['title']);
         $this->assertSame('/blog/my-post-title/', $decoded['items'][0]['postUrl']);
     }
 
@@ -2422,7 +2423,7 @@ final class UsersControllerTest extends TestCase
         $this->assertSame(42, $decoded['meta']['communityId']);
         $this->assertSame(1, $decoded['meta']['trackCount']);
         $this->assertSame('post-902-track-55', $decoded['items'][0]['id']);
-        $this->assertSame('community-song.ogg', $decoded['items'][0]['title']);
+        $this->assertSame($post->title, $decoded['items'][0]['title']);
         $this->assertSame('audio/ogg', $decoded['items'][0]['mime']);
     }
 

@@ -16,7 +16,7 @@ final class UploadRepositoryTest extends TestCase
         $db->expects($this->once())
             ->method('fetchAll')
             ->with(
-                'SELECT id, user_id, path, mime, size, original_name, created_at, purpose FROM uploads WHERE id IN (?, ?)',
+                'SELECT id, user_id, path, mime, size, original_name, created_at, purpose, audio_title, audio_artist FROM uploads WHERE id IN (?, ?)',
                 [5, 7]
             )
             ->willReturn([
