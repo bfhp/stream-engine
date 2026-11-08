@@ -155,7 +155,12 @@ final class InstallationSchemaTest extends TestCase
                 VALUES (100, 'attachment_upload_ids', '[42]', 1, 1)
             ");
 
+            // The current repository requires the later audio-tag columns.
+            // Upgrade existing rows before exercising repository behaviour.
+            $this->executeScript($pdo, $root.'/migrations/20261108000000_add_upload_audio_tags.sql');
             $uploads = new UploadRepository($this->database($pdo));
+            self::assertNull($uploads->findById(41)?->audioTitle);
+            self::assertNull($uploads->findById(41)?->audioArtist);
             self::assertSame([41, 43], $uploads->findOrphanedForumAttachmentIds(100, 100));
 
             // A form submission refreshes the draft before cleanup claims it.
