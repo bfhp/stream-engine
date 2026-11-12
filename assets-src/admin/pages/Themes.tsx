@@ -236,7 +236,6 @@ export default function Themes() {
                             <UnstyledButton
                                 className="admin-theme-card__select"
                                 aria-pressed={selected}
-                                aria-label={trans("js.admin.themes.select", { name: theme.name })}
                                 onClick={() => selectTheme(theme.id)}
                                 style={{ display: "block", width: "100%", textAlign: "start" }}
                             >

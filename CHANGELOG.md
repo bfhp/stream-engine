@@ -7,6 +7,15 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Updated frontend dependencies, including React, Vite, Playwright and Chonky.
+
+### Fixed
+
+- Theme selection cards and the file browser's new-folder button now expose
+  accessible names that include their visible labels.
+
 ## [0.6.1] - 2026-11-12
 
 ### Added
