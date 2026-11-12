@@ -21,3 +21,11 @@ A new task must describe the observable problem, the desired outcome, and,
 where important, how completion will be verified. Keep diagnostic notes and
 reports about completed work in commits/PRs instead of turning TODO back into a
 changelog.
+
+## Gallery
+
+- **P2** — Implement user albums, photo uploads, comments, votes and photo
+  rankings from the [Gallery contract](GALLERY_CONTRACT.md). Only the module
+  scaffold exists. Deliver in the contract's phases, verifying ownership,
+  private image access, upload recovery and rating consistency before exposing
+  the corresponding pages and API.
