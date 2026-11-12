@@ -22,8 +22,24 @@ final class FileStorageTest extends TestCase
     protected function tearDown(): void
     {
         $this->removeDirectory($this->baseDir);
+        $this->removeDirectory($this->baseDir.'-private');
 
         parent::tearDown();
+    }
+
+    public function testPrivateUploadIsOutsideThePublicRoot(): void
+    {
+        $tmpFile = tempnam(sys_get_temp_dir(), 'upload-');
+        file_put_contents($tmpFile, 'private-photo');
+        $stored = (new FileStorage($this->baseDir.'/'))->storePrivateUserFile(42, $tmpFile, 'image/png');
+        self::assertFileDoesNotExist($this->baseDir.'/'.$stored['path']);
+        self::assertSame('private-photo', file_get_contents($this->baseDir.'-private/'.$stored['path']));
+    }
+
+    public function testPrivateDeliveryRejectsTraversal(): void
+    {
+        $this->expectException(\StreamEngine\Core\Exceptions\NotFoundException::class);
+        (new FileStorage($this->baseDir))->sendPrivateFile('../public/file.png', 'image/png');
     }
 
     public function testStoreUserFileMovesFileToUserDirectoryAndReturnsMetadata(): void

@@ -7,6 +7,11 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Security
+
+- Messenger attachments now use private storage and check conversation access
+  before delivery, with shared file delivery.
+
 ## [0.6.2] - 2026-11-12
 
 ### Changed

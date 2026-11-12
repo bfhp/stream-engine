@@ -13,6 +13,7 @@ use StreamEngine\Core\Exceptions\ValidationException;
 use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Core\TranslationManager;
 use StreamEngine\Domain\User;
+use StreamEngine\Domain\Upload;
 use StreamEngine\Repository\ConversationRepository;
 use StreamEngine\Repository\MessageRepository;
 use StreamEngine\Repository\ParticipantRepository;
@@ -394,6 +395,23 @@ final readonly class MessageService
         return $this->purifier->purify($text);
     }
 
+    /** A file follows access to its non-deleted messages; pending files are owner-only. */
+    public function getAttachment(int $uploadId, int $userId): Upload
+    {
+        $upload = $this->uploads->findById($uploadId);
+        if ($userId <= 0 || $upload === null
+            || $upload->purpose !== UploadRepository::PURPOSE_MESSAGE_ATTACHMENT) {
+            throw new NotFoundException('Attachment not found');
+        }
+
+        if ($this->messages->canReadAttachment($uploadId, $userId)
+            || ($upload->userId === $userId && ! $this->messages->hasAttachment($uploadId))) {
+            return $upload;
+        }
+
+        throw new NotFoundException('Attachment not found');
+    }
+
     /**
      * @throws ValidationException
      * @throws ForbiddenException
@@ -436,7 +454,8 @@ final readonly class MessageService
         // link is dropped rather than failing the whole send.
         if ($attachmentUploadId !== null) {
             $upload = $this->uploads->findById($attachmentUploadId);
-            if (!$upload || $upload->userId !== $userId) {
+            if (!$upload || $upload->userId !== $userId
+                || $upload->purpose !== UploadRepository::PURPOSE_MESSAGE_ATTACHMENT) {
                 $attachmentUploadId = null;
             }
         }
@@ -489,7 +508,7 @@ final readonly class MessageService
             ] : null,
             'attachment' => $attachmentId !== null ? [
                 'id' => $attachmentId,
-                'url' => '/uploads/'.$m['attachment_path'],
+                'url' => '/api/v1/conversations/attachments/'.$attachmentId,
                 'mime' => $m['attachment_mime'],
                 'size' => (int)$m['attachment_size'],
                 'original_name' => $m['attachment_original_name'],

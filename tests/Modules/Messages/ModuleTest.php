@@ -17,6 +17,7 @@ use StreamEngine\Modules\Messages\MessagesController;
 use StreamEngine\Service\AccessService;
 use StreamEngine\Service\FeedService;
 use StreamEngine\Service\MessageService;
+use StreamEngine\Service\UploadService;
 
 final class ModuleTest extends TestCase
 {
@@ -25,6 +26,7 @@ final class ModuleTest extends TestCase
         $services = [
             $this->createStub(PdoDatabase::class),
             $this->createStub(FeedService::class),
+            $this->createStub(UploadService::class),
         // MessageService is `final`, so it can't be createStub()'d - built
         // via reflection without its own constructor instead, same trick
         // used elsewhere in this suite (e.g. Modules\Users\ModuleTest).

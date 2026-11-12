@@ -8,6 +8,25 @@ use StreamEngine\Core\PdoDatabase;
 
 final readonly class MessageRepository
 {
+    /** Pending uploads have no message, including no deleted message. */
+    public function hasAttachment(int $uploadId): bool
+    {
+        return $this->db->fetchOne(
+            'SELECT 1 FROM messages WHERE attachment_upload_id = ? LIMIT 1',
+            [$uploadId]
+        ) !== null;
+    }
+
+    public function canReadAttachment(int $uploadId, int $userId): bool
+    {
+        return $this->db->fetchOne(
+            'SELECT 1 FROM messages m
+             JOIN conversation_participants p ON p.conversation_id = m.conversation_id
+             WHERE m.attachment_upload_id = ? AND p.user_id = ? AND m.deleted_at IS NULL LIMIT 1',
+            [$uploadId, $userId]
+        ) !== null;
+    }
+
     public function __construct(
         private PdoDatabase $db
     ) {

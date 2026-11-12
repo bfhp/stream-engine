@@ -888,7 +888,7 @@ export function initMessages() {
     }
 
     function renderAttachment(a: ApiAttachment, m: ApiMessage): string {
-        // Server-built (`/uploads/` + a generated path), but this is an
+        // Server-built protected attachment URL, but this is an
         // attribute in a template string, so escape it like everything else.
         const url = cms.escapeHtml(a.url);
         if (a.mime.startsWith('image/')) {
@@ -1301,7 +1301,7 @@ export function initMessages() {
 
         let result: { id: number; url: string; mime: string } | null = null;
         try {
-            result = await uploadFile('/api/v1/uploads', file);
+            result = await uploadFile('/api/v1/uploads?variant=message-attachment', file);
         } catch (e: any) {
             cms.toast({ message: e?.error || trans('js.messenger.file_upload_failed'), type: 'danger' });
         }

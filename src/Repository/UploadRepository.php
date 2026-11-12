@@ -9,6 +9,8 @@ use StreamEngine\Domain\Upload;
 
 readonly class UploadRepository
 {
+    public const string PURPOSE_MESSAGE_ATTACHMENT = 'message-attachment';
+
     public const string PURPOSE_FORUM_ATTACHMENT = 'forum-attachment';
     public const string PURPOSE_FORUM_ATTACHMENT_RESERVED = 'forum-attachment-reserved';
     public const string PURPOSE_FORUM_ATTACHMENT_DELETING = 'forum-attachment-deleting';

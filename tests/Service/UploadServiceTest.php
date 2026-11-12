@@ -108,6 +108,30 @@ class UploadServiceTest extends TestCase
         $this->assertSame($expectedUpload, $result);
     }
 
+    public function testMessageAttachmentUsesPrivateStorage(): void
+    {
+        $uploads = $this->createMock(UploadRepository::class);
+        $mime = $this->createStub(MimeDetector::class);
+        $storage = $this->createMock(FileStorage::class);
+        $images = $this->createStub(ImageProcessor::class);
+        $access = $this->createStub(AccessService::class);
+        $mime->method('detect')->willReturn('image/png');
+        $images->method('isImage')->willReturn(false);
+        $uploads->method('getUserUsage')->willReturn(0);
+        $storage->expects(self::never())->method('storeUserFile');
+        $storage->expects(self::once())->method('storePrivateUserFile')->with(7, '/tmp/file', 'image/png')
+            ->willReturn(['path' => '7/private.png', 'size' => 10]);
+        $expected = new Upload(3, 7, '7/private.png', 'image/png', 10, 'photo.png', 0, UploadRepository::PURPOSE_MESSAGE_ATTACHMENT);
+        $uploads->expects(self::once())->method('create')->with(self::callback(
+            static fn (array $row): bool => $row['purpose'] === UploadRepository::PURPOSE_MESSAGE_ATTACHMENT
+        ))->willReturn($expected);
+        self::assertSame($expected, $this->makeService($uploads, $mime, $storage, $images, $access)
+            ->uploadMessageAttachmentForUser(
+                new User(id: 7, email: '', role: AccessService::ROLE_USER),
+                ['tmp_name' => '/tmp/file', 'size' => 10, 'name' => 'photo.png']
+            ));
+    }
+
     public function testForumAttachmentUploadIsMarkedForTheOrphanLifecycle(): void
     {
         $user = new User(id: 7, email: '', role: AccessService::ROLE_USER);
@@ -699,6 +723,13 @@ class UploadServiceTest extends TestCase
         $service = $this->makeLookupService($upload);
 
         $this->assertSame($upload, $service->findOwnedUpload(7, new User(3, 'a@b.c', AccessService::ROLE_USER)));
+    }
+
+    public function testPrivateAttachmentCannotBeReusedAsPublicContent(): void
+    {
+        $upload = $this->upload(3);
+        $upload->purpose = UploadRepository::PURPOSE_MESSAGE_ATTACHMENT;
+        self::assertNull($this->makeLookupService($upload)->findOwnedUpload(7, new User(3, 'a@b.c', AccessService::ROLE_USER)));
     }
 
     public function testSomebodyElsesUploadIsNotFound(): void

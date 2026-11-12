@@ -22,6 +22,7 @@ use StreamEngine\Modules\Messages\MessagesController;
 use StreamEngine\Service\AccessService;
 use StreamEngine\Service\FeedService;
 use StreamEngine\Service\MessageService;
+use StreamEngine\Service\UploadService;
 use Throwable;
 
 final class MessagesControllerTest extends TestCase
@@ -53,7 +54,8 @@ final class MessagesControllerTest extends TestCase
                 $user ?? new User(id: 1, email: 'user@example.com', role: AccessService::ROLE_USER),
                 new DateTimeZone('UTC'),
                 QueryParams::fromGlobals()
-            )
+            ),
+            $this->createStub(UploadService::class),
         );
     }
 
@@ -97,8 +99,8 @@ final class MessagesControllerTest extends TestCase
         $this->assertSame('conversations.list', $conversationPage->action);
 
         $conversationChildren = $tree->findChildren($conversationPage->id);
-        $this->assertCount(1, $conversationChildren);
-        $conversationIdPage = $conversationChildren[0];
+        $this->assertCount(2, $conversationChildren);
+        $conversationIdPage = array_values(array_filter($conversationChildren, static fn (Page $page): bool => $page->pattern === '{id}'))[0];
         $this->assertSame('conversation.show', $conversationIdPage->action);
 
         $nestedByPattern = [];

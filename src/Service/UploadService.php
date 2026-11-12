@@ -56,6 +56,17 @@ class UploadService
         return $this->storeUserUpload($user, $file, null);
     }
 
+    public function uploadMessageAttachmentForUser(User $user, array $file): Upload
+    {
+        return $this->storeUserUpload($user, $file, UploadRepository::PURPOSE_MESSAGE_ATTACHMENT);
+    }
+
+    /** Authorization belongs to the calling module, including future galleries. */
+    public function sendPrivateFile(Upload $upload): void
+    {
+        $this->storage->sendPrivateFile($upload->path, $upload->mime);
+    }
+
     /** A pending file from the forum topic form's attachment card. */
     public function uploadForumAttachmentForUser(User $user, array $file): Upload
     {
@@ -81,7 +92,9 @@ class UploadService
         }
 
         $audioTags = (new AudioMetadataReader())->read($tmpFile, $mime);
-        $result = $this->storage->storeUserFile($user->id, $tmpFile, $mime);
+        $result = $purpose === UploadRepository::PURPOSE_MESSAGE_ATTACHMENT
+            ? $this->storage->storePrivateUserFile($user->id, $tmpFile, $mime)
+            : $this->storage->storeUserFile($user->id, $tmpFile, $mime);
 
         return $this->uploads->create([
             'user_id' => $user->id,
@@ -165,7 +178,8 @@ class UploadService
     {
         $upload = $this->uploads->findById($uploadId);
 
-        if ($upload === null || $upload->userId !== $user->id) {
+        if ($upload === null || $upload->userId !== $user->id
+            || $upload->purpose === UploadRepository::PURPOSE_MESSAGE_ATTACHMENT) {
             return null;
         }
 

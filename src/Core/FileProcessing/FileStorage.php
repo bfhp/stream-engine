@@ -23,6 +23,27 @@ class FileStorage
     {
     }
 
+    /** Private files live beside the public root, outside the file browser. */
+    public function storePrivateUserFile(int $userId, string $tmpFile, string $mime): array
+    {
+        return (new self(rtrim($this->basePath, '/\\').'-private'))->storeUserFile($userId, $tmpFile, $mime);
+    }
+
+    /** Call only after the owning module has authorized this request. */
+    public function sendPrivateFile(string $path, string $mime): void
+    {
+        if (preg_match('~\A[1-9][0-9]*/[a-f0-9]{32}\.[a-z0-9]+\z~', $path) !== 1
+            || ! is_file(rtrim($this->basePath, '/\\').'-private/'.$path)) {
+            throw new \StreamEngine\Core\Exceptions\NotFoundException('File not found');
+        }
+
+        header('Content-Type: '.$mime);
+        header('Cache-Control: private, no-store');
+        header('X-Content-Type-Options: nosniff');
+        header('Referrer-Policy: no-referrer');
+        header('X-Accel-Redirect: /protected-uploads/'.$path);
+    }
+
     /**
      * @throws RandomException
      * @throws ValidationException
@@ -31,8 +52,7 @@ class FileStorage
     {
         $ext = $this->getExtension($mime);
 
-        // Conversation attachments grant access by secret URL; keep names
-        // unpredictable even when the original name or contents are known.
+        // Keep storage names independent of client filenames.
         $name = bin2hex(random_bytes(16)).'.'.$ext;
 
         $dir = $this->basePath.'/'.$userId;

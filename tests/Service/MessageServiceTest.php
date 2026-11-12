@@ -84,12 +84,13 @@ final class MessageServiceTest extends TestCase
         array $participantIds = [7],
         array $messageRows = [],
         array $uploadOwners = [],
-        array &$writes = []
+        array &$writes = [],
+        ?string $uploadPurpose = UploadRepository::PURPOSE_MESSAGE_ATTACHMENT,
     ): PdoDatabase {
         $db = $this->createStub(PdoDatabase::class);
 
         $db->method('fetchOne')->willReturnCallback(
-            function (string $sql, array $params) use ($participantIds, $messageRows, $uploadOwners): ?array {
+            function (string $sql, array $params) use ($participantIds, $messageRows, $uploadOwners, $uploadPurpose): ?array {
                 if (str_contains($sql, 'FROM conversation_participants')) {
                     return in_array((int) $params[1], $participantIds, true) ? ['1' => 1] : null;
                 }
@@ -122,6 +123,7 @@ final class MessageServiceTest extends TestCase
                             'id' => $id,
                             'user_id' => $uploadOwners[$id],
                             'path' => 'a.png',
+                            'purpose' => $uploadPurpose,
                             'mime' => 'image/png',
                             'size' => 1,
                             'original_name' => 'a.png',
@@ -421,6 +423,43 @@ final class MessageServiceTest extends TestCase
         $this->assertSame(9, $this->insertedMessage($writes)[3]);
     }
 
+    #[DataProvider('attachmentAccessCases')]
+    public function testAttachmentAccess(int $userId, int $ownerId, bool $attached, bool $visible, ?string $purpose, bool $allowed): void
+    {
+        $db = $this->createStub(PdoDatabase::class);
+        $db->method('fetchOne')->willReturnCallback(static function (string $sql, array $params) use ($ownerId, $attached, $visible, $purpose): ?array {
+            if (str_contains($sql, 'FROM uploads')) {
+                return ['id' => 3, 'user_id' => $ownerId, 'path' => '7/'.str_repeat('a', 32).'.png',
+                    'mime' => 'image/png', 'size' => 1, 'original_name' => 'a.png', 'created_at' => 0, 'purpose' => $purpose];
+            }
+            if (str_contains($sql, 'JOIN conversation_participants')) {
+                return $visible ? ['1' => 1] : null;
+            }
+            if (str_contains($sql, 'FROM messages')) {
+                return $attached ? ['1' => 1] : null;
+            }
+            throw new RuntimeException('Unexpected query: '.$sql);
+        });
+        if (! $allowed) {
+            $this->expectException(NotFoundException::class);
+        }
+        self::assertSame(3, $this->makeService($db)->getAttachment(3, $userId)->id);
+    }
+
+    public static function attachmentAccessCases(): array
+    {
+        $purpose = UploadRepository::PURPOSE_MESSAGE_ATTACHMENT;
+        return [
+            'pending owner' => [7, 7, false, false, $purpose, true],
+            'pending stranger' => [8, 7, false, false, $purpose, false],
+            'participant' => [8, 7, true, true, $purpose, true],
+            'outsider' => [9, 7, true, false, $purpose, false],
+            'removed owner or deleted message' => [7, 7, true, false, $purpose, false],
+            'guest' => [0, 7, true, true, $purpose, false],
+            'public upload' => [7, 7, false, false, null, false],
+        ];
+    }
+
     public function testSendDropsAnAttachmentOwnedBySomeoneElse(): void
     {
         $writes = [];
@@ -433,6 +472,19 @@ final class MessageServiceTest extends TestCase
         $service->send(5, 7, self::TEXT, attachmentUploadId: 3);
 
         $this->assertNull($this->insertedMessage($writes)[4]);
+    }
+
+    public function testSendDropsPublicUploadsEvenForTheirOwner(): void
+    {
+        $writes = [];
+        $service = $this->makeService($this->makeRoutingDb(
+            participantIds: [7],
+            uploadOwners: [3 => 7],
+            writes: $writes,
+            uploadPurpose: null,
+        ));
+        $service->send(5, 7, self::TEXT, attachmentUploadId: 3);
+        self::assertNull($this->insertedMessage($writes)[4]);
     }
 
     public function testSendKeepsTheSendersOwnAttachment(): void
@@ -690,9 +742,8 @@ final class MessageServiceTest extends TestCase
        private conversation is the one thing a reader cannot check for
        themselves.
 
-       The attachment `url` is built by concatenation onto `/uploads/`, which
-       is worth pinning because the path comes from the database and nothing
-       here escapes or validates it.
+       Attachment URLs use the protected endpoint and contain only the upload
+       ID; filesystem paths must never become public attachment URLs.
     ===================================================================== */
 
     /**
@@ -789,7 +840,7 @@ final class MessageServiceTest extends TestCase
 
         self::assertSame([
             'id' => 5,
-            'url' => '/uploads/2026/08/abc123.png',
+            'url' => '/api/v1/conversations/attachments/5',
             'mime' => 'image/png',
             'size' => 20480,
             'original_name' => 'снимок экрана.png',

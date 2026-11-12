@@ -64,8 +64,13 @@ EXIF, including location data, from all publicly delivered images.
 Use the shared upload/image/storage capabilities behind platform contracts.
 Current runtime uploads use local storage; S3-only delivery is not assumed.
 Private albums require protected originals and derivatives: an unpredictable
-public URL does not enforce visibility. Choose protected local delivery or
-extend the shared private-storage contract before enabling private albums.
+public URL does not enforce visibility. Reuse the messenger's shared local
+storage primitives (`FileStorage::storePrivateUserFile` and
+`UploadService::sendPrivateFile`) with Gallery-owned access checks and routes.
+Private files live beside the public uploads root and are delivered only through
+Nginx's internal `/protected-uploads/` location. Gallery must authorize both the
+photo and album before handing an original or derivative to that delivery path;
+message attachment purposes and membership checks remain messenger-specific.
 
 An upload moves from `pending` to `ready` or `failed`. Publish the photo only
 when its file and required previews are ready. A repeated request must not

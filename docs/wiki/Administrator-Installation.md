@@ -90,6 +90,14 @@ server {
     index index.php;
     client_max_body_size 64m;
 
+    location ^~ /protected-uploads/ {
+        internal;
+        alias /srv/stream-engine/storage/uploads-private/;
+        add_header Cache-Control "private, no-store" always;
+        add_header X-Content-Type-Options nosniff always;
+        add_header Referrer-Policy no-referrer always;
+    }
+
     location /uploads/ {
         alias /srv/stream-engine/storage/uploads/;
         autoindex off;
@@ -111,7 +119,8 @@ server {
 }
 ```
 
-If `UPLOADS_DIR` points elsewhere, update the `/uploads/` alias. Runtime uploads
+If `UPLOADS_DIR` points elsewhere, update the `/uploads/` alias and the internal `/protected-uploads/` alias
+(the private directory is `UPLOADS_DIR` with `-private` appended). Runtime uploads
 in the current release use local filesystem storage; setting the available
 `OBJECT_STORAGE_*` reference variables does not switch this backend. See
 [Current object-storage integration](https://github.com/bfhp/stream-engine/wiki/Administrator-Configuration#current-object-storage-integration)

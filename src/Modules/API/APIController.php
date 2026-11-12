@@ -554,6 +554,7 @@ class APIController extends AbstractController
         $variant = $this->context->query->string('variant');
 
         $upload = match ($variant) {
+            'message-attachment' => $this->uploadService->uploadMessageAttachmentForUser($this->context->user, $_FILES['file']),
             'avatar' => $this->uploadService->uploadAvatarForUser($this->context->user, $_FILES['file']),
             'forum-attachment' => $this->uploadService->uploadForumAttachmentForUser(
                 $this->context->user,
@@ -564,7 +565,9 @@ class APIController extends AbstractController
 
         echo Formatter::json([
             'id' => $upload->id,
-            'url' => '/uploads/'.$upload->path,
+            'url' => $variant === 'message-attachment'
+                ? '/api/v1/conversations/attachments/'.$upload->id
+                : '/uploads/'.$upload->path,
             'mime' => $upload->mime,
             // Added for forums.topic-new's multi-file "Attachments" list
             // (Modules\Forums\ForumsController's own attachment card,

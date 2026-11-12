@@ -245,21 +245,22 @@ feeds and are never covered by these overrides.
 
 ## Conversation attachments
 
-Conversation membership controls access to message history. Attachments use
-secret URLs with random filenames: anyone who knows the complete URL can
-download the file without signing in. A participant can share that URL with
-another person.
+Conversation attachments are stored outside the public uploads directory. Their
+URLs require authentication and current membership in a conversation containing
+a non-deleted message with that attachment. Before an upload is attached, only
+its uploader can retrieve it. Public uploads cannot be attached to messages.
 
-Leaving or being removed from a group prevents subsequent message retrieval,
-but does not revoke previously obtained attachment URLs. Logging out or deleting
-a message does not revoke its attachment URL either. If the same upload is
-attached in several conversations or a public post, it keeps the same URL.
+Leaving a conversation or deleting its message removes that route to the file.
+If the same attachment occurs in another accessible conversation, it remains
+available there. Responses use `Cache-Control: private, no-store`; already saved
+copies cannot be recalled. The administrator File Browser lists public files
+only and cannot expose conversation attachments.
 
-Deleting the file or changing its path through the administrator File Browser
-disables the old URL for future requests to the origin server, but also breaks
-every message or post using it. Downloaded or cached copies cannot be recalled.
-Treat attachment URLs as secrets and redact them from support reports and
-screenshots when access should not be shared.
+The messenger uploads with `POST /api/v1/uploads?variant=message-attachment`
+(multipart `file`, authenticated session and CSRF token). The returned URL is
+`GET /api/v1/conversations/attachments/{upload_id}`. Authenticated requests for
+missing or inaccessible attachments return 404; guests are rejected with 403.
+The file response supports byte ranges and does not expose a public storage URL.
 
 ## Community membership roles
 

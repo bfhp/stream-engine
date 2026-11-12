@@ -97,13 +97,13 @@ directory.
 
 Stream Engine currently stores runtime uploads locally through `FileStorage`.
 The object-storage boundary and the currently inactive S3-compatible client
-are described below. Keep local uploads in the backup set.
+are described below. Keep public and private local uploads in the backup set.
+Private uploads live in `UPLOADS_DIR` with `-private` appended and must only be
+served through the internal `/protected-uploads/` Nginx location.
 
-Conversation attachments use secret URLs: anyone who knows the URL can download
-the file without signing in, even after leaving or being removed from the
-conversation. Keep `autoindex off` and `Referrer-Policy: no-referrer` in the
-Nginx `/uploads/` location, as shown in the installation guide. For an existing
-deployment, update that location, run `nginx -t`, and reload Nginx. See
+Conversation attachments require an authenticated user with access to a live
+message containing the file. Configure the internal Nginx location as shown in
+the installation guide, run `nginx -t`, and reload Nginx. See
 [Conversation attachments](https://github.com/bfhp/stream-engine/wiki/Administrator-Users-and-Permissions#conversation-attachments)
 for the sharing and revocation semantics.
 
@@ -118,7 +118,8 @@ The active data flow remains entirely local:
 
 | Operation | Current storage behavior |
 | --- | --- |
-| User, profile, forum, message, and administrator uploads | `UploadService` writes through `FileStorage` below `UPLOADS_DIR`. |
+| User, profile, forum, and administrator uploads | `UploadService` writes through `FileStorage` below `UPLOADS_DIR`. |
+| Message attachments | Stored beside `UPLOADS_DIR` in `UPLOADS_DIR-private`; authorized by the messenger and delivered using `X-Accel-Redirect`. |
 | Header logo and site icon | Written into local subdirectories of `UPLOADS_DIR`. |
 | File Browser | Reads and changes the configured local uploads directory. It cannot browse an object bucket. |
 | Public file URLs | Stored or generated as `/uploads/...` paths and served by the web-server alias. |

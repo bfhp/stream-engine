@@ -20,6 +20,7 @@ use StreamEngine\Domain\Page;
 use StreamEngine\Service\AccessService;
 use StreamEngine\Service\FeedService;
 use StreamEngine\Service\MessageService;
+use StreamEngine\Service\UploadService;
 use StreamEngine\View\ViewModel;
 use Throwable;
 
@@ -37,7 +38,8 @@ class MessagesController extends AbstractController
         protected FeedService $feedService,
         private readonly MessageService $messageService,
         private readonly TranslationManager $tm,
-        protected RequestContext $context
+        protected RequestContext $context,
+        private readonly UploadService $uploadService,
     ) {
         parent::__construct($db, $context);
     }
@@ -75,6 +77,10 @@ class MessagesController extends AbstractController
         }
 
         match ($page->action) {
+            'message.attachments.root' => throw new NotFoundException('Attachment id required'),
+            'message.attachment' => $this->uploadService->sendPrivateFile(
+                $this->messageService->getAttachment((int) ($args['upload_id'] ?? 0), $this->context->user->id)
+            ),
             'conversations.list' => $this->handleConversationsRequest(),
             'conversation.show' => $this->handleConversationIdRequest($args),
             'conversation.typing' => $this->handleTypingRequest($args),
@@ -375,6 +381,23 @@ class MessagesController extends AbstractController
                 accessRule: AccessService::ACCESS_AUTHENTICATED
             )
         );
+        $attachmentsPageId = $pageTree->getMaxPageId();
+        $pageTree->add(Page::api(
+            id: $attachmentsPageId,
+            parentId: $conversationPageId,
+            pattern: 'attachments',
+            requestMethods: ['GET'],
+            action: 'message.attachments.root',
+            accessRule: AccessService::ACCESS_AUTHENTICATED,
+        ));
+        $pageTree->add(Page::api(
+            id: $pageTree->getMaxPageId(),
+            parentId: $attachmentsPageId,
+            pattern: '{upload_id}',
+            requestMethods: ['GET'],
+            action: 'message.attachment',
+            accessRule: AccessService::ACCESS_AUTHENTICATED,
+        ));
         $conversationIdPageId = $pageTree->getMaxPageId();
         $pageTree->add(
             Page::api(
