@@ -75,7 +75,14 @@ export default function FileBrowser() {
     const [refreshKey, setRefreshKey] = useState(0);
 
     const fileActions = useMemo(() => [
-        ChonkyActions.CreateFolder,
+        defineFileAction({
+            ...ChonkyActions.CreateFolder,
+            button: {
+                ...ChonkyActions.CreateFolder.button,
+                name: trans("js.admin.file_browser.new_folder"),
+                tooltip: trans("js.admin.file_browser.new_folder"),
+            },
+        }),
         ChonkyActions.UploadFiles,
         ChonkyActions.CopyFiles,
         defineFileAction({
