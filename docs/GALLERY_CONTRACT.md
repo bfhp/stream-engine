@@ -170,7 +170,13 @@ Photo routes are runtime descendants of the existing `user.show` and
 `community.show-slug` pages. Their base pattern is `photos`, producing
 `<user.show URL>/photos/` and `<community.show-slug URL>/photos/` (for example,
 `/users/alice/photos/` and `/communities/devs/photos/` with those mounts).
-There is no standalone `gallery.index` mount or global `/photos/` page.
+A separate configurable page action, `photos.showcase`, will provide a photo
+showcase across personal blogs and communities. It belongs to Users and will
+be advertised in UsersController::pageActions() when implemented. Administrators
+choose its mount URL through the page tree; it does not require a separate
+Gallery module. The showcase lists only ready photographs accessible to the
+viewer, applying context and album access filters before pagination and counts.
+Photo links lead to their canonical personal-blog or community routes.
 
 | Parent action | Planned list action | Relative pattern |
 | --- | --- | --- |
@@ -179,7 +185,8 @@ There is no standalone `gallery.index` mount or global `/photos/` page.
 
 Album/photo views, album editing, uploads and rankings descend from the
 corresponding photos route. Register runtime pages only when those workflows
-work; do not add configurable photo mounts to `pageActions()`. Resolve context
+work. The scoped photo routes remain runtime descendants; only the separate
+showcase is a configurable photo mount in `pageActions()`. Resolve context
 from the ancestor page and route parameters, never from a client-supplied owner
 or context ID alone. Generate links with UrlGenerator and the ancestor params;
 community `{slug}` must remain distinct from descendant album/photo identifiers.
