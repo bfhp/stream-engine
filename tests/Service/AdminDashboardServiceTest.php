@@ -14,14 +14,48 @@ use StreamEngine\Core\Exceptions\NotFoundException;
 use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Core\RequestContext;
 use StreamEngine\Domain\User;
-use StreamEngine\Repository\DashboardLayoutRepository;
+use StreamEngine\Modules\Admin\DashboardLayoutCookieStore;
 use StreamEngine\Service\AccessService;
-use StreamEngine\Service\AdminDashboardService;
+use StreamEngine\Modules\Admin\AdminDashboardService;
 
 require_once __DIR__.'/../Support/ControllerFactoryFixtures.php';
 
 final class AdminDashboardServiceTest extends TestCase
 {
+    private array $originalCookies;
+
+    protected function setUp(): void
+    {
+        $this->originalCookies = $_COOKIE;
+        $_COOKIE = [];
+    }
+
+    protected function tearDown(): void
+    {
+        $_COOKIE = $this->originalCookies;
+    }
+
+    public function testMalformedCookieFallsBackToDefaultLayout(): void
+    {
+        [$service] = $this->service([]);
+        foreach (['invalid', base64_encode('{"version":1,"items":"invalid"}'), base64_encode('{"version":2,"items":[]}')] as $value) {
+            $_COOKIE[(new DashboardLayoutCookieStore())->cookieName(7)] = $value;
+            self::assertNotEmpty($service->payload($this->context())['layout']['items']);
+        }
+    }
+
+    public function testOversizedLayoutDoesNotReplaceExistingCookie(): void
+    {
+        $store = new DashboardLayoutCookieStore();
+        $store->save(7, 1, []);
+        try {
+            $store->save(7, 1, [['id' => str_repeat('x', 4000), 'size' => 'small', 'position' => 0]]);
+            self::fail('Oversized layout was accepted.');
+        } catch (ValidationException) {
+            self::assertSame(['version' => 1, 'items' => []], $store->find(7));
+        }
+    }
+
     public function testDefaultLayoutIncludesPermittedCoreAndModuleCards(): void
     {
         [$service] = $this->service([DashboardProbeController::class]);
@@ -137,8 +171,8 @@ final class AdminDashboardServiceTest extends TestCase
             'items' => [['id' => 'probe.summary', 'size' => 'wide', 'position' => 0]],
         ]);
 
-        self::assertStringContainsString('INSERT INTO admin_dashboard_layouts', $tracker->writes[0][0]);
-        self::assertSame(42, $tracker->writes[0][1][0]);
+        self::assertSame([], $tracker->writes);
+        self::assertSame($payload['layout'], (new DashboardLayoutCookieStore())->find(42));
         self::assertSame('probe.summary', $payload['layout']['items'][0]['id']);
     }
 
@@ -167,10 +201,15 @@ final class AdminDashboardServiceTest extends TestCase
     {
         [$service, $tracker] = $this->service([]);
 
-        $service->reset($this->context(42));
+        $store = new DashboardLayoutCookieStore();
+        $store->save(42, 1, []);
+        $store->save(7, 1, []);
+        $payload = $service->reset($this->context(42));
 
-        self::assertStringContainsString('DELETE FROM admin_dashboard_layouts', $tracker->writes[0][0]);
-        self::assertSame([42], $tracker->writes[0][1]);
+        self::assertNull($store->find(42));
+        self::assertNotNull($store->find(7));
+        self::assertNotEmpty($payload['layout']['items']);
+        self::assertSame([], $tracker->writes);
     }
 
     /**
@@ -180,15 +219,12 @@ final class AdminDashboardServiceTest extends TestCase
      */
     private function service(array $fixtures, ?array $stored = null): array
     {
+        if ($stored !== null) {
+            (new DashboardLayoutCookieStore())->save(7, AdminDashboardService::LAYOUT_VERSION, $stored);
+        }
         $db = $this->createStub(PdoDatabase::class);
         $db->method('fetchOne')->willReturnCallback(
-            static function (string $sql, array $params = []) use ($stored): ?array {
-                if (str_contains($sql, 'FROM admin_dashboard_layouts')) {
-                    return $stored === null ? null : [
-                        'layout_version' => AdminDashboardService::LAYOUT_VERSION,
-                        'layout_json' => json_encode($stored, JSON_THROW_ON_ERROR),
-                    ];
-                }
+            static function (string $sql, array $params = []): ?array {
                 if (str_contains($sql, 'FROM users')) {
                     return ['total' => 4, 'active' => 3, 'inactive' => 1];
                 }
@@ -213,7 +249,7 @@ final class AdminDashboardServiceTest extends TestCase
         $registry = \StreamEngine\Controllers\registryWithFixtures($fixtures);
 
         return [
-            new AdminDashboardService(new DashboardLayoutRepository($db), $registry, $db),
+            new AdminDashboardService(new DashboardLayoutCookieStore(), $registry, $db),
             $tracker,
         ];
     }

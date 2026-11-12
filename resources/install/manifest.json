@@ -2,7 +2,7 @@
     "format": 1,
     "release": "0.6.2",
     "schema": "schema.sql",
-    "schema_checksum": "0b7dee8bdcddb044a87a669ecf96f7da0fc48673d4fa9a1a283701b2b40c9e27",
+    "schema_checksum": "b003bc666ecf2a584d63e19ff5f4c09e1e837e93dff05c9b2113aade04b23b4d",
     "migrations": [
         {
             "version": "20260912000000_initial",
@@ -108,6 +108,11 @@
             "version": "20261108000000_add_upload_audio_tags",
             "file": "20261108000000_add_upload_audio_tags.sql",
             "checksum": "f85db2578b9d2cc1e434756d14c6963a0964951bab54dd62844b642ae2cba9ae"
+        },
+        {
+            "version": "20261113000000_drop_admin_dashboard_layouts",
+            "file": "20261113000000_drop_admin_dashboard_layouts.sql",
+            "checksum": "40cfd2f4123afd247ae0c9962dd96349ebe8be9a4578a930ebdbe46137017ed7"
         }
     ]
 }

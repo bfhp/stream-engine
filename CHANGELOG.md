@@ -7,6 +7,11 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Admin dashboard layouts now use cookies instead of the `admin_dashboard_layouts`
+  table; existing layouts are reset. Dashboard services now live in the Admin module.
+
 ### Security
 
 - Messenger attachments now use private storage and check conversation access

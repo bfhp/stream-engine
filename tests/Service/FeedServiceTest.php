@@ -67,7 +67,11 @@ final class FeedServiceTest extends TestCase
         $access->method('canEditFeed')->willReturn(true);
         $access->method('canAccessFeed')->willReturn(true);
         $this->expectException(ForbiddenException::class);
-        $this->makeService(new FeedRepository($db), accessService: $access)->updateFeed(
+        $this->makeService(
+            new FeedRepository($db),
+            $this->makeUrlGenerator([10 => $this->makeFeed(id: 10, type: 'gallery-photo')]),
+            accessService: $access,
+        )->updateFeed(
             10,
             ['type' => $type],
             new User(1, 'owner@example.com', $role),
@@ -95,7 +99,11 @@ final class FeedServiceTest extends TestCase
         $access = $this->createStub(AccessService::class);
         $access->method('canEditFeed')->willReturn(true);
         $access->method('canAccessFeed')->willReturn(true);
-        $feed = $this->makeService(new FeedRepository($db), accessService: $access)->updateFeed(
+        $feed = $this->makeService(
+            new FeedRepository($db),
+            $this->makeUrlGenerator([10 => $this->makeFeed(id: 10, type: 'gallery-photo')]),
+            accessService: $access,
+        )->updateFeed(
             10,
             $data,
             new User(1, 'owner@example.com'),
@@ -406,6 +414,20 @@ final class FeedServiceTest extends TestCase
                 accessRule: AccessService::ACCESS_PUBLIC
             ),
         ];
+
+        $pages[] = new Page(
+            id: 12,
+            parentId: 1,
+            pattern: '{slug}',
+            pageName: 'Gallery photo',
+            settings: null,
+            feedType: 'gallery-photo',
+            listFeedType: null,
+            feedId: null,
+            requestMethods: ['GET'],
+            responseType: 'raw',
+            accessRule: AccessService::ACCESS_PUBLIC,
+        );
 
         return new UrlGenerator(
             new PageTree($pages),

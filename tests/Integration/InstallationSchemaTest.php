@@ -38,6 +38,7 @@ final class InstallationSchemaTest extends TestCase
             self::assertContains('users', $tables);
             self::assertContains('pages', $tables);
             self::assertContains('settings', $tables);
+            self::assertNotContains('admin_dashboard_layouts', $tables);
             self::assertNotContains('user_social_accounts', $tables);
             self::assertContains('feeds_parent_type_slug_unique', $this->indexes($databasePdo, 'feeds'));
 

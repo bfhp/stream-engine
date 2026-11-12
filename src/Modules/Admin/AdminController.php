@@ -34,12 +34,10 @@ use StreamEngine\Repository\MenuRepository;
 use StreamEngine\Repository\SettingsRepository;
 use StreamEngine\Repository\UserRepository;
 use StreamEngine\Service\AccessService;
-use StreamEngine\Service\AdminDashboardService;
 use StreamEngine\Service\CronStatusService;
 use StreamEngine\Service\SettingsService;
 use StreamEngine\Service\ThemeService;
 use StreamEngine\Service\UploadService;
-use StreamEngine\Repository\DashboardLayoutRepository;
 use StreamEngine\View\ViewModel;
 
 class AdminController extends AbstractController implements DashboardCardProviderInterface
@@ -300,7 +298,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
         $this->settingsRepository = new SettingsRepository($db);
         $this->userRepository = new UserRepository($db);
         $this->dashboardService = new AdminDashboardService(
-            new DashboardLayoutRepository($db),
+            new DashboardLayoutCookieStore(),
             $modules,
             $db,
             $tm,

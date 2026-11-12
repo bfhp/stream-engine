@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace StreamEngine\Service;
+namespace StreamEngine\Modules\Admin;
 
 use StreamEngine\Core\DashboardCardProviderInterface;
 use StreamEngine\Core\Exceptions\ValidationException;
@@ -12,7 +12,7 @@ use StreamEngine\Core\PdoDatabase;
 use StreamEngine\Core\RequestContext;
 use StreamEngine\Core\TranslationManager;
 use StreamEngine\Domain\User;
-use StreamEngine\Repository\DashboardLayoutRepository;
+use StreamEngine\Service\AccessService;
 use RuntimeException;
 use Throwable;
 
@@ -21,7 +21,7 @@ final readonly class AdminDashboardService
     public const int LAYOUT_VERSION = 1;
 
     public function __construct(
-        private DashboardLayoutRepository $layouts,
+        private DashboardLayoutCookieStore $layouts,
         private ModuleRegistry $modules,
         private PdoDatabase $db,
         private ?TranslationManager $tm = null,
