@@ -1,6 +1,6 @@
 # Users Photo Gallery Contract and Development Plan
 
-Date: November 13, 2026. Status: Users-owned metadata and routing contract; public workflows are not implemented.
+Date: November 13, 2026. Status: initial Users album service implemented; public workflows are not implemented.
 
 Photo galleries belong to the Users module. Registered users will create
 albums and upload photographs within a personal blog or a community. Visitors with access can browse them; registered users can
@@ -22,7 +22,7 @@ The Users photo service or UsersController will validate album/photo types, pare
 author and context relationships, and combine shared AccessService checks for
 the blog/community, album and photograph.
 A separate policy class is not needed. Initial albums support
-public/private visibility within their blog or community context. Community
+`public`/`members`/`private` visibility, matching blog and community posts. Community
 membership and publication permissions reuse the existing Users community
 rules; no separate gallery membership system is introduced. All image variants
 will use protected local storage, including public photos, so making an album
@@ -205,6 +205,22 @@ Every mutation checks authentication, resource authorization, HTTP method,
 CSRF and input on the server. Album deletion removes or schedules deletion of
 its photographs, comments, votes and files consistently; removing the cover
 clears or replaces the cover. A failed cleanup must not restore public access.
+
+## Current implementation
+
+`src/Modules/Users/PhotoService.php` provides album creation, context-scoped
+reading and paginated listing, plus edit permission checks. It reloads context
+and album through FeedService, uses CommunityService::canPost() for community
+publication, and AccessService::canEditFeed() for management. Personal albums
+require the blog owner. Container assignment matches BlogPostService, including
+personal members-only content. Lists use shared SQL access filtering before
+pagination and counting. No photo types, endpoints or pages are advertised yet.
+No new core classes, tables or Feed fields are introduced. Cover references,
+image references and processing fields remain reserved for `feed_metadata`;
+empty albums require no service metadata.
+
+Next: wire album forms and scoped runtime routes, then album updates/deletion,
+metadata validation and protected photo uploads before exposing photographs.
 
 ## Implementation sequence and acceptance
 
