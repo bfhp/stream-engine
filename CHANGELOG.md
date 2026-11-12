@@ -7,14 +7,30 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-11-12
+
 ### Changed
 
-- Updated frontend dependencies, including React, Vite, Playwright and Chonky.
+- Updated frontend dependencies, including React, React Router, Vite,
+  Playwright, axe-core, Chonky and icon libraries. Rebuilt production assets
+  and refreshed the third-party license report.
+- Updated PHP dependencies: phpdotenv, crawler-detect, PHPUnit and Symfony
+  polyfills.
+- Updated the GitHub Actions SARIF uploader used by Semgrep.
 
 ### Fixed
 
 - Theme selection cards and the file browser's new-folder button now expose
   accessible names that include their visible labels.
+
+### Upgrade notes
+
+- From 0.6.1, install dependencies from the updated Composer lockfile and deploy
+  the bundled browser assets. No new database migrations or schema changes
+  are required. The installation manifest is refreshed for release 0.6.2.
+- The existing Chonky/deepmerge low-severity advisory remains covered by the
+  reviewed mitigation in `SECURITY.md`; this release does not claim an upstream
+  fix.
 
 ## [0.6.1] - 2026-11-12
 
