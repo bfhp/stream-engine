@@ -57,6 +57,67 @@ final class FeedServiceTest extends TestCase
         parent::tearDown();
     }
 
+    #[DataProvider('changedFeedTypes')]
+    public function testUpdateCannotChangeFeedType(string $role, mixed $type): void
+    {
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects(self::never())->method('execute');
+        $db->method('fetchOne')->willReturn($this->immutableTypeRow());
+        $access = $this->createStub(AccessService::class);
+        $access->method('canEditFeed')->willReturn(true);
+        $access->method('canAccessFeed')->willReturn(true);
+        $this->expectException(ForbiddenException::class);
+        $this->makeService(new FeedRepository($db), accessService: $access)->updateFeed(
+            10,
+            ['type' => $type],
+            new User(1, 'owner@example.com', $role),
+        );
+    }
+
+    public static function changedFeedTypes(): iterable
+    {
+        foreach (['user', 'moderator', 'admin'] as $role) {
+            foreach (['article', 'Gallery-photo', '', null, 1, []] as $type) {
+                yield [$role, $type];
+            }
+        }
+    }
+
+    #[DataProvider('unchangedFeedTypes')]
+    public function testGalleryEditsRemainAllowedWithoutChangingType(array $data): void
+    {
+        $db = $this->createMock(PdoDatabase::class);
+        $db->method('fetchOne')->willReturn($this->immutableTypeRow());
+        $db->expects(self::once())->method('execute')->with(
+            self::stringContains('UPDATE feeds'),
+            self::callback(static fn (array $params): bool => $params[0] === 'Updated' && $params[3] === 'gallery-photo'),
+        );
+        $access = $this->createStub(AccessService::class);
+        $access->method('canEditFeed')->willReturn(true);
+        $access->method('canAccessFeed')->willReturn(true);
+        $feed = $this->makeService(new FeedRepository($db), accessService: $access)->updateFeed(
+            10,
+            $data,
+            new User(1, 'owner@example.com'),
+        );
+        self::assertSame('gallery-photo', $feed->type);
+    }
+
+    public static function unchangedFeedTypes(): array
+    {
+        return [[['title' => 'Updated']], [['title' => 'Updated', 'type' => 'gallery-photo']]];
+    }
+
+    private function immutableTypeRow(): array
+    {
+        return [
+            'id' => 10, 'parent_id' => null, 'owner_id' => 1, 'type' => 'gallery-photo',
+            'slug' => null, 'title' => 'Test', 'description' => null,
+            'image_url' => null, 'content' => '', 'container_id' => null,
+            'visibility' => 'public', 'position' => 0, 'created_at' => null,
+        ];
+    }
+
     private function makeService(
         FeedRepository $repository,
         ?UrlGenerator $urlGenerator = null,

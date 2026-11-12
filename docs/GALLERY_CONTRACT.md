@@ -1,12 +1,36 @@
 # Gallery Module Contract and Development Plan
 
-Date: November 13, 2026. Status: scaffold; workflows are not implemented.
+Date: November 13, 2026. Status: scaffold and metadata contract; public workflows are not implemented.
 
 The Gallery module will let registered users create albums and upload
 photographs. Visitors with access can browse them; registered users can
 comment and rate photographs. Rankings expose the highest-rated photographs.
 The controller currently contributes no pages, feed types, API or scheduled
-tasks. No schema changes are required for the scaffold.
+tasks. Gallery uses the standard Feed editing and authorization mechanisms.
+Feed type is selected at creation and cannot be changed through user-facing
+updates, including the administration editor and API. Ordinary edits and
+deletions are not blocked by a Gallery-specific reservation.
+
+Gallery uses existing `feeds`, `feed_metadata` and `uploads` tables. No new
+tables or Gallery migration are needed. Photo file references, dimensions and
+processing state reside in the photo Feed's metadata. The album's metadata
+stores its cover photo reference. Shared Upload records retain paths, MIME,
+bytes and original filenames.
+
+The Gallery service or controller will validate album/photo types, parent and
+owner relationships, and combine shared AccessService checks for both records.
+A separate policy class is not needed. Initial albums support
+public/private visibility without memberships or containers. All image variants
+will use protected local storage, including public photos, so making an album
+private can revoke access without relocating files.
+
+No Gallery Feed types are advertised yet. Before exposing them, album/photo
+workflows must enforce these policies on writes, check ready state and cover
+membership, and integrate effective album visibility into shared SQL listing,
+search and direct Feed access. The module policy alone does not filter shared
+queries. UploadService currently chooses private storage only for message
+attachments; Gallery must extend that shared capability before uploads are
+connected, without reusing message attachment purpose or endpoints.
 
 ## Scope and proposed defaults
 
@@ -36,8 +60,8 @@ import Gallery classes.
 | --- | --- |
 | Album | Feed of type `gallery-album`: owner, title, description, visibility |
 | Photograph | Feed of type `gallery-photo`, parented to its album: owner, title, caption, position |
-| Image | Typed module record linked uniquely to the photo Feed: storage reference, MIME, bytes, dimensions, processing state |
-| Album cover | Module association to a ready photograph in the same album |
+| Image | Photo `feed_metadata`: Upload references, dimensions and processing state; shared `uploads`: file metadata |
+| Album cover | Album `feed_metadata` referencing a ready photograph in the same album |
 | Comments | Existing platform comment Feeds targeting the photograph |
 | Votes | Existing `feed_ratings` and Feed rating aggregates |
 
@@ -48,9 +72,35 @@ direct photo links, comments, previews, ranking results and file delivery.
 Generic Feed mutations must enforce the same invariants before these types
 are exposed in the editor; module endpoints alone are insufficient.
 
-Image fields do not belong on the shared Feed model. New typed records use
-root `migrations/` SQL history, with an updated installation snapshot. Exact
-columns, foreign keys, indexes and deletion policy are fixed before migration.
+Image fields do not belong on the shared Feed model. Use the existing
+FeedMetadataRepository and FeedService metadata loading/editing conventions.
+Metadata values are strings; Gallery parses and validates them at its service
+boundary. Missing or invalid metadata never implies a ready image.
+
+| Metadata key | Feed | Value |
+| --- | --- | --- |
+| `gallery.original_upload_id` | Photograph | Positive decimal Upload ID |
+| `gallery.preview_upload_id` | Photograph | Positive decimal Upload ID, distinct from the original |
+| `gallery.width` | Photograph | Positive decimal pixel width |
+| `gallery.height` | Photograph | Positive decimal pixel height |
+| `gallery.state` | Photograph | `pending`, `ready` or `failed` |
+| `gallery.updated_at` | Photograph | Decimal Unix timestamp of processing state change |
+| `gallery.cover_photo_id` | Album | Positive decimal photo Feed ID; absent means no selected cover |
+
+These keys define the persistence contract for the upcoming workflows; no
+upload or metadata-writing workflow is implemented yet. Publishing a ready
+photo requires valid original/preview references, positive dimensions and
+verification that both Upload records belong to the photo owner and represent
+Gallery files. Cover selection checks that the photo is ready and belongs to
+the album. These are service validations, not foreign-key constraints.
+
+Updating Gallery metadata must preserve unrelated Feed metadata. Since
+`replaceForFeed()` replaces the entire map, workflows must merge existing
+values and serialize concurrent changes in a transaction using a Feed row
+lock. File cleanup must check references in metadata before removing an
+Upload. Deleting or moving a photograph clears or replaces the previous
+album's cover. Generic edits must use the same validation and cleanup rules
+before the module exposes these records.
 
 ## Upload lifecycle
 
@@ -117,8 +167,9 @@ clears or replaces the cover. A failed cleanup must not restore public access.
 
 ## Implementation sequence and acceptance
 
-1. Establish typed schema, storage/access policy and Feed mutation guards.
-   Verify upgrades and clean installs, foreign keys and owner restrictions.
+1. Defined: storage/access rules and metadata contract using existing tables.
+   Implement checks in the Gallery service or controller in stages 2–3. Verify
+   metadata parsing, file references, cover membership and owner restrictions.
 2. Implement album CRUD and paginated browsing. Verify isolation between owners
    and visibility on both album and direct photo requests.
 3. Implement uploads, previews, ordering, covers and deletion. Verify invalid

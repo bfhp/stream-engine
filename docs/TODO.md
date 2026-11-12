@@ -25,7 +25,7 @@ changelog.
 ## Gallery
 
 - **P2** — Implement user albums, photo uploads, comments, votes and photo
-  rankings from the [Gallery contract](GALLERY_CONTRACT.md). Only the module
-  scaffold exists. Deliver in the contract's phases, verifying ownership,
+  rankings from the [Gallery contract](GALLERY_CONTRACT.md). The metadata contract and access rules are documented;
+  user workflows remain to be implemented. Deliver in the contract's phases, verifying ownership,
   private image access, upload recovery and rating consistency before exposing
   the corresponding pages and API.

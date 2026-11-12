@@ -1118,11 +1118,10 @@ class FeedService
         $parentId = array_key_exists('parentId', $data)
             ? (! empty($data['parentId']) ? (int) $data['parentId'] : null)
             : $feed->parentId;
-        $type = array_key_exists('type', $data) ? $data['type'] : $feed->type;
-
-        if (! is_string($type) || $type === '') {
-            throw new ValidationException('Feed type must be a non-empty string');
+        if (array_key_exists('type', $data) && $data['type'] !== $feed->type) {
+            throw new ForbiddenException($this->tm->trans('feed.forbidden'));
         }
+        $type = $feed->type;
 
         $content = array_key_exists('content', $data)
             ? ($data['content'] !== null ? $this->purifier->purify($data['content']) : null)

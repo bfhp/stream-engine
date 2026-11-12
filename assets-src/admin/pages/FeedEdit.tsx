@@ -229,6 +229,7 @@ export default function FeedEdit() {
                     <AdminSelect
                         label={trans("js.admin.type")}
                         data={FEED_TYPES}
+                        disabled={id !== "new"}
                         value={feed.type || ""}
                         onChange={(value) =>
                             setFeed({ ...feed, type: value || "" })
