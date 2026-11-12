@@ -1,12 +1,13 @@
-# Gallery Module Contract and Development Plan
+# Users Photo Gallery Contract and Development Plan
 
-Date: November 13, 2026. Status: scaffold and metadata contract; public workflows are not implemented.
+Date: November 13, 2026. Status: Users-owned metadata and routing contract; public workflows are not implemented.
 
-The Gallery module will let registered users create albums and upload
-photographs. Visitors with access can browse them; registered users can
+Photo galleries belong to the Users module. Registered users will create
+albums and upload photographs within a personal blog or a community. Visitors with access can browse them; registered users can
 comment and rate photographs. Rankings expose the highest-rated photographs.
-The controller currently contributes no pages, feed types, API or scheduled
-tasks. Gallery uses the standard Feed editing and authorization mechanisms.
+UsersController will own the photo pages and API. No photo pages, feed types,
+API or scheduled tasks are registered yet; the standalone Gallery controller
+has been removed. Gallery uses the standard Feed editing and authorization mechanisms.
 Feed type is selected at creation and cannot be changed through user-facing
 updates, including the administration editor and API. Ordinary edits and
 deletions are not blocked by a Gallery-specific reservation.
@@ -17,10 +18,13 @@ processing state reside in the photo Feed's metadata. The album's metadata
 stores its cover photo reference. Shared Upload records retain paths, MIME,
 bytes and original filenames.
 
-The Gallery service or controller will validate album/photo types, parent and
-owner relationships, and combine shared AccessService checks for both records.
+The Users photo service or UsersController will validate album/photo types, parent and
+author and context relationships, and combine shared AccessService checks for
+the blog/community, album and photograph.
 A separate policy class is not needed. Initial albums support
-public/private visibility without memberships or containers. All image variants
+public/private visibility within their blog or community context. Community
+membership and publication permissions reuse the existing Users community
+rules; no separate gallery membership system is introduced. All image variants
 will use protected local storage, including public photos, so making an album
 private can revoke access without relocating files.
 
@@ -51,23 +55,36 @@ requirements agreed with the site owner:
 
 ## Architecture and data ownership
 
-Dependency direction: `Gallery -> Core / Service / Repository / Domain`.
-Gallery must not import other modules. Module-private photo repositories,
-services and view models stay in `src/Modules/Gallery`; the platform must not
-import Gallery classes.
+Dependency direction: `Users -> Core / Service / Repository / Domain`.
+Photo services and view models stay in `src/Modules/Users` alongside the blog
+and community services. UsersController owns routing and delegates photo
+operations to a Users-local service. There is no separate Gallery module or
+controller registration; the platform must not import Users photo classes.
 
 | Entity | Proposed source of truth |
 | --- | --- |
-| Album | Feed of type `gallery-album`: owner, title, description, visibility |
+| Album | Feed of type `gallery-album`, parented to a personal `blog` or `community` Feed: owner, title, description, visibility |
 | Photograph | Feed of type `gallery-photo`, parented to its album: owner, title, caption, position |
 | Image | Photo `feed_metadata`: Upload references, dimensions and processing state; shared `uploads`: file metadata |
 | Album cover | Album `feed_metadata` referencing a ready photograph in the same album |
 | Comments | Existing platform comment Feeds targeting the photograph |
 | Votes | Existing `feed_ratings` and Feed rating aggregates |
 
-The album and its photographs have the same owner. Creation and movement
-validate album type, ownership and access on the server. A photograph cannot
-become more visible than its album. Read access checks both records, including
+Every album belongs to exactly one personal blog or community, resolved from
+its parent Feed. Every photograph belongs to exactly one album and inherits
+that context. `owner_id` identifies the author, not the community; community
+publication and management permissions use the existing CommunityService
+rules. A personal album and its photographs belong to the blog owner; a
+community photo's author may differ from the album author where community
+permissions allow contribution. Upload ownership is checked against the photo
+author. Parentage is the source of truth for context; any access container
+fields must agree with that ancestry and existing AccessService conventions.
+
+Creation and movement validate the full blog/community → album → photo chain,
+publication permissions and access on the server. Initial moves stay within
+the same blog/community; cross-context transfers are deferred. A photograph
+cannot become more visible than its album or context. Read access checks the
+blog/community, album and photograph, including
 direct photo links, comments, previews, ranking results and file delivery.
 Generic Feed mutations must enforce the same invariants before these types
 are exposed in the editor; module endpoints alone are insufficient.
@@ -104,7 +121,7 @@ before the module exposes these records.
 
 ## Upload lifecycle
 
-Authenticate, verify CSRF, check album ownership, quotas and request limits
+Authenticate, verify CSRF, check context publication rights, album management permissions, quotas and request limits
 before accepting a file. Validate actual MIME and successful image decoding,
 byte size, dimensions and decoded pixel limits. Limits must be configurable
 and fixed before implementing uploads. Generate storage keys on the server;
@@ -119,7 +136,7 @@ storage primitives (`FileStorage::storePrivateUserFile` and
 `UploadService::sendPrivateFile`) with Gallery-owned access checks and routes.
 Private files live beside the public uploads root and are delivered only through
 Nginx's internal `/protected-uploads/` location. Gallery must authorize both the
-photo and album before handing an original or derivative to that delivery path;
+photo, album and blog/community before handing an original or derivative to that delivery path;
 message attachment purposes and membership checks remain messenger-specific.
 
 An upload moves from `pending` to `ready` or `failed`. Publish the photo only
@@ -133,7 +150,7 @@ reference; old files are removed only after checking references.
 
 Reuse FeedService comment and rating operations; do not duplicate their tables
 or call another module's controller. Verify that shared operations support
-the photo type and album access policy before wiring the UI or API.
+the photo type and context/album access policy before wiring the UI or API.
 
 - Comments support creation and authorized editing/deletion, with platform
   sanitization, moderation and pagination.
@@ -149,12 +166,29 @@ the photo type and album access policy before wiring the UI or API.
 
 ## Planned screens and extension points
 
-The public mount will be `gallery.index`; runtime descendants will provide
-album view, photo view, the owner's albums, album editing, uploads and ranking.
-Only configurable mount actions belong in `pageActions()`. Final route patterns
-and API payloads are fixed when these screens are implemented.
+Photo routes are runtime descendants of the existing `user.show` and
+`community.show-slug` pages. Their base pattern is `photos`, producing
+`<user.show URL>/photos/` and `<community.show-slug URL>/photos/` (for example,
+`/users/alice/photos/` and `/communities/devs/photos/` with those mounts).
+There is no standalone `gallery.index` mount or global `/photos/` page.
 
-Templates belong under `Gallery/views/modules/gallery/` and extend shared
+| Parent action | Planned list action | Relative pattern |
+| --- | --- | --- |
+| `user.show` | `user.photos` | `photos` |
+| `community.show-slug` | `community.photos` | `photos` |
+
+Album/photo views, album editing, uploads and rankings descend from the
+corresponding photos route. Register runtime pages only when those workflows
+work; do not add configurable photo mounts to `pageActions()`. Resolve context
+from the ancestor page and route parameters, never from a client-supplied owner
+or context ID alone. Generate links with UrlGenerator and the ancestor params;
+community `{slug}` must remain distinct from descendant album/photo identifiers.
+Direct links and Feed canonical URLs must select the matching personal or
+community route and reject resources belonging to a different context. API
+mutations enforce the same context checks. Detailed descendant patterns and
+API payloads will be fixed when the screens are implemented.
+
+Templates belong under `Users/views/modules/users/photos/` and extend shared
 theme layouts. Use shared comment/rating components where supported. Include
 captions and alt text, keyboard navigation, explicit upload progress and
 per-file failures, accessible labels, translated messages and RTL support.
@@ -168,10 +202,11 @@ clears or replaces the cover. A failed cleanup must not restore public access.
 ## Implementation sequence and acceptance
 
 1. Defined: storage/access rules and metadata contract using existing tables.
-   Implement checks in the Gallery service or controller in stages 2–3. Verify
+   Implement checks in the Users photo service or UsersController in stages 2–3. Verify
    metadata parsing, file references, cover membership and owner restrictions.
-2. Implement album CRUD and paginated browsing. Verify isolation between owners
-   and visibility on both album and direct photo requests.
+2. Implement album CRUD and paginated browsing. Verify isolation between blogs
+   and communities, community contribution permissions, both `/photos/` route
+   families, canonical URLs and visibility on album and direct photo requests.
 3. Implement uploads, previews, ordering, covers and deletion. Verify invalid
    files, quota exhaustion, retries, partial storage failures and cleanup.
 4. Connect comments and voting. Verify guest rejection, CSRF, moderation,
@@ -180,6 +215,6 @@ clears or replaces the cover. A failed cleanup must not restore public access.
    hidden-content exclusion, both themes, localization and keyboard access.
 
 Register each capability only with its working implementation. Regenerate the
-optimized Composer classmap when adding the controller; build frontend assets
+optimized Composer classmap after removing the standalone controller; build frontend assets
 when introducing browser entries. Run relevant PHPUnit, frontend, type,
 formatting, CSRF and installation checks for the implemented phase.
