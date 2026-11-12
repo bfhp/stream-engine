@@ -7,6 +7,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-11-12
+
 ### Added
 
 - Added `articles.list-id`, `articles.list-slug`, `articles.index` and `articles.by-term` page actions; list page size is configurable and related articles are opt-in.
@@ -25,6 +27,26 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
   responses, and restricted CSS in user-authored content.
 - Hardened upload response headers and documented secret-URL access for private
   attachments; verified isolation of file-browser data from vulnerable theme merges.
+
+### Upgrade notes
+
+- Back up the database and persistent files, install dependencies from the
+  lockfiles, and run `composer migrate`. This release includes
+  `20261101000000_rename_articles_list_action`,
+  `20261102000000_add_auth_rate_limits`, and
+  `20261108000000_add_upload_audio_tags`.
+- Stored `articles.list` actions are migrated to `articles.list-slug`; update
+  module definitions that still use the old action name.
+- The fresh-install schema and manifest are regenerated for 0.6.1. Use
+  migrations for existing installations; do not import `schema.sql` over them.
+- Deploy the bundled rebuilt browser assets and updated Nginx configuration
+  for hardened upload response headers. Private attachments use secret URLs;
+  see `SECURITY.md` for the access model and its limits.
+- Dependency audit: the Chonky/deepmerge chain retains three low-severity
+  advisory entries with no upstream fix. File-browser data is isolated from
+  vulnerable theme merges; the reviewed mitigation is documented in `SECURITY.md`.
+- Database rollback requires restoring the matching backup; down migrations
+  are not provided.
 
 ## [0.6.0] - 2026-10-30
 

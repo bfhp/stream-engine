@@ -1,8 +1,8 @@
 {
     "format": 1,
-    "release": "0.6.0",
+    "release": "0.6.1",
     "schema": "schema.sql",
-    "schema_checksum": "b736c1ae967e1c8223068a6782eb6dbc72ed707ee8ceeaf2819a819385f4737c",
+    "schema_checksum": "0b7dee8bdcddb044a87a669ecf96f7da0fc48673d4fa9a1a283701b2b40c9e27",
     "migrations": [
         {
             "version": "20260912000000_initial",
@@ -103,6 +103,11 @@
             "version": "20261102000000_add_auth_rate_limits",
             "file": "20261102000000_add_auth_rate_limits.sql",
             "checksum": "fa31a7e8b526375cd8bc726589bcfa8e7de4a77e924173349dac13b0681b785d"
+        },
+        {
+            "version": "20261108000000_add_upload_audio_tags",
+            "file": "20261108000000_add_upload_audio_tags.sql",
+            "checksum": "f85db2578b9d2cc1e434756d14c6963a0964951bab54dd62844b642ae2cba9ae"
         }
     ]
 }
