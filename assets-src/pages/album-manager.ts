@@ -152,9 +152,17 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
         if (busy && event.target === settings) { event.preventDefault(); event.stopImmediatePropagation(); }
     };
     const stopClosed = ui.modal.onClosed(settings, () => { if (!busy) restoreFields(); });
+    let modeFocusVersion = 0;
     const focusAfterModeChange = (target: HTMLElement | null | undefined) => {
-        // Let the browser finish replacing hidden/inert toolbar panels before restoring focus.
-        requestAnimationFrame(() => requestAnimationFrame(() => { if (!disposed && target?.isConnected && !target.closest('[hidden], [inert]')) target.focus({ preventScroll: true }); }));
+        const version = ++modeFocusVersion;
+        const previousFocus = document.activeElement;
+        // Wait for hidden/inert panels to settle, without stealing a newer focus choice.
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+            if (disposed || version !== modeFocusVersion || !target?.isConnected || target.closest('[hidden], [inert]')) return;
+            const active = document.activeElement;
+            if (active !== previousFocus && active !== document.body && active !== document.documentElement) return;
+            target.focus({ preventScroll: true });
+        }));
     };
     const click = (event: Event) => {
         const target = event.target as HTMLElement;

@@ -119,7 +119,8 @@ test('album management: selection, keyboard reorder, photo editor and settings d
     await page.setViewportSize({ width: 320, height: 640 }); await scan(page, info, 'reorder-narrow');
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.locator('[data-album-cancel-order]').click();
-    const settingsTrigger = page.locator('[data-album-settings-open]'); await settingsTrigger.focus(); await page.keyboard.press('Enter');
+    await expect(page.locator('[data-album-reorder]')).toBeFocused();
+    const settingsTrigger = page.locator('[data-album-settings-open]'); await settingsTrigger.focus(); await expect(settingsTrigger).toBeFocused(); await page.keyboard.press('Enter');
     const settings = page.locator('[data-album-settings]'); await expect(settings).toBeVisible(); await expect(settings).toHaveAccessibleName(/.+/); await scan(page, info, 'album-settings');
     await page.setViewportSize({ width: 320, height: 640 }); await scan(page, info, 'album-settings-narrow');
     await page.setViewportSize({ width: 1280, height: 900 });

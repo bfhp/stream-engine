@@ -219,3 +219,20 @@ it('keeps keyboard focus in the active toolbar mode and returns it on cancel', a
     button('[data-album-cancel-order]').click();
     await vi.waitFor(() => expect(document.activeElement).toBe(button('[data-album-reorder]')));
 });
+
+
+it('does not let a delayed mode handoff steal focus from album settings', () => {
+    const frames: FrameRequestCallback[] = [];
+    const raf = vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation(callback => { frames.push(callback); return frames.length; });
+    const renderFrames = () => { while (frames.length) frames.shift()!(0); };
+    try {
+        button('[data-album-reorder]').focus(); button('[data-album-reorder]').click(); renderFrames();
+        expect(document.activeElement).toBe(cards()[0]);
+        button('[data-album-cancel-order]').focus(); button('[data-album-cancel-order]').click();
+        const settings = button('[data-album-settings-open]'); settings.focus();
+        renderFrames();
+        expect(document.activeElement).toBe(settings);
+        settings.click();
+        expect(document.querySelector<HTMLElement>('[data-album-settings]')!.hidden).toBe(false);
+    } finally { raf.mockRestore(); }
+});
