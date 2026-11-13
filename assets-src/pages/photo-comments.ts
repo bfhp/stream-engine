@@ -89,8 +89,49 @@ export function initPhotoComments(): () => void {
             viewer.querySelectorAll('[data-photo-comments-toggle]').forEach(el => el.setAttribute('aria-expanded', 'false'));
         }
     }, options);
+    const closeMenus = (except?: HTMLDetailsElement) => {
+        document.querySelectorAll<HTMLDetailsElement>('[data-photo-comment-menu][open]').forEach(menu => { if (menu !== except) menu.open = false; });
+    };
+    document.addEventListener('toggle', event => {
+        const menu = event.target as HTMLDetailsElement;
+        if (!menu.matches('[data-photo-comment-menu]') || !menu.open) return;
+        closeMenus(menu);
+        const popup = menu.querySelector<HTMLElement>(':scope > div')!;
+        const anchor = menu.querySelector('summary')!.getBoundingClientRect();
+        // Fixed positioning escapes the discussion's scrolling list, including inside the native photo dialog.
+        popup.style.position = 'fixed'; popup.style.insetInlineEnd = 'auto';
+        const { width, height } = popup.getBoundingClientRect();
+        const left = document.dir === 'rtl' ? anchor.left : anchor.right - width;
+        const below = anchor.bottom + 4;
+        popup.style.left = `${Math.max(8, Math.min(left, window.innerWidth - width - 8))}px`;
+        popup.style.top = `${Math.max(8, Math.min(below + height <= window.innerHeight - 8 ? below : anchor.top - height - 4, window.innerHeight - height - 8))}px`;
+    }, { ...options, capture: true });
+    document.addEventListener('pointerdown', event => {
+        const menu = (event.target as HTMLElement).closest<HTMLDetailsElement>('[data-photo-comment-menu]');
+        closeMenus(menu ?? undefined);
+    }, options);
+    document.addEventListener('focusin', event => {
+        const menu = (event.target as HTMLElement).closest<HTMLDetailsElement>('[data-photo-comment-menu]');
+        closeMenus(menu ?? undefined);
+    }, options);
+    document.addEventListener('scroll', () => closeMenus(), { ...options, capture: true });
+    window.addEventListener('resize', () => closeMenus(), options);
     document.addEventListener('keydown', event => {
         const viewer = current();
+        const menu = viewer?.querySelector<HTMLDetailsElement>('[data-photo-comment-menu][open]');
+        if (menu) {
+            if (event.key === 'Escape') {
+                event.preventDefault(); event.stopImmediatePropagation(); menu.open = false;
+                menu.querySelector<HTMLElement>('summary')!.focus({ preventScroll: true }); return;
+            }
+            if ((event.target as HTMLElement).closest('[data-photo-comment-menu]') && ['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+                const buttons = [...menu.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')];
+                if (!buttons.length) return;
+                const index = buttons.indexOf(document.activeElement as HTMLButtonElement);
+                const next = event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1 : (index + (event.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length;
+                event.preventDefault(); event.stopImmediatePropagation(); buttons[next].focus({ preventScroll: true }); return;
+            }
+        }
         if (event.key === 'Escape' && viewer?.querySelector<HTMLElement>('[data-photo-discussion]')?.hidden === false) {
             event.preventDefault(); event.stopImmediatePropagation();
             viewer.querySelector<HTMLButtonElement>('[data-photo-comments-close]')?.click();

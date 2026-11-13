@@ -125,3 +125,24 @@ it('switches between mobile details and discussion, expands the sheet and closes
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
     expect(panel.hidden).toBe(true); expect(expand.getAttribute('aria-pressed')).toBe('false');
 });
+
+it('shows one floating actions menu, supports keyboard focus and closes it before the discussion', async () => {
+    const list = document.querySelector('[data-photo-comment-list]')!;
+    const markup = '<details data-photo-comment-menu><summary>Actions</summary><div><button data-photo-comment-edit>Edit</button><button data-photo-comment-delete>Delete</button></div></details>';
+    list.innerHTML = markup + markup;
+    const menus = [...list.querySelectorAll<HTMLDetailsElement>('details')];
+    menus[0].open = true;
+    await vi.waitFor(() => expect(menus[0].querySelector('div')!.style.position).toBe('fixed'));
+    menus[1].open = true;
+    await vi.waitFor(() => expect(menus[0].open).toBe(false));
+    menus[1].querySelector('summary')!.focus();
+    document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+    expect(document.activeElement).toBe(menus[1].querySelector('button'));
+    document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    expect(menus[1].open).toBe(false);
+    expect(document.activeElement).toBe(menus[1].querySelector('summary'));
+    expect(document.querySelector<HTMLElement>('[data-photo-discussion]')!.hidden).toBe(false);
+    menus[1].open = true;
+    document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    expect(menus[1].open).toBe(false);
+});

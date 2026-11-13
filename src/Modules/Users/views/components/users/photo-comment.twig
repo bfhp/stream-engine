@@ -4,7 +4,7 @@
     <div class="users-actions">
         {% if not photoCommentGuest and not isReply %}<button type="button" class="ui-button ui-button--link ui-button--sm" data-photo-comment-reply>{{ trans('view.comments.reply') }}</button>{% endif %}
         {% if item.canEdit or item.canDelete %}
-            <details class="users-photo-comment__menu">
+            <details class="users-photo-comment__menu" data-photo-comment-menu>
                 <summary aria-label="{{ trans('photos.comment_actions') }}">⋯</summary>
                 <div>
                     {% if item.canEdit %}<button type="button" data-photo-comment-edit>{{ trans('photos.comment_edit') }}</button>{% endif %}
