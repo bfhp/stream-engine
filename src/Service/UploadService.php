@@ -77,7 +77,7 @@ class UploadService
         if ($size === false || $size <= 0 || $size > $maxBytes) {
             throw new ValidationException($this->tm->trans('upload.file_too_large'));
         }
-        $this->assertCanUpload($user, $size);
+        $this->assertCanUpload($user, $size, true);
         $processed = $this->images->processWithPreview(
             $file['tmp_name'],
             $this->mime->detect($file['tmp_name']),
@@ -88,7 +88,7 @@ class UploadService
         $stored = [];
         $uploads = [];
         try {
-            $this->assertCanUpload($user, filesize($processed['original']) + filesize($processed['preview']));
+            $this->assertCanUpload($user, filesize($processed['original']) + filesize($processed['preview']), true);
             foreach (['original', 'preview'] as $variant) {
                 $result = $this->storage->storePrivateUserFile($user->id, $processed[$variant], $processed['mime']);
                 $stored[] = $result['path'];
@@ -352,13 +352,16 @@ class UploadService
         ];
     }
 
-    private function assertCanUpload(User $user, int $fileSize): void
+    private function assertCanUpload(User $user, int $fileSize, bool $validationError = false): void
     {
         if (!$this->access->isAdmin($user)) {
 
             $used = $this->uploads->getUserUsage($user->id);
 
             if ($used + $fileSize > $this->userLimitBytes()) {
+                if ($validationError) {
+                    throw new ValidationException($this->tm->trans('upload.storage_limit_exceeded'), 413, 'storage_limit_exceeded');
+                }
                 throw new RuntimeException($this->tm->trans('upload.storage_limit_exceeded'));
             }
         }

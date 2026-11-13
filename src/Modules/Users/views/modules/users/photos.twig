@@ -14,7 +14,7 @@
         <h1>{{ title }}</h1>
         {% if canEditAlbum and not isAlbumForm and not isPhotoForm and not photo %}
             <div class="users-actions">
-                {% if newPhotoUrl %}<a href="{{ newPhotoUrl }}" class="ui-button ui-button--primary ui-button--sm"><i class="bi bi-image" aria-hidden="true"></i> {{ trans('photos.new_photo') }}</a>{% endif %}
+                {% if newPhotoUrl %}<a href="{{ newPhotoUrl }}" class="ui-button ui-button--primary ui-button--sm"><i class="bi bi-image" aria-hidden="true"></i> {{ trans('photos.upload_many') }}</a>{% endif %}
                 <a href="{{ editAlbumUrl }}" class="ui-button ui-button--secondary ui-button--sm"><i class="bi bi-pencil" aria-hidden="true"></i> {{ trans('photos.edit') }}</a>
                 <button type="button" class="ui-button ui-button--secondary ui-button--sm" data-photo-album-delete data-api-url="{{ itemApiUrl }}"><i class="bi bi-trash" aria-hidden="true"></i> {{ trans('photos.delete') }}</button>
             </div>
@@ -25,23 +25,31 @@
                     <i class="bi bi-folder-plus" aria-hidden="true"></i> {{ trans('photos.new_album') }}
                 </a>
                 <button type="button" class="ui-button ui-button--secondary ui-button--sm" disabled title="{{ trans('photos.choose_album') }}">
-                    <i class="bi bi-image" aria-hidden="true"></i> {{ trans('photos.new_photo') }}
+                    <i class="bi bi-image" aria-hidden="true"></i> {{ trans('photos.upload_many') }}
                 </button>
             </div>
         {% endif %}
     </div>
     {% if isPhotoForm %}
-        <form data-photo-upload-form data-api-url="{{ photoUploadApiUrl }}" enctype="multipart/form-data">
-            <label class="ui-label" for="photo-file">{{ trans('photos.file') }}</label>
-            <input class="ui-input" type="file" id="photo-file" name="file" accept="image/jpeg,image/png,image/webp" required>
-            <label class="ui-label" for="photo-title">{{ trans('photos.photo_title') }}</label>
-            <input class="ui-input" id="photo-title" name="title" required maxlength="255">
-            <label class="ui-label" for="photo-caption">{{ trans('photos.caption') }}</label>
-            <textarea class="ui-input" id="photo-caption" name="caption" maxlength="2000"></textarea>
-            <progress data-photo-upload-progress max="100" value="0" aria-label="{{ trans('photos.progress') }}" hidden></progress>
-            <p data-photo-upload-error role="alert"></p>
-            <button class="ui-button ui-button--primary" type="submit">{{ trans('photos.upload') }}</button>
-        </form>
+        <section class="users-photo-uploader" data-photo-uploader data-api-url="{{ photoUploadApiUrl }}">
+            <div class="users-photo-dropzone" data-photo-dropzone>
+                <i class="bi bi-images" aria-hidden="true"></i>
+                <label class="ui-button ui-button--primary users-photo-picker">
+                    {{ trans('photos.select_many') }}
+                    <input data-photo-files type="file" name="files[]" accept="image/jpeg,image/png,image/webp" multiple aria-label="{{ trans('photos.select_many') }}">
+                </label>
+                <p>{{ trans('photos.batch_hint') }}</p>
+            </div>
+            <div class="users-actions users-photo-queue__controls">
+                <button type="button" class="ui-button ui-button--secondary" data-photo-pause hidden>{{ trans('js.photos.batch_pause') }}</button>
+                <button type="button" class="ui-button ui-button--secondary" data-photo-retry-all hidden>{{ trans('photos.retry_failed') }}</button>
+                <button type="button" class="ui-button ui-button--secondary" data-photo-clear-done hidden>{{ trans('photos.clear_done') }}</button>
+                <a class="ui-button ui-button--secondary" href="{{ albumUrl }}">{{ trans('photos.back_to_album') }}</a>
+            </div>
+            <p data-photo-summary role="status" aria-live="polite" aria-atomic="true">{{ trans('photos.keep_open') }}</p>
+            <progress data-photo-total-progress max="100" value="0" aria-label="{{ trans('photos.progress') }}" hidden></progress>
+            <ol class="users-photo-queue" data-photo-queue aria-label="{{ trans('photos.queue') }}"></ol>
+        </section>
     {% elseif photo %}
         <figure>
             <a href="{{ photoOriginalUrl }}"><img class="users-photo-image" src="{{ photoPreviewUrl }}" alt="{{ photo.title }}"></a>

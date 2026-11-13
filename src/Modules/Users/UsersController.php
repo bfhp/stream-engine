@@ -437,7 +437,7 @@ class UsersController extends AbstractController
             feedType: null,
             changefreq: 'noindex',
             settings: null,
-            pageName: $tm->trans('photos.new_photo'),
+            pageName: $tm->trans('photos.upload_many'),
         ));
         $tree->add(Page::runtime(
             id: $tree->getMaxPageId(),
@@ -673,7 +673,7 @@ class UsersController extends AbstractController
         ], $result['items']);
 
         return ViewModel::fromPage($page, 'modules/users/photos.twig', [
-            'title' => $isPhotoForm ? $this->tm->trans('photos.new_photo') : ($isPhotoView ? $photo->title : ($isAlbumForm ? $this->tm->trans($isEdit ? 'photos.edit' : 'photos.new_album') : ($album?->title ?? $this->tm->trans('photos.title')))),
+            'title' => $isPhotoForm ? $this->tm->trans('photos.upload_many') : ($isPhotoView ? $photo->title : ($isAlbumForm ? $this->tm->trans($isEdit ? 'photos.edit' : 'photos.new_album') : ($album?->title ?? $this->tm->trans('photos.title')))),
             'isAlbumForm' => $isAlbumForm,
             'isPhotoForm' => $isPhotoForm, 'photo' => $photo, 'photoItems' => $photoItems,
             'newPhotoUrl' => $canUpload ? $this->urlGenerator->action($scope.'.photo-new', $albumParams) : null,
@@ -741,7 +741,7 @@ class UsersController extends AbstractController
         $this->requireAuthenticatedUser();
         Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
         foreach (['title', 'caption', 'requestId'] as $key) {
-            if (! is_string($_POST[$key] ?? null)) {
+            if (($key === 'requestId' || array_key_exists($key, $_POST)) && ! is_string($_POST[$key] ?? null)) {
                 throw new ValidationException($this->tm->trans('photos.invalid_input'));
             }
         }
@@ -749,7 +749,7 @@ class UsersController extends AbstractController
         if (! is_array($file) || ! is_string($file['tmp_name'] ?? null) || ! is_uploaded_file($file['tmp_name'])) {
             throw new ValidationException($this->tm->trans('upload.invalid_file_type'));
         }
-        $photo = $this->photoUploadService()->publish($contextId, $albumId, $this->context->user, $file, $_POST['title'], $_POST['caption'], $_POST['requestId']);
+        $photo = $this->photoUploadService()->publish($contextId, $albumId, $this->context->user, $file, $_POST['title'] ?? '', $_POST['caption'] ?? '', $_POST['requestId']);
         $album = $this->photoService()->getAlbum($contextId, $albumId, $this->context->user);
         $context = $this->feedService->getFeedById($contextId, $this->context->user);
         $scope = $context->type === 'blog' ? 'user' : 'community';

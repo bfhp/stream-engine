@@ -824,3 +824,45 @@ a.users-person:hover {
     max-inline-size: 100%;
     block-size: auto;
 }
+
+.users-photo-dropzone {
+    display: grid;
+    justify-items: center;
+    gap: var(--ui-space-3);
+    padding: var(--ui-space-5) var(--ui-space-3);
+    border: 2px dashed var(--ui-border);
+    border-radius: var(--ui-radius);
+    text-align: center;
+}
+
+.users-photo-dropzone > .bi { font-size: 2rem; color: var(--ui-muted); }
+.users-photo-dropzone p { margin: 0; color: var(--ui-muted); }
+.users-photo-dropzone.is-dragging { border-color: var(--ui-link); background: var(--ui-surface-2); }
+.users-photo-picker { position: relative; overflow: hidden; min-block-size: 2.75rem; }
+.users-photo-picker input { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; opacity: 0; cursor: pointer; }
+.users-photo-picker:focus-within { outline: 2px solid var(--ui-focus-ring); outline-offset: 3px; }
+.users-photo-queue__controls { margin-block: var(--ui-space-3); }
+.users-photo-uploader > progress { inline-size: 100%; }
+.users-photo-queue { list-style: none; padding: 0; margin-block: var(--ui-space-3); }
+.users-photo-queue__item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: var(--ui-space-2);
+    padding-block: var(--ui-space-3);
+    border-block-end: 1px solid var(--ui-border);
+}
+.users-photo-queue__name { grid-column: 1; color: var(--ui-text); overflow-wrap: anywhere; min-inline-size: 0; }
+.users-photo-queue__status { grid-column: 1; color: var(--ui-muted); font-size: .875rem; overflow-wrap: anywhere; }
+.users-photo-queue__item > progress { grid-column: 1 / -1; inline-size: 100%; block-size: .5rem; }
+.users-photo-queue__item > button { min-block-size: 2.75rem; grid-row: 1 / 3; }
+.users-photo-queue__item > button:last-child { grid-column: 3; }
+.users-photo-queue__item > button:not(:last-child) { grid-column: 2; }
+.users-photo-queue__item[data-state="error"] { border-inline-start: 3px solid var(--ui-danger, #dc2626); padding-inline-start: var(--ui-space-2); }
+
+@media (max-width: 480px) {
+    .users-photo-queue__item { grid-template-columns: minmax(0, 1fr) auto; }
+    .users-photo-queue__item > button { grid-row: auto; }
+    .users-photo-queue__item > button:last-child,
+    .users-photo-queue__item > button:not(:last-child) { grid-column: auto; }
+}

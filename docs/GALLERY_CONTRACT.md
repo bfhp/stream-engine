@@ -219,7 +219,8 @@ pagination and counting. UsersController registers personal and community
 `photos` lists and `photos/{albumSlug}` views, with paginated album browsing and
 creation forms at `photos/new-album/`. The list header provides a New album
 action. Inside an editable album, New photo opens `photos/{albumSlug}/new-photo/`
-with a file input, title, caption and upload progress. The list-level New photo
+with a multiple-file picker, drag-and-drop and an automatic upload queue.
+The former single-photo form is replaced by this batch workflow. The list-level New photo
 hint directs the user to choose an album. Profile and
 community pages link to their photo lists.
 
@@ -260,8 +261,10 @@ stored variants are cleaned on failure; failed cleanup is logged for retry.
 Settings: `photos.max_file_mb` (default 20, ceiling 50), `photos.max_pixels`
 (default 20000000, ceiling 40000000), `photos.max_dimension` (default 10000,
 ceiling 16000), `photos.preview_size` (default 1600, ceiling 2048). Photo upload is available as multipart POST
-`/api/v1/photo-albums/{contextId}/{albumId}/photos`, with `file`, `title`,
-`caption`, and a client UUID `requestId`, plus the standard CSRF header.
+`/api/v1/photo-albums/{contextId}/{albumId}/photos`, with `file` and a client UUID `requestId`, plus the standard CSRF header.
+Optional `title` and `caption` remain accepted; when title is omitted or empty,
+it is derived from the original filename without its extension. The batch UI
+requires no per-file text fields and sends each file in its own bounded request.
 The endpoint requires the right to publish into the blog/community and manage
 the album. It serializes photo uploads for the user and album with row locks;
 Feed, Upload and metadata rows commit together, while failures compensate file
@@ -277,6 +280,22 @@ album and photo chain and both Upload references, then uses protected local
 storage with private/no-store headers. Album grids paginate ready photographs.
 Canonical URL generation includes the static `photos` segment and substitutes
 IDs for explicitly named ID placeholders.
+
+The primary uploader supports selecting many photographs from desktop or
+mobile galleries (`multiple`, without a forced camera capture), adding later
+batches while uploading, and desktop drag-and-drop. Two independent requests
+run concurrently; each queued file keeps its UUID across retries. Successful
+files remain published when another file fails. The UI has per-file and overall
+progress, a processing state after transfer, pause/resume (active requests
+finish), individual and bulk retry, removal of waiting/failed files, and
+clearing completed rows. Network, access, server and quota errors pause further
+scheduling. Quota exhaustion returns 413 with `storage_limit_exceeded`.
+
+The page does not redirect after each success. Keep it open until the queue
+finishes; navigation with unfinished files triggers the browser's standard
+confirmation. The queue is held in the open page and does not survive a reload.
+Already published photographs remain in the album. Source images are not decoded
+for local thumbnails, keeping mobile memory use bounded by the active uploads.
 
 Next: photo removal and retryable file cleanup, album covers and ordering,
 then comments/votes and the separate showcase.

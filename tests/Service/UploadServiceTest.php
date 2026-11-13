@@ -998,7 +998,7 @@ class UploadServiceTest extends TestCase
         try {
             $service->uploadPhotoForUser(new User(7, ''), ['error' => UPLOAD_ERR_OK, 'tmp_name' => $source, 'name' => 'Photo.png']);
             self::fail('Expected quota rejection');
-        } catch (RuntimeException $error) {
+        } catch (ValidationException $error) {
             self::assertSame($this->trans('upload.storage_limit_exceeded'), $error->getMessage());
             self::assertFileDoesNotExist($original);
             self::assertFileDoesNotExist($preview);

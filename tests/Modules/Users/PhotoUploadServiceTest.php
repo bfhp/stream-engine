@@ -239,6 +239,14 @@ final class PhotoUploadServiceTest extends TestCase
         $this->service->getFile(10, 20, $photo->id, 'preview', $this->owner);
     }
 
+    public function testBatchUploadDerivesTitleFromFilenameWithoutManualFields(): void
+    {
+        $photo = $this->service->publish(10, 20, $this->owner, ['error' => UPLOAD_ERR_OK, 'tmp_name' => $this->dir.'/input.png', 'name' => 'Летний отчёт 001.JPG'], '', '', '12345678-1234-4234-8234-123456789abc');
+        self::assertSame('Летний отчёт 001', $photo->title);
+        self::assertSame('', $photo->description);
+        self::assertSame('ready', $photo->metadata['gallery.state']);
+    }
+
     public function testAnotherBlogOwnerCannotUploadIntoAlbum(): void
     {
         $this->expectException(\StreamEngine\Core\Exceptions\ForbiddenException::class);

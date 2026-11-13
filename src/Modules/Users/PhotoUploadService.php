@@ -33,6 +33,10 @@ class PhotoUploadService
             throw new ForbiddenException('Cannot upload to this album');
         }
         $title = trim($title);
+        if ($title === '') {
+            $name = is_string($file['name'] ?? null) ? basename(str_replace('\\', '/', $file['name'])) : '';
+            $title = mb_substr(trim(pathinfo($name, PATHINFO_FILENAME)), 0, 255) ?: 'Photo';
+        }
         if ($title === '' || mb_strlen($title) > 255 || mb_strlen($caption) > 2000
             || preg_match('/\A[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\z/i', $requestId) !== 1) {
             throw new ValidationException('Invalid photo data');
