@@ -7,21 +7,56 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-13
+
 ### Added
 
 - Photo albums for personal blogs and communities, with bulk uploads, editing,
   comments, ratings and a configurable showcase with rankings. Includes
   accessibility tests for both themes, light/dark modes and RTL.
+- Album covers, drag-and-drop ordering, moving photos between albums in the
+  same context, bulk deletion, and keyboard-accessible photo viewing.
+- Protected original and preview images (JPEG, PNG and WebP), configurable
+  upload limits, retry-safe publication and cleanup of orphaned photo files.
 
 ### Changed
 
 - Admin dashboard layouts now use cookies instead of the `admin_dashboard_layouts`
   table; existing layouts are reset. Dashboard services now live in the Admin module.
+- Existing Feed types can no longer be changed through the editor or API.
+  Integrations must choose the type when creating content.
 
 ### Security
 
 - Messenger attachments now use private storage and check conversation access
   before delivery, with shared file delivery.
+- Photo pages, comments, rankings and file delivery enforce access to the
+  photograph, album and parent blog or community. Photos cannot be self-rated.
+
+### Upgrade notes
+
+- From 0.6.2, back up the database and persistent files, deploy the release
+  and bundled browser assets, install dependencies from the lockfiles, and run
+  `composer migrate`. The new migration
+  `20261113000000_drop_admin_dashboard_layouts` removes the obsolete dashboard
+  table; dashboard arrangements must be configured again.
+- The fresh-install `schema.sql` and `manifest.json` are regenerated for 0.7.0.
+  Galleries reuse the existing Feed, metadata and upload tables. Use migrations
+  for existing sites; do not import the snapshot over an existing database.
+- Deploy the Nginx `internal` `/protected-uploads/` location from
+  `docker/nginx/default.conf`. Its alias must match `UPLOADS_DIR` plus
+  `-private` (by default `storage/uploads-private/`). Make this directory
+  writable by PHP and include it in backups; private file delivery requires
+  Nginx support for `X-Accel-Redirect`.
+- Existing messenger attachments are not automatically moved from public
+  storage or assigned the new `message-attachment` purpose. Their old public
+  URLs remain accessible, while the new conversation attachment endpoint
+  rejects them. Plan a separate file/data migration before upgrading a site
+  that needs to preserve attachment access; this release does not retroactively
+  protect previously uploaded files.
+- Database rollback requires the matching backup; down migrations are not
+  provided. The reviewed low-severity Chonky/deepmerge advisory remains
+  documented in `SECURITY.md`.
 
 ## [0.6.2] - 2026-11-12
 
@@ -504,3 +539,6 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 ### Added
 
 - Initial version.
+
+[Unreleased]: https://github.com/bfhp/stream-engine/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/bfhp/stream-engine/compare/v0.6.2...v0.7.0

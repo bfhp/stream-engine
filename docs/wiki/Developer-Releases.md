@@ -51,8 +51,8 @@ Use:
 - a major version once the stable public contracts require an incompatible
   change after `1.0.0`.
 
-For a prerelease, use a valid semantic version such as `0.6.0-beta.1` and a tag
-such as `v0.6.0-beta.1`. State the supported upgrade path, data risk, and
+For a prerelease, use a valid semantic version such as `0.7.0-beta.1` and a tag
+such as `v0.7.0-beta.1`. State the supported upgrade path, data risk, and
 production-readiness level explicitly.
 
 One release version identifies one immutable source tree. Never reuse a
@@ -82,7 +82,7 @@ During release preparation, move all entries for the release from
 ```markdown
 ## [Unreleased]
 
-## [0.6.0] - 2026-10-20
+## [0.7.0] - 2026-11-13
 ```
 
 Keep `Unreleased` present for the next change. Compare the complete commit and
@@ -98,7 +98,7 @@ fixes.
 Set a shell variable only after reviewing the intended version:
 
 ```bash
-release_version='0.6.0'
+release_version='0.7.0'
 ```
 
 Update `package.json` and the root entries in `package-lock.json` together:
@@ -281,7 +281,7 @@ After the release pull request is merged and the exact `main` commit is green,
 verify its identity and create an annotated tag:
 
 ```bash
-release_version='0.6.0'
+release_version='0.7.0'
 git switch main
 git pull --ff-only
 git status --short
@@ -326,7 +326,7 @@ Test the public distribution in a new directory, using the exact published
 version rather than a branch constraint. For the canonical Composer channel:
 
 ```bash
-release_version='0.6.0'
+release_version='0.7.0'
 composer create-project --no-dev --no-interaction \
   bfhp/stream-engine stream-engine-release "$release_version"
 cd stream-engine-release

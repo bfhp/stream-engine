@@ -283,7 +283,7 @@ composer install-schema:build
 During explicit release preparation, a version may be supplied:
 
 ```bash
-composer install-schema:build -- --release=0.6.0
+composer install-schema:build -- --release=0.7.0
 ```
 
 The explicit version is useful for a prerelease build, but it must match the
