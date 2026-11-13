@@ -145,6 +145,50 @@ final class UsersControllerPhotosTest extends TestCase
         self::assertArrayNotHasKey('community', $view->data['photoSidebar']);
     }
 
+    public function testAlbumEditPageRejectsUnauthorizedViewer(): void
+    {
+        $owner = new User(1, '', username: 'alice');
+        $blog = new Feed(10, null, 1, 'blog', 'alice', 'Blog', null, null, '', null, 'public', 0, null, null, null);
+        $album = new Feed(42, 10, 1, 'gallery-album', 'album', 'Album', null, null, '', null, 'public', 0, null, null, null);
+        $feeds = $this->createStub(FeedService::class);
+        $feeds->method('getFeedByOwnerAndType')->willReturn($blog);
+        $feeds->method('getFeedByParentAndSlug')->willReturn($album);
+        $feeds->method('getFeedById')->willReturnCallback(fn (int $id) => $id === 10 ? $blog : $album);
+        [$controller, $router] = $this->controller($feeds, new User(2, ''), $owner);
+        $route = $router->resolve('/users/alice/photos/album/edit/');
+        $this->expectException(\StreamEngine\Core\Exceptions\ForbiddenException::class);
+        $controller->show($route['page'], ['username' => 'alice', 'albumSlug' => 'album']);
+    }
+
+    public function testAlbumBreadcrumbLinksResolveForBothContextsAndEditPages(): void
+    {
+        foreach (['user', 'community'] as $scope) {
+            $owner = new User(1, '', username: 'alice');
+            $parent = new Feed(10, null, 1, $scope === 'user' ? 'blog' : 'community', $scope === 'user' ? 'alice' : 'devs', 'Context', null, null, '', null, 'public', 0, null, null, null);
+            $album = new Feed(42, 10, 1, 'gallery-album', 'summer', 'Summer album', null, null, '', null, 'public', 0, null, null, null);
+            $feeds = $this->createStub(FeedService::class);
+            $feeds->method('getFeedByOwnerAndType')->willReturn($parent);
+            $feeds->method('getFeedByParentAndSlug')->willReturnCallback(fn ($id) => $id === null ? $parent : $album);
+            $feeds->method('getFeedById')->willReturn($parent);
+            [$controller, $router] = $this->controller($feeds, $owner, $owner);
+            $base = $scope === 'user' ? '/users/alice/photos/summer/' : '/communities/devs/photos/summer/';
+            foreach (['', 'edit/'] as $suffix) {
+                $resolved = $router->resolve($base.$suffix);
+                $breadcrumbs = new \StreamEngine\Service\BreadcrumbsService();
+                foreach ($resolved['breadcrumbs'] as $page) {
+                    $page->pageName ??= $page->pattern;
+                    $breadcrumbs->addFor($page, $controller->getBreadcrumb(...));
+                }
+                $trail = $breadcrumbs->finalize();
+                $albumCrumb = $trail[count($trail) - ($suffix === '' ? 1 : 2)];
+                self::assertSame('Summer album', $albumCrumb->title);
+                self::assertSame($base, $albumCrumb->url);
+                self::assertSame($scope.'.photo-album', $router->resolve($albumCrumb->url)['page']->action);
+                self::assertSame($base.$suffix, $trail[array_key_last($trail)]->url);
+            }
+        }
+    }
+
     public function testCommunityAlbumCannotBeOpenedUnderAnotherCommunity(): void
     {
         $community = new Feed(10, null, 1, 'community', 'devs', 'Devs', null, null, '', null, 'public', 0, null, null, null);

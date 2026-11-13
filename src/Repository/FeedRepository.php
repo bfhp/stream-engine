@@ -120,6 +120,12 @@ final class FeedRepository implements FeedRepositoryInterface
         return $this->fetchOne($sql, $params);
     }
 
+    /** Includes hidden children when deciding whether content can be removed. */
+    public function hasChildren(int $parentId): bool
+    {
+        return $this->db->fetchOne('SELECT 1 FROM feeds WHERE parent_id = ? LIMIT 1', [$parentId]) !== null;
+    }
+
     /** Checks slug occupancy regardless of visibility; does not expose content. */
     public function hasSlugInParent(int $parentId, string $type, string $slug): bool
     {

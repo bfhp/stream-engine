@@ -192,4 +192,78 @@ final class PhotoServiceTest extends TestCase
         $service = new PhotoService($feeds, $access, $this->createStub(CommunityService::class), new FeedRepository($this->createStub(PdoDatabase::class)));
         self::assertTrue($service->canEditAlbum(10, 20, $user));
     }
+    public static function albumMutations(): array
+    {
+        return [['blog', 'public', null], ['blog', 'members', 10], ['blog', 'private', null], ['community', 'public', 10], ['community', 'members', 10], ['community', 'private', 10]];
+    }
+
+    #[DataProvider('albumMutations')]
+    public function testUpdatesRetainSlugAndMetadataAndFollowPostVisibility(string $type, string $visibility, ?int $containerId): void
+    {
+        $user = new User(1, '');
+        $album = $this->feed(20, 'gallery-album', parent: 10);
+        $feeds = $this->createMock(FeedService::class);
+        $feeds->method('getFeedById')->willReturnMap([[10, $user, $this->feed(10, $type)], [20, $user, $album]]);
+        $feeds->method('normalizeVisibility')->willReturn($visibility);
+        $feeds->expects(self::once())->method('updateFeed')->with(20, [
+            'title' => 'Changed title', 'description' => 'Changed description', 'visibility' => $visibility,
+            'containerId' => $containerId, 'containerType' => $containerId !== null ? $type : null,
+        ], $user)->willReturn($album);
+        $access = $this->createStub(AccessService::class);
+        $access->method('canEditFeed')->willReturn(true);
+        $service = new PhotoService($feeds, $access, $this->createStub(CommunityService::class), new FeedRepository($this->createStub(PdoDatabase::class)));
+        $service->updateAlbum(10, 20, $user, ['title' => ' Changed title ', 'description' => 'Changed description', 'visibility' => $visibility]);
+    }
+
+    public function testUpdateCannotChangeSlugOrMetadata(): void
+    {
+        $user = new User(1, '');
+        $feeds = $this->createMock(FeedService::class);
+        $feeds->method('getFeedById')->willReturnMap([[10, $user, $this->feed(10, 'blog')], [20, $user, $this->feed(20, 'gallery-album', parent: 10)]]);
+        $feeds->expects(self::never())->method('updateFeed');
+        $access = $this->createStub(AccessService::class);
+        $access->method('canEditFeed')->willReturn(true);
+        $service = new PhotoService($feeds, $access, $this->createStub(CommunityService::class), new FeedRepository($this->createStub(PdoDatabase::class)));
+        $this->expectException(ValidationException::class);
+        $service->updateAlbum(10, 20, $user, ['slug' => 'changed', 'metadata' => []]);
+    }
+
+    public function testUpdateRequiresSharedEditPermission(): void
+    {
+        $user = new User(2, '');
+        $feeds = $this->createMock(FeedService::class);
+        $feeds->method('getFeedById')->willReturnMap([[10, $user, $this->feed(10, 'blog')], [20, $user, $this->feed(20, 'gallery-album', parent: 10)]]);
+        $feeds->expects(self::never())->method('updateFeed');
+        $service = new PhotoService($feeds, $this->createStub(AccessService::class), $this->createStub(CommunityService::class), new FeedRepository($this->createStub(PdoDatabase::class)));
+        $this->expectException(ForbiddenException::class);
+        $service->updateAlbum(10, 20, $user, ['title' => 'Changed']);
+    }
+
+    public function testDeletionOfNonemptyAlbumIsBlockedIncludingHiddenChildren(): void
+    {
+        $user = new User(1, '');
+        $feeds = $this->createMock(FeedService::class);
+        $feeds->method('getFeedById')->willReturnMap([[10, $user, $this->feed(10, 'blog')], [20, $user, $this->feed(20, 'gallery-album', parent: 10)]]);
+        $feeds->expects(self::never())->method('deleteFeed');
+        $access = $this->createStub(AccessService::class);
+        $access->method('canEditFeed')->willReturn(true);
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects(self::once())->method('fetchOne')->with('SELECT 1 FROM feeds WHERE parent_id = ? LIMIT 1', [20])->willReturn(['1' => 1]);
+        $service = new PhotoService($feeds, $access, $this->createStub(CommunityService::class), new FeedRepository($db));
+        $this->expectException(ValidationException::class);
+        $service->deleteAlbum(10, 20, $user);
+    }
+
+    public function testEmptyAlbumCanBeDeletedByAuthorizedUser(): void
+    {
+        $user = new User(1, '');
+        $feeds = $this->createMock(FeedService::class);
+        $feeds->method('getFeedById')->willReturnMap([[10, $user, $this->feed(10, 'blog')], [20, $user, $this->feed(20, 'gallery-album', parent: 10)]]);
+        $feeds->expects(self::once())->method('deleteFeed')->with(20, $user);
+        $access = $this->createStub(AccessService::class);
+        $access->method('canEditFeed')->willReturn(true);
+        $service = new PhotoService($feeds, $access, $this->createStub(CommunityService::class), new FeedRepository($this->createStub(PdoDatabase::class)));
+        $service->deleteAlbum(10, 20, $user);
+    }
+
 }

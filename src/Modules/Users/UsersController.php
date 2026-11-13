@@ -405,8 +405,9 @@ class UsersController extends AbstractController
             settings: null,
             pageName: $tm->trans('photos.new_album'),
         ));
+        $albumPageId = $tree->getMaxPageId();
         $tree->add(Page::runtime(
-            id: $tree->getMaxPageId(),
+            id: $albumPageId,
             parentId: $listId,
             pattern: '{albumSlug}',
             action: $scope.'.photo-album',
@@ -415,6 +416,17 @@ class UsersController extends AbstractController
             changefreq: null,
             settings: null,
             pageName: $tm->trans('photos.album'),
+        ));
+        $tree->add(Page::runtime(
+            id: $tree->getMaxPageId(),
+            parentId: $albumPageId,
+            pattern: 'edit',
+            action: $scope.'.photo-album-edit',
+            accessRule: AccessService::ACCESS_AUTHENTICATED,
+            feedType: null,
+            changefreq: 'noindex',
+            settings: null,
+            pageName: $tm->trans('photos.edit'),
         ));
     }
 
@@ -440,6 +452,17 @@ class UsersController extends AbstractController
 
             if ($community && $community->type === 'community') {
                 return new Breadcrumb($community->title, $community->slug);
+            }
+        }
+
+        if (in_array($page->action, ['user.photo-album', 'community.photo-album'], true)
+            && isset($page->params['albumSlug'])) {
+            [$context] = $this->photoContext($page, []);
+            if ($context !== null) {
+                $slug = (string) $page->params['albumSlug'];
+                $album = $this->photoService()->getAlbumBySlug($context->id, $slug, $this->context->user);
+
+                return new Breadcrumb($album->title ?? $this->tm->trans('photos.album'), $slug);
             }
         }
 
@@ -484,7 +507,7 @@ class UsersController extends AbstractController
     {
         return match ($page->action) {
             'user.photos', 'community.photos', 'user.photo-album', 'community.photo-album',
-            'user.photo-album-new', 'community.photo-album-new' => $this->showPhotosPage($page, $args),
+            'user.photo-album-new', 'community.photo-album-new', 'user.photo-album-edit', 'community.photo-album-edit' => $this->showPhotosPage($page, $args),
             'users.list' => $this->showUsersListPage($page),
             'user.show' => $this->showUserPage($page, $args),
             'user.register' => $this->showRegisterPage($page),
@@ -555,15 +578,16 @@ class UsersController extends AbstractController
         [$context, $params, $canCreate, $apiUrl, $profileUser] = $this->photoContext($page, $args);
         $scope = str_starts_with($page->action, 'user.') ? 'user' : 'community';
         $listUrl = $this->urlGenerator->action($scope.'.photos', $params);
-        $isAlbumForm = $page->action === $scope.'.photo-album-new';
-        if ($isAlbumForm && ! $canCreate) {
+        $isEdit = $page->action === $scope.'.photo-album-edit';
+        $isAlbumForm = $isEdit || $page->action === $scope.'.photo-album-new';
+        if ($isAlbumForm && ! $isEdit && ! $canCreate) {
             throw new ForbiddenException($this->tm->trans('feed.forbidden'));
         }
         $albumSlug = (string) ($args['albumSlug'] ?? '');
         $album = null;
         $offset = max(0, $this->context->query->int('offset'));
         $result = ['items' => [], 'total' => 0];
-        if ($page->action === $scope.'.photo-album') {
+        if ($page->action === $scope.'.photo-album' || $isEdit) {
             if ($context === null || $albumSlug === '') {
                 throw new NotFoundException($this->tm->trans('photos.not_found'));
             }
@@ -571,17 +595,24 @@ class UsersController extends AbstractController
         } elseif ($context !== null && ! $isAlbumForm) {
             $result = $this->photoService()->listAlbums($context->id, $this->context->user, 20, $offset);
         }
+        $canEdit = $album !== null && $this->photoService()->canEditAlbum($context->id, $album->id, $this->context->user);
+        if ($isEdit && ! $canEdit) {
+            throw new ForbiddenException($this->tm->trans('feed.forbidden'));
+        }
+        $itemApiUrl = $album !== null ? '/api/v1/photo-albums/'.$context->id.'/'.$album->id : null;
         $items = array_map(fn (Feed $item): array => [
             'title' => $item->title,
             'url' => $this->urlGenerator->action($scope.'.photo-album', [...$params, 'albumSlug' => $item->slug ?: (string) $item->id]),
         ], $result['items']);
 
         return ViewModel::fromPage($page, 'modules/users/photos.twig', [
-            'title' => $isAlbumForm ? $this->tm->trans('photos.new_album') : ($album?->title ?? $this->tm->trans('photos.title')),
+            'title' => $isAlbumForm ? $this->tm->trans($isEdit ? 'photos.edit' : 'photos.new_album') : ($album?->title ?? $this->tm->trans('photos.title')),
             'isAlbumForm' => $isAlbumForm,
+            'isEdit' => $isEdit, 'canEditAlbum' => $canEdit, 'itemApiUrl' => $itemApiUrl,
+            'editAlbumUrl' => $canEdit ? $this->urlGenerator->action($scope.'.photo-album-edit', [...$params, 'albumSlug' => $album->slug ?: (string) $album->id]) : null,
             'newAlbumUrl' => $canCreate ? $this->urlGenerator->action($scope.'.photo-album-new', $params) : null,
             'album' => $album, 'albums' => $items, 'listUrl' => $listUrl,
-            'canCreate' => $canCreate && $album === null, 'apiUrl' => $apiUrl,
+            'canCreate' => $canCreate && $album === null, 'apiUrl' => $isEdit ? $itemApiUrl : $apiUrl,
             'isCommunityGallery' => $scope === 'community',
             'photoSidebar' => $this->buildPhotoSidebarViewData($context, $profileUser),
             'previousUrl' => $offset > 0 ? $this->urlGenerator->action($scope.'.photos', $params, query: ['offset' => max(0, $offset - 20)]) : null,
@@ -627,6 +658,33 @@ class UsersController extends AbstractController
             ...$this->buildCommunityStatsViewData($context, $viewer),
             ...$this->buildCommunityMembersViewData($context),
         ];
+    }
+
+    private function handlePhotoAlbumItemRequest(int $contextId, int $albumId): void
+    {
+        $method = $_SERVER['REQUEST_METHOD'];
+        if (! in_array($method, ['PATCH', 'DELETE'], true)) {
+            throw new ValidationException('Method not allowed', 405);
+        }
+        $this->requireAuthenticatedUser();
+        Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
+        $context = $this->feedService->getFeedById($contextId, $this->context->user);
+        if ($context === null || ! in_array($context->type, ['blog', 'community'], true)) {
+            throw new NotFoundException($this->tm->trans('feed.not_found'));
+        }
+        $scope = $context->type === 'blog' ? 'user' : 'community';
+        $params = $context->type === 'blog' ? ['username' => $context->slug] : ['slug' => $context->slug];
+        if ($method === 'DELETE') {
+            $this->photoService()->deleteAlbum($contextId, $albumId, $this->context->user);
+            echo Formatter::json(['redirectUrl' => $this->urlGenerator->action($scope.'.photos', $params)]);
+            return;
+        }
+        $input = json_decode(file_get_contents('php://input'), true);
+        if (! is_array($input)) {
+            throw new ValidationException($this->tm->trans('photos.invalid_input'));
+        }
+        $album = $this->photoService()->updateAlbum($contextId, $albumId, $this->context->user, $input);
+        echo Formatter::json(['id' => $album->id, 'redirectUrl' => $this->urlGenerator->action($scope.'.photo-album', [...$params, 'albumSlug' => $album->slug ?: (string) $album->id])]);
     }
 
     private function handlePhotoAlbumCreateRequest(?int $communityId): void
@@ -3651,6 +3709,7 @@ class UsersController extends AbstractController
         match ($page->action) {
             'users.collection' => $this->handleUsersCollectionRequest(),
             'password.retrieve' => $this->handleUserRetrieveRequest(),
+            'photos.album-item' => $this->handlePhotoAlbumItemRequest((int) ($args['contextId'] ?? 0), (int) ($args['albumId'] ?? 0)),
             'user.photo-album-create' => $this->handlePhotoAlbumCreateRequest(null),
             'community.photo-album-create' => $this->handlePhotoAlbumCreateRequest((int) ($args['id'] ?? 0)),
             'user.post-new-create' => $this->handleBlogPostCreateRequest(),
@@ -4355,6 +4414,29 @@ class UsersController extends AbstractController
             pattern: 'photo-albums',
             requestMethods: ['POST'],
             action: 'community.photo-album-create',
+        ));
+        $photoAlbumsPageId = $pageTree->getMaxPageId();
+        $pageTree->add(Page::api(
+            id: $photoAlbumsPageId,
+            parentId: $apiPageId,
+            pattern: 'photo-albums',
+            requestMethods: ['GET'],
+            action: 'photos.albums-parent',
+        ));
+        $photoContextPageId = $pageTree->getMaxPageId();
+        $pageTree->add(Page::api(
+            id: $photoContextPageId,
+            parentId: $photoAlbumsPageId,
+            pattern: '{contextId}',
+            requestMethods: ['GET'],
+            action: 'photos.context-albums-parent',
+        ));
+        $pageTree->add(Page::api(
+            id: $pageTree->getMaxPageId(),
+            parentId: $photoContextPageId,
+            pattern: '{albumId}',
+            requestMethods: ['PATCH', 'DELETE'],
+            action: 'photos.album-item',
         ));
     }
 }

@@ -236,8 +236,17 @@ No new core classes, tables or Feed fields are introduced. Cover references,
 image references and processing fields remain reserved for `feed_metadata`;
 empty albums require no service metadata.
 
-Next: implement album updates/deletion, metadata validation and protected photo
-uploads before exposing photographs; the separate showcase follows ready photos.
+Album editing is available at `photos/{albumSlug}/edit/`. PATCH and DELETE
+`/api/v1/photo-albums/{contextId}/{albumId}` require authentication, CSRF and
+shared post edit permissions after checking the album's context and type.
+PATCH accepts only title, description and visibility, retains slug and
+metadata, and updates access containers using BlogPostService conventions.
+Deletion and visibility changes are currently limited to empty albums; checks
+include hidden children. Protected file cleanup and visibility propagation must
+be connected before enabling these operations on nonempty albums.
+
+Next: metadata validation and protected photo uploads before exposing
+photographs; the separate showcase follows ready photos.
 
 ## Implementation sequence and acceptance
 

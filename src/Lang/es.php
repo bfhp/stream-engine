@@ -1619,4 +1619,9 @@ Correo: {email}
     'photos.new_photo' => 'New photo',
     'photos.upload_soon' => 'Photo uploads coming soon',
     'photos.back_to_albums' => 'Todos los álbumes',
+    'photos.edit' => 'Edit album',
+    'photos.delete' => 'Delete album',
+    'photos.save' => 'Save',
+    'js.photos.delete_confirm' => 'Delete this album?',
+    'js.photos.delete_title' => 'Delete album',
 ];

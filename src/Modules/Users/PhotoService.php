@@ -63,6 +63,56 @@ class PhotoService
         );
     }
 
+    public function updateAlbum(int $contextId, int $albumId, User $user, array $data): Feed
+    {
+        $album = $this->getAlbum($contextId, $albumId, $user);
+        if ($user->isGuest() || ! $this->access->canEditFeed($user, $album)) {
+            throw new ForbiddenException('Cannot edit album');
+        }
+        if (array_diff(array_keys($data), ['title', 'description', 'visibility']) !== []) {
+            throw new ValidationException('Unsupported album fields');
+        }
+        if (array_key_exists('title', $data)) {
+            if (! is_string($data['title']) || trim($data['title']) === '' || mb_strlen(trim($data['title'])) > 255) {
+                throw new ValidationException('Album title must contain 1–255 characters');
+            }
+            $data['title'] = trim($data['title']);
+        }
+        if (array_key_exists('description', $data) && $data['description'] !== null
+            && (! is_string($data['description']) || mb_strlen($data['description']) > 2000)) {
+            throw new ValidationException('Invalid album description');
+        }
+        if (array_key_exists('visibility', $data)) {
+            if (! is_string($data['visibility'])) {
+                throw new ValidationException('Invalid album visibility');
+            }
+            $data['visibility'] = $this->feeds->normalizeVisibility($data['visibility']);
+            if ($data['visibility'] !== $album->visibility && $this->repository->hasChildren($albumId)) {
+                throw new ValidationException('Cannot change visibility of a nonempty album yet', 409);
+            }
+            $context = $this->context($contextId, $user);
+            $container = $context->type === 'community' || $data['visibility'] === 'members';
+            $data['containerId'] = $container ? $contextId : null;
+            $data['containerType'] = $container ? $context->type : null;
+        }
+
+        // Omitted slug, parent, owner and metadata retain their stored values.
+        return $this->feeds->updateFeed($albumId, $data, $user);
+    }
+
+    public function deleteAlbum(int $contextId, int $albumId, User $user): void
+    {
+        $album = $this->getAlbum($contextId, $albumId, $user);
+        if ($user->isGuest() || ! $this->access->canEditFeed($user, $album)) {
+            throw new ForbiddenException('Cannot delete album');
+        }
+        // Photo deletion must also clean protected files; connect it with uploads.
+        if ($this->repository->hasChildren($albumId)) {
+            throw new ValidationException('Cannot delete a nonempty album yet', 409);
+        }
+        $this->feeds->deleteFeed($albumId, $user);
+    }
+
     public function getAlbum(int $contextId, int $albumId, User $user): Feed
     {
         $this->context($contextId, $user);

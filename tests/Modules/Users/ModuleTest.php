@@ -295,13 +295,33 @@ final class ModuleTest extends TestCase
             self::assertSame($scope.'.photos', $router->resolve($base.'/photos/')['page']->action);
             $resolved = $router->resolve($base.'/photos/letniy-otdyh/');
             self::assertSame($scope.'.photo-album', $resolved['page']->action);
+            self::assertSame($scope.'.photo-album-edit', $router->resolve($base.'/photos/letniy-otdyh/edit/')['page']->action);
             self::assertSame($base.'/photos/letniy-otdyh/', $urls->action($scope.'.photo-album', [...$params, 'albumSlug' => 'letniy-otdyh']));
             self::assertArrayNotHasKey($scope.'.photos', UsersController::pageActions());
         }
         UsersController::registerApi(1, $tree);
         $router = new Router($tree);
-        self::assertSame('user.photo-album-create', $router->resolve('/users/photo-albums/', 'POST')['page']->action);
-        self::assertSame('community.photo-album-create', $router->resolve('/communities/10/photo-albums/', 'POST')['page']->action);
+        self::assertSame('user.photo-album-create', $router->resolve('/users/photo-albums/')['page']->action);
+        self::assertSame('community.photo-album-create', $router->resolve('/communities/10/photo-albums/')['page']->action);
+    }
+
+    public function testAlbumMutationApiResolvesContextAndAlbumSegments(): void
+    {
+        $tree = new PageTree([
+            $this->page(1, null, '', 'home.index'),
+            Page::api(2, 1, 'api', ['GET'], 'api.index'),
+            Page::api(3, 2, 'v1', ['GET'], 'api.v1'),
+        ]);
+        UsersController::registerApi(3, $tree);
+        $tree->validateDefinitions();
+        $router = new Router($tree);
+        foreach (['/api/v1/photo-albums/9/32', '/api/v1/photo-albums/9/32/'] as $url) {
+            $route = $router->resolve($url);
+            self::assertNotNull($route);
+            self::assertSame('photos.album-item', $route['page']->action);
+            self::assertSame(['PATCH', 'DELETE'], $route['page']->requestMethods);
+            self::assertSame(['contextId' => '9', 'albumId' => '32'], $route['params']);
+        }
     }
 
     private function pageWithAction(string $action): Page

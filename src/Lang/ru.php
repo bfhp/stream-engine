@@ -1656,4 +1656,9 @@ return [
     'photos.new_photo' => 'Новое фото',
     'photos.upload_soon' => 'Загрузка фотографий скоро появится',
     'photos.back_to_albums' => 'Все альбомы',
+    'photos.edit' => 'Редактировать альбом',
+    'photos.delete' => 'Удалить альбом',
+    'photos.save' => 'Сохранить',
+    'js.photos.delete_confirm' => 'Удалить этот альбом?',
+    'js.photos.delete_title' => 'Удалить альбом',
 ];

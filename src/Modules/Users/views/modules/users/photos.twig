@@ -10,6 +10,12 @@
     {% endblock %}
     <div class="users-heading">
         <h1>{{ title }}</h1>
+        {% if canEditAlbum and not isAlbumForm %}
+            <div class="users-actions">
+                <a href="{{ editAlbumUrl }}" class="ui-button ui-button--secondary ui-button--sm"><i class="bi bi-pencil" aria-hidden="true"></i> {{ trans('photos.edit') }}</a>
+                <button type="button" class="ui-button ui-button--secondary ui-button--sm" data-photo-album-delete data-api-url="{{ itemApiUrl }}"><i class="bi bi-trash" aria-hidden="true"></i> {{ trans('photos.delete') }}</button>
+            </div>
+        {% endif %}
         {% if canCreate and not isAlbumForm %}
             <div class="users-actions">
                 <a href="{{ newAlbumUrl }}" class="ui-button ui-button--primary ui-button--sm">
@@ -22,19 +28,19 @@
         {% endif %}
     </div>
     {% if isAlbumForm %}
-        <form data-photo-album-form data-api-url="{{ apiUrl }}">
+        <form data-photo-album-form data-api-url="{{ apiUrl }}" data-method="{{ isEdit ? 'PATCH' : 'POST' }}">
             <label class="ui-label" for="album-title">{{ trans('photos.album') }}</label>
-            <input class="ui-input" id="album-title" name="title" required maxlength="255">
+            <input class="ui-input" id="album-title" name="title" required maxlength="255" value="{{ album ? album.title : '' }}">
             <label class="ui-label" for="album-description">{{ trans('photos.description') }}</label>
-            <textarea class="ui-input" id="album-description" name="description" maxlength="2000"></textarea>
+            <textarea class="ui-input" id="album-description" name="description" maxlength="2000">{{ album ? album.description|striptags : '' }}</textarea>
             <label class="ui-label" for="album-visibility">{{ trans('photos.visibility') }}</label>
             <select class="ui-input" id="album-visibility" name="visibility">
-                <option value="public">{{ trans('photos.public') }}</option>
-                <option value="members">{{ isCommunityGallery ? trans('photos.members') : trans('view.users.blog.post.form.09') }}</option>
-                <option value="private">{{ trans('photos.private') }}</option>
+                <option value="public" {% if not album or album.visibility == 'public' %}selected{% endif %}>{{ trans('photos.public') }}</option>
+                <option value="members" {% if album and album.visibility == 'members' %}selected{% endif %}>{{ isCommunityGallery ? trans('photos.members') : trans('view.users.blog.post.form.09') }}</option>
+                <option value="private" {% if album and album.visibility == 'private' %}selected{% endif %}>{{ trans('photos.private') }}</option>
             </select>
             <p data-photo-album-error role="alert"></p>
-            <button class="ui-button ui-button--primary" type="submit">{{ trans('photos.create') }}</button>
+            <button class="ui-button ui-button--primary" type="submit">{{ trans(isEdit ? 'photos.save' : 'photos.create') }}</button>
         </form>
     {% elseif album %}
         {% if album.description %}<p>{{ album.description|striptags }}</p>{% endif %}

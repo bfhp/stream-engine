@@ -725,16 +725,39 @@ function initPhotoAlbumForm(): void {
         const data = new FormData(form);
         try {
             const result = await cms.api<{ redirectUrl?: string }>(form.dataset.apiUrl!, {
-                method: 'POST',
+                method: form.dataset.method === 'PATCH' ? 'PATCH' : 'POST',
                 data: { title: data.get('title'), description: data.get('description'), visibility: data.get('visibility') },
             });
             if (result.redirectUrl) window.location.assign(result.redirectUrl);
             else window.location.reload();
         } catch (reason) {
-            error.textContent = getApiErrorMessage(reason, trans('photos.error'));
+            error.textContent = getApiErrorMessage(reason, trans('js.common.action_failed'));
             button.disabled = false;
         }
     });
 }
 
 document.addEventListener('DOMContentLoaded', initPhotoAlbumForm);
+
+document.addEventListener('DOMContentLoaded', () => {
+    const button = document.querySelector<HTMLButtonElement>('[data-photo-album-delete]');
+    if (!button) return;
+    button.addEventListener('click', () => {
+        if (button.disabled) return;
+        cms.confirm({
+            title: trans('js.photos.delete_title'),
+            message: trans('js.photos.delete_confirm'),
+            onConfirm: async () => {
+                button.disabled = true;
+                try {
+                    const result = await cms.api<{ redirectUrl?: string }>(button.dataset.apiUrl!, { method: 'DELETE' });
+                    if (result.redirectUrl) window.location.assign(result.redirectUrl);
+                    else window.location.reload();
+                } catch (error) {
+                    cms.toast({ message: getApiErrorMessage(error, trans('js.common.action_failed')), type: 'danger' });
+                    button.disabled = false;
+                }
+            },
+        });
+    });
+});
