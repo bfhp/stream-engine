@@ -698,9 +698,11 @@ final class FeedRepository implements FeedRepositoryInterface
      * Ranked pages include rated feeds only; ties use vote count and ID.
      * The default chronological listing is unchanged.
      *
+     * $grandparentId scopes nested collections through their direct parent.
+     *
      * @return array{items:list<Feed>, total:int}
      */
-    public function findByTypePage(string $type, User $user, int $limit, int $offset = 0, ?string $tagSlug = null, bool $ranked = false): array
+    public function findByTypePage(string $type, User $user, int $limit, int $offset = 0, ?string $tagSlug = null, bool $ranked = false, ?int $grandparentId = null): array
     {
         $joins = '';
         if ($tagSlug !== null) {
@@ -718,6 +720,10 @@ final class FeedRepository implements FeedRepositoryInterface
             $params[] = $tagSlug;
         }
 
+        if ($grandparentId !== null) {
+            $condition .= "AND EXISTS (SELECT 1 FROM feeds parent_feed WHERE parent_feed.id = f.parent_id AND parent_feed.parent_id = ?)\n";
+            $params[] = $grandparentId;
+        }
         if ($ranked) {
             $condition .= "AND f.rating_count > 0\n";
         }

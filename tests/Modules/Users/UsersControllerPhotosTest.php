@@ -403,4 +403,16 @@ final class UsersControllerPhotosTest extends TestCase
         self::assertSame('/photography/?sort=best', $view->data['bestUrl']);
     }
 
+    public function testSidebarPhotoDataUsesProtectedUrlsAndDoesNotQueryAMissingBlog(): void
+    {
+        $viewer = new User(2, '');
+        $photo = new Feed(100, 42, 1, 'gallery-photo', '7', 'Photo', null, null, '', null, 'public', 0, null, null, '/users/alice/photos/summer/7/');
+        $feeds = $this->createMock(FeedService::class);
+        $feeds->expects(self::once())->method('getFeedsByTypePage')->with('gallery-photo', $viewer, 3, 0, null, false, 10)->willReturn(['items' => [$photo], 'total' => 200]);
+        [$controller] = $this->controller($feeds, $viewer, new User(1, ''));
+        $method = new \ReflectionMethod($controller, 'buildPhotosSidebarViewData');
+        self::assertSame(['count' => 0, 'previews' => []], $method->invoke($controller, null));
+        self::assertSame(['count' => 200, 'previews' => ['/users/alice/photos/summer/7/preview/']], $method->invoke($controller, 10));
+    }
+
 }

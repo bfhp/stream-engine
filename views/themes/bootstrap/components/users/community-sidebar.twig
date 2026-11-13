@@ -108,7 +108,7 @@
 {% endblock %}
 
 {% block community_photos %}
-    {% include 'components/users/photos-link.twig' with {photosUrl: action_url('community.photos', {'slug': community.slug})} only %}
+    {% include 'components/users/photos-link.twig' with {photosUrl: action_url('community.photos', {'slug': community.slug}), photosPreview: sidebarPhotos|default(null)} only %}
 {% endblock %}
 
 {% block community_membership %}

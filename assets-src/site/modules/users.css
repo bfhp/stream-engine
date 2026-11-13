@@ -1101,3 +1101,9 @@ body.photo-viewer-open { overflow: hidden; }
 .users-photo-showcase-sort a { display: flex; align-items: center; min-block-size: 2.75rem; padding-block: .5rem; color: var(--ui-muted); text-decoration: none; border-block-end: 2px solid transparent; }
 .users-photo-showcase-sort a:hover, .users-photo-showcase-sort a[aria-current="page"] { color: var(--ui-text); border-block-end-color: var(--ui-primary); }
 .users-photo-showcase-sort a:focus-visible { outline: 2px solid var(--ui-focus-ring); outline-offset: 4px; border-radius: .125rem; }
+
+.users-sidebar-photos__heading { display: flex; align-items: center; gap: var(--ui-space-3); inline-size: 100%; }
+.users-sidebar-photos { display: block; }
+.users-sidebar-photos__count { color: var(--ui-muted); font-size: .875rem; font-variant-numeric: tabular-nums; }
+.users-sidebar-photos__previews { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .375rem; margin-block-start: .75rem; }
+.users-sidebar-photos__previews img { display: block; inline-size: 100%; aspect-ratio: 1; object-fit: cover; border-radius: .375rem; background: var(--ui-surface-2); }

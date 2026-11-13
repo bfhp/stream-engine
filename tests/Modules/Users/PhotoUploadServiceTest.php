@@ -227,6 +227,41 @@ final class PhotoUploadServiceTest extends TestCase
     }
 
 
+    public function testSidebarPreviewFiltersByContextAndAccessBeforeLimitingToThreePhotos(): void
+    {
+        $first = $this->publish();
+        $this->db->execute('UPDATE feeds SET created_at = 0 WHERE id = ?', [$first->id]);
+        $this->db->execute("INSERT INTO feeds (id, parent_id, owner_id, type, slug, title, visibility) VALUES
+            (30, NULL, 1, 'community', 'devs', 'Devs', 'public'),
+            (40, 30, 1, 'gallery-album', 'events', 'Events', 'public'),
+            (90, 10, 1, 'gallery-album', 'walks', 'Walks', 'public'),
+            (91, 10, 1, 'gallery-album', 'hidden', 'Hidden', 'private')");
+        foreach ([101 => 20, 102 => 90, 103 => 20, 104 => 90, 200 => 91, 201 => 20, 300 => 40] as $id => $album) {
+            $this->db->execute("INSERT INTO feeds (id, parent_id, owner_id, type, slug, title, visibility, created_at) VALUES (?, ?, 1, 'gallery-photo', ?, 'Photo', 'public', ?)", [$id, $album, (string) $id, $id]);
+            $this->db->execute("INSERT INTO feed_metadata (feed_id, name, content) VALUES (?, 'gallery.state', ?)", [$id, $id === 201 ? 'pending' : 'ready']);
+        }
+        $guest = new User(0, '');
+        $personal = $this->feeds->getFeedsByTypePage('gallery-photo', $guest, 3, grandparentId: 10);
+        self::assertSame(5, $personal['total']);
+        self::assertSame([104, 103, 102], array_column($personal['items'], 'id'));
+        $community = $this->feeds->getFeedsByTypePage('gallery-photo', $guest, 3, grandparentId: 30);
+        self::assertSame(1, $community['total']);
+        self::assertSame([300], array_column($community['items'], 'id'));
+        $this->db->execute("UPDATE feeds SET visibility = 'members', container_id = 10, container_type = 'blog' WHERE id = 90");
+        $this->db->execute('INSERT INTO membership_roles (id, role_level) VALUES (1, 1)');
+        $this->db->execute('INSERT INTO memberships (container_id, user_id, membership_role_id) VALUES (10, 2, 1)');
+        $restricted = $this->feeds->getFeedsByTypePage('gallery-photo', $guest, 3, grandparentId: 10);
+        self::assertSame(3, $restricted['total']);
+        self::assertSame([103, 101, $first->id], array_column($restricted['items'], 'id'));
+        $friend = $this->feeds->getFeedsByTypePage('gallery-photo', new User(2, ''), 3, grandparentId: 10);
+        self::assertSame(5, $friend['total']);
+        self::assertSame([104, 103, 102], array_column($friend['items'], 'id'));
+        $this->db->execute('DELETE FROM memberships WHERE user_id = 2');
+        self::assertSame(3, $this->feeds->getFeedsByTypePage('gallery-photo', new User(2, ''), 3, grandparentId: 10)['total']);
+        $this->db->execute("UPDATE feeds SET visibility = 'private' WHERE id = 30");
+        self::assertSame(['items' => [], 'total' => 0], $this->feeds->getFeedsByTypePage('gallery-photo', $guest, 3, grandparentId: 30));
+    }
+
     public function testPhotoRankingUsesFullAverageThenVoteCountAndIdWithAclBeforePagination(): void
     {
         $this->db->execute("INSERT INTO feeds (id, parent_id, owner_id, type, slug, title, visibility) VALUES

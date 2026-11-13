@@ -643,6 +643,22 @@ class UsersController extends AbstractController
         throw new NotFoundException($this->tm->trans('feed.not_found'));
     }
 
+    /** Three latest visible photos and their ACL-filtered total, within one blog/community. */
+    private function buildPhotosSidebarViewData(?int $contextId): array
+    {
+        if ($contextId === null) {
+            return ['count' => 0, 'previews' => []];
+        }
+        $result = $this->feedService->getFeedsByTypePage('gallery-photo', $this->context->user, 3, grandparentId: $contextId);
+        $previews = [];
+        foreach ($result['items'] ?? [] as $photo) {
+            if ($photo->canonicalUrl !== null) {
+                $previews[] = rtrim($photo->canonicalUrl, '/').'/preview/';
+            }
+        }
+        return ['count' => $result['total'] ?? 0, 'previews' => $previews];
+    }
+
     private function showPhotoShowcasePage(Page $page): ViewModel
     {
         $limit = match ($page->settings->photosPerPage ?? null) {
@@ -1081,6 +1097,7 @@ class UsersController extends AbstractController
                 'image' => $profileUserAvatarUrl,
                 'canonical' => $canonicalUrl,
                 'profileUser' => $profileUser,
+                'sidebarPhotos' => $this->buildPhotosSidebarViewData($blogFeed?->id),
                 'profileUserAvatarUrl' => $profileUserAvatarUrl,
                 'profileBirthDateLabel' => $this->formatProfileBirthDate($profileUser),
                 'isOwnProfile' => $isOwnProfile,
@@ -2337,6 +2354,7 @@ class UsersController extends AbstractController
                 'image' => $community->imageUrl,
                 'canonical' => $canonicalUrl,
                 'community' => $community,
+                'sidebarPhotos' => $this->buildPhotosSidebarViewData($community->id),
                 'communityImageUrl' => $this->communityService->resolveImageUrl($community),
                 'owner' => $owner,
                 'ownerUrl' => $ownerUrl,
@@ -3521,8 +3539,9 @@ class UsersController extends AbstractController
         $isOnline = $author !== null && $privacyData['canViewProfilePresence']
             ? $this->userService->isOnline($author->id)
             : false;
+        $sidebarBlog = $author !== null ? $this->resolvePersonalBlogFeed($author, $viewer) : null;
         $audioPlaylistData = $author !== null
-            ? $this->buildUserAudioPlaylistViewData($this->resolvePersonalBlogFeed($author, $viewer), $viewer)
+            ? $this->buildUserAudioPlaylistViewData($sidebarBlog, $viewer)
             : ['audioPlaylist' => []];
         $audioPlaylistData['audioPlaylist'] = $this->ensurePostInAudioPlaylist($audioPlaylistData['audioPlaylist'], $post);
         $currentPostAudioTrackId = $this->findAudioTrackIdForPost($audioPlaylistData['audioPlaylist'], $post->id);
@@ -3548,6 +3567,7 @@ class UsersController extends AbstractController
             'feed' => $post,
             'comments' => $comments,
             'profileUser' => $author,
+            'sidebarPhotos' => $this->buildPhotosSidebarViewData($sidebarBlog?->id),
             'profileUserAvatarUrl' => $profileUserAvatarUrl,
             'profileBirthDateLabel' => $this->formatProfileBirthDate($author),
             'authorAvatarUrl' => $authorAvatarUrl,
@@ -3789,6 +3809,7 @@ class UsersController extends AbstractController
             'deleteRedirectUrl' => $deleteRedirectUrl,
             'isCommunityPost' => true,
             'community' => $community,
+            'sidebarPhotos' => $this->buildPhotosSidebarViewData($community?->id),
             'communityImageUrl' => $communityImageUrl,
             'communityOwner' => $communityOwner,
             'communityOwnerUrl' => $communityOwnerUrl,

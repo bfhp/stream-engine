@@ -1,7 +1,14 @@
 {% if photosUrl %}
-    <a class="users-sidebar-link" href="{{ photosUrl }}">
-        <span class="users-sidebar-link__icon" aria-hidden="true"><i class="bi bi-images"></i></span>
-        <span class="users-sidebar-link__label">{{ trans('photos.title') }}</span>
-        <i class="bi bi-arrow-right users-sidebar-link__arrow" aria-hidden="true"></i>
+    {% set previews = photosPreview.previews|default([]) %}
+    <a class="users-sidebar-link{% if previews %} users-sidebar-photos{% endif %}" href="{{ photosUrl }}">
+        <span class="users-sidebar-photos__heading">
+            {% if not previews %}<span class="users-sidebar-link__icon" aria-hidden="true"><i class="bi bi-images"></i></span>{% endif %}
+            <span class="users-sidebar-link__label">{{ trans('photos.title') }}</span>
+            {% if previews %}<span class="users-sidebar-photos__count">{{ photosPreview.count }}</span>{% endif %}
+            <i class="bi bi-arrow-right users-sidebar-link__arrow" aria-hidden="true"></i>
+        </span>
+        {% if previews %}<span class="users-sidebar-photos__previews" aria-hidden="true">
+            {% for preview in previews %}<img src="{{ preview }}" alt="" loading="lazy" decoding="async">{% endfor %}
+        </span>{% endif %}
     </a>
 {% endif %}

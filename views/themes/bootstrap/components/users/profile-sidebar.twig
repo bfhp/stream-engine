@@ -119,7 +119,7 @@
     {% endblock %}
 
     {% block profile_photos %}
-        {% include 'components/users/photos-link.twig' with {photosUrl: action_url('user.photos', {'username': profileUser.username})} only %}
+        {% include 'components/users/photos-link.twig' with {photosUrl: action_url('user.photos', {'username': profileUser.username}), photosPreview: sidebarPhotos|default(null)} only %}
     {% endblock %}
 
     {% block profile_info %}

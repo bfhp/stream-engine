@@ -1391,11 +1391,13 @@ class FeedService
      *
      * Set $ranked for rated-only results ordered by average, votes and ID.
      *
+     * $grandparentId scopes nested collections through their direct parent.
+     *
      * @return array{items: Feed[], total: int}
      */
-    public function getFeedsByTypePage(string $type, User $user, int $limit, int $offset = 0, ?string $tagSlug = null, bool $ranked = false): array
+    public function getFeedsByTypePage(string $type, User $user, int $limit, int $offset = 0, ?string $tagSlug = null, bool $ranked = false, ?int $grandparentId = null): array
     {
-        $result = $this->repository->findByTypePage($type, $user, $limit, $offset, $tagSlug, $ranked);
+        $result = $this->repository->findByTypePage($type, $user, $limit, $offset, $tagSlug, $ranked, $grandparentId);
 
         $this->decorateFeedsWithUrls($result['items']);
 

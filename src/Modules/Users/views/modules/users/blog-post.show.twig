@@ -148,6 +148,7 @@
         {% include 'components/users/community-sidebar.twig' with {
             isGuest: user.isGuest,
             community: community,
+            sidebarPhotos: sidebarPhotos|default(null),
             imageUrl: communityImageUrl,
             owner: communityOwner,
             ownerUrl: communityOwnerUrl,
