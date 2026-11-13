@@ -1687,4 +1687,7 @@ E-mail : {email}
     'js.photos.select_photo' => 'Select photo',
     'photos.manage.add_photos' => 'Add photos',
     'photos.manage.save_order' => 'Save order',
+    'js.photos.batch_finished' => 'Photos uploaded: {count}',
+    'js.photos.batch_finished_errors' => 'Uploaded: {done}. Failed: {failed}.',
+    'js.photos.view_album' => 'View album',
 ];

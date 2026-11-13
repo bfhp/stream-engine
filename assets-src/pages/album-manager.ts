@@ -29,6 +29,12 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
     let deleted = false;
     let stopDeleteClose: (() => void) | undefined;
     let dragged: HTMLElement | null = null;
+    let wasUploading = false;
+    let disposed = false;
+    let syncingUploads = false;
+    let uploadSyncPending = false;
+    const uploadedSlugs = new Set<string>();
+    const hasPendingUploads = () => root.querySelector('[data-photo-placeholder]') !== null;
     const fieldsDirty = () => JSON.stringify(fields()) !== originalFields;
     const orderDirty = () => JSON.stringify(order()) !== JSON.stringify(originalOrder);
     const dirty = () => fieldsDirty() || orderDirty();
@@ -40,18 +46,20 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
     };
     const update = () => {
         settingsSave.disabled = busy || !fieldsDirty();
-        orderSave.disabled = busy || !orderDirty();
+        const uploading = hasPendingUploads();
+        orderSave.disabled = busy || uploading || !orderDirty();
         root.dataset.dirty = String(dirty());
         const orderActions = root.querySelector<HTMLElement>('[data-album-order-actions]');
-        if (orderActions) orderActions.hidden = !reordering && !orderDirty();
+        if (orderActions) orderActions.hidden = uploading || syncingUploads || (!reordering && !orderDirty());
         settings.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLButtonElement>('input, textarea, [data-album-settings-cancel]').forEach(control => control.disabled = busy);
         const photoCount = cards().length;
         const counter = root.querySelector('[data-album-photo-count]');
         if (counter) counter.textContent = String(photoCount);
         const empty = root.querySelector<HTMLElement>('[data-album-empty]');
-        if (empty) empty.hidden = photoCount > 0;
+        if (empty) empty.hidden = photoCount > 0 || uploading;
         const toolbar = root.querySelector<HTMLElement>('[data-album-toolbar]');
         if (toolbar) toolbar.hidden = photoCount === 0;
+        root.querySelectorAll<HTMLButtonElement>('[data-album-reorder], [data-album-move], [data-photo-up], [data-photo-down], [data-photo-grip], [data-album-cancel-order]').forEach(button => button.disabled = busy || uploading);
         root.querySelectorAll<HTMLButtonElement>('[data-photo-album-delete], [data-photo-save], [data-photo-set-cover]').forEach(button => button.disabled = busy);
         root.dataset.selecting = String(selecting);
         root.dataset.reordering = String(reordering);
@@ -61,7 +69,7 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
         const actions = root.querySelector<HTMLElement>('[data-album-selection-actions]');
         if (actions) actions.hidden = count === 0;
         root.querySelector('[data-album-selection-count]')!.textContent = trans('js.photos.selected', { count });
-        root.querySelectorAll<HTMLButtonElement>('[data-album-move], [data-album-delete-selected]').forEach(button => button.disabled = busy || count === 0);
+        root.querySelectorAll<HTMLButtonElement>('[data-album-move], [data-album-delete-selected]').forEach(button => button.disabled = busy || count === 0 || (uploading && button.hasAttribute('data-album-move')));
         root.querySelector('[data-album-select]')?.setAttribute('aria-pressed', String(selecting));
         root.querySelector('[data-album-reorder]')?.setAttribute('aria-pressed', String(reordering));
         const cancel = root.querySelector<HTMLElement>('[data-album-cancel-order]');
@@ -78,7 +86,25 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
             if (inSettings) settingsError.textContent = message; else setStatus(message);
             throw error;
         }
-        finally { busy = false; update(); }
+        finally { busy = false; update(); setTimeout(() => { void syncUploadOrder(); }, 0); }
+    };
+    const syncUploadOrder = async () => {
+        if (disposed || !uploadSyncPending || busy || syncingUploads || hasPendingUploads()) return;
+        uploadSyncPending = false;
+        const present = order();
+        const target = [...originalOrder.filter(slug => !uploadedSlugs.has(slug)), ...present.filter(slug => uploadedSlugs.has(slug))];
+        if (JSON.stringify(target) === JSON.stringify(originalOrder)) return;
+        syncingUploads = true;
+        try {
+            await api({ order: target });
+            originalOrder = [...target, ...originalOrder.filter(slug => !target.includes(slug))];
+        } catch { /* Keep Save order available if synchronization failed. */ }
+        finally { syncingUploads = false; update(); void syncUploadOrder(); }
+    };
+    const queueChanged = () => {
+        const uploading = hasPendingUploads();
+        if (uploading && !wasUploading) { uploadedSlugs.clear(); uploadSyncPending = false; }
+        wasUploading = uploading; update(); void syncUploadOrder();
     };
     const saveSettings = async () => {
         if (!title.reportValidity() || !description.reportValidity()) return;
@@ -95,7 +121,7 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
         const sentOrder = order();
         await api({ order: sentOrder });
         originalOrder = [...sentOrder, ...order().filter(slug => !sentOrder.includes(slug))];
-        reordering = false;
+        reordering = false; uploadedSlugs.clear(); uploadSyncPending = false;
         setStatus(trans('js.photos.saved')); update();
     };
     const submitSettings = (event: Event) => {
@@ -118,7 +144,7 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
     const click = (event: Event) => {
         const target = event.target as HTMLElement;
         const button = target.closest<HTMLButtonElement>('button');
-        if (!button || busy) return;
+        if (!button || button.disabled || busy) return;
         if (button.matches('[data-photo-album-delete]')) {
             stopDeleteClose?.();
             stopDeleteClose = ui.modal.onClosed(settings, () => {
@@ -199,7 +225,9 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
     };
     const uploaded = (event: Event) => {
         const data = (event as CustomEvent).detail;
-        if (!data || typeof data.slug !== 'string' || cards().some(card => card.dataset.slug === data.slug)) return;
+        if (!data || typeof data.slug !== 'string') return;
+        const placeholder = Array.from(root.querySelectorAll<HTMLElement>('[data-photo-placeholder]')).find(item => item.dataset.requestId === data.requestId);
+        if (cards().some(card => card.dataset.slug === data.slug)) { placeholder?.remove(); update(); return; }
         const template = root.querySelector<HTMLTemplateElement>('[data-photo-card-template]')!;
         const card = template.content.firstElementChild!.cloneNode(true) as HTMLElement;
         card.dataset.slug = data.slug; card.dataset.title = data.title ?? ''; card.dataset.caption = data.caption ?? '';
@@ -210,10 +238,12 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
         card.querySelector<HTMLInputElement>('[data-photo-select]')!.setAttribute('aria-label', `${trans('js.photos.select_photo')} ${data.title ?? ''}`);
         card.querySelector<HTMLInputElement>('[data-photo-title]')!.value = data.title ?? '';
         card.querySelector<HTMLTextAreaElement>('[data-photo-caption]')!.value = data.caption ?? '';
-        originalOrder.push(data.slug); grid.append(card); update();
+        originalOrder.push(data.slug); uploadedSlugs.add(data.slug); uploadSyncPending = true;
+        if (placeholder) placeholder.replaceWith(card); else grid.append(card);
+        update();
     };
     const dragstart = (event: DragEvent) => {
-        if (!reordering || busy || !(event.target as HTMLElement).closest('[data-photo-grip]')) return;
+        if (!reordering || busy || hasPendingUploads() || !(event.target as HTMLElement).closest('[data-photo-grip]')) return;
         dragged = (event.target as HTMLElement).closest('[data-photo-card]');
         event.dataTransfer?.setData('text/plain', dragged?.dataset.slug ?? '');
     };
@@ -235,7 +265,7 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
     let touchCard: HTMLElement | null = null;
     const pointerdown = (event: PointerEvent) => {
         const handle = (event.target as HTMLElement).closest<HTMLElement>('[data-photo-grip]');
-        if (!handle || !reordering || busy || event.pointerType === 'mouse') return;
+        if (!handle || !reordering || busy || hasPendingUploads() || event.pointerType === 'mouse') return;
         touchCard = handle.closest('[data-photo-card]'); handle.setPointerCapture?.(event.pointerId);
     };
     const pointermove = (event: PointerEvent) => {
@@ -257,16 +287,19 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
     settings.addEventListener('hide.bs.modal', preventBusyClose);
     settings.addEventListener('click', preventBusyBackdrop, true);
     root.addEventListener('click', click); root.addEventListener('input', change); root.addEventListener('change', change);
+    root.addEventListener('photo-queue-changed', queueChanged);
     root.addEventListener('photo-uploaded', uploaded); root.addEventListener('dragstart', dragstart); root.addEventListener('dragover', dragover); root.addEventListener('drop', drop);
     root.addEventListener('pointerdown', pointerdown); root.addEventListener('pointermove', pointermove); root.addEventListener('pointerup', pointerup); root.addEventListener('pointercancel', pointerup);
     window.addEventListener('beforeunload', beforeunload); update();
     return () => {
+        disposed = true;
         stopClosed(); stopDeleteClose?.();
         settingsForm.removeEventListener('submit', submitSettings);
         settings.removeEventListener('cancel', preventBusyClose);
         settings.removeEventListener('hide.bs.modal', preventBusyClose);
         settings.removeEventListener('click', preventBusyBackdrop, true);
         root.removeEventListener('click', click); root.removeEventListener('input', change); root.removeEventListener('change', change);
+        root.removeEventListener('photo-queue-changed', queueChanged);
         root.removeEventListener('photo-uploaded', uploaded); root.removeEventListener('dragstart', dragstart); root.removeEventListener('dragover', dragover); root.removeEventListener('drop', drop);
         root.removeEventListener('pointerdown', pointerdown); root.removeEventListener('pointermove', pointermove); root.removeEventListener('pointerup', pointerup); root.removeEventListener('pointercancel', pointerup);
         window.removeEventListener('beforeunload', beforeunload);

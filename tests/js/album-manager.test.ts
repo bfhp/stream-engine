@@ -155,3 +155,24 @@ it('closes album settings before opening the destructive confirmation', () => {
     expect(confirm).toHaveBeenCalledOnce();
     expect(api).not.toHaveBeenCalled();
 });
+
+it('replaces upload slots in place and saves their order without committing an existing draft', async () => {
+    button('[data-photo-down]').click();
+    const root = document.querySelector('[data-album-manager]')!;
+    const grid = root.querySelector('[data-album-grid]')!;
+    for (const requestId of ['first', 'second']) {
+        const placeholder = document.createElement('figure'); placeholder.dataset.photoPlaceholder = ''; placeholder.dataset.requestId = requestId; grid.append(placeholder);
+    }
+    root.dispatchEvent(new Event('photo-queue-changed', { bubbles: true }));
+    expect(button('[data-album-reorder]').disabled).toBe(true);
+    for (const [requestId, slug] of [['second', '4'], ['first', '5']]) {
+        root.dispatchEvent(new CustomEvent('photo-uploaded', { detail: { requestId, slug, title: slug, caption: '', previewUrl: `/preview/${slug}`, redirectUrl: `/photo/${slug}` } }));
+        root.dispatchEvent(new Event('photo-queue-changed', { bubbles: true }));
+    }
+    await flush();
+    expect(order()).toEqual(['2', '1', '3', '5', '4']);
+    expect(api).toHaveBeenCalledExactlyOnceWith('/api/album', { method: 'PATCH', data: { order: ['1', '2', '3', '5', '4'] } });
+    expect(button('[data-album-save-order]').disabled).toBe(false);
+    button('[data-album-save-order]').click(); await flush();
+    expect(api).toHaveBeenLastCalledWith('/api/album', { method: 'PATCH', data: { order: ['2', '1', '3', '5', '4'] } });
+});

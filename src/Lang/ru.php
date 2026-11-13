@@ -1724,4 +1724,7 @@ return [
     'js.photos.select_photo' => 'Выбрать фотографию',
     'photos.manage.add_photos' => 'Добавить фотографии',
     'photos.manage.save_order' => 'Сохранить порядок',
+    'js.photos.batch_finished' => 'Загружено фотографий: {count}',
+    'js.photos.batch_finished_errors' => 'Загружено: {done}. Не удалось загрузить: {failed}.',
+    'js.photos.view_album' => 'Посмотреть альбом',
 ];

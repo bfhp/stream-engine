@@ -7,17 +7,14 @@ interface QueueItem {
     file: File | null;
     requestId: string;
     state: State;
-    percent: number;
-    row: HTMLLIElement;
-    name: HTMLAnchorElement;
+    row: HTMLElement;
     status: HTMLElement;
-    progress: HTMLProgressElement;
+    indicator: HTMLElement;
     retry: HTMLButtonElement;
     remove: HTMLButtonElement;
 }
 
 function requestId(): string {
-    // randomUUID is unavailable on some mobile HTTP origins; getRandomValues is.
     if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
     const bytes = crypto.getRandomValues(new Uint8Array(16));
     bytes[6] = (bytes[6] & 15) | 64;
@@ -26,52 +23,68 @@ function requestId(): string {
     return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
-/** One queue for all selection/drop batches; each file has its own retry identity. */
+/** Placeholders share the album grid; files keep their retry identity until published. */
 export function initPhotoUpload(root: HTMLElement | null = document.querySelector('[data-photo-uploader]')): (() => void) | undefined {
     if (!root || root.dataset.ready === 'true' || !root.dataset.apiUrl) return;
     root.dataset.ready = 'true';
     const input = root.querySelector<HTMLInputElement>('[data-photo-files]')!;
-    const list = root.querySelector<HTMLOListElement>('[data-photo-queue]')!;
+    const manager = root.closest('[data-album-manager]')!;
+    const grid = manager.querySelector<HTMLElement>('[data-album-grid]')!;
     const summary = root.querySelector<HTMLElement>('[data-photo-summary]')!;
-    const overall = root.querySelector<HTMLProgressElement>('[data-photo-total-progress]')!;
+    const controls = root.querySelector<HTMLElement>('[data-photo-queue-controls]')!;
     const pause = root.querySelector<HTMLButtonElement>('[data-photo-pause]')!;
     const retryAll = root.querySelector<HTMLButtonElement>('[data-photo-retry-all]')!;
-    const clear = root.querySelector<HTMLButtonElement>('[data-photo-clear-done]')!;
     const dropzone = root.querySelector<HTMLElement>('[data-photo-dropzone]')!;
     const items = new Set<QueueItem>();
     const active = new Map<QueueItem, XMLHttpRequest>();
     let paused = false;
     let destroyed = false;
+    let notified = true;
 
-    const updateProgress = (): void => {
-        let value = 0;
-        for (const item of items) value += item.state === 'done' || item.state === 'error' ? 100 : item.percent;
-        overall.value = items.size ? value / items.size : 0;
-    };
     const update = (): void => {
-        const done = [...items].filter(item => item.state === 'done').length;
+        const done = [...items].filter(item => item.state === 'done');
         const failed = [...items].filter(item => item.state === 'error').length;
         const waiting = [...items].some(item => item.state === 'waiting');
         if (!waiting && active.size === 0 && failed === 0) paused = false;
-        summary.textContent = trans('js.photos.batch_summary', { done, total: items.size, failed })
+        summary.textContent = trans('js.photos.batch_summary', { done: done.length, total: items.size, failed })
             + (paused ? ` · ${trans('js.photos.batch_paused')}` : '');
-        const panel = root.querySelector<HTMLElement>('[data-photo-queue-panel]');
-        if (panel) panel.hidden = items.size === 0;
-        overall.hidden = items.size === 0;
+        controls.hidden = items.size === 0;
         pause.hidden = !waiting && active.size === 0;
         pause.textContent = trans(paused ? 'js.photos.batch_resume' : 'js.photos.batch_pause');
         retryAll.hidden = failed === 0;
-        clear.hidden = done === 0;
-        updateProgress();
+        root.dispatchEvent(new CustomEvent('photo-queue-changed', { bubbles: true }));
+        if (!waiting && active.size === 0 && !notified && items.size > 0) {
+            notified = true;
+            for (const item of done) items.delete(item);
+            controls.hidden = items.size === 0;
+            const message = failed ? trans('js.photos.batch_finished_errors', { done: done.length, failed }) : trans('js.photos.batch_finished', { count: done.length });
+            const albumUrl = root.dataset.albumUrl;
+            if (albumUrl?.startsWith('/') && !albumUrl.startsWith('//')) {
+                const body = document.createElement('span'); body.textContent = message;
+                const link = document.createElement('a'); link.href = albumUrl; link.className = 'users-photo-toast-link'; link.textContent = trans('js.photos.view_album');
+                body.append(' ', link);
+                window.CMS.toast({ message: body.outerHTML, html: true, type: failed ? 'warning' : 'success' });
+            } else window.CMS.toast({ message, type: failed ? 'warning' : 'success' });
+        }
     };
     const setState = (item: QueueItem, state: State, message?: string): void => {
         item.state = state;
         item.row.dataset.state = state;
+        const uploading = state === 'uploading' || state === 'processing';
+        item.row.setAttribute('aria-busy', String(uploading));
+        const image = item.indicator.parentElement!;
+        image.setAttribute('role', uploading ? 'progressbar' : 'group');
+        if (uploading) {
+            image.setAttribute('aria-valuemin', '0'); image.setAttribute('aria-valuemax', '100');
+            image.setAttribute('aria-valuetext', trans(`js.photos.batch_${state}`));
+        } else {
+            for (const attribute of ['aria-valuemin', 'aria-valuemax', 'aria-valuetext']) image.removeAttribute(attribute);
+        }
+        if (state === 'uploading') image.setAttribute('aria-valuenow', '0'); else image.removeAttribute('aria-valuenow');
         item.status.textContent = message ?? trans(`js.photos.batch_${state}`);
+        item.indicator.textContent = state === 'error' ? '!' : state === 'uploading' ? '0%' : '…';
         item.retry.hidden = state !== 'error';
         item.remove.hidden = state !== 'waiting' && state !== 'error';
-        if (state === 'done') item.percent = 100;
-        item.progress.value = item.percent;
     };
     const pump = (): void => {
         if (destroyed || paused) return;
@@ -85,23 +98,21 @@ export function initPhotoUpload(root: HTMLElement | null = document.querySelecto
     const start = (item: QueueItem): void => {
         const xhr = new XMLHttpRequest();
         active.set(item, xhr);
-        item.percent = 0;
         setState(item, 'uploading');
         const fail = (reason: unknown, stopQueue = false): void => {
             if (destroyed || !active.has(item)) return;
             active.delete(item);
             if (stopQueue) paused = true;
             setState(item, 'error', getApiErrorMessage(reason, trans('js.common.action_failed')));
-            update();
-            pump();
+            update(); pump();
         };
         xhr.upload.onprogress = event => {
             if (destroyed || !active.has(item) || !event.lengthComputable) return;
-            item.percent = Math.min(100, Math.round(event.loaded / event.total * 100));
-            item.progress.value = item.percent;
-            item.status.textContent = `${item.percent}%`;
-            if (item.percent === 100) setState(item, 'processing');
-            updateProgress();
+            const percent = Math.min(100, Math.round(event.loaded / event.total * 100));
+            item.indicator.textContent = `${percent}%`;
+            item.indicator.parentElement!.setAttribute('aria-valuenow', String(percent));
+            item.indicator.parentElement!.setAttribute('aria-valuetext', `${percent}%`);
+            if (percent === 100) setState(item, 'processing');
         };
         xhr.onload = () => {
             if (destroyed || !active.has(item)) return;
@@ -115,10 +126,9 @@ export function initPhotoUpload(root: HTMLElement | null = document.querySelecto
             active.delete(item);
             setState(item, 'done');
             item.file = null;
-            root.dispatchEvent(new CustomEvent('photo-uploaded', { bubbles: true, detail: payload }));
-            if (payload.redirectUrl?.startsWith('/') && !payload.redirectUrl.startsWith('//')) item.name.href = payload.redirectUrl;
-            update();
-            pump();
+            root.dispatchEvent(new CustomEvent('photo-uploaded', { bubbles: true, detail: { ...payload, requestId: item.requestId } }));
+            item.row.remove();
+            update(); pump();
         };
         xhr.onerror = () => fail(null, true);
         xhr.ontimeout = () => fail(null, true);
@@ -128,92 +138,61 @@ export function initPhotoUpload(root: HTMLElement | null = document.querySelecto
             xhr.setRequestHeader('X-CSRF-Token', csrfToken());
             xhr.timeout = 120000;
             const data = new FormData();
-            data.set('file', item.file!);
-            data.set('requestId', item.requestId);
+            data.set('file', item.file!); data.set('requestId', item.requestId);
             xhr.send(data);
         } catch (error) { fail(error, true); }
     };
     const retry = (item: QueueItem): void => {
         if (item.state !== 'error' || !item.file) return;
-        item.percent = 0;
+        notified = false;
         setState(item, 'waiting');
     };
     const addFiles = (files: Iterable<File>): void => {
+        if (destroyed) return;
         const fragment = document.createDocumentFragment();
+        let firstAdded: HTMLElement | null = null;
         for (const file of files) {
-            const row = document.createElement('li');
-            row.className = 'users-photo-queue__item';
-            const name = document.createElement('a');
-            name.className = 'users-photo-queue__name';
-            name.textContent = file.name;
-            const status = document.createElement('span');
-            status.className = 'users-photo-queue__status';
-            const progress = document.createElement('progress');
-            progress.max = 100;
-            progress.setAttribute('aria-label', trans('js.photos.batch_file_progress', { name: file.name }));
-            const retryButton = document.createElement('button');
-            retryButton.type = 'button';
-            retryButton.className = 'ui-button ui-button--secondary ui-button--sm';
-            retryButton.textContent = trans('js.photos.batch_retry');
-            retryButton.setAttribute('aria-label', trans('js.photos.batch_retry_file', { name: file.name }));
-            const remove = document.createElement('button');
-            remove.type = 'button';
-            remove.className = 'ui-button ui-button--secondary ui-button--sm';
-            remove.textContent = trans('js.photos.batch_remove');
-            remove.setAttribute('aria-label', trans('js.photos.batch_remove_file', { name: file.name }));
-            const item: QueueItem = { file, requestId: requestId(), state: 'waiting', percent: 0, row, name, status, progress, retry: retryButton, remove };
+            notified = false;
+            const row = document.createElement('figure');
+            row.className = 'ui-card users-panel users-album-placeholder';
+            firstAdded ??= row;
+            row.dataset.photoPlaceholder = ''; row.dataset.requestId = requestId();
+            const image = document.createElement('div'); image.className = 'users-album-placeholder__image';
+            image.setAttribute('aria-label', trans('js.photos.batch_file_progress', { name: file.name }));
+            const indicator = document.createElement('span'); indicator.className = 'users-album-placeholder__indicator'; indicator.setAttribute('aria-hidden', 'true');
+            const status = document.createElement('span'); status.className = 'users-album-placeholder__status';
+            image.append(indicator, status);
+            const name = document.createElement('figcaption'); name.className = 'users-album-placeholder__name'; name.textContent = file.name; name.title = file.name;
+            const actions = document.createElement('div'); actions.className = 'users-actions';
+            const retryButton = document.createElement('button'); retryButton.type = 'button'; retryButton.className = 'ui-button ui-button--secondary ui-button--sm';
+            retryButton.textContent = trans('js.photos.batch_retry'); retryButton.setAttribute('aria-label', trans('js.photos.batch_retry_file', { name: file.name }));
+            const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'ui-button ui-button--secondary ui-button--sm';
+            remove.textContent = trans('js.photos.batch_remove'); remove.setAttribute('aria-label', trans('js.photos.batch_remove_file', { name: file.name }));
+            const item: QueueItem = { file, requestId: row.dataset.requestId, state: 'waiting', row, status, indicator, retry: retryButton, remove };
             retryButton.addEventListener('click', () => { retry(item); paused = false; pump(); });
             remove.addEventListener('click', () => {
                 if (item.state !== 'waiting' && item.state !== 'error') return;
-                items.delete(item);
-                item.file = null;
-                row.remove();
-                update();
+                items.delete(item); item.file = null; row.remove(); update();
             });
-            row.append(name, status, progress, retryButton, remove);
-            fragment.append(row);
-            items.add(item);
-            setState(item, 'waiting');
+            actions.append(retryButton, remove); row.append(image, name, actions); fragment.append(row); items.add(item); setState(item, 'waiting');
         }
-        list.append(fragment);
-        update();
-        pump();
+        grid.append(fragment);
+        update(); pump();
+        firstAdded?.scrollIntoView?.({ behavior: 'instant', block: 'start' });
     };
-    input.addEventListener('change', () => {
-        addFiles(Array.from(input.files ?? []));
-        input.value = '';
-    });
+    input.addEventListener('change', () => { addFiles(Array.from(input.files ?? [])); input.value = ''; });
     pause.addEventListener('click', () => { paused = !paused; update(); pump(); });
-    retryAll.addEventListener('click', () => {
-        for (const item of items) retry(item);
-        paused = false;
-        pump();
-    });
-    clear.addEventListener('click', () => {
-        for (const item of items) {
-            if (item.state === 'done') { item.row.remove(); items.delete(item); }
-        }
-        update();
-    });
+    retryAll.addEventListener('click', () => { for (const item of items) retry(item); paused = false; pump(); });
     dropzone.addEventListener('dragover', event => { event.preventDefault(); dropzone.classList.add('is-dragging'); });
     dropzone.addEventListener('dragleave', () => dropzone.classList.remove('is-dragging'));
-    dropzone.addEventListener('drop', event => {
-        event.preventDefault();
-        dropzone.classList.remove('is-dragging');
-        addFiles(Array.from(event.dataTransfer?.files ?? []));
-    });
+    dropzone.addEventListener('drop', event => { event.preventDefault(); dropzone.classList.remove('is-dragging'); addFiles(Array.from(event.dataTransfer?.files ?? [])); });
     const warnBeforeLeaving = (event: BeforeUnloadEvent): void => {
-        if (active.size || [...items].some(item => item.state === 'waiting' || item.state === 'error')) {
-            event.preventDefault();
-            event.returnValue = '';
-        }
+        if (active.size || [...items].some(item => item.state === 'waiting' || item.state === 'error')) { event.preventDefault(); event.returnValue = ''; }
     };
     window.addEventListener('beforeunload', warnBeforeLeaving);
     return () => {
-        destroyed = true;
-        window.removeEventListener('beforeunload', warnBeforeLeaving);
+        destroyed = true; window.removeEventListener('beforeunload', warnBeforeLeaving);
         for (const xhr of active.values()) xhr.abort();
-        active.clear();
-        items.clear();
+        active.clear(); for (const item of items) item.row.remove(); items.clear();
     };
 }

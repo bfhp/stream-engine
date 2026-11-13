@@ -302,10 +302,17 @@ The primary uploader supports selecting many photographs from desktop or
 mobile galleries (`multiple`, without a forced camera capture), adding later
 batches while uploading, and desktop drag-and-drop. Two independent requests
 run concurrently; each queued file keeps its UUID across retries. Successful
-files remain published when another file fails. The UI has per-file and overall
-progress, a processing state after transfer, pause/resume (active requests
-finish), individual and bulk retry, removal of waiting/failed files, and
-clearing completed rows. Network, access, server and quota errors pause further
+files remain published when another file fails. Each file occupies a placeholder at the end of the existing album grid with a
+small percentage and processing state; publication replaces that exact slot
+with its photo card. Each selection/drop immediately scrolls once to the first
+new placeholder. Progress updates do not scroll the page. Completion toasts
+include a view-album link.
+There are no per-file or overall progress bars. Compact controls retain
+pause/resume (active requests finish), individual and bulk retry and removal of
+waiting/failed files. A single toast reports completion or a completed batch
+with errors; failed placeholders remain retryable. Newly uploaded photos keep
+their selection order, synchronizing it after the queue clears without saving
+an existing manual order draft. Sorting is paused while placeholders remain. Network, access, server and quota errors pause further
 scheduling. Quota exhaustion returns 413 with `storage_limit_exceeded`.
 
 The page does not redirect after each success. Keep it open until the queue
