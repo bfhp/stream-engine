@@ -9,6 +9,23 @@ export function initPhotoViewer(): void {
     let request: AbortController | null = null;
     let touch: { id: number; x: number; y: number } | null = null;
     const direct = viewer !== null;
+    const descriptionSelectors = ['meta[name="description"]', 'meta[property="og:description"]'];
+    const originalDescriptions = descriptionSelectors.map(selector => ({ selector, meta: document.head.querySelector(selector)?.cloneNode(true) ?? null }));
+    const updateDescriptions = (page: Document) => {
+        for (const selector of descriptionSelectors) {
+            const source = page.head.querySelector<HTMLMetaElement>(selector);
+            if (!source) continue;
+            const current = document.head.querySelector<HTMLMetaElement>(selector);
+            if (current) current.content = source.content;
+            else document.head.append(source.cloneNode(true));
+        }
+    };
+    const restoreDescriptions = () => {
+        for (const { selector, meta } of originalDescriptions) {
+            document.head.querySelector(selector)?.remove();
+            if (meta) document.head.append(meta.cloneNode(true));
+        }
+    };
     const showLogin = () => { const auth = document.getElementById('authFormModal'); if (auth) ui.modal.open(auth); };
     if (direct && new URL(location.href).searchParams.get('login') === '1' && viewer?.querySelector('[data-photo-login]')) showLogin();
     const safeUrl = (value: string) => { const url = new URL(value, location.href); if (url.origin !== location.origin) throw new Error('Invalid photo URL'); return url; };
@@ -21,7 +38,7 @@ export function initPhotoViewer(): void {
         if (!dialog) return;
         viewer?.dispatchEvent(new Event('photo-viewer-changing', { bubbles: true }));
         dialog.close(); dialog.remove(); dialog = null; viewer = null;
-        document.body.classList.remove('photo-viewer-open');
+        document.body.classList.remove('photo-viewer-open'); restoreDescriptions();
         opener?.focus({ preventScroll: true }); window.scrollTo({ top: albumScroll, behavior: 'instant' });
     };
     const load = async (href: string, mode: 'open' | 'navigate' | 'pop') => {
@@ -45,7 +62,7 @@ export function initPhotoViewer(): void {
                 dialog.addEventListener('close', () => { if (openedDialog.isConnected && history.state?.photoViewer) history.back(); });
                 dialog.append(fragment); dialog.showModal(); document.body.classList.add('photo-viewer-open');
             } else viewer?.replaceWith(fragment);
-            viewer = fragment; preload();
+            viewer = fragment; preload(); updateDescriptions(parsed);
             viewer.dispatchEvent(new Event('photo-viewer-ready', { bubbles: true }));
             if (dialog) dialog.setAttribute('aria-label', fragment.getAttribute('aria-label') ?? '');
             if (mode === 'open') history.pushState({ photoViewer: true, albumUrl, albumScroll }, '', url);

@@ -838,7 +838,7 @@ class UsersController extends AbstractController
         }
         return ViewModel::fromPage($page, 'modules/users/photos.twig', [
             'title' => $isPhotoForm ? $this->tm->trans('photos.upload_many') : ($isPhotoView ? $photo->title : ($isAlbumForm ? $this->tm->trans($isEdit ? 'photos.edit' : 'photos.new_album') : ($album?->title ?? $this->tm->trans('photos.title')))),
-            'description' => trim((string) preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags($album?->description ?? ''), ENT_QUOTES | ENT_HTML5, 'UTF-8'))),
+            'description' => trim((string) preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags(($photo !== null ? $photo->description : $album?->description) ?? ''), ENT_QUOTES | ENT_HTML5, 'UTF-8'))),
             'isAlbumForm' => $isAlbumForm, 'isManage' => $isManage, 'photoOwner' => $photoOwner, 'coverUrl' => $coverUrl,
             'isPhotoForm' => $isPhotoForm, 'photo' => $photo, 'photoItems' => $photoItems,
             'newPhotoUrl' => $canUpload ? $this->urlGenerator->action($scope.'.photo-album-edit', $albumParams).'#album-upload' : null,

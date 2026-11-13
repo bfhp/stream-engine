@@ -131,7 +131,7 @@ final class UsersControllerPhotosTest extends TestCase
     {
         $owner = new User(1, '', username: 'alice');
         $blog = new Feed(10, null, 1, 'blog', 'alice', 'Blog', null, null, '', null, 'public', 0, null, null, null);
-        $album = new Feed(42, 10, 1, 'gallery-album', 'album', 'Album', null, null, '', null, 'public', 0, null, null, null);
+        $album = new Feed(42, 10, 1, 'gallery-album', 'album', 'Album', '<p>Album &amp; description</p>', null, '', null, 'public', 0, null, null, null);
         $feeds = $this->createStub(FeedService::class);
         $feeds->method('getFeedByOwnerAndType')->willReturn($blog);
         $feeds->method('getFeedByParentAndSlug')->willReturn($album);
@@ -139,6 +139,7 @@ final class UsersControllerPhotosTest extends TestCase
         [$controller, $router] = $this->controller($feeds, new User(2, ''), $owner);
         $route = $router->resolve('/users/alice/photos/album/');
         $view = $controller->show($route['page'], ['username' => 'alice', 'albumSlug' => 'album']);
+        self::assertSame('Album & description', $view->data['description']);
         self::assertSame($album, $view->data['album']);
         self::assertSame('#1', $view->data['photoOwner']['name']);
         self::assertSame('/users/alice/', $view->data['photoOwner']['url']);
@@ -413,6 +414,40 @@ final class UsersControllerPhotosTest extends TestCase
         $method = new \ReflectionMethod($controller, 'buildPhotosSidebarViewData');
         self::assertSame(['count' => 0, 'previews' => []], $method->invoke($controller, null));
         self::assertSame(['count' => 200, 'previews' => ['/users/alice/photos/summer/7/preview/']], $method->invoke($controller, 10));
+    }
+
+    public static function photoDescriptions(): array
+    {
+        return [
+            'personal caption' => ['blog', "<p>Photo &amp; caption</p>\n  at the sea", 'Photo & caption at the sea'],
+            'community caption' => ['community', '<p>Community &quot;photo&quot;</p>', 'Community "photo"'],
+            'empty caption' => ['blog', '', ''],
+            'missing caption' => ['community', null, ''],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('photoDescriptions')]
+    public function testPhotoMetadataUsesItsOwnDescriptionInsteadOfTheAlbum(string $contextType, ?string $caption, string $expected): void
+    {
+        $owner = new User(1, '', username: 'alice');
+        $viewer = new User(2, '');
+        $context = new Feed(10, null, 1, $contextType, 'alice', 'Context', null, null, '', null, 'public', 0, null, null, null);
+        $album = new Feed(42, 10, 1, 'gallery-album', 'summer', 'Album', 'Album description must not leak into photo metadata', null, '', null, 'public', 0, null, null, null);
+        $photo = new Feed(100, 42, 1, 'gallery-photo', '1', 'Photo', $caption, null, '', null, 'public', 0, null, null, null, metadata: ['gallery.state' => 'ready', 'gallery.width' => '100', 'gallery.height' => '100', 'gallery.original_upload_id' => '1', 'gallery.preview_upload_id' => '2']);
+        $feeds = $this->createStub(FeedService::class);
+        $feeds->method('getFeedByOwnerAndType')->willReturn($context);
+        $feeds->method('getFeedById')->willReturnCallback(fn ($id) => match ($id) {
+            10 => $context, 42 => $album, default => $photo
+        });
+        $feeds->method('getFeedByParentAndSlug')->willReturnCallback(fn ($parent) => match ($parent) {
+            null => $context, 10 => $album, default => $photo
+        });
+        $feeds->method('getFeedsByParentAndTypePage')->willReturn(['items' => [$photo], 'total' => 1]);
+        [$controller, $router] = $this->controller($feeds, $viewer, $owner);
+        $path = $contextType === 'blog' ? '/users/alice/photos/summer/1/' : '/communities/alice/photos/summer/1/';
+        $route = $router->resolve($path);
+        $args = ['albumSlug' => 'summer', 'photoSlug' => '1', ...($contextType === 'blog' ? ['username' => 'alice'] : ['slug' => 'alice'])];
+        self::assertSame($expected, $controller->show($route['page'], $args)->data['description']);
     }
 
 }
