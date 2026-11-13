@@ -7,6 +7,7 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
     root.dataset.ready = 'true';
     const cms = window.CMS;
     const grid = root.querySelector<HTMLElement>('[data-album-grid]')!;
+    const toolbar = root.querySelector<HTMLElement>('[data-album-toolbar]');
     const title = root.querySelector<HTMLInputElement>('[data-album-title]')!;
     const description = root.querySelector<HTMLTextAreaElement>('[data-album-description-input]')!;
     const settings = root.querySelector<HTMLElement>('[data-album-settings]')!;
@@ -51,16 +52,20 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
         orderSave.disabled = busy || uploading || !orderDirty();
         root.dataset.dirty = String(dirty());
         const orderActions = root.querySelector<HTMLElement>('[data-album-order-actions]');
-        if (orderActions) orderActions.hidden = uploading || syncingUploads || (!reordering && !orderDirty());
+        const showingOrder = !selecting && !uploading && !syncingUploads && (reordering || orderDirty());
+        if (orderActions) orderActions.hidden = !showingOrder;
         settings.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLButtonElement>('input, textarea, [data-album-settings-cancel]').forEach(control => control.disabled = busy);
         const photoCount = cards().length;
         const counter = root.querySelector('[data-album-photo-count]');
         if (counter) counter.textContent = String(photoCount);
         const empty = root.querySelector<HTMLElement>('[data-album-empty]');
         if (empty) empty.hidden = photoCount > 0 || uploading;
-        const toolbar = root.querySelector<HTMLElement>('[data-album-toolbar]');
-        if (toolbar) toolbar.hidden = photoCount === 0;
-        root.querySelectorAll<HTMLButtonElement>('[data-album-reorder], [data-album-cancel-order]').forEach(button => button.disabled = busy || uploading);
+        const selectButton = root.querySelector<HTMLButtonElement>('[data-album-select]');
+        if (selectButton) selectButton.disabled = busy || photoCount === 0;
+        const reorderButton = root.querySelector<HTMLButtonElement>('[data-album-reorder]');
+        if (reorderButton) reorderButton.disabled = busy || uploading || photoCount < 2;
+        const cancelOrder = root.querySelector<HTMLButtonElement>('[data-album-cancel-order]');
+        if (cancelOrder) cancelOrder.disabled = busy || uploading;
         root.querySelectorAll<HTMLButtonElement>('[data-photo-album-delete], [data-photo-save], [data-photo-set-cover]').forEach(button => button.disabled = busy);
         root.dataset.selecting = String(selecting);
         root.dataset.reordering = String(reordering);
@@ -73,9 +78,12 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
         }
         const selection = root.querySelector<HTMLElement>('[data-album-selection]')!;
         selection.hidden = !selecting;
+        const standardActions = root.querySelector<HTMLElement>('[data-album-standard-actions]');
+        if (standardActions) {
+            standardActions.hidden = selecting || showingOrder;
+            standardActions.inert = selecting || showingOrder;
+        }
         const count = selected().length;
-        const actions = root.querySelector<HTMLElement>('[data-album-selection-actions]');
-        if (actions) actions.hidden = count === 0;
         root.querySelector('[data-album-selection-count]')!.textContent = trans('js.photos.selected', { count });
         root.querySelectorAll<HTMLButtonElement>('[data-album-delete-selected]').forEach(button => button.disabled = busy || count === 0);
         root.querySelector('[data-album-select]')?.setAttribute('aria-pressed', String(selecting));
@@ -171,6 +179,11 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
             root.querySelector<HTMLInputElement>('[data-photo-files]')?.click();
         }
         if (button.matches('[data-album-select]')) { selecting = !selecting; reordering = false; update(); }
+        if (button.matches('[data-album-cancel-selection]')) {
+            selecting = false;
+            cards().forEach(card => card.querySelector<HTMLInputElement>('[data-photo-select]')!.checked = false);
+            update();
+        }
         if (button.matches('[data-album-reorder]')) { reordering = true; selecting = false; update(); }
         if (button.matches('[data-album-cancel-order]')) {
             const bySlug = new Map(cards().map(card => [card.dataset.slug, card]));
@@ -186,6 +199,7 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
                     await api({ photos: slugs }, 'DELETE', root.dataset.photosApiUrl!);
                     chosen.forEach(card => card.remove());
                     originalOrder = originalOrder.filter(slug => !slugs.includes(slug));
+                    if (cards().length === 0) selecting = false;
                     setStatus(trans('js.photos.deleted_count', { count: slugs.length })); update();
                 } catch { /* Keep selection for retry. */ }
             } });
@@ -322,6 +336,12 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
         const photoDraft = cards().some(card => card.querySelector<HTMLInputElement>('[data-photo-title]')!.value !== card.dataset.title || card.querySelector<HTMLTextAreaElement>('[data-photo-caption]')!.value !== card.dataset.caption);
         if (!deleted && (dirty() || photoDraft)) { event.preventDefault(); event.returnValue = ''; }
     };
+    const updateToolbarHeight = () => {
+        if (toolbar) root.style.setProperty('--album-toolbar-height', `${Math.ceil(toolbar.getBoundingClientRect().height)}px`);
+    };
+    const toolbarObserver = toolbar && typeof ResizeObserver !== 'undefined' ? new ResizeObserver(updateToolbarHeight) : null;
+    if (toolbar) toolbarObserver?.observe(toolbar);
+    updateToolbarHeight();
     settingsForm.addEventListener('submit', submitSettings);
     settings.addEventListener('cancel', preventBusyClose);
     settings.addEventListener('hide.bs.modal', preventBusyClose);
@@ -336,6 +356,7 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
     return () => {
         finishDrag(true);
         disposed = true;
+        toolbarObserver?.disconnect();
         stopClosed(); stopDeleteClose?.();
         settingsForm.removeEventListener('submit', submitSettings);
         settings.removeEventListener('cancel', preventBusyClose);

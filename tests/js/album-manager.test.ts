@@ -35,7 +35,7 @@ beforeEach(() => {
         <p data-album-settings-error></p><button type="button" data-photo-album-delete>Delete album</button><button type="submit" data-album-settings-save disabled>Save settings</button><button type="button" data-album-settings-cancel>Cancel</button></form></div>
         <button data-album-save-order disabled>Save order</button><button data-album-select>Select</button><button data-album-reorder>Reorder</button><button data-album-cancel-order hidden>Reset</button>
         <div data-album-selection hidden><input type="checkbox" data-album-select-all><span data-album-selection-count></span>
-        <button data-album-delete-selected>Delete</button></div><p data-album-status></p>
+        <button data-album-cancel-selection>Cancel selection</button><button data-album-delete-selected>Delete</button></div><p data-album-status></p>
         <div data-album-grid>${card('1')}${card('2')}${card('3')}</div><template data-photo-card-template>${card('')}</template></section>`;
     dispose = initAlbumManager();
 });
@@ -204,4 +204,17 @@ it('captures mouse dragging on the stationary grid and Escape restores the drag 
     expect(order()).toEqual(['2', '1', '3']);
     expect(api).not.toHaveBeenCalled();
     delete (document as Partial<Document>).elementFromPoint;
+});
+
+it('cancels selection, clears checkboxes and preserves an unsaved photo order', () => {
+    moveFirstLater();
+    button('[data-album-select]').click();
+    document.querySelector<HTMLInputElement>('[data-album-select-all]')!.click();
+    expect(cards().every(card => card.querySelector<HTMLInputElement>('[data-photo-select]')!.checked)).toBe(true);
+    button('[data-album-cancel-selection]').click();
+    expect(document.querySelector<HTMLElement>('[data-album-manager]')!.dataset.selecting).toBe('false');
+    expect(document.querySelector<HTMLElement>('[data-album-selection]')!.hidden).toBe(true);
+    expect(cards().some(card => card.querySelector<HTMLInputElement>('[data-photo-select]')!.checked)).toBe(false);
+    expect(order()).toEqual(['2', '1', '3']);
+    expect(button('[data-album-save-order]').disabled).toBe(false);
 });

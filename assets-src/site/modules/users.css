@@ -843,7 +843,7 @@ a.users-person:hover {
 .users-photo-picker:focus-within { outline: 2px solid var(--ui-focus-ring); outline-offset: 3px; }
 .users-photo-queue__controls { margin-block: var(--ui-space-3); }
 [data-photo-summary] { color: var(--ui-muted); font-size: .875rem; }
-.users-album-placeholder { margin: 0; min-inline-size: 0; scroll-margin-block-start: 6rem; }
+.users-album-placeholder { margin: 0; min-inline-size: 0; scroll-margin-block-start: calc(var(--album-toolbar-height, 5rem) + .75rem); }
 .users-album-placeholder__image {
     aspect-ratio: 4 / 3; border-radius: var(--ui-radius); background: var(--ui-surface-2);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -869,12 +869,20 @@ a.users-person:hover {
 .users-album-delete:hover { color: var(--ui-danger, #dc2626); }
 [data-album-status] { overflow-wrap: anywhere; }
 [data-album-status]:empty { display: none; }
-.users-album-toolbar { align-items: center; margin-block: var(--ui-space-4); }
-.users-album-toolbar [data-album-selection] { flex-basis: 100%; padding: var(--ui-space-3); background: var(--ui-surface-2); border-radius: var(--ui-radius); align-items: center; }
-.users-album-toolbar [data-album-selection-actions] { flex-basis: 100%; align-items: center; }
-.users-album-toolbar [data-album-selection-actions][hidden] { display: flex !important; visibility: hidden; pointer-events: none; }
+.users-album-toolbar { display: grid; grid-template-columns: minmax(0, 1fr); align-items: center; margin-block: var(--ui-space-4); padding: var(--ui-space-3); background: var(--ui-surface-2); border-radius: var(--ui-radius); box-shadow: var(--ui-shadow); position: sticky; inset-block-start: calc(var(--ui-sticky-offset, 4.5rem) + .5rem); z-index: 10; }
+.users-album-toolbar > [data-album-standard-actions],
+.users-album-toolbar > [data-album-order-actions],
+.users-album-toolbar > [data-album-selection] { grid-area: 1 / 1; }
+.users-album-toolbar__hint { flex: 1 1 16rem; max-inline-size: 36rem; margin: 0; margin-inline-start: auto; text-align: end; }
+.users-album-toolbar > [data-album-standard-actions][hidden],
+.users-album-toolbar > [data-album-order-actions][hidden] { display: flex !important; visibility: hidden; pointer-events: none; }
+.users-album-toolbar__hint[hidden] { display: block !important; visibility: hidden; }
+.users-album-toolbar [data-album-cancel-order][hidden] { display: inline-flex !important; visibility: hidden; }
+.users-album-toolbar [data-album-selection] { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; align-items: center; }
+.users-album-toolbar [data-album-selection][hidden] { display: grid !important; visibility: hidden; pointer-events: none; }
+.users-album-toolbar [data-album-selection-count] { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .users-album-toolbar label { display: inline-flex; align-items: center; gap: var(--ui-space-2); }
-.users-album-photo { position: relative; min-inline-size: 0; margin: 0; }
+.users-album-photo { position: relative; min-inline-size: 0; margin: 0; scroll-margin-block-start: calc(var(--album-toolbar-height, 5rem) + .75rem); }
 .users-album-photo figcaption { overflow-wrap: anywhere; padding-inline-end: 2.5rem; }
 .users-album-photo__select,
 .users-album-photo__grip { display: none; }
@@ -917,7 +925,12 @@ dialog.users-album-settings-dialog form { display: flex; flex-direction: column;
 .users-photo-toast-link,
 .users-photo-toast-link:hover { color: inherit; text-decoration: underline; font-weight: 600; }
 
-[data-reordering="true"] [data-album-reorder],
-[data-reordering="true"] [data-album-select],
-[data-selecting="true"] [data-album-reorder] { display: none; }
-[data-reordering="true"] .users-album-photo__menu { visibility: hidden; }
+[data-reordering="true"] .users-album-photo__menu,
+[data-selecting="true"] .users-album-photo__menu { visibility: hidden; }
+@media (max-width: 640px) {
+    .users-album-toolbar [data-album-selection] { grid-template-columns: minmax(0, 1fr) auto; }
+    .users-album-toolbar [data-album-cancel-selection] { grid-area: 1 / 1; justify-self: start; }
+    .users-album-toolbar [data-album-delete-selected] { grid-area: 1 / 2; }
+    .users-album-toolbar [data-album-selection] > label { grid-area: 2 / 1; }
+    .users-album-toolbar [data-album-selection-count] { grid-area: 2 / 2; justify-self: end; }
+}
