@@ -339,6 +339,15 @@ controls when sorting or order changes are active; uploads, deletion, cover and 
 apply immediately. Unsaved drafts trigger a navigation warning. Order reset
 restores the last saved order while retaining new uploads.
 
+Photo cards have a compact overlay actions menu: edit details, set cover and
+confirmed deletion through the existing photo collection endpoint. The current
+cover is marked and cannot be selected again. Editing opens a shared preview
+and title/caption dialog without changing the card height. Previous/next follows
+the current grid order; draft navigation explicitly saves first and keeps the
+current photo and draft on failure. Closing the editor discards unsaved changes.
+Menus support keyboard navigation and focus return, and close on outside focus
+or click. Both themes use their existing modal adapters.
+
 Next: comments/votes and the separate showcase.
 
 ## Implementation sequence and acceptance

@@ -7,16 +7,13 @@
     <a data-photo-link href="{{ item.url }}"><img{% if isManage %} draggable="false"{% endif %} src="{{ item.previewUrl }}" alt="{{ item.title }}" loading="lazy" decoding="async"></a>
     <figcaption><a data-photo-name href="{{ item.url }}">{{ item.title }}</a></figcaption>
     {% if isManage %}
-        <details class="users-album-photo__menu">
-            <summary aria-label="{{ trans('photos.manage.photo_menu') }}">⋯</summary>
-            <button type="button" class="ui-button ui-button--secondary" data-photo-set-cover>{{ trans('photos.manage.set_cover') }}</button>
-            <button type="button" class="ui-button ui-button--secondary" data-photo-edit>{{ trans('photos.manage.details') }}</button>
-        </details>
-        <div data-photo-details hidden>
-            <label class="ui-label">{{ trans('photos.photo_title') }}<input class="ui-input" data-photo-title maxlength="255" value="{{ item.title }}"></label>
-            <label class="ui-label">{{ trans('photos.caption') }}<textarea class="ui-input" data-photo-caption maxlength="2000">{{ item.caption }}</textarea></label>
-            <button type="button" class="ui-button ui-button--primary" data-photo-save>{{ trans('photos.save') }}</button>
-            <button type="button" class="ui-button ui-button--secondary" data-photo-cancel>{{ trans('photos.manage.cancel') }}</button>
+        <div class="users-album-photo__menu">
+            <button type="button" class="ui-button users-album-photo__menu-toggle" data-photo-menu-toggle aria-haspopup="menu" aria-expanded="false" aria-label="{{ trans('photos.manage.photo_menu') }}">⋯</button>
+            <div class="users-album-photo__popover" data-photo-menu role="menu" aria-label="{{ trans('photos.manage.photo_menu') }}" hidden>
+                <button type="button" role="menuitem" tabindex="-1" data-photo-edit>{{ trans('photos.manage.details') }}</button>
+                <button type="button" role="menuitem" tabindex="-1" data-photo-set-cover{% if item.cover %} disabled{% endif %}>{{ item.cover ? trans('photos.manage.album_cover') : trans('photos.manage.set_cover') }}</button>
+                <button type="button" role="menuitem" tabindex="-1" class="users-album-photo__delete" data-photo-delete>{{ trans('photos.manage.delete_photo') }}</button>
+            </div>
         </div>
     {% endif %}
 </figure>

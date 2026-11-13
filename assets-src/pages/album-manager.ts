@@ -1,3 +1,4 @@
+import { initPhotoActions } from './photo-actions';
 import { trans } from '../shared/i18n';
 import { ui } from '../shared/ui';
 import { getApiErrorMessage } from '../shared/api-errors';
@@ -66,7 +67,7 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
         if (reorderButton) reorderButton.disabled = busy || uploading || photoCount < 2;
         const cancelOrder = root.querySelector<HTMLButtonElement>('[data-album-cancel-order]');
         if (cancelOrder) cancelOrder.disabled = busy || uploading;
-        root.querySelectorAll<HTMLButtonElement>('[data-photo-album-delete], [data-photo-save], [data-photo-set-cover]').forEach(button => button.disabled = busy);
+        root.querySelectorAll<HTMLButtonElement>('[data-photo-album-delete]').forEach(button => button.disabled = busy);
         root.dataset.selecting = String(selecting);
         root.dataset.reordering = String(reordering);
         const hint = root.querySelector<HTMLElement>('[data-album-reorder-hint]');
@@ -94,12 +95,12 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
         all.checked = count > 0 && count === cards().length;
         all.indeterminate = count > 0 && count < cards().length;
     };
-    const api = async (data: unknown, method: 'PATCH' | 'DELETE' = 'PATCH', url = root.dataset.apiUrl!, inSettings = false) => {
-        busy = true; if (inSettings) settingsError.textContent = ''; else setStatus(''); update();
+    const api = async (data: unknown, method: 'PATCH' | 'DELETE' = 'PATCH', url = root.dataset.apiUrl!, errorTarget: 'page' | 'album' | 'photo' = 'page') => {
+        busy = true; if (errorTarget === 'album') settingsError.textContent = ''; else if (errorTarget === 'page') setStatus(''); update();
         try { return await cms.api<{ redirectUrl?: string }>(url, { method, data }); }
         catch (error) {
             const message = getApiErrorMessage(error, trans('js.common.action_failed'));
-            if (inSettings) settingsError.textContent = message; else setStatus(message);
+            if (errorTarget === 'album') settingsError.textContent = message; else if (errorTarget === 'page') setStatus(message);
             throw error;
         }
         finally { busy = false; update(); setTimeout(() => { void syncUploadOrder(); }, 0); }
@@ -125,7 +126,7 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
     const saveSettings = async () => {
         if (!title.reportValidity() || !description.reportValidity()) return;
         const data = fields();
-        await api(data, 'PATCH', root.dataset.apiUrl!, true);
+        await api(data, 'PATCH', root.dataset.apiUrl!, 'album');
         originalFields = JSON.stringify(data);
         root.querySelector('[data-album-heading]')!.textContent = data.title;
         const summary = root.querySelector<HTMLElement>('[data-album-description]')!;
@@ -204,30 +205,6 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
                 } catch { /* Keep selection for retry. */ }
             } });
         }
-        const card = button.closest<HTMLElement>('[data-photo-card]');
-        if (!card) return;
-        if (button.matches('[data-photo-edit]')) card.querySelector<HTMLElement>('[data-photo-details]')!.hidden = false;
-        if (button.matches('[data-photo-cancel]')) {
-            card.querySelector<HTMLInputElement>('[data-photo-title]')!.value = card.dataset.title!;
-            card.querySelector<HTMLTextAreaElement>('[data-photo-caption]')!.value = card.dataset.caption!;
-            card.querySelector<HTMLElement>('[data-photo-details]')!.hidden = true;
-        }
-        if (button.matches('[data-photo-save]')) {
-            const data = { slug: card.dataset.slug!, title: card.querySelector<HTMLInputElement>('[data-photo-title]')!.value, caption: card.querySelector<HTMLTextAreaElement>('[data-photo-caption]')!.value };
-            void api({ photo: data }).then(() => {
-                card.dataset.title = data.title; card.dataset.caption = data.caption;
-                card.querySelector('[data-photo-name]')!.textContent = data.title;
-                card.querySelector('img')!.alt = data.title;
-                card.querySelector<HTMLElement>('[data-photo-details]')!.hidden = true;
-                setStatus(trans('js.photos.saved')); update();
-            }).catch(() => {});
-        }
-        if (button.matches('[data-photo-set-cover]')) {
-            void api({ cover: card.dataset.slug }).then(() => {
-                cards().forEach(item => item.querySelector<HTMLElement>('[data-photo-cover-badge]')!.hidden = item !== card);
-                setStatus(trans('js.photos.saved')); update();
-            }).catch(() => {});
-        }
         update();
     };
     const change = (event: Event) => {
@@ -250,8 +227,6 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
         card.querySelectorAll<HTMLAnchorElement>('a').forEach(link => link.href = data.redirectUrl);
         card.querySelector('[data-photo-name]')!.textContent = data.title;
         card.querySelector<HTMLInputElement>('[data-photo-select]')!.setAttribute('aria-label', `${trans('js.photos.select_photo')} ${data.title ?? ''}`);
-        card.querySelector<HTMLInputElement>('[data-photo-title]')!.value = data.title ?? '';
-        card.querySelector<HTMLTextAreaElement>('[data-photo-caption]')!.value = data.caption ?? '';
         originalOrder.push(data.slug); uploadedSlugs.add(data.slug); uploadSyncPending = true;
         if (placeholder) placeholder.replaceWith(card); else grid.append(card);
         update();
@@ -332,8 +307,18 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
         const input = root.querySelector<HTMLInputElement>('[data-photo-files]');
         if (input) { event.preventDefault(); input.files = event.dataTransfer.files; input.dispatchEvent(new Event('change')); }
     };
+    const photoActions = initPhotoActions(root, {
+        request: (data, method = 'PATCH', url = root.dataset.apiUrl!) => api(data, method, url, 'photo'),
+        isBusy: () => busy,
+        changed: update,
+        removed: slug => {
+            originalOrder = originalOrder.filter(value => value !== slug);
+            if (cards().length === 0) selecting = false;
+            update();
+        },
+    });
     const beforeunload = (event: BeforeUnloadEvent) => {
-        const photoDraft = cards().some(card => card.querySelector<HTMLInputElement>('[data-photo-title]')!.value !== card.dataset.title || card.querySelector<HTMLTextAreaElement>('[data-photo-caption]')!.value !== card.dataset.caption);
+        const photoDraft = photoActions?.hasDraft() ?? false;
         if (!deleted && (dirty() || photoDraft)) { event.preventDefault(); event.returnValue = ''; }
     };
     const updateToolbarHeight = () => {
@@ -356,6 +341,7 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
     return () => {
         finishDrag(true);
         disposed = true;
+        photoActions?.dispose();
         toolbarObserver?.disconnect();
         stopClosed(); stopDeleteClose?.();
         settingsForm.removeEventListener('submit', submitSettings);

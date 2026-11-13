@@ -89,18 +89,6 @@ it('adds uploaded photographs without losing unsaved title or order', () => {
     button('[data-album-cancel-order]').click();
     expect(order()).toEqual(['1', '2', '3', '4']);
 });
-it('saves captions and covers immediately while preserving album drafts', async () => {
-    button('[data-photo-edit]').click();
-    const caption = cards()[0].querySelector<HTMLTextAreaElement>('[data-photo-caption]')!;
-    caption.value = 'New caption';
-    button('[data-photo-save]').click(); await flush();
-    expect(api).toHaveBeenLastCalledWith('/api/album', { method: 'PATCH', data: { photo: { slug: '1', title: 'Photo 1', caption: 'New caption' } } });
-    expect(cards()[0].dataset.caption).toBe('New caption');
-    button('[data-photo-set-cover]').click(); await flush();
-    expect(api).toHaveBeenLastCalledWith('/api/album', { method: 'PATCH', data: { cover: '1' } });
-    expect(cards()[0].querySelector<HTMLElement>('[data-photo-cover-badge]')!.hidden).toBe(false);
-    expect(button('[data-album-save-order]').disabled).toBe(true);
-});
 it('warns before leaving with unsaved changes and stops after successful save', async () => {
     moveFirstLater();
     expect(window.dispatchEvent(new Event('beforeunload', { cancelable: true }))).toBe(false);

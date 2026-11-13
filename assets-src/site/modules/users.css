@@ -895,16 +895,35 @@ a.users-person:hover {
 [data-reordering="true"] .users-album-photo__grip { display: grid; place-items: center; position: absolute; z-index: 1; inset-block-start: .75rem; inset-inline-start: .75rem; inline-size: 2.75rem; block-size: 2.75rem; background: var(--ui-surface); border: 1px solid var(--ui-border); border-radius: var(--ui-radius); font-size: 1.5rem; touch-action: none; }
 [data-reordering="true"] .users-album-photo.is-dragging { opacity: .55; outline: 2px solid var(--ui-focus-ring); cursor: grabbing; }
 [data-reordering="true"] .users-album-photo:focus-visible { outline: 2px solid var(--ui-focus-ring); outline-offset: 2px; }
-.users-album-photo__menu { margin-block-start: var(--ui-space-2); }
-.users-album-photo__menu > summary { inline-size: 2.75rem; min-block-size: 2.75rem; display: grid; place-items: center; margin-inline-start: auto; cursor: pointer; font-size: 1.5rem; }
-.users-album-photo__menu[open] > button { display: block; inline-size: 100%; margin-block-end: var(--ui-space-2); }
-[data-photo-details] { border-block-start: 1px solid var(--ui-border); padding-block-start: var(--ui-space-3); }
-[data-photo-details] label { display: block; margin-block-end: var(--ui-space-3); }
+.users-album-photo__menu { position: relative; margin-block-start: var(--ui-space-2); display: flex; justify-content: flex-end; }
+.users-album-photo__menu-toggle { inline-size: 2.75rem; min-block-size: 2.75rem; padding: 0; font-size: 1.5rem; }
+.users-album-photo__popover { position: absolute; inset-inline-end: 0; inset-block-end: calc(100% + .25rem); z-index: 30; inline-size: max-content; max-inline-size: min(18rem, calc(100vw - 3rem)); padding: .375rem; background: var(--ui-surface); border: 1px solid var(--ui-border); border-radius: var(--ui-radius); box-shadow: var(--ui-shadow); }
+.users-album-photo__menu.is-below .users-album-photo__popover { inset-block-end: auto; inset-block-start: calc(100% + .25rem); }
+.users-album-photo__popover button { font: inherit; font-size: .875rem; display: block; inline-size: 100%; min-block-size: 2.75rem; padding: .625rem .75rem; text-align: start; border: 0; border-radius: var(--ui-radius); background: transparent; color: var(--ui-text); cursor: pointer; }
+.users-album-photo__popover button:hover:not(:disabled), .users-album-photo__popover button:focus-visible { background: var(--ui-surface-2); outline: 2px solid var(--ui-focus-ring); outline-offset: -2px; }
+.users-album-photo__popover button:disabled { color: var(--ui-muted); cursor: default; }
+.users-album-photo__popover .users-album-photo__delete { color: var(--ui-danger-text); }
+.users-photo-editor form { display: flex; flex-direction: column; overflow: hidden; margin: 0; max-block-size: calc(100dvh - 2rem); }
+dialog.users-photo-editor { inline-size: min(52rem, calc(100% - 2rem)); max-block-size: calc(100dvh - 2rem); }
+.modal-content.users-photo-editor { background: var(--ui-surface); color: var(--ui-text); }
+.modal-content.users-photo-editor form { max-block-size: calc(100dvh - 4rem); }
+.users-photo-editor .ui-modal__body { overflow-y: auto; min-block-size: 0; }
+.users-photo-editor__content { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--ui-space-4); align-items: start; }
+.users-photo-editor__preview { inline-size: 100%; block-size: auto; max-block-size: 24rem; object-fit: contain; border-radius: var(--ui-radius); background: var(--ui-surface-2); }
+.users-photo-editor .ui-input + .ui-label { margin-block-start: var(--ui-space-3); }
+.users-photo-editor__navigation { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--ui-space-2); margin-block-start: var(--ui-space-4); }
+.users-photo-editor [data-photo-editor-error]:empty, .users-photo-editor [data-photo-editor-status]:empty { display: none; }
+.users-photo-editor [data-photo-editor-error] { color: var(--ui-danger-text); overflow-wrap: anywhere; }
+@media (max-width: 640px) {
+    .users-photo-editor__content { grid-template-columns: minmax(0, 1fr); }
+    .users-photo-editor__preview { max-block-size: 12rem; }
+    .users-photo-editor__navigation > button { flex: 1; }
+    .users-photo-editor__navigation > span { order: -1; flex-basis: 100%; text-align: center; }
+}
 .users-album-cover { display: block; max-inline-size: 100%; max-block-size: 28rem; margin: var(--ui-space-4) auto; border-radius: var(--ui-radius); object-fit: contain; }
 @media (max-width: 640px) {
     .users-album-page .users-heading { align-items: flex-start; }
     .users-album-toolbar > .users-actions { gap: var(--ui-space-2); }
-    .users-album-photo__menu > summary { min-inline-size: 2.75rem; }
 }
 
 /* Album parameters stay out of the photo workspace. */

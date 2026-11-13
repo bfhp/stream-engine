@@ -31,6 +31,7 @@
         {% if isManage %}
             <p class="users-album-description" data-album-description{% if not album.description %} hidden{% endif %}>{{ album.description|striptags }}</p>
             {% include 'components/users/photo-album-settings.twig' %}
+            {% include 'components/users/photo-editor.twig' %}
             <section class="users-album-workspace" aria-labelledby="album-photos-heading">
                 <div class="users-heading">
                     <h2 id="album-photos-heading" class="users-heading__title--sm">{{ trans('photos.title') }} · <span data-album-photo-count>{{ photoItems|length }}</span></h2>

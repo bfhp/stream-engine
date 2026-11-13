@@ -1,0 +1,28 @@
+<form data-photo-editor-form>
+    <div class="ui-modal__header">
+        <h2 class="ui-modal__title" id="photo-editor-title">{{ trans('photos.manage.details') }}</h2>
+        <button type="button" class="ui-close" data-photo-editor-close aria-label="{{ trans('view.ui.close') }}">&times;</button>
+    </div>
+    <div class="ui-modal__body">
+        <div class="users-photo-editor__content">
+            <img class="users-photo-editor__preview" data-photo-editor-preview alt="">
+            <div>
+                <label class="ui-label" for="photo-editor-name">{{ trans('photos.photo_title') }}</label>
+                <input class="ui-input" id="photo-editor-name" data-photo-editor-name maxlength="255" required>
+                <label class="ui-label" for="photo-editor-caption">{{ trans('photos.caption') }}</label>
+                <textarea class="ui-input" id="photo-editor-caption" data-photo-editor-caption maxlength="2000" rows="5"></textarea>
+                <p data-photo-editor-error role="alert"></p>
+                <p data-photo-editor-status role="status" aria-live="polite"></p>
+            </div>
+        </div>
+        <div class="users-photo-editor__navigation">
+            <button type="button" class="ui-button ui-button--secondary" data-photo-editor-prev>{{ trans('photos.manage.previous_photo') }}</button>
+            <span class="ui-help" data-photo-editor-position></span>
+            <button type="button" class="ui-button ui-button--secondary" data-photo-editor-next>{{ trans('photos.manage.next_photo') }}</button>
+        </div>
+    </div>
+    <div class="ui-modal__footer">
+        <button type="button" class="ui-button ui-button--secondary" data-photo-editor-close>{{ trans('photos.manage.cancel') }}</button>
+        <button type="submit" class="ui-button ui-button--primary" data-photo-editor-save disabled>{{ trans('photos.save') }}</button>
+    </div>
+</form>
