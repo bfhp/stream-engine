@@ -41,12 +41,12 @@
                 <button type="button" class="ui-button ui-button--secondary" data-album-select aria-pressed="false">{{ trans('photos.manage.select') }}</button>
                 <button type="button" class="ui-button ui-button--secondary" data-album-reorder aria-pressed="false">{{ trans('photos.manage.reorder') }}</button>
                 </div>
-                <div class="users-actions" data-album-order-actions hidden>
+                <div class="users-actions" data-album-order-actions hidden inert>
                     <button type="button" class="ui-button ui-button--primary" data-album-save-order disabled>{{ trans('photos.manage.save_order') }}</button>
                     <button type="button" class="ui-button ui-button--secondary" data-album-cancel-order>{{ trans('photos.manage.cancel') }}</button>
                 <p class="ui-help users-album-toolbar__hint" id="album-reorder-hint" data-album-reorder-hint hidden>{{ trans('photos.manage.reorder_hint') }}</p>
                 </div>
-                <div class="users-actions" data-album-selection hidden>
+                <div class="users-actions" data-album-selection hidden inert>
                     <button type="button" class="ui-button ui-button--secondary" data-album-cancel-selection>{{ trans('photos.manage.cancel') }}</button>
                     <label><input type="checkbox" data-album-select-all> {{ trans('photos.manage.all') }}</label>
                     <span data-album-selection-count role="status"></span>

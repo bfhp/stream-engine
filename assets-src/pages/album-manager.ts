@@ -54,7 +54,7 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
         root.dataset.dirty = String(dirty());
         const orderActions = root.querySelector<HTMLElement>('[data-album-order-actions]');
         const showingOrder = !selecting && !uploading && !syncingUploads && (reordering || orderDirty());
-        if (orderActions) orderActions.hidden = !showingOrder;
+        if (orderActions) { orderActions.hidden = !showingOrder; orderActions.inert = !showingOrder; }
         settings.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLButtonElement>('input, textarea, [data-album-settings-cancel]').forEach(control => control.disabled = busy);
         const photoCount = cards().length;
         const counter = root.querySelector('[data-album-photo-count]');
@@ -71,14 +71,14 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
         root.dataset.selecting = String(selecting);
         root.dataset.reordering = String(reordering);
         const hint = root.querySelector<HTMLElement>('[data-album-reorder-hint]');
-        if (hint) hint.hidden = !reordering;
+        if (hint) { hint.hidden = !reordering; hint.setAttribute('aria-hidden', String(!reordering)); }
         for (const card of cards()) {
             if (reordering) { card.tabIndex = 0; card.setAttribute('aria-describedby', 'album-reorder-hint'); }
             else { card.removeAttribute('tabindex'); card.removeAttribute('aria-describedby'); }
             card.querySelectorAll<HTMLAnchorElement>('a').forEach(link => { link.draggable = false; if (reordering) link.tabIndex = -1; else link.removeAttribute('tabindex'); });
         }
         const selection = root.querySelector<HTMLElement>('[data-album-selection]')!;
-        selection.hidden = !selecting;
+        selection.hidden = !selecting; selection.inert = !selecting;
         const standardActions = root.querySelector<HTMLElement>('[data-album-standard-actions]');
         if (standardActions) {
             standardActions.hidden = selecting || showingOrder;
@@ -90,7 +90,7 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
         root.querySelector('[data-album-select]')?.setAttribute('aria-pressed', String(selecting));
         root.querySelector('[data-album-reorder]')?.setAttribute('aria-pressed', String(reordering));
         const cancel = root.querySelector<HTMLElement>('[data-album-cancel-order]');
-        if (cancel) cancel.hidden = !reordering;
+        if (cancel) { cancel.hidden = !reordering; cancel.inert = !reordering; }
         const all = root.querySelector<HTMLInputElement>('[data-album-select-all]')!;
         all.checked = count > 0 && count === cards().length;
         all.indeterminate = count > 0 && count < cards().length;
@@ -152,6 +152,10 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
         if (busy && event.target === settings) { event.preventDefault(); event.stopImmediatePropagation(); }
     };
     const stopClosed = ui.modal.onClosed(settings, () => { if (!busy) restoreFields(); });
+    const focusAfterModeChange = (target: HTMLElement | null | undefined) => {
+        // Let the browser finish replacing hidden/inert toolbar panels before restoring focus.
+        requestAnimationFrame(() => requestAnimationFrame(() => { if (!disposed && target?.isConnected && !target.closest('[hidden], [inert]')) target.focus({ preventScroll: true }); }));
+    };
     const click = (event: Event) => {
         const target = event.target as HTMLElement;
         if (reordering && target.closest('[data-photo-card] a')) event.preventDefault();
@@ -179,17 +183,20 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
         if (button.matches('[data-open-upload]')) {
             root.querySelector<HTMLInputElement>('[data-photo-files]')?.click();
         }
-        if (button.matches('[data-album-select]')) { selecting = !selecting; reordering = false; update(); }
+        if (button.matches('[data-album-select]')) {
+            selecting = !selecting; reordering = false; update();
+            focusAfterModeChange(root.querySelector<HTMLElement>('[data-album-cancel-selection]')); return;
+        }
         if (button.matches('[data-album-cancel-selection]')) {
             selecting = false;
             cards().forEach(card => card.querySelector<HTMLInputElement>('[data-photo-select]')!.checked = false);
-            update();
+            update(); focusAfterModeChange(root.querySelector<HTMLElement>('[data-album-select]')); return;
         }
-        if (button.matches('[data-album-reorder]')) { reordering = true; selecting = false; update(); }
+        if (button.matches('[data-album-reorder]')) { reordering = true; selecting = false; update(); focusAfterModeChange(cards()[0]); return; }
         if (button.matches('[data-album-cancel-order]')) {
             const bySlug = new Map(cards().map(card => [card.dataset.slug, card]));
             for (const slug of originalOrder) { const card = bySlug.get(slug); if (card) grid.append(card); }
-            reordering = false; update();
+            reordering = false; update(); focusAfterModeChange(root.querySelector<HTMLElement>('[data-album-reorder]')); return;
         }
         if (button.matches('[data-album-delete-selected]')) {
             const chosen = selected(); const slugs = chosen.map(card => card.dataset.slug!);

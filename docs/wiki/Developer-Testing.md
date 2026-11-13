@@ -324,6 +324,25 @@ invalid ARIA, and duplicate ids quickly; they cannot judge contrast, focus
 behavior, or anything that depends on layout. `tests/js/a11y-admin.test.ts`
 is the reference suite.
 
+**Gallery browser checks** use production Twig templates and built browser assets
+with isolated HTTP fixtures. They require PHP, Composer dependencies and Chromium,
+but no running site, database, credentials or saved content:
+
+```bash
+npm run build
+npx playwright install chromium
+npm run test:a11y:gallery
+```
+
+The gallery gate covers both themes in light/dark mode and Arabic RTL,
+320px reflow, the sidebar preview, albums, latest/best showcase, viewer focus
+containment/return, comments and actions, keyboard reordering and editor dialogs.
+It fails on every WCAG 2.2 A/AA violation without baseline exceptions. Reports
+and failure traces are written under `storage/a11y/gallery/`. An already installed
+Chromium executable can be selected with `A11Y_CHROMIUM_PATH`. API responses are
+stubbed; permissions and persistence remain covered by PHP integration tests.
+The accessibility CI workflow runs this gate before scanning the installed site.
+
 **Page scans** in `tests/a11y/` open an installed site in Chromium. They scan
 the home, not-found, and sign-in dialog views, account pages the sign-in
 dialog links to, the built-in administration screens and empty editors, and

@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:a11y": "node tests/a11y/run.mjs",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "test:a11y:gallery": "playwright test -c tests/a11y/gallery.config.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",

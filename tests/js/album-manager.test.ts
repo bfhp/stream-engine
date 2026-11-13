@@ -206,3 +206,16 @@ it('cancels selection, clears checkboxes and preserves an unsaved photo order', 
     expect(order()).toEqual(['2', '1', '3']);
     expect(button('[data-album-save-order]').disabled).toBe(false);
 });
+
+
+it('keeps keyboard focus in the active toolbar mode and returns it on cancel', async () => {
+    button('[data-album-select]').click();
+    await vi.waitFor(() => expect(document.activeElement).toBe(button('[data-album-cancel-selection]')));
+    button('[data-album-cancel-selection]').click();
+    await vi.waitFor(() => expect(document.activeElement).toBe(button('[data-album-select]')));
+    expect(document.querySelector<HTMLElement>('[data-album-selection]')!.inert).toBe(true);
+    button('[data-album-reorder]').click();
+    await vi.waitFor(() => expect(document.activeElement).toBe(cards()[0]));
+    button('[data-album-cancel-order]').click();
+    await vi.waitFor(() => expect(document.activeElement).toBe(button('[data-album-reorder]')));
+});

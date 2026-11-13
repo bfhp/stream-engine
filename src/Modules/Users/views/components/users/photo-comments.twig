@@ -7,9 +7,9 @@
     {% if not photoCommentGuest and not photoComments.isReplyPage %}
         <form class="users-photo-composer" data-photo-comment-form>
             <button type="button" class="users-photo-composer__prompt" data-photo-compose-open hidden>{{ trans('view.comments.placeholder') }}…</button>
-            <p class="ui-help" data-photo-comment-context hidden></p>
+            <p class="ui-help" id="photo-comment-context" data-photo-comment-context hidden></p>
             <label class="ui-visually-hidden" for="photo-comment-text">{{ trans('view.comments.comment') }}</label>
-            <textarea class="ui-input" id="photo-comment-text" name="content" rows="3" maxlength="5000" required placeholder="{{ trans('view.comments.placeholder') }}"></textarea>
+            <textarea class="ui-input" id="photo-comment-text" aria-describedby="photo-comment-context" name="content" rows="3" maxlength="5000" required placeholder="{{ trans('view.comments.placeholder') }}"></textarea>
             <div class="users-actions" data-photo-compose-actions><button type="submit" class="ui-button ui-button--primary ui-button--sm">{{ trans('view.comments.submit') }}</button><button type="button" class="ui-button ui-button--secondary ui-button--sm" data-photo-comment-cancel>{{ trans('photos.manage.cancel') }}</button></div>
         </form>
     {% elseif photoCommentGuest and not photoComments.isReplyPage %}
