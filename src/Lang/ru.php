@@ -1744,4 +1744,6 @@ return [
     'js.photos.cover_saved' => 'Обложка альбома обновлена',
     'js.photos.photo_deleted' => 'Фотография удалена',
     'js.photos.photo_position' => '{position} из {total}',
+    'photos.rating_login' => 'Войти, чтобы оценить',
+    'photos.rating_own' => 'Ваша фотография',
 ];

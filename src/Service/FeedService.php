@@ -652,6 +652,10 @@ class FeedService
             throw new NotFoundException($this->tm->trans('feed.rating_target_not_found'));
         }
 
+        if ($feed->type === 'gallery-photo' && $feed->ownerId === $user->id) {
+            throw new ForbiddenException($this->tm->trans('feed.forbidden'));
+        }
+
         $this->ratingRepository->submit($feedId, $user->id, $value);
 
         return $this->getFeedById($feedId, $user);

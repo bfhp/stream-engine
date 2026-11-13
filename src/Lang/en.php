@@ -1707,4 +1707,6 @@ Email: {email}
     'js.photos.cover_saved' => 'Album cover updated',
     'js.photos.photo_deleted' => 'Photo deleted',
     'js.photos.photo_position' => '{position} of {total}',
+    'photos.rating_login' => 'Sign in to rate',
+    'photos.rating_own' => 'Your photo',
 ];

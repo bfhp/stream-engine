@@ -1,3 +1,4 @@
+import { ui } from '../shared/ui';
 /** Progressive viewer: real photo URLs work without JavaScript or from a shared link. */
 export function initPhotoViewer(): void {
     let viewer = document.querySelector<HTMLElement>('[data-photo-viewer]');
@@ -8,6 +9,8 @@ export function initPhotoViewer(): void {
     let request: AbortController | null = null;
     let touch: { id: number; x: number; y: number } | null = null;
     const direct = viewer !== null;
+    const showLogin = () => { const auth = document.getElementById('authFormModal'); if (auth) ui.modal.open(auth); };
+    if (direct && new URL(location.href).searchParams.get('login') === '1' && viewer?.querySelector('[data-photo-login]')) showLogin();
     const safeUrl = (value: string) => { const url = new URL(value, location.href); if (url.origin !== location.origin) throw new Error('Invalid photo URL'); return url; };
     const preload = () => {
         const preview = viewer?.querySelector<HTMLElement>('[data-photo-preview]')?.dataset.photoPreview;
@@ -55,6 +58,7 @@ export function initPhotoViewer(): void {
         if (event.button !== 0 || event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
         const target = (event.target as HTMLElement).closest<HTMLAnchorElement>('a');
         if (!target) return;
+        if (target.matches('[data-photo-login]') && !dialog) { event.preventDefault(); showLogin(); return; }
         if (target.matches('[data-photo-open]') && !direct) {
             if (typeof HTMLDialogElement === 'undefined' || !HTMLDialogElement.prototype.showModal) return;
             event.preventDefault(); opener = target; albumUrl = location.href; albumScroll = window.scrollY; void load(target.href, 'open');
@@ -66,7 +70,7 @@ export function initPhotoViewer(): void {
         else if (!direct) close();
     });
     document.addEventListener('keydown', event => {
-        if (!viewer || (event.target as HTMLElement).closest('input, textarea, select, [contenteditable="true"]') || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+        if (!viewer || (event.target as HTMLElement).closest('input, textarea, select, [contenteditable="true"], [data-photo-rating]') || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
         if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); navigate(event.key === 'ArrowLeft' ? 'previous' : 'next'); }
         if (event.key === 'Escape' && !dialog) { const link = viewer.querySelector<HTMLAnchorElement>('[data-photo-viewer-close]'); if (link) location.assign(link.href); }
     });

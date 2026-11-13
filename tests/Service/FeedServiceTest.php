@@ -3555,4 +3555,15 @@ final class FeedServiceTest extends TestCase
         $this->assertFalse($result['meta']['has_more']);
         $this->assertNull($result['meta']['next_cursor']);
     }
+
+    public function testPhotoAuthorCannotRateThroughGenericFeedEndpoint(): void
+    {
+        $db = $this->createStub(PdoDatabase::class);
+        $db->method('fetchOne')->willReturn(['id' => 58, 'parent_id' => 42, 'owner_id' => 7, 'type' => 'gallery-photo', 'slug' => '1', 'title' => 'Photo', 'visibility' => 'public', 'container_id' => null]);
+        $ratingDb = $this->createMock(PdoDatabase::class);
+        $ratingDb->expects(self::never())->method('begin');
+        $service = $this->makeService(new FeedRepository($db), $this->makeUrlGenerator(), ratingRepository: new FeedRatingRepository($ratingDb));
+        $this->expectException(ForbiddenException::class);
+        $service->rateFeed(58, 5, new User(7, ''));
+    }
 }

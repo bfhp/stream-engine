@@ -1,3 +1,4 @@
+import { initPhotoRating } from './photo-rating';
 import { initPhotoViewer } from './photo-viewer';
 import { initAlbumManager } from './album-manager';
 import { initPhotoUpload } from './photo-upload';
@@ -747,3 +748,5 @@ document.addEventListener('DOMContentLoaded', () => { initPhotoUpload(); });
 document.addEventListener('DOMContentLoaded', () => { initAlbumManager(); });
 
 document.addEventListener('DOMContentLoaded', initPhotoViewer);
+
+document.addEventListener('DOMContentLoaded', initPhotoRating);

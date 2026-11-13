@@ -11,6 +11,16 @@
     </div>
     <footer class="users-photo-viewer__footer">
         <div><h1>{{ photo.title }}</h1>{% if photo.description %}<p>{{ photo.description|striptags }}</p>{% endif %}</div>
+        <div class="users-photo-rating" data-photo-rating data-api-url="{{ photoRatingUrl }}" data-value="{{ photoUserRating ?? '' }}">
+            <div class="users-photo-rating__stars" role="group" aria-label="{{ trans('view.users.blog.post.show.01') }}">
+                {% for value in 1..5 %}
+                    <button type="button" data-photo-rate="{{ value }}" aria-label="{{ trans('view.common.rate_aria', {rating: value}) }}" aria-pressed="{{ photoUserRating == value ? 'true' : 'false' }}"{% if not photoCanRate %} disabled{% endif %}>{{ photoUserRating and value <= photoUserRating ? '★' : '☆' }}</button>
+                {% endfor %}
+            </div>
+            <span data-photo-rating-summary role="status" aria-live="polite">{% if photo.ratingCount %}{{ photo.ratingAverage|number_format(1) }} · {{ photo.ratingCount }}{% else %}{{ trans('view.forums.topic.view.26') }}{% endif %}</span>
+            {% if photoRatingGuest %}<a data-photo-login href="{{ photo.canonicalUrl }}?login=1">{{ trans('photos.rating_login') }}</a>{% elseif not photoCanRate %}<small>{{ trans('photos.rating_own') }}</small>{% endif %}
+            <span data-photo-rating-error role="alert"></span>
+        </div>
         <a href="{{ photoOriginalUrl }}">{{ trans('photos.original') }}</a>
     </footer>
 </section>

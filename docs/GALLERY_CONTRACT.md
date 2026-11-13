@@ -358,7 +358,17 @@ page of previews. The client handles arrows, horizontal touch swipes, Escape,
 Back/Forward and next-preview preloading. HTML requests use no-store and the
 existing scoped server authorization. No new core classes or migrations.
 
-Next: photo ratings, then comments and the separate showcase.
+Photo ratings use the existing 1–5 Feed rating storage and transactional
+aggregate updates. POST /api/v1/photo-albums/{contextId}/{albumId}/photos/{photoSlug}/rating
+accepts an integer value and resolves context, album and ready photo with ACL
+before voting. Authentication and CSRF are required. A repeat vote changes the
+existing value. Photo authors cannot vote for themselves, including through
+the generic feed-rating endpoint. Viewer fragments include the current user
+vote, average and count; delegated controls survive navigation. Guests enter
+through the existing login modal on the standalone photo page. Failed requests
+retain the prior vote and show an inline error.
+
+Next: photo comments and the separate showcase.
 
 ## Implementation sequence and acceptance
 

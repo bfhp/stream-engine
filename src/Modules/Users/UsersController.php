@@ -735,6 +735,10 @@ class UsersController extends AbstractController
             'nextPhotoUrl' => $photoIndex !== null ? ($photoItems[$photoIndex + 1]['url'] ?? null) : null,
             'nextPhotoPreviewUrl' => $photoIndex !== null ? ($photoItems[$photoIndex + 1]['previewUrl'] ?? null) : null,
             'photoReturnUrl' => $photoReturnUrl,
+            'photoUserRating' => $photo !== null ? $this->feedService->getUserRatingValue($photo->id, $this->context->user) : null,
+            'photoCanRate' => $photo !== null && !$this->context->user->isGuest() && $photo->ownerId !== $this->context->user->id,
+            'photoRatingGuest' => $this->context->user->isGuest(),
+            'photoRatingUrl' => $photo !== null ? $itemApiUrl.'/photos/'.$photo->slug.'/rating' : null,
             'photoUploadApiUrl' => $itemApiUrl !== null ? $itemApiUrl.'/photos' : null,
             'photoPreviewUrl' => $photo !== null ? $this->urlGenerator->action($scope.'.photo-file', [...$albumParams, 'photoSlug' => $photo->slug, 'variant' => 'preview']) : null,
             'photoOriginalUrl' => $photo !== null ? $this->urlGenerator->action($scope.'.photo-file', [...$albumParams, 'photoSlug' => $photo->slug, 'variant' => 'original']) : null,
@@ -748,6 +752,22 @@ class UsersController extends AbstractController
             'nextUrl' => $offset + 20 < $total ? $this->urlGenerator->action($paginationAction, $paginationParams, query: ['offset' => $offset + 20]) : null,
             'head_ext' => ['<script type="module" src="/assets/js/users.js" defer></script>'],
         ]);
+    }
+
+    private function handlePhotoRatingRequest(int $contextId, int $albumId, string $photoSlug): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            throw new ValidationException('Method not allowed', 405);
+        }
+        $this->requireAuthenticatedUser();
+        Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
+        $input = json_decode(file_get_contents('php://input'), true);
+        if (!is_array($input) || !is_int($input['value'] ?? null)) {
+            throw new ValidationException($this->tm->trans('feed.rating_invalid'));
+        }
+        $photo = $this->photoUploadService()->getPhotoBySlug($contextId, $albumId, $photoSlug, $this->context->user);
+        $updated = $this->feedService->rateFeed($photo->id, $input['value'], $this->context->user);
+        echo Formatter::json(['ratingAverage' => $updated->ratingAverage(), 'ratingCount' => $updated->ratingCount, 'userRating' => $input['value']]);
     }
 
     private function handlePhotosCollectionRequest(int $contextId, int $albumId): void
@@ -3853,6 +3873,7 @@ class UsersController extends AbstractController
         match ($page->action) {
             'users.collection' => $this->handleUsersCollectionRequest(),
             'password.retrieve' => $this->handleUserRetrieveRequest(),
+            'photos.rating' => $this->handlePhotoRatingRequest((int) ($args['contextId'] ?? 0), (int) ($args['albumId'] ?? 0), (string) ($args['photoSlug'] ?? '')),
             'photos.upload' => $this->handlePhotosCollectionRequest((int) ($args['contextId'] ?? 0), (int) ($args['albumId'] ?? 0)),
             'user.photo-file', 'community.photo-file' => $this->handlePhotoFileRequest($page, $args),
             'photos.album-item' => $this->handlePhotoAlbumItemRequest((int) ($args['contextId'] ?? 0), (int) ($args['albumId'] ?? 0)),
@@ -4590,5 +4611,8 @@ class UsersController extends AbstractController
         ));
         $photoCollectionId = $pageTree->getMaxPageId();
         $pageTree->add(Page::api(id: $photoCollectionId, parentId: $photoAlbumItemId, pattern: 'photos', requestMethods: ['POST', 'DELETE'], action: 'photos.upload'));
+        $photoItemId = $pageTree->getMaxPageId();
+        $pageTree->add(Page::api(id: $photoItemId, parentId: $photoCollectionId, pattern: '{photoSlug}', requestMethods: ['GET'], action: 'photos.photo-parent'));
+        $pageTree->add(Page::api(id: $pageTree->getMaxPageId(), parentId: $photoItemId, pattern: 'rating', requestMethods: ['POST'], action: 'photos.rating'));
     }
 }
