@@ -75,7 +75,11 @@
             <p class="ui-help">{{ trans('photos.title') }} · {{ photoCount }}</p>
             {% if photoItems %}{% include 'components/users/photo-grid.twig' %}{% else %}<p>{{ trans('photos.empty_album') }}</p>{% endif %}
         {% else %}
-            <ul class="users-feed">{% for item in albums %}<li class="ui-card users-panel"><a href="{{ item.url }}">{{ item.title }}</a></li>{% else %}<li>{{ trans('photos.empty') }}</li>{% endfor %}</ul>
+            {% if albums %}
+                <ul class="users-album-list">
+                    {% for item in albums %}{% include 'components/users/photo-album-card.twig' %}{% endfor %}
+                </ul>
+            {% else %}<p class="ui-help">{{ trans('photos.empty') }}</p>{% endif %}
         {% endif %}
         {% if not isManage and not isAlbumForm and not photo %}
             <nav aria-label="{{ trans('photos.pagination') }}">

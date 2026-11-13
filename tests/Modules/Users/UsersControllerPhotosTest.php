@@ -309,4 +309,50 @@ final class UsersControllerPhotosTest extends TestCase
         $this->expectException(NotFoundException::class);
         $controller->show($route['page'], ['username' => 'alice', 'albumSlug' => 'album', 'photoSlug' => '51']);
     }
+    public function testAlbumCardsUseScopedCoversAndOnlyFetchOneVisiblePhotoPerAlbum(): void
+    {
+        $owner = new User(1, '', username: 'alice');
+        $viewer = new User(2, '');
+        $blog = new Feed(10, null, 1, 'blog', 'alice', 'Blog', null, null, '', null, 'public', 0, null, null, null);
+        $album = new Feed(42, 10, 1, 'gallery-album', 'summer', 'Summer', '<p>Summer &amp; sunshine</p>', null, '', null, 'public', 0, null, null, null, metadata: ['gallery.cover_photo_id' => '900']);
+        $foreignCoverAlbum = new Feed(43, 10, 1, 'gallery-album', 'walks', 'Walks', null, null, '', null, 'public', 0, null, null, null, metadata: ['gallery.cover_photo_id' => '900']);
+        $emptyAlbum = new Feed(44, 10, 1, 'gallery-album', 'empty', 'Empty', null, null, '', null, 'public', 0, null, null, null);
+        $metadata = ['gallery.state' => 'ready', 'gallery.width' => '100', 'gallery.height' => '100', 'gallery.original_upload_id' => '1', 'gallery.preview_upload_id' => '2'];
+        $cover = new Feed(900, 42, 1, 'gallery-photo', '9', 'Cover', null, null, '', null, 'public', 9, null, null, null, metadata: $metadata);
+        $firstSummer = new Feed(902, 42, 1, 'gallery-photo', '1', 'First summer photo', null, null, '', null, 'public', 0, null, null, null, metadata: $metadata);
+        $first = new Feed(901, 43, 1, 'gallery-photo', '1', 'First', null, null, '', null, 'public', 0, null, null, null, metadata: $metadata);
+        $feeds = $this->createMock(FeedService::class);
+        $feeds->method('getFeedByOwnerAndType')->willReturn($blog);
+        $feeds->method('getFeedById')->willReturnCallback(fn ($id) => match ($id) {
+            10 => $blog, 42 => $album, 43 => $foreignCoverAlbum, 44 => $emptyAlbum, 900 => $cover, default => null,
+        });
+        $feeds->expects(self::exactly(4))->method('getFeedsByParentAndTypePage')->willReturnCallback(function ($parent, $type, $user, $limit, $offset, $ordered = false) use ($viewer, $album, $foreignCoverAlbum, $emptyAlbum, $firstSummer, $first) {
+            self::assertSame($viewer, $user);
+            if ($parent === 10) {
+                self::assertSame('gallery-album', $type);
+                self::assertSame(20, $limit);
+                self::assertSame(20, $offset);
+                return ['items' => [$album, $foreignCoverAlbum, $emptyAlbum], 'total' => 23];
+            }
+            self::assertSame('gallery-photo', $type);
+            self::assertSame(1, $limit);
+            self::assertSame(0, $offset);
+            self::assertTrue($ordered);
+            return match ($parent) {
+                42 => ['items' => [$firstSummer], 'total' => 200],
+                43 => ['items' => [$first], 'total' => 1],
+                44 => ['items' => [], 'total' => 0],
+            };
+        });
+        [$controller, $router] = $this->controller($feeds, $viewer, $owner, ['offset' => '20']);
+        $route = $router->resolve('/users/alice/photos/');
+        $view = $controller->show($route['page'], ['username' => 'alice']);
+        self::assertSame('/users/alice/photos/summer/9/preview/', $view->data['albums'][0]['previewUrl']);
+        self::assertSame('Summer & sunshine', $view->data['albums'][0]['description']);
+        self::assertSame(200, $view->data['albums'][0]['photoCount']);
+        self::assertSame('/users/alice/photos/walks/1/preview/', $view->data['albums'][1]['previewUrl']);
+        self::assertNull($view->data['albums'][2]['previewUrl']);
+        self::assertSame(0, $view->data['albums'][2]['photoCount']);
+    }
+
 }

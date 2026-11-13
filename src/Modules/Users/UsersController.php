@@ -703,10 +703,28 @@ class UsersController extends AbstractController
         $paginationParams = $album !== null ? $albumParams : $params;
         $total = $album !== null ? $photoTotal : $result['total'];
 
-        $items = array_map(fn (Feed $item): array => [
-            'title' => $item->title,
-            'url' => $this->urlGenerator->action($scope.'.photo-album', [...$params, 'albumSlug' => $item->slug ?: (string) $item->id]),
-        ], $result['items']);
+        $items = [];
+        foreach ($result['items'] as $item) {
+            $itemParams = [...$params, 'albumSlug' => $item->slug ?: (string) $item->id];
+            // Only one ordered photo is loaded per album; the same ACL-filtered
+            // query supplies the count without loading every photograph.
+            $preview = $this->feedService->getFeedsByParentAndTypePage($item->id, 'gallery-photo', $this->context->user, 1, 0, true);
+            $cover = $preview['items'][0] ?? null;
+            if (isset($item->metadata['gallery.cover_photo_id'])) {
+                try {
+                    $cover = $this->photoUploadService()->getPhoto($context->id, $item->id, (int) $item->metadata['gallery.cover_photo_id'], $this->context->user);
+                } catch (NotFoundException|ForbiddenException) {
+                    // A deleted or inaccessible cover falls back to the first visible photo.
+                }
+            }
+            $items[] = [
+                'title' => $item->title,
+                'description' => trim((string) preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags($item->description ?? ''), ENT_QUOTES | ENT_HTML5, 'UTF-8'))),
+                'url' => $this->urlGenerator->action($scope.'.photo-album', $itemParams),
+                'photoCount' => $preview['total'],
+                'previewUrl' => $cover !== null ? $this->urlGenerator->action($scope.'.photo-file', [...$itemParams, 'photoSlug' => $cover->slug, 'variant' => 'preview']) : null,
+            ];
+        }
 
         $photoOwner = $profileUser !== null ? [
             'name' => $profileUser->getDisplayName(), 'avatar' => $this->userService->resolveAvatarUrl($profileUser->avatarUrl),

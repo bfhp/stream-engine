@@ -1,0 +1,17 @@
+<li>
+    <a class="users-album-card" href="{{ item.url }}">
+        <div class="users-album-card__cover">
+            {% if item.previewUrl %}<img src="{{ item.previewUrl }}" alt="" loading="lazy" decoding="async">{% else %}
+                <div class="users-album-card__empty">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.5"/><path d="m3 17 5-5 4 4 4-6 5 7"/></svg>
+                    <span>{{ trans('photos.empty_album') }}</span>
+                </div>
+            {% endif %}
+        </div>
+        <div class="users-album-card__body">
+            <h2>{{ item.title }}</h2>
+            <span class="users-album-card__count">{{ trans('photos.title') }} · {{ item.photoCount }}</span>
+            {% if item.description %}<p>{{ item.description }}</p>{% endif %}
+        </div>
+    </a>
+</li>
