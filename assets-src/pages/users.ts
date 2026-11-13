@@ -1,3 +1,4 @@
+import { csrfToken } from '../shared/csrf';
 import {
     FeedPostCard,
     renderFeedPostCard,
@@ -759,5 +760,47 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             },
         });
+    });
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.querySelector<HTMLFormElement>('[data-photo-upload-form]');
+    if (!form) return;
+    const requestId = crypto.randomUUID();
+    const button = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+    const progress = form.querySelector<HTMLProgressElement>('[data-photo-upload-progress]')!;
+    const error = form.querySelector<HTMLElement>('[data-photo-upload-error]')!;
+    form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        if (button.disabled) return;
+        button.disabled = true;
+        error.textContent = '';
+        progress.hidden = false;
+        progress.value = 0;
+        const data = new FormData(form);
+        data.set('requestId', requestId);
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', form.dataset.apiUrl!);
+        xhr.setRequestHeader('X-CSRF-Token', csrfToken());
+        xhr.timeout = 120000;
+        const fail = (reason: unknown): void => {
+            error.textContent = getApiErrorMessage(reason, trans('js.common.action_failed'));
+            button.disabled = false;
+            progress.hidden = true;
+        };
+        xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) progress.value = Math.round(event.loaded / event.total * 100);
+        };
+        xhr.onload = () => {
+            let payload: { redirectUrl?: string };
+            try { payload = JSON.parse(xhr.responseText); }
+            catch { fail(null); return; }
+            if (xhr.status < 200 || xhr.status >= 300) { fail(payload); return; }
+            if (payload.redirectUrl) window.location.assign(payload.redirectUrl);
+            else window.location.reload();
+        };
+        xhr.onerror = () => fail(null);
+        xhr.ontimeout = () => fail(null);
+        xhr.send(data);
     });
 });

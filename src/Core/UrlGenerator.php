@@ -325,7 +325,16 @@ final class UrlGenerator
                 );
             }
 
-            $pageChain[] = $childPage;
+            // Include static route segments between two feed-backed pages.
+            $append = false;
+            foreach ($this->buildPageAncestors($childPage) as $ancestor) {
+                if ($append) {
+                    $pageChain[] = $ancestor;
+                }
+                if ($ancestor->id === $currentPage->id) {
+                    $append = true;
+                }
+            }
             $currentPage = $childPage;
         }
 
@@ -407,6 +416,10 @@ final class UrlGenerator
             return $pattern;
         }
 
+        if ($matches[1] === 'id' || str_ends_with($matches[1], 'Id')) {
+            return str_replace($matches[0], (string) $feed->id, $pattern);
+        }
+
         if (! $feed->slug) {
             throw new RuntimeException("Feed $feed->id has no slug");
         }
@@ -451,7 +464,19 @@ final class UrlGenerator
 
     private function findChildPageByFeedType(int $parentId, string $type): ?Page
     {
-        return $this->pageTree->findChildByFeedType($parentId, $type);
+        $direct = $this->pageTree->findChildByFeedType($parentId, $type);
+        if ($direct !== null) {
+            return $direct;
+        }
+        foreach ($this->pageTree->findChildren($parentId) as $page) {
+            if ($page->feedType === null && ! str_contains($page->pattern, '{') && $page->responseType === 'html') {
+                $nested = $this->findChildPageByFeedType($page->id, $type);
+                if ($nested !== null) {
+                    return $nested;
+                }
+            }
+        }
+        return null;
     }
 
     private function cacheKey(int $feedId): string

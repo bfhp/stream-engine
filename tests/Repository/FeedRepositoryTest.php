@@ -155,6 +155,7 @@ final class FeedRepositoryTest extends TestCase
                 views INTEGER NOT NULL DEFAULT 0,
                 rating_avg REAL NOT NULL DEFAULT 0
             );
+            CREATE TABLE feed_metadata (feed_id INTEGER, name TEXT, content TEXT);
             CREATE TABLE membership_roles (
                 id INTEGER PRIMARY KEY,
                 role_level INTEGER NOT NULL

@@ -1624,4 +1624,12 @@ E-mail: {email}
     'photos.save' => 'Save',
     'js.photos.delete_confirm' => 'Delete this album?',
     'js.photos.delete_title' => 'Delete album',
+    'photos.photo' => 'Photograph',
+    'photos.file' => 'Image file',
+    'photos.photo_title' => 'Photo title',
+    'photos.caption' => 'Caption',
+    'photos.upload' => 'Upload photo',
+    'photos.progress' => 'Upload progress',
+    'photos.original' => 'View full size',
+    'photos.choose_album' => 'Open an album to add a photograph',
 ];

@@ -121,6 +121,18 @@ class UploadService
         }
     }
 
+    /** Compensates a failed publication, after its database transaction rolls back. */
+    public function discardUnattachedPhoto(\StreamEngine\Domain\Upload $upload): void
+    {
+        if ($upload->purpose !== UploadRepository::PURPOSE_GALLERY_PHOTO || $this->uploads->isPhotoReferenced($upload->id)) {
+            return;
+        }
+        if (! $this->storage->deletePrivateFile($upload->path)) {
+            throw new RuntimeException('Could not remove private photo file');
+        }
+        $this->uploads->deletePath($upload->path, false);
+    }
+
     /** Authorization belongs to the calling module, including future galleries. */
     public function sendPrivateFile(Upload $upload): void
     {

@@ -65,7 +65,10 @@ final readonly class FeedMetadataRepository
     {
         $metadata = $this->normalize($metadata);
 
-        $this->db->begin();
+        $manageTransaction = ! $this->db->inTransaction();
+        if ($manageTransaction) {
+            $this->db->begin();
+        }
 
         try {
             $this->db->execute(
@@ -83,9 +86,13 @@ final readonly class FeedMetadataRepository
                 );
             }
 
-            $this->db->commit();
+            if ($manageTransaction) {
+                $this->db->commit();
+            }
         } catch (Throwable $exception) {
-            $this->db->rollback();
+            if ($manageTransaction) {
+                $this->db->rollback();
+            }
             throw new RuntimeException('Failed to update feed metadata: ' . $exception->getMessage());
         }
     }

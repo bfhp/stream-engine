@@ -248,7 +248,7 @@ final class PhotoServiceTest extends TestCase
         $access = $this->createStub(AccessService::class);
         $access->method('canEditFeed')->willReturn(true);
         $db = $this->createMock(PdoDatabase::class);
-        $db->expects(self::once())->method('fetchOne')->with('SELECT 1 FROM feeds WHERE parent_id = ? LIMIT 1', [20])->willReturn(['1' => 1]);
+        $db->expects(self::exactly(2))->method('fetchOne')->willReturnCallback(static fn (string $sql): ?array => str_contains($sql, 'FOR UPDATE') ? ['id' => 20] : ['1' => 1]);
         $service = new PhotoService($feeds, $access, $this->createStub(CommunityService::class), new FeedRepository($db));
         $this->expectException(ValidationException::class);
         $service->deleteAlbum(10, 20, $user);

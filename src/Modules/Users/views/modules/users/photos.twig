@@ -1,7 +1,9 @@
 {% extends "layouts/with-sidebar.twig" %}
 {% block content %}
     {% block photos_back_link %}
-        {% if (isAlbumForm or album) and listUrl %}
+        {% if (isPhotoForm or photo) and albumUrl %}
+            <a class="users-back-link" href="{{ albumUrl }}"><i class="bi bi-arrow-left" aria-hidden="true"></i><span>{{ album.title }}</span></a>
+        {% elseif (isAlbumForm or album) and listUrl %}
             <a class="users-back-link" href="{{ listUrl }}">
                 <i class="bi bi-arrow-left" aria-hidden="true"></i>
                 <span>{{ trans('photos.back_to_albums') }}</span>
@@ -10,8 +12,9 @@
     {% endblock %}
     <div class="users-heading">
         <h1>{{ title }}</h1>
-        {% if canEditAlbum and not isAlbumForm %}
+        {% if canEditAlbum and not isAlbumForm and not isPhotoForm and not photo %}
             <div class="users-actions">
+                {% if newPhotoUrl %}<a href="{{ newPhotoUrl }}" class="ui-button ui-button--primary ui-button--sm"><i class="bi bi-image" aria-hidden="true"></i> {{ trans('photos.new_photo') }}</a>{% endif %}
                 <a href="{{ editAlbumUrl }}" class="ui-button ui-button--secondary ui-button--sm"><i class="bi bi-pencil" aria-hidden="true"></i> {{ trans('photos.edit') }}</a>
                 <button type="button" class="ui-button ui-button--secondary ui-button--sm" data-photo-album-delete data-api-url="{{ itemApiUrl }}"><i class="bi bi-trash" aria-hidden="true"></i> {{ trans('photos.delete') }}</button>
             </div>
@@ -21,13 +24,31 @@
                 <a href="{{ newAlbumUrl }}" class="ui-button ui-button--primary ui-button--sm">
                     <i class="bi bi-folder-plus" aria-hidden="true"></i> {{ trans('photos.new_album') }}
                 </a>
-                <button type="button" class="ui-button ui-button--secondary ui-button--sm" disabled title="{{ trans('photos.upload_soon') }}">
+                <button type="button" class="ui-button ui-button--secondary ui-button--sm" disabled title="{{ trans('photos.choose_album') }}">
                     <i class="bi bi-image" aria-hidden="true"></i> {{ trans('photos.new_photo') }}
                 </button>
             </div>
         {% endif %}
     </div>
-    {% if isAlbumForm %}
+    {% if isPhotoForm %}
+        <form data-photo-upload-form data-api-url="{{ photoUploadApiUrl }}" enctype="multipart/form-data">
+            <label class="ui-label" for="photo-file">{{ trans('photos.file') }}</label>
+            <input class="ui-input" type="file" id="photo-file" name="file" accept="image/jpeg,image/png,image/webp" required>
+            <label class="ui-label" for="photo-title">{{ trans('photos.photo_title') }}</label>
+            <input class="ui-input" id="photo-title" name="title" required maxlength="255">
+            <label class="ui-label" for="photo-caption">{{ trans('photos.caption') }}</label>
+            <textarea class="ui-input" id="photo-caption" name="caption" maxlength="2000"></textarea>
+            <progress data-photo-upload-progress max="100" value="0" aria-label="{{ trans('photos.progress') }}" hidden></progress>
+            <p data-photo-upload-error role="alert"></p>
+            <button class="ui-button ui-button--primary" type="submit">{{ trans('photos.upload') }}</button>
+        </form>
+    {% elseif photo %}
+        <figure>
+            <a href="{{ photoOriginalUrl }}"><img class="users-photo-image" src="{{ photoPreviewUrl }}" alt="{{ photo.title }}"></a>
+            {% if photo.description %}<figcaption>{{ photo.description|striptags }}</figcaption>{% endif %}
+        </figure>
+        <a href="{{ photoOriginalUrl }}">{{ trans('photos.original') }}</a>
+    {% elseif isAlbumForm %}
         <form data-photo-album-form data-api-url="{{ apiUrl }}" data-method="{{ isEdit ? 'PATCH' : 'POST' }}">
             <label class="ui-label" for="album-title">{{ trans('photos.album') }}</label>
             <input class="ui-input" id="album-title" name="title" required maxlength="255" value="{{ album ? album.title : '' }}">
@@ -44,7 +65,20 @@
         </form>
     {% elseif album %}
         {% if album.description %}<p>{{ album.description|striptags }}</p>{% endif %}
-        <p>{{ trans('photos.empty_album') }}</p>
+        {% if photoItems %}
+            <div class="users-photo-grid">
+                {% for item in photoItems %}
+                    <figure class="ui-card users-panel">
+                        <a href="{{ item.url }}"><img src="{{ item.previewUrl }}" alt="{{ item.title }}" loading="lazy" decoding="async"></a>
+                        <figcaption><a href="{{ item.url }}">{{ item.title }}</a></figcaption>
+                    </figure>
+                {% endfor %}
+            </div>
+            <nav aria-label="{{ trans('photos.pagination') }}">
+                {% if previousUrl %}<a class="ui-button" href="{{ previousUrl }}">{{ trans('photos.previous') }}</a>{% endif %}
+                {% if nextUrl %}<a class="ui-button" href="{{ nextUrl }}">{{ trans('photos.next') }}</a>{% endif %}
+            </nav>
+        {% else %}<p>{{ trans('photos.empty_album') }}</p>{% endif %}
     {% else %}
         <ul class="users-feed">
             {% for item in albums %}

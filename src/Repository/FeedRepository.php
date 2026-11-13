@@ -120,6 +120,28 @@ final class FeedRepository implements FeedRepositoryInterface
         return $this->fetchOne($sql, $params);
     }
 
+    /** Serialize container mutations with child publication. */
+    public function withLockedFeed(int $feedId, callable $action): mixed
+    {
+        $ownsTransaction = ! $this->db->inTransaction();
+        if ($ownsTransaction) {
+            $this->db->begin();
+        }
+        try {
+            $this->db->fetchOne('SELECT id FROM feeds WHERE id = ? FOR UPDATE', [$feedId]);
+            $result = $action();
+            if ($ownsTransaction) {
+                $this->db->commit();
+            }
+            return $result;
+        } catch (\Throwable $error) {
+            if ($ownsTransaction) {
+                $this->db->rollback();
+            }
+            throw $error;
+        }
+    }
+
     /** Includes hidden children when deciding whether content can be removed. */
     public function hasChildren(int $parentId): bool
     {
@@ -1302,10 +1324,11 @@ final class FeedRepository implements FeedRepositoryInterface
             'mr'
         );
         [$commentAcl, $commentParams] = $this->commentAclCondition($user);
+        $galleryAcl = $this->galleryAclCondition($user, 'f.id', 'f.parent_id', 'f.type');
 
         $sql = "
         (
-            (f.type <> 'comment' AND $feedAcl)
+            (f.type <> 'comment' AND $feedAcl AND $galleryAcl)
             OR (f.type = 'comment' AND $commentAcl)
         )
         ";
@@ -1314,6 +1337,21 @@ final class FeedRepository implements FeedRepositoryInterface
             $sql,
             [$user->id, $user->id, ...$commentParams],
         ];
+    }
+
+    private function galleryAclCondition(User $user, string $idExpression, string $parentExpression, string $typeExpression): string
+    {
+        // Numeric user IDs are trusted integers, as with the LIMIT clauses.
+        $albumAcl = str_replace('?', (string) $user->id, $this->aclSubjectCondition('ga.owner_id', 'ga.visibility', 'ga.container_id', 'gam', 'gar'));
+        $contextAcl = str_replace('?', (string) $user->id, $this->aclSubjectCondition('gc.owner_id', 'gc.visibility', 'gc.container_id', 'gcm', 'gcr'));
+        return "($typeExpression <> 'gallery-photo' OR EXISTS (
+            SELECT 1 FROM feeds ga JOIN feeds gc ON gc.id = ga.parent_id
+            WHERE ga.id = $parentExpression AND ga.type = 'gallery-album' AND gc.type IN ('blog', 'community')
+              AND $albumAcl AND $contextAcl
+              AND EXISTS (SELECT 1 FROM feed_metadata gs WHERE gs.feed_id = $idExpression AND gs.name = 'gallery.state' AND gs.content = 'ready')
+        ))";
+
+
     }
 
     /**
@@ -1335,6 +1373,8 @@ final class FeedRepository implements FeedRepositoryInterface
             'cmr'
         );
 
+        $galleryAcl = $this->galleryAclCondition($user, $subject('id'), $subject('parent_id'), $subject('type'));
+
         return [
             "
             EXISTS (
@@ -1345,7 +1385,7 @@ final class FeedRepository implements FeedRepositoryInterface
                  AND acl_root.id = acl_parent.parent_id
                 WHERE acl_parent.id = f.parent_id
                   AND (acl_parent.type <> 'comment' OR acl_root.type <> 'comment')
-                  AND $subjectAcl
+                  AND $subjectAcl AND $galleryAcl
             )
             ",
             [$user->id, $user->id],

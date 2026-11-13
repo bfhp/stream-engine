@@ -1661,4 +1661,12 @@ return [
     'photos.save' => 'Сохранить',
     'js.photos.delete_confirm' => 'Удалить этот альбом?',
     'js.photos.delete_title' => 'Удалить альбом',
+    'photos.photo' => 'Фотография',
+    'photos.file' => 'Файл изображения',
+    'photos.photo_title' => 'Название фотографии',
+    'photos.caption' => 'Подпись',
+    'photos.upload' => 'Загрузить фотографию',
+    'photos.progress' => 'Ход загрузки',
+    'photos.original' => 'Открыть в полном размере',
+    'photos.choose_album' => 'Откройте альбом, чтобы добавить фотографию',
 ];

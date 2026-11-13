@@ -126,6 +126,14 @@ readonly class UploadRepository
     /**
      * Uses index: uploads_user_id_size_index (user_id, size)
      */
+    public function isPhotoReferenced(int $uploadId): bool
+    {
+        return $this->db->fetchOne(
+            "SELECT 1 FROM feed_metadata WHERE name IN ('gallery.original_upload_id', 'gallery.preview_upload_id') AND content = ? LIMIT 1",
+            [(string) $uploadId],
+        ) !== null;
+    }
+
     public function getUserUsage(int $userId): int
     {
         $row = $this->db->fetchOne(

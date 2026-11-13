@@ -93,6 +93,11 @@ class PdoDatabase
     TRANSACTIONS
     ========================== */
 
+    public function inTransaction(): bool
+    {
+        return $this->pdo->inTransaction();
+    }
+
     public function begin(): void
     {
         $this->pdo->beginTransaction();

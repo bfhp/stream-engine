@@ -72,4 +72,15 @@ final class FeedMetadataRepositoryTest extends TestCase
         $this->assertSame([10, 'book-type', 'fragment'], $executed[1][1]);
         $this->assertSame([10, 'isbn', '978-5-17-123456-7'], $executed[2][1]);
     }
+    public function testReplaceJoinsPublicationTransactionWithoutCommittingIt(): void
+    {
+        $db = $this->createMock(PdoDatabase::class);
+        $db->method('inTransaction')->willReturn(true);
+        $db->expects(self::never())->method('begin');
+        $db->expects(self::never())->method('commit');
+        $db->expects(self::never())->method('rollback');
+        $db->expects(self::exactly(2))->method('execute')->willReturn(1);
+        (new FeedMetadataRepository($db))->replaceForFeed(42, ['gallery.state' => 'ready']);
+    }
+
 }

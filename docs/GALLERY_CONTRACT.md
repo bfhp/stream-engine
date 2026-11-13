@@ -1,11 +1,11 @@
 # Users Photo Gallery Contract and Development Plan
 
-Date: November 13, 2026. Status: album browsing and creation implemented in Users; photo uploads and showcase are planned.
+Date: November 13, 2026. Status: album CRUD, protected photo publication and viewing implemented in Users; covers, photo deletion and showcase are planned.
 
 Photo galleries belong to the Users module. Registered users will create
 albums and upload photographs within a personal blog or a community. Visitors with access can browse them; registered users can
 comment and rate photographs. Rankings expose the highest-rated photographs.
-UsersController owns the album pages and creation API. Photo upload, rating
+UsersController owns album/photo pages, upload and protected file APIs. Rating
 and showcase workflows are not registered yet; the standalone Gallery
 controller has been removed. Gallery uses the standard Feed editing and authorization mechanisms.
 Feed type is selected at creation and cannot be changed through user-facing
@@ -28,14 +28,13 @@ rules; no separate gallery membership system is introduced. All image variants
 will use protected local storage, including public photos, so making an album
 private can revoke access without relocating files.
 
-No Gallery Feed types are advertised yet. Before exposing them, album/photo
-workflows must enforce these policies on writes, check ready state and cover
-membership, and integrate effective album visibility into shared SQL listing,
-search and direct Feed access. The module policy alone does not filter shared
-queries. UploadService now supports protected original/preview pairs with the dedicated
-`gallery-photo` Upload purpose. Gallery must connect this capability to album
-authorization and metadata publication before exposing uploads; message
-attachment purposes and endpoints remain separate.
+Album and photo runtime routes map `gallery-album` and `gallery-photo` to
+canonical URLs under their personal blog or community. They are not advertised
+as generic editor choices. Shared Feed SQL applies the album and context access
+policy to ready photographs and their comments before pagination and counting.
+Private file routes also validate ancestry, state, dimensions, Upload ownership
+and the dedicated `gallery-photo` purpose. No message attachment endpoints or
+purposes are reused.
 
 ## Scope and proposed defaults
 
@@ -103,10 +102,11 @@ boundary. Missing or invalid metadata never implies a ready image.
 | `gallery.height` | Photograph | Positive decimal pixel height |
 | `gallery.state` | Photograph | `pending`, `ready` or `failed` |
 | `gallery.updated_at` | Photograph | Decimal Unix timestamp of processing state change |
+| `gallery.request_id` | Photograph | Client UUID, scoped to author and album for retry deduplication |
 | `gallery.cover_photo_id` | Album | Positive decimal photo Feed ID; absent means no selected cover |
 
-These keys define the persistence contract for the upcoming workflows; no
-upload or metadata-writing workflow is implemented yet. Publishing a ready
+Photo publication writes these keys atomically with the Feed and Upload rows.
+Cover selection remains planned. Publishing a ready
 photo requires valid original/preview references, positive dimensions and
 verification that both Upload records belong to the photo owner and represent
 Gallery files. Cover selection checks that the photo is ready and belongs to
@@ -196,7 +196,7 @@ community route and reject resources belonging to a different context. API
 mutations enforce the same context checks. Detailed descendant patterns and
 API payloads will be fixed when the screens are implemented.
 
-Templates belong under `Users/views/modules/users/photos/` and extend shared
+The current shared template is `Users/views/modules/users/photos.twig` and extend shared
 theme layouts. Use shared comment/rating components where supported. Include
 captions and alt text, keyboard navigation, explicit upload progress and
 per-file failures, accessible labels, translated messages and RTL support.
@@ -218,7 +218,9 @@ personal members-only content. Lists use shared SQL access filtering before
 pagination and counting. UsersController registers personal and community
 `photos` lists and `photos/{albumSlug}` views, with paginated album browsing and
 creation forms at `photos/new-album/`. The list header provides a New album
-action; New photo remains disabled until uploads are implemented. Profile and
+action. Inside an editable album, New photo opens `photos/{albumSlug}/new-photo/`
+with a file input, title, caption and upload progress. The list-level New photo
+hint directs the user to choose an album. Profile and
 community pages link to their photo lists.
 
 Creation APIs are `POST /api/v1/users/photo-albums` for the authenticated user's
@@ -233,9 +235,9 @@ on the title, with numeric suffixes for collisions within the context and
 `new-album` reserved for creation. Legacy albums without a slug retain their
 numeric ID links. Slug occupancy checks include private albums. Photo Feed types remain
 unadvertised in generic editors until their mutation invariants are enforced.
-No new core classes, tables or Feed fields are introduced. Cover references,
-image references and processing fields remain reserved for `feed_metadata`;
-empty albums require no service metadata.
+No new core classes, tables or Feed fields are introduced. Image references,
+dimensions, state and request UUID live in `feed_metadata`; empty albums require
+no service metadata. `PhotoUploadService` resides inside Users.
 
 Album editing is available at `photos/{albumSlug}/edit/`. PATCH and DELETE
 `/api/v1/photo-albums/{contextId}/{albumId}` require authentication, CSRF and
@@ -243,7 +245,7 @@ shared post edit permissions after checking the album's context and type.
 PATCH accepts only title, description and visibility, retains slug and
 metadata, and updates access containers using BlogPostService conventions.
 Deletion and visibility changes are currently limited to empty albums; checks
-include hidden children. Protected file cleanup and visibility propagation must
+include hidden children and lock the album against concurrent publication. Protected file cleanup and visibility propagation must
 be connected before enabling these operations on nonempty albums.
 
 Protected upload storage is prepared in `UploadService::uploadPhotoForUser()`.
@@ -257,13 +259,27 @@ stored variants are cleaned on failure; failed cleanup is logged for retry.
 
 Settings: `photos.max_file_mb` (default 20, ceiling 50), `photos.max_pixels`
 (default 20000000, ceiling 40000000), `photos.max_dimension` (default 10000,
-ceiling 16000), `photos.preview_size` (default 1600, ceiling 2048). No public
-photo upload endpoint is registered yet and no photo metadata is written by
-this storage operation.
+ceiling 16000), `photos.preview_size` (default 1600, ceiling 2048). Photo upload is available as multipart POST
+`/api/v1/photo-albums/{contextId}/{albumId}/photos`, with `file`, `title`,
+`caption`, and a client UUID `requestId`, plus the standard CSRF header.
+The endpoint requires the right to publish into the blog/community and manage
+the album. It serializes photo uploads for the user and album with row locks;
+Feed, Upload and metadata rows commit together, while failures compensate file
+storage. Repeating a request UUID for the same author and album returns the
+existing photograph. Metadata replacement joins the publication transaction
+without committing it independently. There is no observable pending Feed in
+this synchronous workflow: files are processed before ready publication.
 
-Next: connect album authorization, idempotent photo publication in
-`feed_metadata`, protected delivery routes and the upload form; the separate
-showcase follows ready photos.
+Photo pages use `photos/{albumSlug}/{photoId}/`. Original and preview delivery
+use GET `/api/v1/photo-albums/{contextId}/{albumId}/photos/{photoId}/{variant}`,
+where variant is `original` or `preview`. Delivery rechecks the entire context,
+album and photo chain and both Upload references, then uses protected local
+storage with private/no-store headers. Album grids paginate ready photographs.
+Canonical URL generation includes the static `photos` segment and substitutes
+IDs for explicitly named ID placeholders.
+
+Next: photo removal and retryable file cleanup, album covers and ordering,
+then comments/votes and the separate showcase.
 
 ## Implementation sequence and acceptance
 

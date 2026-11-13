@@ -803,3 +803,24 @@ a.users-person:hover {
 [dir="rtl"] .users-back-link > .bi {
     transform: scaleX(-1);
 }
+
+.users-photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
+    gap: var(--ui-space-3);
+}
+
+.users-photo-grid img {
+    display: block;
+    inline-size: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: var(--ui-radius);
+    margin-block-end: var(--ui-space-2);
+}
+
+.users-photo-image {
+    display: block;
+    max-inline-size: 100%;
+    block-size: auto;
+}
