@@ -1,111 +1,117 @@
-{% extends "layouts/with-sidebar.twig" %}
+{% extends isAlbumForm ? "layouts/with-sidebar.twig" : "layouts/single.twig" %}
+{% block main_class %}layout-main users-album-page{% endblock %}
+{% block layout_container_class %}ui-container{% endblock %}
 {% block content %}
-    {% block photos_back_link %}
-        {% if (isPhotoForm or photo) and albumUrl %}
-            <a class="users-back-link" href="{{ albumUrl }}"><i class="bi bi-arrow-left" aria-hidden="true"></i><span>{{ album.title }}</span></a>
-        {% elseif (isAlbumForm or album) and listUrl %}
-            <a class="users-back-link" href="{{ listUrl }}">
-                <i class="bi bi-arrow-left" aria-hidden="true"></i>
-                <span>{{ trans('photos.back_to_albums') }}</span>
-            </a>
-        {% endif %}
-    {% endblock %}
-    <div class="users-heading">
-        <h1>{{ title }}</h1>
-        {% if canEditAlbum and not isAlbumForm and not isPhotoForm and not photo %}
-            <div class="users-actions">
-                {% if newPhotoUrl %}<a href="{{ newPhotoUrl }}" class="ui-button ui-button--primary ui-button--sm"><i class="bi bi-image" aria-hidden="true"></i> {{ trans('photos.upload_many') }}</a>{% endif %}
-                <a href="{{ editAlbumUrl }}" class="ui-button ui-button--secondary ui-button--sm"><i class="bi bi-pencil" aria-hidden="true"></i> {{ trans('photos.edit') }}</a>
-                <button type="button" class="ui-button ui-button--secondary ui-button--sm" data-photo-album-delete data-api-url="{{ itemApiUrl }}"><i class="bi bi-trash" aria-hidden="true"></i> {{ trans('photos.delete') }}</button>
-            </div>
-        {% endif %}
-        {% if canCreate and not isAlbumForm %}
-            <div class="users-actions">
-                <a href="{{ newAlbumUrl }}" class="ui-button ui-button--primary ui-button--sm">
-                    <i class="bi bi-folder-plus" aria-hidden="true"></i> {{ trans('photos.new_album') }}
-                </a>
-                <button type="button" class="ui-button ui-button--secondary ui-button--sm" disabled title="{{ trans('photos.choose_album') }}">
-                    <i class="bi bi-image" aria-hidden="true"></i> {{ trans('photos.upload_many') }}
-                </button>
-            </div>
-        {% endif %}
+    {% if not isAlbumForm and not isManage %}
+    <div class="users-album-context">
+        {% if photoOwner.url %}<a class="users-album-owner" href="{{ photoOwner.url }}">
+            {% if photoOwner.avatar %}<img src="{{ photoOwner.avatar }}" alt="" width="32" height="32">{% endif %}
+            <bdi>{{ photoOwner.name }}</bdi>
+        </a>{% endif %}
+        {% if album %}<a href="{{ listUrl }}">{{ trans('photos.back_to_albums') }}</a>{% endif %}
     </div>
-    {% if isPhotoForm %}
-        <section class="users-photo-uploader" data-photo-uploader data-api-url="{{ photoUploadApiUrl }}">
-            <div class="users-photo-dropzone" data-photo-dropzone>
-                <i class="bi bi-images" aria-hidden="true"></i>
-                <label class="ui-button ui-button--primary users-photo-picker">
-                    {{ trans('photos.select_many') }}
-                    <input data-photo-files type="file" name="files[]" accept="image/jpeg,image/png,image/webp" multiple aria-label="{{ trans('photos.select_many') }}">
-                </label>
-                <p>{{ trans('photos.batch_hint') }}</p>
+    {% endif %}
+    {% block photos_back_link %}
+        {% if photo %}<a class="users-back-link" href="{{ albumUrl }}">← {{ album.title }}</a>{% endif %}
+    {% endblock %}
+    <section{% if isManage %} data-album-manager data-api-url="{{ itemApiUrl }}" data-photos-api-url="{{ photoUploadApiUrl }}"{% endif %}>
+        <div class="users-heading">
+            <h1 data-album-heading>{{ isManage ? album.title : title }}</h1>
+            <div class="users-actions">
+                {% if isManage %}
+                    <button type="button" class="ui-button ui-button--secondary" data-album-settings-open>{{ trans('photos.manage.settings') }}</button>
+                    <a class="ui-button ui-button--secondary" href="{{ albumUrl }}">{{ trans('photos.manage.view') }}</a>
+                {% elseif album and canEditAlbum %}
+                    <a class="ui-button ui-button--secondary" href="{{ editAlbumUrl }}">{{ trans('photos.manage.open') }}</a>
+                {% elseif canCreate and not isAlbumForm %}
+                    <a class="ui-button ui-button--primary" href="{{ newAlbumUrl }}">{{ trans('photos.new_album') }}</a>
+                {% endif %}
             </div>
-            <div class="users-actions users-photo-queue__controls">
-                <button type="button" class="ui-button ui-button--secondary" data-photo-pause hidden>{{ trans('js.photos.batch_pause') }}</button>
-                <button type="button" class="ui-button ui-button--secondary" data-photo-retry-all hidden>{{ trans('photos.retry_failed') }}</button>
-                <button type="button" class="ui-button ui-button--secondary" data-photo-clear-done hidden>{{ trans('photos.clear_done') }}</button>
-                <a class="ui-button ui-button--secondary" href="{{ albumUrl }}">{{ trans('photos.back_to_album') }}</a>
+        </div>
+        {% if isManage %}
+            <p class="users-album-description" data-album-description{% if not album.description %} hidden{% endif %}>{{ album.description|striptags }}</p>
+            {% include 'components/users/photo-album-settings.twig' %}
+            <section class="users-album-workspace" aria-labelledby="album-photos-heading">
+                <div class="users-heading">
+                    <h2 id="album-photos-heading" class="users-heading__title--sm">{{ trans('photos.title') }} · <span data-album-photo-count>{{ photoItems|length }}</span></h2>
+                    {% if newPhotoUrl %}<button type="button" class="ui-button ui-button--primary" data-open-upload><i class="bi bi-plus-lg" aria-hidden="true"></i> {{ trans('photos.manage.add_photos') }}</button>{% endif %}
+                </div>
+                {% if newPhotoUrl %}{% include 'components/users/photo-uploader.twig' %}{% endif %}
+            <div class="users-album-toolbar users-actions" data-album-toolbar{% if not photoItems %} hidden{% endif %}>
+                <button type="button" class="ui-button ui-button--secondary" data-album-select aria-pressed="false">{{ trans('photos.manage.select') }}</button>
+                <button type="button" class="ui-button ui-button--secondary" data-album-reorder aria-pressed="false">{{ trans('photos.manage.reorder') }}</button>
+                <div class="users-actions" data-album-order-actions hidden>
+                    <button type="button" class="ui-button ui-button--primary" data-album-save-order disabled>{{ trans('photos.manage.save_order') }}</button>
+                    <button type="button" class="ui-button ui-button--secondary" data-album-cancel-order>{{ trans('photos.manage.cancel_order') }}</button>
+                </div>
+                <div class="users-actions" data-album-selection hidden>
+                    <label><input type="checkbox" data-album-select-all> {{ trans('photos.manage.all') }}</label>
+                    <span data-album-selection-count role="status"></span>
+                    <div class="users-actions" data-album-selection-actions hidden>
+                    <button type="button" class="ui-button ui-button--secondary" data-album-move="start">{{ trans('photos.manage.first') }}</button>
+                    <button type="button" class="ui-button ui-button--secondary" data-album-move="end">{{ trans('photos.manage.last') }}</button>
+                    <label>{{ trans('photos.manage.position') }}<input class="ui-input users-album-position" type="number" min="1" value="1" data-album-position></label>
+                    <button type="button" class="ui-button ui-button--secondary" data-album-move="position">{{ trans('photos.manage.move') }}</button>
+                    <button type="button" class="ui-button ui-button--secondary" data-album-delete-selected>{{ trans('photos.manage.delete_selected') }}</button>
+                    </div>
+                </div>
             </div>
-            <p data-photo-summary role="status" aria-live="polite" aria-atomic="true">{{ trans('photos.keep_open') }}</p>
-            <progress data-photo-total-progress max="100" value="0" aria-label="{{ trans('photos.progress') }}" hidden></progress>
-            <ol class="users-photo-queue" data-photo-queue aria-label="{{ trans('photos.queue') }}"></ol>
-        </section>
-    {% elseif photo %}
-        <figure>
-            <a href="{{ photoOriginalUrl }}"><img class="users-photo-image" src="{{ photoPreviewUrl }}" alt="{{ photo.title }}"></a>
-            {% if photo.description %}<figcaption>{{ photo.description|striptags }}</figcaption>{% endif %}
-        </figure>
-        <a href="{{ photoOriginalUrl }}">{{ trans('photos.original') }}</a>
-    {% elseif isAlbumForm %}
-        <form data-photo-album-form data-api-url="{{ apiUrl }}" data-method="{{ isEdit ? 'PATCH' : 'POST' }}">
-            <label class="ui-label" for="album-title">{{ trans('photos.album') }}</label>
-            <input class="ui-input" id="album-title" name="title" required maxlength="255" value="{{ album ? album.title : '' }}">
-            <label class="ui-label" for="album-description">{{ trans('photos.description') }}</label>
-            <textarea class="ui-input" id="album-description" name="description" maxlength="2000">{{ album ? album.description|striptags : '' }}</textarea>
-            <label class="ui-label" for="album-visibility">{{ trans('photos.visibility') }}</label>
-            <select class="ui-input" id="album-visibility" name="visibility">
-                <option value="public" {% if not album or album.visibility == 'public' %}selected{% endif %}>{{ trans('photos.public') }}</option>
-                <option value="members" {% if album and album.visibility == 'members' %}selected{% endif %}>{{ isCommunityGallery ? trans('photos.members') : trans('view.users.blog.post.form.09') }}</option>
-                <option value="private" {% if album and album.visibility == 'private' %}selected{% endif %}>{{ trans('photos.private') }}</option>
-            </select>
-            <p data-photo-album-error role="alert"></p>
-            <button class="ui-button ui-button--primary" type="submit">{{ trans(isEdit ? 'photos.save' : 'photos.create') }}</button>
-        </form>
-    {% elseif album %}
-        {% if album.description %}<p>{{ album.description|striptags }}</p>{% endif %}
-        {% if photoItems %}
-            <div class="users-photo-grid">
-                {% for item in photoItems %}
-                    <figure class="ui-card users-panel">
-                        <a href="{{ item.url }}"><img src="{{ item.previewUrl }}" alt="{{ item.title }}" loading="lazy" decoding="async"></a>
-                        <figcaption><a href="{{ item.url }}">{{ item.title }}</a></figcaption>
-                    </figure>
-                {% endfor %}
-            </div>
+            <p data-album-status role="status" aria-live="polite"></p>
+            <p data-album-empty{% if photoItems %} hidden{% endif %}>{{ trans('photos.empty_album') }}</p>
+            {% include 'components/users/photo-grid.twig' %}
+            <template data-photo-card-template>{% include 'components/users/photo-card.twig' with {item: {slug: '', title: '', caption: '', url: '', previewUrl: '', cover: false}} %}</template>
+            </section>
+        {% elseif photo %}
+            <figure><a href="{{ photoOriginalUrl }}"><img class="users-photo-image" src="{{ photoPreviewUrl }}" alt="{{ photo.title }}"></a>
+                {% if photo.description %}<figcaption>{{ photo.description|striptags }}</figcaption>{% endif %}
+            </figure>
+            <a href="{{ photoOriginalUrl }}">{{ trans('photos.original') }}</a>
+        {% elseif isAlbumForm %}
+            <form id="photoAlbumForm" data-photo-album-form data-api-url="{{ apiUrl }}" data-method="POST">
+                <div class="ui-card users-panel">
+                    <label class="ui-label users-caps" for="album-title">{{ trans('photos.album') }}</label>
+                    <input class="ui-input users-input-lg" id="album-title" name="title" required maxlength="255">
+                    <label class="ui-label users-caps" for="album-description">{{ trans('photos.description') }}</label>
+                    <textarea class="ui-input" id="album-description" name="description" rows="5" maxlength="2000"></textarea>
+                    <div class="users-form-error" data-photo-album-error role="alert"></div>
+                </div>
+            </form>
+        {% elseif album %}
+            {% if album.description %}<p>{{ album.description|striptags }}</p>{% endif %}
+            {% if coverUrl %}<img class="users-album-cover" src="{{ coverUrl }}" alt="{{ album.title }}">{% endif %}
+            {% if photoItems %}{% include 'components/users/photo-grid.twig' %}{% else %}<p>{{ trans('photos.empty_album') }}</p>{% endif %}
+        {% else %}
+            <ul class="users-feed">{% for item in albums %}<li class="ui-card users-panel"><a href="{{ item.url }}">{{ item.title }}</a></li>{% else %}<li>{{ trans('photos.empty') }}</li>{% endfor %}</ul>
+        {% endif %}
+        {% if not isManage and not isAlbumForm and not photo %}
             <nav aria-label="{{ trans('photos.pagination') }}">
                 {% if previousUrl %}<a class="ui-button" href="{{ previousUrl }}">{{ trans('photos.previous') }}</a>{% endif %}
                 {% if nextUrl %}<a class="ui-button" href="{{ nextUrl }}">{{ trans('photos.next') }}</a>{% endif %}
             </nav>
-        {% else %}<p>{{ trans('photos.empty_album') }}</p>{% endif %}
-    {% else %}
-        <ul class="users-feed">
-            {% for item in albums %}
-                <li class="ui-card users-panel"><a href="{{ item.url }}">{{ item.title }}</a></li>
-            {% else %}
-                <li>{{ trans('photos.empty') }}</li>
-            {% endfor %}
-        </ul>
-        <nav aria-label="{{ trans('photos.pagination') }}">
-            {% if previousUrl %}<a class="ui-button" href="{{ previousUrl }}">{{ trans('photos.previous') }}</a>{% endif %}
-            {% if nextUrl %}<a class="ui-button" href="{{ nextUrl }}">{{ trans('photos.next') }}</a>{% endif %}
-        </nav>
-    {% endif %}
+        {% endif %}
+    </section>
 {% endblock %}
 
 {% block sidebar_widgets %}
-    {% if isCommunityGallery %}
-        {% include 'components/users/community-sidebar.twig' with photoSidebar only %}
-    {% else %}
-        {% include 'components/users/profile-sidebar.twig' with photoSidebar %}
+    {% if isAlbumForm %}
+        <div class="blog-post-sidebar-sticky">
+            <div class="ui-card users-panel">
+                <h2 class="users-panel__title"><i class="bi bi-person-check" aria-hidden="true"></i> {{ trans('photos.visibility') }}</h2>
+                {% for value, label in {public: trans('photos.public'), members: isCommunityGallery ? trans('photos.members') : trans('view.users.blog.post.form.09'), private: trans('photos.private')} %}
+                    <div class="ui-check{% if not loop.first %} users-gap{% endif %}">
+                        <input class="ui-check__input" type="radio" name="visibility" id="album-visibility-{{ value }}" value="{{ value }}" form="photoAlbumForm"{% if loop.first %} checked{% endif %}>
+                        <label class="ui-check__label" for="album-visibility-{{ value }}">{{ label }}</label>
+                    </div>
+                {% endfor %}
+                <div class="users-stack">
+                    <button class="ui-button ui-button--primary" type="submit" form="photoAlbumForm" data-photo-album-submit>
+                        <i class="bi bi-plus-lg" aria-hidden="true"></i> {{ trans('photos.create') }}
+                    </button>
+                    <a href="{{ listUrl }}" class="ui-button ui-button--link users-cancel">
+                        <i class="bi bi-x-lg" aria-hidden="true"></i> {{ trans('view.comments.cancel') }}
+                    </a>
+                </div>
+            </div>
+        </div>
     {% endif %}
 {% endblock %}

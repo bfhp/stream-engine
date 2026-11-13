@@ -1,0 +1,5 @@
+<div class="users-photo-grid" {% if isManage %}data-album-grid{% endif %}>
+    {% for item in photoItems %}
+        {% include 'components/users/photo-card.twig' %}
+    {% endfor %}
+</div>

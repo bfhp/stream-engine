@@ -1,3 +1,4 @@
+import { initAlbumManager } from './album-manager';
 import { initPhotoUpload } from './photo-upload';
 import {
     FeedPostCard,
@@ -718,7 +719,7 @@ function initPhotoAlbumForm(): void {
     if (!form) return;
     form.addEventListener('submit', async (event) => {
         event.preventDefault();
-        const button = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+        const button = document.querySelector<HTMLButtonElement>('[data-photo-album-submit]')!;
         if (button.disabled) return;
         const error = form.querySelector<HTMLElement>('[data-photo-album-error]')!;
         error.textContent = '';
@@ -740,27 +741,6 @@ function initPhotoAlbumForm(): void {
 
 document.addEventListener('DOMContentLoaded', initPhotoAlbumForm);
 
-document.addEventListener('DOMContentLoaded', () => {
-    const button = document.querySelector<HTMLButtonElement>('[data-photo-album-delete]');
-    if (!button) return;
-    button.addEventListener('click', () => {
-        if (button.disabled) return;
-        cms.confirm({
-            title: trans('js.photos.delete_title'),
-            message: trans('js.photos.delete_confirm'),
-            onConfirm: async () => {
-                button.disabled = true;
-                try {
-                    const result = await cms.api<{ redirectUrl?: string }>(button.dataset.apiUrl!, { method: 'DELETE' });
-                    if (result.redirectUrl) window.location.assign(result.redirectUrl);
-                    else window.location.reload();
-                } catch (error) {
-                    cms.toast({ message: getApiErrorMessage(error, trans('js.common.action_failed')), type: 'danger' });
-                    button.disabled = false;
-                }
-            },
-        });
-    });
-});
-
 document.addEventListener('DOMContentLoaded', () => { initPhotoUpload(); });
+
+document.addEventListener('DOMContentLoaded', () => { initAlbumManager(); });

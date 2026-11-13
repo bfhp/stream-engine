@@ -133,6 +133,17 @@ class UploadService
         $this->uploads->deletePath($upload->path, false);
     }
 
+    public function cleanupOrphanedPhotos(): void
+    {
+        foreach ($this->uploads->orphanedPhotoUploads(time() - 86400) as $upload) {
+            try {
+                $this->discardUnattachedPhoto($upload);
+            } catch (\Throwable $error) {
+                error_log('Photo cleanup retry failed: '.$error->getMessage());
+            }
+        }
+    }
+
     /** Authorization belongs to the calling module, including future galleries. */
     public function sendPrivateFile(Upload $upload): void
     {

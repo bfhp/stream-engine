@@ -1,6 +1,6 @@
 # Users Photo Gallery Contract and Development Plan
 
-Date: November 13, 2026. Status: album CRUD, protected photo publication and viewing implemented in Users; covers, photo deletion and showcase are planned.
+Date: November 13, 2026. Status: album CRUD, protected photo publication and viewing implemented in Users; separate public/editor pages, ordering, covers and bulk deletion are implemented; showcase is planned.
 
 Photo galleries belong to the Users module. Registered users will create
 albums and upload photographs within a personal blog or a community. Visitors with access can browse them; registered users can
@@ -231,7 +231,7 @@ blog and `POST /api/v1/communities/{id}/photo-albums` for a community. Payload:
 `visibility` (`public`, `members`, `private`; default `public`). Both require
 authentication and CSRF, return 201 with `id` and `redirectUrl`, and resolve
 publication rights on the server. A personal blog is created lazily on write;
-viewing an empty gallery does not create it. Album links are generated with
+viewing an empty gallery does not create it. Creation redirects directly to the editor upload section. Album links are generated with
 UrlGenerator using explicit context and album slugs. New album slugs use Formatter::slugify()
 on the title, with numeric suffixes for collisions within the context and
 `new-album` reserved for creation. Legacy albums without a slug retain their
@@ -244,11 +244,20 @@ no service metadata. `PhotoUploadService` resides inside Users.
 Album editing is available at `photos/{albumSlug}/edit/`. PATCH and DELETE
 `/api/v1/photo-albums/{contextId}/{albumId}` require authentication, CSRF and
 shared post edit permissions after checking the album's context and type.
-PATCH accepts only title, description and visibility, retains slug and
-metadata, and updates access containers using BlogPostService conventions.
-Deletion and visibility changes are currently limited to empty albums; checks
-include hidden children and lock the album against concurrent publication. Protected file cleanup and visibility propagation must
-be connected before enabling these operations on nonempty albums.
+PATCH accepts title, description, visibility, order (a list of local photo slugs),
+cover (a ready photo slug, or null), and photo ({slug, title, caption}). Album
+slug remains stable. Visibility changes propagate to child photographs and use
+BlogPostService access containers. Order uses the existing Feed position field;
+new uploads append, and uploads absent from a submitted order remain at the end.
+Cover references stay in feed_metadata. Invalid selections roll back the entire
+operation. All album mutations hold the album row lock against publication.
+
+DELETE on the album removes all photographs, then the album. DELETE on
+`/api/v1/photo-albums/{contextId}/{albumId}/photos` accepts {photos: [slug, ...]}
+for an atomic selection deletion. Both check shared edit permissions. File
+cleanup happens after commit, so failure cannot restore visibility. Unreferenced
+variants older than one day are retried hourly by users:photo-cleanup in bounded
+batches, preserving files still referenced by published photos.
 
 Protected upload storage is prepared in `UploadService::uploadPhotoForUser()`.
 It accepts still JPEG/PNG/WebP, verifies actual bytes and dimensions before
@@ -287,7 +296,7 @@ ancestry are resolved from that route; there is no global photo-number lookup.
 Delivery checks context, album, photograph and both Upload references and uses
 protected storage with private/no-store headers. URL cache keys are versioned
 to discard obsolete address schemes. Upload responses expose the local `slug`
-and scoped `redirectUrl`, without the global Feed ID.
+and scoped `redirectUrl`, plus title, caption and previewUrl for appending cards without reloading, without the global Feed ID.
 
 The primary uploader supports selecting many photographs from desktop or
 mobile galleries (`multiple`, without a forced camera capture), adding later
@@ -305,8 +314,22 @@ confirmation. The queue is held in the open page and does not survive a reload.
 Already published photographs remain in the album. Source images are not decoded
 for local thumbnails, keeping mobile memory use bounded by the active uploads.
 
-Next: photo removal and retryable file cleanup, album covers and ordering,
-then comments/votes and the separate showcase.
+The public album uses ui-container without a sidebar and shows a compact owner
+link and a manage link to authorized viewers. Its /edit/ page keeps the
+photo workspace in ui-container without a sidebar. Title, description and
+visibility are edited together in an Album settings dialog with its own save
+and cancel actions; cancel, Escape and backdrop closure discard those drafts.
+New album creation retains its separate content/sidebar form. The editor shares the public photo
+grid, embeds the batch uploader, shows the queue after files are selected,
+appends each success without discarding drafts, and provides selection, atomic deletion,
+cover/details editing, drag ordering, keyboard buttons and selected-group moves
+to start/end/position on mobile. The complete editor grid loads lazy images;
+public browsing remains paginated. Settings save independently of photo order. Save order appears beside sorting
+controls when sorting or order changes are active; uploads, deletion, cover and per-photo details
+apply immediately. Unsaved drafts trigger a navigation warning. Order reset
+restores the last saved order while retaining new uploads.
+
+Next: comments/votes and the separate showcase.
 
 ## Implementation sequence and acceptance
 

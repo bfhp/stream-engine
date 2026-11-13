@@ -58,7 +58,7 @@ beforeEach(() => {
     });
     document.body.innerHTML = `<section data-photo-uploader data-api-url="/api/v1/photo-albums/9/32/photos">
         <div data-photo-dropzone><input type="file" data-photo-files multiple></div>
-        <ol data-photo-queue></ol><p data-photo-summary></p><progress data-photo-total-progress max="100" hidden></progress>
+        <div data-photo-queue-panel hidden><ol data-photo-queue></ol></div><p data-photo-summary></p><progress data-photo-total-progress max="100" hidden></progress>
         <button data-photo-pause hidden></button><button data-photo-retry-all hidden></button><button data-photo-clear-done hidden></button>
     </section>`;
     dispose = initPhotoUpload();
@@ -182,4 +182,15 @@ describe('batch photo uploader', () => {
         window.dispatchEvent(done);
         expect(done.defaultPrevented).toBe(false);
     });
+});
+
+it('shows the queue only after selection and hides it when cleared', () => {
+    const panel = document.querySelector<HTMLElement>('[data-photo-queue-panel]')!;
+    expect(panel.hidden).toBe(true);
+    select(file());
+    expect(panel.hidden).toBe(false);
+    success(0);
+    expect(panel.hidden).toBe(false);
+    button('[data-photo-clear-done]').click();
+    expect(panel.hidden).toBe(true);
 });

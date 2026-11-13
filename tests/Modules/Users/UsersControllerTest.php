@@ -3880,11 +3880,12 @@ final class UsersControllerTest extends TestCase
 
         // add() keys by task name, so all() is a map rather than a list.
         $tasks = array_keys($registry->all());
-        $this->assertSame(['users:cleanup', 'users:sessions-cleanup'], $tasks);
+        $this->assertSame(['users:cleanup', 'users:photo-cleanup', 'users:sessions-cleanup'], $tasks);
 
         $db = $this->createStub(PdoDatabase::class);
         $db->method('execute')->willReturn(0);
         $module = $this->makeUsersModule($db);
+        (new \ReflectionProperty(UsersController::class, 'uploadService'))->setValue($module, $this->createStub(\StreamEngine\Service\UploadService::class));
 
         // No assertion needed after this loop: a name that drifted between the
         // two methods raises UnhandledMatchError, which fails the test on its

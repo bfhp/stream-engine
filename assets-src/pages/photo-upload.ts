@@ -55,6 +55,8 @@ export function initPhotoUpload(root: HTMLElement | null = document.querySelecto
         if (!waiting && active.size === 0 && failed === 0) paused = false;
         summary.textContent = trans('js.photos.batch_summary', { done, total: items.size, failed })
             + (paused ? ` · ${trans('js.photos.batch_paused')}` : '');
+        const panel = root.querySelector<HTMLElement>('[data-photo-queue-panel]');
+        if (panel) panel.hidden = items.size === 0;
         overall.hidden = items.size === 0;
         pause.hidden = !waiting && active.size === 0;
         pause.textContent = trans(paused ? 'js.photos.batch_resume' : 'js.photos.batch_pause');
@@ -103,7 +105,7 @@ export function initPhotoUpload(root: HTMLElement | null = document.querySelecto
         };
         xhr.onload = () => {
             if (destroyed || !active.has(item)) return;
-            let payload: { slug?: string; redirectUrl?: string; code?: string };
+            let payload: { slug?: string; redirectUrl?: string; code?: string; title?: string; caption?: string; previewUrl?: string };
             try { payload = JSON.parse(xhr.responseText); }
             catch { fail(null, true); return; }
             if (xhr.status < 200 || xhr.status >= 300 || typeof payload?.slug !== 'string' || !/^[1-9][0-9]*$/.test(payload.slug)) {
@@ -113,6 +115,7 @@ export function initPhotoUpload(root: HTMLElement | null = document.querySelecto
             active.delete(item);
             setState(item, 'done');
             item.file = null;
+            root.dispatchEvent(new CustomEvent('photo-uploaded', { bubbles: true, detail: payload }));
             if (payload.redirectUrl?.startsWith('/') && !payload.redirectUrl.startsWith('//')) item.name.href = payload.redirectUrl;
             update();
             pump();

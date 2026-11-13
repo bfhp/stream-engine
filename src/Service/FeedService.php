@@ -298,9 +298,9 @@ class FeedService
      *
      * @return array{items: Feed[], total: int}
      */
-    public function getFeedsByParentAndTypePage(?int $parentId, string $type, User $user, int $limit, int $offset = 0): array
+    public function getFeedsByParentAndTypePage(?int $parentId, string $type, User $user, int $limit, int $offset = 0, bool $positionOrder = false): array
     {
-        $result = $this->repository->findByParentAndTypePage($parentId, $type, $user, $limit, $offset);
+        $result = $this->repository->findByParentAndTypePage($parentId, $type, $user, $limit, $offset, $positionOrder);
 
         $this->decorateFeedsWithUrls($result['items']);
 

@@ -71,9 +71,10 @@ class PhotoUploadService
                 'gallery.state' => 'ready', 'gallery.updated_at' => (string) time(),
                 'gallery.request_id' => strtolower($requestId),
             ];
+            $number = $this->nextPhotoNumber($album);
             $photo = $this->feeds->createFeed(
                 title: $title,
-                slug: $this->nextPhotoNumber($album),
+                slug: $number,
                 type: 'gallery-photo',
                 parentId: $albumId,
                 description: $caption,
@@ -84,6 +85,7 @@ class PhotoUploadService
                 visibility: $album->visibility,
                 containerId: $album->containerId,
                 containerType: $album->containerType,
+                position: (int) $number,
             );
             $photo->metadata = $metadata;
             $this->db->commit();
@@ -101,6 +103,137 @@ class PhotoUploadService
             }
             throw $error;
         }
+    }
+
+    public function saveManagement(int $contextId, int $albumId, User $user, array $input): Feed
+    {
+        if (array_diff(array_keys($input), ['title', 'description', 'visibility', 'order', 'cover', 'photo']) !== []) {
+            throw new ValidationException('Unsupported album fields');
+        }
+        $this->db->begin();
+        try {
+            $this->db->fetchOne('SELECT id FROM feeds WHERE id = ? FOR UPDATE', [$albumId]);
+            $album = $this->editableAlbum($contextId, $albumId, $user);
+            $fields = array_intersect_key($input, array_flip(['title', 'description', 'visibility']));
+            if ($fields !== []) {
+                $album = $this->photos->updateAlbum($contextId, $albumId, $user, $fields);
+            }
+            if (array_key_exists('order', $input)) {
+                $order = $this->validatedSlugs($input['order']);
+                $rows = $this->db->fetchAll("SELECT id, slug FROM feeds WHERE parent_id = ? AND type = 'gallery-photo' ORDER BY position, id", [$albumId]);
+                $ids = array_column($rows, 'id', 'slug');
+                foreach ($order as $slug) {
+                    if (! isset($ids[$slug])) {
+                        throw new ValidationException('Album contents changed; reload and try again', 409);
+                    }
+                }
+                $complete = [...$order, ...array_diff(array_map('strval', array_keys($ids)), $order)];
+                foreach ($complete as $position => $slug) {
+                    $this->db->execute('UPDATE feeds SET position = ? WHERE id = ?', [$position + 1, $ids[$slug]]);
+                }
+            }
+            if (array_key_exists('cover', $input)) {
+                $metadata = $album->metadata;
+                if ($input['cover'] === null || $input['cover'] === '') {
+                    unset($metadata['gallery.cover_photo_id']);
+                } elseif (is_string($input['cover'])) {
+                    $cover = $this->getPhotoBySlug($contextId, $albumId, $input['cover'], $user);
+                    $metadata['gallery.cover_photo_id'] = (string) $cover->id;
+                } else {
+                    throw new ValidationException('Invalid album cover');
+                }
+                (new FeedMetadataRepository($this->db))->replaceForFeed($albumId, $metadata);
+            }
+            if (array_key_exists('photo', $input)) {
+                $data = $input['photo'];
+                if (! is_array($data) || ! is_string($data['slug'] ?? null) || ! is_string($data['title'] ?? null)
+                    || trim($data['title']) === '' || mb_strlen($data['title']) > 255 || ! is_string($data['caption'] ?? null) || mb_strlen($data['caption']) > 2000) {
+                    throw new ValidationException('Invalid photo details');
+                }
+                $photo = $this->getPhotoBySlug($contextId, $albumId, $data['slug'], $user);
+                $this->feeds->updateFeed($photo->id, ['title' => trim($data['title']), 'description' => $data['caption']], $user);
+            }
+            $updated = $this->photos->getAlbum($contextId, $albumId, $user);
+            $this->db->commit();
+            return $updated;
+        } catch (Throwable $error) {
+            $this->db->rollback();
+            throw $error;
+        }
+    }
+
+    public function removePhotos(int $contextId, int $albumId, User $user, mixed $slugs, bool $deleteAlbum = false): array
+    {
+        $files = [];
+        $this->db->begin();
+        try {
+            $this->db->fetchOne('SELECT id FROM feeds WHERE id = ? FOR UPDATE', [$albumId]);
+            $album = $this->editableAlbum($contextId, $albumId, $user);
+            if ($deleteAlbum) {
+                $slugs = array_column($this->db->fetchAll("SELECT slug FROM feeds WHERE parent_id = ? AND type = 'gallery-photo' ORDER BY id", [$albumId]), 'slug');
+            }
+            $slugs = $this->validatedSlugs($slugs);
+            $removed = [];
+            foreach ($slugs as $slug) {
+                $photo = $this->getPhotoBySlug($contextId, $albumId, $slug, $user);
+                if (! $this->feeds->canEditFeed($photo, $user)) {
+                    throw new ForbiddenException('Cannot delete this photograph');
+                }
+                foreach (['original', 'preview'] as $variant) {
+                    $upload = $this->getFile($contextId, $albumId, $slug, $variant, $user);
+                    $files[$upload->id] = $upload;
+                }
+                $removed[] = $photo->id;
+                $this->feeds->deleteFeed($photo->id, $user);
+            }
+            if (in_array((int) ($album->metadata['gallery.cover_photo_id'] ?? 0), $removed, true)) {
+                $metadata = $album->metadata;
+                unset($metadata['gallery.cover_photo_id']);
+                (new FeedMetadataRepository($this->db))->replaceForFeed($albumId, $metadata);
+            }
+            if ($deleteAlbum) {
+                $this->photos->deleteAlbum($contextId, $albumId, $user);
+            }
+            $this->db->commit();
+        } catch (Throwable $error) {
+            $this->db->rollback();
+            throw $error;
+        }
+        $pending = 0;
+        foreach ($files as $upload) {
+            try {
+                $this->uploads->discardUnattachedPhoto($upload);
+            } catch (Throwable $error) {
+                $pending++;
+                error_log('Photo cleanup pending: '.$error->getMessage());
+            }
+        }
+        return ['removed' => $slugs, 'cleanupPending' => $pending];
+    }
+
+    private function editableAlbum(int $contextId, int $albumId, User $user): Feed
+    {
+        $album = $this->photos->getAlbum($contextId, $albumId, $user);
+        if ($user->isGuest() || ! $this->photos->canEditAlbum($contextId, $albumId, $user)) {
+            throw new ForbiddenException('Cannot manage this album');
+        }
+        return $album;
+    }
+
+    private function validatedSlugs(mixed $values): array
+    {
+        if (! is_array($values) || ! array_is_list($values)) {
+            throw new ValidationException('Invalid photograph selection');
+        }
+        foreach ($values as $value) {
+            if (! is_string($value) || preg_match('/\A[1-9][0-9]*\z/', $value) !== 1) {
+                throw new ValidationException('Invalid photograph selection');
+            }
+        }
+        if (count(array_unique($values)) !== count($values)) {
+            throw new ValidationException('Duplicate photograph numbers');
+        }
+        return $values;
     }
 
     private function nextPhotoNumber(Feed $album): string

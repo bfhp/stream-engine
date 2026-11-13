@@ -88,9 +88,6 @@ class PhotoService
                     throw new ValidationException('Invalid album visibility');
                 }
                 $data['visibility'] = $this->feeds->normalizeVisibility($data['visibility']);
-                if ($data['visibility'] !== $album->visibility && $this->repository->hasChildren($albumId)) {
-                    throw new ValidationException('Cannot change visibility of a nonempty album yet', 409);
-                }
                 $context = $this->context($contextId, $user);
                 $container = $context->type === 'community' || $data['visibility'] === 'members';
                 $data['containerId'] = $container ? $contextId : null;
@@ -98,7 +95,11 @@ class PhotoService
             }
 
             // Omitted slug, parent, owner and metadata retain their stored values.
-            return $this->feeds->updateFeed($albumId, $data, $user);
+            $updated = $this->feeds->updateFeed($albumId, $data, $user);
+            if (isset($data['visibility'])) {
+                $this->repository->updateChildAccess($albumId, 'gallery-photo', $data['visibility'], $data['containerId'], $data['containerType']);
+            }
+            return $updated;
         });
     }
 

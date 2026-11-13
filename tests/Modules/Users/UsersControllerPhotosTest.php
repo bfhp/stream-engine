@@ -72,8 +72,9 @@ final class UsersControllerPhotosTest extends TestCase
         $view = $controller->show($route['page'], ['username' => 'alice']);
         self::assertSame([], $view->data['albums']);
         self::assertTrue($view->data['canCreate']);
-        self::assertSame('alice', $view->data['photoSidebar']['profileUser']->username);
-        self::assertTrue($view->data['photoSidebar']['isOwnProfile']);
+        self::assertSame('#1', $view->data['photoOwner']['name']);
+        self::assertSame('/users/alice/', $view->data['photoOwner']['url']);
+        self::assertArrayNotHasKey('photoSidebar', $view->data);
         self::assertSame('/api/v1/users/photo-albums', $view->data['apiUrl']);
     }
 
@@ -86,7 +87,7 @@ final class UsersControllerPhotosTest extends TestCase
         self::assertFalse($controller->show($route['page'], ['username' => 'alice'])->data['canCreate']);
     }
 
-    public function testCommunityPhotosUseCommunitySidebar(): void
+    public function testCommunityPhotosUseCompactOwnerLink(): void
     {
         $community = new Feed(10, null, 1, 'community', 'devs', 'Devs', null, null, '', null, 'public', 0, null, null, null);
         $feeds = $this->createStub(FeedService::class);
@@ -98,9 +99,9 @@ final class UsersControllerPhotosTest extends TestCase
         $route = $router->resolve('/communities/devs/photos/');
         $view = $controller->show($route['page'], ['slug' => 'devs']);
         self::assertTrue($view->data['isCommunityGallery']);
-        self::assertSame($community, $view->data['photoSidebar']['community']);
-        self::assertSame('/api/v1/communities/10/membership', $view->data['photoSidebar']['membershipActionUrl']);
-        self::assertArrayNotHasKey('profileUser', $view->data['photoSidebar']);
+        self::assertSame('Devs', $view->data['photoOwner']['name']);
+        self::assertSame('/communities/devs/', $view->data['photoOwner']['url']);
+        self::assertArrayNotHasKey('photoSidebar', $view->data);
     }
 
     public function testNewAlbumFormIsSeparateFromListing(): void
@@ -126,7 +127,7 @@ final class UsersControllerPhotosTest extends TestCase
         $controller->show($route['page'], ['username' => 'alice']);
     }
 
-    public function testPersonalAlbumUsesBlogOwnersSidebar(): void
+    public function testPersonalAlbumUsesCompactBlogOwnerLink(): void
     {
         $owner = new User(1, '', username: 'alice');
         $blog = new Feed(10, null, 1, 'blog', 'alice', 'Blog', null, null, '', null, 'public', 0, null, null, null);
@@ -139,10 +140,10 @@ final class UsersControllerPhotosTest extends TestCase
         $route = $router->resolve('/users/alice/photos/album/');
         $view = $controller->show($route['page'], ['username' => 'alice', 'albumSlug' => 'album']);
         self::assertSame($album, $view->data['album']);
-        self::assertSame('alice', $view->data['photoSidebar']['profileUser']->username);
-        self::assertFalse($view->data['photoSidebar']['isOwnProfile']);
-        self::assertFalse($view->data['photoSidebar']['canViewProfileGender']);
-        self::assertArrayNotHasKey('community', $view->data['photoSidebar']);
+        self::assertSame('#1', $view->data['photoOwner']['name']);
+        self::assertSame('/users/alice/', $view->data['photoOwner']['url']);
+        self::assertFalse($view->data['isManage']);
+        self::assertArrayNotHasKey('photoSidebar', $view->data);
     }
 
     public function testAlbumEditPageRejectsUnauthorizedViewer(): void
@@ -200,5 +201,25 @@ final class UsersControllerPhotosTest extends TestCase
         $route = $router->resolve('/communities/devs/photos/album/');
         $this->expectException(NotFoundException::class);
         $controller->show($route['page'], ['slug' => 'devs', 'albumSlug' => 'album']);
+    }
+
+    public function testAlbumEditorLoadsCompleteOrderedGridAndUsesUploadAnchor(): void
+    {
+        $owner = new User(1, '', username: 'alice');
+        $blog = new Feed(10, null, 1, 'blog', 'alice', 'Blog', null, null, '', null, 'public', 0, null, null, null);
+        $album = new Feed(42, 10, 1, 'gallery-album', 'album', 'Album', null, null, '', null, 'public', 0, null, null, null);
+        $feeds = $this->createMock(FeedService::class);
+        $feeds->method('getFeedByOwnerAndType')->willReturn($blog);
+        $feeds->method('getFeedByParentAndSlug')->willReturn($album);
+        $feeds->method('getFeedById')->willReturnCallback(fn (int $id) => $id === 10 ? $blog : $album);
+        $feeds->expects(self::once())->method('countFeedsByParentAndType')->with(42, 'gallery-photo', $owner)->willReturn(200);
+        $feeds->expects(self::once())->method('getFeedsByParentAndTypePage')->with(42, 'gallery-photo', $owner, 200, 0, true)->willReturn(['items' => [], 'total' => 200]);
+        [$controller, $router] = $this->controller($feeds, $owner, $owner);
+        $route = $router->resolve('/users/alice/photos/album/edit/');
+        $view = $controller->show($route['page'], ['username' => 'alice', 'albumSlug' => 'album']);
+        self::assertTrue($view->data['isManage']);
+        self::assertFalse($view->data['isAlbumForm']);
+        self::assertSame('/users/alice/photos/album/edit/#album-upload', $view->data['newPhotoUrl']);
+        self::assertArrayNotHasKey('photoSidebar', $view->data);
     }
 }

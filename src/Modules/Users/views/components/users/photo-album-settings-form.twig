@@ -1,0 +1,27 @@
+<form data-album-settings-form>
+    <div class="ui-modal__header">
+        <h2 class="ui-modal__title" id="album-settings-title">{{ trans('photos.manage.settings') }}</h2>
+        <button type="button" class="ui-close" data-album-settings-cancel aria-label="{{ trans('view.ui.close') }}">&times;</button>
+    </div>
+    <div class="ui-modal__body">
+        <label class="ui-label" for="album-title">{{ trans('photos.album') }}</label>
+        <input class="ui-input" id="album-title" data-album-title maxlength="255" required value="{{ album.title }}">
+        <label class="ui-label" for="album-description">{{ trans('photos.description') }}</label>
+        <textarea class="ui-input" id="album-description" data-album-description-input maxlength="2000" rows="4">{{ album.description|striptags }}</textarea>
+        <fieldset class="users-album-visibility">
+            <legend class="ui-label">{{ trans('photos.visibility') }}</legend>
+            {% for value, label in {public: trans('photos.public'), members: isCommunityGallery ? trans('photos.members') : trans('view.users.blog.post.form.09'), private: trans('photos.private')} %}
+                <div class="ui-check{% if not loop.first %} users-gap{% endif %}">
+                    <input class="ui-check__input" type="radio" name="visibility" id="album-visibility-{{ value }}" value="{{ value }}" data-album-visibility{% if album.visibility == value %} checked{% endif %}>
+                    <label class="ui-check__label" for="album-visibility-{{ value }}">{{ label }}</label>
+                </div>
+            {% endfor %}
+        </fieldset>
+        <p data-album-settings-error role="alert"></p>
+        <button type="button" class="ui-button ui-button--link users-album-delete" data-photo-album-delete>{{ trans('photos.delete') }}</button>
+    </div>
+    <div class="ui-modal__footer">
+        <button type="button" class="ui-button ui-button--secondary" data-album-settings-cancel>{{ trans('view.comments.cancel') }}</button>
+        <button type="submit" class="ui-button ui-button--primary" data-album-settings-save disabled>{{ trans('photos.save') }}</button>
+    </div>
+</form>

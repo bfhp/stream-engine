@@ -1,0 +1,26 @@
+<figure class="ui-card users-panel users-album-photo" {% if isManage %}data-photo-card data-slug="{{ item.slug }}" data-title="{{ item.title }}" data-caption="{{ item.caption }}"{% endif %}>
+    {% if isManage %}
+        <label class="users-album-photo__select"><input type="checkbox" data-photo-select aria-label="{{ trans('photos.manage.select_photo') }} {{ item.title }}"></label>
+        <span class="ui-badge users-album-photo__cover" data-photo-cover-badge {% if not item.cover %}hidden{% endif %}>{{ trans('photos.manage.cover') }}</span>
+        <div class="users-album-photo__order">
+            <button type="button" class="ui-button" data-photo-grip draggable="true" aria-label="{{ trans('photos.manage.drag') }}">⠿</button>
+            <button type="button" class="ui-button" data-photo-up aria-label="{{ trans('photos.manage.up') }}">↑</button>
+            <button type="button" class="ui-button" data-photo-down aria-label="{{ trans('photos.manage.down') }}">↓</button>
+        </div>
+    {% endif %}
+    <a data-photo-link href="{{ item.url }}"><img src="{{ item.previewUrl }}" alt="{{ item.title }}" loading="lazy" decoding="async"></a>
+    <figcaption><a data-photo-name href="{{ item.url }}">{{ item.title }}</a></figcaption>
+    {% if isManage %}
+        <details class="users-album-photo__menu">
+            <summary aria-label="{{ trans('photos.manage.photo_menu') }}">⋯</summary>
+            <button type="button" class="ui-button ui-button--secondary" data-photo-set-cover>{{ trans('photos.manage.set_cover') }}</button>
+            <button type="button" class="ui-button ui-button--secondary" data-photo-edit>{{ trans('photos.manage.details') }}</button>
+        </details>
+        <div data-photo-details hidden>
+            <label class="ui-label">{{ trans('photos.photo_title') }}<input class="ui-input" data-photo-title maxlength="255" value="{{ item.title }}"></label>
+            <label class="ui-label">{{ trans('photos.caption') }}<textarea class="ui-input" data-photo-caption maxlength="2000">{{ item.caption }}</textarea></label>
+            <button type="button" class="ui-button ui-button--primary" data-photo-save>{{ trans('photos.save') }}</button>
+            <button type="button" class="ui-button ui-button--secondary" data-photo-cancel>{{ trans('photos.manage.cancel') }}</button>
+        </div>
+    {% endif %}
+</figure>

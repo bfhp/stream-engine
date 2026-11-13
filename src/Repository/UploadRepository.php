@@ -126,6 +126,13 @@ readonly class UploadRepository
     /**
      * Uses index: uploads_user_id_size_index (user_id, size)
      */
+    public function orphanedPhotoUploads(int $before, int $limit = 100): array
+    {
+        $limit = max(1, min(100, $limit));
+        $rows = $this->db->fetchAll("SELECT u.id FROM uploads u WHERE u.purpose = ? AND u.created_at < ? AND NOT EXISTS (SELECT 1 FROM feed_metadata m WHERE m.name IN ('gallery.original_upload_id', 'gallery.preview_upload_id') AND m.content = CAST(u.id AS CHAR)) ORDER BY u.id LIMIT $limit", [self::PURPOSE_GALLERY_PHOTO, $before]);
+        return $this->findByIds(array_column($rows, 'id'));
+    }
+
     public function isPhotoReferenced(int $uploadId): bool
     {
         return $this->db->fetchOne(

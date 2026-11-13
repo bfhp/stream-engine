@@ -142,6 +142,11 @@ final class FeedRepository implements FeedRepositoryInterface
         }
     }
 
+    public function updateChildAccess(int $parentId, string $type, string $visibility, ?int $containerId, ?string $containerType): void
+    {
+        $this->db->execute('UPDATE feeds SET visibility = ?, container_id = ?, container_type = ? WHERE parent_id = ? AND type = ?', [$visibility, $containerId, $containerType, $parentId, $type]);
+    }
+
     /** Includes hidden children when deciding whether content can be removed. */
     public function hasChildren(int $parentId): bool
     {
@@ -251,7 +256,7 @@ final class FeedRepository implements FeedRepositoryInterface
      *
      * @return array{items:list<Feed>, total:int}
      */
-    public function findByParentAndTypePage(?int $parentId, string $type, User $user, int $limit, int $offset = 0): array
+    public function findByParentAndTypePage(?int $parentId, string $type, User $user, int $limit, int $offset = 0, bool $positionOrder = false): array
     {
         $sql = $this->baseSelect(", COUNT(*) OVER () AS total_count");
 
@@ -266,7 +271,8 @@ final class FeedRepository implements FeedRepositoryInterface
         $condition = $this->applyAcl($condition, $params, $user);
 
         $sql .= $this->where($condition);
-        $sql .= "\nORDER BY f.created_at DESC, f.id DESC\nLIMIT $limit OFFSET $offset";
+        $sql .= $positionOrder ? "\nORDER BY f.position ASC, f.id ASC" : "\nORDER BY f.created_at DESC, f.id DESC";
+        $sql .= "\nLIMIT $limit OFFSET $offset";
 
         return $this->fetchWithTotal($sql, $params);
     }

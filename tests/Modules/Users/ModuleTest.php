@@ -329,7 +329,7 @@ final class ModuleTest extends TestCase
         }
         $upload = $router->resolve('/api/v1/photo-albums/9/32/photos');
         self::assertSame('photos.upload', $upload['page']->action);
-        self::assertSame(['POST'], $upload['page']->requestMethods);
+        self::assertSame(['POST', 'DELETE'], $upload['page']->requestMethods);
         self::assertNull($router->resolve('/api/v1/photos/1/preview'));
     }
 

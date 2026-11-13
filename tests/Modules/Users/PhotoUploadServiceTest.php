@@ -59,6 +59,7 @@ final class PhotoUploadServiceTest extends TestCase
                 $pdo->sqliteCreateFunction($name, $function, $arguments);
             }
         }
+        $pdo->exec('PRAGMA foreign_keys = ON');
         $pdo->exec(<<<'SQL'
             CREATE TABLE users (
                 id INTEGER PRIMARY KEY,
@@ -87,7 +88,7 @@ final class PhotoUploadServiceTest extends TestCase
                 views INTEGER NOT NULL DEFAULT 0,
                 rating_avg REAL NOT NULL DEFAULT 0
             );
-            CREATE TABLE feed_metadata (feed_id INTEGER, name TEXT, content TEXT, created_at INTEGER, updated_at INTEGER, PRIMARY KEY(feed_id, name));
+            CREATE TABLE feed_metadata (feed_id INTEGER, name TEXT, content TEXT, created_at INTEGER, updated_at INTEGER, PRIMARY KEY(feed_id, name), FOREIGN KEY(feed_id) REFERENCES feeds(id) ON DELETE CASCADE);
             CREATE TABLE membership_roles (
                 id INTEGER PRIMARY KEY,
                 role_level INTEGER NOT NULL
@@ -288,5 +289,118 @@ final class PhotoUploadServiceTest extends TestCase
     {
         $this->expectException(\StreamEngine\Core\Exceptions\ForbiddenException::class);
         $this->service->publish(10, 20, new User(2, ''), [], 'Photo', '', '12345678-1234-4234-8234-123456789abc');
+    }
+    public function testManagementSavesOrderingCoverAndDetailsWithoutChangingAddresses(): void
+    {
+        $first = $this->publish();
+        $second = $this->service->publish(10, 20, $this->owner, ['error' => UPLOAD_ERR_OK, 'tmp_name' => $this->dir.'/input.png', 'name' => 'Second.png'], '', '', '22345678-1234-4234-8234-123456789abc');
+        // A concurrent upload absent from the submitted order is retained at the end.
+        $third = $this->service->publish(10, 20, $this->owner, ['error' => UPLOAD_ERR_OK, 'tmp_name' => $this->dir.'/input.png', 'name' => 'Third.png'], '', '', '32345678-1234-4234-8234-123456789abc');
+        $album = $this->service->saveManagement(10, 20, $this->owner, [
+            'title' => 'New title', 'description' => 'New description', 'visibility' => 'members',
+            'order' => [$second->slug, $first->slug], 'cover' => $second->slug,
+            'photo' => ['slug' => $first->slug, 'title' => 'New photo title', 'caption' => 'New caption'],
+        ]);
+        self::assertSame('summer', $album->slug);
+        self::assertSame('New title', $album->title);
+        self::assertSame('New description', $album->description);
+        self::assertSame((string) $second->id, $album->metadata['gallery.cover_photo_id']);
+        self::assertSame('3', $album->metadata['gallery.last_photo_number']);
+        $rows = $this->feeds->getFeedsByParentAndTypePage(20, 'gallery-photo', $this->owner, 20, 0, true);
+        self::assertSame([$second->slug, $first->slug, $third->slug], array_column($rows['items'], 'slug'));
+        foreach ($rows['items'] as $photo) {
+            self::assertSame('members', $photo->visibility);
+            self::assertSame(10, $photo->containerId);
+            self::assertSame('blog', $photo->containerType);
+        }
+        self::assertNull($this->repository->findById($first->id, new User(0, '')));
+        $updated = $this->service->getPhotoBySlug(10, 20, $first->slug, $this->owner);
+        self::assertSame('New photo title', $updated->title);
+        self::assertSame('New caption', $updated->description);
+        self::assertSame('/users/alice/photos/summer/1/', $updated->canonicalUrl);
+    }
+
+    public function testInvalidOrderRollsBackAllAlbumChanges(): void
+    {
+        $this->publish();
+        try {
+            $this->service->saveManagement(10, 20, $this->owner, ['title' => 'Must roll back', 'order' => ['999']]);
+            self::fail('Unknown photo must be rejected');
+        } catch (\StreamEngine\Core\Exceptions\ValidationException $error) {
+            self::assertSame(409, $error->getHttpCode());
+        }
+        self::assertSame('Summer', $this->albums->getAlbum(10, 20, $this->owner)->title);
+        self::assertFalse($this->db->inTransaction());
+    }
+
+    public function testBulkDeleteRemovesFilesCoverAndReferencesButRetainsCounter(): void
+    {
+        $photo = $this->publish();
+        $this->service->saveManagement(10, 20, $this->owner, ['cover' => $photo->slug]);
+        $result = $this->service->removePhotos(10, 20, $this->owner, [$photo->slug]);
+        self::assertSame(['removed' => ['1'], 'cleanupPending' => 0], $result);
+        self::assertNull($this->repository->findById($photo->id, $this->owner));
+        self::assertSame([], glob($this->dir.'/uploads-private/1/*'));
+        self::assertSame(0, (int) $this->db->fetchOne('SELECT COUNT(*) AS n FROM uploads')['n']);
+        $album = $this->albums->getAlbum(10, 20, $this->owner);
+        self::assertArrayNotHasKey('gallery.cover_photo_id', $album->metadata);
+        self::assertSame('1', $album->metadata['gallery.last_photo_number']);
+        $next = $this->service->publish(10, 20, $this->owner, ['error' => UPLOAD_ERR_OK, 'tmp_name' => $this->dir.'/input.png', 'name' => 'Next.png'], '', '', '22345678-1234-4234-8234-123456789abc');
+        self::assertSame('2', $next->slug);
+    }
+
+    public function testInvalidBulkSelectionRollsBackDeletedPhotosAndKeepsFiles(): void
+    {
+        $photo = $this->publish();
+        try {
+            $this->service->removePhotos(10, 20, $this->owner, [$photo->slug, '999']);
+            self::fail('Unknown photo must be rejected');
+        } catch (NotFoundException) {
+        }
+        self::assertNotNull($this->service->getPhotoBySlug(10, 20, $photo->slug, $this->owner));
+        self::assertCount(2, glob($this->dir.'/uploads-private/1/*'));
+        self::assertSame(2, (int) $this->db->fetchOne('SELECT COUNT(*) AS n FROM uploads')['n']);
+        self::assertFalse($this->db->inTransaction());
+    }
+
+    public function testDeletingNonemptyAlbumRemovesItsPhotosAndFiles(): void
+    {
+        $this->publish();
+        $this->service->removePhotos(10, 20, $this->owner, [], true);
+        self::assertNull($this->repository->findById(20, $this->owner));
+        self::assertSame(0, (int) $this->db->fetchOne("SELECT COUNT(*) AS n FROM feeds WHERE type = 'gallery-photo'")['n']);
+        self::assertSame([], glob($this->dir.'/uploads-private/1/*'));
+        self::assertSame(0, (int) $this->db->fetchOne('SELECT COUNT(*) AS n FROM uploads')['n']);
+    }
+
+    public function testOrphanCleanupRetainsPublishedFilesAndRetriesUnreferencedVariants(): void
+    {
+        $photo = $this->publish();
+        $this->db->execute('UPDATE uploads SET created_at = ?', [time() - 172800]);
+        $this->uploads->cleanupOrphanedPhotos();
+        self::assertCount(2, glob($this->dir.'/uploads-private/1/*'));
+        // Simulate an earlier deletion which committed before file cleanup completed.
+        $this->feeds->deleteFeed($photo->id, $this->owner);
+        $this->uploads->cleanupOrphanedPhotos();
+        self::assertSame([], glob($this->dir.'/uploads-private/1/*'));
+        self::assertSame(0, (int) $this->db->fetchOne('SELECT COUNT(*) AS n FROM uploads')['n']);
+    }
+
+    public function testAnotherUserCannotManageOrDeleteAlbum(): void
+    {
+        $photo = $this->publish();
+        foreach (['save', 'delete'] as $operation) {
+            try {
+                if ($operation === 'save') {
+                    $this->service->saveManagement(10, 20, new User(2, ''), ['cover' => $photo->slug]);
+                } else {
+                    $this->service->removePhotos(10, 20, new User(2, ''), [$photo->slug]);
+                }
+                self::fail('Another user must not manage this album');
+            } catch (\StreamEngine\Core\Exceptions\ForbiddenException) {
+            }
+            self::assertFalse($this->db->inTransaction());
+        }
+        self::assertNotNull($this->repository->findById($photo->id, $this->owner));
     }
 }

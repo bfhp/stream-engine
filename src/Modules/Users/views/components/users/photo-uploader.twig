@@ -1,0 +1,17 @@
+        <section id="album-upload" class="users-photo-uploader" data-photo-uploader data-api-url="{{ photoUploadApiUrl }}">
+            <div class="users-photo-dropzone" data-photo-dropzone>
+                <i class="bi bi-images" aria-hidden="true"></i>
+                <input data-photo-files type="file" name="files[]" accept="image/jpeg,image/png,image/webp" multiple aria-label="{{ trans('photos.select_many') }}" hidden>
+                <p>{{ trans('photos.batch_hint') }}</p>
+            </div>
+            <div data-photo-queue-panel hidden>
+            <div class="users-actions users-photo-queue__controls">
+                <button type="button" class="ui-button ui-button--secondary" data-photo-pause hidden>{{ trans('js.photos.batch_pause') }}</button>
+                <button type="button" class="ui-button ui-button--secondary" data-photo-retry-all hidden>{{ trans('photos.retry_failed') }}</button>
+                <button type="button" class="ui-button ui-button--secondary" data-photo-clear-done hidden>{{ trans('photos.clear_done') }}</button>
+            </div>
+            <p data-photo-summary role="status" aria-live="polite" aria-atomic="true">{{ trans('photos.keep_open') }}</p>
+            <progress data-photo-total-progress max="100" value="0" aria-label="{{ trans('photos.progress') }}" hidden></progress>
+            <ol class="users-photo-queue" data-photo-queue aria-label="{{ trans('photos.queue') }}"></ol>
+            </div>
+        </section>
