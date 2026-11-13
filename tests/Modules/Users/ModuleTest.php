@@ -250,6 +250,16 @@ final class ModuleTest extends TestCase
         $this->assertSame('Management', $tree->findByAction('community.manage')?->pageName);
     }
 
+    public function testPhotoShowcaseIsConfigurableWithoutAddingARuntimeMount(): void
+    {
+        $action = UsersController::pageActions()['photos.showcase'];
+        self::assertSame('Photo showcase', $action['label']);
+        self::assertSame(['12', '24', '48'], array_column($action['settings']['photosPerPage']['options'], 'value'));
+        $tree = new PageTree([new Page(1, null, '', 'Home', null, null, null, null, ['GET'], 'html', 'public', 'home.index')]);
+        UsersController::registerRuntimePages($tree, new TranslationManager('en'));
+        self::assertNull($tree->findByAction('photos.showcase'));
+    }
+
     public function testPersonalBlogInternalActionsAreNotPubliclyConfigurable(): void
     {
         $actions = UsersController::pageActions();

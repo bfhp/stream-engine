@@ -1,12 +1,11 @@
 # Users Photo Gallery Contract and Development Plan
 
-Date: November 13, 2026. Status: album CRUD, protected photo publication and viewing implemented in Users; separate public/editor pages, ordering, covers and bulk deletion are implemented; showcase is planned.
+Date: November 13, 2026. Status: album CRUD, protected photo publication and viewing implemented in Users; separate public/editor pages, ordering, covers and bulk deletion, ratings, comments and the configurable latest-photo showcase are implemented; rankings are planned.
 
 Photo galleries belong to the Users module. Registered users will create
 albums and upload photographs within a personal blog or a community. Visitors with access can browse them; registered users can
 comment and rate photographs. Rankings expose the highest-rated photographs.
-UsersController owns album/photo pages, upload and protected file APIs. Rating
-and showcase workflows are not registered yet; the standalone Gallery
+UsersController owns album/photo pages, upload and protected file APIs. Rating and showcase workflows are registered in Users; the standalone Gallery
 controller has been removed. Gallery uses the standard Feed editing and authorization mechanisms.
 Feed type is selected at creation and cannot be changed through user-facing
 updates, including the administration editor and API. Ordinary edits and
@@ -107,7 +106,7 @@ boundary. Missing or invalid metadata never implies a ready image.
 | `gallery.cover_photo_id` | Album | Positive decimal photo Feed ID; absent means no selected cover |
 
 Photo publication writes these keys atomically with the Feed and Upload rows.
-Cover selection remains planned. Publishing a ready
+Cover selection is implemented in the album manager. Publishing a ready
 photo requires valid original/preview references, positive dimensions and
 verification that both Upload records belong to the photo owner and represent
 Gallery files. Cover selection checks that the photo is ready and belongs to
@@ -172,9 +171,9 @@ Photo routes are runtime descendants of the existing `user.show` and
 `community.show-slug` pages. Their base pattern is `photos`, producing
 `<user.show URL>/photos/` and `<community.show-slug URL>/photos/` (for example,
 `/users/alice/photos/` and `/communities/devs/photos/` with those mounts).
-A separate configurable page action, `photos.showcase`, will provide a photo
-showcase across personal blogs and communities. It belongs to Users and will
-be advertised in UsersController::pageActions() when implemented. Administrators
+A separate configurable page action, `photos.showcase`, provides a latest-photo
+showcase across personal blogs and communities. It belongs to Users and is
+advertised in UsersController::pageActions(). Administrators
 choose its mount URL through the page tree; it does not require a separate
 Gallery module. The showcase lists only ready photographs accessible to the
 viewer, applying context and album access filters before pagination and counts.
@@ -368,7 +367,20 @@ vote, average and count; delegated controls survive navigation. Guests enter
 through the existing login modal on the standalone photo page. Failed requests
 retain the prior vote and show an inline error.
 
-Next: photo comments and the separate showcase.
+The separate `photos.showcase` action is configured through the page tree;
+no URL is mounted automatically. Its `photosPerPage` setting accepts 12, 24 or
+48 (default 24). It uses existing site-wide Feed pagination ordered by creation
+time and ID descending. The existing SQL applies ready-state and full ancestry
+ACL before counting and limiting. Preview URLs stay on protected photo routes;
+links open the existing viewer and Back returns to the showcase. Cards show
+author, average and vote count; unrated photos omit the rating. No new core
+classes, database tables, migrations or public file URLs were introduced.
+
+Photo comments, replies and author/moderator actions reuse the existing comments
+API. The viewer keeps drafts per photo, lazy-loads discussions and uses one
+collapsible desktop column and a mobile discussion sheet.
+
+Next: ranked photo listings (average, vote count, then ID descending).
 
 ## Implementation sequence and acceptance
 

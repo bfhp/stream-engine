@@ -221,6 +221,21 @@ class UsersController extends AbstractController
     {
         return [
             'users.list' => 'Users list page',
+            'photos.showcase' => [
+                'label' => 'Photo showcase',
+                'settings' => [
+                    'photosPerPage' => [
+                        'control' => 'select',
+                        'label' => 'js.admin.photos.per_page',
+                        'required' => true,
+                        'options' => [
+                            ['value' => '12', 'label' => '12'],
+                            ['value' => '24', 'label' => '24'],
+                            ['value' => '48', 'label' => '48'],
+                        ],
+                    ],
+                ],
+            ],
             'user.show' => [
                 'label' => 'User profile page',
                 'singleton' => true,
@@ -557,6 +572,7 @@ class UsersController extends AbstractController
             'user.photos', 'community.photos', 'user.photo-album', 'community.photo-album',
             'user.photo-album-new', 'community.photo-album-new', 'user.photo-album-edit', 'community.photo-album-edit',
             'user.photo-new', 'community.photo-new', 'user.photo-show', 'community.photo-show' => $this->showPhotosPage($page, $args),
+            'photos.showcase' => $this->showPhotoShowcasePage($page),
             'users.list' => $this->showUsersListPage($page),
             'user.show' => $this->showUserPage($page, $args),
             'user.register' => $this->showRegisterPage($page),
@@ -625,6 +641,41 @@ class UsersController extends AbstractController
             }
         }
         throw new NotFoundException($this->tm->trans('feed.not_found'));
+    }
+
+    private function showPhotoShowcasePage(Page $page): ViewModel
+    {
+        $limit = match ($page->settings->photosPerPage ?? null) {
+            12, '12' => 12,
+            48, '48' => 48,
+            default => 24,
+        };
+        $offset = max(0, $this->context->query->int('offset'));
+        // Existing Feed SQL checks ready state and the album/context ACL
+        // before selecting, counting and paginating site-wide photographs.
+        $result = $this->feedService->getFeedsByTypePage('gallery-photo', $this->context->user, $limit, $offset);
+        $photos = [];
+        foreach ($result['items'] as $photo) {
+            if ($photo->canonicalUrl === null) {
+                continue; // Its blog/community route has not been mounted.
+            }
+            $photos[] = [
+                'title' => $photo->title ?: $this->tm->trans('photos.photo'),
+                'url' => $photo->canonicalUrl,
+                'previewUrl' => rtrim($photo->canonicalUrl, '/').'/preview/',
+                'authorName' => $photo->authorDisplayName,
+                'authorUrl' => $photo->authorUrl,
+                'ratingAverage' => $photo->ratingAverage(),
+                'ratingCount' => $photo->ratingCount,
+            ];
+        }
+        return ViewModel::fromPage($page, 'modules/users/photo-showcase.twig', [
+            'title' => $page->pageName ?: $this->tm->trans('photos.showcase'),
+            'photos' => $photos,
+            'previousUrl' => $offset > 0 ? $this->urlGenerator->page($page, $page->params, query: $offset > $limit ? ['offset' => max(0, $offset - $limit)] : []) : null,
+            'nextUrl' => $offset + $limit < $result['total'] ? $this->urlGenerator->page($page, $page->params, query: ['offset' => $offset + $limit]) : null,
+            'head_ext' => ['<script type="module" src="/assets/js/users.js" defer></script>'],
+        ]);
     }
 
     private function showPhotosPage(Page $page, array $args): ViewModel

@@ -1756,4 +1756,7 @@ return [
     'photos.details' => 'О фотографии',
     'photos.discussion_expand' => 'Развернуть обсуждение',
     'photos.comment_actions' => 'Действия с комментарием',
+    'photos.showcase' => 'Витрина фотографий',
+    'photos.showcase_empty' => 'Пока нет фотографий для просмотра.',
+    'js.admin.photos.per_page' => 'Фотографий на странице',
 ];

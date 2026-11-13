@@ -1719,4 +1719,7 @@ Correo: {email}
     'photos.details' => 'Photo details',
     'photos.discussion_expand' => 'Expand discussion',
     'photos.comment_actions' => 'Comment actions',
+    'photos.showcase' => 'Photo showcase',
+    'photos.showcase_empty' => 'No photographs to show yet.',
+    'js.admin.photos.per_page' => 'Photos per page',
 ];

@@ -1,0 +1,26 @@
+{% extends 'layouts/single.twig' %}
+{% block content %}
+    <div class="users-heading"><h1>{{ title }}</h1></div>
+    {% if photos %}
+        <div class="users-photo-showcase">
+            {% for item in photos %}
+                <figure class="users-showcase-photo">
+                    <a class="users-showcase-photo__link" data-photo-open href="{{ item.url }}">
+                        <img src="{{ item.previewUrl }}" alt="{{ item.title }}" loading="lazy" decoding="async">
+                        <span class="users-showcase-photo__title">{{ item.title }}</span>
+                    </a>
+                    <figcaption>
+                        {% if item.authorUrl %}<a href="{{ item.authorUrl }}"><bdi>{{ item.authorName }}</bdi></a>{% else %}<bdi>{{ item.authorName }}</bdi>{% endif %}
+                        {% if item.ratingCount %}<span class="users-showcase-photo__rating" aria-label="{{ trans('js.rating.summary', {average: item.ratingAverage|number_format(1), count: item.ratingCount}) }}">★ {{ item.ratingAverage|number_format(1) }} · {{ item.ratingCount }}</span>{% endif %}
+                    </figcaption>
+                </figure>
+            {% endfor %}
+        </div>
+    {% else %}<p class="ui-help">{{ trans('photos.showcase_empty') }}</p>{% endif %}
+    {% if previousUrl or nextUrl %}
+        <nav class="users-showcase-pagination" aria-label="{{ trans('photos.pagination') }}">
+            {% if previousUrl %}<a class="ui-button ui-button--secondary" href="{{ previousUrl }}">{{ trans('photos.previous') }}</a>{% endif %}
+            {% if nextUrl %}<a class="ui-button ui-button--secondary" href="{{ nextUrl }}">{{ trans('photos.next') }}</a>{% endif %}
+        </nav>
+    {% endif %}
+{% endblock %}

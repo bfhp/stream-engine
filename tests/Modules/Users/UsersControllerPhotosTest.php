@@ -355,4 +355,37 @@ final class UsersControllerPhotosTest extends TestCase
         self::assertSame(0, $view->data['albums'][2]['photoCount']);
     }
 
+    public function testShowcaseUsesConfiguredMountAndExistingViewerUrls(): void
+    {
+        $viewer = new User(2, '');
+        $photo = new Feed(100, 42, 1, 'gallery-photo', '7', 'Summer', null, null, '', null, 'public', 0, null, null, '/users/alice/photos/summer/7/', authorDisplayName: 'Alice', ratingSum: 9, ratingCount: 2, authorUrl: '/users/alice/');
+        $feeds = $this->createMock(FeedService::class);
+        $feeds->expects(self::once())->method('getFeedsByTypePage')->with('gallery-photo', $viewer, 12, 12)->willReturn(['items' => [$photo], 'total' => 30]);
+        [$controller] = $this->controller($feeds, $viewer, new User(1, '', username: 'alice'), ['offset' => '12']);
+        $page = new Page(900, 1, 'photography', 'Photography', (object) ['photosPerPage' => '12'], null, null, null, ['GET'], 'html', 'public', 'photos.showcase');
+        $view = $controller->show($page);
+        self::assertSame('modules/users/photo-showcase.twig', $view->template);
+        self::assertSame('Photography', $view->data['title']);
+        self::assertSame('/photography/', $view->data['previousUrl']);
+        self::assertSame('/photography/?offset=24', $view->data['nextUrl']);
+        self::assertSame('/users/alice/photos/summer/7/', $view->data['photos'][0]['url']);
+        self::assertSame('/users/alice/photos/summer/7/preview/', $view->data['photos'][0]['previewUrl']);
+        self::assertSame(4.5, $view->data['photos'][0]['ratingAverage']);
+        self::assertSame(2, $view->data['photos'][0]['ratingCount']);
+        self::assertSame('Alice', $view->data['photos'][0]['authorName']);
+    }
+
+    public function testShowcaseBoundsSettingsAndHasAGracefulEmptyState(): void
+    {
+        $viewer = new User(0, '');
+        $feeds = $this->createMock(FeedService::class);
+        $feeds->expects(self::once())->method('getFeedsByTypePage')->with('gallery-photo', $viewer, 24, 0)->willReturn(['items' => [], 'total' => 0]);
+        [$controller] = $this->controller($feeds, $viewer, new User(1, ''), ['offset' => '-100']);
+        $page = new Page(900, 1, 'pictures', null, (object) ['photosPerPage' => 99999], null, null, null, ['GET'], 'html', 'public', 'photos.showcase');
+        $view = $controller->show($page);
+        self::assertSame([], $view->data['photos']);
+        self::assertNull($view->data['previousUrl']);
+        self::assertNull($view->data['nextUrl']);
+    }
+
 }

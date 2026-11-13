@@ -194,6 +194,38 @@ final class PhotoUploadServiceTest extends TestCase
         $this->service->getFile(10, 20, $photo->slug, 'original', $guest);
     }
 
+    public function testSiteWideShowcaseFiltersPrivateAndPendingPhotosBeforePaginationAndCounting(): void
+    {
+        $personal = $this->publish();
+        $this->db->execute("INSERT INTO feeds (id, parent_id, owner_id, type, slug, title, visibility, container_id, container_type) VALUES (30, NULL, 1, 'community', 'devs', 'Devs', 'public', NULL, NULL), (40, 30, 1, 'gallery-album', 'events', 'Events', 'public', 30, 'community')");
+        $community = $this->service->publish(30, 40, $this->owner, ['error' => UPLOAD_ERR_OK, 'tmp_name' => $this->dir.'/input.png', 'name' => 'Photo.png'], 'Event', '', '12345678-1234-4234-8234-123456789def');
+        $this->db->execute('UPDATE feeds SET created_at = 100 WHERE id = ?', [$personal->id]);
+        $this->db->execute('UPDATE feeds SET created_at = 200 WHERE id = ?', [$community->id]);
+        $this->db->execute("INSERT INTO feeds (id, parent_id, owner_id, type, slug, title, visibility, created_at) VALUES
+            (60, 10, 1, 'gallery-album', 'private', 'Private album', 'private', 0),
+            (70, NULL, 1, 'community', 'closed', 'Closed community', 'private', 0),
+            (80, 70, 1, 'gallery-album', 'events', 'Events', 'public', 0),
+            (500, 20, 1, 'gallery-photo', '2', 'Pending', 'public', 300),
+            (501, 60, 1, 'gallery-photo', '1', 'Private album photo', 'public', 400),
+            (502, 80, 1, 'gallery-photo', '1', 'Private community photo', 'public', 500)");
+        $this->db->execute("INSERT INTO feed_metadata (feed_id, name, content) VALUES (500, 'gallery.state', 'pending'), (501, 'gallery.state', 'ready'), (502, 'gallery.state', 'ready')");
+        $guest = new User(0, '');
+        $first = $this->feeds->getFeedsByTypePage('gallery-photo', $guest, 1);
+        self::assertSame(2, $first['total']);
+        self::assertSame($community->id, $first['items'][0]->id);
+        self::assertSame('/communities/devs/photos/events/'.$community->slug.'/', $first['items'][0]->canonicalUrl);
+        $second = $this->feeds->getFeedsByTypePage('gallery-photo', $guest, 1, 1);
+        self::assertSame(2, $second['total']);
+        self::assertSame($personal->id, $second['items'][0]->id);
+        $this->db->execute("UPDATE feeds SET visibility = 'private' WHERE id = 30");
+        $revoked = $this->feeds->getFeedsByTypePage('gallery-photo', $guest, 1);
+        self::assertSame(1, $revoked['total']);
+        self::assertSame($personal->id, $revoked['items'][0]->id);
+        $owner = $this->feeds->getFeedsByTypePage('gallery-photo', $this->owner, 24);
+        self::assertSame(4, $owner['total']);
+        self::assertNotContains(500, array_column($owner['items'], 'id'));
+    }
+
     public function testFailedFeedPublicationRollsBackUploadsAndRemovesPrivateFiles(): void
     {
         $feeds = $this->createMock(FeedService::class);

@@ -1079,3 +1079,20 @@ body.photo-viewer-open { overflow: hidden; }
 @media (max-width: 63.99rem) { .users-album-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; } }
 @media (max-width: 31.99rem) { .users-album-list { grid-template-columns: minmax(0, 1fr); } }
 @media (prefers-reduced-motion: reduce) { .users-album-card__cover > img { transition: none; } }
+
+.users-photo-showcase { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.5rem 1rem; margin-block: 1.5rem; }
+.users-showcase-photo { min-inline-size: 0; margin: 0; }
+.users-showcase-photo__link { display: block; color: var(--ui-text); text-decoration: none; border-radius: var(--ui-radius); }
+.users-showcase-photo__link:hover { color: var(--ui-text); text-decoration: none; }
+.users-showcase-photo__link:focus-visible { outline: 3px solid var(--ui-focus-ring); outline-offset: 4px; }
+.users-showcase-photo__link img { display: block; inline-size: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--ui-radius); background: var(--ui-surface-2); }
+.users-showcase-photo__title { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-block-start: .625rem; font-size: .9375rem; font-weight: 600; }
+.users-showcase-photo figcaption { display: flex; align-items: baseline; gap: .5rem; margin-block-start: .25rem; color: var(--ui-muted); font-size: .75rem; }
+.users-showcase-photo figcaption > a, .users-showcase-photo figcaption > bdi { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: inherit; }
+.users-showcase-photo figcaption > a { text-decoration: none; }
+.users-showcase-photo figcaption > a:hover { text-decoration: underline; }
+.users-showcase-photo__rating { margin-inline-start: auto; white-space: nowrap; }
+.users-showcase-pagination { display: flex; gap: .75rem; margin-block: 1.5rem; }
+@media (max-width: 63.99rem) { .users-photo-showcase { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 40rem) { .users-photo-showcase { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem .75rem; } }
+@media (max-width: 22rem) { .users-showcase-photo figcaption { flex-wrap: wrap; } .users-showcase-photo__rating { margin-inline-start: 0; } }
