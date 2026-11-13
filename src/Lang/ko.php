@@ -1722,4 +1722,8 @@ return [
     'photos.showcase' => 'Photo showcase',
     'photos.showcase_empty' => 'No photographs to show yet.',
     'js.admin.photos.per_page' => 'Photos per page',
+    'photos.sort' => 'Photo order',
+    'photos.latest' => 'Latest',
+    'photos.best' => 'Best rated',
+    'photos.ranking_empty' => 'No rated photographs yet.',
 ];

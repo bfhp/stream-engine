@@ -21,11 +21,3 @@ A new task must describe the observable problem, the desired outcome, and,
 where important, how completion will be verified. Keep diagnostic notes and
 reports about completed work in commits/PRs instead of turning TODO back into a
 changelog.
-
-## Users photo galleries
-
-- **P2** — Implement personal-blog and community albums in Users, photo uploads, comments, votes and photo
-  rankings, plus a separate configurable photo showcase page action, from the [Gallery contract](GALLERY_CONTRACT.md). The metadata contract and access rules are documented;
-  user workflows remain to be implemented. Deliver in the contract's phases, verifying ownership,
-  private image access, upload recovery and rating consistency before exposing
-  the corresponding pages and API.

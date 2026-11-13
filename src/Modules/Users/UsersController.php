@@ -651,9 +651,11 @@ class UsersController extends AbstractController
             default => 24,
         };
         $offset = max(0, $this->context->query->int('offset'));
+        $ranked = $this->context->query->string('sort') === 'best';
+        $filters = $ranked ? ['sort' => 'best'] : [];
         // Existing Feed SQL checks ready state and the album/context ACL
         // before selecting, counting and paginating site-wide photographs.
-        $result = $this->feedService->getFeedsByTypePage('gallery-photo', $this->context->user, $limit, $offset);
+        $result = $this->feedService->getFeedsByTypePage('gallery-photo', $this->context->user, $limit, $offset, ranked: $ranked);
         $photos = [];
         foreach ($result['items'] as $photo) {
             if ($photo->canonicalUrl === null) {
@@ -672,8 +674,11 @@ class UsersController extends AbstractController
         return ViewModel::fromPage($page, 'modules/users/photo-showcase.twig', [
             'title' => $page->pageName ?: $this->tm->trans('photos.showcase'),
             'photos' => $photos,
-            'previousUrl' => $offset > 0 ? $this->urlGenerator->page($page, $page->params, query: $offset > $limit ? ['offset' => max(0, $offset - $limit)] : []) : null,
-            'nextUrl' => $offset + $limit < $result['total'] ? $this->urlGenerator->page($page, $page->params, query: ['offset' => $offset + $limit]) : null,
+            'ranked' => $ranked,
+            'latestUrl' => $this->urlGenerator->page($page, $page->params),
+            'bestUrl' => $this->urlGenerator->page($page, $page->params, query: ['sort' => 'best']),
+            'previousUrl' => $offset > 0 ? $this->urlGenerator->page($page, $page->params, query: $offset > $limit ? [...$filters, 'offset' => max(0, $offset - $limit)] : $filters) : null,
+            'nextUrl' => $offset + $limit < $result['total'] ? $this->urlGenerator->page($page, $page->params, query: [...$filters, 'offset' => $offset + $limit]) : null,
             'head_ext' => ['<script type="module" src="/assets/js/users.js" defer></script>'],
         ]);
     }

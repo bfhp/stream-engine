@@ -1,6 +1,6 @@
 # Users Photo Gallery Contract and Development Plan
 
-Date: November 13, 2026. Status: album CRUD, protected photo publication and viewing implemented in Users; separate public/editor pages, ordering, covers and bulk deletion, ratings, comments and the configurable latest-photo showcase are implemented; rankings are planned.
+Date: November 13, 2026. Status: album CRUD, protected photo publication and viewing implemented in Users; separate public/editor pages, ordering, covers and bulk deletion, ratings, comments and the configurable photo showcase and rankings are implemented.
 
 Photo galleries belong to the Users module. Registered users will create
 albums and upload photographs within a personal blog or a community. Visitors with access can browse them; registered users can
@@ -184,7 +184,7 @@ Photo links lead to their canonical personal-blog or community routes.
 | `user.show` | `user.photos` | `photos` |
 | `community.show-slug` | `community.photos` | `photos` |
 
-Album/photo views, album editing, uploads and rankings descend from the
+Album/photo views, album editing and uploads descend from the
 corresponding photos route. Register runtime pages only when those workflows
 work. The scoped photo routes remain runtime descendants; only the separate
 showcase is a configurable photo mount in `pageActions()`. Resolve context
@@ -380,7 +380,13 @@ Photo comments, replies and author/moderator actions reuse the existing comments
 API. The viewer keeps drafts per photo, lazy-loads discussions and uses one
 collapsible desktop column and a mobile discussion sheet.
 
-Next: ranked photo listings (average, vote count, then ID descending).
+Photo ranking is available in the showcase through `?sort=best`. The default
+view remains latest photographs. Ranked SQL excludes unrated feeds before
+pagination/counting and orders by the unrounded average descending, then vote
+count descending and ID descending. It reuses the same ready-state and ancestry
+ACL; votes, removals and visibility changes affect the next query. Switching
+views resets the offset, while pagination keeps the selected view. No new core
+classes, migrations or ranking cache are introduced.
 
 ## Implementation sequence and acceptance
 

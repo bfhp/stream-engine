@@ -226,6 +226,45 @@ final class PhotoUploadServiceTest extends TestCase
         self::assertNotContains(500, array_column($owner['items'], 'id'));
     }
 
+
+    public function testPhotoRankingUsesFullAverageThenVoteCountAndIdWithAclBeforePagination(): void
+    {
+        $this->db->execute("INSERT INTO feeds (id, parent_id, owner_id, type, slug, title, visibility) VALUES
+            (30, 10, 1, 'gallery-album', 'private', 'Private', 'private'),
+            (40, NULL, 1, 'community', 'private-community', 'Private community', 'private'),
+            (50, 40, 1, 'gallery-album', 'events', 'Events', 'public')");
+        foreach ([
+            [100, 20, 5, 1, 5.0], [101, 20, 9, 2, 4.5],
+            [102, 20, 18, 4, 4.5], [103, 20, 18, 4, 4.5],
+            [104, 20, 0, 0, 0.0], [105, 30, 500, 100, 5.0],
+            [106, 50, 1000, 200, 5.0], [107, 20, 563, 125, 4.5],
+            [108, 20, 1000, 200, 5.0], [109, 20, 4503, 1000, 4.5],
+        ] as [$id, $parent, $sum, $count, $average]) {
+            $this->db->execute("INSERT INTO feeds (id, parent_id, owner_id, type, slug, title, visibility, created_at, rating_sum, rating_count, rating_avg) VALUES (?, ?, 1, 'gallery-photo', ?, 'Photo', 'public', ?, ?, ?, ?)", [$id, $parent, (string) $id, $id, $sum, $count, $average]);
+            $this->db->execute("INSERT INTO feed_metadata (feed_id, name, content) VALUES (?, 'gallery.state', ?)", [$id, $id === 108 ? 'pending' : 'ready']);
+        }
+        $guest = new User(0, '');
+        $expected = [100, 107, 109, 103, 102, 101];
+        $ids = [];
+        foreach ([0, 2, 4] as $offset) {
+            $page = $this->feeds->getFeedsByTypePage('gallery-photo', $guest, 2, $offset, ranked: true);
+            self::assertSame(6, $page['total']);
+            array_push($ids, ...array_column($page['items'], 'id'));
+        }
+        self::assertSame($expected, $ids);
+        $latest = $this->feeds->getFeedsByTypePage('gallery-photo', $guest, 24);
+        self::assertContains(104, array_column($latest['items'], 'id'));
+        $owner = $this->feeds->getFeedsByTypePage('gallery-photo', $this->owner, 24, ranked: true);
+        self::assertSame(8, $owner['total']);
+        self::assertNotContains(108, array_column($owner['items'], 'id'));
+        // Changing an aggregate must take effect on the next request.
+        $this->db->execute('UPDATE feeds SET rating_sum = 1, rating_avg = 1 WHERE id = 100');
+        $changed = $this->feeds->getFeedsByTypePage('gallery-photo', $guest, 24, ranked: true);
+        self::assertSame([107, 109, 103, 102, 101, 100], array_column($changed['items'], 'id'));
+        $this->db->execute("UPDATE feeds SET visibility = 'private' WHERE id = 20");
+        self::assertSame(['items' => [], 'total' => 0], $this->feeds->getFeedsByTypePage('gallery-photo', $guest, 24, ranked: true));
+    }
+
     public function testFailedFeedPublicationRollsBackUploadsAndRemovesPrivateFiles(): void
     {
         $feeds = $this->createMock(FeedService::class);

@@ -1,6 +1,12 @@
 {% extends 'layouts/single.twig' %}
 {% block content %}
-    <div class="users-heading"><h1>{{ title }}</h1></div>
+    <div class="users-heading">
+        <h1>{{ title }}</h1>
+        <nav class="users-photo-showcase-sort" aria-label="{{ trans('photos.sort') }}">
+            <a href="{{ latestUrl }}"{% if not ranked %} aria-current="page"{% endif %}>{{ trans('photos.latest') }}</a>
+            <a href="{{ bestUrl }}"{% if ranked %} aria-current="page"{% endif %}>{{ trans('photos.best') }}</a>
+        </nav>
+    </div>
     {% if photos %}
         <div class="users-photo-showcase">
             {% for item in photos %}
@@ -16,7 +22,7 @@
                 </figure>
             {% endfor %}
         </div>
-    {% else %}<p class="ui-help">{{ trans('photos.showcase_empty') }}</p>{% endif %}
+    {% else %}<p class="ui-help">{{ trans(ranked ? 'photos.ranking_empty' : 'photos.showcase_empty') }}</p>{% endif %}
     {% if previousUrl or nextUrl %}
         <nav class="users-showcase-pagination" aria-label="{{ trans('photos.pagination') }}">
             {% if previousUrl %}<a class="ui-button ui-button--secondary" href="{{ previousUrl }}">{{ trans('photos.previous') }}</a>{% endif %}

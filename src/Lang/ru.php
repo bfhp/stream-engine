@@ -1759,4 +1759,8 @@ return [
     'photos.showcase' => 'Витрина фотографий',
     'photos.showcase_empty' => 'Пока нет фотографий для просмотра.',
     'js.admin.photos.per_page' => 'Фотографий на странице',
+    'photos.sort' => 'Порядок фотографий',
+    'photos.latest' => 'Последние',
+    'photos.best' => 'Лучшие',
+    'photos.ranking_empty' => 'Пока нет фотографий с оценками.',
 ];

@@ -379,13 +379,28 @@ final class UsersControllerPhotosTest extends TestCase
     {
         $viewer = new User(0, '');
         $feeds = $this->createMock(FeedService::class);
-        $feeds->expects(self::once())->method('getFeedsByTypePage')->with('gallery-photo', $viewer, 24, 0)->willReturn(['items' => [], 'total' => 0]);
-        [$controller] = $this->controller($feeds, $viewer, new User(1, ''), ['offset' => '-100']);
+        $feeds->expects(self::once())->method('getFeedsByTypePage')->with('gallery-photo', $viewer, 24, 0, null, false)->willReturn(['items' => [], 'total' => 0]);
+        [$controller] = $this->controller($feeds, $viewer, new User(1, ''), ['offset' => '-100', 'sort' => ['best']]);
         $page = new Page(900, 1, 'pictures', null, (object) ['photosPerPage' => 99999], null, null, null, ['GET'], 'html', 'public', 'photos.showcase');
         $view = $controller->show($page);
         self::assertSame([], $view->data['photos']);
         self::assertNull($view->data['previousUrl']);
         self::assertNull($view->data['nextUrl']);
+    }
+
+    public function testPhotoRankingKeepsSortInPaginationAndResetsOffsetWhenSwitchingMode(): void
+    {
+        $viewer = new User(0, '');
+        $feeds = $this->createMock(FeedService::class);
+        $feeds->expects(self::once())->method('getFeedsByTypePage')->with('gallery-photo', $viewer, 12, 24, null, true)->willReturn(['items' => [], 'total' => 50]);
+        [$controller] = $this->controller($feeds, $viewer, new User(1, ''), ['sort' => 'best', 'offset' => '24']);
+        $page = new Page(900, 1, 'photography', 'Photography', (object) ['photosPerPage' => '12'], null, null, null, ['GET'], 'html', 'public', 'photos.showcase');
+        $view = $controller->show($page);
+        self::assertTrue($view->data['ranked']);
+        self::assertSame('/photography/?sort=best&offset=12', $view->data['previousUrl']);
+        self::assertSame('/photography/?sort=best&offset=36', $view->data['nextUrl']);
+        self::assertSame('/photography/', $view->data['latestUrl']);
+        self::assertSame('/photography/?sort=best', $view->data['bestUrl']);
     }
 
 }

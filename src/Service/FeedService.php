@@ -1389,11 +1389,13 @@ class FeedService
      * canonicalUrl (blog posts do) are expected to override feed->canonicalUrl
      * afterwards, same as showBlogPostPage()/buildPostCards() already do.
      *
+     * Set $ranked for rated-only results ordered by average, votes and ID.
+     *
      * @return array{items: Feed[], total: int}
      */
-    public function getFeedsByTypePage(string $type, User $user, int $limit, int $offset = 0, ?string $tagSlug = null): array
+    public function getFeedsByTypePage(string $type, User $user, int $limit, int $offset = 0, ?string $tagSlug = null, bool $ranked = false): array
     {
-        $result = $this->repository->findByTypePage($type, $user, $limit, $offset, $tagSlug);
+        $result = $this->repository->findByTypePage($type, $user, $limit, $offset, $tagSlug, $ranked);
 
         $this->decorateFeedsWithUrls($result['items']);
 

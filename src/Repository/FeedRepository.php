@@ -695,9 +695,12 @@ final class FeedRepository implements FeedRepositoryInterface
      * Uses index: feeds_type_created_at_id_index (type asc, created_at desc, id desc)
      * Uses index: feed_terms_vocabulary_slug_index (vocabulary, slug) when $tagSlug is set.
      *
+     * Ranked pages include rated feeds only; ties use vote count and ID.
+     * The default chronological listing is unchanged.
+     *
      * @return array{items:list<Feed>, total:int}
      */
-    public function findByTypePage(string $type, User $user, int $limit, int $offset = 0, ?string $tagSlug = null): array
+    public function findByTypePage(string $type, User $user, int $limit, int $offset = 0, ?string $tagSlug = null, bool $ranked = false): array
     {
         $joins = '';
         if ($tagSlug !== null) {
@@ -715,10 +718,15 @@ final class FeedRepository implements FeedRepositoryInterface
             $params[] = $tagSlug;
         }
 
+        if ($ranked) {
+            $condition .= "AND f.rating_count > 0\n";
+        }
         $condition = $this->applyAcl($condition, $params, $user);
 
         $sql .= $this->where($condition);
-        $sql .= "\nORDER BY f.created_at DESC, f.id DESC\nLIMIT $limit OFFSET $offset";
+        // Use the full average: rating_avg is rounded to two decimal places.
+        $order = $ranked ? '(1e0 * f.rating_sum / f.rating_count) DESC, f.rating_count DESC, f.id DESC' : 'f.created_at DESC, f.id DESC';
+        $sql .= "\nORDER BY $order\nLIMIT $limit OFFSET $offset";
 
         return $this->fetchWithTotal($sql, $params);
     }
