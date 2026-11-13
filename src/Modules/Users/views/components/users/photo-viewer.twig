@@ -1,0 +1,16 @@
+<section class="users-photo-viewer" data-photo-viewer data-url="{{ photo.canonicalUrl }}" aria-label="{{ photo.title }}">
+    <header class="users-photo-viewer__header">
+        <a class="users-photo-viewer__close" data-photo-viewer-close href="{{ photoReturnUrl }}" aria-label="{{ trans('view.ui.close') }}">×</a>
+        <a data-photo-viewer-close href="{{ photoReturnUrl }}">{{ album.title }}</a>
+        <span>{{ photoPosition }} / {{ photoCount }}</span>
+    </header>
+    <div class="users-photo-viewer__stage">
+        {% if previousPhotoUrl %}<a class="users-photo-viewer__previous" data-photo-viewer-nav="previous" href="{{ previousPhotoUrl }}" aria-label="{{ trans('photos.previous') }}">‹</a>{% endif %}
+        <img data-photo-viewer-image src="{{ photoPreviewUrl }}" alt="{{ photo.title }}" draggable="false">
+        {% if nextPhotoUrl %}<a class="users-photo-viewer__next" data-photo-viewer-nav="next" data-photo-preview="{{ nextPhotoPreviewUrl }}" href="{{ nextPhotoUrl }}" aria-label="{{ trans('photos.next') }}">›</a>{% endif %}
+    </div>
+    <footer class="users-photo-viewer__footer">
+        <div><h1>{{ photo.title }}</h1>{% if photo.description %}<p>{{ photo.description|striptags }}</p>{% endif %}</div>
+        <a href="{{ photoOriginalUrl }}">{{ trans('photos.original') }}</a>
+    </footer>
+</section>

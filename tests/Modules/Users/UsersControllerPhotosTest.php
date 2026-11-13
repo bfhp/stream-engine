@@ -54,7 +54,7 @@ final class UsersControllerPhotosTest extends TestCase
         $communities = $this->createStub(CommunityService::class);
         $communities->method('canPost')->willReturn(false);
         $communities->method('getMembers')->willReturn(['items' => [], 'total' => 0]);
-        foreach (['pageTree' => $tree, 'tm' => $tm, 'feedService' => $feeds, 'userService' => $users, 'communityService' => $communities, 'memberships' => new MembershipRepository($db), 'urlGenerator' => new UrlGenerator($tree, new FakeFeedRepository([]), new ArrayCache())] as $key => $value) {
+        foreach (['pageTree' => $tree, 'tm' => $tm, 'feedService' => $feeds, 'userService' => $users, 'communityService' => $communities, 'uploadService' => $this->createStub(\StreamEngine\Service\UploadService::class), 'memberships' => new MembershipRepository($db), 'urlGenerator' => new UrlGenerator($tree, new FakeFeedRepository([]), new ArrayCache())] as $key => $value) {
             $reflection->getProperty($key)->setValue($controller, $value);
         }
 
@@ -221,5 +221,32 @@ final class UsersControllerPhotosTest extends TestCase
         self::assertFalse($view->data['isAlbumForm']);
         self::assertSame('/users/alice/photos/album/edit/#album-upload', $view->data['newPhotoUrl']);
         self::assertArrayNotHasKey('photoSidebar', $view->data);
+    }
+
+    public function testPhotoViewerUsesSavedOrderAndReturnsToTheCorrectAlbumPage(): void
+    {
+        $owner = new User(1, '', username: 'alice');
+        $viewer = new User(2, '');
+        $blog = new Feed(10, null, 1, 'blog', 'alice', 'Blog', null, null, '', null, 'public', 0, null, null, null);
+        $album = new Feed(42, 10, 1, 'gallery-album', 'album', 'Album', null, null, '', null, 'public', 0, null, null, null);
+        $photos = [];
+        for ($i = 0; $i < 23; $i++) {
+            $photos[] = new Feed(1000 + $i, 42, 1, 'gallery-photo', (string) (31 + $i), 'Photo', null, null, '', null, 'public', $i, null, null, null, metadata: ['gallery.state' => 'ready', 'gallery.width' => '10', 'gallery.height' => '10', 'gallery.original_upload_id' => '1', 'gallery.preview_upload_id' => '2']);
+        }
+        $current = $photos[20];
+        $feeds = $this->createMock(FeedService::class);
+        $feeds->method('getFeedByOwnerAndType')->willReturn($blog);
+        $feeds->method('getFeedByParentAndSlug')->willReturnCallback(fn ($parent) => $parent === 10 ? $album : $current);
+        $feeds->method('getFeedById')->willReturnCallback(fn ($id) => $id === 10 ? $blog : ($id === 42 ? $album : $current));
+        $feeds->method('countFeedsByParentAndType')->willReturn(23);
+        $feeds->expects(self::once())->method('getFeedsByParentAndTypePage')->with(42, 'gallery-photo', $viewer, 23, 0, true)->willReturn(['items' => $photos, 'total' => 23]);
+        [$controller, $router] = $this->controller($feeds, $viewer, $owner);
+        $route = $router->resolve('/users/alice/photos/album/51/');
+        $view = $controller->show($route['page'], ['username' => 'alice', 'albumSlug' => 'album', 'photoSlug' => '51']);
+        self::assertSame(21, $view->data['photoPosition']);
+        self::assertSame(23, $view->data['photoCount']);
+        self::assertSame('/users/alice/photos/album/50/', $view->data['previousPhotoUrl']);
+        self::assertSame('/users/alice/photos/album/52/', $view->data['nextPhotoUrl']);
+        self::assertSame('/users/alice/photos/album/?offset=20', $view->data['photoReturnUrl']);
     }
 }

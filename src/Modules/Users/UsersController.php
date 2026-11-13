@@ -665,11 +665,11 @@ class UsersController extends AbstractController
         $photo = $isPhotoView ? $this->photoUploadService()->getPhotoBySlug($context->id, $album->id, (string) ($args['photoSlug'] ?? ''), $this->context->user) : null;
         $photoItems = [];
         $photoTotal = 0;
-        if ($album !== null && ! $isAlbumForm && ! $isPhotoView) {
-            if ($isManage) {
+        if ($album !== null && ! $isAlbumForm) {
+            if ($isManage || $isPhotoView) {
                 $offset = 0;
             }
-            $limit = $isManage ? max(20, $this->feedService->countFeedsByParentAndType($album->id, 'gallery-photo', $this->context->user)) : 20;
+            $limit = ($isManage || $isPhotoView) ? max(20, $this->feedService->countFeedsByParentAndType($album->id, 'gallery-photo', $this->context->user)) : 20;
             $photoRows = $this->feedService->getFeedsByParentAndTypePage($album->id, 'gallery-photo', $this->context->user, $limit, $offset, true);
             $photoTotal = $photoRows['total'] ?? 0;
             foreach ($photoRows['items'] ?? [] as $item) {
@@ -684,6 +684,20 @@ class UsersController extends AbstractController
                     'previewUrl' => $this->urlGenerator->action($scope.'.photo-file', [...$albumParams, 'photoSlug' => $item->slug, 'variant' => 'preview']),
                 ];
             }
+        }
+        $photoIndex = null;
+        if ($photo !== null) {
+            foreach ($photoItems as $index => $item) {
+                if ($item['slug'] === $photo->slug) {
+                    $photoIndex = $index;
+                    break;
+                }
+            }
+        }
+        $photoAlbumUrl = $album !== null ? $this->urlGenerator->action($scope.'.photo-album', $albumParams) : null;
+        $photoReturnUrl = $photoAlbumUrl;
+        if ($photoIndex !== null && $photoIndex >= 20) {
+            $photoReturnUrl = $this->urlGenerator->action($scope.'.photo-album', $albumParams, query: ['offset' => intdiv($photoIndex, 20) * 20]);
         }
         $paginationAction = $album !== null ? $scope.'.photo-album' : $scope.'.photos';
         $paginationParams = $album !== null ? $albumParams : $params;
@@ -716,6 +730,11 @@ class UsersController extends AbstractController
             'isPhotoForm' => $isPhotoForm, 'photo' => $photo, 'photoItems' => $photoItems,
             'newPhotoUrl' => $canUpload ? $this->urlGenerator->action($scope.'.photo-album-edit', $albumParams).'#album-upload' : null,
             'albumUrl' => $album !== null ? $this->urlGenerator->action($scope.'.photo-album', $albumParams) : null,
+            'photoCount' => $photoTotal, 'photoPosition' => $photoIndex !== null ? $photoIndex + 1 : null,
+            'previousPhotoUrl' => $photoIndex !== null && $photoIndex > 0 ? $photoItems[$photoIndex - 1]['url'] : null,
+            'nextPhotoUrl' => $photoIndex !== null ? ($photoItems[$photoIndex + 1]['url'] ?? null) : null,
+            'nextPhotoPreviewUrl' => $photoIndex !== null ? ($photoItems[$photoIndex + 1]['previewUrl'] ?? null) : null,
+            'photoReturnUrl' => $photoReturnUrl,
             'photoUploadApiUrl' => $itemApiUrl !== null ? $itemApiUrl.'/photos' : null,
             'photoPreviewUrl' => $photo !== null ? $this->urlGenerator->action($scope.'.photo-file', [...$albumParams, 'photoSlug' => $photo->slug, 'variant' => 'preview']) : null,
             'photoOriginalUrl' => $photo !== null ? $this->urlGenerator->action($scope.'.photo-file', [...$albumParams, 'photoSlug' => $photo->slug, 'variant' => 'original']) : null,

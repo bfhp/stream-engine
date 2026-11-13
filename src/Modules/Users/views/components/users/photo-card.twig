@@ -1,11 +1,11 @@
-<figure class="ui-card users-panel users-album-photo" {% if isManage %}data-photo-card data-slug="{{ item.slug }}" data-title="{{ item.title }}" data-caption="{{ item.caption }}"{% endif %}>
+<figure class="{{ isManage ? 'ui-card users-panel users-album-photo' : 'users-public-photo' }}" {% if isManage %}data-photo-card data-slug="{{ item.slug }}" data-title="{{ item.title }}" data-caption="{{ item.caption }}"{% endif %}>
     {% if isManage %}
         <label class="users-album-photo__select"><input type="checkbox" data-photo-select aria-label="{{ trans('photos.manage.select_photo') }} {{ item.title }}"></label>
         <span class="ui-badge users-album-photo__cover" data-photo-cover-badge {% if not item.cover %}hidden{% endif %}>{{ trans('photos.manage.cover') }}</span>
         <span class="users-album-photo__grip" data-photo-grip aria-hidden="true">⠿</span>
     {% endif %}
-    <a data-photo-link href="{{ item.url }}"><img{% if isManage %} draggable="false"{% endif %} src="{{ item.previewUrl }}" alt="{{ item.title }}" loading="lazy" decoding="async"></a>
-    <figcaption><a data-photo-name href="{{ item.url }}">{{ item.title }}</a></figcaption>
+    <a{% if not isManage %} data-photo-open{% endif %} data-photo-link href="{{ item.url }}"><img{% if isManage %} draggable="false"{% endif %} src="{{ item.previewUrl }}" alt="{{ item.title }}" loading="lazy" decoding="async"></a>
+    <figcaption{% if not isManage %} class="users-public-photo__caption"{% endif %}><a{% if not isManage %} data-photo-open{% endif %} data-photo-name href="{{ item.url }}">{{ item.title }}</a></figcaption>
     {% if isManage %}
         <div class="users-album-photo__menu">
             <button type="button" class="ui-button users-album-photo__menu-toggle" data-photo-menu-toggle aria-haspopup="menu" aria-expanded="false" aria-label="{{ trans('photos.manage.photo_menu') }}">⋯</button>

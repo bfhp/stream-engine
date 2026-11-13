@@ -1,3 +1,4 @@
+import { initPhotoViewer } from './photo-viewer';
 import { initAlbumManager } from './album-manager';
 import { initPhotoUpload } from './photo-upload';
 import {
@@ -744,3 +745,5 @@ document.addEventListener('DOMContentLoaded', initPhotoAlbumForm);
 document.addEventListener('DOMContentLoaded', () => { initPhotoUpload(); });
 
 document.addEventListener('DOMContentLoaded', () => { initAlbumManager(); });
+
+document.addEventListener('DOMContentLoaded', initPhotoViewer);

@@ -2,7 +2,7 @@
 {% block main_class %}layout-main users-album-page{% endblock %}
 {% block layout_container_class %}ui-container{% endblock %}
 {% block content %}
-    {% if not isAlbumForm and not isManage %}
+    {% if not isAlbumForm and not isManage and not photo %}
     <div class="users-album-context">
         {% if photoOwner.url %}<a class="users-album-owner" href="{{ photoOwner.url }}">
             {% if photoOwner.avatar %}<img src="{{ photoOwner.avatar }}" alt="" width="32" height="32">{% endif %}
@@ -11,11 +11,8 @@
         {% if album %}<a href="{{ listUrl }}">{{ trans('photos.back_to_albums') }}</a>{% endif %}
     </div>
     {% endif %}
-    {% block photos_back_link %}
-        {% if photo %}<a class="users-back-link" href="{{ albumUrl }}">← {{ album.title }}</a>{% endif %}
-    {% endblock %}
     <section{% if isManage %} data-album-manager data-api-url="{{ itemApiUrl }}" data-photos-api-url="{{ photoUploadApiUrl }}"{% endif %}>
-        <div class="users-heading">
+        {% if not photo %}<div class="users-heading">
             <h1 data-album-heading>{{ isManage ? album.title : title }}</h1>
             <div class="users-actions">
                 {% if isManage %}
@@ -28,6 +25,7 @@
                 {% endif %}
             </div>
         </div>
+        {% endif %}
         {% if isManage %}
             <p class="users-album-description" data-album-description{% if not album.description %} hidden{% endif %}>{{ album.description|striptags }}</p>
             {% include 'components/users/photo-album-settings.twig' %}
@@ -61,10 +59,7 @@
             <template data-photo-card-template>{% include 'components/users/photo-card.twig' with {item: {slug: '', title: '', caption: '', url: '', previewUrl: '', cover: false}} %}</template>
             </section>
         {% elseif photo %}
-            <figure><a href="{{ photoOriginalUrl }}"><img class="users-photo-image" src="{{ photoPreviewUrl }}" alt="{{ photo.title }}"></a>
-                {% if photo.description %}<figcaption>{{ photo.description|striptags }}</figcaption>{% endif %}
-            </figure>
-            <a href="{{ photoOriginalUrl }}">{{ trans('photos.original') }}</a>
+            {% include 'components/users/photo-viewer.twig' %}
         {% elseif isAlbumForm %}
             <form id="photoAlbumForm" data-photo-album-form data-api-url="{{ apiUrl }}" data-method="POST">
                 <div class="ui-card users-panel">
@@ -77,7 +72,7 @@
             </form>
         {% elseif album %}
             {% if album.description %}<p>{{ album.description|striptags }}</p>{% endif %}
-            {% if coverUrl %}<img class="users-album-cover" src="{{ coverUrl }}" alt="{{ album.title }}">{% endif %}
+            <p class="ui-help">{{ trans('photos.title') }} · {{ photoCount }}</p>
             {% if photoItems %}{% include 'components/users/photo-grid.twig' %}{% else %}<p>{{ trans('photos.empty_album') }}</p>{% endif %}
         {% else %}
             <ul class="users-feed">{% for item in albums %}<li class="ui-card users-panel"><a href="{{ item.url }}">{{ item.title }}</a></li>{% else %}<li>{{ trans('photos.empty') }}</li>{% endfor %}</ul>

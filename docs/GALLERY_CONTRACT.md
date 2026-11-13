@@ -348,7 +348,17 @@ current photo and draft on failure. Closing the editor discards unsaved changes.
 Menus support keyboard navigation and focus return, and close on outside focus
 or click. Both themes use their existing modal adapters.
 
-Next: comments/votes and the separate showcase.
+Public viewing stage: a frameless responsive preview grid (two columns on
+mobile) opens an immersive native dialog while retaining the album DOM, scroll
+and opener focus. Each photo still has a server-rendered URL and real previous/
+next/album links that work without JavaScript. Navigation respects saved Feed
+positions and ACL-filtered contents, including pagination boundaries. Shared
+links open a standalone photo page; its album return link selects the correct
+page of previews. The client handles arrows, horizontal touch swipes, Escape,
+Back/Forward and next-preview preloading. HTML requests use no-store and the
+existing scoped server authorization. No new core classes or migrations.
+
+Next: photo ratings, then comments and the separate showcase.
 
 ## Implementation sequence and acceptance
 

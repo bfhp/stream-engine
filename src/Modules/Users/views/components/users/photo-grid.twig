@@ -1,4 +1,4 @@
-<div class="users-photo-grid" {% if isManage %}data-album-grid{% endif %}>
+<div class="users-photo-grid{{ not isManage ? ' users-public-photo-grid' : '' }}" {% if isManage %}data-album-grid{% endif %}>
     {% for item in photoItems %}
         {% include 'components/users/photo-card.twig' %}
     {% endfor %}
