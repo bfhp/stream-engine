@@ -27,7 +27,7 @@ use Tests\Support\FakeFeedRepository;
 
 final class UsersControllerPhotosTest extends TestCase
 {
-    private function controller(FeedService $feeds, User $viewer, User $owner): array
+    private function controller(FeedService $feeds, User $viewer, User $owner, array $query = []): array
     {
         $tree = new PageTree([
             new Page(1, null, '', null, null, null, null, null, ['GET'], 'html', 'public', 'home.index'),
@@ -41,7 +41,7 @@ final class UsersControllerPhotosTest extends TestCase
         $controller = $reflection->newInstanceWithoutConstructor();
         $db = $this->createStub(PdoDatabase::class);
         $reflection->getParentClass()->getProperty('db')->setValue($controller, $db);
-        $reflection->getParentClass()->getProperty('context')->setValue($controller, new RequestContext($viewer, new \DateTimeZone('UTC'), new QueryParams([])));
+        $reflection->getParentClass()->getProperty('context')->setValue($controller, new RequestContext($viewer, new \DateTimeZone('UTC'), new QueryParams($query)));
         $db->method('fetchOne')->willReturn(['id' => $owner->id, 'email' => $owner->email, 'role' => $owner->role, 'username' => $owner->username]);
         $userReflection = new ReflectionClass(UserService::class);
         $users = $userReflection->newInstanceWithoutConstructor();
@@ -235,6 +235,7 @@ final class UsersControllerPhotosTest extends TestCase
         }
         $current = $photos[20];
         $feeds = $this->createMock(FeedService::class);
+        $feeds->expects(self::never())->method('getComments');
         $feeds->method('getFeedByOwnerAndType')->willReturn($blog);
         $feeds->method('getFeedByParentAndSlug')->willReturnCallback(fn ($parent) => $parent === 10 ? $album : $current);
         $feeds->method('getFeedById')->willReturnCallback(fn ($id) => $id === 10 ? $blog : ($id === 42 ? $album : $current));
@@ -248,5 +249,64 @@ final class UsersControllerPhotosTest extends TestCase
         self::assertSame('/users/alice/photos/album/50/', $view->data['previousPhotoUrl']);
         self::assertSame('/users/alice/photos/album/52/', $view->data['nextPhotoUrl']);
         self::assertSame('/users/alice/photos/album/?offset=20', $view->data['photoReturnUrl']);
+    }
+    public function testPhotoDiscussionUsesExistingCommentPermissionsAndScopedReplies(): void
+    {
+        $owner = new User(1, '', username: 'alice');
+        $viewer = new User(2, '');
+        $blog = new Feed(10, null, 1, 'blog', 'alice', 'Blog', null, null, '', null, 'public', 0, null, null, null);
+        $album = new Feed(42, 10, 1, 'gallery-album', 'album', 'Album', null, null, '', null, 'public', 0, null, null, null);
+        $photos = [];
+        for ($i = 0; $i < 23; $i++) {
+            $photos[] = new Feed(1000 + $i, 42, 1, 'gallery-photo', (string) (31 + $i), 'Photo', null, null, '', null, 'public', $i, null, null, null, metadata: ['gallery.state' => 'ready', 'gallery.width' => '10', 'gallery.height' => '10', 'gallery.original_upload_id' => '1', 'gallery.preview_upload_id' => '2']);
+        }
+        $current = $photos[20];
+        $comment = new Feed(500, $current->id, 2, 'comment', null, '', null, null, 'Comment', null, 'public', 0, null, null, null);
+        $reply = new Feed(501, 500, 3, 'comment', null, '', null, null, 'Reply', null, 'public', 0, null, null, null);
+        $comment->children = ['items' => [$reply], 'meta' => ['next_cursor' => 'replies']];
+        $feeds = $this->createMock(FeedService::class);
+        $feeds->method('getFeedByOwnerAndType')->willReturn($blog);
+        $feeds->method('getFeedByParentAndSlug')->willReturnCallback(fn ($parent) => $parent === 10 ? $album : $current);
+        $feeds->method('getFeedById')->willReturnCallback(fn ($id) => $id === 10 ? $blog : ($id === 42 ? $album : $current));
+        $feeds->method('countFeedsByParentAndType')->willReturn(23);
+        $feeds->expects(self::once())->method('getFeedsByParentAndTypePage')->with(42, 'gallery-photo', $viewer, 23, 0, true)->willReturn(['items' => $photos, 'total' => 23]);
+        $feeds->expects(self::once())->method('getComments')->with($current->id, null, $viewer)->willReturn(['items' => [$comment], 'meta' => ['next_cursor' => 'more']]);
+        $feeds->method('canEditFeed')->willReturnCallback(fn ($feed) => $feed->id === 500);
+        $feeds->method('isWithinEditWindow')->willReturn(false);
+        [$controller, $router] = $this->controller($feeds, $viewer, $owner, ['discussion' => '1']);
+        $route = $router->resolve('/users/alice/photos/album/51/');
+        $view = $controller->show($route['page'], ['username' => 'alice', 'albumSlug' => 'album', 'photoSlug' => '51']);
+        $discussion = $view->data['photoComments'];
+        self::assertSame($current->id, $discussion['rootId']);
+        self::assertSame('more', $discussion['cursor']);
+        self::assertTrue($discussion['items'][0]['canDelete']);
+        self::assertFalse($discussion['items'][0]['canEdit']);
+        self::assertSame('replies', $discussion['items'][0]['nextReplies']);
+        self::assertFalse($discussion['items'][0]['replies'][0]['canDelete']);
+    }
+
+    public function testPhotoDiscussionRejectsACommentFromAnotherPhoto(): void
+    {
+        $owner = new User(1, '', username: 'alice');
+        $viewer = new User(2, '');
+        $blog = new Feed(10, null, 1, 'blog', 'alice', 'Blog', null, null, '', null, 'public', 0, null, null, null);
+        $album = new Feed(42, 10, 1, 'gallery-album', 'album', 'Album', null, null, '', null, 'public', 0, null, null, null);
+        $photos = [];
+        for ($i = 0; $i < 23; $i++) {
+            $photos[] = new Feed(1000 + $i, 42, 1, 'gallery-photo', (string) (31 + $i), 'Photo', null, null, '', null, 'public', $i, null, null, null, metadata: ['gallery.state' => 'ready', 'gallery.width' => '10', 'gallery.height' => '10', 'gallery.original_upload_id' => '1', 'gallery.preview_upload_id' => '2']);
+        }
+        $current = $photos[20];
+        $comment = new Feed(500, $current->id + 1, 2, 'comment', null, '', null, null, 'Comment', null, 'public', 0, null, null, null);
+        $feeds = $this->createMock(FeedService::class);
+        $feeds->method('getFeedByOwnerAndType')->willReturn($blog);
+        $feeds->method('getFeedByParentAndSlug')->willReturnCallback(fn ($parent) => $parent === 10 ? $album : $current);
+        $feeds->method('getFeedById')->willReturnCallback(fn ($id) => $id === 10 ? $blog : ($id === 42 ? $album : ($id === 500 ? $comment : $current)));
+        $feeds->method('countFeedsByParentAndType')->willReturn(23);
+        $feeds->expects(self::once())->method('getFeedsByParentAndTypePage')->with(42, 'gallery-photo', $viewer, 23, 0, true)->willReturn(['items' => $photos, 'total' => 23]);
+        $feeds->expects(self::never())->method('getComments');
+        [$controller, $router] = $this->controller($feeds, $viewer, $owner, ['discussion' => '1', 'comment_parent' => '500']);
+        $route = $router->resolve('/users/alice/photos/album/51/');
+        $this->expectException(NotFoundException::class);
+        $controller->show($route['page'], ['username' => 'alice', 'albumSlug' => 'album', 'photoSlug' => '51']);
     }
 }

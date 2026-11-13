@@ -19,6 +19,7 @@ export function initPhotoViewer(): void {
     const close = () => {
         request?.abort(); request = null;
         if (!dialog) return;
+        viewer?.dispatchEvent(new Event('photo-viewer-changing', { bubbles: true }));
         dialog.close(); dialog.remove(); dialog = null; viewer = null;
         document.body.classList.remove('photo-viewer-open');
         opener?.focus({ preventScroll: true }); window.scrollTo({ top: albumScroll, behavior: 'instant' });
@@ -27,12 +28,15 @@ export function initPhotoViewer(): void {
         const url = safeUrl(href); request?.abort(); const controller = new AbortController(); request = controller;
         viewer?.setAttribute('aria-busy', 'true');
         try {
-            const response = await fetch(url, { credentials: 'same-origin', cache: 'no-store', signal: controller.signal });
+            const fetchUrl = new URL(url);
+            if (viewer?.querySelector<HTMLElement>('[data-photo-discussion]')?.hidden === false) fetchUrl.searchParams.set('discussion', '1');
+            const response = await fetch(fetchUrl, { credentials: 'same-origin', cache: 'no-store', signal: controller.signal });
             if (!response.ok) throw new Error('Photo unavailable');
             const parsed = new DOMParser().parseFromString(await response.text(), 'text/html');
             const fragment = parsed.querySelector<HTMLElement>('[data-photo-viewer]');
             if (!fragment) throw new Error('Photo unavailable');
             if (controller.signal.aborted) return;
+            viewer?.dispatchEvent(new Event('photo-viewer-changing', { bubbles: true }));
             if (!direct && !dialog) {
                 dialog = document.createElement('dialog'); dialog.className = 'users-photo-viewer-dialog';
                 dialog.setAttribute('aria-label', fragment.getAttribute('aria-label') ?? ''); document.body.append(dialog);
@@ -42,6 +46,7 @@ export function initPhotoViewer(): void {
                 dialog.append(fragment); dialog.showModal(); document.body.classList.add('photo-viewer-open');
             } else viewer?.replaceWith(fragment);
             viewer = fragment; preload();
+            viewer.dispatchEvent(new Event('photo-viewer-ready', { bubbles: true }));
             if (dialog) dialog.setAttribute('aria-label', fragment.getAttribute('aria-label') ?? '');
             if (mode === 'open') history.pushState({ photoViewer: true, albumUrl, albumScroll }, '', url);
             else if (mode === 'navigate') history.replaceState(history.state, '', url);
@@ -70,7 +75,7 @@ export function initPhotoViewer(): void {
         else if (!direct) close();
     });
     document.addEventListener('keydown', event => {
-        if (!viewer || (event.target as HTMLElement).closest('input, textarea, select, [contenteditable="true"], [data-photo-rating]') || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+        if (!viewer || (event.target as HTMLElement).closest('input, textarea, select, [contenteditable="true"], [data-photo-rating], [data-photo-discussion]') || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
         if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); navigate(event.key === 'ArrowLeft' ? 'previous' : 'next'); }
         if (event.key === 'Escape' && !dialog) { const link = viewer.querySelector<HTMLAnchorElement>('[data-photo-viewer-close]'); if (link) location.assign(link.href); }
     });

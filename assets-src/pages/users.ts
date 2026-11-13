@@ -1,3 +1,4 @@
+import { initPhotoComments } from './photo-comments';
 import { initPhotoRating } from './photo-rating';
 import { initPhotoViewer } from './photo-viewer';
 import { initAlbumManager } from './album-manager';
@@ -750,3 +751,5 @@ document.addEventListener('DOMContentLoaded', () => { initAlbumManager(); });
 document.addEventListener('DOMContentLoaded', initPhotoViewer);
 
 document.addEventListener('DOMContentLoaded', initPhotoRating);
+
+document.addEventListener('DOMContentLoaded', initPhotoComments);

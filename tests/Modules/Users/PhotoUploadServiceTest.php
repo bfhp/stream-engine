@@ -179,10 +179,13 @@ final class PhotoUploadServiceTest extends TestCase
         self::assertNotNull($this->repository->findById($photo->id, $guest));
         $this->db->execute("INSERT INTO feeds (id, parent_id, owner_id, type, title, visibility) VALUES (500, ?, 99, 'comment', 'Comment', 'public')", [$photo->id]);
         self::assertNotNull($this->repository->findById(500, $guest));
+        $this->db->execute("INSERT INTO feeds (id, parent_id, owner_id, type, title, visibility) VALUES (501, 500, 99, 'comment', 'Reply', 'public')");
+        self::assertNotNull($this->repository->findById(501, $guest));
         foreach ([20, 10] as $id) {
             $this->db->execute("UPDATE feeds SET visibility = 'private' WHERE id = ?", [$id]);
             self::assertNull($this->repository->findById($photo->id, $guest));
             self::assertNull($this->repository->findById(500, $guest));
+            self::assertNull($this->repository->findById(501, $guest));
             self::assertSame(0, $this->repository->countByType('gallery-photo', $guest));
             $this->db->execute("UPDATE feeds SET visibility = 'public' WHERE id = ?", [$id]);
         }

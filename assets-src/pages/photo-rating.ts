@@ -17,6 +17,8 @@ export function initPhotoRating(): void {
                 const n = Number(item.dataset.photoRate); item.textContent = n <= result.userRating ? '★' : '☆'; item.setAttribute('aria-pressed', String(n === result.userRating));
             });
             widget.querySelector('[data-photo-rating-summary]')!.textContent = trans('js.rating.summary', { average: result.ratingAverage.toFixed(1), count: result.ratingCount });
+            const compact = widget.closest('[data-photo-viewer]')?.querySelector('[data-photo-rating-compact]');
+            if (compact) compact.textContent = `${result.ratingAverage.toFixed(1)} · ${result.ratingCount}`;
         }).catch(reason => { error.textContent = getApiErrorMessage(reason, trans('js.rating.save_failed')); }).finally(() => {
             widget.dataset.saving = 'false'; buttons.forEach(item => item.disabled = false);
         });

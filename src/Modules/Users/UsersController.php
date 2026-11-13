@@ -723,6 +723,29 @@ class UsersController extends AbstractController
             } catch (NotFoundException|ForbiddenException) {
             }
         }
+        $photoComments = null;
+        $photoCommentCount = $photo !== null ? $this->feedService->countFeedsByParentAndType($photo->id, 'comment', $this->context->user) : 0;
+        if ($photo !== null && $this->context->query->int('discussion') === 1) {
+            $discussionParent = $photo->id;
+            $requestedParent = $this->context->query->int('comment_parent');
+            if ($requestedParent > 0 && $requestedParent !== $photo->id) {
+                $parentComment = $this->feedService->getFeedById($requestedParent, $this->context->user);
+                if ($parentComment === null || $parentComment->type !== 'comment' || $parentComment->parentId !== $photo->id) {
+                    throw new NotFoundException($this->tm->trans('feed.parent_not_found'));
+                }
+                $discussionParent = $requestedParent;
+            }
+            $discussion = $this->feedService->getComments($discussionParent, $this->context->query->string('comment_cursor') ?: null, $this->context->user);
+            $decorateComment = function (Feed $comment) use (&$decorateComment): array {
+                $canManage = !$this->context->user->isGuest() && $this->feedService->canEditFeed($comment, $this->context->user);
+                return ['feed' => $comment, 'canDelete' => $canManage,
+                    'canEdit' => $canManage && $this->feedService->isWithinEditWindow($comment, $this->context->user),
+                    'replies' => array_map($decorateComment, $comment->children['items'] ?? []),
+                    'nextReplies' => $comment->children['meta']['next_cursor'] ?? null];
+            };
+            $photoComments = ['items' => array_map($decorateComment, $discussion['items']), 'cursor' => $discussion['meta']['next_cursor'] ?? null,
+                'parentId' => $discussionParent, 'rootId' => $photo->id, 'isReplyPage' => $discussionParent !== $photo->id];
+        }
         return ViewModel::fromPage($page, 'modules/users/photos.twig', [
             'title' => $isPhotoForm ? $this->tm->trans('photos.upload_many') : ($isPhotoView ? $photo->title : ($isAlbumForm ? $this->tm->trans($isEdit ? 'photos.edit' : 'photos.new_album') : ($album?->title ?? $this->tm->trans('photos.title')))),
             'description' => trim((string) preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags($album?->description ?? ''), ENT_QUOTES | ENT_HTML5, 'UTF-8'))),
@@ -737,6 +760,8 @@ class UsersController extends AbstractController
             'photoReturnUrl' => $photoReturnUrl,
             'photoUserRating' => $photo !== null ? $this->feedService->getUserRatingValue($photo->id, $this->context->user) : null,
             'photoCanRate' => $photo !== null && !$this->context->user->isGuest() && $photo->ownerId !== $this->context->user->id,
+            'photoComments' => $photoComments, 'photoCommentCount' => $photoCommentCount,
+            'photoCommentGuest' => $this->context->user->isGuest(),
             'photoRatingGuest' => $this->context->user->isGuest(),
             'photoRatingUrl' => $photo !== null ? $itemApiUrl.'/photos/'.$photo->slug.'/rating' : null,
             'photoUploadApiUrl' => $itemApiUrl !== null ? $itemApiUrl.'/photos' : null,

@@ -3,14 +3,23 @@
         <a class="users-photo-viewer__close" data-photo-viewer-close href="{{ photoReturnUrl }}" aria-label="{{ trans('view.ui.close') }}">×</a>
         <a data-photo-viewer-close href="{{ photoReturnUrl }}">{{ album.title }}</a>
         <span>{{ photoPosition }} / {{ photoCount }}</span>
+        <a class="users-photo-viewer__details-toggle" data-photo-comments-toggle aria-controls="photo-discussion" aria-expanded="{{ photoComments ? 'true' : 'false' }}" href="{{ photo.canonicalUrl }}?discussion=1">{{ trans('photos.details') }}</a>
     </header>
+    <div class="users-photo-viewer__body">
     <div class="users-photo-viewer__stage">
         {% if previousPhotoUrl %}<a class="users-photo-viewer__previous" data-photo-viewer-nav="previous" href="{{ previousPhotoUrl }}" aria-label="{{ trans('photos.previous') }}">‹</a>{% endif %}
         <img data-photo-viewer-image src="{{ photoPreviewUrl }}" alt="{{ photo.title }}" draggable="false">
         {% if nextPhotoUrl %}<a class="users-photo-viewer__next" data-photo-viewer-nav="next" data-photo-preview="{{ nextPhotoPreviewUrl }}" href="{{ nextPhotoUrl }}" aria-label="{{ trans('photos.next') }}">›</a>{% endif %}
     </div>
-    <footer class="users-photo-viewer__footer">
-        <div><h1>{{ photo.title }}</h1>{% if photo.description %}<p>{{ photo.description|striptags }}</p>{% endif %}</div>
+    <aside class="users-photo-discussion" id="photo-discussion" tabindex="-1" data-photo-discussion{% if not photoComments %} hidden{% endif %} aria-label="{{ trans('photos.details') }}">
+        <div class="users-photo-discussion__heading">
+            <a class="users-photo-discussion__author" href="{{ photo.authorUrl|default(photoOwner.url) }}">{% if photo.authorAvatarUrl|default(photoOwner.avatar) %}<img src="{{ photo.authorAvatarUrl|default(photoOwner.avatar) }}" width="28" height="28" alt="">{% endif %}<bdi>{{ photo.authorDisplayName|default(photoOwner.name) }}</bdi></a>
+            <button type="button" class="users-photo-discussion__expand" data-photo-comments-expand aria-pressed="false" aria-label="{{ trans('photos.discussion_expand') }}">↕</button>
+            <button type="button" class="ui-close" data-photo-comments-close aria-label="{{ trans('view.ui.close') }}">×</button>
+        </div>
+        <div class="users-photo-discussion__details">
+            <h1>{{ photo.title }}</h1>
+            {% if photo.description %}<p>{{ photo.description|striptags }}</p>{% endif %}
         <div class="users-photo-rating" data-photo-rating data-api-url="{{ photoRatingUrl }}" data-value="{{ photoUserRating ?? '' }}">
             <div class="users-photo-rating__stars" role="group" aria-label="{{ trans('view.users.blog.post.show.01') }}">
                 {% for value in 1..5 %}
@@ -21,6 +30,14 @@
             {% if photoRatingGuest %}<a data-photo-login href="{{ photo.canonicalUrl }}?login=1">{{ trans('photos.rating_login') }}</a>{% elseif not photoCanRate %}<small>{{ trans('photos.rating_own') }}</small>{% endif %}
             <span data-photo-rating-error role="alert"></span>
         </div>
-        <a href="{{ photoOriginalUrl }}">{{ trans('photos.original') }}</a>
-    </footer>
+            <a class="users-photo-discussion__original" href="{{ photoOriginalUrl }}">{{ trans('photos.original') }}</a>
+        </div>
+        <h2 class="users-photo-discussion__title">{{ trans('view.comments.title') }} <span data-photo-comment-count>{{ photoCommentCount }}</span></h2>
+        <div data-photo-discussion-content>{% if photoComments %}{% include 'components/users/photo-comments.twig' %}{% endif %}</div>
+    </aside>
+    </div>
+    <div class="users-photo-viewer__mobile-bar">
+        <a data-photo-comments-toggle data-photo-show-details aria-controls="photo-discussion" aria-expanded="{{ photoComments ? 'true' : 'false' }}" href="{{ photo.canonicalUrl }}?discussion=1"><span class="users-photo-viewer__rating-mark">★</span> <span data-photo-rating-compact>{% if photo.ratingCount %}{{ photo.ratingAverage|number_format(1) }} · {{ photo.ratingCount }}{% else %}{{ trans('view.forums.topic.view.26') }}{% endif %}</span></a>
+        <a data-photo-comments-toggle aria-controls="photo-discussion" aria-expanded="{{ photoComments ? 'true' : 'false' }}" href="{{ photo.canonicalUrl }}?discussion=1">{{ trans('view.comments.title') }} <span data-photo-comment-count>{{ photoCommentCount }}</span></a>
+    </div>
 </section>
