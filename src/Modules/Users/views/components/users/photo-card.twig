@@ -2,13 +2,9 @@
     {% if isManage %}
         <label class="users-album-photo__select"><input type="checkbox" data-photo-select aria-label="{{ trans('photos.manage.select_photo') }} {{ item.title }}"></label>
         <span class="ui-badge users-album-photo__cover" data-photo-cover-badge {% if not item.cover %}hidden{% endif %}>{{ trans('photos.manage.cover') }}</span>
-        <div class="users-album-photo__order">
-            <button type="button" class="ui-button" data-photo-grip draggable="true" aria-label="{{ trans('photos.manage.drag') }}">⠿</button>
-            <button type="button" class="ui-button" data-photo-up aria-label="{{ trans('photos.manage.up') }}">↑</button>
-            <button type="button" class="ui-button" data-photo-down aria-label="{{ trans('photos.manage.down') }}">↓</button>
-        </div>
+        <span class="users-album-photo__grip" data-photo-grip aria-hidden="true">⠿</span>
     {% endif %}
-    <a data-photo-link href="{{ item.url }}"><img src="{{ item.previewUrl }}" alt="{{ item.title }}" loading="lazy" decoding="async"></a>
+    <a data-photo-link href="{{ item.url }}"><img{% if isManage %} draggable="false"{% endif %} src="{{ item.previewUrl }}" alt="{{ item.title }}" loading="lazy" decoding="async"></a>
     <figcaption><a data-photo-name href="{{ item.url }}">{{ item.title }}</a></figcaption>
     {% if isManage %}
         <details class="users-album-photo__menu">

@@ -329,8 +329,11 @@ and cancel actions; cancel, Escape and backdrop closure discard those drafts.
 New album creation retains its separate content/sidebar form. The editor shares the public photo
 grid, embeds the batch uploader, shows the queue after files are selected,
 appends each success without discarding drafts, and provides selection, atomic deletion,
-cover/details editing, drag ordering, keyboard buttons and selected-group moves
-to start/end/position on mobile. The complete editor grid loads lazy images;
+cover/details editing and a separate sorting mode. Sorting uses pointer-based
+card dragging with capture on the stationary grid, touch handles and edge
+auto-scroll. Focused cards support arrows, Home and End; Escape cancels an
+active drag. Selection is reserved for deletion. No per-card arrow buttons or
+start/end/position controls are shown. The complete editor grid loads lazy images;
 public browsing remains paginated. Settings save independently of photo order. Save order appears beside sorting
 controls when sorting or order changes are active; uploads, deletion, cover and per-photo details
 apply immediately. Unsaved drafts trigger a navigation warning. Order reset

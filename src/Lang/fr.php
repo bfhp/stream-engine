@@ -1690,4 +1690,6 @@ E-mail : {email}
     'js.photos.batch_finished' => 'Photos uploaded: {count}',
     'js.photos.batch_finished_errors' => 'Uploaded: {done}. Failed: {failed}.',
     'js.photos.view_album' => 'View album',
+    'photos.manage.reorder_hint' => 'Drag photos using the ⠿ handle. Keyboard: focus a card with Tab, then use arrow keys, Home or End.',
+    'js.photos.moved' => 'Position: {position} of {total}',
 ];

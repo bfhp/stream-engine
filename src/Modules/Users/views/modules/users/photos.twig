@@ -48,14 +48,11 @@
                     <label><input type="checkbox" data-album-select-all> {{ trans('photos.manage.all') }}</label>
                     <span data-album-selection-count role="status"></span>
                     <div class="users-actions" data-album-selection-actions hidden>
-                    <button type="button" class="ui-button ui-button--secondary" data-album-move="start">{{ trans('photos.manage.first') }}</button>
-                    <button type="button" class="ui-button ui-button--secondary" data-album-move="end">{{ trans('photos.manage.last') }}</button>
-                    <label>{{ trans('photos.manage.position') }}<input class="ui-input users-album-position" type="number" min="1" value="1" data-album-position></label>
-                    <button type="button" class="ui-button ui-button--secondary" data-album-move="position">{{ trans('photos.manage.move') }}</button>
                     <button type="button" class="ui-button ui-button--secondary" data-album-delete-selected>{{ trans('photos.manage.delete_selected') }}</button>
                     </div>
                 </div>
             </div>
+            <p class="ui-help" id="album-reorder-hint" data-album-reorder-hint hidden>{{ trans('photos.manage.reorder_hint') }}</p>
             <p data-album-status role="status" aria-live="polite"></p>
             <p data-album-empty{% if photoItems %} hidden{% endif %}>{{ trans('photos.empty_album') }}</p>
             {% include 'components/users/photo-grid.twig' %}

@@ -9,11 +9,15 @@ const button = (selector: string) => document.querySelector<HTMLButtonElement>(s
 const cards = () => Array.from(document.querySelectorAll<HTMLElement>('[data-album-grid] [data-photo-card]'));
 const order = () => cards().map(card => card.dataset.slug);
 const flush = async () => { await new Promise(resolve => setTimeout(resolve, 0)); };
+function moveFirstLater() {
+    button('[data-album-reorder]').click();
+    cards()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
+}
 function card(slug: string) {
     return `<figure data-photo-card data-slug="${slug}" data-title="Photo ${slug}" data-caption="Caption ${slug}">
         <input type="checkbox" data-photo-select><span data-photo-cover-badge hidden></span>
         <a data-photo-link><img alt="Photo ${slug}"></a><a data-photo-name>Photo ${slug}</a>
-        <button data-photo-up>Up</button><button data-photo-down>Down</button><button data-photo-set-cover>Cover</button><button data-photo-edit>Edit</button>
+        <span data-photo-grip>⠿</span><button data-photo-set-cover>Cover</button><button data-photo-edit>Edit</button>
         <div data-photo-details hidden><input data-photo-title value="Photo ${slug}"><textarea data-photo-caption>Caption ${slug}</textarea>
         <button data-photo-save>Save photo</button><button data-photo-cancel>Cancel</button></div></figure>`;
 }
@@ -31,7 +35,6 @@ beforeEach(() => {
         <p data-album-settings-error></p><button type="button" data-photo-album-delete>Delete album</button><button type="submit" data-album-settings-save disabled>Save settings</button><button type="button" data-album-settings-cancel>Cancel</button></form></div>
         <button data-album-save-order disabled>Save order</button><button data-album-select>Select</button><button data-album-reorder>Reorder</button><button data-album-cancel-order hidden>Reset</button>
         <div data-album-selection hidden><input type="checkbox" data-album-select-all><span data-album-selection-count></span>
-        <button data-album-move="start">Start</button><button data-album-move="end">End</button><input data-album-position value="1"><button data-album-move="position">Move</button>
         <button data-album-delete-selected>Delete</button></div><p data-album-status></p>
         <div data-album-grid>${card('1')}${card('2')}${card('3')}</div><template data-photo-card-template>${card('')}</template></section>`;
     dispose = initAlbumManager();
@@ -42,7 +45,7 @@ it('saves album parameters independently of the pending photo order', async () =
     button('[data-album-settings-open]').click();
     const title = document.querySelector<HTMLInputElement>('[data-album-title]')!;
     title.value = 'New title'; title.dispatchEvent(new Event('input', { bubbles: true }));
-    button('[data-photo-down]').click();
+    moveFirstLater();
     document.querySelector<HTMLFormElement>('[data-album-settings-form]')!.requestSubmit(); await flush();
     expect(api).toHaveBeenCalledWith('/api/album', { method: 'PATCH', data: { title: 'New title', description: 'Description', visibility: 'public' } });
     expect(document.querySelector<HTMLElement>('[data-album-settings]')!.hidden).toBe(true);
@@ -52,12 +55,11 @@ it('saves album parameters independently of the pending photo order', async () =
     expect(api).toHaveBeenLastCalledWith('/api/album', { method: 'PATCH', data: { order: ['2', '1', '3'] } });
     expect(button('[data-album-save-order]').disabled).toBe(true);
 });
-it('moves a selection to a numbered position and can restore saved order', () => {
+it('moves focused cards with the keyboard and can restore saved order', () => {
     button('[data-album-reorder]').click();
-    cards()[0].querySelector<HTMLInputElement>('[data-photo-select]')!.click();
-    document.querySelector<HTMLInputElement>('[data-album-position]')!.value = '3';
-    button('[data-album-move="position"]').click();
+    cards()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true, cancelable: true }));
     expect(order()).toEqual(['2', '3', '1']);
+    expect(document.querySelector<HTMLElement>('[data-album-selection]')!.hidden).toBe(true);
     button('[data-album-cancel-order]').click();
     expect(order()).toEqual(['1', '2', '3']);
     expect(button('[data-album-save-order]').disabled).toBe(true);
@@ -76,7 +78,7 @@ it('keeps cards and selection after a failed deletion so it can be retried', asy
     expect(button('[data-album-save-order]').disabled).toBe(true);
 });
 it('adds uploaded photographs without losing unsaved title or order', () => {
-    button('[data-photo-down]').click();
+    moveFirstLater();
     const root = document.querySelector('[data-album-manager]')!;
     const payload = { slug: '4', title: '<New photo>', caption: 'Caption', previewUrl: '/preview/4', redirectUrl: '/photos/4' };
     root.dispatchEvent(new CustomEvent('photo-uploaded', { detail: payload }));
@@ -100,14 +102,14 @@ it('saves captions and covers immediately while preserving album drafts', async 
     expect(button('[data-album-save-order]').disabled).toBe(true);
 });
 it('warns before leaving with unsaved changes and stops after successful save', async () => {
-    button('[data-photo-down]').click();
+    moveFirstLater();
     expect(window.dispatchEvent(new Event('beforeunload', { cancelable: true }))).toBe(false);
     button('[data-album-save-order]').click(); await flush();
     expect(window.dispatchEvent(new Event('beforeunload', { cancelable: true }))).toBe(true);
 });
 
 it('discards settings drafts on cancel without losing the photo order', () => {
-    button('[data-photo-down]').click();
+    moveFirstLater();
     button('[data-album-settings-open]').click();
     const title = document.querySelector<HTMLInputElement>('[data-album-title]')!;
     title.value = 'Discard me';
@@ -157,7 +159,7 @@ it('closes album settings before opening the destructive confirmation', () => {
 });
 
 it('replaces upload slots in place and saves their order without committing an existing draft', async () => {
-    button('[data-photo-down]').click();
+    moveFirstLater();
     const root = document.querySelector('[data-album-manager]')!;
     const grid = root.querySelector('[data-album-grid]')!;
     for (const requestId of ['first', 'second']) {
@@ -175,4 +177,31 @@ it('replaces upload slots in place and saves their order without committing an e
     expect(button('[data-album-save-order]').disabled).toBe(false);
     button('[data-album-save-order]').click(); await flush();
     expect(api).toHaveBeenLastCalledWith('/api/album', { method: 'PATCH', data: { order: ['2', '1', '3', '5', '4'] } });
+});
+
+it('captures mouse dragging on the stationary grid and Escape restores the drag snapshot', () => {
+    button('[data-album-reorder]').click();
+    const grid = document.querySelector<HTMLElement>('[data-album-grid]')!;
+    const capture = vi.fn(); const release = vi.fn();
+    Object.assign(grid, { setPointerCapture: capture, hasPointerCapture: () => true, releasePointerCapture: release });
+    for (const card of cards()) vi.spyOn(card, 'getBoundingClientRect').mockImplementation(() => ({ top: 0, left: cards().indexOf(card) * 110, width: 100, height: 100 } as DOMRect));
+    Object.defineProperty(document, 'elementFromPoint', { configurable: true, value: () => cards()[1] });
+    const pointer = (type: string, target: HTMLElement, x: number) => {
+        const event = new MouseEvent(type, { bubbles: true, cancelable: true, button: 0, clientX: x, clientY: 50 });
+        Object.defineProperties(event, { pointerId: { value: 7 }, pointerType: { value: 'mouse' } });
+        target.dispatchEvent(event);
+    };
+    pointer('pointerdown', cards()[0], 50);
+    pointer('pointermove', grid, 190);
+    expect(order()).toEqual(['2', '1', '3']);
+    pointer('pointerup', grid, 190);
+    expect(capture).toHaveBeenCalledWith(7);
+    expect(release).toHaveBeenCalledWith(7);
+    pointer('pointerdown', cards()[0], 50);
+    pointer('pointermove', grid, 190);
+    expect(order()).toEqual(['1', '2', '3']);
+    grid.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    expect(order()).toEqual(['2', '1', '3']);
+    expect(api).not.toHaveBeenCalled();
+    delete (document as Partial<Document>).elementFromPoint;
 });

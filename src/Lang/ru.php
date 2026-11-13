@@ -1727,4 +1727,6 @@ return [
     'js.photos.batch_finished' => 'Загружено фотографий: {count}',
     'js.photos.batch_finished_errors' => 'Загружено: {done}. Не удалось загрузить: {failed}.',
     'js.photos.view_album' => 'Посмотреть альбом',
+    'photos.manage.reorder_hint' => 'Перетаскивайте фотографии за значок ⠿. С клавиатуры: выберите карточку клавишей Tab и перемещайте стрелками, Home или End.',
+    'js.photos.moved' => 'Позиция: {position} из {total}',
 ];

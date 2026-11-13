@@ -28,7 +28,8 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
     let busy = false;
     let deleted = false;
     let stopDeleteClose: (() => void) | undefined;
-    let dragged: HTMLElement | null = null;
+    let pointer: { card: HTMLElement; id: number; startX: number; startY: number; x: number; y: number; active: boolean; snapshot: string[] } | null = null;
+    let scrollFrame = 0;
     let wasUploading = false;
     let disposed = false;
     let syncingUploads = false;
@@ -59,17 +60,24 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
         if (empty) empty.hidden = photoCount > 0 || uploading;
         const toolbar = root.querySelector<HTMLElement>('[data-album-toolbar]');
         if (toolbar) toolbar.hidden = photoCount === 0;
-        root.querySelectorAll<HTMLButtonElement>('[data-album-reorder], [data-album-move], [data-photo-up], [data-photo-down], [data-photo-grip], [data-album-cancel-order]').forEach(button => button.disabled = busy || uploading);
+        root.querySelectorAll<HTMLButtonElement>('[data-album-reorder], [data-album-cancel-order]').forEach(button => button.disabled = busy || uploading);
         root.querySelectorAll<HTMLButtonElement>('[data-photo-album-delete], [data-photo-save], [data-photo-set-cover]').forEach(button => button.disabled = busy);
         root.dataset.selecting = String(selecting);
         root.dataset.reordering = String(reordering);
+        const hint = root.querySelector<HTMLElement>('[data-album-reorder-hint]');
+        if (hint) hint.hidden = !reordering;
+        for (const card of cards()) {
+            if (reordering) { card.tabIndex = 0; card.setAttribute('aria-describedby', 'album-reorder-hint'); }
+            else { card.removeAttribute('tabindex'); card.removeAttribute('aria-describedby'); }
+            card.querySelectorAll<HTMLAnchorElement>('a').forEach(link => { link.draggable = false; if (reordering) link.tabIndex = -1; else link.removeAttribute('tabindex'); });
+        }
         const selection = root.querySelector<HTMLElement>('[data-album-selection]')!;
         selection.hidden = !selecting;
         const count = selected().length;
         const actions = root.querySelector<HTMLElement>('[data-album-selection-actions]');
         if (actions) actions.hidden = count === 0;
         root.querySelector('[data-album-selection-count]')!.textContent = trans('js.photos.selected', { count });
-        root.querySelectorAll<HTMLButtonElement>('[data-album-move], [data-album-delete-selected]').forEach(button => button.disabled = busy || count === 0 || (uploading && button.hasAttribute('data-album-move')));
+        root.querySelectorAll<HTMLButtonElement>('[data-album-delete-selected]').forEach(button => button.disabled = busy || count === 0);
         root.querySelector('[data-album-select]')?.setAttribute('aria-pressed', String(selecting));
         root.querySelector('[data-album-reorder]')?.setAttribute('aria-pressed', String(reordering));
         const cancel = root.querySelector<HTMLElement>('[data-album-cancel-order]');
@@ -135,14 +143,9 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
         if (busy && event.target === settings) { event.preventDefault(); event.stopImmediatePropagation(); }
     };
     const stopClosed = ui.modal.onClosed(settings, () => { if (!busy) restoreFields(); });
-    const move = (target: string) => {
-        const chosen = selected(); const rest = cards().filter(card => !chosen.includes(card));
-        const position = root.querySelector<HTMLInputElement>('[data-album-position]')!;
-        const index = target === 'start' ? 0 : target === 'end' ? rest.length : Math.max(0, Math.min(rest.length, (Number(position.value) || 1) - 1));
-        grid.append(...rest.slice(0, index), ...chosen, ...rest.slice(index)); update();
-    };
     const click = (event: Event) => {
         const target = event.target as HTMLElement;
+        if (reordering && target.closest('[data-photo-card] a')) event.preventDefault();
         const button = target.closest<HTMLButtonElement>('button');
         if (!button || button.disabled || busy) return;
         if (button.matches('[data-photo-album-delete]')) {
@@ -167,14 +170,13 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
         if (button.matches('[data-open-upload]')) {
             root.querySelector<HTMLInputElement>('[data-photo-files]')?.click();
         }
-        if (button.matches('[data-album-select]')) { selecting = !selecting; update(); }
-        if (button.matches('[data-album-reorder]')) { reordering = !reordering; selecting = reordering || selecting; update(); }
+        if (button.matches('[data-album-select]')) { selecting = !selecting; reordering = false; update(); }
+        if (button.matches('[data-album-reorder]')) { reordering = true; selecting = false; update(); }
         if (button.matches('[data-album-cancel-order]')) {
             const bySlug = new Map(cards().map(card => [card.dataset.slug, card]));
             for (const slug of originalOrder) { const card = bySlug.get(slug); if (card) grid.append(card); }
             reordering = false; update();
         }
-        if (button.dataset.albumMove) move(button.dataset.albumMove);
         if (button.matches('[data-album-delete-selected]')) {
             const chosen = selected(); const slugs = chosen.map(card => card.dataset.slug!);
             if (!slugs.length) return;
@@ -190,8 +192,6 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
         }
         const card = button.closest<HTMLElement>('[data-photo-card]');
         if (!card) return;
-        if (button.matches('[data-photo-up]') && card.previousElementSibling) grid.insertBefore(card, card.previousElementSibling);
-        if (button.matches('[data-photo-down]') && card.nextElementSibling) grid.insertBefore(card.nextElementSibling, card);
         if (button.matches('[data-photo-edit]')) card.querySelector<HTMLElement>('[data-photo-details]')!.hidden = false;
         if (button.matches('[data-photo-cancel]')) {
             card.querySelector<HTMLInputElement>('[data-photo-title]')!.value = card.dataset.title!;
@@ -242,42 +242,82 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
         if (placeholder) placeholder.replaceWith(card); else grid.append(card);
         update();
     };
-    const dragstart = (event: DragEvent) => {
-        if (!reordering || busy || hasPendingUploads() || !(event.target as HTMLElement).closest('[data-photo-grip]')) return;
-        dragged = (event.target as HTMLElement).closest('[data-photo-card]');
-        event.dataTransfer?.setData('text/plain', dragged?.dataset.slug ?? '');
-    };
-    const dragover = (event: DragEvent) => {
-        if (event.dataTransfer?.types.includes('Files')) {
-            event.preventDefault();
-        } else if (dragged) event.preventDefault();
-    };
-    const drop = (event: DragEvent) => {
-        if (event.dataTransfer?.files.length && !(event.target as HTMLElement).closest('[data-photo-dropzone]')) {
-            const input = root.querySelector<HTMLInputElement>('[data-photo-files]');
-            if (input) { event.preventDefault(); input.files = event.dataTransfer.files; input.dispatchEvent(new Event('change')); }
-            return;
+    const announcePosition = (card: HTMLElement) => setStatus(trans('js.photos.moved', { position: cards().indexOf(card) + 1, total: cards().length }));
+    const moveAt = (x: number, y: number) => {
+        if (!pointer?.active) return;
+        const target = document.elementFromPoint(x, y)?.closest<HTMLElement>('[data-photo-card]');
+        if (!target || target === pointer.card || !grid.contains(target)) return;
+        const list = cards(); const from = list.indexOf(pointer.card); const to = list.indexOf(target);
+        const rect = target.getBoundingClientRect(); const sourceRect = pointer.card.getBoundingClientRect();
+        const sameRow = Math.abs(sourceRect.top - rect.top) < 5;
+        const rtl = getComputedStyle(grid).direction === 'rtl';
+        const passedMiddle = sameRow ? (rtl ? x < rect.left + rect.width / 2 : x > rect.left + rect.width / 2) : y > rect.top + rect.height / 2;
+        if ((to > from && passedMiddle) || (to < from && !passedMiddle)) {
+            grid.insertBefore(pointer.card, to > from ? target.nextSibling : target); pointer.card.focus({ preventScroll: true }); update();
         }
-        const target = (event.target as HTMLElement).closest<HTMLElement>('[data-photo-card]');
-        if (dragged && target && target !== dragged && grid.contains(target)) { event.preventDefault(); const rect = target.getBoundingClientRect(); grid.insertBefore(dragged, event.clientY > rect.top + rect.height / 2 ? target.nextSibling : target); update(); }
-        dragged = null;
     };
-    let touchCard: HTMLElement | null = null;
+    const autoScroll = () => {
+        if (!pointer?.active) return;
+        const edge = 80;
+        const amount = pointer.y < edge ? -Math.min(20, (edge - pointer.y) / 3) : pointer.y > window.innerHeight - edge ? Math.min(20, (pointer.y - window.innerHeight + edge) / 3) : 0;
+        if (amount) { window.scrollBy({ top: amount, behavior: 'instant' }); moveAt(pointer.x, pointer.y); }
+        scrollFrame = requestAnimationFrame(autoScroll);
+    };
+    const finishDrag = (cancel = false) => {
+        if (!pointer) return;
+        const current = pointer; pointer = null; cancelAnimationFrame(scrollFrame);
+        current.card.classList.remove('is-dragging');
+        if (grid.hasPointerCapture?.(current.id)) grid.releasePointerCapture(current.id);
+        if (cancel) {
+            const bySlug = new Map(cards().map(card => [card.dataset.slug, card]));
+            for (const slug of current.snapshot) { const card = bySlug.get(slug); if (card) grid.append(card); }
+        } else if (current.active) announcePosition(current.card);
+        current.card.focus({ preventScroll: true }); update();
+    };
     const pointerdown = (event: PointerEvent) => {
-        const handle = (event.target as HTMLElement).closest<HTMLElement>('[data-photo-grip]');
-        if (!handle || !reordering || busy || hasPendingUploads() || event.pointerType === 'mouse') return;
-        touchCard = handle.closest('[data-photo-card]'); handle.setPointerCapture?.(event.pointerId);
+        if (!reordering || busy || hasPendingUploads() || pointer || event.button !== 0) return;
+        const target = event.target as HTMLElement;
+        const card = target.closest<HTMLElement>('[data-photo-card]');
+        if (!card || !grid.contains(card) || target.closest('button, input, textarea, select, details, label')) return;
+        if (event.pointerType !== 'mouse' && !target.closest('[data-photo-grip]')) return;
+        event.preventDefault(); card.focus({ preventScroll: true });
+        pointer = { card, id: event.pointerId, startX: event.clientX, startY: event.clientY, x: event.clientX, y: event.clientY, active: false, snapshot: order() };
+        // Capture on the stationary grid: moving the card must not lose pointer capture.
+        grid.setPointerCapture?.(event.pointerId);
     };
     const pointermove = (event: PointerEvent) => {
-        if (!touchCard) return;
+        if (!pointer || event.pointerId !== pointer.id) return;
+        pointer.x = event.clientX; pointer.y = event.clientY;
+        if (!pointer.active && Math.hypot(pointer.x - pointer.startX, pointer.y - pointer.startY) < 5) return;
         event.preventDefault();
-        const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>('[data-photo-card]');
-        if (target && target !== touchCard && grid.contains(target)) {
-            const rect = target.getBoundingClientRect();
-            grid.insertBefore(touchCard, event.clientY > rect.top + rect.height / 2 ? target.nextSibling : target); update();
-        }
+        if (!pointer.active) { pointer.active = true; pointer.card.classList.add('is-dragging'); scrollFrame = requestAnimationFrame(autoScroll); }
+        moveAt(pointer.x, pointer.y);
     };
-    const pointerup = () => { touchCard = null; dragged = null; };
+    const pointerup = (event: PointerEvent) => { if (event.pointerId === pointer?.id) finishDrag(event.type === 'pointercancel'); };
+    const lostCapture = () => finishDrag();
+    const keydown = (event: KeyboardEvent) => {
+        if (event.key === 'Escape' && pointer) { event.preventDefault(); finishDrag(true); return; }
+        if (!reordering || busy || hasPendingUploads() || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+        const card = (event.target as HTMLElement).closest<HTMLElement>('[data-photo-card]');
+        if (!card || !grid.contains(card) || event.target !== card) return;
+        const list = cards(); const index = list.indexOf(card);
+        const firstTop = list[0].getBoundingClientRect().top;
+        const columns = list.filter(item => Math.abs(item.getBoundingClientRect().top - firstTop) < 5).length || 1;
+        const rtl = getComputedStyle(grid).direction === 'rtl';
+        const next = event.key === 'Home' ? 0 : event.key === 'End' ? list.length - 1 : event.key === 'ArrowLeft' ? index + (rtl ? 1 : -1) : event.key === 'ArrowRight' ? index + (rtl ? -1 : 1) : event.key === 'ArrowUp' ? index - columns : event.key === 'ArrowDown' ? index + columns : null;
+        if (next === null) return;
+        event.preventDefault();
+        const position = Math.max(0, Math.min(list.length - 1, next));
+        grid.insertBefore(card, list.filter(item => item !== card)[position] ?? null);
+        card.focus({ preventScroll: true }); card.scrollIntoView?.({ block: 'nearest', behavior: 'instant' }); announcePosition(card); update();
+    };
+    const dragstart = (event: DragEvent) => { if (reordering) event.preventDefault(); };
+    const dragover = (event: DragEvent) => { if (event.dataTransfer?.types.includes('Files')) event.preventDefault(); };
+    const drop = (event: DragEvent) => {
+        if (!event.dataTransfer?.files.length || (event.target as HTMLElement).closest('[data-photo-dropzone]')) return;
+        const input = root.querySelector<HTMLInputElement>('[data-photo-files]');
+        if (input) { event.preventDefault(); input.files = event.dataTransfer.files; input.dispatchEvent(new Event('change')); }
+    };
     const beforeunload = (event: BeforeUnloadEvent) => {
         const photoDraft = cards().some(card => card.querySelector<HTMLInputElement>('[data-photo-title]')!.value !== card.dataset.title || card.querySelector<HTMLTextAreaElement>('[data-photo-caption]')!.value !== card.dataset.caption);
         if (!deleted && (dirty() || photoDraft)) { event.preventDefault(); event.returnValue = ''; }
@@ -289,9 +329,12 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
     root.addEventListener('click', click); root.addEventListener('input', change); root.addEventListener('change', change);
     root.addEventListener('photo-queue-changed', queueChanged);
     root.addEventListener('photo-uploaded', uploaded); root.addEventListener('dragstart', dragstart); root.addEventListener('dragover', dragover); root.addEventListener('drop', drop);
+    grid.addEventListener('lostpointercapture', lostCapture);
+    window.addEventListener('keydown', keydown);
     root.addEventListener('pointerdown', pointerdown); root.addEventListener('pointermove', pointermove); root.addEventListener('pointerup', pointerup); root.addEventListener('pointercancel', pointerup);
     window.addEventListener('beforeunload', beforeunload); update();
     return () => {
+        finishDrag(true);
         disposed = true;
         stopClosed(); stopDeleteClose?.();
         settingsForm.removeEventListener('submit', submitSettings);
@@ -301,6 +344,8 @@ export function initAlbumManager(root: HTMLElement | null = document.querySelect
         root.removeEventListener('click', click); root.removeEventListener('input', change); root.removeEventListener('change', change);
         root.removeEventListener('photo-queue-changed', queueChanged);
         root.removeEventListener('photo-uploaded', uploaded); root.removeEventListener('dragstart', dragstart); root.removeEventListener('dragover', dragover); root.removeEventListener('drop', drop);
+        grid.removeEventListener('lostpointercapture', lostCapture);
+        window.removeEventListener('keydown', keydown);
         root.removeEventListener('pointerdown', pointerdown); root.removeEventListener('pointermove', pointermove); root.removeEventListener('pointerup', pointerup); root.removeEventListener('pointercancel', pointerup);
         window.removeEventListener('beforeunload', beforeunload);
     };
