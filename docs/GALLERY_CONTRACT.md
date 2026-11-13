@@ -32,9 +32,10 @@ No Gallery Feed types are advertised yet. Before exposing them, album/photo
 workflows must enforce these policies on writes, check ready state and cover
 membership, and integrate effective album visibility into shared SQL listing,
 search and direct Feed access. The module policy alone does not filter shared
-queries. UploadService currently chooses private storage only for message
-attachments; Gallery must extend that shared capability before uploads are
-connected, without reusing message attachment purpose or endpoints.
+queries. UploadService now supports protected original/preview pairs with the dedicated
+`gallery-photo` Upload purpose. Gallery must connect this capability to album
+authorization and metadata publication before exposing uploads; message
+attachment purposes and endpoints remain separate.
 
 ## Scope and proposed defaults
 
@@ -245,8 +246,24 @@ Deletion and visibility changes are currently limited to empty albums; checks
 include hidden children. Protected file cleanup and visibility propagation must
 be connected before enabling these operations on nonempty albums.
 
-Next: metadata validation and protected photo uploads before exposing
-photographs; the separate showcase follows ready photos.
+Protected upload storage is prepared in `UploadService::uploadPhotoForUser()`.
+It accepts still JPEG/PNG/WebP, verifies actual bytes and dimensions before
+GD decoding, rejects animated PNG/WebP, re-encodes both variants without
+embedded metadata, and stores them outside the public uploads root. The
+preview fits within 1600 pixels by default. Both Upload records use the
+`gallery-photo` purpose and are excluded from generic attachment reuse.
+Quota checks include the encoded original and preview. Temporary files and
+stored variants are cleaned on failure; failed cleanup is logged for retry.
+
+Settings: `photos.max_file_mb` (default 20, ceiling 50), `photos.max_pixels`
+(default 20000000, ceiling 40000000), `photos.max_dimension` (default 10000,
+ceiling 16000), `photos.preview_size` (default 1600, ceiling 2048). No public
+photo upload endpoint is registered yet and no photo metadata is written by
+this storage operation.
+
+Next: connect album authorization, idempotent photo publication in
+`feed_metadata`, protected delivery routes and the upload form; the separate
+showcase follows ready photos.
 
 ## Implementation sequence and acceptance
 

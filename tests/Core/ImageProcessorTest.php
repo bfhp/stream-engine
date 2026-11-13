@@ -254,6 +254,49 @@ final class ImageProcessorTest extends TestCase
         return $file;
     }
 
+    public function testStillPhotoProducesMetadataFreeOriginalAndBoundedPreview(): void
+    {
+        $source = $this->makePngImage(120, 80);
+        $png = file_get_contents($source);
+        $text = "location\0secret coordinates";
+        $chunk = pack('N', strlen($text)).'tEXt'.$text.pack('N', crc32('tEXt'.$text));
+        file_put_contents($source, substr($png, 0, -12).$chunk.substr($png, -12));
+        $result = (new ImageProcessor($this->tmpDir))->processWithPreview($source, 'image/png', 10000, 200, 40);
+        $this->filesToDelete[] = $result['original'];
+        $this->filesToDelete[] = $result['preview'];
+        self::assertSame([120, 80], [$result['width'], $result['height']]);
+        self::assertSame([40, 27], array_slice(getimagesize($result['preview']), 0, 2));
+        foreach (['original', 'preview'] as $key) {
+            self::assertSame('image/webp', getimagesize($result[$key])['mime']);
+            self::assertStringNotContainsString('secret coordinates', file_get_contents($result[$key]));
+        }
+    }
+
+    public function testPhotoPixelLimitIsCheckedBeforeProcessing(): void
+    {
+        $source = $this->makePngImage(120, 80);
+        $this->expectException(ValidationException::class);
+        (new ImageProcessor($this->tmpDir))->processWithPreview($source, 'image/png', 9000, 200, 40);
+    }
+
+    public function testPhotoProcessingRejectsGifAndMismatchedMime(): void
+    {
+        $source = $this->makeGifImage(10, 10);
+        $this->expectException(ValidationException::class);
+        (new ImageProcessor($this->tmpDir))->processWithPreview($source, 'image/png', 10000, 200, 40);
+    }
+
+    public function testPhotoProcessingRejectsAnimationControlChunk(): void
+    {
+        $source = $this->makePngImage(10, 10);
+        $png = file_get_contents($source);
+        $control = pack('NN', 2, 0);
+        $chunk = pack('N', 8).'acTL'.$control.pack('N', crc32('acTL'.$control));
+        file_put_contents($source, substr($png, 0, 33).$chunk.substr($png, 33));
+        $this->expectException(ValidationException::class);
+        (new ImageProcessor($this->tmpDir))->processWithPreview($source, 'image/png', 10000, 200, 40);
+    }
+
     private function makePngImage(int $width, int $height): string
     {
         $image = imagecreatetruecolor($width, $height);

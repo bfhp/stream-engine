@@ -29,6 +29,11 @@ class FileStorage
         return (new self(rtrim($this->basePath, '/\\').'-private'))->storeUserFile($userId, $tmpFile, $mime);
     }
 
+    public function deletePrivateFile(string $path): bool
+    {
+        return (new self(rtrim($this->basePath, '/\\').'-private'))->deleteStoredFile($path);
+    }
+
     /** Call only after the owning module has authorized this request. */
     public function sendPrivateFile(string $path, string $mime): void
     {
@@ -57,13 +62,15 @@ class FileStorage
 
         $dir = $this->basePath.'/'.$userId;
 
-        if (! is_dir($dir)) {
-            mkdir($dir, 0777, true);
+        if (! is_dir($dir) && ! @mkdir($dir, 0777, true) && ! is_dir($dir)) {
+            throw new ValidationException('Could not create storage directory');
         }
 
         $path = $dir.'/'.$name;
 
-        rename($tmpFile, $path);
+        if (! @rename($tmpFile, $path)) {
+            throw new ValidationException('Could not store file');
+        }
 
         chmod($path, 0644);
 

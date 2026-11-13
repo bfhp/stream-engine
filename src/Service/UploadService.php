@@ -61,6 +61,66 @@ class UploadService
         return $this->storeUserUpload($user, $file, UploadRepository::PURPOSE_MESSAGE_ATTACHMENT);
     }
 
+    /**
+     * Stores both image variants privately. The caller authorizes the album and
+     * attaches returned IDs in feed_metadata; paths are never public URLs.
+     * @return array{original: Upload, preview: Upload, width:int, height:int}
+     */
+    public function uploadPhotoForUser(User $user, array $file): array
+    {
+        if ($user->isGuest() || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK
+            || ! is_string($file['tmp_name'] ?? null) || ! is_file($file['tmp_name'])) {
+            throw new ValidationException($this->tm->trans('upload.invalid_file_type'));
+        }
+        $size = filesize($file['tmp_name']);
+        $maxBytes = max(1, min(50, $this->settings->getInt('photos.max_file_mb', 20))) * 1024 * 1024;
+        if ($size === false || $size <= 0 || $size > $maxBytes) {
+            throw new ValidationException($this->tm->trans('upload.file_too_large'));
+        }
+        $this->assertCanUpload($user, $size);
+        $processed = $this->images->processWithPreview(
+            $file['tmp_name'],
+            $this->mime->detect($file['tmp_name']),
+            max(1, min(40000000, $this->settings->getInt('photos.max_pixels', 20000000))),
+            max(1, min(16000, $this->settings->getInt('photos.max_dimension', 10000))),
+            max(1, min(2048, $this->settings->getInt('photos.preview_size', 1600))),
+        );
+        $stored = [];
+        $uploads = [];
+        try {
+            $this->assertCanUpload($user, filesize($processed['original']) + filesize($processed['preview']));
+            foreach (['original', 'preview'] as $variant) {
+                $result = $this->storage->storePrivateUserFile($user->id, $processed[$variant], $processed['mime']);
+                $stored[] = $result['path'];
+                $uploads[$variant] = $this->uploads->create([
+                    'user_id' => $user->id, 'path' => $result['path'], 'mime' => $processed['mime'],
+                    'size' => $result['size'], 'original_name' => basename((string) ($file['name'] ?? 'photo')),
+                    'purpose' => UploadRepository::PURPOSE_GALLERY_PHOTO,
+                ]);
+            }
+
+            return [...$uploads, 'width' => $processed['width'], 'height' => $processed['height']];
+        } catch (\Throwable $error) {
+            foreach ($stored as $path) {
+                try {
+                    if (! $this->storage->deletePrivateFile($path)) {
+                        throw new RuntimeException('Could not remove private file');
+                    }
+                    $this->uploads->deletePath($path, false);
+                } catch (\Throwable $cleanupError) {
+                    error_log('Photo upload cleanup failed for '.$path.': '.$cleanupError->getMessage());
+                }
+            }
+            throw $error;
+        } finally {
+            foreach (['original', 'preview'] as $variant) {
+                if (is_file($processed[$variant])) {
+                    @unlink($processed[$variant]);
+                }
+            }
+        }
+    }
+
     /** Authorization belongs to the calling module, including future galleries. */
     public function sendPrivateFile(Upload $upload): void
     {
@@ -179,7 +239,7 @@ class UploadService
         $upload = $this->uploads->findById($uploadId);
 
         if ($upload === null || $upload->userId !== $user->id
-            || $upload->purpose === UploadRepository::PURPOSE_MESSAGE_ATTACHMENT) {
+            || in_array($upload->purpose, [UploadRepository::PURPOSE_MESSAGE_ATTACHMENT, UploadRepository::PURPOSE_GALLERY_PHOTO], true)) {
             return null;
         }
 

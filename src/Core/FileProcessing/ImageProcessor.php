@@ -131,6 +131,74 @@ readonly class ImageProcessor
         return [$output, $mime];
     }
 
+    /**
+     * Re-encode a still image and a bounded preview, stripping embedded metadata.
+     * @return array{original:string, preview:string, mime:string, width:int, height:int}
+     */
+    public function processWithPreview(string $file, string $mime, int $maxPixels, int $maxDimension, int $previewSize): array
+    {
+        $info = @getimagesize($file);
+        if (! in_array($mime, ['image/jpeg', 'image/png', 'image/webp'], true)
+            || $info === false || ($info['mime'] ?? '') !== $mime
+            || $info[0] <= 0 || $info[1] <= 0
+            || $info[0] > $maxDimension || $info[1] > $maxDimension
+            || $info[0] * $info[1] > $maxPixels || $previewSize < 1) {
+            throw new ValidationException('Invalid image or image dimensions exceed limits');
+        }
+        $bytes = file_get_contents($file);
+        if ($bytes === false) {
+            throw new ValidationException('Invalid image');
+        }
+        // Animated PNG and WebP must not silently turn into their first frame.
+        $offset = $mime === 'image/png' ? 8 : 12;
+        while ($mime !== 'image/jpeg' && $offset + 8 <= strlen($bytes)) {
+            $type = substr($bytes, $mime === 'image/png' ? $offset + 4 : $offset, 4);
+            if (in_array($type, ['acTL', 'ANIM', 'ANMF'], true)) {
+                throw new ValidationException('Animated images are not supported');
+            }
+            $length = unpack($mime === 'image/png' ? 'N' : 'V', substr($bytes, $mime === 'image/png' ? $offset : $offset + 4, 4))[1];
+            $offset += $mime === 'image/png' ? $length + 12 : $length + 8 + ($length % 2);
+        }
+        $image = @imagecreatefromstring($bytes);
+        unset($bytes);
+        if (! $image) {
+            throw new ValidationException('Invalid image');
+        }
+        $image = $this->trueColorImage($image);
+        imagealphablending($image, false);
+        imagesavealpha($image, true);
+        $paths = [];
+        try {
+            $width = imagesx($image);
+            $height = imagesy($image);
+            $scale = min(1, $previewSize / max($width, $height));
+            $preview = imagescale($image, max(1, (int) round($width * $scale)), max(1, (int) round($height * $scale)));
+            if (! $preview) {
+                throw new ValidationException('Image conversion failed');
+            }
+            imagealphablending($preview, false);
+            imagesavealpha($preview, true);
+            foreach ([$image, $preview] as $variant) {
+                $path = tempnam($this->tmpPath, 'photo');
+                if ($path === false) {
+                    throw new ValidationException('Cannot create image file');
+                }
+                $paths[] = $path;
+                $written = function_exists('imagewebp') ? imagewebp($variant, $path, 85) : imagepng($variant, $path, 8);
+                if (! $written || filesize($path) === 0) {
+                    throw new ValidationException('Image conversion failed');
+                }
+            }
+
+            return ['original' => $paths[0], 'preview' => $paths[1], 'mime' => function_exists('imagewebp') ? 'image/webp' : 'image/png', 'width' => $width, 'height' => $height];
+        } catch (\Throwable $error) {
+            foreach ($paths as $path) {
+                @unlink($path);
+            }
+            throw $error;
+        }
+    }
+
     private function trueColorImage(GdImage $image): GdImage
     {
         if (imageistruecolor($image)) {

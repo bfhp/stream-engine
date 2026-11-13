@@ -907,4 +907,106 @@ class UploadServiceTest extends TestCase
             @unlink($log);
         }
     }
+    public function testPhotoVariantsArePrivateAndUseDistinctTrackedUploads(): void
+    {
+        $dir = sys_get_temp_dir().'/photo-upload-'.bin2hex(random_bytes(6));
+        mkdir($dir);
+        $source = $dir.'/source.png';
+        imagepng(imagecreatetruecolor(40, 20), $source);
+        $storage = new FileStorage($dir.'/uploads');
+        $repository = $this->createMock(UploadRepository::class);
+        $id = 0;
+        $repository->expects(self::exactly(2))->method('create')->willReturnCallback(function (array $data) use (&$id): Upload {
+            self::assertSame(UploadRepository::PURPOSE_GALLERY_PHOTO, $data['purpose']);
+            return new Upload(++$id, $data['user_id'], $data['path'], $data['mime'], $data['size'], $data['original_name'], time(), $data['purpose']);
+        });
+        $service = $this->makeService($repository, new MimeDetector(), $storage, new ImageProcessor($dir), $this->createStub(AccessService::class));
+        try {
+            $result = $service->uploadPhotoForUser(new User(7, ''), ['error' => UPLOAD_ERR_OK, 'tmp_name' => $source, 'name' => 'Summer.png', 'size' => 1]);
+            self::assertSame([40, 20], [$result['width'], $result['height']]);
+            self::assertNotSame($result['original']->id, $result['preview']->id);
+            self::assertNotSame($result['original']->path, $result['preview']->path);
+            foreach (['original', 'preview'] as $variant) {
+                self::assertFileExists($dir.'/uploads-private/'.$result[$variant]->path);
+                self::assertFileDoesNotExist($dir.'/uploads/'.$result[$variant]->path);
+                self::assertTrue($storage->deletePrivateFile($result[$variant]->path));
+            }
+        } finally {
+            @unlink($source);
+            @rmdir($dir.'/uploads-private/7');
+            @rmdir($dir.'/uploads-private');
+            @rmdir($dir);
+        }
+    }
+
+    public function testPhotoPairIsCleanedWhenSecondUploadRecordFails(): void
+    {
+        $dir = sys_get_temp_dir().'/photo-failure-'.bin2hex(random_bytes(6));
+        mkdir($dir);
+        $source = $dir.'/source.png';
+        imagepng(imagecreatetruecolor(20, 20), $source);
+        $storage = new FileStorage($dir.'/uploads');
+        $repository = $this->createMock(UploadRepository::class);
+        $calls = 0;
+        $repository->expects(self::exactly(2))->method('create')->willReturnCallback(function (array $data) use (&$calls): Upload {
+            if (++$calls === 2) {
+                throw new RuntimeException('Database unavailable');
+            }
+            return new Upload(1, 7, $data['path'], $data['mime'], $data['size'], $data['original_name'], time());
+        });
+        $repository->expects(self::exactly(2))->method('deletePath');
+        $service = $this->makeService($repository, new MimeDetector(), $storage, new ImageProcessor($dir), $this->createStub(AccessService::class));
+        try {
+            $service->uploadPhotoForUser(new User(7, ''), ['error' => UPLOAD_ERR_OK, 'tmp_name' => $source, 'name' => 'Photo.png']);
+            self::fail('Expected database failure');
+        } catch (RuntimeException $error) {
+            self::assertSame('Database unavailable', $error->getMessage());
+            self::assertSame([], glob($dir.'/uploads-private/7/*'));
+            self::assertSame([], glob($dir.'/photo*'));
+        } finally {
+            @unlink($source);
+            @rmdir($dir.'/uploads-private/7');
+            @rmdir($dir.'/uploads-private');
+            @rmdir($dir);
+        }
+    }
+
+    public function testPrivatePhotoCannotBeReusedThroughGenericOwnedUploadLookup(): void
+    {
+        $repository = $this->createStub(UploadRepository::class);
+        $repository->method('findById')->willReturn(new Upload(1, 7, '7/photo.webp', 'image/webp', 100, 'Photo.png', time(), UploadRepository::PURPOSE_GALLERY_PHOTO));
+        $service = $this->makeService($repository, $this->createStub(MimeDetector::class), $this->createStub(FileStorage::class), $this->createStub(ImageProcessor::class), $this->createStub(AccessService::class));
+        self::assertNull($service->findOwnedUpload(1, new User(7, ''), 'image/'));
+    }
+
+    public function testPhotoQuotaIncludesBothVariantsAndCleansProcessedTemps(): void
+    {
+        $source = tempnam(sys_get_temp_dir(), 'photo-source');
+        $original = tempnam(sys_get_temp_dir(), 'photo-original');
+        $preview = tempnam(sys_get_temp_dir(), 'photo-preview');
+        file_put_contents($source, str_repeat('x', 99));
+        file_put_contents($original, str_repeat('x', 100));
+        file_put_contents($preview, str_repeat('x', 100));
+        $images = $this->createStub(ImageProcessor::class);
+        $images->method('processWithPreview')->willReturn(['original' => $original, 'preview' => $preview, 'mime' => 'image/webp', 'width' => 20, 'height' => 20]);
+        $repository = $this->createMock(UploadRepository::class);
+        $repository->method('getUserUsage')->willReturn(1024 * 1024 - 150);
+        $repository->expects(self::never())->method('create');
+        $storage = $this->createMock(FileStorage::class);
+        $storage->expects(self::never())->method('storePrivateUserFile');
+        $service = $this->makeService($repository, $this->createStub(MimeDetector::class), $storage, $images, $this->createStub(AccessService::class), 1);
+        try {
+            $service->uploadPhotoForUser(new User(7, ''), ['error' => UPLOAD_ERR_OK, 'tmp_name' => $source, 'name' => 'Photo.png']);
+            self::fail('Expected quota rejection');
+        } catch (RuntimeException $error) {
+            self::assertSame($this->trans('upload.storage_limit_exceeded'), $error->getMessage());
+            self::assertFileDoesNotExist($original);
+            self::assertFileDoesNotExist($preview);
+        } finally {
+            @unlink($source);
+            @unlink($original);
+            @unlink($preview);
+        }
+    }
+
 }
