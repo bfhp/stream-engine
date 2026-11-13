@@ -7,6 +7,12 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Photo albums for personal blogs and communities, with bulk uploads, editing,
+  comments, ratings and a configurable showcase with rankings. Includes
+  accessibility tests for both themes, light/dark modes and RTL.
+
 ### Changed
 
 - Admin dashboard layouts now use cookies instead of the `admin_dashboard_layouts`
