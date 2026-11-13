@@ -103,10 +103,10 @@ export function initPhotoUpload(root: HTMLElement | null = document.querySelecto
         };
         xhr.onload = () => {
             if (destroyed || !active.has(item)) return;
-            let payload: { id?: number; redirectUrl?: string; code?: string };
+            let payload: { slug?: string; redirectUrl?: string; code?: string };
             try { payload = JSON.parse(xhr.responseText); }
             catch { fail(null, true); return; }
-            if (xhr.status < 200 || xhr.status >= 300 || !Number.isInteger(payload?.id) || payload.id! <= 0) {
+            if (xhr.status < 200 || xhr.status >= 300 || typeof payload?.slug !== 'string' || !/^[1-9][0-9]*$/.test(payload.slug)) {
                 fail(payload, [401, 403, 404, 429].includes(xhr.status) || xhr.status >= 500 || payload?.code === 'storage_limit_exceeded');
                 return;
             }

@@ -12,6 +12,7 @@ use StreamEngine\Domain\Feed;
 use StreamEngine\Domain\Upload;
 use StreamEngine\Domain\User;
 use StreamEngine\Repository\UploadRepository;
+use StreamEngine\Repository\FeedMetadataRepository;
 use StreamEngine\Service\FeedService;
 use StreamEngine\Service\UploadService;
 use Throwable;
@@ -72,7 +73,7 @@ class PhotoUploadService
             ];
             $photo = $this->feeds->createFeed(
                 title: $title,
-                slug: null,
+                slug: $this->nextPhotoNumber($album),
                 type: 'gallery-photo',
                 parentId: $albumId,
                 description: $caption,
@@ -102,6 +103,37 @@ class PhotoUploadService
         }
     }
 
+    private function nextPhotoNumber(Feed $album): string
+    {
+        // The caller holds the album row lock; preserve unrelated metadata.
+        $row = $this->db->fetchOne(
+            "SELECT MAX(CAST(slug AS UNSIGNED)) AS last_number FROM feeds WHERE parent_id = ? AND type = 'gallery-photo' AND slug REGEXP '^[1-9][0-9]*$'",
+            [$album->id],
+        );
+        $options = ['options' => ['min_range' => 0, 'max_range' => PHP_INT_MAX - 1]];
+        $stored = filter_var($album->metadata['gallery.last_photo_number'] ?? '0', FILTER_VALIDATE_INT, $options);
+        $existing = filter_var($row['last_number'] ?? 0, FILTER_VALIDATE_INT, $options);
+        if ($stored === false || $existing === false) {
+            throw new ValidationException('Invalid album photo counter', 409);
+        }
+        $number = (string) (max($stored, $existing) + 1);
+        (new FeedMetadataRepository($this->db))->replaceForFeed($album->id, [...$album->metadata, 'gallery.last_photo_number' => $number]);
+        return $number;
+    }
+
+    public function getPhotoBySlug(int $contextId, int $albumId, string $slug, User $user): Feed
+    {
+        if (preg_match('/\A[1-9][0-9]*\z/', $slug) !== 1) {
+            throw new NotFoundException('Photo not found');
+        }
+        $this->photos->getAlbum($contextId, $albumId, $user);
+        $photo = $this->feeds->getFeedByParentAndSlug($albumId, $slug, $user, 'gallery-photo');
+        if ($photo === null) {
+            throw new NotFoundException('Photo not found');
+        }
+        return $this->getPhoto($contextId, $albumId, $photo->id, $user);
+    }
+
     public function getPhoto(int $contextId, int $albumId, int $photoId, User $user): Feed
     {
         $this->photos->getAlbum($contextId, $albumId, $user);
@@ -121,12 +153,12 @@ class PhotoUploadService
         return $photo;
     }
 
-    public function getFile(int $contextId, int $albumId, int $photoId, string $variant, User $user): Upload
+    public function getFile(int $contextId, int $albumId, string $photoSlug, string $variant, User $user): Upload
     {
         if (! in_array($variant, ['original', 'preview'], true)) {
             throw new NotFoundException('Photo variant not found');
         }
-        $photo = $this->getPhoto($contextId, $albumId, $photoId, $user);
+        $photo = $this->getPhotoBySlug($contextId, $albumId, $photoSlug, $user);
         $result = null;
         foreach (['original', 'preview'] as $name) {
             $upload = $this->uploads->findById((int) $photo->metadata['gallery.'.$name.'_upload_id']);

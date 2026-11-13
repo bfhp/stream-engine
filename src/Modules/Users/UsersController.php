@@ -439,16 +439,31 @@ class UsersController extends AbstractController
             settings: null,
             pageName: $tm->trans('photos.upload_many'),
         ));
+        $photoPageId = $tree->getMaxPageId();
         $tree->add(Page::runtime(
-            id: $tree->getMaxPageId(),
+            id: $photoPageId,
             parentId: $albumPageId,
-            pattern: '{photoId:\d+}',
+            pattern: '{photoSlug}',
             action: $scope.'.photo-show',
             accessRule: AccessService::ACCESS_PUBLIC,
             feedType: 'gallery-photo',
             changefreq: null,
             settings: null,
             pageName: $tm->trans('photos.photo'),
+        ));
+        $tree->add(new Page(
+            id: $tree->getMaxPageId(),
+            parentId: $photoPageId,
+            pattern: '{variant}',
+            pageName: null,
+            settings: null,
+            feedType: null,
+            listFeedType: null,
+            feedId: null,
+            requestMethods: ['GET'],
+            responseType: 'raw',
+            accessRule: AccessService::ACCESS_PUBLIC,
+            action: $scope.'.photo-file',
         ));
     }
 
@@ -488,13 +503,13 @@ class UsersController extends AbstractController
             }
         }
 
-        if (in_array($page->action, ['user.photo-show', 'community.photo-show'], true) && isset($page->params['photoId'])) {
+        if (in_array($page->action, ['user.photo-show', 'community.photo-show'], true) && isset($page->params['photoSlug'])) {
             [$context] = $this->photoContext($page, []);
             foreach ($this->pageTree->ancestors($page) as $ancestor) {
                 if (isset($ancestor->params['albumSlug'])) {
                     $album = $this->photoService()->getAlbumBySlug($context->id, $ancestor->params['albumSlug'], $this->context->user);
-                    $photo = $this->photoUploadService()->getPhoto($context->id, $album->id, (int) $page->params['photoId'], $this->context->user);
-                    return new Breadcrumb($photo->title ?? $this->tm->trans('photos.photo'), (string) $photo->id);
+                    $photo = $this->photoUploadService()->getPhotoBySlug($context->id, $album->id, $page->params['photoSlug'], $this->context->user);
+                    return new Breadcrumb($photo->title ?? $this->tm->trans('photos.photo'), $photo->slug);
                 }
             }
         }
@@ -646,7 +661,7 @@ class UsersController extends AbstractController
             throw new ForbiddenException($this->tm->trans('feed.forbidden'));
         }
         $albumParams = [...$params, 'albumSlug' => $album?->slug ?: (string) $album?->id];
-        $photo = $isPhotoView ? $this->photoUploadService()->getPhoto($context->id, $album->id, (int) ($args['photoId'] ?? 0), $this->context->user) : null;
+        $photo = $isPhotoView ? $this->photoUploadService()->getPhotoBySlug($context->id, $album->id, (string) ($args['photoSlug'] ?? ''), $this->context->user) : null;
         $photoItems = [];
         $photoTotal = 0;
         if ($album !== null && ! $isAlbumForm && ! $isPhotoForm && ! $isPhotoView) {
@@ -658,8 +673,8 @@ class UsersController extends AbstractController
                 }
                 $photoItems[] = [
                     'title' => $item->title,
-                    'url' => $this->urlGenerator->action($scope.'.photo-show', [...$albumParams, 'photoId' => $item->id]),
-                    'previewUrl' => $itemApiUrl.'/photos/'.$item->id.'/preview',
+                    'url' => $this->urlGenerator->action($scope.'.photo-show', [...$albumParams, 'photoSlug' => $item->slug]),
+                    'previewUrl' => $this->urlGenerator->action($scope.'.photo-file', [...$albumParams, 'photoSlug' => $item->slug, 'variant' => 'preview']),
                 ];
             }
         }
@@ -679,8 +694,8 @@ class UsersController extends AbstractController
             'newPhotoUrl' => $canUpload ? $this->urlGenerator->action($scope.'.photo-new', $albumParams) : null,
             'albumUrl' => $album !== null ? $this->urlGenerator->action($scope.'.photo-album', $albumParams) : null,
             'photoUploadApiUrl' => $itemApiUrl !== null ? $itemApiUrl.'/photos' : null,
-            'photoPreviewUrl' => $photo !== null ? $itemApiUrl.'/photos/'.$photo->id.'/preview' : null,
-            'photoOriginalUrl' => $photo !== null ? $itemApiUrl.'/photos/'.$photo->id.'/original' : null,
+            'photoPreviewUrl' => $photo !== null ? $this->urlGenerator->action($scope.'.photo-file', [...$albumParams, 'photoSlug' => $photo->slug, 'variant' => 'preview']) : null,
+            'photoOriginalUrl' => $photo !== null ? $this->urlGenerator->action($scope.'.photo-file', [...$albumParams, 'photoSlug' => $photo->slug, 'variant' => 'original']) : null,
             'isEdit' => $isEdit, 'canEditAlbum' => $canEdit, 'itemApiUrl' => $itemApiUrl,
             'editAlbumUrl' => $canEdit ? $this->urlGenerator->action($scope.'.photo-album-edit', [...$params, 'albumSlug' => $album->slug ?: (string) $album->id]) : null,
             'newAlbumUrl' => $canCreate ? $this->urlGenerator->action($scope.'.photo-album-new', $params) : null,
@@ -755,15 +770,20 @@ class UsersController extends AbstractController
         $scope = $context->type === 'blog' ? 'user' : 'community';
         $params = $scope === 'user' ? ['username' => $context->slug] : ['slug' => $context->slug];
         http_response_code(201);
-        echo Formatter::json(['id' => $photo->id, 'redirectUrl' => $this->urlGenerator->action($scope.'.photo-show', [...$params, 'albumSlug' => $album->slug ?: (string) $albumId, 'photoId' => $photo->id])]);
+        echo Formatter::json(['slug' => $photo->slug, 'redirectUrl' => $this->urlGenerator->action($scope.'.photo-show', [...$params, 'albumSlug' => $album->slug ?: (string) $albumId, 'photoSlug' => $photo->slug])]);
     }
 
-    private function handlePhotoFileRequest(array $args): void
+    private function handlePhotoFileRequest(Page $page, array $args): void
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
             throw new ValidationException('Method not allowed', 405);
         }
-        $upload = $this->photoUploadService()->getFile((int) ($args['contextId'] ?? 0), (int) ($args['albumId'] ?? 0), (int) ($args['photoId'] ?? 0), (string) ($args['variant'] ?? ''), $this->context->user);
+        [$context] = $this->photoContext($page, $args);
+        if ($context === null) {
+            throw new NotFoundException($this->tm->trans('feed.not_found'));
+        }
+        $album = $this->photoService()->getAlbumBySlug($context->id, (string) ($args['albumSlug'] ?? ''), $this->context->user);
+        $upload = $this->photoUploadService()->getFile($context->id, $album->id, (string) ($args['photoSlug'] ?? ''), (string) ($args['variant'] ?? ''), $this->context->user);
         $this->uploadService->sendPrivateFile($upload);
     }
 
@@ -3817,7 +3837,7 @@ class UsersController extends AbstractController
             'users.collection' => $this->handleUsersCollectionRequest(),
             'password.retrieve' => $this->handleUserRetrieveRequest(),
             'photos.upload' => $this->handlePhotoUploadRequest((int) ($args['contextId'] ?? 0), (int) ($args['albumId'] ?? 0)),
-            'photos.file' => $this->handlePhotoFileRequest($args),
+            'user.photo-file', 'community.photo-file' => $this->handlePhotoFileRequest($page, $args),
             'photos.album-item' => $this->handlePhotoAlbumItemRequest((int) ($args['contextId'] ?? 0), (int) ($args['albumId'] ?? 0)),
             'user.photo-album-create' => $this->handlePhotoAlbumCreateRequest(null),
             'community.photo-album-create' => $this->handlePhotoAlbumCreateRequest((int) ($args['id'] ?? 0)),
@@ -4550,8 +4570,5 @@ class UsersController extends AbstractController
         ));
         $photoCollectionId = $pageTree->getMaxPageId();
         $pageTree->add(Page::api(id: $photoCollectionId, parentId: $photoAlbumItemId, pattern: 'photos', requestMethods: ['POST'], action: 'photos.upload'));
-        $photoItemId = $pageTree->getMaxPageId();
-        $pageTree->add(Page::api(id: $photoItemId, parentId: $photoCollectionId, pattern: '{photoId}', requestMethods: ['GET'], action: 'photos.photo-parent'));
-        $pageTree->add(Page::api(id: $pageTree->getMaxPageId(), parentId: $photoItemId, pattern: '{variant}', requestMethods: ['GET'], action: 'photos.file'));
     }
 }

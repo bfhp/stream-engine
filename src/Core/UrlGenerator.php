@@ -416,10 +416,6 @@ final class UrlGenerator
             return $pattern;
         }
 
-        if ($matches[1] === 'id' || str_ends_with($matches[1], 'Id')) {
-            return str_replace($matches[0], (string) $feed->id, $pattern);
-        }
-
         if (! $feed->slug) {
             throw new RuntimeException("Feed $feed->id has no slug");
         }
@@ -481,7 +477,7 @@ final class UrlGenerator
 
     private function cacheKey(int $feedId): string
     {
-        return 'feed_url_'.$feedId;
+        return 'feed_url_v3_'.$feedId;
     }
 
     /**

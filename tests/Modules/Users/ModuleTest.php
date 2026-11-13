@@ -297,7 +297,10 @@ final class ModuleTest extends TestCase
             self::assertSame($scope.'.photo-album', $resolved['page']->action);
             self::assertSame($scope.'.photo-album-edit', $router->resolve($base.'/photos/letniy-otdyh/edit/')['page']->action);
             self::assertSame($scope.'.photo-new', $router->resolve($base.'/photos/letniy-otdyh/new-photo/')['page']->action);
-            self::assertSame($scope.'.photo-show', $router->resolve($base.'/photos/letniy-otdyh/7/')['page']->action);
+            self::assertSame($scope.'.photo-show', $router->resolve($base.'/photos/letniy-otdyh/1/')['page']->action);
+            $file = $router->resolve($base.'/photos/letniy-otdyh/1/preview');
+            self::assertSame($scope.'.photo-file', $file['page']->action);
+            self::assertSame(['GET'], $file['page']->requestMethods);
             self::assertSame($base.'/photos/letniy-otdyh/', $urls->action($scope.'.photo-album', [...$params, 'albumSlug' => 'letniy-otdyh']));
             self::assertArrayNotHasKey($scope.'.photos', UsersController::pageActions());
         }
@@ -327,10 +330,7 @@ final class ModuleTest extends TestCase
         $upload = $router->resolve('/api/v1/photo-albums/9/32/photos');
         self::assertSame('photos.upload', $upload['page']->action);
         self::assertSame(['POST'], $upload['page']->requestMethods);
-        $file = $router->resolve('/api/v1/photo-albums/9/32/photos/7/preview');
-        self::assertSame('photos.file', $file['page']->action);
-        self::assertSame(['GET'], $file['page']->requestMethods);
-        self::assertSame(['contextId' => '9', 'albumId' => '32', 'photoId' => '7', 'variant' => 'preview'], $file['params']);
+        self::assertNull($router->resolve('/api/v1/photos/1/preview'));
     }
 
     private function pageWithAction(string $action): Page

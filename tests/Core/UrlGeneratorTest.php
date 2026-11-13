@@ -431,7 +431,7 @@ final class UrlGeneratorTest extends TestCase
             slug: 'master-i-margarita',
         );
         $cache = new ArrayCache();
-        $cache->set('feed_url_3', false);
+        $cache->set('feed_url_v3_3', false);
         $generator = new UrlGenerator(
             $this->getPageTree(),
             new FakeFeedRepository([3 => $feed]),
@@ -439,7 +439,7 @@ final class UrlGeneratorTest extends TestCase
         );
 
         $this->assertSame('/publication/master-i-margarita/', $generator->feed($feed));
-        $this->assertSame('/publication/master-i-margarita/', $cache->get('feed_url_3'));
+        $this->assertSame('/publication/master-i-margarita/', $cache->get('feed_url_v3_3'));
     }
 
     public function testFeedTermUrl(): void

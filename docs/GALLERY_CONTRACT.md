@@ -103,6 +103,7 @@ boundary. Missing or invalid metadata never implies a ready image.
 | `gallery.state` | Photograph | `pending`, `ready` or `failed` |
 | `gallery.updated_at` | Photograph | Decimal Unix timestamp of processing state change |
 | `gallery.request_id` | Photograph | Client UUID, scoped to author and album for retry deduplication |
+| `gallery.last_photo_number` | Album | Last allocated album-local photograph number; retained on deletion |
 | `gallery.cover_photo_id` | Album | Positive decimal photo Feed ID; absent means no selected cover |
 
 Photo publication writes these keys atomically with the Feed and Upload rows.
@@ -273,13 +274,20 @@ existing photograph. Metadata replacement joins the publication transaction
 without committing it independently. There is no observable pending Feed in
 this synchronous workflow: files are processed before ready publication.
 
-Photo pages use `photos/{albumSlug}/{photoId}/`. Original and preview delivery
-use GET `/api/v1/photo-albums/{contextId}/{albumId}/photos/{photoId}/{variant}`,
-where variant is `original` or `preview`. Delivery rechecks the entire context,
-album and photo chain and both Upload references, then uses protected local
-storage with private/no-store headers. Album grids paginate ready photographs.
-Canonical URL generation includes the static `photos` segment and substitutes
-IDs for explicitly named ID placeholders.
+Photo pages use `photos/{albumSlug}/{photoSlug}/`, where photoSlug is a
+positive sequential number within that album: `1`, `2`, `3`, etc. It is
+independent of global Feed IDs. The album's `gallery.last_photo_number`
+metadata retains the last allocated number so deletion does not reuse an old
+public address. Allocation, publication and counter updates share the album
+row lock and database transaction. Retries return the original number.
+
+Original and preview delivery are child routes of the scoped photo page:
+`<photo URL>/original/` and `<photo URL>/preview/`. Both personal and community
+ancestry are resolved from that route; there is no global photo-number lookup.
+Delivery checks context, album, photograph and both Upload references and uses
+protected storage with private/no-store headers. URL cache keys are versioned
+to discard obsolete address schemes. Upload responses expose the local `slug`
+and scoped `redirectUrl`, without the global Feed ID.
 
 The primary uploader supports selecting many photographs from desktop or
 mobile galleries (`multiple`, without a forced camera capture), adding later

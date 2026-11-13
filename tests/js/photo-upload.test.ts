@@ -37,7 +37,7 @@ class UploadRequest {
 let dispose: (() => void) | undefined;
 const button = (selector: string) => document.querySelector<HTMLButtonElement>(selector)!;
 const rows = (state: string) => document.querySelectorAll(`[data-photo-queue] [data-state="${state}"]`);
-const success = (index: number) => UploadRequest.requests[index].respond(201, { id: index + 1, redirectUrl: `/photos/${index + 1}/` });
+const success = (index: number) => UploadRequest.requests[index].respond(201, { slug: String(index + 1), redirectUrl: `/photos/${String(index + 1)}/` });
 function select(...files: File[]) {
     const input = document.querySelector<HTMLInputElement>('[data-photo-files]')!;
     Object.defineProperty(input, 'files', { configurable: true, value: files });
@@ -162,6 +162,14 @@ describe('batch photo uploader', () => {
         button('[data-photo-clear-done]').click();
         expect(rows('done')).toHaveLength(0);
         expect(rows('error')).toHaveLength(1);
+    });
+
+    it('rejects the obsolete response containing only a sequential ID', () => {
+        select(file());
+        UploadRequest.requests[0].respond(201, { id: 100, redirectUrl: '/photos/100/' });
+        expect(rows('done')).toHaveLength(0);
+        expect(rows('error')).toHaveLength(1);
+        expect(rows('error')[0].querySelector('a')?.hasAttribute('href')).toBe(false);
     });
 
     it('warns before leaving with unfinished uploads and stops warning once complete', () => {

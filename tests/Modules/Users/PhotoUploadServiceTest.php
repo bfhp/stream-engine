@@ -48,10 +48,16 @@ final class PhotoUploadServiceTest extends TestCase
         $pdo = class_exists(\Pdo\Sqlite::class) ? new \Pdo\Sqlite('sqlite::memory:') : new PDO('sqlite::memory:');
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        if ($pdo instanceof \Pdo\Sqlite) {
-            $pdo->createFunction('UNIX_TIMESTAMP', time(...), 0);
-        } else {
-            $pdo->sqliteCreateFunction('UNIX_TIMESTAMP', time(...), 0);
+        $functions = [
+            'UNIX_TIMESTAMP' => [time(...), 0],
+            'regexp' => [static fn (string $pattern, ?string $value): int => $value === null ? 0 : (int) preg_match('~'.$pattern.'~', $value), 2],
+        ];
+        foreach ($functions as $name => [$function, $arguments]) {
+            if ($pdo instanceof \Pdo\Sqlite) {
+                $pdo->createFunction($name, $function, $arguments);
+            } else {
+                $pdo->sqliteCreateFunction($name, $function, $arguments);
+            }
         }
         $pdo->exec(<<<'SQL'
             CREATE TABLE users (
@@ -153,12 +159,14 @@ final class PhotoUploadServiceTest extends TestCase
         $first = $this->publish();
         $second = $this->publish();
         self::assertSame($first->id, $second->id);
+        self::assertSame('1', $first->slug);
+        self::assertSame($first->slug, $second->slug);
         self::assertSame('ready', $first->metadata['gallery.state']);
-        self::assertSame('/users/alice/photos/summer/'.$first->id.'/', $second->canonicalUrl);
+        self::assertSame('/users/alice/photos/summer/'.$first->slug.'/', $second->canonicalUrl);
         self::assertSame(2, (int) $this->db->fetchOne('SELECT COUNT(*) AS n FROM uploads')['n']);
         self::assertCount(2, glob($this->dir.'/uploads-private/1/*'));
         self::assertFalse($this->db->inTransaction());
-        $file = $this->service->getFile(10, 20, $first->id, 'preview', new User(0, ''));
+        $file = $this->service->getFile(10, 20, $first->slug, 'preview', new User(0, ''));
         self::assertSame(UploadRepository::PURPOSE_GALLERY_PHOTO, $file->purpose);
         self::assertSame('image/webp', $file->mime);
     }
@@ -179,7 +187,7 @@ final class PhotoUploadServiceTest extends TestCase
         }
         $this->db->execute("UPDATE feeds SET visibility = 'private' WHERE id = 20");
         $this->expectException(NotFoundException::class);
-        $this->service->getFile(10, 20, $photo->id, 'original', $guest);
+        $this->service->getFile(10, 20, $photo->slug, 'original', $guest);
     }
 
     public function testFailedFeedPublicationRollsBackUploadsAndRemovesPrivateFiles(): void
@@ -203,7 +211,7 @@ final class PhotoUploadServiceTest extends TestCase
         $photo = $this->publish();
         $this->db->execute('UPDATE uploads SET user_id = 99 WHERE id = ?', [(int) $photo->metadata['gallery.original_upload_id']]);
         $this->expectException(NotFoundException::class);
-        $this->service->getFile(10, 20, $photo->id, 'preview', $this->owner);
+        $this->service->getFile(10, 20, $photo->slug, 'preview', $this->owner);
     }
 
     public function testCommunityPublicationKeepsContextAndCanonicalUrl(): void
@@ -212,9 +220,9 @@ final class PhotoUploadServiceTest extends TestCase
         $photo = $this->service->publish(30, 40, $this->owner, ['error' => UPLOAD_ERR_OK, 'tmp_name' => $this->dir.'/input.png', 'name' => 'Photo.png'], 'Event', '', '12345678-1234-4234-8234-123456789abc');
         $loaded = $this->feeds->getFeedById($photo->id, $this->owner);
         self::assertSame(30, $loaded->containerId);
-        self::assertSame('/communities/devs/photos/events/'.$photo->id.'/', $loaded->canonicalUrl);
+        self::assertSame('/communities/devs/photos/events/'.$photo->slug.'/', $loaded->canonicalUrl);
         $this->expectException(NotFoundException::class);
-        $this->service->getFile(10, 20, $photo->id, 'original', $this->owner);
+        $this->service->getFile(10, 20, $photo->slug, 'original', $this->owner);
     }
 
     public function testFriendsOnlyPhotoInheritsBlogMembershipAccess(): void
@@ -236,7 +244,7 @@ final class PhotoUploadServiceTest extends TestCase
         $photo = $this->publish();
         $this->db->execute("DELETE FROM feed_metadata WHERE feed_id = ? AND name = 'gallery.width'", [$photo->id]);
         $this->expectException(NotFoundException::class);
-        $this->service->getFile(10, 20, $photo->id, 'preview', $this->owner);
+        $this->service->getFile(10, 20, $photo->slug, 'preview', $this->owner);
     }
 
     public function testBatchUploadDerivesTitleFromFilenameWithoutManualFields(): void
@@ -245,6 +253,35 @@ final class PhotoUploadServiceTest extends TestCase
         self::assertSame('Летний отчёт 001', $photo->title);
         self::assertSame('', $photo->description);
         self::assertSame('ready', $photo->metadata['gallery.state']);
+    }
+
+    public function testNumericFeedIdIsNotAcceptedAsPublicPhotoSlug(): void
+    {
+        $photo = $this->publish();
+        $this->expectException(NotFoundException::class);
+        $this->service->getPhotoBySlug(10, 20, (string) $photo->id, $this->owner);
+    }
+
+    public function testPhotoNumbersAreLocalToAlbumAndAreNotReusedAfterDeletion(): void
+    {
+        (new FeedMetadataRepository($this->db))->replaceForFeed(20, ['unrelated.setting' => 'kept']);
+        $first = $this->publish();
+        $second = $this->service->publish(10, 20, $this->owner, ['error' => UPLOAD_ERR_OK, 'tmp_name' => $this->dir.'/input.png', 'name' => 'Second.png'], '', '', '22345678-1234-4234-8234-123456789abc');
+        self::assertSame('1', $first->slug);
+        self::assertSame('2', $second->slug);
+        self::assertNotSame((string) $first->id, $first->slug);
+        $this->db->execute('DELETE FROM feed_metadata WHERE feed_id = ?', [$second->id]);
+        $this->db->execute('DELETE FROM feeds WHERE id = ?', [$second->id]);
+        $third = $this->service->publish(10, 20, $this->owner, ['error' => UPLOAD_ERR_OK, 'tmp_name' => $this->dir.'/input.png', 'name' => 'Third.png'], '', '', '32345678-1234-4234-8234-123456789abc');
+        self::assertSame('3', $third->slug);
+        $meta = (new FeedMetadataRepository($this->db))->findByFeedIds([20])[20];
+        self::assertSame('3', $meta['gallery.last_photo_number']);
+        self::assertSame('kept', $meta['unrelated.setting']);
+        $this->db->execute("INSERT INTO feeds (id, parent_id, owner_id, type, slug, title, visibility) VALUES (60, 10, 1, 'gallery-album', 'other', 'Other', 'public')");
+        $other = $this->service->publish(10, 60, $this->owner, ['error' => UPLOAD_ERR_OK, 'tmp_name' => $this->dir.'/input.png', 'name' => 'Other.png'], '', '', '42345678-1234-4234-8234-123456789abc');
+        self::assertSame('1', $other->slug);
+        self::assertSame($first->id, $this->service->getPhotoBySlug(10, 20, '1', $this->owner)->id);
+        self::assertSame($other->id, $this->service->getPhotoBySlug(10, 60, '1', $this->owner)->id);
     }
 
     public function testAnotherBlogOwnerCannotUploadIntoAlbum(): void
