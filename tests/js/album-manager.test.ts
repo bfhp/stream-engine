@@ -80,11 +80,13 @@ it('keeps cards and selection after a failed deletion so it can be retried', asy
 it('adds uploaded photographs without losing unsaved title or order', () => {
     moveFirstLater();
     const root = document.querySelector('[data-album-manager]')!;
-    const payload = { slug: '4', title: '<New photo>', caption: 'Caption', previewUrl: '/preview/4', redirectUrl: '/photos/4' };
+    const payload = { slug: '4', title: '<img src=x onerror=alert(1)>', caption: '</textarea><script>alert(1)</script>', previewUrl: '/preview/4', redirectUrl: '/photos/4' };
     root.dispatchEvent(new CustomEvent('photo-uploaded', { detail: payload }));
     root.dispatchEvent(new CustomEvent('photo-uploaded', { detail: payload }));
     expect(order()).toEqual(['2', '1', '3', '4']);
-    expect(cards()[3].querySelector('[data-photo-name]')!.textContent).toBe('<New photo>');
+    expect(cards()[3].querySelector('[data-photo-name]')!.textContent).toBe(payload.title);
+    expect(cards()[3].dataset.caption).toBe(payload.caption);
+    expect(cards()[3].querySelector('img')!.getAttribute('onerror')).toBeNull();
     expect(cards()[3].querySelector('[data-photo-name]')!.children).toHaveLength(0);
     button('[data-album-cancel-order]').click();
     expect(order()).toEqual(['1', '2', '3', '4']);

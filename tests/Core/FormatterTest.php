@@ -652,6 +652,16 @@ final class FormatterTest extends TestCase
         $this->assertSame($expected, Formatter::json($value));
     }
 
+    public function testApiJsonPreservesMarkupAsDataWithoutHtmlEntityEncoding(): void
+    {
+        $payload = [
+            'title' => '<img src=x onerror=alert(1)>',
+            'caption' => '</textarea><script>alert("xss")</script> & \'quotes\'',
+            'previewUrl' => '/users/alice/photos/summer/1/preview/',
+        ];
+        self::assertSame($payload, json_decode(Formatter::json($payload), true, 512, JSON_THROW_ON_ERROR));
+    }
+
     public function testExtraFlagsAreAddedRatherThanReplacing(): void
     {
         // The three defaults are not negotiable per call; a caller that wants

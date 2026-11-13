@@ -922,7 +922,16 @@ class UsersController extends AbstractController
         $scope = $context->type === 'blog' ? 'user' : 'community';
         $params = $scope === 'user' ? ['username' => $context->slug] : ['slug' => $context->slug];
         http_response_code(201);
-        echo Formatter::json(['slug' => $photo->slug, 'title' => $photo->title, 'caption' => strip_tags($photo->description ?? ''), 'previewUrl' => $this->urlGenerator->action($scope.'.photo-file', [...$params, 'albumSlug' => $album->slug ?: (string) $albumId, 'photoSlug' => $photo->slug, 'variant' => 'preview']), 'redirectUrl' => $this->urlGenerator->action($scope.'.photo-show', [...$params, 'albumSlug' => $album->slug ?: (string) $albumId, 'photoSlug' => $photo->slug])]);
+        // callApi() sends application/json; Formatter::json() serializes values, not HTML.
+        // The upload client inserts the title via textContent; HTML escaping would corrupt the JSON contract.
+        // nosemgrep: php.lang.security.injection.echoed-request.echoed-request
+        echo Formatter::json([
+            'slug' => $photo->slug,
+            'title' => $photo->title,
+            'caption' => strip_tags($photo->description ?? ''),
+            'previewUrl' => $this->urlGenerator->action($scope.'.photo-file', [...$params, 'albumSlug' => $album->slug ?: (string) $albumId, 'photoSlug' => $photo->slug, 'variant' => 'preview']),
+            'redirectUrl' => $this->urlGenerator->action($scope.'.photo-show', [...$params, 'albumSlug' => $album->slug ?: (string) $albumId, 'photoSlug' => $photo->slug]),
+        ]);
     }
 
     private function handlePhotoFileRequest(Page $page, array $args): void
