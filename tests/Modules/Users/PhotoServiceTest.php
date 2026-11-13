@@ -9,6 +9,8 @@ use PHPUnit\Framework\TestCase;
 use StreamEngine\Core\Exceptions\ForbiddenException;
 use StreamEngine\Core\Exceptions\NotFoundException;
 use StreamEngine\Core\Exceptions\ValidationException;
+use StreamEngine\Core\PdoDatabase;
+use StreamEngine\Repository\FeedRepository;
 use StreamEngine\Domain\Feed;
 use StreamEngine\Domain\User;
 use StreamEngine\Modules\Users\CommunityService;
@@ -40,7 +42,7 @@ final class PhotoServiceTest extends TestCase
         $album = $this->feed(20, 'gallery-album', parent: 10);
         $feeds->expects(self::once())->method('createFeed')->with(
             'Summer',
-            null,
+            'summer',
             'gallery-album',
             10,
             'Description',
@@ -52,8 +54,59 @@ final class PhotoServiceTest extends TestCase
             $containerId,
             $containerType,
         )->willReturn($album);
-        $service = new PhotoService($feeds, $this->createStub(AccessService::class), $community);
+        $service = new PhotoService($feeds, $this->createStub(AccessService::class), $community, new FeedRepository($this->createStub(PdoDatabase::class)));
         self::assertSame($album, $service->createAlbum(10, $user, ' Summer ', 'Description', $visibility));
+    }
+
+    public static function albumTitles(): array
+    {
+        return [
+            ['Летний отдых', [], 'letnij-otdykh'],
+            ['Summer', ['summer', 'summer-2'], 'summer-3'],
+            ['New album', [], 'new-album-2'],
+            ['!!!', [], 'album'],
+            [str_repeat('a', 255), [], str_repeat('a', FeedService::MAX_SLUG_LENGTH)],
+        ];
+    }
+
+    #[DataProvider('albumTitles')]
+    public function testSlugsAreTransliteratedAndUniqueWithinContext(string $title, array $taken, string $expected): void
+    {
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects(self::atLeastOnce())->method('fetchOne')->willReturnCallback(function (string $sql, array $params) use ($taken): ?array {
+            self::assertSame([10, 'gallery-album'], array_slice($params, 0, 2));
+            self::assertStringNotContainsString('visibility', $sql);
+            return in_array($params[2], $taken, true) ? ['1' => 1] : null;
+        });
+        $feeds = $this->createMock(FeedService::class);
+        $feeds->method('getFeedById')->willReturn($this->feed(10, 'blog'));
+        $feeds->method('normalizeVisibility')->willReturn('public');
+        $feeds->expects(self::once())->method('createFeed')->with($title, $expected)->willReturn($this->feed(20, 'gallery-album', parent: 10));
+        $service = new PhotoService($feeds, $this->createStub(AccessService::class), $this->createStub(CommunityService::class), new FeedRepository($db));
+        $service->createAlbum(10, new User(1, ''), $title);
+    }
+
+    public function testSlugLookupCannotCrossContexts(): void
+    {
+        $feeds = $this->createMock(FeedService::class);
+        $user = new User(1, '');
+        $feeds->method('getFeedById')->willReturn($this->feed(10, 'blog'));
+        $feeds->expects(self::once())->method('getFeedByParentAndSlug')->with(10, 'summer', $user, 'gallery-album')
+            ->willReturn($this->feed(20, 'gallery-album', parent: 99));
+        $service = new PhotoService($feeds, $this->createStub(AccessService::class), $this->createStub(CommunityService::class), new FeedRepository($this->createStub(PdoDatabase::class)));
+        $this->expectException(NotFoundException::class);
+        $service->getAlbumBySlug(10, 'summer', $user);
+    }
+
+    public function testLegacyAlbumWithoutSlugStillResolvesById(): void
+    {
+        $feeds = $this->createStub(FeedService::class);
+        $user = new User(1, '');
+        $album = $this->feed(20, 'gallery-album', parent: 10);
+        $feeds->method('getFeedById')->willReturnMap([[10, $user, $this->feed(10, 'blog')], [20, $user, $album]]);
+        $feeds->method('getFeedByParentAndSlug')->willReturn(null);
+        $service = new PhotoService($feeds, $this->createStub(AccessService::class), $this->createStub(CommunityService::class), new FeedRepository($this->createStub(PdoDatabase::class)));
+        self::assertSame($album, $service->getAlbumBySlug(10, '20', $user));
     }
 
     public static function forbiddenContexts(): array
@@ -69,7 +122,7 @@ final class PhotoServiceTest extends TestCase
         $feeds->expects(self::never())->method('createFeed');
         $communities = $this->createStub(CommunityService::class);
         $communities->method('canPost')->willReturn(false);
-        $service = new PhotoService($feeds, $this->createStub(AccessService::class), $communities);
+        $service = new PhotoService($feeds, $this->createStub(AccessService::class), $communities, new FeedRepository($this->createStub(PdoDatabase::class)));
         $this->expectException(ForbiddenException::class);
         $service->createAlbum(10, new User($viewer, ''), 'Album');
     }
@@ -81,7 +134,7 @@ final class PhotoServiceTest extends TestCase
             [10, $user = new User(1, ''), $this->feed(10, 'blog')],
             [20, $user, $this->feed(20, 'gallery-album', parent: 99)],
         ]);
-        $service = new PhotoService($feeds, $this->createStub(AccessService::class), $this->createStub(CommunityService::class));
+        $service = new PhotoService($feeds, $this->createStub(AccessService::class), $this->createStub(CommunityService::class), new FeedRepository($this->createStub(PdoDatabase::class)));
         $this->expectException(NotFoundException::class);
         $service->getAlbum(10, 20, $user);
     }
@@ -91,7 +144,7 @@ final class PhotoServiceTest extends TestCase
         $feeds = $this->createMock(FeedService::class);
         $feeds->method('getFeedById')->willReturn($this->feed(10, 'blog-post'));
         $feeds->expects(self::never())->method('createFeed');
-        $service = new PhotoService($feeds, $this->createStub(AccessService::class), $this->createStub(CommunityService::class));
+        $service = new PhotoService($feeds, $this->createStub(AccessService::class), $this->createStub(CommunityService::class), new FeedRepository($this->createStub(PdoDatabase::class)));
         $this->expectException(NotFoundException::class);
         $service->createAlbum(10, new User(1, ''), 'Album');
     }
@@ -101,7 +154,7 @@ final class PhotoServiceTest extends TestCase
         $feeds = $this->createMock(FeedService::class);
         $feeds->method('getFeedById')->willReturn($this->feed(10, 'blog'));
         $feeds->expects(self::never())->method('createFeed');
-        $service = new PhotoService($feeds, $this->createStub(AccessService::class), $this->createStub(CommunityService::class));
+        $service = new PhotoService($feeds, $this->createStub(AccessService::class), $this->createStub(CommunityService::class), new FeedRepository($this->createStub(PdoDatabase::class)));
         $this->expectException(ValidationException::class);
         $service->createAlbum(10, new User(1, ''), '  ');
     }
@@ -111,7 +164,7 @@ final class PhotoServiceTest extends TestCase
         $feeds = $this->createMock(FeedService::class);
         $feeds->method('getFeedById')->willThrowException(new ForbiddenException('Hidden'));
         $feeds->expects(self::never())->method('getFeedsByParentAndTypePage');
-        $service = new PhotoService($feeds, $this->createStub(AccessService::class), $this->createStub(CommunityService::class));
+        $service = new PhotoService($feeds, $this->createStub(AccessService::class), $this->createStub(CommunityService::class), new FeedRepository($this->createStub(PdoDatabase::class)));
         $this->expectException(ForbiddenException::class);
         $service->listAlbums(10, new User(2, ''));
     }
@@ -124,7 +177,7 @@ final class PhotoServiceTest extends TestCase
         $result = ['items' => [], 'total' => 0];
         $feeds->expects(self::once())->method('getFeedsByParentAndTypePage')
             ->with(10, 'gallery-album', $user, 100, 0)->willReturn($result);
-        $service = new PhotoService($feeds, $this->createStub(AccessService::class), $this->createStub(CommunityService::class));
+        $service = new PhotoService($feeds, $this->createStub(AccessService::class), $this->createStub(CommunityService::class), new FeedRepository($this->createStub(PdoDatabase::class)));
         self::assertSame($result, $service->listAlbums(10, $user, 10000, -1));
     }
 
@@ -136,7 +189,7 @@ final class PhotoServiceTest extends TestCase
         $feeds->method('getFeedById')->willReturnMap([[10, $user, $this->feed(10, 'community')], [20, $user, $album]]);
         $access = $this->createMock(AccessService::class);
         $access->expects(self::once())->method('canEditFeed')->with($user, $album)->willReturn(true);
-        $service = new PhotoService($feeds, $access, $this->createStub(CommunityService::class));
+        $service = new PhotoService($feeds, $access, $this->createStub(CommunityService::class), new FeedRepository($this->createStub(PdoDatabase::class)));
         self::assertTrue($service->canEditAlbum(10, 20, $user));
     }
 }

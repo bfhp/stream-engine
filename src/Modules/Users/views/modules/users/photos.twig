@@ -1,0 +1,63 @@
+{% extends "layouts/with-sidebar.twig" %}
+{% block content %}
+    {% block photos_back_link %}
+        {% if (isAlbumForm or album) and listUrl %}
+            <a class="users-back-link" href="{{ listUrl }}">
+                <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                <span>{{ trans('photos.back_to_albums') }}</span>
+            </a>
+        {% endif %}
+    {% endblock %}
+    <div class="users-heading">
+        <h1>{{ title }}</h1>
+        {% if canCreate and not isAlbumForm %}
+            <div class="users-actions">
+                <a href="{{ newAlbumUrl }}" class="ui-button ui-button--primary ui-button--sm">
+                    <i class="bi bi-folder-plus" aria-hidden="true"></i> {{ trans('photos.new_album') }}
+                </a>
+                <button type="button" class="ui-button ui-button--secondary ui-button--sm" disabled title="{{ trans('photos.upload_soon') }}">
+                    <i class="bi bi-image" aria-hidden="true"></i> {{ trans('photos.new_photo') }}
+                </button>
+            </div>
+        {% endif %}
+    </div>
+    {% if isAlbumForm %}
+        <form data-photo-album-form data-api-url="{{ apiUrl }}">
+            <label class="ui-label" for="album-title">{{ trans('photos.album') }}</label>
+            <input class="ui-input" id="album-title" name="title" required maxlength="255">
+            <label class="ui-label" for="album-description">{{ trans('photos.description') }}</label>
+            <textarea class="ui-input" id="album-description" name="description" maxlength="2000"></textarea>
+            <label class="ui-label" for="album-visibility">{{ trans('photos.visibility') }}</label>
+            <select class="ui-input" id="album-visibility" name="visibility">
+                <option value="public">{{ trans('photos.public') }}</option>
+                <option value="members">{{ isCommunityGallery ? trans('photos.members') : trans('view.users.blog.post.form.09') }}</option>
+                <option value="private">{{ trans('photos.private') }}</option>
+            </select>
+            <p data-photo-album-error role="alert"></p>
+            <button class="ui-button ui-button--primary" type="submit">{{ trans('photos.create') }}</button>
+        </form>
+    {% elseif album %}
+        {% if album.description %}<p>{{ album.description|striptags }}</p>{% endif %}
+        <p>{{ trans('photos.empty_album') }}</p>
+    {% else %}
+        <ul class="users-feed">
+            {% for item in albums %}
+                <li class="ui-card users-panel"><a href="{{ item.url }}">{{ item.title }}</a></li>
+            {% else %}
+                <li>{{ trans('photos.empty') }}</li>
+            {% endfor %}
+        </ul>
+        <nav aria-label="{{ trans('photos.pagination') }}">
+            {% if previousUrl %}<a class="ui-button" href="{{ previousUrl }}">{{ trans('photos.previous') }}</a>{% endif %}
+            {% if nextUrl %}<a class="ui-button" href="{{ nextUrl }}">{{ trans('photos.next') }}</a>{% endif %}
+        </nav>
+    {% endif %}
+{% endblock %}
+
+{% block sidebar_widgets %}
+    {% if isCommunityGallery %}
+        {% include 'components/users/community-sidebar.twig' with photoSidebar only %}
+    {% else %}
+        {% include 'components/users/profile-sidebar.twig' with photoSidebar %}
+    {% endif %}
+{% endblock %}

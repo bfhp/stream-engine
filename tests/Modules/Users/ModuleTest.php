@@ -280,6 +280,30 @@ final class ModuleTest extends TestCase
         }
     }
 
+    public function testPhotoRoutesPreserveBlogAndCommunityContexts(): void
+    {
+        $tree = new PageTree([
+            $this->page(1, null, '', 'home.index'),
+            $this->page(2, 1, 'users', 'users.list'),
+            $this->page(3, 2, '{username}', 'user.show', 'blog'),
+            $this->page(4, 1, 'communities', 'community.main'),
+        ]);
+        UsersController::registerRuntimePages($tree, new TranslationManager('ru', 'en'));
+        $router = new Router($tree);
+        $urls = new UrlGenerator($tree, new FakeFeedRepository([]), new ArrayCache());
+        foreach ([['user', ['username' => 'alice'], '/users/alice'], ['community', ['slug' => 'devs'], '/communities/devs']] as [$scope, $params, $base]) {
+            self::assertSame($scope.'.photos', $router->resolve($base.'/photos/')['page']->action);
+            $resolved = $router->resolve($base.'/photos/letniy-otdyh/');
+            self::assertSame($scope.'.photo-album', $resolved['page']->action);
+            self::assertSame($base.'/photos/letniy-otdyh/', $urls->action($scope.'.photo-album', [...$params, 'albumSlug' => 'letniy-otdyh']));
+            self::assertArrayNotHasKey($scope.'.photos', UsersController::pageActions());
+        }
+        UsersController::registerApi(1, $tree);
+        $router = new Router($tree);
+        self::assertSame('user.photo-album-create', $router->resolve('/users/photo-albums/', 'POST')['page']->action);
+        self::assertSame('community.photo-album-create', $router->resolve('/communities/10/photo-albums/', 'POST')['page']->action);
+    }
+
     private function pageWithAction(string $action): Page
     {
         return new Page(

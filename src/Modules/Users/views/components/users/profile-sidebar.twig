@@ -117,6 +117,10 @@
         </div>
     {% endblock %}
 
+    {% block profile_photos %}
+        {% include 'components/users/photos-link.twig' with {photosUrl: action_url('user.photos', {'username': profileUser.username})} only %}
+    {% endblock %}
+
     {% block profile_info %}
         <div class="ui-card profile-info-card">
             <div class="ui-card__body">

@@ -107,6 +107,10 @@
     </div>
 {% endblock %}
 
+{% block community_photos %}
+    {% include 'components/users/photos-link.twig' with {photosUrl: action_url('community.photos', {'slug': community.slug})} only %}
+{% endblock %}
+
 {% block community_membership %}
     {# The join/leave action, as its own card right after the header -
        same relative position profile-sidebar.twig's profile_info ("About

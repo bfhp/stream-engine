@@ -259,6 +259,7 @@ class UsersController extends AbstractController
     {
         $profile = $pageTree->findByAction('user.show');
         if ($profile !== null) {
+            self::registerPhotoPages($pageTree, $profile->id, 'user', $tm);
             $pageTree->add(Page::runtime(
                 id: $pageTree->getMaxPageId(),
                 parentId: $profile->id,
@@ -327,6 +328,8 @@ class UsersController extends AbstractController
             pageName: null,
         ));
 
+        self::registerPhotoPages($pageTree, $communityId, 'community', $tm);
+
         $pageTree->add(Page::runtime(
             id: $pageTree->getMaxPageId(),
             parentId: $communityId,
@@ -374,6 +377,44 @@ class UsersController extends AbstractController
             changefreq: 'noindex',
             settings: null,
             pageName: $tm->trans('view.users.community.sidebar.02'),
+        ));
+    }
+
+    private static function registerPhotoPages(PageTree $tree, int $parentId, string $scope, TranslationManager $tm): void
+    {
+        $listId = $tree->getMaxPageId();
+        $tree->add(Page::runtime(
+            id: $listId,
+            parentId: $parentId,
+            pattern: 'photos',
+            action: $scope.'.photos',
+            accessRule: AccessService::ACCESS_PUBLIC,
+            feedType: null,
+            changefreq: null,
+            settings: null,
+            pageName: $tm->trans('photos.title'),
+        ));
+        $tree->add(Page::runtime(
+            id: $tree->getMaxPageId(),
+            parentId: $listId,
+            pattern: 'new-album',
+            action: $scope.'.photo-album-new',
+            accessRule: AccessService::ACCESS_AUTHENTICATED,
+            feedType: null,
+            changefreq: 'noindex',
+            settings: null,
+            pageName: $tm->trans('photos.new_album'),
+        ));
+        $tree->add(Page::runtime(
+            id: $tree->getMaxPageId(),
+            parentId: $listId,
+            pattern: '{albumSlug}',
+            action: $scope.'.photo-album',
+            accessRule: AccessService::ACCESS_PUBLIC,
+            feedType: null,
+            changefreq: null,
+            settings: null,
+            pageName: $tm->trans('photos.album'),
         ));
     }
 
@@ -442,6 +483,8 @@ class UsersController extends AbstractController
     public function show(Page $page, array $args = []): ?ViewModel
     {
         return match ($page->action) {
+            'user.photos', 'community.photos', 'user.photo-album', 'community.photo-album',
+            'user.photo-album-new', 'community.photo-album-new' => $this->showPhotosPage($page, $args),
             'users.list' => $this->showUsersListPage($page),
             'user.show' => $this->showUserPage($page, $args),
             'user.register' => $this->showRegisterPage($page),
@@ -470,6 +513,150 @@ class UsersController extends AbstractController
             'community.manage' => $this->showCommunityManagePage($page, $args),
             default => throw new ForbiddenException('Unknown page action'),
         };
+    }
+
+    private function photoService(): PhotoService
+    {
+        return new PhotoService($this->feedService, new AccessService($this->memberships, new FeedRepository($this->db)), $this->communityService, new FeedRepository($this->db));
+    }
+
+    /** Resolve the ancestor context, keeping community slug separate from album ID. */
+    private function photoContext(Page $page, array $args): array
+    {
+        foreach ($this->pageTree->ancestors($page) as $ancestor) {
+            if ($ancestor->action === 'user.show') {
+                $username = (string) ($ancestor->params['username'] ?? $args['username'] ?? '');
+                $owner = $this->userService->findPublicUserByUsername($username);
+                if ($owner === null) {
+                    throw new NotFoundException($this->tm->trans('user.not_found'));
+                }
+                return [
+                    $this->resolvePersonalBlogFeed($owner, $this->context->user),
+                    ['username' => $owner->username],
+                    ! $this->context->user->isGuest() && $owner->id === $this->context->user->id,
+                    '/api/v1/users/photo-albums',
+                    $owner,
+                ];
+            }
+            if ($ancestor->action === 'community.show-slug') {
+                $slug = (string) ($ancestor->params['slug'] ?? $args['slug'] ?? '');
+                $community = $this->feedService->getFeedByParentAndSlug(null, $slug, $this->context->user, 'community');
+                if ($community === null || $community->type !== 'community') {
+                    throw new NotFoundException($this->tm->trans('community.not_found'));
+                }
+                return [$community, ['slug' => $slug], $this->communityService->canPost($this->context->user, $community), '/api/v1/communities/'.$community->id.'/photo-albums', null];
+            }
+        }
+        throw new NotFoundException($this->tm->trans('feed.not_found'));
+    }
+
+    private function showPhotosPage(Page $page, array $args): ViewModel
+    {
+        [$context, $params, $canCreate, $apiUrl, $profileUser] = $this->photoContext($page, $args);
+        $scope = str_starts_with($page->action, 'user.') ? 'user' : 'community';
+        $listUrl = $this->urlGenerator->action($scope.'.photos', $params);
+        $isAlbumForm = $page->action === $scope.'.photo-album-new';
+        if ($isAlbumForm && ! $canCreate) {
+            throw new ForbiddenException($this->tm->trans('feed.forbidden'));
+        }
+        $albumSlug = (string) ($args['albumSlug'] ?? '');
+        $album = null;
+        $offset = max(0, $this->context->query->int('offset'));
+        $result = ['items' => [], 'total' => 0];
+        if ($page->action === $scope.'.photo-album') {
+            if ($context === null || $albumSlug === '') {
+                throw new NotFoundException($this->tm->trans('photos.not_found'));
+            }
+            $album = $this->photoService()->getAlbumBySlug($context->id, $albumSlug, $this->context->user);
+        } elseif ($context !== null && ! $isAlbumForm) {
+            $result = $this->photoService()->listAlbums($context->id, $this->context->user, 20, $offset);
+        }
+        $items = array_map(fn (Feed $item): array => [
+            'title' => $item->title,
+            'url' => $this->urlGenerator->action($scope.'.photo-album', [...$params, 'albumSlug' => $item->slug ?: (string) $item->id]),
+        ], $result['items']);
+
+        return ViewModel::fromPage($page, 'modules/users/photos.twig', [
+            'title' => $isAlbumForm ? $this->tm->trans('photos.new_album') : ($album?->title ?? $this->tm->trans('photos.title')),
+            'isAlbumForm' => $isAlbumForm,
+            'newAlbumUrl' => $canCreate ? $this->urlGenerator->action($scope.'.photo-album-new', $params) : null,
+            'album' => $album, 'albums' => $items, 'listUrl' => $listUrl,
+            'canCreate' => $canCreate && $album === null, 'apiUrl' => $apiUrl,
+            'isCommunityGallery' => $scope === 'community',
+            'photoSidebar' => $this->buildPhotoSidebarViewData($context, $profileUser),
+            'previousUrl' => $offset > 0 ? $this->urlGenerator->action($scope.'.photos', $params, query: ['offset' => max(0, $offset - 20)]) : null,
+            'nextUrl' => $offset + 20 < $result['total'] ? $this->urlGenerator->action($scope.'.photos', $params, query: ['offset' => $offset + 20]) : null,
+            'head_ext' => ['<script type="module" src="/assets/js/users.js" defer></script>'],
+        ]);
+    }
+
+    private function buildPhotoSidebarViewData(?Feed $context, ?User $profileUser): array
+    {
+        $viewer = $this->context->user;
+        if ($profileUser !== null) {
+            $isOwnProfile = ! $viewer->isGuest() && $viewer->id === $profileUser->id;
+            $relationship = $isOwnProfile ? null : $this->friendService->getRelationshipStatus($viewer, $profileUser);
+            $privacy = $this->buildProfilePrivacyViewData($profileUser, $isOwnProfile, $relationship);
+
+            return [
+                'profileUser' => $profileUser,
+                'profileUserAvatarUrl' => $this->userService->resolveAvatarUrl($profileUser->avatarUrl),
+                'profileBirthDateLabel' => $this->formatProfileBirthDate($profileUser),
+                'isOwnProfile' => $isOwnProfile,
+                'isOnline' => $privacy['canViewProfilePresence'] && $this->userService->isOnline($profileUser->id),
+                'relationshipStatus' => $relationship,
+                'friendActionUrl' => '/api/v1/users/'.rawurlencode($profileUser->username).'/friend',
+                ...$privacy,
+            ];
+        }
+
+        $owner = $this->userService->findPublicUserById($context->ownerId);
+        $communityUrl = $this->urlGenerator->action('community.show-slug', ['slug' => $context->slug]);
+
+        return [
+            'isGuest' => $viewer->isGuest(),
+            'community' => $context,
+            'imageUrl' => $this->communityService->resolveImageUrl($context),
+            'owner' => $owner,
+            'ownerUrl' => $owner !== null ? $this->urlGenerator->action('user.show', ['username' => $owner->username]) : null,
+            'relationshipStatus' => $this->communityService->getRelationshipStatus($viewer, $context),
+            'membershipActionUrl' => '/api/v1/communities/'.$context->id.'/membership',
+            'manageUrl' => ! $viewer->isGuest() && $viewer->id === $context->ownerId && $communityUrl !== null
+                ? $this->urlGenerator->childAction('community.manage', $communityUrl) : null,
+            ...$this->buildCommunityRatingViewData($context, $viewer),
+            ...$this->buildCommunityStatsViewData($context, $viewer),
+            ...$this->buildCommunityMembersViewData($context),
+        ];
+    }
+
+    private function handlePhotoAlbumCreateRequest(?int $communityId): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            throw new ValidationException('Method not allowed', 405);
+        }
+        $this->requireAuthenticatedUser();
+        Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
+        $input = json_decode(file_get_contents('php://input'), true);
+        if (! is_array($input) || ! is_string($input['title'] ?? null)
+            || (isset($input['description']) && ! is_string($input['description']))
+            || (isset($input['visibility']) && ! is_string($input['visibility']))) {
+            throw new ValidationException($this->tm->trans('photos.invalid_input'));
+        }
+        if ($communityId === null) {
+            $context = $this->blogPostService->getOrCreateUserBlogFeed($this->context->user);
+            $params = ['username' => $this->context->user->username];
+            $scope = 'user';
+        } else {
+            $context = $this->feedService->getFeedById($communityId, $this->context->user);
+            if ($context === null || $context->type !== 'community') {
+                throw new NotFoundException($this->tm->trans('community.not_found'));
+            }
+            $params = ['slug' => $context->slug];
+            $scope = 'community';
+        }
+        $album = $this->photoService()->createAlbum($context->id, $this->context->user, $input['title'], $input['description'] ?? null, $input['visibility'] ?? 'public');
+        http_response_code(201);
+        echo Formatter::json(['id' => $album->id, 'redirectUrl' => $this->urlGenerator->action($scope.'.photo-album', [...$params, 'albumSlug' => $album->slug])]);
     }
 
     private function showUsersListPage(Page $page): ViewModel
@@ -3464,6 +3651,8 @@ class UsersController extends AbstractController
         match ($page->action) {
             'users.collection' => $this->handleUsersCollectionRequest(),
             'password.retrieve' => $this->handleUserRetrieveRequest(),
+            'user.photo-album-create' => $this->handlePhotoAlbumCreateRequest(null),
+            'community.photo-album-create' => $this->handlePhotoAlbumCreateRequest((int) ($args['id'] ?? 0)),
             'user.post-new-create' => $this->handleBlogPostCreateRequest(),
             'user.post-item' => $this->handleBlogPostItemRequest((int) ($args['id'] ?? 0)),
             'user.posts' => $this->handleUserPostsRequest((string) ($args['username'] ?? '')),
@@ -4153,5 +4342,19 @@ class UsersController extends AbstractController
                 action: 'community.manage-member',
             )
         );
+        $pageTree->add(Page::api(
+            id: $pageTree->getMaxPageId(),
+            parentId: $usersPageId,
+            pattern: 'photo-albums',
+            requestMethods: ['POST'],
+            action: 'user.photo-album-create',
+        ));
+        $pageTree->add(Page::api(
+            id: $pageTree->getMaxPageId(),
+            parentId: $communityIdPageId,
+            pattern: 'photo-albums',
+            requestMethods: ['POST'],
+            action: 'community.photo-album-create',
+        ));
     }
 }

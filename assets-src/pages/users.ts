@@ -711,3 +711,30 @@ document.addEventListener('DOMContentLoaded', () => {
     initCommunityManageMembers();
     initAudioPlayers();
 });
+
+function initPhotoAlbumForm(): void {
+    const form = document.querySelector<HTMLFormElement>('[data-photo-album-form]');
+    if (!form) return;
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const button = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+        if (button.disabled) return;
+        const error = form.querySelector<HTMLElement>('[data-photo-album-error]')!;
+        error.textContent = '';
+        button.disabled = true;
+        const data = new FormData(form);
+        try {
+            const result = await cms.api<{ redirectUrl?: string }>(form.dataset.apiUrl!, {
+                method: 'POST',
+                data: { title: data.get('title'), description: data.get('description'), visibility: data.get('visibility') },
+            });
+            if (result.redirectUrl) window.location.assign(result.redirectUrl);
+            else window.location.reload();
+        } catch (reason) {
+            error.textContent = getApiErrorMessage(reason, trans('photos.error'));
+            button.disabled = false;
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', initPhotoAlbumForm);

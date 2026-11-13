@@ -174,7 +174,7 @@ class SitemapController extends AbstractController
             && $page->changefreq !== 'noindex'
             && in_array('GET', $page->requestMethods ?? ['GET'], true)
             && $page->feedType === null
-            && !str_contains($page->pattern, '{');
+            && !str_contains($this->pageTree->buildPath($page), '{');
     }
 
     /**

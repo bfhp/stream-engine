@@ -1,0 +1,7 @@
+{% if photosUrl %}
+    <a class="users-sidebar-link" href="{{ photosUrl }}">
+        <span class="users-sidebar-link__icon" aria-hidden="true"><i class="bi bi-images"></i></span>
+        <span class="users-sidebar-link__label">{{ trans('photos.title') }}</span>
+        <i class="bi bi-arrow-right users-sidebar-link__arrow" aria-hidden="true"></i>
+    </a>
+{% endif %}

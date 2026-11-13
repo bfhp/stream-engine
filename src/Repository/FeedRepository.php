@@ -120,6 +120,15 @@ final class FeedRepository implements FeedRepositoryInterface
         return $this->fetchOne($sql, $params);
     }
 
+    /** Checks slug occupancy regardless of visibility; does not expose content. */
+    public function hasSlugInParent(int $parentId, string $type, string $slug): bool
+    {
+        return $this->db->fetchOne(
+            'SELECT 1 FROM feeds WHERE parent_id = ? AND type = ? AND slug = ? LIMIT 1',
+            [$parentId, $type, $slug],
+        ) !== null;
+    }
+
     /**
      * Uses index: feeds_parent_id_slug_type_index (parent_id, slug, type)
      * Fallback: feeds_slug_index (slug) may be used when parent selectivity is poor.

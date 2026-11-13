@@ -186,6 +186,25 @@ final class SitemapControllerTest extends TestCase
         $this->assertStringNotContainsString('{slug}', $output);
     }
 
+    public function testStaticDescendantsOfDynamicRoutesAreExcludedFromPageSitemap(): void
+    {
+        $tree = new PageTree([
+            self::page(1, null, ''),
+            self::page(2, 1, 'photos'),
+            self::page(3, 1, 'sections/{sectionId:\d+}'),
+            self::page(4, 3, 'albums'),
+            self::page(5, 4, 'photos'),
+        ]);
+        $module = $this->makeModule($tree, $this->createStub(FeedService::class));
+        ob_start();
+        $module->callApi(self::page(100, 1, 'sitemap-{slug}.xml', 'raw', action: 'sitemap.sitemap'), ['slug' => 'pages']);
+        $output = ob_get_clean();
+
+        self::assertStringContainsString('https://example.test/photos/', $output);
+        self::assertStringNotContainsString('sections/', $output);
+        self::assertStringNotContainsString('{sectionId', $output);
+    }
+
     public function testMigratedRuntimeTreesExposeFeedsButNotPrivateUtilityPages(): void
     {
         $pageTree = new PageTree([

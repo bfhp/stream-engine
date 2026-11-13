@@ -7,18 +7,21 @@ namespace StreamEngine\Modules\Users;
 use StreamEngine\Core\Exceptions\ForbiddenException;
 use StreamEngine\Core\Exceptions\NotFoundException;
 use StreamEngine\Core\Exceptions\ValidationException;
+use StreamEngine\Core\Formatter;
+use StreamEngine\Repository\FeedRepository;
 use StreamEngine\Domain\Feed;
 use StreamEngine\Domain\User;
 use StreamEngine\Service\AccessService;
 use StreamEngine\Service\FeedService;
 
-/** Photo workflows owned by Users; no public endpoints until the UI is ready. */
+/** Photo workflows owned by Users; authorization follows blog post rules. */
 class PhotoService
 {
     public function __construct(
         private readonly FeedService $feeds,
         private readonly AccessService $access,
         private readonly CommunityService $communities,
+        private readonly FeedRepository $repository,
     ) {
     }
 
@@ -35,6 +38,9 @@ class PhotoService
         if ($title === '' || mb_strlen($title) > 255) {
             throw new ValidationException('Album title must contain 1–255 characters');
         }
+        if ($description !== null && mb_strlen($description) > 2000) {
+            throw new ValidationException('Album description must contain at most 2000 characters');
+        }
         $visibility = $this->feeds->normalizeVisibility($visibility);
 
         // Match BlogPostService: communities always carry an access container;
@@ -43,7 +49,7 @@ class PhotoService
 
         return $this->feeds->createFeed(
             title: $title,
-            slug: null,
+            slug: $this->albumSlug($contextId, $title),
             type: 'gallery-album',
             parentId: $context->id,
             description: $description,
@@ -66,6 +72,38 @@ class PhotoService
         }
 
         return $album;
+    }
+
+    public function getAlbumBySlug(int $contextId, string $slug, User $user): Feed
+    {
+        $this->context($contextId, $user);
+        $album = $this->feeds->getFeedByParentAndSlug($contextId, $slug, $user, 'gallery-album');
+        if ($album === null && ctype_digit($slug)) {
+            $legacy = $this->getAlbum($contextId, (int) $slug, $user);
+            if ($legacy->slug === null || $legacy->slug === '') {
+                return $legacy;
+            }
+        }
+        if ($album === null || $album->type !== 'gallery-album' || $album->parentId !== $contextId) {
+            throw new NotFoundException('Album not found');
+        }
+
+        return $album;
+    }
+
+    private function albumSlug(int $contextId, string $title): string
+    {
+        $maxLength = FeedService::MAX_SLUG_LENGTH;
+        $base = Formatter::slugify($title, '-', $maxLength, 'album');
+        $candidate = $base;
+        $suffix = 1;
+        while ($candidate === 'new-album' || $this->repository->hasSlugInParent($contextId, 'gallery-album', $candidate)) {
+            $suffix++;
+            $tail = '-'.$suffix;
+            $candidate = rtrim(substr($base, 0, $maxLength - strlen($tail)), '-').$tail;
+        }
+
+        return $candidate;
     }
 
     /** @return array{items: Feed[], total: int} */

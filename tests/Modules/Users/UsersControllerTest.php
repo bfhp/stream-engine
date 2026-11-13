@@ -44,6 +44,27 @@ use Tests\Support\PhpInputStreamMock;
 
 final class UsersControllerTest extends TestCase
 {
+    public function testPhotoAlbumCreationRejectsRequestsWithoutCsrfBeforeAccessingFeeds(): void
+    {
+        $module = $this->makeUsersModule($this->createStub(PdoDatabase::class));
+        $this->setContext($module, new User(7, 'test@example.org'));
+        $feeds = $this->createMock(FeedService::class);
+        $feeds->expects(self::never())->method('createFeed');
+        $feeds->expects(self::never())->method('getFeedById');
+        $this->setFeedService($module, $feeds);
+        $server = $_SERVER;
+        $cookies = $_COOKIE;
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        unset($_SERVER['HTTP_X_CSRF_TOKEN'], $_COOKIE['csrfToken']);
+        try {
+            $this->expectException(ValidationException::class);
+            $module->callApi(Page::api(100, 1, 'photo-albums', ['POST'], 'user.photo-album-create'));
+        } finally {
+            $_SERVER = $server;
+            $_COOKIE = $cookies;
+        }
+    }
+
     private function makeUsersModule(PdoDatabase $db): UsersController
     {
         $reflection = new ReflectionClass(UsersController::class);
@@ -1904,7 +1925,7 @@ final class UsersControllerTest extends TestCase
         // blog-posts (create) is added first, {username} second - this
         // matters because testRegisterApiAddsBlogPostsEndpointUnderUsers
         // above relies on findChildren()[0] still being 'blog-posts'.
-        $this->assertCount(2, $usersChildren);
+        $this->assertCount(3, $usersChildren);
         $usernamePage = $usersChildren[1];
         $this->assertSame('{username}', $usernamePage->pattern);
         $this->assertSame(['GET'], $usernamePage->requestMethods);

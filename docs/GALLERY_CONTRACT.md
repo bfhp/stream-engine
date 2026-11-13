@@ -1,13 +1,13 @@
 # Users Photo Gallery Contract and Development Plan
 
-Date: November 13, 2026. Status: initial Users album service implemented; public workflows are not implemented.
+Date: November 13, 2026. Status: album browsing and creation implemented in Users; photo uploads and showcase are planned.
 
 Photo galleries belong to the Users module. Registered users will create
 albums and upload photographs within a personal blog or a community. Visitors with access can browse them; registered users can
 comment and rate photographs. Rankings expose the highest-rated photographs.
-UsersController will own the photo pages and API. No photo pages, feed types,
-API or scheduled tasks are registered yet; the standalone Gallery controller
-has been removed. Gallery uses the standard Feed editing and authorization mechanisms.
+UsersController owns the album pages and creation API. Photo upload, rating
+and showcase workflows are not registered yet; the standalone Gallery
+controller has been removed. Gallery uses the standard Feed editing and authorization mechanisms.
 Feed type is selected at creation and cannot be changed through user-facing
 updates, including the administration editor and API. Ordinary edits and
 deletions are not blocked by a Gallery-specific reservation.
@@ -214,13 +214,30 @@ and album through FeedService, uses CommunityService::canPost() for community
 publication, and AccessService::canEditFeed() for management. Personal albums
 require the blog owner. Container assignment matches BlogPostService, including
 personal members-only content. Lists use shared SQL access filtering before
-pagination and counting. No photo types, endpoints or pages are advertised yet.
+pagination and counting. UsersController registers personal and community
+`photos` lists and `photos/{albumSlug}` views, with paginated album browsing and
+creation forms at `photos/new-album/`. The list header provides a New album
+action; New photo remains disabled until uploads are implemented. Profile and
+community pages link to their photo lists.
+
+Creation APIs are `POST /api/v1/users/photo-albums` for the authenticated user's
+blog and `POST /api/v1/communities/{id}/photo-albums` for a community. Payload:
+`title` (1–255 characters), optional `description` (up to 2000 characters), and
+`visibility` (`public`, `members`, `private`; default `public`). Both require
+authentication and CSRF, return 201 with `id` and `redirectUrl`, and resolve
+publication rights on the server. A personal blog is created lazily on write;
+viewing an empty gallery does not create it. Album links are generated with
+UrlGenerator using explicit context and album slugs. New album slugs use Formatter::slugify()
+on the title, with numeric suffixes for collisions within the context and
+`new-album` reserved for creation. Legacy albums without a slug retain their
+numeric ID links. Slug occupancy checks include private albums. Photo Feed types remain
+unadvertised in generic editors until their mutation invariants are enforced.
 No new core classes, tables or Feed fields are introduced. Cover references,
 image references and processing fields remain reserved for `feed_metadata`;
 empty albums require no service metadata.
 
-Next: wire album forms and scoped runtime routes, then album updates/deletion,
-metadata validation and protected photo uploads before exposing photographs.
+Next: implement album updates/deletion, metadata validation and protected photo
+uploads before exposing photographs; the separate showcase follows ready photos.
 
 ## Implementation sequence and acceptance
 
