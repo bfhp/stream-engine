@@ -871,6 +871,8 @@ a.users-person:hover {
 [data-album-status]:empty { display: none; }
 .users-album-toolbar { align-items: center; margin-block: var(--ui-space-4); }
 .users-album-toolbar [data-album-selection] { flex-basis: 100%; padding: var(--ui-space-3); background: var(--ui-surface-2); border-radius: var(--ui-radius); align-items: center; }
+.users-album-toolbar [data-album-selection-actions] { flex-basis: 100%; align-items: center; }
+.users-album-toolbar [data-album-selection-actions][hidden] { display: flex !important; visibility: hidden; pointer-events: none; }
 .users-album-toolbar label { display: inline-flex; align-items: center; gap: var(--ui-space-2); }
 .users-album-position { inline-size: 5rem; }
 .users-album-photo { position: relative; min-inline-size: 0; margin: 0; }
