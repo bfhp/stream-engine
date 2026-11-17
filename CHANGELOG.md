@@ -7,6 +7,11 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Admin Feed list filters, sorting and limit now persist in the URL when
+  returning from the editor or reloading the page.
+
 ## [0.7.0] - 2026-11-13
 
 ### Added

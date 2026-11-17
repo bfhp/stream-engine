@@ -1,5 +1,5 @@
 import { useEffect, useState, ChangeEvent, useRef } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
 
 import Editor from "@monaco-editor/react";
 import CodeEditorHint, { codeEditorAriaLabel } from "../components/CodeEditorHint";
@@ -21,6 +21,7 @@ export default function FeedEdit() {
 
     const { id } = useParams();
     const navigate = useNavigate();
+    const { search } = useLocation();
     const colorScheme = useComputedColorScheme("light");
 
     const [feed, setFeed] = useState<any>(null);
@@ -143,7 +144,7 @@ export default function FeedEdit() {
                 });
 
                 if (id === "new") {
-                    navigate(`/feeds/${data.id}`, { replace: true });
+                    navigate(`/feeds/${data.id}${search}`, { replace: true });
                 }
             })
             .catch(err => {
@@ -194,7 +195,7 @@ export default function FeedEdit() {
             <Group>
                 <Button
                     variant="light"
-                    onClick={() => navigate("/feeds")}
+                    onClick={() => navigate(`/feeds${search}`)}
                 >
                     {isRtl() ? "→" : "←"} {trans("js.admin.back")}
                 </Button>

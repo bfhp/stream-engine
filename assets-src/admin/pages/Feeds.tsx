@@ -14,7 +14,7 @@ import {
     TextInput,
     Tooltip
 } from "@mantine/core";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
     IconAdjustmentsHorizontal,
     IconArrowsSort,
@@ -130,13 +130,40 @@ function numericValue(value: string): string {
 
 export default function Feeds() {
     const [feeds, setFeeds] = useState<FeedListItem[]>([]);
-    const [type, setType] = useState<string | null>(null);
-    const [id, setId] = useState("");
-    const [slug, setSlug] = useState("");
-    const [ownerId, setOwnerId] = useState("");
-    const [parentId, setParentId] = useState("");
-    const [sort, setSort] = useState<SortKey>("id_desc");
-    const [limit, setLimit] = useState(100);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const type = searchParams.get("type") || null;
+    const id = numericValue(searchParams.get("id") || "");
+    const slug = searchParams.get("slug") || "";
+    const ownerId = numericValue(searchParams.get("owner_id") || "");
+    const parentId = numericValue(searchParams.get("parent_id") || "");
+    const requestedSort = searchParams.get("sort");
+    const sort: SortKey =
+        (requestedSort === "created_desc" || requestedSort === "rating_desc") && type
+            ? requestedSort
+            : requestedSort === "position_asc" && parentId ? requestedSort : "id_desc";
+    const requestedLimit = Number(searchParams.get("limit") ?? 100);
+    const limit = Number.isInteger(requestedLimit) && requestedLimit >= 1 && requestedLimit <= 500
+        ? requestedLimit : 100;
+    const search = searchParams.size ? `?${searchParams.toString()}` : "";
+
+    function setFilter(key: string, value: string | null) {
+        setSearchParams(current => {
+            const next = new URLSearchParams(current);
+            if (value === null || value === "") {
+                next.delete(key);
+            } else {
+                next.set(key, value);
+            }
+
+            // These sort orders require an indexed filter.
+            const nextSort = next.get("sort");
+            if ((!next.get("type") && (nextSort === "created_desc" || nextSort === "rating_desc"))
+                || (!next.get("parent_id") && nextSort === "position_asc")) {
+                next.delete("sort");
+            }
+            return next;
+        }, { replace: true });
+    }
     const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>(initialColumns);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -152,16 +179,6 @@ export default function Feeds() {
         { value: "position_asc", label: trans("js.admin.feeds.sort_position"), disabled: !hasParent },
         { value: "rating_desc", label: trans("js.admin.feeds.sort_rating"), disabled: !hasType }
     ], [hasParent, hasType]);
-
-    useEffect(() => {
-        if ((sort === "created_desc" || sort === "rating_desc") && !hasType) {
-            setSort("id_desc");
-        }
-
-        if (sort === "position_asc" && !hasParent) {
-            setSort("id_desc");
-        }
-    }, [hasParent, hasType, sort]);
 
     useEffect(() => {
         window.localStorage.setItem(COLUMN_STORAGE_KEY, JSON.stringify(visibleColumns));
@@ -218,12 +235,13 @@ export default function Feeds() {
     }, [id, limit, ownerId, parentId, refreshKey, slug, sort, type]);
 
     function resetFilters() {
-        setType(null);
-        setId("");
-        setSlug("");
-        setOwnerId("");
-        setParentId("");
-        setSort("id_desc");
+        setSearchParams(current => {
+            const next = new URLSearchParams(current);
+            for (const key of ["type", "id", "slug", "owner_id", "parent_id", "sort"]) {
+                next.delete(key);
+            }
+            return next;
+        }, { replace: true });
     }
 
     function toggleColumn(key: ColumnKey) {
@@ -264,7 +282,7 @@ export default function Feeds() {
                         px={4}
                         rightSection={<IconArrowsSort size={14} />}
                         disabled={disabled}
-                        onClick={() => setSort(nextSort)}
+                        onClick={() => setFilter("sort", nextSort)}
                     >
                         {label}
                     </Button>
@@ -283,7 +301,7 @@ export default function Feeds() {
                 return (
                     <Text
                         component={Link}
-                        to={`/feeds/${feed.id}`}
+                        to={`/feeds/${feed.id}${search}`}
                         lineClamp={1}
                         maw={520}
                         title={label}
@@ -335,7 +353,7 @@ export default function Feeds() {
                     <TextInput
                         label="ID"
                         value={id}
-                        onChange={(event) => setId(numericValue(event.currentTarget.value))}
+                        onChange={(event) => setFilter("id", numericValue(event.currentTarget.value))}
                         w={110}
                     />
                     <AdminSelect
@@ -343,7 +361,7 @@ export default function Feeds() {
                         placeholder={trans("js.admin.all")}
                         data={FEED_TYPES}
                         value={type}
-                        onChange={setType}
+                        onChange={(value) => setFilter("type", value)}
                         clearable
                         searchable
                         w={210}
@@ -351,26 +369,26 @@ export default function Feeds() {
                     <TextInput
                         label={trans("js.admin.slug")}
                         value={slug}
-                        onChange={(event) => setSlug(event.currentTarget.value)}
+                        onChange={(event) => setFilter("slug", event.currentTarget.value)}
                         w={220}
                     />
                     <TextInput
                         label={trans("js.admin.owner")}
                         value={ownerId}
-                        onChange={(event) => setOwnerId(numericValue(event.currentTarget.value))}
+                        onChange={(event) => setFilter("owner_id", numericValue(event.currentTarget.value))}
                         w={120}
                     />
                     <TextInput
                         label={trans("js.admin.parent")}
                         value={parentId}
-                        onChange={(event) => setParentId(numericValue(event.currentTarget.value))}
+                        onChange={(event) => setFilter("parent_id", numericValue(event.currentTarget.value))}
                         w={120}
                     />
                     <AdminSelect
                         label={trans("js.admin.sort")}
                         data={sortOptions}
                         value={sort}
-                        onChange={(value) => setSort((value || "id_desc") as SortKey)}
+                        onChange={(value) => setFilter("sort", value === "id_desc" ? null : value)}
                         allowDeselect={false}
                         w={230}
                     />
@@ -379,7 +397,7 @@ export default function Feeds() {
                         min={1}
                         max={500}
                         value={limit}
-                        onChange={(value) => setLimit(typeof value === "number" ? value : 100)}
+                        onChange={(value) => setFilter("limit", typeof value === "number" && value !== 100 ? String(value) : null)}
                         w={110}
                     />
                 </Group>
@@ -453,7 +471,7 @@ export default function Feeds() {
                         </ActionIcon>
                     </Tooltip>
 
-                    <Button leftSection={<IconPlus size={16} />} onClick={() => navigate("/feeds/new")}>
+                    <Button leftSection={<IconPlus size={16} />} onClick={() => navigate(`/feeds/new${search}`)}>
                         {trans("js.admin.feeds.new")}
                     </Button>
                 </Group>
