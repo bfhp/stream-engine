@@ -8,7 +8,7 @@
         <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-3">
             <div style="min-width: 0">
                 {% if parentForum %}
-                    <a href="{{ parentForum.canonicalUrl }}" class="section-eyebrow d-inline-block mb-2 text-decoration-none">{{ trans('view.forums.topic.list.01') }} {{ parentForum.title }}</a>
+                    <a href="{{ parentForum.canonicalUrl }}" class="section-eyebrow d-inline-block mb-2 text-decoration-none">{{ trans('view.forums.topic.list.01') }} {{ parentForum.title|e }}</a>
                 {% endif %}
                 <h1 class="fw-bold mb-2" dir="auto" style="font-size: 2rem; text-wrap: pretty"><bdi>{{ feed.title }}</bdi></h1>
                 <div class="d-flex flex-wrap align-items-center gap-3 text-body-secondary" style="font-size: .82rem">
@@ -490,7 +490,7 @@
                 {% endif %}
             </div>
             {% if parentForum %}
-                <a href="{{ parentForum.canonicalUrl }}" class="link-quiet">{{ trans('view.forums.topic.view.41', {title: parentForum.title}) }}</a>
+                <a href="{{ parentForum.canonicalUrl }}" class="link-quiet">{{ trans('view.forums.topic.view.41', {title: parentForum.title})|e }}</a>
             {% endif %}
         </div>
 

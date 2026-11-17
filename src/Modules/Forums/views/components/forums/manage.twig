@@ -1,0 +1,46 @@
+<div class="forums-management ui-card ui-card__body" data-forum-management data-api-url="{{ managementApiUrl|e('html_attr') }}">
+    <div class="forums-management__body">
+        <form data-forum-settings class="forums-management__form">
+            <h2>{{ trans('js.forums.settings') }}</h2>
+            <label class="ui-label" for="forumManageTitle">{{ trans('js.admin.title') }}</label>
+            <input class="ui-input" id="forumManageTitle" name="title" value="{{ feed.title|e('html_attr') }}" maxlength="255" required>
+            <label class="ui-label" for="forumManageDescription">{{ trans('js.admin.description') }}</label>
+            <textarea class="ui-input" id="forumManageDescription" name="description" rows="3" maxlength="2000">{{ feed.description|e }}</textarea>
+            <label class="ui-label" for="forumManageParent">{{ trans('js.forums.parent') }}</label>
+            <select class="ui-input" id="forumManageParent" name="parentId">
+                <option value=""{% if feed.parentId is null %} selected{% endif %}>{{ trans('js.forums.category') }}</option>
+                {% for parent in managementParents %}
+                    <option value="{{ parent.id }}"{% if parent.id == feed.parentId %} selected{% endif %}>{{ parent.title|e }}</option>
+                {% endfor %}
+            </select>
+            <label class="ui-label" for="forumManageVisibility">{{ trans('js.admin.visibility') }}</label>
+            <select class="ui-input" id="forumManageVisibility" name="visibility">
+                <option value="public"{% if feed.visibility == 'public' %} selected{% endif %}>{{ trans('js.forums.public') }}</option>
+                <option value="members"{% if feed.visibility == 'members' %} selected{% endif %}>{{ trans('js.forums.members_only') }}</option>
+                <option value="private"{% if feed.visibility == 'private' %} selected{% endif %}>{{ trans('js.forums.moderators_only') }}</option>
+            </select>
+            <p class="ui-help">{{ trans('js.forums.hierarchy_note') }}</p>
+            <button class="ui-button ui-button--primary" type="submit">{{ trans('js.admin.save') }}</button>
+        </form>
+        <section class="forums-management__form" aria-labelledby="forumManageMembersTitle">
+            <h2 id="forumManageMembersTitle">{{ trans('js.forums.members') }}</h2>
+            <p class="ui-help">{{ trans('js.forums.members_note') }}</p>
+            <form data-forum-member-search>
+                <label class="ui-label" for="forumManageSearch">{{ trans('js.admin.search') }}</label>
+                <div class="forums-management__actions">
+                    <input class="ui-input" id="forumManageSearch" name="query" autocomplete="off" required>
+                    <button class="ui-button ui-button--secondary" type="submit">{{ trans('js.admin.search') }}</button>
+                </div>
+            </form>
+            <ul class="forums-management__list" data-forum-user-results></ul>
+            <ul class="forums-management__list" data-forum-member-list></ul>
+            <div class="forums-management__actions">
+                <button type="button" class="ui-button ui-button--secondary" data-forum-members-prev>{{ trans('js.pagination.previous') }}</button>
+                <span data-forum-members-page></span>
+                <button type="button" class="ui-button ui-button--secondary" data-forum-members-next>{{ trans('js.pagination.next') }}</button>
+            </div>
+        </section>
+    </div>
+    <p class="ui-error" role="alert" data-forum-manage-error></p>
+    <p role="status" aria-live="polite" data-forum-manage-status></p>
+</div>

@@ -10,7 +10,7 @@
         <div class="forums-header">
             <div class="forums-header__text">
                 {% if parentForum %}
-                    <a href="{{ parentForum.canonicalUrl }}" class="section-eyebrow">{{ trans('view.forums.topic.list.01') }} {{ parentForum.title }}</a>
+                    <a href="{{ parentForum.canonicalUrl }}" class="section-eyebrow">{{ trans('view.forums.topic.list.01') }} {{ parentForum.title|e }}</a>
                 {% endif %}
                 <h1 class="forums-header__title">{{ title }}</h1>
                 {% if description %}
@@ -46,6 +46,10 @@
                 </div>
             </div>
         </div>
+
+        {% if canManageForum %}
+            <a class="ui-button ui-button--secondary" href="{{ managementUrl|e('html_attr') }}">{{ trans('js.forums.manage') }}</a>
+        {% endif %}
 
         {# The legend explains the icons to sighted readers; each row's icon is
            itself a named image, so screen readers skip this. #}
@@ -83,7 +87,7 @@
                                         <i class="bi bi-chat-square-text forums-row__icon forums-icon--read" title="{{ trans('view.forums.list.06') }}" role="img" aria-label="{{ trans('view.forums.list.06') }}"></i>
                                     {% endif %}
                                     <div class="forums-row__text">
-                                        <a href="{{ subForum.canonicalUrl }}" class="forums-row__title">{{ subForum.title }}</a>
+                                        <a href="{{ subForum.canonicalUrl }}" class="forums-row__title">{{ subForum.title|e }}</a>
                                         {% if unreadCount > 0 %}
                                             <span class="ui-badge forums-count">{{ unreadCount }}</span>
                                         {% endif %}

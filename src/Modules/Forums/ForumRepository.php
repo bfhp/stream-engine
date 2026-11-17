@@ -25,6 +25,24 @@ final class ForumRepository
     ) {
     }
 
+    /** Uses feeds type index. Called inside the settings transaction, before other forum row locks. */
+    public function lockStructure(): void
+    {
+        $this->db->fetchAll("SELECT id FROM feeds WHERE type = 'forum' ORDER BY id FOR UPDATE");
+    }
+
+    /** Uses feeds_parent_id_type_position_index(parent_id,type,position). */
+    public function hasSubforums(int $id): bool
+    {
+        return $this->db->fetchOne("SELECT 1 FROM feeds WHERE parent_id = ? AND type = 'forum' LIMIT 1", [$id]) !== null;
+    }
+
+    /** Uses PRIMARY(id). This only initializes the ordinary membership container, not a new access rule. */
+    public function initializeContainer(int $id): void
+    {
+        $this->db->execute("UPDATE feeds SET container_id = id, container_type = 'forum' WHERE id = ? AND type = 'forum'", [$id]);
+    }
+
     /**
      * Uses index: feeds_parent_id_type_position_index (parent_id, type, position) on feeds t (WHERE t.parent_id IN (...) AND t.type = 'forum-post').
      * Uses index: feeds_parent_id_type_position_index (parent_id, type, position) on feeds c (LEFT JOIN ... ON c.parent_id = t.id AND c.type = 'comment').

@@ -251,7 +251,7 @@ class ForumsController extends AbstractController
                 throw new ForbiddenException('Forum not found');
             }
 
-            return new Breadcrumb($forumFeed->title, $forumFeed->slug);
+            return new Breadcrumb(htmlspecialchars((string) $forumFeed->title, ENT_QUOTES), $forumFeed->slug);
         }
 
         if ($page->action === 'forums.topic-view' && key_exists('slug', $page->params)) {
@@ -617,6 +617,22 @@ class ForumsController extends AbstractController
             throw new ForbiddenException('Forum not found');
         }
 
+        if ($this->context->query->boolOrNull('manage') === true) {
+            $this->management()->requireForum($forumFeed->id, $this->context->user);
+            return ViewModel::fromPage($page, 'modules/forums/forums.manage.twig', [
+                'title' => $this->tm->trans('js.forums.manage'),
+                'description' => '', 'feed' => $forumFeed,
+                'canonical' => $this->urlGenerator->feed($forumFeed, ['manage' => 1]),
+                'cancelUrl' => $forumFeed->canonicalUrl,
+                'managementApiUrl' => '/api/v1/forums/manage/'.$forumFeed->id,
+                'managementParents' => array_filter(
+                    $this->feedService->getFeedsByType('forum', $this->context->user, 99999),
+                    static fn (Feed $f): bool => $f->parentId === null && $f->visibility === 'public' && $f->id !== $forumFeed->id
+                ),
+                'head_ext' => ['<meta name="robots" content="noindex">', '<script type="module" src="/assets/js/forums.js" defer></script>'],
+            ]);
+        }
+
         // Eyebrow above the title ("Section · <parent forum>") for a
         // subforum. Plain FeedRepository::findById() (not FeedService's
         // getFeedById(), which throws on a miss) since a parent forum not
@@ -703,16 +719,19 @@ class ForumsController extends AbstractController
             throw new NotFoundException('Page not found');
         }
 
+        $canManageForum = $this->management()->canManage($forumFeed, $this->context->user);
         return ViewModel::fromPage(
             $page,
             'modules/forums/forums.topic-list.twig',
             [
-                'title' => $forumFeed->title,
-                'description' => $forumFeed->description,
+                'title' => htmlspecialchars((string) $forumFeed->title, ENT_QUOTES),
+                'description' => htmlspecialchars(strip_tags((string) $forumFeed->description), ENT_QUOTES),
                 'canonical' => $this->urlGenerator->listing($forumFeed->canonicalUrl, $currentPage),
                 'head_ext' => [
                     '<script type="module" src="/assets/js/forums.js" defer></script>',
                 ],
+                'canManageForum' => $canManageForum,
+                'managementUrl' => $this->urlGenerator->feed($forumFeed, ['manage' => 1]),
                 'feed' => $forumFeed,
                 'parentForum' => $parentForum,
                 'forumsListUrl' => $this->urlGenerator->action('forums.list'),
@@ -1721,6 +1740,10 @@ class ForumsController extends AbstractController
         header('Content-Type: application/json');
 
         match ($page->action) {
+            'forums.manage' => $this->handleManageRequest((int) ($args['forumId'] ?? 0)),
+            'forums.manage-members' => $this->handleManageMembersRequest((int) ($args['forumId'] ?? 0)),
+            'forums.manage-member' => $this->handleManageMemberRequest((int) ($args['forumId'] ?? 0), (int) ($args['userId'] ?? 0)),
+            'forums.manage-users' => $this->handleManageUsersRequest((int) ($args['forumId'] ?? 0)),
             'forums.access' => $this->handleForumAccessRequest(),
             'forums.read-all' => $this->handleMarkAllReadRequest(),
             'forums.reply' => $this->handleTopicReplyRequest((int) ($args['topicId'] ?? 0)),
@@ -1729,6 +1752,58 @@ class ForumsController extends AbstractController
             'forums.topic-item' => $this->handleTopicItemRequest((int) ($args['id'] ?? 0)),
             default => throw new NotFoundException('Unknown API action'),
         };
+    }
+
+    private function management(): ForumManagementService
+    {
+        return new ForumManagementService($this->db, $this->feedService, $this->tm);
+    }
+
+    private function readManagementBody(): array
+    {
+        try {
+            $input = json_decode((string) file_get_contents('php://input'), false, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            throw new ValidationException($this->tm->trans('js.forums.manage_invalid'));
+        }
+        if (!$input instanceof \stdClass) {
+            throw new ValidationException($this->tm->trans('js.forums.manage_invalid'));
+        }
+        return (array) $input;
+    }
+
+    private function handleManageRequest(int $forumId): void
+    {
+        Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
+        $forum = $this->management()->save($forumId, $this->readManagementBody(), $this->context->user);
+        echo Formatter::json(['id' => $forum->id, 'url' => $this->urlGenerator->feed($forum)]);
+    }
+
+    private function handleManageMembersRequest(int $forumId): void
+    {
+        echo Formatter::json($this->management()->members($forumId, $this->context->user, max(0, $this->context->query->int('offset'))));
+    }
+
+    private function handleManageUsersRequest(int $forumId): void
+    {
+        echo Formatter::json(['data' => $this->management()->searchUsers($forumId, $this->context->user, $this->context->query->trimmed('q'))]);
+    }
+
+    private function handleManageMemberRequest(int $forumId, int $userId): void
+    {
+        Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
+        $role = null;
+        if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
+            $body = $this->readManagementBody();
+            $role = array_key_exists('role', $body) ? $body['role'] : 'member';
+            if (!is_string($role)) {
+                throw new ValidationException($this->tm->trans('js.forums.manage_invalid'));
+            }
+        } elseif ($_SERVER['REQUEST_METHOD'] !== 'DELETE') {
+            throw new ValidationException('Method not allowed', 405);
+        }
+        $this->management()->setMember($forumId, $userId, $role, $this->context->user);
+        http_response_code(204);
     }
 
     /** Change a section and its topics together using the ordinary feed/container ACL. */
@@ -1824,6 +1899,15 @@ class ForumsController extends AbstractController
             action: 'forums.access',
             accessRule: AccessService::ACCESS_ADMIN,
         ));
+
+        $manageId = $pageTree->getMaxPageId();
+        $pageTree->add(Page::api(id: $manageId, parentId: $forumsPageId, pattern: 'manage', requestMethods: ['GET'], action: 'forums.manage-parent', accessRule: AccessService::ACCESS_AUTHENTICATED));
+        $manageForumId = $pageTree->getMaxPageId();
+        $pageTree->add(Page::api(id: $manageForumId, parentId: $manageId, pattern: '{forumId:\\d+}', requestMethods: ['PATCH'], action: 'forums.manage', accessRule: AccessService::ACCESS_AUTHENTICATED));
+        $manageMembersId = $pageTree->getMaxPageId();
+        $pageTree->add(Page::api(id: $manageMembersId, parentId: $manageForumId, pattern: 'members', requestMethods: ['GET'], action: 'forums.manage-members', accessRule: AccessService::ACCESS_AUTHENTICATED));
+        $pageTree->add(Page::api(id: $pageTree->getMaxPageId(), parentId: $manageMembersId, pattern: '{userId:\\d+}', requestMethods: ['PUT', 'DELETE'], action: 'forums.manage-member', accessRule: AccessService::ACCESS_AUTHENTICATED));
+        $pageTree->add(Page::api(id: $pageTree->getMaxPageId(), parentId: $manageForumId, pattern: 'users', requestMethods: ['GET'], action: 'forums.manage-users', accessRule: AccessService::ACCESS_AUTHENTICATED));
 
         $topicsPageId = $pageTree->getMaxPageId();
         $pageTree->add(

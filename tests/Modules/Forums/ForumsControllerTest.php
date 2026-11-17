@@ -609,6 +609,11 @@ final class ForumsControllerTest extends TestCase
         $expected = [
             'forums.access',
             'forums.api-parent',
+            'forums.manage',
+            'forums.manage-member',
+            'forums.manage-members',
+            'forums.manage-parent',
+            'forums.manage-users',
             'forums.read-all',
             'forums.reply',
             'forums.topic-api-parent',
@@ -639,6 +644,8 @@ final class ForumsControllerTest extends TestCase
     {
         return [
             'set section access' => ['forums.access', ['PATCH']],
+            'manage forum' => ['forums.manage', ['PATCH']],
+            'manage member' => ['forums.manage-member', ['PUT', 'DELETE']],
             'mark all read' => ['forums.read-all', ['POST']],
             'create a topic' => ['forums.topic-create', ['POST']],
             // PATCH, not POST: an edit is a partial update of the item the
@@ -3039,6 +3046,34 @@ final class ForumsControllerTest extends TestCase
      * @param array<string, string> $args
      * @param array<string, mixed> $body
      */
+    public function testManagementOpensAsItsOwnPageForModerators(): void
+    {
+        $module = $this->makeModule($this->makeRoutingDb());
+        $feeds = $this->createStub(FeedService::class);
+        $forum = $this->makeForumFeed();
+        $feeds->method('getFeedByTypeAndSlug')->willReturn($forum);
+        $feeds->method('getFeedById')->willReturn($forum);
+        $feeds->method('getFeedsByType')->willReturn([]);
+        $this->setProperty($module, 'feedService', $feeds);
+        $this->setProperty($module, 'context', new RequestContext(new User(70, '', 'moderator'), new \DateTimeZone('UTC'), new QueryParams(['manage' => '1'])));
+        $view = $module->showTopicListPage($this->makePage(id: 3, parentId: 2, pattern: '{slug}', action: 'forums.topic-list'), 'magiya');
+        self::assertSame('modules/forums/forums.manage.twig', $view->template);
+        self::assertSame('/api/v1/forums/manage/'.self::FORUM_ID, $view->data['managementApiUrl']);
+        self::assertArrayNotHasKey('topics', $view->data);
+    }
+
+    public function testManagementPageRejectsAnOrdinaryMember(): void
+    {
+        $module = $this->makeModule($this->makeRoutingDb());
+        $feeds = $this->createStub(FeedService::class);
+        $feeds->method('getFeedByTypeAndSlug')->willReturn($this->makeForumFeed());
+        $feeds->method('getFeedById')->willReturn($this->makeForumFeed());
+        $this->setProperty($module, 'feedService', $feeds);
+        $this->setProperty($module, 'context', new RequestContext(new User(20, '', 'user'), new \DateTimeZone('UTC'), new QueryParams(['manage' => '1'])));
+        $this->expectException(ForbiddenException::class);
+        $module->showTopicListPage($this->makePage(id: 3, parentId: 2, pattern: '{slug}', action: 'forums.topic-list'), 'magiya');
+    }
+
     public function testSectionAccessUpdatesTheExistingTopicAclAtomically(): void
     {
         $db = $this->createMock(PdoDatabase::class);

@@ -667,6 +667,57 @@ final class InstallationSchemaTest extends TestCase
             $setAccess('public');
             self::assertNotNull($repository->findById(201, $guest));
             self::assertNotNull($repository->findById(301, $guest));
+            $pdo->exec("UPDATE users SET is_active = 1 WHERE id IN (10,20,30,40,60)");
+            $pdo->exec("INSERT INTO feeds (id,owner_id,type,slug,title,visibility,created_at,updated_at)
+                VALUES (103,60,'forum','second-category','Second category','public',1,1)");
+            $management = new \StreamEngine\Modules\Forums\ForumManagementService($db, $feeds, $tm);
+            $localModerator = new \StreamEngine\Domain\User(40, '', 'user');
+            $updated = $management->save(101, ['title' => 'Renamed club', 'description' => 'New description',
+                'parentId' => 103, 'visibility' => 'members', 'ownerId' => 40], $localModerator);
+            self::assertSame('Renamed club', $updated->title);
+            self::assertSame('New description', $updated->description);
+            self::assertSame(103, $updated->parentId);
+            self::assertSame(60, $updated->ownerId, 'Only explicitly editable fields may change');
+            self::assertNull($repository->findById(201, $guest));
+            foreach ([['parentId' => 101], ['parentId' => 102], ['parentId' => null], ['title' => []]] as $invalid) {
+                try {
+                    $management->save(101, $invalid, $localModerator);
+                    self::fail('Invalid hierarchy/settings must be rejected');
+                } catch (\StreamEngine\Core\Exceptions\ValidationException) {
+                    self::assertSame(103, $repository->findById(101, $admin)->parentId);
+                }
+            }
+            try {
+                $management->save(103, ['parentId' => 100], $admin);
+                self::fail('A category containing a forum cannot become a nested section');
+            } catch (\StreamEngine\Core\Exceptions\ValidationException) {
+                self::assertNull($repository->findById(103, $admin)->parentId);
+            }
+            $management->setMember(101, 30, 'member', $localModerator);
+            self::assertSame(1, $memberships->find(101, 30)->roleLevel);
+            self::assertNotNull($repository->findById(201, new \StreamEngine\Domain\User(30, '', 'user')));
+            $management->setMember(101, 20, 'moderator', $localModerator);
+            self::assertSame(2, $memberships->find(101, 20)->roleLevel);
+            self::assertTrue($management->canManage($updated, $member));
+            $management->setMember(101, 20, 'member', $localModerator);
+            self::assertFalse($management->canManage($updated, $member));
+            try {
+                $management->setMember(101, 20, 'moderator', $member);
+                self::fail('An ordinary member cannot grant moderator rights');
+            } catch (\StreamEngine\Core\Exceptions\ForbiddenException) {
+                self::assertSame(1, $memberships->find(101, 20)->roleLevel);
+            }
+            try {
+                $management->setMember(101, 40, null, $localModerator);
+                self::fail('A local moderator cannot remove their own membership');
+            } catch (\StreamEngine\Core\Exceptions\ForbiddenException) {
+                self::assertSame(2, $memberships->find(101, 40)->roleLevel);
+            }
+            $management->setMember(101, 30, null, $localModerator);
+            self::assertNull($memberships->find(101, 30));
+            self::assertNull($repository->findById(301, new \StreamEngine\Domain\User(30, '', 'user')));
+            $management->save(101, ['visibility' => 'public'], new \StreamEngine\Domain\User(70, '', 'moderator'));
+            self::assertNotNull($repository->findById(201, $guest));
         });
     }
 

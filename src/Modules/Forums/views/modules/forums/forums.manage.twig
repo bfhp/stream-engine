@@ -1,0 +1,10 @@
+{% extends "layouts/simple.twig" %}
+{% block content %}
+<div class="ui-container forums-page">
+    <div class="forums-header">
+        <h1 class="forums-management-heading">{{ trans('js.forums.manage') }}: {{ feed.title|e }}</h1>
+        <a class="ui-button ui-button--secondary" href="{{ cancelUrl|e('html_attr') }}">{{ trans('js.admin.back') }}</a>
+    </div>
+    {% include 'components/forums/manage.twig' %}
+</div>
+{% endblock %}

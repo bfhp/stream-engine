@@ -291,23 +291,44 @@ honoured, but the current interface does not provide a supported control for
 promoting a member to local moderator or transferring community ownership.
 Do not implement either operation with direct database edits.
 
-## Forum section access
+## Forum management and access
 
-Forum sections use the same feed ACL and `memberships` table as other
-containers. An administrator can change a section through
-`PATCH /api/v1/forums/access` with JSON
-`{"forumId": 123, "visibility": "members"}` and a valid `X-CSRF-Token`.
-The response is 204. `public`, `members`, and `private` have the meanings listed
-above. Top-level forum categories are not changed by this operation.
+Open a forum and select **Manage forum**. This opens a separate management page
+on the public site (`?manage=1`), outside Administration. Administrators and
+global moderators can manage every forum; local moderators and owners with a
+membership role at level 2 or above can manage their own forum. Ordinary members
+cannot open the management page or call its backing endpoints.
 
-Use this module operation when changing section access: it sets the section's
-membership container to its own ID and updates existing topics in the same
-transaction. New topics copy the section's access fields; replies inherit their
-topic's ACL. Generic feed-field edits do not propagate section access to topics.
-Existing author, owner, and moderator overrides remain unchanged.
+Settings include title, description, parent category, and visibility. Saving
+preserves the forum and topic URLs and updates existing topic access in the
+same transaction. Replies inherit their topic's ACL. Categories stay public;
+a category with sections cannot be nested, and a section with topics cannot
+become a category. Each section retains its own independent membership list
+when moved between categories.
 
-Membership administration is not exposed by this feature. Files retain their
-existing public URLs.
+Search active users by display name or username in **Members**, then add them,
+change their local member/moderator role, or remove them. Membership changes
+apply immediately, independently of the settings Save button. Removal preserves
+posts and accounts. Local moderators cannot change their own membership, and
+existing owner-role memberships cannot be changed here. Existing author,
+container-owner and global-moderator ACL overrides remain unchanged. Files
+retain their public URLs.
+
+The session-authenticated endpoints are owned by Forums. Every mutation requires
+`X-CSRF-Token` and rechecks the actor's current management permission:
+
+| Endpoint | Behavior |
+| --- | --- |
+| PATCH `/api/v1/forums/manage/{forumId}` | Save any supplied `title`, `description`, `parentId` (integer or null), and `visibility` (`public`, `members`, `private`); returns `{id, url}`. |
+| GET `/api/v1/forums/manage/{forumId}/members?offset=0` | Read 50 members at a time, with total and actor information. |
+| PUT `/api/v1/forums/manage/{forumId}/members/{userId}` | Add or update `role` (`member` or `moderator`); 204. |
+| DELETE `/api/v1/forums/manage/{forumId}/members/{userId}` | Remove membership; 204. |
+| GET `/api/v1/forums/manage/{forumId}/users?q=...` | Search active public account names; up to 20 results, without private account details. |
+
+The earlier administrator-only `PATCH /api/v1/forums/access` operation remains
+available with JSON `{"forumId": 123, "visibility": "members"}` and a valid CSRF
+token; it returns 204. Use either module settings operation when changing access:
+generic feed-field edits do not propagate section access to existing topics.
 
 ## Permission-change checklist
 

@@ -12,7 +12,7 @@
         <div class="forums-header">
             <div class="forums-header__text">
                 {% if parentForum %}
-                    <a href="{{ parentForum.canonicalUrl }}" class="section-eyebrow">{{ trans('view.forums.topic.list.01') }} {{ parentForum.title }}</a>
+                    <a href="{{ parentForum.canonicalUrl }}" class="section-eyebrow">{{ trans('view.forums.topic.list.01') }} {{ parentForum.title|e }}</a>
                 {% endif %}
                 <h1 class="forums-header__title" dir="auto"><bdi>{{ feed.title }}</bdi></h1>
                 <div class="forums-topic-meta">
@@ -438,7 +438,7 @@
                 {% endif %}
             </div>
             {% if parentForum %}
-                <a href="{{ parentForum.canonicalUrl }}" class="link-quiet">{{ trans('view.forums.topic.view.41', {title: parentForum.title}) }}</a>
+                <a href="{{ parentForum.canonicalUrl }}" class="link-quiet">{{ trans('view.forums.topic.view.41', {title: parentForum.title})|e }}</a>
             {% endif %}
         </div>
 

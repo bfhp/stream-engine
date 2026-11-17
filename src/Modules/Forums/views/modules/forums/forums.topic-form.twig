@@ -23,7 +23,7 @@
 {% block content %}
     <div class="forums-header">
         <h1 class="forums-header__title">{{ isEdit ? trans('forums.topic_edit') : trans('forums.topic_new') }}</h1>
-        <span class="forums-form__forum"><i class="bi bi-folder2-open" aria-hidden="true"></i> <bdi>{{ feed.title }}</bdi></span>
+        <span class="forums-form__forum"><i class="bi bi-folder2-open" aria-hidden="true"></i> <bdi>{{ feed.title|e }}</bdi></span>
     </div>
 
     <div class="ui-alert ui-alert--info forums-form__notice">

@@ -25,6 +25,7 @@ import { useSectionHeadings } from "../shared/trix-headings";
 import { installTrixToolbarKeyboard } from "../shared/trix-toolbar";
 import { buildRichQuoteInsertionHtml } from "../shared/comment-quotes";
 import { initForumPostActions } from "./forum-post-actions";
+import { initForumManagement } from "./forum-management";
 import { initForumTopicDelete } from "./forum-topic-actions";
 import {
     PollApiResponse,
@@ -1113,6 +1114,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initMarkTopicRead();
     initMarkAllRead();
     initTopicForm();
+    document.querySelectorAll<HTMLElement>("[data-forum-management]").forEach(root => initForumManagement(root, cms.api));
     initPoll();
     focusLinkedPost();
 });

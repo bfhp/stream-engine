@@ -9,6 +9,9 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Forum management on the public site for administrators and moderators,
+  including settings, category moves, visibility, and local membership roles.
+
 - Forum section access through the existing container membership ACL, with
   atomic propagation to topics and inherited access for new discussions.
 

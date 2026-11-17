@@ -556,3 +556,19 @@
 [data-forum-quick-reply-preview][data-empty],
 [data-empty].forums-preview__title,
 [data-slot-html][data-empty] { color: var(--bs-secondary-color); }
+
+/* Inline forum settings use the same controls in both bundled themes. */
+.forums-management { margin-block: 1rem; padding: 1.25rem; }
+.forums-management__body { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; margin-block-start: 1rem; }
+.forums-management__form { display: flex; flex-direction: column; gap: .65rem; min-width: 0; }
+.forums-management__form h2 { font-size: 1.1rem; }
+.forums-management__actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.forums-management__actions > input { flex: 1 1 10rem; min-width: 0; }
+.forums-management__list { list-style: none; padding: 0; margin: 0; }
+.forums-management__list li { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; padding-block: .6rem; border-block-end: 1px solid var(--ui-border, #8885); }
+.forums-management__list li > span { flex: 1 1 8rem; overflow-wrap: anywhere; }
+.forums-management__list select { width: auto; max-width: 100%; }
+.forums-management .ui-input { max-width: 100%; }
+@media (max-width: 48rem) { .forums-management__body { grid-template-columns: minmax(0, 1fr); } }
+
+.forums-management-heading { min-width: 0; overflow-wrap: anywhere; }

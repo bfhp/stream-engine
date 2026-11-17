@@ -53,7 +53,7 @@
                         </button>
                         <div class="forums-section__text">
                             <h2 class="forums-section__heading">
-                                <a href="{{ forum.canonicalUrl }}">{{ forum.title }}</a>
+                                <a href="{{ forum.canonicalUrl }}">{{ forum.title|e }}</a>
                                 {% if (forumGroupUnreadCounts[forum.id] ?? 0) > 0 %}
                                     <span class="ui-badge forums-count"
                                           title="{{ trans('view.common.unread_topics', {count: forumGroupUnreadCounts[forum.id]}) }}">{{ forumGroupUnreadCounts[forum.id] }}</span>
@@ -81,7 +81,7 @@
                                                    title="{{ trans('view.forums.list.06') }}" role="img" aria-label="{{ trans('view.forums.list.06') }}"></i>
                                             {% endif %}
                                             <div class="forums-row__text">
-                                                <a href="{{ subForum.canonicalUrl }}" class="forums-row__title"><bdi>{{ subForum.title }}</bdi></a>
+                                                <a href="{{ subForum.canonicalUrl }}" class="forums-row__title"><bdi>{{ subForum.title|e }}</bdi></a>
                                                 {% if unreadCount > 0 %}
                                                     <span class="ui-badge forums-count">{{ unreadCount }}</span>
                                                 {% endif %}
