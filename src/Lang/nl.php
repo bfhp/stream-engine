@@ -54,6 +54,11 @@ return [
     'js.admin.health.web' => 'Handmatig webresultaat',
     'js.admin.health.run' => 'Nu controleren',
     'js.admin.health.run_check' => 'Controle uitvoeren: {check}',
+    'js.admin.health.extensions' => 'Extensies',
+    'js.admin.health.extensions_description' => 'Klassen van de site die het gedrag van het platform wijzigen, en de extensiepunten die elk ervan afhandelt. Voer composer dump-autoload -o uit na het toevoegen of verwijderen ervan.',
+    'js.admin.health.extensions_none' => 'Er zijn geen actieve extensies.',
+    'js.admin.health.extension_class' => 'Klasse',
+    'js.admin.health.extension_points' => 'Extensiepunten',
 
     'time.just_now' => 'zojuist',
     'time.minute_ago' => 'een minuut geleden',

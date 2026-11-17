@@ -54,6 +54,11 @@ return [
     'js.admin.health.web' => 'Risultato web manuale',
     'js.admin.health.run' => 'Verifica ora',
     'js.admin.health.run_check' => 'Avvia verifica: {check}',
+    'js.admin.health.extensions' => 'Estensioni',
+    'js.admin.health.extensions_description' => 'Classi del sito che modificano il comportamento della piattaforma e i punti di estensione gestiti da ciascuna. Eseguire composer dump-autoload -o dopo averne aggiunta o rimossa una.',
+    'js.admin.health.extensions_none' => 'Nessuna estensione attiva.',
+    'js.admin.health.extension_class' => 'Classe',
+    'js.admin.health.extension_points' => 'Punti di estensione',
 
     'time.just_now' => 'proprio ora',
     'time.minute_ago' => 'un minuto fa',

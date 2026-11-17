@@ -25,6 +25,9 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 - `UserRepository::updatePasswordHash()` for storing a new password hash.
 
+- The administration **System status** page lists active site extensions and
+  the extension points each one handles.
+
 ### Changed
 
 - `ControllerFactory` delegates constructor resolution to the new

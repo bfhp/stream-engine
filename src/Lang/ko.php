@@ -54,6 +54,11 @@ return [
     'js.admin.health.web' => '수동 웹 검사 결과',
     'js.admin.health.run' => '지금 검사',
     'js.admin.health.run_check' => '검사 실행: {check}',
+    'js.admin.health.extensions' => '확장',
+    'js.admin.health.extensions_description' => '플랫폼 동작을 변경하는 사이트 클래스와 각 클래스가 처리하는 확장 지점입니다. 추가하거나 제거한 후 composer dump-autoload -o를 실행하세요.',
+    'js.admin.health.extensions_none' => '활성화된 확장이 없습니다.',
+    'js.admin.health.extension_class' => '클래스',
+    'js.admin.health.extension_points' => '확장 지점',
 
     'time.just_now' => '방금',
     'time.minute_ago' => '1분 전',

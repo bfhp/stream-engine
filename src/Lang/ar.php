@@ -54,6 +54,11 @@ return [
     'js.admin.health.web' => 'نتيجة فحص الويب اليدوي',
     'js.admin.health.run' => 'افحص الآن',
     'js.admin.health.run_check' => 'تشغيل الفحص: {check}',
+    'js.admin.health.extensions' => 'الإضافات',
+    'js.admin.health.extensions_description' => 'فئات الموقع التي تغيّر سلوك المنصة، ونقاط التوسعة التي تعالجها كل منها. شغّل composer dump-autoload -o بعد إضافة إحداها أو إزالتها.',
+    'js.admin.health.extensions_none' => 'لا توجد إضافات نشطة.',
+    'js.admin.health.extension_class' => 'الفئة',
+    'js.admin.health.extension_points' => 'نقاط التوسعة',
 
     'time.just_now' => 'الآن',
     'time.minute_ago' => 'منذ دقيقة',

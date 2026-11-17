@@ -54,6 +54,11 @@ return [
     'js.admin.health.web' => '手动 Web 检查结果',
     'js.admin.health.run' => '立即检查',
     'js.admin.health.run_check' => '运行检查：{check}',
+    'js.admin.health.extensions' => '扩展',
+    'js.admin.health.extensions_description' => '更改平台行为的站点类，以及每个类处理的扩展点。添加或删除后请运行 composer dump-autoload -o。',
+    'js.admin.health.extensions_none' => '没有已启用的扩展。',
+    'js.admin.health.extension_class' => '类',
+    'js.admin.health.extension_points' => '扩展点',
 
     'time.just_now' => '刚刚',
     'time.minute_ago' => '1分钟前',

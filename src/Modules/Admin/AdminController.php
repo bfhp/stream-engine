@@ -28,6 +28,7 @@ use StreamEngine\Core\Security;
 use StreamEngine\Core\TranslationManager;
 use StreamEngine\Core\UploadDirectoryBrowser;
 use StreamEngine\Domain\Page;
+use StreamEngine\Extension\Extension;
 use StreamEngine\Repository\PageRepository;
 use StreamEngine\Repository\UploadRepository;
 use StreamEngine\Repository\MenuRepository;
@@ -504,18 +505,29 @@ class AdminController extends AbstractController implements DashboardCardProvide
 
         $healthPageId = $pageTree->getMaxPageId();
         $pageTree->add(Page::api(
-            id: $healthPageId, parentId: $adminApiPageId, pattern: 'health',
-            requestMethods: ['GET'], action: 'admin.health', accessRule: AccessService::ACCESS_ADMIN,
+            id: $healthPageId,
+            parentId: $adminApiPageId,
+            pattern: 'health',
+            requestMethods: ['GET'],
+            action: 'admin.health',
+            accessRule: AccessService::ACCESS_ADMIN,
         ));
         $healthCheckPageId = $pageTree->getMaxPageId();
         $pageTree->add(Page::api(
-            id: $healthCheckPageId, parentId: $healthPageId, pattern: '{id:[a-z]+}',
-            requestMethods: ['GET'], accessRule: AccessService::ACCESS_ADMIN,
+            id: $healthCheckPageId,
+            parentId: $healthPageId,
+            pattern: '{id:[a-z]+}',
+            requestMethods: ['GET'],
+            accessRule: AccessService::ACCESS_ADMIN,
         ));
         $healthRunPageId = $pageTree->getMaxPageId();
         $pageTree->add(Page::api(
-            id: $healthRunPageId, parentId: $healthCheckPageId, pattern: 'run',
-            requestMethods: ['POST'], action: 'admin.health-run', accessRule: AccessService::ACCESS_ADMIN,
+            id: $healthRunPageId,
+            parentId: $healthCheckPageId,
+            pattern: 'run',
+            requestMethods: ['POST'],
+            action: 'admin.health-run',
+            accessRule: AccessService::ACCESS_ADMIN,
         ));
 
         $cronPageId = $pageTree->getMaxPageId();
@@ -2398,7 +2410,31 @@ class AdminController extends AbstractController implements DashboardCardProvide
         return ['interval' => self::HEALTH_INTERVAL, 'data' => array_map(fn (string $id): array => [
             'id' => $id, 'label' => $this->tm->trans('health.check.'.$id),
             'cron' => $rows[$id]['cron'] ?? null, 'web' => $rows[$id]['web'] ?? null,
-        ], self::HEALTH_CHECKS)];
+        ], self::HEALTH_CHECKS), 'extensions' => $this->activeExtensions()];
+    }
+
+    /**
+     * Active site extensions and the extension points each one handles: its
+     * public methods other than those of the Extension base class. Classes
+     * are not constructed.
+     *
+     * @return list<array{class: string, points: list<string>}>
+     */
+    private function activeExtensions(): array
+    {
+        return array_map(static function (string $class): array {
+            $points = [];
+            foreach ((new \ReflectionClass($class))->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
+                if (! $method->isStatic()
+                    && $method->getDeclaringClass()->getName() !== Extension::class
+                    && ! str_starts_with($method->getName(), '__')) {
+                    $points[] = $method->getName();
+                }
+            }
+            sort($points);
+
+            return ['class' => $class, 'points' => $points];
+        }, $this->modules->extensionClasses());
     }
 
     private function runHealthChecks(): void

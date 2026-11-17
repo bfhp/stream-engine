@@ -156,6 +156,14 @@ A site may have several extension classes, and one class may handle several
 points. Keep one class per integration so its order relative to others is easy
 to see from the class names.
 
+## See active extensions
+
+The administration **System status** page (`#/health`) lists every active
+extension class and the extension points it handles: its public methods other
+than those of the base class. The list is built from the classmap without
+constructing the classes. Use it to check what changes platform behavior on a
+site, and that an extension was picked up after `composer dump-autoload -o`.
+
 ## Test an extension
 
 The point method is ordinary PHP. When it does not use base-class services,

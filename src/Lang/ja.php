@@ -54,6 +54,11 @@ return [
     'js.admin.health.web' => '手動ウェブ確認の結果',
     'js.admin.health.run' => '今すぐ確認',
     'js.admin.health.run_check' => '確認を実行: {check}',
+    'js.admin.health.extensions' => '拡張機能',
+    'js.admin.health.extensions_description' => 'プラットフォームの動作を変更するサイトのクラスと、それぞれが処理する拡張ポイント。追加または削除した後は composer dump-autoload -o を実行してください。',
+    'js.admin.health.extensions_none' => '有効な拡張機能はありません。',
+    'js.admin.health.extension_class' => 'クラス',
+    'js.admin.health.extension_points' => '拡張ポイント',
 
     'time.just_now' => 'たった今',
     'time.minute_ago' => '1分前',

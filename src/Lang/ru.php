@@ -54,6 +54,11 @@ return [
     'js.admin.health.web' => 'Ручная веб-проверка',
     'js.admin.health.run' => 'Проверить',
     'js.admin.health.run_check' => 'Запустить проверку: {check}',
+    'js.admin.health.extensions' => 'Расширения',
+    'js.admin.health.extensions_description' => 'Классы сайта, которые меняют поведение платформы, и точки расширения, которые обрабатывает каждый из них. После добавления или удаления выполните composer dump-autoload -o.',
+    'js.admin.health.extensions_none' => 'Активных расширений нет.',
+    'js.admin.health.extension_class' => 'Класс',
+    'js.admin.health.extension_points' => 'Точки расширения',
 
     'time.just_now' => 'только что',
 
