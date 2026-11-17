@@ -37,10 +37,12 @@ final class NotificationServiceTest extends TestCase
         $db->method('execute')->willReturn(0);
         $service = new NotificationService(
             (new ReflectionClass(MessageService::class))->newInstanceWithoutConstructor(),
-            new NotificationDeliveryRepository($db), new NotificationPreferenceRepository($db),
+            new NotificationDeliveryRepository($db),
+            new NotificationPreferenceRepository($db),
             new UserRepository($db),
             (new ReflectionClass(MailService::class))->newInstanceWithoutConstructor(),
-            new \StreamEngine\Core\TranslationManager('en'), new Config([]),
+            new \StreamEngine\Core\TranslationManager('en'),
+            new Config([]),
         );
         $visible = new \ReflectionMethod($service, 'deliveryIsStillVisible');
         self::assertFalse($visible->invoke($service, [

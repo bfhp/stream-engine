@@ -19,6 +19,12 @@ use StreamEngine\Service\MessageService;
 use StreamEngine\Service\NotificationService;
 use StreamEngine\Modules\Admin\AdminController;
 use StreamEngine\Repository\SettingsRepository;
+use StreamEngine\Core\ModuleRegistry;
+use Tests\Support\Extensions\AAbstainingExtension;
+use Tests\Support\Extensions\PasswordFallbackExtension;
+
+require_once __DIR__.'/../../Support/ControllerFactoryFixtures.php';
+require_once __DIR__.'/../../Support/ExtensionFixtures.php';
 
 final class SystemHealthTest extends TestCase
 {
@@ -30,7 +36,7 @@ final class SystemHealthTest extends TestCase
     private int $releases = 0;
     private int $probes = 0;
 
-    private function controller(array $responses, int $expectedProbes = 1): AdminController
+    private function controller(array $responses, int $expectedProbes = 1, ?ModuleRegistry $modules = null): AdminController
     {
         $db = $this->createStub(PdoDatabase::class);
         $db->method('fetchOne')->willReturnCallback(function (string $sql, array $params): ?array {
@@ -79,7 +85,8 @@ final class SystemHealthTest extends TestCase
         $service = $this->getMockBuilder(AdminController::class)->disableOriginalConstructor()
             ->onlyMethods(['healthProbe'])->getMock();
         foreach (['db' => $db, 'config' => $config, 'tm' => $tm, 'notifications' => $notifications,
-            'settingsRepository' => new SettingsRepository($db), 'userRepository' => new UserRepository($db)] as $name => $value) {
+            'settingsRepository' => new SettingsRepository($db), 'userRepository' => new UserRepository($db),
+            'modules' => $modules ?? \StreamEngine\Controllers\registryWithFixtures([])] as $name => $value) {
             (new \ReflectionProperty(AdminController::class, $name))->setValue($service, $value);
         }
         $index = 0;
@@ -161,6 +168,24 @@ final class SystemHealthTest extends TestCase
         $this->runCheck($service);
         self::assertSame(1, $this->storedResult('cron')['consecutive_failures']);
         self::assertSame([], $this->deliveries);
+    }
+
+    public function testPayloadListsActiveExtensionsAndTheirPointsWithoutConstructingThem(): void
+    {
+        $modules = \StreamEngine\Controllers\registryWithFixtures([
+            PasswordFallbackExtension::class,
+            AAbstainingExtension::class,
+        ]);
+        $extensions = array_values(array_filter(
+            $this->payload($this->controller(['ok'], 0, $modules))['extensions'],
+            static fn (array $e): bool => str_starts_with($e['class'], 'Tests\\Support\\Extensions\\'),
+        ));
+
+        self::assertSame([
+            ['class' => AAbstainingExtension::class, 'points' => ['probe']],
+            ['class' => PasswordFallbackExtension::class, 'points' => ['verifyPasswordFallback']],
+        ], $extensions);
+        self::assertSame(0, \Tests\Support\Extensions\CallLog::$constructed);
     }
 
     public function testUnknownCheckDoesNotProbe(): void

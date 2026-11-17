@@ -421,4 +421,4 @@ Verify menus and sitemaps as separate consumers of the same definitions.
 - PageTree, Router, URL generator, module, menu, breadcrumb, and sitemap tests
   relevant to the change pass.
 
-[Back: Modules](https://github.com/bfhp/stream-engine/wiki/Developer-Modules) · [Developer Guide](https://github.com/bfhp/stream-engine/wiki/Developer-Guide) · [Next: Themes](https://github.com/bfhp/stream-engine/wiki/Developer-Themes)
+[Back: Extensions](https://github.com/bfhp/stream-engine/wiki/Developer-Extensions) · [Developer Guide](https://github.com/bfhp/stream-engine/wiki/Developer-Guide) · [Next: Themes](https://github.com/bfhp/stream-engine/wiki/Developer-Themes)

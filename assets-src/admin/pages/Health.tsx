@@ -15,7 +15,29 @@ export type HealthResult = {
     stale: boolean;
 };
 export type HealthCheck = { id: string; label: string; cron: HealthResult | null; web: HealthResult | null };
-type Payload = { interval: number; data: HealthCheck[] };
+export type ActiveExtension = { class: string; points: string[] };
+type Payload = { interval: number; data: HealthCheck[]; extensions: ActiveExtension[] };
+
+function Extensions({ extensions }: { extensions: ActiveExtension[] }) {
+    return <Stack gap="xs">
+        <Text component="h2" fw={700} size="lg" m={0}>{trans("js.admin.health.extensions")}</Text>
+        <Text size="sm" c="dimmed">{trans("js.admin.health.extensions_description")}</Text>
+        {extensions.length === 0
+            ? <Text size="sm">{trans("js.admin.health.extensions_none")}</Text>
+            : <Table.ScrollContainer minWidth={500}>
+                <Table striped withTableBorder>
+                    <Table.Thead><Table.Tr>
+                        <Table.Th>{trans("js.admin.health.extension_class")}</Table.Th>
+                        <Table.Th>{trans("js.admin.health.extension_points")}</Table.Th>
+                    </Table.Tr></Table.Thead>
+                    <Table.Tbody>{extensions.map(extension => <Table.Tr key={extension.class}>
+                        <Table.Th scope="row"><Text component="code" ff="monospace" size="sm">{extension.class}</Text></Table.Th>
+                        <Table.Td><Text ff="monospace" size="sm">{extension.points.join(", ")}</Text></Table.Td>
+                    </Table.Tr>)}</Table.Tbody>
+                </Table>
+            </Table.ScrollContainer>}
+    </Stack>;
+}
 
 function Result({ result }: { result: HealthResult | null }) {
     if (!result) return <Text c="dimmed" size="sm">{trans("js.admin.health.never")}</Text>;
@@ -113,5 +135,6 @@ export default function Health() {
                 </Table.Tr>)}</Table.Tbody>
             </Table>
         </Table.ScrollContainer>}
+        {payload && <Extensions extensions={payload.extensions ?? []} />}
     </Stack>;
 }

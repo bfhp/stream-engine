@@ -16,6 +16,7 @@ use StreamEngine\Controllers\PlainClass;
 use StreamEngine\Modules\Forums\ForumsController;
 
 require_once __DIR__.'/../Support/ControllerFactoryFixtures.php';
+require_once __DIR__.'/../Support/ExtensionFixtures.php';
 
 class_alias(ActionProbeController::class, 'RegistryFixtures\First\FirstController');
 class_alias(ActionProbeController::class, 'RegistryFixtures\Second\SecondController');
@@ -268,5 +269,26 @@ final class ModuleRegistryTest extends TestCase
             realpath(__DIR__.'/../../src/Modules/Forums/views'),
             $registry->viewsNamespaces()['Forums'] ?? null,
         );
+    }
+
+    public function testExtensionsAreDiscoveredFromTheClassmapInClassNameOrder(): void
+    {
+        $registry = \StreamEngine\Controllers\registryWithFixtures([
+            \Tests\Support\Extensions\BAnsweringExtension::class,
+            \Tests\Support\Extensions\AAbstainingExtension::class,
+            \Tests\Support\Extensions\AbstractSiteExtension::class,
+            ActionProbeController::class,
+        ]);
+
+        $discovered = array_values(array_filter(
+            $registry->extensionClasses(),
+            static fn (string $class): bool => str_starts_with($class, 'Tests\\Support\\Extensions\\'),
+        ));
+
+        self::assertSame([
+            \Tests\Support\Extensions\AAbstainingExtension::class,
+            \Tests\Support\Extensions\BAnsweringExtension::class,
+        ], $discovered);
+        self::assertNotContains(ActionProbeController::class, $registry->extensionClasses());
     }
 }

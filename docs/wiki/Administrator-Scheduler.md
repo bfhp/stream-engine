@@ -226,7 +226,7 @@ Current built-in tasks include:
 | Task | Interval | Purpose |
 | --- | --- | --- |
 | `notifications:deliveries` | One minute | Process queued notification deliveries. |
-| `system:health` | Five minutes | Check system components and save the results in one `system.health` settings value. Individual checks can also be run from **System status**. |
+| `system:health` | Five minutes | Check system components and save the results in one `system.health` settings value. Individual checks can also be run from **System status**, which also lists the site extensions that change platform behavior. |
 | `forums:uploads-cleanup` | One hour | Remove abandoned pending forum attachments after their grace period. |
 | `users:cleanup` | One hour | Remove expired password-reset and verification state, including unfinished expired registrations. |
 | `users:sessions-cleanup` | One hour | Remove expired member, guest, and crawler session rows. |

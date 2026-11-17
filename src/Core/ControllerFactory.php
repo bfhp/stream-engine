@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace StreamEngine\Core;
 
 use Exception;
-use ReflectionClass;
-use ReflectionNamedType;
 use RuntimeException;
 use StreamEngine\Domain\Page;
 
@@ -20,22 +18,19 @@ use StreamEngine\Domain\Page;
  */
 final readonly class ControllerFactory
 {
-    /** @var array<class-string, object> */
-    private array $services;
+    private ServiceResolver $resolver;
 
     public function __construct(
         private ModuleRegistry $modules,
         object ...$services,
     ) {
-        $indexed = [];
+        $this->resolver = new ServiceResolver($modules, ...$services);
+    }
 
-        foreach ($services as $service) {
-            foreach ([$service::class, ...class_parents($service), ...class_implements($service)] as $type) {
-                $indexed[$type] = $service;
-            }
-        }
-
-        $this->services = $indexed;
+    /** The resolver controllers are built with; extensions are built with the same one. */
+    public function resolver(): ServiceResolver
+    {
+        return $this->resolver;
     }
 
     public static function shortName(string $controllerClass): string
@@ -107,31 +102,6 @@ final readonly class ControllerFactory
     /** @param class-string $className */
     private function instantiate(string $className, RequestContext $context): object
     {
-        $reflection = new ReflectionClass($className);
-        $constructor = $reflection->getConstructor();
-
-        if (! $constructor) {
-            return new $className();
-        }
-
-        $args = [];
-
-        foreach ($constructor->getParameters() as $param) {
-            $type = $param->getType();
-            $typeName = $type instanceof ReflectionNamedType ? $type->getName() : null;
-
-            $args[] = match (true) {
-                $typeName === null => throw new Exception(
-                    "Cannot resolve untyped parameter \${$param->getName()} of $className"
-                ),
-                $typeName === RequestContext::class => $context,
-                $typeName === ModuleRegistry::class => $this->modules,
-                isset($this->services[$typeName]) => $this->services[$typeName],
-                $param->isDefaultValueAvailable() => $param->getDefaultValue(),
-                default => throw new Exception("Unknown dependency: $typeName"),
-            };
-        }
-
-        return $reflection->newInstanceArgs($args);
+        return $this->resolver->instantiate($className, [RequestContext::class => $context]);
     }
 }

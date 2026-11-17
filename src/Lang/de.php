@@ -54,6 +54,11 @@ return [
     'js.admin.health.web' => 'Manuelles Webergebnis',
     'js.admin.health.run' => 'Jetzt prüfen',
     'js.admin.health.run_check' => 'Prüfung starten: {check}',
+    'js.admin.health.extensions' => 'Erweiterungen',
+    'js.admin.health.extensions_description' => 'Klassen der Website, die das Verhalten der Plattform ändern, und die Erweiterungspunkte, die jede davon behandelt. Nach dem Hinzufügen oder Entfernen composer dump-autoload -o ausführen.',
+    'js.admin.health.extensions_none' => 'Keine Erweiterungen aktiv.',
+    'js.admin.health.extension_class' => 'Klasse',
+    'js.admin.health.extension_points' => 'Erweiterungspunkte',
 
     'time.just_now' => 'gerade eben',
     'time.minute_ago' => 'vor einer Minute',

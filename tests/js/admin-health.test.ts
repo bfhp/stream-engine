@@ -32,7 +32,7 @@ it("loads saved checks and runs only the selected probe while retaining a stale 
     const payload = (manual: HealthResult | null) => ({ interval: 300, data: [
         { id: "smtp", label: "SMTP", cron, web: manual },
         { id: "cache", label: "Memcached", cron: null, web: null },
-    ] });
+    ], extensions: [{ class: "MySite\\Extensions\\LegacyAuth", points: ["verifyPasswordFallback"] }] });
     const fetchMock = vi.fn()
         .mockResolvedValueOnce({ ok: true, json: async () => payload(null) })
         .mockResolvedValueOnce({ ok: true, json: async () => payload(web) });
@@ -47,6 +47,8 @@ it("loads saved checks and runs only the selected probe while retaining a stale 
         expect(fetchMock).toHaveBeenCalledTimes(1);
         expect(fetchMock.mock.calls[0][0]).toBe("/api/v1/admin/health");
         expect(container.textContent).toContain("Check the scheduler");
+        expect(container.textContent).toContain("MySite\\Extensions\\LegacyAuth");
+        expect(container.textContent).toContain("verifyPasswordFallback");
         const button = container.querySelector<HTMLButtonElement>('button[aria-label="Run SMTP"]');
         expect(button).not.toBeNull();
         await act(async () => button!.click());

@@ -205,9 +205,11 @@ layout used by the module template.
 ## Controller construction
 
 `ControllerFactory` resolves typed constructor arguments from the shared
-services supplied by the composition root. It also supplies the current
-`RequestContext` and the `ModuleRegistry`. Services are indexed by their
-concrete class, parent classes, and implemented interfaces.
+services supplied by the composition root, through `ServiceResolver`. It also
+supplies the current `RequestContext` and the `ModuleRegistry`. Services are
+indexed by their concrete class, parent classes, and implemented interfaces.
+Site extensions are constructed by the same resolver and can receive the same
+services, except `RequestContext`.
 
 Unknown required types and untyped required parameters fail construction.
 Default values are used only when no matching shared service exists. The
@@ -455,6 +457,12 @@ exceptions are isolated as an error state.
 Saved layouts contain only IDs, positions, and supported sizes. They never
 contain executable provider code or database queries.
 
+## Site extensions
+
+A module adds features. To change how an existing platform operation behaves
+on one site, such as accepting a password checked by the site's own code,
+write an extension instead: see [Extensions](https://github.com/bfhp/stream-engine/wiki/Developer-Extensions).
+
 ## Localization limitations
 
 Server catalogs currently live only in `src/Lang/<locale>.php`; there is no
@@ -509,4 +517,4 @@ archive that state according to an explicit data-retention decision.
 - PHP unit/integration tests, Vitest, type checking, the production build, and
   the relevant manual workflow pass.
 
-[Back: Database and migrations](https://github.com/bfhp/stream-engine/wiki/Developer-Database-and-Migrations) · [Developer Guide](https://github.com/bfhp/stream-engine/wiki/Developer-Guide) · [Next: Pages and routing](https://github.com/bfhp/stream-engine/wiki/Developer-Pages-and-Routing)
+[Back: Database and migrations](https://github.com/bfhp/stream-engine/wiki/Developer-Database-and-Migrations) · [Developer Guide](https://github.com/bfhp/stream-engine/wiki/Developer-Guide) · [Next: Extensions](https://github.com/bfhp/stream-engine/wiki/Developer-Extensions)

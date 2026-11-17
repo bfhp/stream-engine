@@ -14,7 +14,12 @@ use StreamEngine\Service\AuthenticationRateLimiter;
 use StreamEngine\Service\AuthService;
 use StreamEngine\Service\UserService;
 use StreamEngine\Core\TranslationManager;
+use StreamEngine\Core\ServiceResolver;
+use StreamEngine\Extension\ExtensionRegistry;
+use Tests\Support\Extensions\PasswordFallbackExtension;
 use Tests\Support\InMemoryRateLimitStore;
+
+require_once __DIR__.'/../Support/ExtensionFixtures.php';
 
 final class AuthServiceTest extends TestCase
 {
@@ -30,6 +35,9 @@ final class AuthServiceTest extends TestCase
 
         $_COOKIE = [];
         $_SERVER = [];
+
+        PasswordFallbackExtension::$handler = null;
+        PasswordFallbackExtension::$requests = [];
     }
 
     protected function tearDown(): void
@@ -512,5 +520,133 @@ final class AuthServiceTest extends TestCase
         $user = new User(id: 7, email: 'user@example.com', role: AccessService::ROLE_USER, timezone: 'Europe/Berlin');
 
         $this->assertSame('Europe/Berlin', $service->getUserTimezone($user)->getName());
+    }
+
+    private function makeServiceWithFallback(PdoDatabase $userDb, PdoDatabase $sessionDb): AuthService
+    {
+        $extensions = new ExtensionRegistry([PasswordFallbackExtension::class]);
+        $extensions->bind(new ServiceResolver());
+
+        return new AuthService(
+            new UserRepository($userDb),
+            new UserSessionRepository($sessionDb),
+            new AuthenticationRateLimiter(new InMemoryRateLimitStore(), new TranslationManager('en', 'en')),
+            $extensions,
+        );
+    }
+
+    /** @param array<string, mixed> $overrides */
+    private function userDbReturning(array $overrides = []): PdoDatabase
+    {
+        $userDb = $this->createStub(PdoDatabase::class);
+        $userDb->method('fetchOne')->willReturn($overrides + [
+            'id' => 7,
+            'email' => 'user@example.com',
+            'password_hash' => password_hash('engine-secret', PASSWORD_DEFAULT),
+            'role' => 'user',
+            'is_active' => 1,
+        ]);
+
+        return $userDb;
+    }
+
+    public function testFallbackIsNotAskedWhenTheEnginePasswordMatches(): void
+    {
+        PasswordFallbackExtension::$handler = static fn (): bool => false;
+        $sessionDb = $this->createStub(PdoDatabase::class);
+        $sessionDb->method('execute')->willReturn(1);
+
+        $service = $this->makeServiceWithFallback($this->userDbReturning(), $sessionDb);
+
+        self::assertTrue($service->login('user@example.com', 'engine-secret'));
+        self::assertSame([], PasswordFallbackExtension::$requests);
+    }
+
+    public function testAcceptedFallbackLogsTheUserIn(): void
+    {
+        $_SERVER['REMOTE_ADDR'] = '203.0.113.9';
+        PasswordFallbackExtension::$handler = static fn (int $userId, string $email, string $password): bool => $password === 'legacy-secret';
+        $sessionDb = $this->createMock(PdoDatabase::class);
+        $sessionDb->expects($this->once())
+            ->method('execute')
+            ->with($this->stringContains('user_sessions'), $this->callback(static fn (array $p): bool => $p[0] === 7))
+            ->willReturn(1);
+
+        $service = $this->makeServiceWithFallback($this->userDbReturning(), $sessionDb);
+        $log = $this->captureLog(static fn () => self::assertTrue($service->login('user@example.com', 'legacy-secret')));
+
+        self::assertCount(1, PasswordFallbackExtension::$requests);
+        $request = PasswordFallbackExtension::$requests[0];
+        self::assertSame([
+            'userId' => 7,
+            'email' => 'user@example.com',
+            'password' => 'legacy-secret',
+            'clientIp' => '203.0.113.9',
+        ], $request);
+        self::assertStringContainsString('auth.fallback_accepted user=7', $log);
+        self::assertStringNotContainsString('legacy-secret', $log);
+    }
+
+    /** @return iterable<string, array{\Closure(): mixed}> */
+    public static function refusingFallbacks(): iterable
+    {
+        yield 'abstains' => [static fn (): ?bool => null];
+        yield 'rejects' => [static fn (): bool => false];
+        yield 'throws' => [static fn (): bool => throw new \RuntimeException('legacy system is down')];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('refusingFallbacks')]
+    public function testRefusingOrFailingFallbackKeepsTheLoginRefused(\Closure $handler): void
+    {
+        PasswordFallbackExtension::$handler = $handler;
+        $sessionDb = $this->createMock(PdoDatabase::class);
+        $sessionDb->expects($this->never())->method('execute');
+
+        $service = $this->makeServiceWithFallback($this->userDbReturning(), $sessionDb);
+
+        $this->captureLog(static fn () => self::assertFalse($service->login('user@example.com', 'wrong')));
+        self::assertCount(1, PasswordFallbackExtension::$requests);
+    }
+
+    /** @return iterable<string, array{array<string, mixed>|null}> */
+    public static function usersTheFallbackMustNotSee(): iterable
+    {
+        yield 'unknown' => [null];
+        yield 'inactive' => [['is_active' => 0]];
+        yield 'system' => [['id' => User::SYSTEM_USER_ID]];
+    }
+
+    /** @param array<string, mixed>|null $row */
+    #[\PHPUnit\Framework\Attributes\DataProvider('usersTheFallbackMustNotSee')]
+    public function testFallbackIsNotAskedForUsersThatCannotLogIn(?array $row): void
+    {
+        PasswordFallbackExtension::$handler = static fn (): bool => true;
+        $userDb = $row === null ? $this->createStub(PdoDatabase::class) : $this->userDbReturning($row);
+        if ($row === null) {
+            $userDb->method('fetchOne')->willReturn(null);
+        }
+
+        $service = $this->makeServiceWithFallback($userDb, $this->createStub(PdoDatabase::class));
+
+        self::assertFalse($service->login('user@example.com', 'anything'));
+        self::assertSame([], PasswordFallbackExtension::$requests);
+    }
+
+    /** Silences the error_log() the login path writes, and hands it back. */
+    private function captureLog(callable $run): string
+    {
+        $file = (string) tempnam(sys_get_temp_dir(), 'auth');
+        $previous = ini_set('error_log', $file);
+
+        try {
+            $run();
+        } finally {
+            ini_set('error_log', $previous === false ? '' : $previous);
+        }
+
+        $written = (string) file_get_contents($file);
+        unlink($file);
+
+        return $written;
     }
 }

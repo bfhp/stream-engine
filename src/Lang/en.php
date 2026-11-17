@@ -54,6 +54,11 @@ return [
     'js.admin.health.web' => 'Manual web result',
     'js.admin.health.run' => 'Check now',
     'js.admin.health.run_check' => 'Run check: {check}',
+    'js.admin.health.extensions' => 'Extensions',
+    'js.admin.health.extensions_description' => 'Site classes that change platform behavior, and the extension points each one handles. Run composer dump-autoload -o after adding or removing one.',
+    'js.admin.health.extensions_none' => 'No extensions are active.',
+    'js.admin.health.extension_class' => 'Class',
+    'js.admin.health.extension_points' => 'Extension points',
 
     'time.just_now' => 'just now',
     'time.minute_ago' => 'a minute ago',

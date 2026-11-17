@@ -40,20 +40,23 @@ variables changes upload storage.
 [`StreamEngine`](https://github.com/bfhp/stream-engine/blob/main/src/StreamEngine.php)
 is the application composition root. Its constructor currently:
 
-1. discovers module controllers;
+1. discovers module controllers and site extensions;
 2. reads deployment configuration from the environment;
 3. connects to the database and Memcached;
 4. creates repositories and shared services;
 5. loads the database-backed page tree and active theme;
 6. gives shared dependencies to `ControllerFactory`;
-7. lets modules register runtime pages, API routes, and cron tasks; and
-8. validates the complete page definition set.
+7. binds the extension registry to the same dependencies;
+8. lets modules register runtime pages, API routes, and cron tasks; and
+9. validates the complete page definition set.
 
 There is no general-purpose dependency-injection container. The composition
-root constructs shared objects explicitly. `ControllerFactory` indexes those
-objects by concrete class, parent class, and implemented interface, then uses
-constructor reflection to inject them into a controller. It also supplies the
-per-request `RequestContext` and `ModuleRegistry`.
+root constructs shared objects explicitly. `ControllerFactory` hands those
+objects to `ServiceResolver`, which indexes them by concrete class, parent
+class, and implemented interface, then uses constructor reflection to inject
+them. The factory also supplies the per-request `RequestContext` and
+`ModuleRegistry`. Site extensions are built by the same resolver, without
+`RequestContext`.
 
 A controller dependency is therefore available only when it is one of these:
 
@@ -269,6 +272,13 @@ are global contracts and are checked for supported shapes or collisions during
 bootstrap. Discovery does not automatically expose a public page: a page
 action still needs a configured database page, while fixed subordinate routes
 belong in runtime-page registration.
+
+The same classmap pass collects every concrete subclass of
+`StreamEngine\Extension\Extension`. Extensions change the behavior of
+selected platform operations rather than adding features. `ExtensionRegistry`
+constructs them on the first call of an extension point and returns the first
+non-null result. The available points and their rules are documented in
+[Extensions](https://github.com/bfhp/stream-engine/wiki/Developer-Extensions).
 
 ## Frontend architecture
 

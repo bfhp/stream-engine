@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace StreamEngine\Core;
 
 use RuntimeException;
+use StreamEngine\Extension\Extension;
 
 /** Stores module controllers and checks module ids and actions for conflicts. */
 final class ModuleRegistry
@@ -50,6 +51,9 @@ final class ModuleRegistry
     /** @var array<string, array<string, mixed>> dashboard card id => normalized descriptor */
     private array $dashboardCards = [];
 
+    /** @var array<class-string<Extension>, class-string<Extension>> */
+    private array $extensionClasses = [];
+
     public function __construct()
     {
         $registrations = [];
@@ -64,19 +68,30 @@ final class ModuleRegistry
 
                 try {
                     $isController = is_subclass_of($class, ControllerInterface::class);
+                    $isExtension = ! $isController && is_subclass_of($class, Extension::class);
                 } catch (\Throwable) {
                     // Optimized classmaps may contain optional integration classes
                     // whose development-only parents are not installed in production.
                     continue;
                 }
 
-                if ($isController
-                    && (new \ReflectionClass($class))->isInstantiable()) {
+                if (! $isController && ! $isExtension) {
+                    continue;
+                }
+
+                if (! (new \ReflectionClass($class))->isInstantiable()) {
+                    continue;
+                }
+
+                if ($isController) {
                     $registrations[$class] = $class;
+                } else {
+                    $this->extensionClasses[$class] = $class;
                 }
             }
         }
         ksort($registrations);
+        ksort($this->extensionClasses);
 
         foreach ($registrations as $entry) {
             [$id, $controllerClass] = $this->describe($entry);
@@ -122,6 +137,16 @@ final class ModuleRegistry
             $this->pageActions,
             static fn (array $a, array $b): int => [$a['module'], $a['action']] <=> [$b['module'], $b['action']]
         );
+    }
+
+    /**
+     * Instantiable Extension subclasses found in the classmap, in class-name order.
+     *
+     * @return list<class-string<Extension>>
+     */
+    public function extensionClasses(): array
+    {
+        return array_values($this->extensionClasses);
     }
 
     /** @return list<array<string, mixed>> */

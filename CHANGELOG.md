@@ -15,6 +15,25 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 - Forum section access through the existing container membership ACL, with
   atomic propagation to topics and inherited access for new discussions.
 
+- Site extensions: a site can change selected platform behavior with classes
+  extending `StreamEngine\Extension\Extension`, discovered from the Composer
+  classmap, with the shared services available as properties
+  (`$this->db`, `$this->accessService`, …). First
+  extension point: `verifyPasswordFallback`, which lets a site accept a
+  password the engine's hash rejected. Run `composer dump-autoload -o` after
+  adding, renaming, or removing an extension class.
+
+- `UserRepository::updatePasswordHash()` for storing a new password hash.
+
+- The administration **System status** page lists active site extensions and
+  the extension points each one handles.
+
+### Changed
+
+- `ControllerFactory` delegates constructor resolution to the new
+  `ServiceResolver`, which also builds site extensions. Controller
+  construction behaves as before.
+
 ### Fixed
 
 - Admin Feed list filters, sorting and limit now persist in the URL when

@@ -37,6 +37,7 @@ use StreamEngine\Core\TranslationManager;
 use StreamEngine\Core\UrlGenerator;
 use StreamEngine\Domain\Page;
 use StreamEngine\Domain\User;
+use StreamEngine\Extension\ExtensionRegistry;
 use StreamEngine\Repository\ConversationRepository;
 use StreamEngine\Repository\FeedFavoriteRepository;
 use StreamEngine\Repository\FeedMetadataRepository;
@@ -124,6 +125,8 @@ class StreamEngine
 
     private ModuleRegistry $modules;
 
+    private ExtensionRegistry $extensions;
+
     private CronRegistry $cronRegistry;
 
     private TranslationManager $tm;
@@ -143,6 +146,7 @@ class StreamEngine
     {
         $this->startTime = microtime(true);
         $this->modules = new ModuleRegistry();
+        $this->extensions = new ExtensionRegistry($this->modules->extensionClasses());
         $this->config = Config::fromEnvironment();
 
         $this->db = new PdoDatabase($this->config);
@@ -241,6 +245,7 @@ class StreamEngine
             $userRepository,
             $sessionRepository,
             $authenticationRateLimiter,
+            $this->extensions,
         );
 
         $this->mailService = new MailService(
@@ -335,6 +340,7 @@ class StreamEngine
             $this->cronRegistry,
             $mentionService,
         );
+        $this->extensions->bind($this->controllerFactory->resolver());
 
         $this->controllerFactory->registerRuntimePages($this->pageTree, $this->tm);
         $this->initCronAndApi();

@@ -54,6 +54,11 @@ return [
     'js.admin.health.web' => 'Ręczny wynik WWW',
     'js.admin.health.run' => 'Sprawdź teraz',
     'js.admin.health.run_check' => 'Uruchom kontrolę: {check}',
+    'js.admin.health.extensions' => 'Rozszerzenia',
+    'js.admin.health.extensions_description' => 'Klasy witryny zmieniające działanie platformy oraz punkty rozszerzeń obsługiwane przez każdą z nich. Po dodaniu lub usunięciu uruchom composer dump-autoload -o.',
+    'js.admin.health.extensions_none' => 'Brak aktywnych rozszerzeń.',
+    'js.admin.health.extension_class' => 'Klasa',
+    'js.admin.health.extension_points' => 'Punkty rozszerzeń',
 
     'time.just_now' => 'przed chwilą',
     'time.minute_ago' => 'minutę temu',
