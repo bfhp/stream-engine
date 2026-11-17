@@ -380,7 +380,7 @@ final class ArticleControllerTest extends TestCase
         $feedService->method('getFeedById')->willReturn($this->makeFeed(1, 'articles'));
         $feedService->expects($this->once())
             ->method('getFeedsByParentAndTypePage')
-            ->with(1, 'article-section', $this->isInstanceOf(User::class), 10, 10)
+            ->with(1, 'article-section', $this->isInstanceOf(User::class), 10, 10, true)
             ->willReturn([
                 'items' => [$this->makeFeed(12, 'section-12', parentId: 1, type: 'article-section')],
                 'total' => 21,
@@ -453,10 +453,13 @@ final class ArticleControllerTest extends TestCase
             ->method('getFeedByParentAndSlug')
             ->with(1, 'section-a', $this->isInstanceOf(User::class), 'article-section')
             ->willReturn($this->makeFeed(2, 'section-a', parentId: 1, type: 'article-section'));
-        $feedService->method('getFeedsByParentAndTypePage')->willReturn([
-            'items' => [$this->makeFeed(3, 'article-a', parentId: 2)],
-            'total' => 1,
-        ]);
+        $feedService->expects($this->once())
+            ->method('getFeedsByParentAndTypePage')
+            ->with(2, 'article', $this->isInstanceOf(User::class), 20, 0, true)
+            ->willReturn([
+                'items' => [$this->makeFeed(3, 'article-a', parentId: 2)],
+                'total' => 1,
+            ]);
 
         $view = $this->makeController($feedService, pages: [$rootPage])
             ->show($sectionPage, ['slug' => 'section-a']);
@@ -477,7 +480,7 @@ final class ArticleControllerTest extends TestCase
             ->willReturn($section);
         $feedService->expects($this->once())
             ->method('getFeedsByParentAndTypePage')
-            ->with(2, 'article', $this->isInstanceOf(User::class), 20, 0)
+            ->with(2, 'article', $this->isInstanceOf(User::class), 20, 0, true)
             ->willReturn([
                 'items' => [$this->makeFeed(3, 'article-a', parentId: 2)],
                 'total' => 1,
@@ -504,7 +507,7 @@ final class ArticleControllerTest extends TestCase
         $feedService->method('getFeedById')->willReturn($section);
         $feedService->expects($this->once())
             ->method('getFeedsByParentAndTypePage')
-            ->with(2, 'article', $this->isInstanceOf(User::class), 10, 10)
+            ->with(2, 'article', $this->isInstanceOf(User::class), 10, 10, true)
             ->willReturn([
                 'items' => [$this->makeFeed(13, 'article-13', parentId: 2)],
                 'total' => 21,

@@ -275,6 +275,7 @@ class ArticleController extends AbstractController
             $this->context->user,
             $sectionsPerPage,
             ($currentPage - 1) * $sectionsPerPage,
+            positionOrder: true,
         );
         $sections = $sectionsPage['items'];
         $totalPages = max(1, (int) ceil($sectionsPage['total'] / $sectionsPerPage));
@@ -333,6 +334,7 @@ class ArticleController extends AbstractController
                 $this->context->user,
                 $articlesPerPage,
                 ($currentPage - 1) * $articlesPerPage,
+                positionOrder: true,
             );
             $subFeeds = $articlesPage['items'];
             $totalPages = max(1, (int) ceil($articlesPage['total'] / $articlesPerPage));
