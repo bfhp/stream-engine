@@ -143,5 +143,3 @@ exhausted, `true` creates a session, an exception never logs the user in.
 - Points that need all results (collect) or a value passed through every
   extension (pipeline), added as separate registry methods.
 - Events for reacting to completed operations.
-- Replacing the inline password `UPDATE`s in `UserService` with
-  `UserRepository::updatePasswordHash()`.

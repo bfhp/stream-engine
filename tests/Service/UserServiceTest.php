@@ -839,17 +839,18 @@ final class UserServiceTest extends TestCase
             ]);
 
         $writes = [];
+        $record = static function (string $sql, array $params) use (&$writes): int {
+            $writes[] = [$sql, $params];
+
+            return 1;
+        };
         $db->expects($this->once())->method('begin');
         $db->expects($this->once())->method('commit');
         $db->expects($this->never())->method('rollback');
-        $db
-            ->expects($this->exactly(3))
-            ->method('execute')
-            ->willReturnCallback(static function (string $sql, array $params) use (&$writes): int {
-                $writes[] = [$sql, $params];
-
-                return 1;
-            });
+        $db->expects($this->exactly(2))->method('execute')->willReturnCallback($record);
+        // The hash goes through UserRepository; in production both share one
+        // connection, so the update stays inside the token transaction.
+        $userDb->expects($this->once())->method('execute')->willReturnCallback($record);
 
         $userDb
             ->expects($this->once())
@@ -968,13 +969,13 @@ final class UserServiceTest extends TestCase
         $mailService = $this->createMock(MailService::class);
 
         $writes = [];
-        $db->expects($this->exactly(2))->method('execute')->willReturnCallback(
-            function (string $sql, array $params = []) use (&$writes): int {
-                $writes[] = [$sql, $params];
+        $record = function (string $sql, array $params = []) use (&$writes): int {
+            $writes[] = [$sql, $params];
 
-                return 1;
-            }
-        );
+            return 1;
+        };
+        $userDb->method('execute')->willReturnCallback($record);
+        $db->expects($this->once())->method('execute')->willReturnCallback($record);
         $sessionDb->expects($this->once())->method('execute')->with(
             'DELETE FROM user_sessions WHERE user_id = ? AND token_hash <> ?',
             [7, 'keep-this-session']

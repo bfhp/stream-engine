@@ -626,10 +626,7 @@ final class UserService
 
             $userId = (int) $row['user_id'];
 
-            $this->db->execute(
-                'UPDATE users SET password_hash = ? WHERE id = ?',
-                [$hash, $userId]
-            );
+            $this->userRepository->updatePasswordHash($userId, $hash);
             $this->db->execute('DELETE FROM password_resets WHERE user_id = ?', [$userId]);
             $this->db->execute('DELETE FROM user_sessions WHERE user_id = ?', [$userId]);
             $this->db->commit();
@@ -725,10 +722,7 @@ final class UserService
         }
 
         if ($changePassword) {
-            $this->db->execute(
-                'UPDATE users SET password_hash = ? WHERE id = ?',
-                [password_hash($newPassword, PASSWORD_DEFAULT), $user->id]
-            );
+            $this->userRepository->updatePasswordHash($user->id, password_hash($newPassword, PASSWORD_DEFAULT));
             // A reset link mailed before the change would undo it.
             $this->db->execute('DELETE FROM password_resets WHERE user_id = ?', [$user->id]);
             $this->sessionRepository->deleteForUserExcept($user->id, $keepSessionTokenHash);
