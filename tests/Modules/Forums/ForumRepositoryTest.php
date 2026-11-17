@@ -119,7 +119,8 @@ final class ForumRepositoryTest extends TestCase
             'countTopicsAndPosts' => [fn (ForumRepository $r) => $r->countTopicsAndPosts([]), []],
             'findLastActivity' => [fn (ForumRepository $r) => $r->findLastActivity([]), []],
             'findTopicIdsForForums' => [fn (ForumRepository $r) => $r->findTopicIdsForForums([]), []],
-            'countUserForumPosts' => [fn (ForumRepository $r) => $r->countUserForumPosts([]), []],
+            'countUserForumPosts without forums' => [fn (ForumRepository $r) => $r->countUserForumPosts([7], []), []],
+            'countUserForumPosts' => [fn (ForumRepository $r) => $r->countUserForumPosts([], [10]), []],
             'findTopicActivity' => [fn (ForumRepository $r) => $r->findTopicActivity([]), []],
         ];
     }
@@ -479,7 +480,7 @@ final class ForumRepositoryTest extends TestCase
             ['owner_id' => '9', 'total' => '3'],
         ]));
 
-        $this->assertSame([7 => 12, 9 => 3], $repository->countUserForumPosts([7, 7, 9]));
+        $this->assertSame([7 => 12, 9 => 3], $repository->countUserForumPosts([7, 7, 9], [10, 11]));
 
         [$sql, $params] = $this->reads[0];
         $this->assertStringContainsString("type = 'forum-post'", $sql);
@@ -487,6 +488,6 @@ final class ForumRepositoryTest extends TestCase
         $this->assertStringContainsString('EXISTS', $sql);
         $this->assertStringContainsString("t.type = 'forum-post'", $sql);
         // Deduplicated ids are bound once for topics and once for replies.
-        $this->assertSame([7, 9, 7, 9], $params);
+        $this->assertSame([7, 9, 10, 11, 7, 9, 10, 11], $params);
     }
 }

@@ -607,6 +607,7 @@ final class ForumsControllerTest extends TestCase
         sort($registered);
 
         $expected = [
+            'forums.access',
             'forums.api-parent',
             'forums.read-all',
             'forums.reply',
@@ -637,6 +638,7 @@ final class ForumsControllerTest extends TestCase
     public static function mutatingRouteProvider(): array
     {
         return [
+            'set section access' => ['forums.access', ['PATCH']],
             'mark all read' => ['forums.read-all', ['POST']],
             'create a topic' => ['forums.topic-create', ['POST']],
             // PATCH, not POST: an edit is a partial update of the item the
@@ -1811,6 +1813,7 @@ final class ForumsControllerTest extends TestCase
         $feedService->expects($this->once())->method('decorateFeedsMentions')
             ->with($this->callback(static fn (array $feeds): bool => array_column($feeds, 'id') === [910, 911]));
         $feedService->method('isWithinEditWindow')->willReturn(true);
+        $feedService->method('getFeedsByType')->willReturn([$this->makeForumFeed()]);
         $feedService->method('canEditFeed')->willReturn(true);
         $feedService->expects($this->once())->method('getUserRatingValues')
             ->with(
@@ -2713,11 +2716,12 @@ final class ForumsControllerTest extends TestCase
     public function testMarkAllReadWithoutAForumIdCoversEveryTopic(): void
     {
         $module = $this->makeModule($this->makeRoutingDb([
-            self::SQL_ALL_TOPIC_IDS => [['id' => 900], ['id' => 901], ['id' => 902]],
+            self::SQL_TOPIC_IDS_FOR_FORUMS => [['id' => 900], ['id' => 901], ['id' => 902]],
         ]));
 
         $feedService = $this->createMock(FeedService::class);
-        // Nothing to resolve - the site-wide button sends no scope at all.
+        $feedService->method('getFeedsByType')->willReturn([$this->makeForumFeed()]);
+        // Only sections readable by this user contribute topics.
         $feedService->expects($this->never())->method('getFeedById');
         $feedService->expects($this->once())
             ->method('markFeedsAsRead')
@@ -2870,6 +2874,22 @@ final class ForumsControllerTest extends TestCase
         $this->assertSame([], $messageDb->messages);
     }
 
+    public function testClosedTopicDoesNotNotifyAFollowerWhoCannotReadIt(): void
+    {
+        $topic = $this->feedRow(self::TOPIC_ID, 'forum-post', parentId: self::FORUM_ID, extra: [
+            'visibility' => 'members', 'container_id' => self::FORUM_ID,
+        ]);
+        $messageDb = new FakePdoDatabase();
+        $module = $this->makeModule($this->makeRoutingDb([
+            self::SQL_TOPIC_FOLLOWERS => [['user_id' => 7], ['user_id' => 8], ['user_id' => 9]],
+        ], [
+            self::SQL_FEED_BY_ID => static fn (array $params): ?array => $params[1] === 9 ? null : $topic,
+            'WHERE u.id = ?' => static fn (array $params): array => ['id' => $params[0], 'email' => 'member@example.test', 'role' => 'user'],
+        ]), notificationDb: $messageDb);
+        $this->invoke($module, 'notifyTopicFollowers', self::TOPIC_ID, new User(7, '', 'user'));
+        $this->assertSame([8], array_column($messageDb->notificationDeliveries, 'recipient_user_id'));
+    }
+
     public function testTopicReplySendsNothingWhenNobodyFollowsTheTopic(): void
     {
         $messageDb = new FakePdoDatabase();
@@ -3019,6 +3039,84 @@ final class ForumsControllerTest extends TestCase
      * @param array<string, string> $args
      * @param array<string, mixed> $body
      */
+    public function testSectionAccessUpdatesTheExistingTopicAclAtomically(): void
+    {
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects($this->once())->method('begin');
+        $db->expects($this->once())->method('commit');
+        $db->expects($this->never())->method('rollback');
+        $db->expects($this->once())->method('execute')->with(
+            $this->stringContains('UPDATE feeds SET visibility'),
+            ['members', self::FORUM_ID, 'forum', self::FORUM_ID, 'forum-post'],
+        )->willReturn(1);
+        $module = $this->makeModule($db);
+        $actor = new User(7, '', AccessService::ROLE_ADMIN);
+        $this->setContext($module, $actor);
+        $forum = $this->makeForum(self::FORUM_ID, 'club', parentId: 1);
+        $feeds = $this->createMock(FeedService::class);
+        $feeds->method('normalizeVisibility')->with('members')->willReturn('members');
+        $feeds->method('getFeedById')->willReturn($forum);
+        $feeds->expects($this->once())->method('updateFeed')->with(self::FORUM_ID, [
+            'visibility' => 'members', 'containerId' => self::FORUM_ID, 'containerType' => 'forum',
+        ], $actor)->willReturn($forum);
+        $this->setProperty($module, 'feedService', $feeds);
+        $this->assertSame('', $this->callJsonApi(
+            $module,
+            $this->makeApiPage('access', 'forums.access'),
+            body: ['forumId' => self::FORUM_ID, 'visibility' => 'members'],
+            method: 'PATCH'
+        ));
+    }
+
+    public function testNormalUsersCannotChangeSectionAccess(): void
+    {
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects($this->never())->method('execute');
+        $this->expectException(ForbiddenException::class);
+        $this->callJsonApi(
+            $this->makeModule($db),
+            $this->makeApiPage('access', 'forums.access'),
+            body: ['forumId' => self::FORUM_ID, 'visibility' => 'members'],
+            method: 'PATCH'
+        );
+    }
+
+    public function testNewTopicsUseTheSectionAudienceAndIgnoreClientAccessFields(): void
+    {
+        $forum = Feed::fromRow($this->feedRow(self::FORUM_ID, 'forum', extra: [
+            'visibility' => 'members', 'container_id' => self::FORUM_ID, 'container_type' => 'forum',
+        ]));
+        $module = $this->makeModule($this->makeRoutingDb());
+        $feeds = $this->createMock(FeedService::class);
+        $feeds->method('getFeedById')->willReturn($forum);
+        $feeds->expects($this->once())->method('createFeed')->willReturnCallback(function (...$args): Feed {
+            $this->assertSame('members', $args[9]);
+            $this->assertSame(self::FORUM_ID, $args[10]);
+            $this->assertSame('forum', $args[11]);
+            return $this->makeTopic();
+        });
+        $this->setProperty($module, 'feedService', $feeds);
+        $this->callCreateApi($module, ['forumId' => self::FORUM_ID, 'title' => 'Secret', 'content' => '<p>Text</p>',
+            'visibility' => 'public', 'containerId' => 12345]);
+    }
+
+    public function testTopicCreationRechecksAccessAfterTakingTheSectionLock(): void
+    {
+        $module = $this->makeModule($this->makeRoutingDb());
+        $feeds = $this->createMock(FeedService::class);
+        $calls = 0;
+        $feeds->method('getFeedById')->willReturnCallback(function () use (&$calls): Feed {
+            if (++$calls === 2) {
+                throw new ForbiddenException('Access changed');
+            }
+            return $this->makeForumFeed();
+        });
+        $feeds->expects($this->never())->method('createFeed');
+        $this->setProperty($module, 'feedService', $feeds);
+        $this->expectException(ForbiddenException::class);
+        $this->callCreateApi($module, ['forumId' => self::FORUM_ID, 'title' => 'Secret', 'content' => '<p>Text</p>']);
+    }
+
     private function callJsonApi(
         ForumsController $module,
         Page $page,

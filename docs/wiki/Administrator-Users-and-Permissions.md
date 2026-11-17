@@ -291,6 +291,24 @@ honoured, but the current interface does not provide a supported control for
 promoting a member to local moderator or transferring community ownership.
 Do not implement either operation with direct database edits.
 
+## Forum section access
+
+Forum sections use the same feed ACL and `memberships` table as other
+containers. An administrator can change a section through
+`PATCH /api/v1/forums/access` with JSON
+`{"forumId": 123, "visibility": "members"}` and a valid `X-CSRF-Token`.
+The response is 204. `public`, `members`, and `private` have the meanings listed
+above. Top-level forum categories are not changed by this operation.
+
+Use this module operation when changing section access: it sets the section's
+membership container to its own ID and updates existing topics in the same
+transaction. New topics copy the section's access fields; replies inherit their
+topic's ACL. Generic feed-field edits do not propagate section access to topics.
+Existing author, owner, and moderator overrides remain unchanged.
+
+Membership administration is not exposed by this feature. Files retain their
+existing public URLs.
+
 ## Permission-change checklist
 
 - [ ] The target account ID and owner were confirmed independently.

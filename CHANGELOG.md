@@ -7,6 +7,11 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Forum section access through the existing container membership ACL, with
+  atomic propagation to topics and inherited access for new discussions.
+
 ### Fixed
 
 - Admin Feed list filters, sorting and limit now persist in the URL when

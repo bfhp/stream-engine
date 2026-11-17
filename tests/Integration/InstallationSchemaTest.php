@@ -593,6 +593,83 @@ final class InstallationSchemaTest extends TestCase
         });
     }
 
+    public function testForumAccessReusesTheSharedFeedAndCommentAcl(): void
+    {
+        $this->withEmptyDatabase(function (PDO $pdo): void {
+            $this->executeScript($pdo, dirname(__DIR__, 2).'/migrations/20260912000000_initial.sql');
+            $pdo->exec("INSERT INTO users (id,email,password_hash,created_at) VALUES
+                (10,'author@example.test','x',1),(20,'member@example.test','x',1),
+                (30,'pending@example.test','x',1),(40,'mod@example.test','x',1),(60,'admin@example.test','x',1)");
+            $pdo->exec("INSERT INTO feeds (id,parent_id,owner_id,type,slug,title,content,visibility,created_at,updated_at) VALUES
+                (100,NULL,60,'forum','category','Category','','public',1,1),
+                (101,100,60,'forum','club','Club','','public',1,1),
+                (102,100,60,'forum','open','Open','','public',1,1),
+                (201,101,10,'forum-post','secret','Secret topic','Secret content','public',1,1),
+                (202,102,10,'forum-post','other','Public topic','','public',1,1),
+                (301,201,30,'comment',NULL,'','Secret reply','public',1,1)");
+            $db = (new ReflectionClass(PdoDatabase::class))->newInstanceWithoutConstructor();
+            (new ReflectionProperty(PdoDatabase::class, 'pdo'))->setValue($db, $pdo);
+            $memberships = new \StreamEngine\Repository\MembershipRepository($db);
+            $memberships->create(101, 20, $memberships::ROLE_MEMBER_ID);
+            $memberships->create(101, 30, $memberships::ROLE_SUBSCRIBER_ID);
+            $memberships->create(101, 40, $memberships::ROLE_MODERATOR_ID);
+            $memberships->create(102, 30, $memberships::ROLE_MEMBER_ID);
+            $repository = new \StreamEngine\Repository\FeedRepository($db);
+            $access = new \StreamEngine\Service\AccessService($memberships, $repository);
+            $tm = new \StreamEngine\Core\TranslationManager('en', 'en');
+            $tree = new \StreamEngine\Core\PageTree([]);
+            $urls = new \StreamEngine\Core\UrlGenerator($tree, $repository, new \Tests\Support\ArrayCache());
+            $feeds = new \StreamEngine\Service\FeedService($repository, $urls, $access, new \StreamEngine\Core\Formatter($tm, 'en'), $tm);
+            $controllerClass = new ReflectionClass(\StreamEngine\Modules\Forums\ForumsController::class);
+            $controller = $controllerClass->newInstanceWithoutConstructor();
+            $admin = new \StreamEngine\Domain\User(60, '', 'admin');
+            foreach (['db' => $db, 'context' => new \StreamEngine\Core\RequestContext($admin, new \DateTimeZone('UTC')),
+                'tm' => $tm, 'feedService' => $feeds, 'feedRepository' => $repository] as $property => $value) {
+                $controllerClass->getProperty($property)->setValue($controller, $value);
+            }
+            $setAccess = function (string $visibility) use ($controller): void {
+                $server = $_SERVER;
+                $cookies = $_COOKIE;
+                $_SERVER['REQUEST_METHOD'] = 'PATCH';
+                $_SERVER['HTTP_X_CSRF_TOKEN'] = $_COOKIE['csrfToken'] = 'forum-test';
+                \Tests\Support\PhpInputStreamMock::register(json_encode(['forumId' => 101, 'visibility' => $visibility]));
+                ob_start();
+                try {
+                    $controller->callApi(\StreamEngine\Domain\Page::api(id: 1, parentId: 0, pattern: 'access', action: 'forums.access', requestMethods: ['PATCH']));
+                } finally {
+                    ob_end_clean();
+                    \Tests\Support\PhpInputStreamMock::restore();
+                    $_SERVER = $server;
+                    $_COOKIE = $cookies;
+                }
+            };
+            $setAccess('members');
+            $member = new \StreamEngine\Domain\User(20, '', 'user');
+            $guest = new \StreamEngine\Domain\User(0, '', 'user');
+            foreach ([$guest, new \StreamEngine\Domain\User(30, '', 'user')] as $denied) {
+                self::assertNull($repository->findById(101, $denied));
+                self::assertNull($repository->findById(201, $denied));
+                self::assertNull($repository->findById(301, $denied));
+                self::assertSame([], $repository->search('Secret', 20, null, $denied));
+            }
+            self::assertNotNull($repository->findById(201, $member));
+            self::assertNotNull($repository->findById(301, $member));
+            self::assertNotNull($repository->findById(201, new \StreamEngine\Domain\User(10, '', 'user')), 'Shared author override is preserved');
+            $topic = $repository->findById(201, $admin);
+            self::assertSame(101, $topic->containerId);
+            self::assertSame('forum', $topic->containerType);
+            $forums = new \StreamEngine\Modules\Forums\ForumRepository($db);
+            self::assertSame([10 => 1], $forums->countUserForumPosts([10,30], [102]));
+            $memberships->delete(101, 20);
+            self::assertNull($repository->findById(201, $member));
+            $setAccess('private');
+            self::assertNotNull($repository->findById(201, new \StreamEngine\Domain\User(40, '', 'user')));
+            $setAccess('public');
+            self::assertNotNull($repository->findById(201, $guest));
+            self::assertNotNull($repository->findById(301, $guest));
+        });
+    }
+
     /** @param callable(PDO, array{host:string,port:int,database:string,username:string,password:string}): void $test */
     private function withEmptyDatabase(callable $test): void
     {

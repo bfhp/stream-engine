@@ -516,7 +516,7 @@ class ForumsController extends AbstractController
             'topics' => $topics,
             'posts' => $posts,
             'members' => $this->userRepository->countPublicUsers(),
-            'postsToday' => $this->forumRepository->countPostsSince(time() - 86400),
+            'postsToday' => $this->forumRepository->countPostsSince(time() - 86400, array_keys($forumStats)),
         ];
     }
 
@@ -1488,7 +1488,7 @@ class ForumsController extends AbstractController
 
         $authorIds = array_map(static fn (Feed $post): int => $post->ownerId, $posts);
         $authors = $this->userRepository->findByIds($authorIds);
-        $authorPostCounts = $this->forumRepository->countUserForumPosts($authorIds);
+        $authorPostCounts = $this->forumRepository->countUserForumPosts($authorIds, $this->readableForumIds());
 
         // Once per distinct author, not per post - the same author usually
         // holds several posts on a page.
@@ -1721,6 +1721,7 @@ class ForumsController extends AbstractController
         header('Content-Type: application/json');
 
         match ($page->action) {
+            'forums.access' => $this->handleForumAccessRequest(),
             'forums.read-all' => $this->handleMarkAllReadRequest(),
             'forums.reply' => $this->handleTopicReplyRequest((int) ($args['topicId'] ?? 0)),
             'forums.topic-read' => $this->handleTopicReadRequest((int) ($args['topicId'] ?? 0)),
@@ -1728,6 +1729,45 @@ class ForumsController extends AbstractController
             'forums.topic-item' => $this->handleTopicItemRequest((int) ($args['id'] ?? 0)),
             default => throw new NotFoundException('Unknown API action'),
         };
+    }
+
+    /** Change a section and its topics together using the ordinary feed/container ACL. */
+    private function handleForumAccessRequest(): void
+    {
+        Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
+        $user = $this->context->user;
+        if (!$user->isAdmin()) {
+            throw new ForbiddenException($this->tm->trans('feed.forbidden'));
+        }
+        try {
+            $input = json_decode((string) file_get_contents('php://input'), false, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            throw new ValidationException($this->tm->trans('feed.parent_not_found'));
+        }
+        if (!$input instanceof \stdClass || !isset($input->forumId) || !is_int($input->forumId) || $input->forumId <= 0) {
+            throw new ValidationException($this->tm->trans('feed.parent_not_found'));
+        }
+        $visibility = $this->feedService->normalizeVisibility($input->visibility ?? null);
+        $this->feedRepository->withLockedFeed($input->forumId, function () use ($input, $visibility, $user): void {
+            $forum = $this->feedService->getFeedById($input->forumId, $user);
+            if ($forum->type !== 'forum' || $forum->parentId === null) {
+                throw new ValidationException($this->tm->trans('feed.parent_not_found'));
+            }
+            $this->feedService->updateFeed($forum->id, [
+                'visibility' => $visibility, 'containerId' => $forum->id, 'containerType' => 'forum',
+            ], $user);
+            $this->feedRepository->updateChildAccess($forum->id, 'forum-post', $visibility, $forum->id, 'forum');
+        });
+        http_response_code(204);
+    }
+
+    /** @return int[] Section access has already been filtered by the shared ACL. */
+    private function readableForumIds(): array
+    {
+        return array_map(
+            static fn (Feed $feed): int => $feed->id,
+            $this->feedService->getFeedsByType('forum', $this->context->user, 99999)
+        );
     }
 
     /**
@@ -1775,6 +1815,15 @@ class ForumsController extends AbstractController
                 action: 'forums.read-all',
             )
         );
+
+        $pageTree->add(Page::api(
+            id: $pageTree->getMaxPageId(),
+            parentId: $forumsPageId,
+            pattern: 'access',
+            requestMethods: ['PATCH'],
+            action: 'forums.access',
+            accessRule: AccessService::ACCESS_ADMIN,
+        ));
 
         $topicsPageId = $pageTree->getMaxPageId();
         $pageTree->add(
@@ -1883,7 +1932,7 @@ class ForumsController extends AbstractController
 
             $topicIds = $this->forumRepository->findTopicIdsForForums([$forum->id, ...$subForumIds]);
         } else {
-            $topicIds = $this->forumRepository->findAllTopicIds();
+            $topicIds = $this->forumRepository->findTopicIdsForForums($this->readableForumIds());
         }
 
         $this->feedService->markFeedsAsRead($topicIds, $this->context->user);
@@ -1966,14 +2015,8 @@ class ForumsController extends AbstractController
      *   "Subscribe to topic" switch (checked by default).
      * - `poll` (optional): see attachTopicPoll()'s own docblock.
      *
-     * No draft/visibility control here unlike Modules\Users\BlogPostService::
-     * createBlogPost() - ForumRepository::findTopicsPage() has no visibility
-     * filter at all yet (every topic in a section is listed to everyone
-     * regardless of its `visibility` column), so a 'private' "draft" topic
-     * would still show up in the public topic list - offering one from this
-     * form would be actively misleading until that gap is closed, so every
-     * topic created here is 'public' (createFeed()'s own default), full
-     * stop.
+     * Topics copy the section's visibility and membership container, just as
+     * community publications do. Replies already use their publication's ACL.
      *
      * Slug collisions/reservations are uniqueTopicSlug()'s own job; this
      * method just calls it once and passes the result
@@ -2024,17 +2067,24 @@ class ForumsController extends AbstractController
             ? ['attachment_upload_ids' => json_encode(array_map(static fn (Upload $upload): int => $upload->id, $attachments))]
             : null;
 
-        $topic = $this->feedService->createFeed(
-            title: $title,
-            slug: $slug,
-            type: 'forum-post',
-            parentId: $forumFeed->id,
-            description: null,
-            imageUrl: null,
-            content: $content,
-            user: $user,
-            metadata: $metadata,
-        );
+        $topic = $this->feedRepository->withLockedFeed($forumFeed->id, function () use ($forumFeed, $title, $slug, $content, $user, $metadata): Feed {
+            // Access may have changed while the author was submitting the form.
+            $forumFeed = $this->feedService->getFeedById($forumFeed->id, $user);
+            return $this->feedService->createFeed(
+                title: $title,
+                slug: $slug,
+                type: 'forum-post',
+                parentId: $forumFeed->id,
+                description: null,
+                imageUrl: null,
+                content: $content,
+                user: $user,
+                metadata: $metadata,
+                visibility: $forumFeed->visibility ?? 'public',
+                containerId: $forumFeed->containerId,
+                containerType: $forumFeed->containerType,
+            );
+        });
 
         if (! empty($input['subscribe'])) {
             try {
@@ -2921,6 +2971,12 @@ class ForumsController extends AbstractController
                 continue;
             }
 
+            if ($topic->visibility !== 'public') {
+                $recipient = $this->userRepository->findActiveById($followerId);
+                if ($recipient === null || $this->feedRepository->findById($topicId, $recipient) === null) {
+                    continue;
+                }
+            }
             try {
                 $this->notifications->notify(new Notification(
                     recipientUserId: $followerId,

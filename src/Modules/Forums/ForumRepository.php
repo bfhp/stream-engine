@@ -36,13 +36,8 @@ final class ForumRepository
      * convention - a topic's own opening message counts as a post too),
      * summed across every topic in the forum.
      *
-     * No ACL/visibility filtering here: forum topics and their replies are
-     * always public today - there's no membership-gated sub-forum feature,
-     * unlike blog/community posts which use container_id for that. Same
-     * reasoning FeedRepository::countCommentsForParents() documents for
-     * skipping ACL on comments (always inserted 'public'), extended here to
-     * topics too since Forums has no private-post path at all yet. If that
-     * changes, this needs revisiting alongside whatever grants the access.
+     * Callers authorize section IDs with the shared ACL before aggregating.
+     * Topics share their section's audience and replies inherit topic access.
      *
      * @param int[] $forumIds
      * @return array<int, array{topics: int, posts: int}> keyed by forum id;
@@ -101,8 +96,7 @@ final class ForumRepository
      * back to the top, same as everywhere else this kind of listing shows
      * up).
      *
-     * No ACL/visibility filtering, same reasoning as countTopicsAndPosts()
-     * above - forums have no private-post path today.
+     * Requires authorized section IDs, as documented by countTopicsAndPosts().
      *
      * @param int[] $forumIds
      * @return array<int, array{topicId: int, ownerId: int, createdAt: int}>
@@ -216,8 +210,7 @@ final class ForumRepository
      * bumped by, so the caller can build the same "last post" preview
      * forums.list shows per-forum, but per-topic here.
      *
-     * No ACL/visibility filtering, same reasoning as the rest of this class
-     * - forum topics/replies are always public today.
+     * The controller authorizes the section before requesting its topics.
      *
      * @return array{
      *     topicIds: int[],
@@ -322,7 +315,7 @@ final class ForumRepository
      * thousands), so a single IN(...) list is fine; revisit if that stops
      * being true.
      *
-     * No ACL filtering, same reasoning as the rest of this class.
+     * Callers must authorize section/topic IDs before requesting aggregates.
      *
      * @param int|int[]|null $forumId
      */
@@ -396,7 +389,7 @@ final class ForumRepository
      * double-count anyone active in more than one). No chunking, same
      * reasoning as countPostsSince() above.
      *
-     * No ACL filtering, same reasoning as the rest of this class.
+     * Callers must authorize section/topic IDs before requesting aggregates.
      *
      * @param int|int[] $forumId
      */
@@ -437,7 +430,7 @@ final class ForumRepository
      * (see ForumsController::showTopicViewPage()'s own docblock for how the
      * opening post is folded into the same page-size window as replies).
      *
-     * No ACL filtering, same reasoning as the rest of this class.
+     * Callers must authorize section/topic IDs before requesting aggregates.
      */
     public function countReplies(int $topicId): int
     {
@@ -484,7 +477,7 @@ final class ForumRepository
      * (ForumsController::showTopicViewPage()) is responsible for folding the
      * topic's own opening post into page 1 of the combined post numbering.
      *
-     * No ACL filtering, same reasoning as the rest of this class.
+     * Callers must authorize section/topic IDs before requesting aggregates.
      *
      * @return int[] comment feed ids, oldest first
      */
@@ -547,7 +540,7 @@ final class ForumRepository
      * findLastActivity()'s per-forum single row, just per-topic and
      * returning several ids instead of one.
      *
-     * No ACL filtering, same reasoning as the rest of this class.
+     * Callers must authorize section/topic IDs before requesting aggregates.
      *
      * @return array{ids: int[], total: int}
      */
@@ -596,19 +589,22 @@ final class ForumRepository
      * `type IN ('forum-post', 'comment')` count would double-count a user's
      * other feed comments as if they were forum posts).
      *
-     * No ACL filtering, same reasoning as the rest of this class.
+     * Callers must authorize section/topic IDs before requesting aggregates.
      *
      * @param int[] $userIds
+     * @param int[] $forumIds Readable section IDs, resolved using the shared ACL.
      * @return array<int, int> keyed by user id; users with no forum posts are absent
      */
-    public function countUserForumPosts(array $userIds): array
+    public function countUserForumPosts(array $userIds, array $forumIds): array
     {
         $userIds = array_values(array_unique(array_map('intval', $userIds)));
 
-        if ($userIds === []) {
+        $forumIds = array_values(array_unique(array_map('intval', $forumIds)));
+        if ($userIds === [] || $forumIds === []) {
             return [];
         }
 
+        $forumPlaceholders = implode(', ', array_fill(0, count($forumIds), '?'));
         $result = [];
 
         foreach (array_chunk($userIds, self::IN_CHUNK_SIZE) as $chunk) {
@@ -618,17 +614,17 @@ final class ForumRepository
                 "
                 SELECT owner_id, COUNT(*) AS total
                 FROM (
-                    SELECT owner_id FROM feeds WHERE type = 'forum-post' AND owner_id IN ($placeholders)
+                    SELECT owner_id FROM feeds WHERE type = 'forum-post' AND owner_id IN ($placeholders) AND parent_id IN ($forumPlaceholders)
                     UNION ALL
                     SELECT c.owner_id
                     FROM feeds c
                     WHERE c.type = 'comment'
                       AND c.owner_id IN ($placeholders)
-                      AND EXISTS (SELECT 1 FROM feeds t WHERE t.id = c.parent_id AND t.type = 'forum-post')
+                      AND EXISTS (SELECT 1 FROM feeds t WHERE t.id = c.parent_id AND t.type = 'forum-post' AND t.parent_id IN ($forumPlaceholders))
                 ) posts
                 GROUP BY owner_id
                 ",
-                array_merge($chunk, $chunk)
+                array_merge($chunk, $forumIds, $chunk, $forumIds)
             );
 
             foreach ($rows as $row) {
@@ -651,7 +647,7 @@ final class ForumRepository
      * returns every topic so a caller can count how many are actually
      * unread, not just check the newest one.
      *
-     * No ACL filtering, same reasoning as the rest of this class.
+     * Callers must authorize section/topic IDs before requesting aggregates.
      *
      * @param int[] $forumIds
      * @return array<int, array{topicId: int, forumId: int, lastActivityAt: int}>
@@ -754,10 +750,8 @@ final class ForumRepository
     /**
      * Uses index: feeds_type_created_at_id_index (type, created_at, id) on feeds - type = 'forum-post' is an index-only scan, id already covered.
      *
-     * Every topic id across every forum and subforum - the topic-id source
-     * for "mark the whole forum read" (no specific forum to scope to).
-     *
-     * No ACL filtering, same reasoning as the rest of this class.
+     * Unfiltered topic IDs. User-facing operations use findTopicIdsForForums()
+     * with section IDs already authorized by the shared ACL instead.
      *
      * @return int[] forum-post ids, unordered
      */
