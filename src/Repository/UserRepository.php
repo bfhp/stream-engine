@@ -533,6 +533,14 @@ final readonly class UserRepository
      *
      * Uses index: PRIMARY(id)
      */
+    public function updatePasswordHash(int $id, string $passwordHash): void
+    {
+        $this->db->execute(
+            'UPDATE users SET password_hash = ? WHERE id = ?',
+            [$passwordHash, $id]
+        );
+    }
+
     public function updateTimezone(int $id, string $timezone): void
     {
         $this->db->execute(

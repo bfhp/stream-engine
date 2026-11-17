@@ -15,6 +15,12 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 - Forum section access through the existing container membership ACL, with
   atomic propagation to topics and inherited access for new discussions.
 
+- Site extensions: a site can change selected platform behavior with classes
+  extending `StreamEngine\Extension\Extension`, discovered from the Composer
+  classmap and built with the same services as module controllers. First
+  extension point: `verifyPasswordFallback`, which lets a site accept a
+  password the engine's hash rejected.
+
 ### Fixed
 
 - Admin Feed list filters, sorting and limit now persist in the URL when

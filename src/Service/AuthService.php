@@ -10,6 +10,7 @@ use Exception;
 use Random\RandomException;
 use RuntimeException;
 use StreamEngine\Domain\User;
+use StreamEngine\Extension\ExtensionRegistry;
 use StreamEngine\Repository\UserRepository;
 use StreamEngine\Repository\UserSessionRepository;
 
@@ -22,6 +23,7 @@ final class AuthService
         private readonly UserRepository        $userRepository,
         private readonly UserSessionRepository $sessionRepository,
         private readonly ?AuthenticationRateLimiter $rateLimiter = null,
+        private readonly ?ExtensionRegistry $extensions = null,
     ) {
 
     }
@@ -29,7 +31,7 @@ final class AuthService
     /**
      * @throws Exception
      */
-    public function login(string $email, string $password): bool
+    public function login(string $email, #[\SensitiveParameter] string $password): bool
     {
         if ($this->rateLimiter === null) {
             throw new RuntimeException('Authentication rate limiter is not configured');
@@ -51,7 +53,8 @@ final class AuthService
             return false;
         }
 
-        if (!password_verify($password, $row['password_hash'])) {
+        if (!password_verify($password, $row['password_hash'])
+            && !$this->verifyPasswordFallback((int) $row['id'], $email, $password)) {
             return false;
         }
 
@@ -59,6 +62,32 @@ final class AuthService
         $this->createSession((int)$row['id']);
 
         return true;
+    }
+
+    /**
+     * Asks the site's extensions to accept a password the engine's hash
+     * rejected. Only true counts as acceptance: null, false, or a failing
+     * extension keeps the login refused. Storing the password is the
+     * extension's decision.
+     */
+    private function verifyPasswordFallback(int $userId, string $email, #[\SensitiveParameter] string $password): bool
+    {
+        if ($this->extensions === null) {
+            return false;
+        }
+
+        $accepted = $this->extensions->verifyPasswordFallback(
+            $userId,
+            $email,
+            $password,
+            $this->clientIp(),
+        ) === true;
+
+        if ($accepted) {
+            error_log("auth.fallback_accepted user=$userId");
+        }
+
+        return $accepted;
     }
 
     /**

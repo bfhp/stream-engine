@@ -1,6 +1,6 @@
 # Extensions Contract and Development Plan
 
-Date: November 18, 2026. Status: design before implementation.
+Date: November 18, 2026. Status: implemented (sections 6.1–6.4).
 
 Sites built on Stream Engine need to change the behavior of selected platform
 operations without forking the engine. The first case is a site that must
@@ -37,20 +37,19 @@ actually needs one.
 namespace MySite\Extensions;
 
 use StreamEngine\Extension\Extension;
-use StreamEngine\Extension\Auth\PasswordFallbackRequest;
 use StreamEngine\Repository\UserRepository;
 
 final class LegacyAuth extends Extension
 {
     public function __construct(private readonly UserRepository $users) {}
 
-    public function verifyPasswordFallback(PasswordFallbackRequest $request): ?bool
+    public function verifyPasswordFallback(int $userId, string $email, #[\SensitiveParameter] string $password, string $clientIp): ?bool
     {
-        if (!$this->checkInLegacySystem($request->email, $request->password)) {
+        if (!$this->checkInLegacySystem($email, $password)) {
             return null;
         }
 
-        $this->users->updatePasswordHash($request->userId, password_hash($request->password, PASSWORD_DEFAULT));
+        $this->users->updatePasswordHash($userId, password_hash($password, PASSWORD_DEFAULT));
 
         return true;
     }
@@ -97,8 +96,9 @@ request
 
 ## 4. Adding a Point
 
-1. Choose a method name and arguments. Prefer one readonly argument object, so
-   fields can be added later; mark secrets with `#[\SensitiveParameter]`.
+1. Choose a method name and plain arguments; mark secrets with
+   `#[\SensitiveParameter]`. A new argument of an existing point goes last and
+   has a default value.
 2. Call it from platform code through `ExtensionRegistry` and handle `null` as
    "keep the default behavior".
 3. Add the point to the table in section 5: when it is called, what is already
@@ -112,13 +112,13 @@ sites and goes to the CHANGELOG.
 
 | Method | Called from | Arguments | Non-null result |
 | --- | --- | --- | --- |
-| `verifyPasswordFallback` | `AuthService::login()`, only for an existing, active, non-system user whose password did not match the engine's hash, after the attempt was counted by the rate limiter | `PasswordFallbackRequest` (`userId`, `email`, `password`, `clientIp`) | `true` logs the user in; `false` refuses without asking later extensions |
+| `verifyPasswordFallback` | `AuthService::login()`, only for an existing, active, non-system user whose password did not match the engine's hash, after the attempt was counted by the rate limiter | `int $userId, string $email, string $password, string $clientIp` | `true` logs the user in; `false` refuses without asking later extensions |
 
 For `verifyPasswordFallback` the extension decides whether and how to store
 the password in the engine, for example with
 `UserRepository::updatePasswordHash()`. It must not call
 `AuthService::login()`. The engine logs
-`auth.fallback_accepted user=<id> extension=<class>` on `true`. Web and API
+`auth.fallback_accepted user=<id>` on `true`. Web and API
 logins both go through `AuthService::login()`.
 
 ## 6. Development Sequence
@@ -127,9 +127,7 @@ logins both go through `AuthService::login()`.
    passes unchanged.
 2. Add `Extension` and `ExtensionRegistry`; collect extension classes in the
    `ModuleRegistry` classmap pass; wire and bind in `StreamEngine::__construct()`.
-3. Add `PasswordFallbackRequest`, `UserRepository::updatePasswordHash()` (also
-   used by `UserService::resetPasswordByToken()` instead of its inline
-   `UPDATE`), and the `AuthService` change.
+3. Add `UserRepository::updatePasswordHash()` and the `AuthService` change.
 4. Wiki page section on extensions in `Developer-Modules.md`, including the
    table from section 5.
 
@@ -144,3 +142,5 @@ exhausted, `true` creates a session, an exception never logs the user in.
   extension (pipeline), added as separate registry methods.
 - Events for reacting to completed operations.
 - Listing extensions in the administration system health check.
+- Replacing the inline password `UPDATE`s in `UserService` with
+  `UserRepository::updatePasswordHash()`.
