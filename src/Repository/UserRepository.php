@@ -26,6 +26,14 @@ final readonly class UserRepository
         return array_map(static fn (array $row): int => (int) $row['id'], $rows);
     }
 
+    public function isActiveAdministrator(int $id): bool
+    {
+        return $this->db->fetchOne(
+            "SELECT id FROM users WHERE id = ? AND role = 'admin' AND is_active = 1",
+            [$id],
+        ) !== null;
+    }
+
     /**
      * Admin-only account catalogue. Unlike the public user list this includes
      * inactive accounts and private identifiers, so it must only be exposed by

@@ -8,20 +8,9 @@ use Throwable;
 
 final readonly class InstallationPreflight
 {
-    private const array REQUIRED_EXTENSIONS = [
-        'curl',
-        'dom',
-        'fileinfo',
-        'gd',
-        'intl',
-        'libxml',
-        'mbstring',
-        'memcached',
-        'pdo',
-        'pdo_mysql',
-        'simplexml',
-        'xmlreader',
-        'zip',
+    public const array REQUIRED_EXTENSIONS = [
+        'curl', 'dom', 'fileinfo', 'gd', 'intl', 'libxml', 'mbstring',
+        'memcached', 'pdo', 'pdo_mysql', 'simplexml', 'xmlreader', 'zip',
     ];
 
     /** @param array<string, mixed> $currentEnvironment */

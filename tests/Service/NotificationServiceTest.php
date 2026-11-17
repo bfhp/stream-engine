@@ -30,6 +30,24 @@ use Tests\Support\FakePdoDatabase;
 
 final class NotificationServiceTest extends TestCase
 {
+    public function testHealthNotificationIsCancelledAfterAdministratorLosesAccess(): void
+    {
+        $db = $this->createStub(PdoDatabase::class);
+        $db->method('fetchOne')->willReturn(null);
+        $db->method('execute')->willReturn(0);
+        $service = new NotificationService(
+            (new ReflectionClass(MessageService::class))->newInstanceWithoutConstructor(),
+            new NotificationDeliveryRepository($db), new NotificationPreferenceRepository($db),
+            new UserRepository($db),
+            (new ReflectionClass(MailService::class))->newInstanceWithoutConstructor(),
+            new \StreamEngine\Core\TranslationManager('en'), new Config([]),
+        );
+        $visible = new \ReflectionMethod($service, 'deliveryIsStillVisible');
+        self::assertFalse($visible->invoke($service, [
+            'recipientUserId' => 9, 'notificationType' => 'system.health', 'payload' => [],
+        ]));
+    }
+
     public static function unreadDigestStates(): array
     {
         return [

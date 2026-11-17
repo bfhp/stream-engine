@@ -26,6 +26,16 @@ use StreamEngine\Service\SettingsService;
  */
 final class SettingsServiceTest extends TestCase
 {
+    public function testDiagnosticSnapshotDoesNotChangePublicSettingsTimestamp(): void
+    {
+        $service = $this->makeService([
+            'site_name' => ['Site', 100],
+            'system.health' => ['{"cron":{}}', 200],
+        ]);
+        self::assertSame(100, $service->lastModified());
+        self::assertSame('missing', $service->getString('system.health', 'missing'));
+    }
+
     public function testCronModeDefaultsToOsAndRejectsCorruptStoredValues(): void
     {
         self::assertSame('os', $this->makeService()->cronMode());

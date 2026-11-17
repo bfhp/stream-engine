@@ -20,6 +20,7 @@ import { trans } from "../shared/i18n";
 
 const FileBrowser = lazy(() => import("./pages/FileBrowser"));
 const Cron = lazy(() => import("./pages/Cron"));
+const Health = lazy(() => import("./pages/Health"));
 
 type AppProps = {
     moduleAdminPages: AdminRoute[];
@@ -49,6 +50,9 @@ export default function App({ moduleAdminPages }: AppProps) {
                 } />
                 <Route path="/cron" element={
                     <Suspense fallback={<p>{trans("js.admin.loading")}</p>}><Cron /></Suspense>
+                } />
+                <Route path="/health" element={
+                    <Suspense fallback={<p>{trans("js.admin.loading")}</p>}><Health /></Suspense>
                 } />
                 <Route path="/uploads" element={<Navigate replace to="/file-browser" />} />
                 <Route path="/users" element={<Users />} />

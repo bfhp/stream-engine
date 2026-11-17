@@ -44,6 +44,7 @@ const CORE_NAV: NavItem[] = [
     { path: "/widgets", labelKey: "js.admin.nav.widgets" },
     { path: "/file-browser", labelKey: "js.admin.nav.file_browser" },
     { path: "/cron", labelKey: "js.admin.dashboard.cron_tasks" },
+    { path: "/health", labelKey: "js.admin.health.title" },
 ];
 
 const USERS_NAV: NavItem = { path: "/users", labelKey: "js.admin.nav.users" };

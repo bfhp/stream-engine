@@ -113,7 +113,8 @@ final readonly class NotificationService
             $preferences['messenger']['delivery'] ?? null,
             $notification->type,
         );
-        $emailDelivery = $this->emailDelivery($preferences['email']['delivery'] ?? null);
+        $emailDelivery = $this->emailDelivery($preferences['email']['delivery']
+            ?? ($notification->type === 'system.health' ? 'instant' : null));
 
         if ($messengerDelivery === 'instant') {
             $this->deliveries->create(
@@ -605,6 +606,10 @@ final readonly class NotificationService
     /** @param array{recipientUserId:int, notificationType:string, payload:array} $delivery */
     private function deliveryIsStillVisible(array $delivery): bool
     {
+        if ($delivery['notificationType'] === 'system.health') {
+            // Queued diagnostics must not reach an account after demotion.
+            return $this->users->isActiveAdministrator($delivery['recipientUserId']);
+        }
         if ($delivery['notificationType'] !== 'user.mention' || $this->mentionService === null) {
             return true;
         }

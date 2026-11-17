@@ -17,7 +17,7 @@ describe("admin module pages", () => {
         expect(() => collectModulePages({ a: { default: [page("/sync"), page("/sync")] } })).toThrow(/Duplicate/);
         for (const path of [
             "/feeds", "/feeds/new", "/pages", "/menus", "/settings", "/themes", "/widgets",
-            "/file-browser", "/uploads", "/users",
+            "/file-browser", "/uploads", "/users", "/health", "/health/details",
         ]) {
             expect(() => collectModulePages({ a: { default: [page(path)] } })).toThrow(/reserved/);
         }

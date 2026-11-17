@@ -35,6 +35,50 @@ require_once __DIR__.'/../../Support/ControllerFactoryFixtures.php';
 
 final class AdminControllerTest extends TestCase
 {
+    public function testRegistersOneSystemDiagnosticsTask(): void
+    {
+        $registry = new CronRegistry();
+        AdminController::registerCron($registry);
+        self::assertSame([
+            'system:health' => ['task' => 'system:health', 'controller' => 'Admin', 'interval' => 300],
+        ], $registry->all());
+    }
+
+    public function testHealthRunRejectsMissingCsrfBeforeStartingProbe(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage((new TranslationManager('en'))->trans('security.csrf_missing'));
+        $this->makeModule()->callApi($this->makeApiPage('admin.health-run', ['POST']), ['id' => 'smtp']);
+    }
+
+    public function testHealthResultsAreNotAvailableToNonAdministrators(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $this->expectException(ForbiddenException::class);
+        $this->makeModule(isAdmin: false)->callApi($this->makeApiPage('admin.health', ['GET']));
+    }
+
+    public function testHealthRoutesAreAdminOnlyAndRunRequiresPost(): void
+    {
+        $tree = new PageTree([
+            new Page(1, null, '', 'Root', null, null, null, null, ['GET'], 'html', AccessService::ACCESS_PUBLIC),
+            Page::api(id: 2, parentId: 1, pattern: 'api', requestMethods: ['GET']),
+            Page::api(id: 3, parentId: 2, pattern: 'v1', requestMethods: ['GET']),
+        ]);
+        AdminController::registerApi(3, $tree);
+        $router = new Router($tree);
+        $list = $router->resolve('/api/v1/admin/health');
+        $run = $router->resolve('/api/v1/admin/health/smtp/run');
+        self::assertSame('admin.health', $list['page']->action);
+        self::assertSame(AccessService::ACCESS_ADMIN, $list['page']->accessRule);
+        self::assertSame(['GET'], $list['page']->requestMethods);
+        self::assertSame('admin.health-run', $run['page']->action);
+        self::assertSame(AccessService::ACCESS_ADMIN, $run['page']->accessRule);
+        self::assertSame(['POST'], $run['page']->requestMethods);
+        self::assertSame(['id' => 'smtp'], $run['params']);
+    }
+
     private array $writes = [];
 
     protected function tearDown(): void
@@ -1692,6 +1736,15 @@ final class AdminControllerTest extends TestCase
         }
     }
 
+    public function testDiagnosticSnapshotCannotBeEditedAsAGeneralSetting(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode(['key' => 'system.health', 'value' => '{}']));
+        $this->expectException(ValidationException::class);
+        $this->makeModule()->callApi($this->makeApiPage('admin.settings', ['GET', 'POST']));
+    }
+
     public function testAnUnsupportedInterfaceLocaleIsRefused(): void
     {
         $module = $this->makeModule();
@@ -2263,6 +2316,7 @@ final class AdminControllerTest extends TestCase
         $rows = [
             ['tasks' => 4, 'last_run' => 1_700_000_000, 'stale_locks' => 1],
             ['pending' => 6, 'failed' => 2],
+            ['setting_value' => '{}'],
         ];
         $index = 0;
         $db->method('fetchOne')->willReturnCallback(static function () use (&$rows, &$index): array {

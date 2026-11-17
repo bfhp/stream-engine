@@ -36,12 +36,23 @@ use StreamEngine\Repository\UserRepository;
 use StreamEngine\Service\AccessService;
 use StreamEngine\Service\CronStatusService;
 use StreamEngine\Service\SettingsService;
+use StreamEngine\Service\NotificationService;
+use StreamEngine\Core\Installation\InstallationPreflight;
+use StreamEngine\Core\Migrations\MigrationRunner;
+use StreamEngine\Domain\Notification;
+use Memcached;
+use PHPMailer\PHPMailer\PHPMailer;
 use StreamEngine\Service\ThemeService;
 use StreamEngine\Service\UploadService;
 use StreamEngine\View\ViewModel;
 
 class AdminController extends AbstractController implements DashboardCardProviderInterface
 {
+    private const array HEALTH_CHECKS = ['components', 'database', 'migrations', 'cache', 'smtp',
+        'storage', 'uploads', 'temporary', 'twig', 'disk'];
+    private const int HEALTH_INTERVAL = 300;
+    private const int HEALTH_STALE_AFTER = 900;
+
     private const int SITE_ICON_MAX_SIZE = 2 * 1024 * 1024;
     private const int HEADER_LOGO_MAX_SIZE = 2 * 1024 * 1024;
 
@@ -228,10 +239,26 @@ class AdminController extends AbstractController implements DashboardCardProvide
                     COALESCE(SUM(status = 'failed'), 0) AS failed
              FROM notification_deliveries"
         ) ?? [];
+        $healthRows = (self::healthResults($db)['cron'] ?? []);
+        $known = array_fill_keys(self::HEALTH_CHECKS, true);
+        $problems = 0;
+        $fresh = 0;
+        $unconfigured = 0;
+        foreach ($healthRows as $result) {
+            if (! isset($known[$result['check_id'] ?? ''])) {
+                continue;
+            }
+            $problems += in_array($result['status'], ['warning', 'error'], true) ? 1 : 0;
+            $unconfigured += $result['status'] === 'unconfigured' ? 1 : 0;
+            $fresh += time() - (int) $result['checked_at'] <= self::HEALTH_STALE_AFTER ? 1 : 0;
+        }
 
         return [
             'status' => 'ready',
             'data' => [
+                ['label' => 'js.admin.health.problems', 'value' => $problems, 'href' => '#/health'],
+                ['label' => 'js.admin.health.unchecked', 'value' => count($known) - $fresh, 'href' => '#/health'],
+                ['label' => 'js.admin.health.unconfigured', 'value' => $unconfigured, 'href' => '#/health'],
                 ['label' => 'js.admin.dashboard.cron_tasks', 'value' => (int) ($cron['tasks'] ?? 0), 'href' => '#/cron'],
                 [
                     'label' => 'js.admin.dashboard.last_cron',
@@ -291,6 +318,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
         ?SettingsService $settings = null,
         ?CronRegistry $cronRegistry = null,
         ?CronTrigger $cronTrigger = null,
+        private readonly ?NotificationService $notifications = null,
     ) {
         parent::__construct($db, $context);
         $this->pageRepository = new PageRepository($db);
@@ -343,6 +371,12 @@ class AdminController extends AbstractController implements DashboardCardProvide
         }
 
         switch ($page->action) {
+            case 'admin.health':
+                $this->handleHealthRequest();
+                break;
+            case 'admin.health-run':
+                $this->handleHealthRunRequest((string) ($args['id'] ?? ''));
+                break;
             case 'admin.pages':
                 $this->handlePagesRequest();
                 break;
@@ -467,6 +501,22 @@ class AdminController extends AbstractController implements DashboardCardProvide
                 accessRule: AccessService::ACCESS_ADMIN,
             )
         );
+
+        $healthPageId = $pageTree->getMaxPageId();
+        $pageTree->add(Page::api(
+            id: $healthPageId, parentId: $adminApiPageId, pattern: 'health',
+            requestMethods: ['GET'], action: 'admin.health', accessRule: AccessService::ACCESS_ADMIN,
+        ));
+        $healthCheckPageId = $pageTree->getMaxPageId();
+        $pageTree->add(Page::api(
+            id: $healthCheckPageId, parentId: $healthPageId, pattern: '{id:[a-z]+}',
+            requestMethods: ['GET'], accessRule: AccessService::ACCESS_ADMIN,
+        ));
+        $healthRunPageId = $pageTree->getMaxPageId();
+        $pageTree->add(Page::api(
+            id: $healthRunPageId, parentId: $healthCheckPageId, pattern: 'run',
+            requestMethods: ['POST'], action: 'admin.health-run', accessRule: AccessService::ACCESS_ADMIN,
+        ));
 
         $cronPageId = $pageTree->getMaxPageId();
         $pageTree->add(
@@ -672,6 +722,31 @@ class AdminController extends AbstractController implements DashboardCardProvide
             )
         );
 
+    }
+
+    public static function registerCron(CronRegistry $cron): void
+    {
+        $cron->add('system:health', 'Admin', self::HEALTH_INTERVAL);
+    }
+
+    public function runCron(string $task): void
+    {
+        match ($task) {
+            'system:health' => $this->runHealthChecks(),
+        };
+    }
+
+    private function handleHealthRequest(): void
+    {
+        header('Cache-Control: no-store');
+        echo Formatter::json($this->healthPayload());
+    }
+
+    private function handleHealthRunRequest(string $id): void
+    {
+        Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
+        $this->runHealthCheck($id, 'web');
+        $this->handleHealthRequest();
     }
 
     private function handleCronRequest(): void
@@ -1281,7 +1356,8 @@ class AdminController extends AbstractController implements DashboardCardProvide
         echo Formatter::json([
             'data' => array_values(array_filter(
                 $this->settingsRepository->findAllForAdmin(),
-                static fn (array $setting): bool => ! str_starts_with($setting['key'], 'registration.'),
+                static fn (array $setting): bool => ! str_starts_with($setting['key'], 'registration.')
+                    && $setting['key'] !== 'system.health',
             )),
             'siteIcon' => $this->siteIconPayload(),
             'headerLogo' => $this->headerLogoPayload(),
@@ -2263,6 +2339,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
                 SettingsService::HEADER_LOGO_KEY,
             ], true)
             || str_starts_with($key, 'registration.')
+            || $key === 'system.health'
             || str_starts_with($key, 'theme.')) {
             throw new ValidationException($this->tm->trans('admin.error.setting_key'));
         }
@@ -2295,5 +2372,329 @@ class AdminController extends AbstractController implements DashboardCardProvide
             && ! in_array($value, SettingsService::REGISTRATION_CAPTCHA_PROVIDERS, true)) {
             throw new ValidationException($this->tm->trans('admin.error.invalid_captcha_provider'));
         }
+    }
+
+    private static function healthResults(PdoDatabase $db): array
+    {
+        return json_decode((new SettingsRepository($db))->get('system.health') ?? '{}', true, flags: \JSON_THROW_ON_ERROR);
+    }
+
+    private function healthPayload(?int $now = null): array
+    {
+        $now ??= time();
+        $rows = [];
+        foreach (self::healthResults($this->db) as $contextResults) {
+            foreach ($contextResults as $row) {
+                $rows[$row['check_id']][$row['context']] = [
+                    'status' => $row['status'], 'message' => $row['message'],
+                    'checkedAt' => (int) $row['checked_at'], 'durationMs' => (int) $row['duration_ms'],
+                    'lastSucceededAt' => $row['last_succeeded_at'] === null ? null : (int) $row['last_succeeded_at'],
+                    'consecutiveFailures' => (int) $row['consecutive_failures'],
+                    'stale' => $now - (int) $row['checked_at'] > self::HEALTH_STALE_AFTER,
+            ];
+            }
+        }
+
+        return ['interval' => self::HEALTH_INTERVAL, 'data' => array_map(fn (string $id): array => [
+            'id' => $id, 'label' => $this->tm->trans('health.check.'.$id),
+            'cron' => $rows[$id]['cron'] ?? null, 'web' => $rows[$id]['web'] ?? null,
+        ], self::HEALTH_CHECKS)];
+    }
+
+    private function runHealthChecks(): void
+    {
+        $failed = false;
+        foreach (self::HEALTH_CHECKS as $id) {
+            try {
+                $this->runHealthCheck($id, 'cron');
+            } catch (Throwable) {
+                // Continue independent checks even if persisting one result failed.
+                $failed = true;
+            }
+        }
+        if ($failed) {
+            throw new \RuntimeException('Some system health results could not be saved.');
+        }
+    }
+
+    private function runHealthCheck(string $id, string $context): void
+    {
+        if (! in_array($id, self::HEALTH_CHECKS, true)) {
+            throw new NotFoundException('Health check not found.');
+        }
+        // Cron and manual checks update the same JSON value.
+        $lock = 'health:'.sha1($this->config->dbName());
+        if ((int) ($this->db->fetchOne('SELECT GET_LOCK(?, 0) AS acquired', [$lock])['acquired'] ?? 0) !== 1) {
+            throw new ValidationException('Health check is already running.', 409, 'conflict');
+        }
+        try {
+            $start = microtime(true);
+            try {
+                $result = $this->healthProbe($id);
+            } catch (Throwable) {
+                // Exception messages may contain credentials, paths or server banners.
+                $result = ['status' => 'error', 'message' => $this->tm->trans('health.message.'.$id.'_failed')];
+                if (in_array($id, ['storage', 'uploads', 'temporary', 'twig'], true)) {
+                    $result['message'] = $this->tm->trans('health.message.directory_failed');
+                }
+            }
+            $duration = max(0, (int) round((microtime(true) - $start) * 1000));
+            $this->db->begin();
+            try {
+                $snapshot = self::healthResults($this->db);
+                $previous = $snapshot[$context][$id] ?? null;
+                $now = time();
+                $bad = in_array($result['status'], ['warning', 'error'], true);
+                // A long gap cannot confirm that two failures are consecutive.
+                $recent = $previous !== null && $now - (int) $previous['checked_at'] <= self::HEALTH_STALE_AFTER;
+                $failures = $bad ? ($recent ? (int) $previous['consecutive_failures'] : 0) + 1 : 0;
+                $incident = $previous['incident_id'] ?? null;
+                $transition = null;
+                if ($context === 'cron' && $bad && $failures >= 2 && $incident === null) {
+                    $incident = bin2hex(random_bytes(16));
+                    $transition = 'problem';
+                } elseif ($context === 'cron' && $result['status'] === 'ok' && $incident !== null) {
+                    $transition = 'recovered';
+                }
+                if ($transition !== null) {
+                    $this->healthNotify($id, $transition, $incident, $result['message']);
+                }
+                $snapshot[$context][$id] = [
+                    'check_id' => $id, 'context' => $context,
+                    'status' => $result['status'], 'message' => $result['message'],
+                    'checked_at' => $now, 'duration_ms' => $duration,
+                    'last_succeeded_at' => $result['status'] === 'ok' ? $now : ($previous['last_succeeded_at'] ?? null),
+                    'consecutive_failures' => $failures,
+                    'incident_id' => $transition === 'recovered' ? null : $incident,
+                ];
+                $this->settingsRepository->set('system.health', json_encode($snapshot, \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_UNICODE));
+                $this->db->commit();
+            } catch (Throwable $error) {
+                $this->db->rollback();
+                throw $error;
+            }
+        } finally {
+            $this->db->fetchOne('SELECT RELEASE_LOCK(?)', [$lock]);
+        }
+    }
+
+    private function healthNotify(string $id, string $transition, string $incident, string $message): void
+    {
+        $text = $this->tm->trans('health.notification.'.$transition, [
+            'check' => $this->tm->trans('health.check.'.$id), 'message' => $message,
+        ]);
+        foreach ($this->userRepository->findAdministratorIds() as $userId) {
+            $this->notifications->notify(new Notification(
+                recipientUserId: $userId,
+                type: 'system.health',
+                messengerText: $text,
+                payload: ['contentUrl' => ($this->config->siteUrl() ?? '').'/admin/#/health'],
+                deduplicationKey: 'health:'.$incident.':'.$transition,
+            ));
+        }
+    }
+
+    /** @return array{status:string,message:string} */
+    protected function healthProbe(string $id): array
+    {
+        return match ($id) {
+            'components' => $this->healthComponents(),
+            'database' => $this->healthDatabase(),
+            'migrations' => $this->healthMigrations(),
+            'cache' => $this->healthCache(),
+            'smtp' => $this->healthSmtp(),
+            'storage', 'uploads', 'temporary' => $this->healthDirectory($this->healthPaths()[$id]),
+            'twig' => $this->healthTwigDirectory(),
+            'disk' => $this->healthDisk(),
+            default => throw new RuntimeException('Unknown health check'),
+        };
+    }
+
+    private function healthResult(string $status, string $key, array $params = []): array
+    {
+        return ['status' => $status, 'message' => $this->tm->trans('health.message.'.$key, $params)];
+    }
+
+    private function healthComponents(): array
+    {
+        $missing = array_values(array_filter(
+            InstallationPreflight::REQUIRED_EXTENSIONS,
+            static fn (string $extension): bool => ! extension_loaded($extension)
+        ));
+        foreach ([PHPMailer::class, \Twig\Environment::class, \HTMLPurifier::class,
+            \TijsVerkoyen\CssToInlineStyles\CssToInlineStyles::class, \getID3::class] as $class) {
+            if (! class_exists($class)) {
+                $missing[] = $class;
+            }
+        }
+        if (PHP_VERSION_ID < 80300 || PHP_VERSION_ID >= 90000) {
+            $missing[] = 'PHP ^8.3';
+        }
+
+        return $missing === [] ? $this->healthResult('ok', 'components_ok')
+            : $this->healthResult('error', 'components_missing', ['items' => implode(', ', $missing)]);
+    }
+
+    private function healthDatabase(): array
+    {
+        return (int) ($this->db->fetchOne('SELECT 1 AS health')['health'] ?? 0) === 1
+            ? $this->healthResult('ok', 'database_ok') : $this->healthResult('error', 'database_failed');
+    }
+
+    private function healthMigrations(): array
+    {
+        $engineRoot = dirname(__DIR__, 3);
+        $pending = (new MigrationRunner(
+            null,
+            [dirname(__DIR__, 3).'/migrations', $engineRoot.'/migrations'],
+            dirname(__DIR__, 3).'/storage/migrations.json'
+        ))->pending();
+
+        return $pending === [] ? $this->healthResult('ok', 'migrations_ok')
+            : $this->healthResult('warning', 'migrations_pending', ['count' => count($pending)]);
+    }
+
+    private function healthCache(): array
+    {
+        if (! class_exists(Memcached::class)) {
+            return $this->healthResult('error', 'cache_failed');
+        }
+        // A dedicated client must not silently use Cache's in-memory fallback.
+        $client = new Memcached();
+        $client->setOption(Memcached::OPT_CONNECT_TIMEOUT, 1000);
+        $client->setOption(Memcached::OPT_SEND_TIMEOUT, 1_000_000);
+        $client->setOption(Memcached::OPT_RECV_TIMEOUT, 1_000_000);
+        $client->setOption(Memcached::OPT_POLL_TIMEOUT, 1000);
+        $client->setOption(Memcached::OPT_RETRY_TIMEOUT, 0);
+        $client->addServer($this->config->cacheHost(), $this->config->cachePort());
+        $value = bin2hex(random_bytes(16));
+        $key = $this->config->cachePrefix().'health:'.$value;
+        try {
+            $ok = $client->set($key, $value, 30) && $client->get($key) === $value;
+            return $ok ? $this->healthResult('ok', 'cache_ok') : $this->healthResult('error', 'cache_failed');
+        } finally {
+            $client->delete($key);
+            $client->quit();
+        }
+    }
+
+    private function healthSmtp(): array
+    {
+        if (trim($this->config->smtpHost()) === '' || $this->config->smtpUsername() === ''
+            || $this->config->smtpPassword() === '') {
+            return $this->healthResult('unconfigured', 'smtp_unconfigured');
+        }
+        $mail = new PHPMailer(true);
+        $mail->isSMTP();
+        $mail->Host = $this->config->smtpHost();
+        $mail->Port = $this->config->smtpPort();
+        $mail->SMTPAuth = true;
+        $mail->Username = $this->config->smtpUsername();
+        $mail->Password = $this->config->smtpPassword();
+        $mail->SMTPSecure = $this->config->smtpEncryption();
+        $mail->Timeout = 5;
+        $mail->getSMTPInstance()->Timelimit = 5;
+        try {
+            return $mail->smtpConnect() ? $this->healthResult('ok', 'smtp_ok')
+                : $this->healthResult('error', 'smtp_failed');
+        } finally {
+            $mail->smtpClose();
+        }
+    }
+
+    private function healthPaths(): array
+    {
+        $paths = [
+            'storage' => dirname(__DIR__, 3).'/storage',
+            'uploads' => $this->config->uploadsPath(dirname(__DIR__, 3)),
+            'temporary' => $this->config->tempDir(),
+            'twig' => $this->config->twigCacheDir(),
+        ];
+        return array_map(fn (string $path): string => $path === '' || str_starts_with($path, '/')
+            ? $path : dirname(__DIR__, 3).'/'.$path, $paths);
+    }
+
+    private function healthDirectory(string $path): array
+    {
+        // Do not create missing application directories or fall back to /tmp.
+        if (! is_dir($path)) {
+            return $this->healthResult('error', 'directory_missing');
+        }
+        $file = rtrim($path, '/').'/.health-'.bin2hex(random_bytes(16));
+        $handle = @fopen($file, 'x+b');
+        if ($handle === false) {
+            return $this->healthResult('error', 'directory_failed');
+        }
+        $value = bin2hex(random_bytes(16));
+        $ok = false;
+        try {
+            $ok = fwrite($handle, $value) === strlen($value)
+                && fflush($handle) && rewind($handle) && stream_get_contents($handle) === $value;
+        } finally {
+            fclose($handle);
+            $removed = @unlink($file);
+        }
+
+        return $ok && $removed ? $this->healthResult('ok', 'directory_ok')
+            : $this->healthResult('error', 'directory_failed');
+    }
+
+    private function healthTwigDirectory(): array
+    {
+        $path = $this->healthPaths()['twig'];
+        if (is_dir($path)) {
+            return $this->healthDirectory($path);
+        }
+        // Twig creates its cache lazily. A fresh scheduler container may never
+        // render a web template, so test creation in the nearest existing parent.
+        $parent = $this->healthExistingDirectory($path);
+        if ($parent === null) {
+            return $this->healthResult('error', 'directory_failed');
+        }
+        $probe = rtrim($parent, '/').'/.health-dir-'.bin2hex(random_bytes(16));
+        if (! @mkdir($probe, 0775)) {
+            return $this->healthResult('error', 'directory_failed');
+        }
+        try {
+            $result = $this->healthDirectory($probe);
+        } finally {
+            $removed = @rmdir($probe);
+        }
+        return $removed ? $result : $this->healthResult('error', 'directory_failed');
+    }
+
+    private function healthExistingDirectory(string $path): ?string
+    {
+        while (! is_dir($path)) {
+            if ($path === '' || file_exists($path) || is_link($path)) {
+                return null;
+            }
+            $parent = dirname($path);
+            if ($parent === $path) {
+                return null;
+            }
+            $path = $parent;
+        }
+        return $path;
+    }
+
+    private function healthDisk(): array
+    {
+        $minimum = 100;
+        foreach (array_unique($this->healthPaths()) as $path) {
+            $existing = $this->healthExistingDirectory($path);
+            $free = $existing === null ? false : @disk_free_space($existing);
+            $total = $existing === null ? false : @disk_total_space($existing);
+            if ($free === false || $total === false || $total <= 0) {
+                return $this->healthResult('error', 'disk_failed');
+            }
+            $minimum = min($minimum, (int) floor($free / $total * 100));
+        }
+
+        return $this->healthResult(
+            $minimum < 5 ? 'error' : ($minimum < 10 ? 'warning' : 'ok'),
+            'disk_free',
+            ['percent' => $minimum]
+        );
     }
 }

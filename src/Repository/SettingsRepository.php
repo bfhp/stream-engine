@@ -28,6 +28,9 @@ final readonly class SettingsRepository
         $lastModified = 0;
 
         foreach ($rows as $row) {
+            if ($row['setting_key'] === 'system.health') {
+                continue;
+            }
             $data[$row['setting_key']] = $row['setting_value'];
             $lastModified = max($lastModified, (int)$row['updated_at']);
         }
@@ -36,6 +39,13 @@ final readonly class SettingsRepository
             'data' => $data,
             'lastModified' => $lastModified,
         ];
+    }
+
+    public function get(string $key): ?string
+    {
+        $row = $this->db->fetchOne('SELECT setting_value FROM settings WHERE setting_key = ?', [$key]);
+
+        return $row === null ? null : (string) $row['setting_value'];
     }
 
     /**
