@@ -205,9 +205,11 @@ layout used by the module template.
 ## Controller construction
 
 `ControllerFactory` resolves typed constructor arguments from the shared
-services supplied by the composition root. It also supplies the current
-`RequestContext` and the `ModuleRegistry`. Services are indexed by their
-concrete class, parent classes, and implemented interfaces.
+services supplied by the composition root, through `ServiceResolver`. It also
+supplies the current `RequestContext` and the `ModuleRegistry`. Services are
+indexed by their concrete class, parent classes, and implemented interfaces.
+Site extensions are constructed by the same resolver and can receive the same
+services, except `RequestContext`.
 
 Unknown required types and untyped required parameters fail construction.
 Default values are used only when no matching shared service exists. The

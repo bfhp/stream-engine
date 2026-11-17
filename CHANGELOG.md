@@ -19,7 +19,16 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
   extending `StreamEngine\Extension\Extension`, discovered from the Composer
   classmap and built with the same services as module controllers. First
   extension point: `verifyPasswordFallback`, which lets a site accept a
-  password the engine's hash rejected.
+  password the engine's hash rejected. Run `composer dump-autoload -o` after
+  adding, renaming, or removing an extension class.
+
+- `UserRepository::updatePasswordHash()` for storing a new password hash.
+
+### Changed
+
+- `ControllerFactory` delegates constructor resolution to the new
+  `ServiceResolver`, which also builds site extensions. Controller
+  construction behaves as before.
 
 ### Fixed
 
