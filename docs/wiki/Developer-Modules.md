@@ -459,67 +459,9 @@ contain executable provider code or database queries.
 
 ## Site extensions
 
-A module adds features; an extension changes how existing platform operations
-behave. A site writes a class that extends `StreamEngine\Extension\Extension`
-and defines public methods named after the extension points it handles:
-
-```php
-namespace MySite\Extensions;
-
-use StreamEngine\Extension\Extension;
-use StreamEngine\Repository\UserRepository;
-
-final class LegacyAuth extends Extension
-{
-    public function __construct(private readonly UserRepository $users)
-    {
-    }
-
-    public function verifyPasswordFallback(
-        int $userId,
-        string $email,
-        #[\SensitiveParameter] string $password,
-        string $clientIp,
-    ): ?bool {
-        if (! $this->checkInLegacySystem($email, $password)) {
-            return null;
-        }
-
-        $this->users->updatePasswordHash($userId, password_hash($password, PASSWORD_DEFAULT));
-
-        return true;
-    }
-}
-```
-
-- Discovery is the same as for controllers: any instantiable `Extension`
-  subclass in the Composer classmap is active. Run `composer dump-autoload -o`
-  after adding, renaming, or removing one.
-- The class is constructed on the first call of any extension point, with the
-  same shared services a controller can receive. `RequestContext` is not
-  available; data a point needs from the request is in its arguments.
-- For each point, extensions that define the method are called in class-name
-  order. The first result that is not `null` wins and later extensions are not
-  called. Return `null` to leave the outcome unchanged.
-- An exception thrown by an extension method is logged and treated as `null`.
-  Constructor failures are configuration errors and are not caught.
-- Extension code is trusted like module code.
-
-Available points:
-
-| Method | Called from | Non-null result |
-| --- | --- | --- |
-| `verifyPasswordFallback(int $userId, string $email, string $password, string $clientIp)` | `AuthService::login()` (web and API), only for an existing, active, non-system user whose password did not match the engine's hash, after the attempt was counted by the rate limiter | `true` logs the user in; `false` refuses without asking later extensions |
-
-Storing the password is the extension's decision. It must not call
-`AuthService::login()`.
-
-A test fixture that extends `Extension` must be excluded from the classmap
-(see `exclude-from-classmap` in `composer.json`) and loaded with
-`require_once`; otherwise it becomes active on a development site.
-
-The design and rules for adding new points are in
-[`docs/EXTENSIONS_CONTRACT.md`](https://github.com/bfhp/stream-engine/blob/main/docs/EXTENSIONS_CONTRACT.md).
+A module adds features. To change how an existing platform operation behaves
+on one site, such as accepting a password checked by the site's own code,
+write an extension instead: see [Extensions](https://github.com/bfhp/stream-engine/wiki/Developer-Extensions).
 
 ## Localization limitations
 
@@ -575,4 +517,4 @@ archive that state according to an explicit data-retention decision.
 - PHP unit/integration tests, Vitest, type checking, the production build, and
   the relevant manual workflow pass.
 
-[Back: Database and migrations](https://github.com/bfhp/stream-engine/wiki/Developer-Database-and-Migrations) · [Developer Guide](https://github.com/bfhp/stream-engine/wiki/Developer-Guide) · [Next: Pages and routing](https://github.com/bfhp/stream-engine/wiki/Developer-Pages-and-Routing)
+[Back: Database and migrations](https://github.com/bfhp/stream-engine/wiki/Developer-Database-and-Migrations) · [Developer Guide](https://github.com/bfhp/stream-engine/wiki/Developer-Guide) · [Next: Extensions](https://github.com/bfhp/stream-engine/wiki/Developer-Extensions)

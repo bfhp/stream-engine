@@ -62,6 +62,10 @@ final class BAnsweringExtension extends Extension
 
 final class CAnsweringExtension extends Extension
 {
+    public function __construct()
+    {
+    }
+
     public function probe(string $value): ?string
     {
         CallLog::$calls[] = self::class;
@@ -72,6 +76,10 @@ final class CAnsweringExtension extends Extension
 
 final class ZAnsweringExtension extends Extension
 {
+    public function __construct()
+    {
+    }
+
     public function probe(string $value): ?string
     {
         CallLog::$calls[] = self::class;
@@ -82,6 +90,10 @@ final class ZAnsweringExtension extends Extension
 
 final class ThrowingExtension extends Extension
 {
+    public function __construct()
+    {
+    }
+
     public function probe(string $value): ?string
     {
         CallLog::$calls[] = self::class;
@@ -92,6 +104,10 @@ final class ThrowingExtension extends Extension
 
 final class FalseAnsweringExtension extends Extension
 {
+    public function __construct()
+    {
+    }
+
     public function probe(string $value): bool
     {
         CallLog::$calls[] = self::class;
@@ -102,6 +118,10 @@ final class FalseAnsweringExtension extends Extension
 
 final class PrivatePointExtension extends Extension
 {
+    public function __construct()
+    {
+    }
+
     /** @noinspection PhpUnusedPrivateMethodInspection */
     private function probe(string $value): string
     {
@@ -130,6 +150,16 @@ final class RequestContextExtension extends Extension
     }
 }
 
+/** Uses the inherited constructor, so it receives every shared service. */
+final class PropertyProbeExtension extends Extension
+{
+    /** @return array{0: object, 1: object, 2: object} */
+    public function probeProperties(): array
+    {
+        return [$this->db, $this->accessService, $this->userRepository];
+    }
+}
+
 abstract class AbstractSiteExtension extends Extension
 {
 }
@@ -137,6 +167,10 @@ abstract class AbstractSiteExtension extends Extension
 /** Answers verifyPasswordFallback with whatever the test configures. */
 final class PasswordFallbackExtension extends Extension
 {
+    public function __construct()
+    {
+    }
+
     /** @var (Closure(int, string, string, string): ?bool)|null */
     public static ?Closure $handler = null;
 

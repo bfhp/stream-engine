@@ -23,8 +23,10 @@ change the existing module or theme contracts.
   returns `null` and the platform keeps its default behavior.
 - An exception thrown by an extension is logged and treated as `null`.
 - Extensions are found through the existing Composer classmap discovery and
-  constructed **lazily** by the same resolver as controllers, so they receive
-  the same shared services, except `RequestContext`.
+  constructed **lazily** by the same resolver as controllers. The base class
+  constructor takes the shared services controllers can receive, except
+  `RequestContext`, and exposes them as protected properties named as in
+  `StreamEngine` (`$this->db`, `$this->accessService`, …).
 - Extension code is trusted, exactly like module code. This is not a sandbox.
 
 Scope of the first version: the mechanism and one point,

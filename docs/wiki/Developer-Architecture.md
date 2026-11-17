@@ -278,8 +278,7 @@ The same classmap pass collects every concrete subclass of
 selected platform operations rather than adding features. `ExtensionRegistry`
 constructs them on the first call of an extension point and returns the first
 non-null result. The available points and their rules are documented in
-[Modules](https://github.com/bfhp/stream-engine/wiki/Developer-Modules#site-extensions)
-and `docs/EXTENSIONS_CONTRACT.md`.
+[Extensions](https://github.com/bfhp/stream-engine/wiki/Developer-Extensions).
 
 ## Frontend architecture
 

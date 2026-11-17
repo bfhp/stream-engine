@@ -17,7 +17,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 - Site extensions: a site can change selected platform behavior with classes
   extending `StreamEngine\Extension\Extension`, discovered from the Composer
-  classmap and built with the same services as module controllers. First
+  classmap, with the shared services available as properties
+  (`$this->db`, `$this->accessService`, …). First
   extension point: `verifyPasswordFallback`, which lets a site accept a
   password the engine's hash rejected. Run `composer dump-autoload -o` after
   adding, renaming, or removing an extension class.

@@ -43,32 +43,35 @@ starting, but you should be comfortable with Git and command-line tools.
 4. [Modules](https://github.com/bfhp/stream-engine/wiki/Developer-Modules) — discover and compose modules, declare public
    and runtime contributions, integrate templates and browser code, preserve
    dependency boundaries, and remove an extension safely.
-5. [Pages and routing](https://github.com/bfhp/stream-engine/wiki/Developer-Pages-and-Routing) — design static and
+5. [Extensions](https://github.com/bfhp/stream-engine/wiki/Developer-Extensions) — change the behavior of
+   platform operations from a site, use shared services in an extension, and
+   look up the available extension points and their arguments.
+6. [Pages and routing](https://github.com/bfhp/stream-engine/wiki/Developer-Pages-and-Routing) — design static and
    dynamic page trees, bind content, generate canonical URLs, preserve access
    and method boundaries, and test route changes.
-6. [Themes](https://github.com/bfhp/stream-engine/wiki/Developer-Themes) — create and discover themes, define manifests
+7. [Themes](https://github.com/bfhp/stream-engine/wiki/Developer-Themes) — create and discover themes, define manifests
    and settings, inherit templates and assets, override module presentation,
    preserve the browser UI contract, and test compatibility.
-7. [Frontend development](https://github.com/bfhp/stream-engine/wiki/Developer-Frontend) — organize TypeScript and
+8. [Frontend development](https://github.com/bfhp/stream-engine/wiki/Developer-Frontend) — organize TypeScript and
    React code, define Vite entries, integrate public and administration
    features, localize and test browser behavior, and ship generated assets.
-8. [API and security](https://github.com/bfhp/stream-engine/wiki/Developer-API-and-Security) — register versioned JSON
+9. [API and security](https://github.com/bfhp/stream-engine/wiki/Developer-API-and-Security) — register versioned JSON
    routes, define success and error contracts, enforce authentication,
    authorization and CSRF, validate input, and protect output, uploads, and
    secrets.
-9. [Testing](https://github.com/bfhp/stream-engine/wiki/Developer-Testing) — choose truthful unit, component, repository,
-   integration, and browser test scopes; manage fixtures and external state;
-   run coverage; write regressions; and reproduce continuous integration.
-10. [Localization and accessibility](https://github.com/bfhp/stream-engine/wiki/Developer-Localization-and-Accessibility) — maintain server and browser
+10. [Testing](https://github.com/bfhp/stream-engine/wiki/Developer-Testing) — choose truthful unit, component, repository,
+    integration, and browser test scopes; manage fixtures and external state;
+    run coverage; write regressions; and reproduce continuous integration.
+11. [Localization and accessibility](https://github.com/bfhp/stream-engine/wiki/Developer-Localization-and-Accessibility) — maintain server and browser
     catalogs, plural/date/time and RTL behavior, semantic and keyboard
     contracts, assistive-technology expectations, and honest verification.
-11. [Performance](https://github.com/bfhp/stream-engine/wiki/Developer-Performance) — design indexed access paths,
+12. [Performance](https://github.com/bfhp/stream-engine/wiki/Developer-Performance) — design indexed access paths,
     prevent repeated and unbounded work, use caches safely, measure request,
     background, and frontend cost, and document current platform limits.
-12. [Releases](https://github.com/bfhp/stream-engine/wiki/Developer-Releases) — choose and synchronize a version,
+13. [Releases](https://github.com/bfhp/stream-engine/wiki/Developer-Releases) — choose and synchronize a version,
     prepare release notes, snapshots and assets, test clean installation and
     upgrades, tag an immutable commit, and verify public distribution.
-13. [Contributing](https://github.com/bfhp/stream-engine/wiki/Developer-Contributing) — scope an issue, work from a
+14. [Contributing](https://github.com/bfhp/stream-engine/wiki/Developer-Contributing) — scope an issue, work from a
     fork and focused branch, preserve project contracts, submit evidence with a
     pull request to `main`, respond to review, and meet the definition of done.
 
