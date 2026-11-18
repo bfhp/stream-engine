@@ -7,16 +7,50 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.7.3] - 2026-11-18
+
 ### Fixed
 
-- Publication ownership no longer bypasses access to a closed container.
-  Authors removed from a closed forum section or category cannot read, find,
-  edit, delete, or reply to their own topics and replies. Administrators,
-  global moderators, and authorized local moderators retain access. The rule
-  is shared by SQL reads and service authorization for all feed containers;
-  authors keep ownership permissions inside containers they can access.
-- This access correction applies to existing content immediately; no database
-  migration or schema change is required.
+- Authors can no longer use publication ownership to bypass a closed forum
+  section or category. Without access to the effective container, their own
+  topics and replies are excluded from direct reads, search, listings, and
+  counts, and cannot be edited, deleted, or replied to.
+- Comment authorization now rechecks the inherited publication ACL, including
+  when a caller holds a previously loaded comment object. Closing a container
+  or revoking membership takes effect on subsequent authorization checks.
+
+### Security
+
+- Container access is checked before publication ownership in both SQL reads
+  and service authorization. This is a shared ACL correction for all feed
+  containers, including communities; a publication's public visibility or
+  authorship does not override a closed container. Administrators and global
+  content moderators retain their override. Container owners and authorized
+  local moderators retain access under the existing container policy.
+- The known build/test dependency advisory
+  [GHSA-fc5q-39xc-vjpf](https://github.com/advisories/GHSA-fc5q-39xc-vjpf)
+  remains unresolved. npm audit still reports six high-severity affected
+  packages through picomatch and its dependents. This release does not update
+  dependencies or suppress the failing dependency audit.
+
+### Upgrade notes
+
+- From 0.7.2, deploy the release with its bundled browser assets and install
+  PHP dependencies from the lockfile. Earlier versions must also follow the
+  intervening release notes.
+- No database migrations, schema changes, or dependency updates are required.
+  The installation snapshot was regenerated from all 22 migrations:
+  `schema.sql` is unchanged from 0.7.2, and its matching manifest identifies
+  0.7.3. Existing sites must not import `schema.sql`.
+- The ACL correction applies immediately to existing content. Review membership
+  of closed sections, categories, and other containers: authors must have
+  container access to continue working with their own publications. Adding
+  an accepted member back restores access according to container visibility;
+  moderator-only containers still require a local moderator role or higher.
+  Authorship and content are preserved. Reverting to 0.7.2 restores the previous
+  ownership bypass.
+- Authors retain their usual ownership permissions inside containers they can
+  access. Direct file URLs retain their existing access behavior.
 
 ## [0.7.2] - 2026-11-18
 
