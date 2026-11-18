@@ -1,4 +1,4 @@
-<div class="forums-management ui-card ui-card__body" data-forum-management data-api-url="{{ managementApiUrl|e('html_attr') }}">
+        <div class="forums-management ui-card ui-card__body" data-forum-management data-api-url="{{ managementApiUrl|e('html_attr') }}" data-own-visibility="{{ managementOwnVisibility|default(feed.visibility)|e('html_attr') }}">
     <div class="forums-management__body">
         <form data-forum-settings class="forums-management__form">
             <h2>{{ trans('js.forums.settings') }}</h2>
@@ -10,7 +10,7 @@
             <select class="ui-input" id="forumManageParent" name="parentId">
                 <option value=""{% if feed.parentId is null %} selected{% endif %}>{{ trans('js.forums.category') }}</option>
                 {% for parent in managementParents %}
-                    <option value="{{ parent.id }}"{% if parent.id == feed.parentId %} selected{% endif %}>{{ parent.title|e }}</option>
+                    <option value="{{ parent.id }}" data-visibility="{{ parent.visibility|default('public')|e('html_attr') }}"{% if parent.id == feed.parentId %} selected{% endif %}>{{ parent.title|e }}</option>
                 {% endfor %}
             </select>
             <label class="ui-label" for="forumManageVisibility">{{ trans('js.admin.visibility') }}</label>
@@ -20,6 +20,9 @@
                 <option value="private"{% if feed.visibility == 'private' %} selected{% endif %}>{{ trans('js.forums.moderators_only') }}</option>
             </select>
             <p class="ui-help">{{ trans('js.forums.hierarchy_note') }}</p>
+            {% if managementInherited %}
+                <p class="ui-help">{{ trans('js.forums.inherited_access') }} <a href="{{ managementCategoryUrl|e('html_attr') }}">{{ trans('js.forums.manage') }}</a></p>
+            {% endif %}
             <button class="ui-button ui-button--primary" type="submit">{{ trans('js.admin.save') }}</button>
         </form>
         <section class="forums-management__form" aria-labelledby="forumManageMembersTitle">
@@ -28,8 +31,8 @@
             <form data-forum-member-search>
                 <label class="ui-label" for="forumManageSearch">{{ trans('js.admin.search') }}</label>
                 <div class="forums-management__actions">
-                    <input class="ui-input" id="forumManageSearch" name="query" autocomplete="off" required>
-                    <button class="ui-button ui-button--secondary" type="submit">{{ trans('js.admin.search') }}</button>
+                    <input class="ui-input" id="forumManageSearch" name="query" autocomplete="off" required{% if managementInherited %} disabled{% endif %}>
+                    <button class="ui-button ui-button--secondary" type="submit"{% if managementInherited %} disabled{% endif %}>{{ trans('js.admin.search') }}</button>
                 </div>
             </form>
             <ul class="forums-management__list" data-forum-user-results></ul>

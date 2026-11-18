@@ -33,10 +33,22 @@ final readonly class ForumManagementService
         $this->forums = new ForumRepository($db);
     }
 
+    public function accessContainer(Feed $forum): int
+    {
+        return $forum->parentId !== null && $forum->containerType === 'forum' && $forum->containerId === $forum->parentId
+            ? $forum->parentId : $forum->id;
+    }
+
+    public function ownVisibility(Feed $forum): string
+    {
+        return $this->accessContainer($forum) !== $forum->id
+            ? ($this->forums->ownVisibility($forum->id) ?? 'members') : ($forum->visibility ?? 'public');
+    }
+
     public function canManage(Feed $forum, User $actor): bool
     {
         return $forum->type === 'forum' && !$actor->isGuest() && ($actor->canModerateContent()
-            || ($this->memberships->find($forum->id, $actor->id)?->roleLevel ?? 0) >= 2);
+            || ($this->memberships->find($this->accessContainer($forum), $actor->id)?->roleLevel ?? 0) >= 2);
     }
 
     public function requireForum(int $id, User $actor): Feed
@@ -74,19 +86,51 @@ final readonly class ForumManagementService
             $visibility = $this->feedService->normalizeVisibility($visibility);
             if ($parentId !== null) {
                 $parent = $this->feeds->findById($parentId, $actor);
-                if ($parent === null || $parent->type !== 'forum' || $parent->parentId !== null || $parent->visibility !== 'public' || $this->forums->hasSubforums($id)) {
+                if ($parent === null || $parent->type !== 'forum' || $parent->parentId !== null || $this->forums->hasSubforums($id)) {
                     throw new ValidationException($this->tm->trans('js.forums.manage_invalid'));
                 }
-            } elseif ($visibility !== 'public' || $this->forums->findTopicsPage($id, 1, 0)['total'] > 0) {
+            } elseif ($forum->parentId !== null && $this->forums->findTopicsPage($id, 1, 0)['total'] > 0) {
                 throw new ValidationException($this->tm->trans('js.forums.manage_invalid'));
             }
-            // Old public sections may not yet have a membership container.
-            $this->forums->initializeContainer($id);
+            $oldInherited = $this->accessContainer($forum) !== $id;
+            $ownVisibility = $this->ownVisibility($forum);
+            $containerId = $id;
+            if ($parentId !== null && $parent->visibility !== 'public') {
+                // One ordinary ACL container: a closed category owns its entire subtree's audience.
+                if (!$this->canManage($parent, $actor)) {
+                    throw new ForbiddenException($this->tm->trans('feed.forbidden'));
+                }
+                $this->forums->rememberVisibility($id, $ownVisibility);
+                $visibility = $parent->visibility;
+                $containerId = $parent->id;
+            } elseif ($oldInherited && !array_key_exists('visibility', $input)) {
+                $visibility = $ownVisibility;
+            }
+            if (!$oldInherited) {
+                // Initialize legacy public sections before the shared local-moderator edit check.
+                $this->forums->initializeContainer($id);
+            }
             $updated = $this->feedService->updateFeed($id, [
                 'title' => trim($title), 'description' => $description, 'parentId' => $parentId,
-                'visibility' => $visibility, 'containerId' => $id, 'containerType' => 'forum',
+                'visibility' => $visibility, 'containerId' => $containerId, 'containerType' => 'forum',
             ], $actor);
-            $this->feeds->updateChildAccess($id, 'forum-post', $visibility, $id, 'forum');
+            $this->feeds->updateChildAccess($id, 'forum-post', $visibility, $containerId, 'forum');
+            if ($parentId === null) {
+                foreach ($this->forums->childAccessSettings($id) as $child) {
+                    $childId = (int) $child['id'];
+                    $inherited = (int) ($child['container_id'] ?? 0) === $id;
+                    if ($visibility === 'public' && !$inherited) {
+                        continue;
+                    }
+                    if (!$inherited) {
+                        $this->forums->rememberVisibility($childId, $child['visibility'] ?? 'public');
+                    }
+                    $childVisibility = $visibility === 'public' ? ($child['own_visibility'] ?? 'members') : $visibility;
+                    $childContainer = $visibility === 'public' ? $childId : $id;
+                    $this->forums->setAccess($childId, $childVisibility, $childContainer);
+                    $this->feeds->updateChildAccess($childId, 'forum-post', $childVisibility, $childContainer, 'forum');
+                }
+            }
             if ($ownsTransaction) {
                 $this->db->commit();
             }
@@ -101,15 +145,16 @@ final readonly class ForumManagementService
 
     public function members(int $id, User $actor, int $offset): array
     {
-        $this->requireForum($id, $actor);
-        return ['data' => $this->memberships->findMembers($id, 50, max(0, $offset)),
-            'total' => $this->memberships->countMembers($id), 'currentUserId' => $actor->id,
+        $forum = $this->requireForum($id, $actor);
+        $containerId = $this->accessContainer($forum);
+        return ['data' => $this->memberships->findMembers($containerId, 50, max(0, $offset)),
+            'total' => $this->memberships->countMembers($containerId), 'readOnly' => $containerId !== $id, 'currentUserId' => $actor->id,
             'globalModerator' => $actor->canModerateContent()];
     }
 
     public function searchUsers(int $id, User $actor, string $query): array
     {
-        $this->requireForum($id, $actor);
+        $this->requireOwnMembership($id, $actor);
         $query = trim($query);
         if ($query === '') {
             return [];
@@ -131,14 +176,21 @@ final readonly class ForumManagementService
         return $result;
     }
 
+    private function requireOwnMembership(int $id, User $actor): void
+    {
+        if ($this->accessContainer($this->requireForum($id, $actor)) !== $id) {
+            throw new ForbiddenException($this->tm->trans('feed.forbidden'));
+        }
+    }
+
     public function setMember(int $id, int $userId, ?string $role, User $actor): void
     {
-        $this->requireForum($id, $actor);
+        $this->requireOwnMembership($id, $actor);
         if ($userId <= User::SYSTEM_USER_ID || !in_array($role, ['member', 'moderator', null], true)) {
             throw new ValidationException($this->tm->trans('js.forums.manage_invalid'));
         }
         $this->feeds->withLockedFeed($id, function () use ($id, $userId, $role, $actor): void {
-            $this->requireForum($id, $actor);
+            $this->requireOwnMembership($id, $actor);
             $current = $this->memberships->find($id, $userId);
             if (($current?->roleLevel ?? 0) >= 3 || (!$actor->canModerateContent() && $userId === $actor->id)) {
                 throw new ForbiddenException($this->tm->trans('feed.forbidden'));

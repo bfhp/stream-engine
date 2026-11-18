@@ -1794,7 +1794,7 @@ return [
     'js.forums.public' => '公开',
     'js.forums.members_only' => '仅限成员',
     'js.forums.moderators_only' => '仅限版主',
-    'js.forums.hierarchy_note' => '分类保持公开。有版块的分类不能嵌套，有主题的版块不能改为分类。',
+    'js.forums.hierarchy_note' => '有版块的分类不能嵌套，有主题的版块不能改为分类。',
     'js.forums.members' => '成员',
     'js.forums.members_note' => '成员变更立即生效。移除成员后保留其帖子。',
     'js.forums.role' => '成员角色',
@@ -1806,4 +1806,5 @@ return [
     'js.forums.no_users' => '未找到用户。',
     'js.forums.management_saved' => '已保存更改。',
     'js.forums.manage_invalid' => '论坛设置、上级分类或成员无效。',
+    'js.forums.inherited_access' => '访问权限和成员继承自封闭分类。',
 ];

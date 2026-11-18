@@ -625,9 +625,15 @@ class ForumsController extends AbstractController
                 'canonical' => $this->urlGenerator->feed($forumFeed, ['manage' => 1]),
                 'cancelUrl' => $forumFeed->canonicalUrl,
                 'managementApiUrl' => '/api/v1/forums/manage/'.$forumFeed->id,
+                'managementInherited' => $this->management()->accessContainer($forumFeed) !== $forumFeed->id,
+                'managementOwnVisibility' => $this->management()->ownVisibility($forumFeed),
+                'managementCategoryUrl' => $this->management()->accessContainer($forumFeed) !== $forumFeed->id
+                    ? $this->urlGenerator->feed($this->feedService->getFeedById($forumFeed->parentId, $this->context->user), ['manage' => 1]) : null,
+
                 'managementParents' => array_filter(
                     $this->feedService->getFeedsByType('forum', $this->context->user, 99999),
-                    static fn (Feed $f): bool => $f->parentId === null && $f->visibility === 'public' && $f->id !== $forumFeed->id
+                    fn (Feed $f): bool => $f->parentId === null && $f->id !== $forumFeed->id
+                        && ($f->visibility === 'public' || $this->management()->canManage($f, $this->context->user))
                 ),
                 'head_ext' => ['<meta name="robots" content="noindex">', '<script type="module" src="/assets/js/forums.js" defer></script>'],
             ]);
@@ -1823,16 +1829,7 @@ class ForumsController extends AbstractController
             throw new ValidationException($this->tm->trans('feed.parent_not_found'));
         }
         $visibility = $this->feedService->normalizeVisibility($input->visibility ?? null);
-        $this->feedRepository->withLockedFeed($input->forumId, function () use ($input, $visibility, $user): void {
-            $forum = $this->feedService->getFeedById($input->forumId, $user);
-            if ($forum->type !== 'forum' || $forum->parentId === null) {
-                throw new ValidationException($this->tm->trans('feed.parent_not_found'));
-            }
-            $this->feedService->updateFeed($forum->id, [
-                'visibility' => $visibility, 'containerId' => $forum->id, 'containerType' => 'forum',
-            ], $user);
-            $this->feedRepository->updateChildAccess($forum->id, 'forum-post', $visibility, $forum->id, 'forum');
-        });
+        $this->management()->save($input->forumId, ['visibility' => $visibility], $user);
         http_response_code(204);
     }
 

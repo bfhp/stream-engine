@@ -301,10 +301,19 @@ cannot open the management page or call its backing endpoints.
 
 Settings include title, description, parent category, and visibility. Saving
 preserves the forum and topic URLs and updates existing topic access in the
-same transaction. Replies inherit their topic's ACL. Categories stay public;
-a category with sections cannot be nested, and a section with topics cannot
-become a category. Each section retains its own independent membership list
-when moved between categories.
+same transaction. Categories can be public, members-only, or moderator-only.
+A closed category supplies its visibility and membership container to every
+section and topic inside it; replies inherit their topic's ACL. Section
+membership does not bypass a closed category. Category moderators manage the
+inherited sections, and membership changes are made on the category. Section
+management shows the category members read-only with a link to the category.
+
+Opening a category restores each section's previous visibility and membership
+container; a previously closed section does not become public by accident.
+Moving a section into a closed category applies category access immediately;
+moving it out restores its own access. Original section memberships are
+preserved. A category with sections cannot be nested, and a section with topics
+cannot become a category. Existing owner and author overrides still apply.
 
 Search active users by display name or username in **Members**, then add them,
 change their local member/moderator role, or remove them. Membership changes
@@ -320,7 +329,7 @@ The session-authenticated endpoints are owned by Forums. Every mutation requires
 | Endpoint | Behavior |
 | --- | --- |
 | PATCH `/api/v1/forums/manage/{forumId}` | Save any supplied `title`, `description`, `parentId` (integer or null), and `visibility` (`public`, `members`, `private`); returns `{id, url}`. |
-| GET `/api/v1/forums/manage/{forumId}/members?offset=0` | Read 50 members at a time, with total and actor information. |
+| GET `/api/v1/forums/manage/{forumId}/members?offset=0` | Read 50 members at a time, with total and actor information; `readOnly` identifies inherited category membership. |
 | PUT `/api/v1/forums/manage/{forumId}/members/{userId}` | Add or update `role` (`member` or `moderator`); 204. |
 | DELETE `/api/v1/forums/manage/{forumId}/members/{userId}` | Remove membership; 204. |
 | GET `/api/v1/forums/manage/{forumId}/users?q=...` | Search active public account names; up to 20 results, without private account details. |

@@ -1794,7 +1794,7 @@ E-mail: {email}
     'js.forums.public' => 'Openbaar',
     'js.forums.members_only' => 'Alleen leden',
     'js.forums.moderators_only' => 'Alleen moderators',
-    'js.forums.hierarchy_note' => 'Categorieën blijven openbaar. Een categorie met secties kan niet worden genest; een sectie met onderwerpen kan geen categorie worden.',
+    'js.forums.hierarchy_note' => 'Een categorie met secties kan niet worden genest; een sectie met onderwerpen kan geen categorie worden.',
     'js.forums.members' => 'Leden',
     'js.forums.members_note' => 'Wijzigingen gelden direct. Berichten blijven behouden wanneer een lid wordt verwijderd.',
     'js.forums.role' => 'Ledenrol',
@@ -1806,4 +1806,5 @@ E-mail: {email}
     'js.forums.no_users' => 'Geen gebruikers gevonden.',
     'js.forums.management_saved' => 'Wijzigingen opgeslagen.',
     'js.forums.manage_invalid' => 'Ongeldige instellingen, bovenliggende categorie of ongeldig lid.',
+    'js.forums.inherited_access' => 'Toegang en leden worden overgenomen van de gesloten categorie.',
 ];

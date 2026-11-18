@@ -1794,7 +1794,7 @@ return [
     'js.forums.public' => '公開',
     'js.forums.members_only' => 'メンバー限定',
     'js.forums.moderators_only' => 'モデレーター限定',
-    'js.forums.hierarchy_note' => 'カテゴリーは公開のままです。セクションのあるカテゴリーは入れ子にできず、トピックのあるセクションはカテゴリーにできません。',
+    'js.forums.hierarchy_note' => 'セクションのあるカテゴリーは入れ子にできず、トピックのあるセクションはカテゴリーにできません。',
     'js.forums.members' => 'メンバー',
     'js.forums.members_note' => '変更は即座に適用されます。メンバーを削除しても投稿は残ります。',
     'js.forums.role' => 'メンバーの役割',
@@ -1806,4 +1806,5 @@ return [
     'js.forums.no_users' => 'ユーザーが見つかりません。',
     'js.forums.management_saved' => '変更を保存しました。',
     'js.forums.manage_invalid' => '設定、親カテゴリー、またはメンバーが無効です。',
+    'js.forums.inherited_access' => 'アクセス権とメンバーは非公開カテゴリーから継承されます。',
 ];

@@ -1794,7 +1794,7 @@ Email: {email}
     'js.forums.public' => 'Public',
     'js.forums.members_only' => 'Members only',
     'js.forums.moderators_only' => 'Moderators only',
-    'js.forums.hierarchy_note' => 'Categories stay public. A category with sections cannot be nested; a section with topics cannot become a category.',
+    'js.forums.hierarchy_note' => 'A category with sections cannot be nested; a section with topics cannot become a category.',
     'js.forums.members' => 'Members',
     'js.forums.members_note' => 'Membership changes apply immediately. Posts are preserved when a member is removed.',
     'js.forums.role' => 'Member role',
@@ -1806,4 +1806,5 @@ Email: {email}
     'js.forums.no_users' => 'No users found.',
     'js.forums.management_saved' => 'Changes saved.',
     'js.forums.manage_invalid' => 'Invalid forum settings, parent category, or member.',
+    'js.forums.inherited_access' => 'Access and members are inherited from the closed category.',
 ];

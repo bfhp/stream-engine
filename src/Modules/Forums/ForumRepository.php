@@ -37,6 +37,38 @@ final class ForumRepository
         return $this->db->fetchOne("SELECT 1 FROM feeds WHERE parent_id = ? AND type = 'forum' LIMIT 1", [$id]) !== null;
     }
 
+    /** Uses feeds_parent_id_type_position_index and feed_metadata PRIMARY(feed_id,name).
+     * Internal propagation includes hidden sections; the category was authorized by the caller.
+     */
+    public function childAccessSettings(int $categoryId): array
+    {
+        return $this->db->fetchAll("SELECT f.id, f.visibility, f.container_id, own.content AS own_visibility
+            FROM feeds f LEFT JOIN feed_metadata own ON own.feed_id = f.id AND own.name = 'forum.own_visibility'
+            WHERE f.parent_id = ? AND f.type = 'forum'", [$categoryId]);
+    }
+
+    /** Uses feed_metadata PRIMARY(feed_id,name). */
+    public function ownVisibility(int $id): ?string
+    {
+        $row = $this->db->fetchOne("SELECT content FROM feed_metadata WHERE feed_id = ? AND name = 'forum.own_visibility'", [$id]);
+        return $row['content'] ?? null;
+    }
+
+    /** Uses feed_metadata PRIMARY(feed_id,name). Preserve section privacy while category access is inherited. */
+    public function rememberVisibility(int $id, string $visibility): void
+    {
+        $this->db->execute("INSERT INTO feed_metadata (feed_id, name, content, created_at, updated_at)
+            VALUES (?, 'forum.own_visibility', ?, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+            ON DUPLICATE KEY UPDATE content = VALUES(content), updated_at = UNIX_TIMESTAMP()", [$id, $visibility]);
+    }
+
+    /** Uses PRIMARY(id). Only access columns are changed, never content or ownership. */
+    public function setAccess(int $id, string $visibility, int $containerId): void
+    {
+        $this->db->execute("UPDATE feeds SET visibility = ?, container_id = ?, container_type = 'forum', updated_at = UNIX_TIMESTAMP()
+            WHERE id = ? AND type = 'forum'", [$visibility, $containerId, $id]);
+    }
+
     /** Uses PRIMARY(id). This only initializes the ordinary membership container, not a new access rule. */
     public function initializeContainer(int $id): void
     {

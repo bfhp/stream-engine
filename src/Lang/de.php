@@ -1794,7 +1794,7 @@ E-Mail: {email}
     'js.forums.public' => 'Öffentlich',
     'js.forums.members_only' => 'Nur Mitglieder',
     'js.forums.moderators_only' => 'Nur Moderatoren',
-    'js.forums.hierarchy_note' => 'Kategorien bleiben öffentlich. Kategorien mit Bereichen können nicht verschachtelt werden; Bereiche mit Themen können keine Kategorien werden.',
+    'js.forums.hierarchy_note' => 'Kategorien mit Bereichen können nicht verschachtelt werden; Bereiche mit Themen können keine Kategorien werden.',
     'js.forums.members' => 'Mitglieder',
     'js.forums.members_note' => 'Mitgliedschaftsänderungen gelten sofort. Beiträge entfernter Mitglieder bleiben erhalten.',
     'js.forums.role' => 'Mitgliedsrolle',
@@ -1806,4 +1806,5 @@ E-Mail: {email}
     'js.forums.no_users' => 'Keine Benutzer gefunden.',
     'js.forums.management_saved' => 'Änderungen gespeichert.',
     'js.forums.manage_invalid' => 'Ungültige Foreneinstellungen, Kategorie oder Mitglied.',
+    'js.forums.inherited_access' => 'Zugriff und Mitglieder werden von der geschlossenen Kategorie übernommen.',
 ];

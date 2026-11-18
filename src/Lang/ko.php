@@ -1794,7 +1794,7 @@ return [
     'js.forums.public' => '공개',
     'js.forums.members_only' => '회원 전용',
     'js.forums.moderators_only' => '운영자 전용',
-    'js.forums.hierarchy_note' => '카테고리는 공개로 유지됩니다. 섹션이 있는 카테고리를 중첩하거나 주제가 있는 섹션을 카테고리로 바꿀 수 없습니다.',
+    'js.forums.hierarchy_note' => '섹션이 있는 카테고리를 중첩하거나 주제가 있는 섹션을 카테고리로 바꿀 수 없습니다.',
     'js.forums.members' => '회원',
     'js.forums.members_note' => '변경 사항은 즉시 적용됩니다. 회원을 제외해도 게시물은 유지됩니다.',
     'js.forums.role' => '회원 역할',
@@ -1806,4 +1806,5 @@ return [
     'js.forums.no_users' => '사용자를 찾을 수 없습니다.',
     'js.forums.management_saved' => '변경 사항을 저장했습니다.',
     'js.forums.manage_invalid' => '설정, 상위 카테고리 또는 회원이 올바르지 않습니다.',
+    'js.forums.inherited_access' => '접근 권한과 회원은 비공개 카테고리에서 상속됩니다.',
 ];

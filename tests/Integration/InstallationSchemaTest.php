@@ -718,6 +718,51 @@ final class InstallationSchemaTest extends TestCase
             self::assertNull($repository->findById(301, new \StreamEngine\Domain\User(30, '', 'user')));
             $management->save(101, ['visibility' => 'public'], new \StreamEngine\Domain\User(70, '', 'moderator'));
             self::assertNotNull($repository->findById(201, $guest));
+            // A closed category supplies the one existing membership container to all descendants.
+            $pdo->exec("INSERT INTO feeds (id,parent_id,owner_id,type,slug,title,visibility,container_id,container_type,created_at,updated_at) VALUES
+                (104,103,60,'forum','private-section','Private section','members',104,'forum',1,1),
+                (204,104,10,'forum-post','inherited-topic','Inherited topic','members',104,'forum',1,1)");
+            $memberships->create(104, 20, $memberships::ROLE_MEMBER_ID);
+            $management->setMember(103, 30, 'member', $admin);
+            $management->setMember(103, 40, 'moderator', $admin);
+            $management->save(103, ['visibility' => 'members'], $admin);
+            $categoryMember = new \StreamEngine\Domain\User(30, '', 'user');
+            foreach ([103,101,104,201,204,301] as $id) {
+                self::assertNotNull($repository->findById($id, $categoryMember));
+                self::assertNull($repository->findById($id, $guest));
+                self::assertNull($repository->findById($id, $member), 'Membership in a section does not bypass its closed category');
+            }
+            self::assertSame(103, $repository->findById(201, $admin)->containerId);
+            self::assertSame([], $repository->search('Secret', 20, null, $member));
+            $management->save(101, ['title' => 'Inherited club', 'visibility' => 'public'], $localModerator);
+            self::assertSame('members', $repository->findById(101, $admin)->visibility);
+            self::assertSame('public', $management->ownVisibility($repository->findById(101, $admin)));
+            $inheritedMembers = $management->members(101, $localModerator, 0);
+            self::assertTrue($inheritedMembers['readOnly']);
+            self::assertSame([40,30], array_column($inheritedMembers['data'], 'id'));
+            try {
+                $management->setMember(101, 20, 'member', $admin);
+                self::fail('Inherited membership is managed on the category, never overwritten locally');
+            } catch (\StreamEngine\Core\Exceptions\ForbiddenException) {
+                self::assertSame(103, $repository->findById(101, $admin)->containerId);
+            }
+            $management->save(103, ['visibility' => 'private'], $admin);
+            self::assertNull($repository->findById(204, $categoryMember));
+            self::assertNotNull($repository->findById(204, $localModerator));
+            $management->save(103, ['visibility' => 'members'], $admin);
+            $management->setMember(103, 30, null, $admin);
+            self::assertNull($repository->findById(201, $categoryMember));
+            $management->save(103, ['visibility' => 'public'], $admin);
+            self::assertNotNull($repository->findById(201, $guest));
+            self::assertNull($repository->findById(204, $guest), 'Opening a category restores the section privacy');
+            self::assertNotNull($repository->findById(204, $member));
+            self::assertSame(104, $repository->findById(204, $admin)->containerId);
+            $management->save(100, ['visibility' => 'members'], $admin);
+            $management->save(104, ['parentId' => 100], $admin);
+            self::assertSame(100, $repository->findById(204, $admin)->containerId);
+            $management->save(104, ['parentId' => 103], $admin);
+            self::assertSame('members', $repository->findById(104, $admin)->visibility);
+            self::assertSame(104, $repository->findById(204, $admin)->containerId);
         });
     }
 

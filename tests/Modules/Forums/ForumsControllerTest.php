@@ -3080,10 +3080,12 @@ final class ForumsControllerTest extends TestCase
         $db->expects($this->once())->method('begin');
         $db->expects($this->once())->method('commit');
         $db->expects($this->never())->method('rollback');
-        $db->expects($this->once())->method('execute')->with(
-            $this->stringContains('UPDATE feeds SET visibility'),
-            ['members', self::FORUM_ID, 'forum', self::FORUM_ID, 'forum-post'],
-        )->willReturn(1);
+        $db->method('fetchOne')->willReturnCallback(fn (string $sql): ?array => str_contains($sql, 'SELECT 1') ? null : $this->feedRow(1, 'forum'));
+        $writes = [];
+        $db->method('execute')->willReturnCallback(static function (string $sql, array $params) use (&$writes): int {
+            $writes[] = $params;
+            return 1;
+        });
         $module = $this->makeModule($db);
         $actor = new User(7, '', AccessService::ROLE_ADMIN);
         $this->setContext($module, $actor);
@@ -3092,6 +3094,7 @@ final class ForumsControllerTest extends TestCase
         $feeds->method('normalizeVisibility')->with('members')->willReturn('members');
         $feeds->method('getFeedById')->willReturn($forum);
         $feeds->expects($this->once())->method('updateFeed')->with(self::FORUM_ID, [
+            'title' => $forum->title, 'description' => '', 'parentId' => 1,
             'visibility' => 'members', 'containerId' => self::FORUM_ID, 'containerType' => 'forum',
         ], $actor)->willReturn($forum);
         $this->setProperty($module, 'feedService', $feeds);
@@ -3101,6 +3104,7 @@ final class ForumsControllerTest extends TestCase
             body: ['forumId' => self::FORUM_ID, 'visibility' => 'members'],
             method: 'PATCH'
         ));
+        self::assertContains(['members', self::FORUM_ID, 'forum', self::FORUM_ID, 'forum-post'], $writes);
     }
 
     public function testNormalUsersCannotChangeSectionAccess(): void

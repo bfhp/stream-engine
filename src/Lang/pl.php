@@ -1794,7 +1794,7 @@ E-mail: {email}
     'js.forums.public' => 'Publiczne',
     'js.forums.members_only' => 'Tylko członkowie',
     'js.forums.moderators_only' => 'Tylko moderatorzy',
-    'js.forums.hierarchy_note' => 'Kategorie pozostają publiczne. Nie można zagnieżdżać kategorii z działami ani zmieniać działów z tematami w kategorie.',
+    'js.forums.hierarchy_note' => 'Nie można zagnieżdżać kategorii z działami ani zmieniać działów z tematami w kategorie.',
     'js.forums.members' => 'Członkowie',
     'js.forums.members_note' => 'Zmiany działają natychmiast. Wiadomości pozostają po usunięciu członka.',
     'js.forums.role' => 'Rola członka',
@@ -1806,4 +1806,5 @@ E-mail: {email}
     'js.forums.no_users' => 'Nie znaleziono użytkowników.',
     'js.forums.management_saved' => 'Zapisano zmiany.',
     'js.forums.manage_invalid' => 'Nieprawidłowe ustawienia, kategoria nadrzędna lub członek.',
+    'js.forums.inherited_access' => 'Dostęp i członkowie są dziedziczeni z zamkniętej kategorii.',
 ];

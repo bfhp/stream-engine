@@ -1794,7 +1794,7 @@ Correo: {email}
     'js.forums.public' => 'Público',
     'js.forums.members_only' => 'Solo miembros',
     'js.forums.moderators_only' => 'Solo moderadores',
-    'js.forums.hierarchy_note' => 'Las categorías siguen siendo públicas. No se pueden anidar categorías con secciones ni convertir secciones con temas en categorías.',
+    'js.forums.hierarchy_note' => 'No se pueden anidar categorías con secciones ni convertir secciones con temas en categorías.',
     'js.forums.members' => 'Miembros',
     'js.forums.members_note' => 'Los cambios se aplican inmediatamente. Las publicaciones se conservan al eliminar un miembro.',
     'js.forums.role' => 'Rol del miembro',
@@ -1806,4 +1806,5 @@ Correo: {email}
     'js.forums.no_users' => 'No se encontraron usuarios.',
     'js.forums.management_saved' => 'Cambios guardados.',
     'js.forums.manage_invalid' => 'Configuración, categoría superior o miembro no válido.',
+    'js.forums.inherited_access' => 'El acceso y los miembros se heredan de la categoría cerrada.',
 ];

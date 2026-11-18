@@ -1794,7 +1794,7 @@ E-mail: {email}
     'js.forums.public' => 'Pubblico',
     'js.forums.members_only' => 'Solo membri',
     'js.forums.moderators_only' => 'Solo moderatori',
-    'js.forums.hierarchy_note' => 'Le categorie restano pubbliche. Non si possono annidare categorie con sezioni né convertire sezioni con discussioni in categorie.',
+    'js.forums.hierarchy_note' => 'Non si possono annidare categorie con sezioni né convertire sezioni con discussioni in categorie.',
     'js.forums.members' => 'Membri',
     'js.forums.members_note' => 'Le modifiche si applicano subito. I messaggi restano quando un membro viene rimosso.',
     'js.forums.role' => 'Ruolo del membro',
@@ -1806,4 +1806,5 @@ E-mail: {email}
     'js.forums.no_users' => 'Nessun utente trovato.',
     'js.forums.management_saved' => 'Modifiche salvate.',
     'js.forums.manage_invalid' => 'Impostazioni, categoria superiore o membro non valido.',
+    'js.forums.inherited_access' => 'L’accesso e i membri vengono ereditati dalla categoria chiusa.',
 ];

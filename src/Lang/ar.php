@@ -1794,7 +1794,7 @@ return [
     'js.forums.public' => 'عام',
     'js.forums.members_only' => 'للأعضاء فقط',
     'js.forums.moderators_only' => 'للمشرفين فقط',
-    'js.forums.hierarchy_note' => 'تبقى الفئات عامة. لا يمكن تداخل فئة تحتوي على أقسام أو تحويل قسم يحتوي على مواضيع إلى فئة.',
+    'js.forums.hierarchy_note' => 'لا يمكن تداخل فئة تحتوي على أقسام أو تحويل قسم يحتوي على مواضيع إلى فئة.',
     'js.forums.members' => 'الأعضاء',
     'js.forums.members_note' => 'تسري التغييرات فورًا. تبقى المشاركات عند إزالة عضو.',
     'js.forums.role' => 'دور العضو',
@@ -1806,4 +1806,5 @@ return [
     'js.forums.no_users' => 'لم يتم العثور على مستخدمين.',
     'js.forums.management_saved' => 'تم حفظ التغييرات.',
     'js.forums.manage_invalid' => 'إعدادات المنتدى أو الفئة الرئيسية أو العضو غير صالح.',
+    'js.forums.inherited_access' => 'يتم توريث الوصول والأعضاء من الفئة المغلقة.',
 ];

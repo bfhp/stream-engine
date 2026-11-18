@@ -1794,7 +1794,7 @@ E-mail : {email}
     'js.forums.public' => 'Public',
     'js.forums.members_only' => 'Membres uniquement',
     'js.forums.moderators_only' => 'Modérateurs uniquement',
-    'js.forums.hierarchy_note' => 'Les catégories restent publiques. Une catégorie contenant des sections ne peut être imbriquée ; une section contenant des sujets ne peut devenir une catégorie.',
+    'js.forums.hierarchy_note' => 'Une catégorie contenant des sections ne peut être imbriquée ; une section contenant des sujets ne peut devenir une catégorie.',
     'js.forums.members' => 'Membres',
     'js.forums.members_note' => 'Les changements prennent effet immédiatement. Les messages sont conservés lors du retrait d’un membre.',
     'js.forums.role' => 'Rôle du membre',
@@ -1806,4 +1806,5 @@ E-mail : {email}
     'js.forums.no_users' => 'Aucun utilisateur trouvé.',
     'js.forums.management_saved' => 'Modifications enregistrées.',
     'js.forums.manage_invalid' => 'Paramètres, catégorie parente ou membre non valide.',
+    'js.forums.inherited_access' => 'L’accès et les membres sont hérités de la catégorie fermée.',
 ];

@@ -28,10 +28,15 @@ export function initForumManagement(root: HTMLElement, api: Api, reload = () => 
         return element;
     };
     function updateVisibility() {
-        visibility.disabled = parent.value === "";
-        if (visibility.disabled) visibility.value = "public";
+        const inherited = parent.selectedOptions[0]?.dataset.visibility;
+        visibility.disabled = !!parent.value && !!inherited && inherited !== "public";
+        if (visibility.disabled) visibility.value = inherited!;
     }
-    parent.addEventListener("change", updateVisibility); updateVisibility();
+    parent.addEventListener("change", () => {
+        if (visibility.disabled) visibility.value = root.dataset.ownVisibility || "members";
+        updateVisibility();
+    });
+    updateVisibility();
 
     async function loadMembers() {
         const version = ++membersVersion;
@@ -50,7 +55,7 @@ export function initForumManagement(root: HTMLElement, api: Api, reload = () => 
                 option.textContent = trans(`js.forums.${value}`); role.append(option);
             }
             role.value = member.roleLevel >= 2 ? "moderator" : "member";
-            const protectedMember = member.roleLevel >= 3 || (!page.globalModerator && member.id === page.currentUserId);
+            const protectedMember = page.readOnly === true || member.roleLevel >= 3 || (!page.globalModerator && member.id === page.currentUserId);
             role.disabled = protectedMember;
             role.addEventListener("change", () => { void mutate(member.id, role.value); });
             const remove = button(trans("js.forums.remove_member"), () => { void mutate(member.id, null); });

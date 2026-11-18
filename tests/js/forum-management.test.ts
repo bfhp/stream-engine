@@ -67,12 +67,27 @@ describe("forum management page", () => {
         expect(api).toHaveBeenCalledWith("/api/v1/forums/manage/101/users?q=New");
         expect(api).toHaveBeenCalledWith("/api/v1/forums/manage/101/members/30", { method: "PUT", data: { role: "member" } });
     });
-    it("forces public visibility for a top-level category", async () => {
+    it("allows closed visibility for a top-level category", async () => {
         const api = vi.fn().mockResolvedValue(page);
         initForumManagement(element("[data-forum-management]"), api);
         const parent = element<HTMLSelectElement>('[name="parentId"]'); parent.value = "";
         parent.dispatchEvent(new Event("change"));
-        expect(element<HTMLSelectElement>('[name="visibility"]').disabled).toBe(true);
-        expect(element<HTMLSelectElement>('[name="visibility"]').value).toBe("public");
+        expect(element<HTMLSelectElement>('[name="visibility"]').disabled).toBe(false);
+        expect(element<HTMLSelectElement>('[name="visibility"]').value).toBe("members");
     });
+    it("locks visibility to a closed category and restores the section choice when moved out", async () => {
+        const root = element<HTMLElement>("[data-forum-management]");
+        root.dataset.ownVisibility = "public";
+        element<HTMLOptionElement>('[name="parentId"] option[value="100"]').dataset.visibility = "members";
+        initForumManagement(root, vi.fn().mockResolvedValue({ ...page, readOnly: true }));
+        await flush();
+        const visibility = element<HTMLSelectElement>('[name="visibility"]');
+        expect(visibility.disabled).toBe(true);
+        expect(element<HTMLSelectElement>("[data-forum-member-list] select").disabled).toBe(true);
+        const parent = element<HTMLSelectElement>('[name="parentId"]'); parent.value = "";
+        parent.dispatchEvent(new Event("change"));
+        expect(visibility.disabled).toBe(false);
+        expect(visibility.value).toBe("public");
+    });
+
 });

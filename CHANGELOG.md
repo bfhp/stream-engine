@@ -7,6 +7,11 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Closed forum categories with inherited access and membership for sections,
+  topics, and replies. Reopening a category restores each section’s own privacy.
+
 ## [0.7.1] - 2026-11-18
 
 ### Added
