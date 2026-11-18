@@ -7,6 +7,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-11-18
+
 ### Added
 
 - Forum management on the public site for administrators and moderators,
@@ -28,16 +30,59 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 - The administration **System status** page lists active site extensions and
   the extension points each one handles.
 
+- Administration system health checks for PHP components, database access,
+  pending migrations, cache, SMTP, writable storage and temporary directories,
+  Twig cache, and free disk space. Results distinguish scheduled and manual
+  checks, show stale results, and notify administrators of confirmed failures
+  and recovery through the notification system.
+
 ### Changed
 
 - `ControllerFactory` delegates constructor resolution to the new
   `ServiceResolver`, which also builds site extensions. Controller
   construction behaves as before.
 
+- Updated Vite, the React Vite plugin, and Rolldown within their existing
+  supported version ranges, and rebuilt production browser assets.
+
+- npm dependency auditing now runs in a separate workflow on pushes, pull
+  requests, weekly, and on demand, with its own README status badge. High and
+  critical findings still fail the audit; frontend tests and builds can run
+  independently. CI installation skips the duplicate implicit npm audit.
+
 ### Fixed
 
 - Admin Feed list filters, sorting and limit now persist in the URL when
   returning from the editor or reloading the page.
+
+- Article sections and their article lists respect the configured position
+  order.
+
+### Security
+
+- Documented the unresolved picomatch ReDoS advisory
+  [GHSA-fc5q-39xc-vjpf](https://github.com/advisories/GHSA-fc5q-39xc-vjpf)
+  in the build/test dependency chain. No path from application HTTP requests
+  to its glob-pattern inputs was found in the reviewed code. No patched
+  upstream release was available at release preparation; the dependency
+  audit remains failing, and this release does not fix or suppress the issue.
+
+### Upgrade notes
+
+- From 0.7.0, deploy the release and bundled browser assets, install PHP
+  dependencies from the lockfile, and refresh Composer's optimized autoloader
+  (`composer dump-autoload -o`) so site extensions can be discovered. Rebuild
+  frontend assets only when deploying from sources without bundled output.
+- There are no new database migrations. The fresh-install snapshot was regenerated: `schema.sql` is unchanged from
+  0.7.0, and its matching manifest now identifies 0.7.1. Existing sites must
+  not import `schema.sql`.
+  Sites upgrading from an older release must also follow the 0.7.0 upgrade notes.
+- Ensure the existing scheduler runs `bin/cron.php` once a minute. It discovers
+  the new `system:health` task, which runs every five minutes. Health incidents
+  can generate administrator notifications; check SMTP and delivery settings.
+- Site extensions execute trusted PHP code. The password fallback is optional
+  and only an explicit `true` from an extension accepts a password rejected by
+  the engine's hash check. Sites without extensions retain normal authentication.
 
 ## [0.7.0] - 2026-11-13
 
@@ -572,5 +617,6 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 - Initial version.
 
-[Unreleased]: https://github.com/bfhp/stream-engine/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/bfhp/stream-engine/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/bfhp/stream-engine/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/bfhp/stream-engine/compare/v0.6.2...v0.7.0

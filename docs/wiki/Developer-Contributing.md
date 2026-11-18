@@ -301,7 +301,7 @@ Every push and pull request runs these GitHub Actions jobs:
 | --- | --- |
 | Documentation | `php bin/check-wiki-docs.php` |
 | PHP | PHP 8.3, required extensions, MariaDB 12 and MySQL 8.4 (one job each), locked Composer install, `composer audit`, Pint, the complete PHPUnit suite with installation integration tests, and the CSRF audit |
-| Frontend | PHP dependencies, Node.js 20.19, `npm ci`, Vitest, strict TypeScript, and the Vite production build |
+| Frontend | PHP dependencies, Node.js 20.19, `npm ci --no-audit`, Vitest, strict TypeScript, and the Vite production build |
 | Dependency audit | Separate workflow: Node.js 20.19, `npm ci --ignore-scripts --no-audit`, and `npm audit --audit-level=high`, including development dependencies; runs on pushes, pull requests, weekly, and on demand |
 | Dependency review | Pull requests only: rejects new or upgraded dependencies with a known high or critical vulnerability or a licence outside the allowed list in `.github/workflows/ci.yml` |
 | Semgrep | Separate workflow: static security analysis of the source; findings appear under Security → Code scanning |

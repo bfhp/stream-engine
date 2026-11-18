@@ -506,7 +506,7 @@ the behavior itself is intentionally changing.
 | --- | --- |
 | Documentation | PHP 8.3; `php bin/check-wiki-docs.php`. |
 | PHP | Two jobs: PHP 8.3 with MariaDB 12, and PHP 8.3 with MySQL 8.4; Composer install, Pint, PHPUnit with `INSTALL_TEST_DB_*`, and the CSRF audit. |
-| Frontend | PHP 8.3 and Node 20.19; Composer install, `npm ci`, Vitest, TypeScript, and the production Vite build. |
+| Frontend | PHP 8.3 and Node 20.19; Composer install, `npm ci --no-audit`, Vitest, TypeScript, and the production Vite build. |
 
 `.github/workflows/dependency-audit.yml` runs npm auditing independently on
 pushes, pull requests, weekly, and on demand. It installs locked dependencies
