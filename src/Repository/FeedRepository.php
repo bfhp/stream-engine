@@ -1345,10 +1345,11 @@ final class FeedRepository implements FeedRepositoryInterface
         );
         [$commentAcl, $commentParams] = $this->commentAclCondition($user);
         $galleryAcl = $this->galleryAclCondition($user, 'f.id', 'f.parent_id', 'f.type');
+        $containerAcl = $this->containerAclCondition($user, 'f.id', 'f.container_id');
 
         $sql = "
         (
-            (f.type <> 'comment' AND $feedAcl AND $galleryAcl)
+            (f.type <> 'comment' AND $feedAcl AND $containerAcl AND $galleryAcl)
             OR (f.type = 'comment' AND $commentAcl)
         )
         ";
@@ -1357,6 +1358,27 @@ final class FeedRepository implements FeedRepositoryInterface
             $sql,
             [$user->id, $user->id, ...$commentParams],
         ];
+    }
+
+    /**
+     * Uses feeds PRIMARY(id) and memberships PRIMARY(container_id,user_id).
+     * Owning a publication does not grant access to its closed container.
+     * Self-contained feeds use their own ordinary ACL without recursion.
+     */
+    private function containerAclCondition(User $user, string $idExpression, string $containerExpression): string
+    {
+        $containerAcl = str_replace('?', (string) $user->id, $this->aclSubjectCondition(
+            'acl_container.owner_id',
+            'acl_container.visibility',
+            'acl_container.container_id',
+            'acm',
+            'acr',
+        ));
+
+        return "($containerExpression IS NULL OR $containerExpression = $idExpression OR EXISTS (
+            SELECT 1 FROM feeds acl_container
+            WHERE acl_container.id = $containerExpression AND $containerAcl
+        ))";
     }
 
     private function galleryAclCondition(User $user, string $idExpression, string $parentExpression, string $typeExpression): string
@@ -1394,6 +1416,7 @@ final class FeedRepository implements FeedRepositoryInterface
         );
 
         $galleryAcl = $this->galleryAclCondition($user, $subject('id'), $subject('parent_id'), $subject('type'));
+        $containerAcl = $this->containerAclCondition($user, $subject('id'), $subject('container_id'));
 
         return [
             "
@@ -1405,7 +1428,7 @@ final class FeedRepository implements FeedRepositoryInterface
                  AND acl_root.id = acl_parent.parent_id
                 WHERE acl_parent.id = f.parent_id
                   AND (acl_parent.type <> 'comment' OR acl_root.type <> 'comment')
-                  AND $subjectAcl AND $galleryAcl
+                  AND $subjectAcl AND $containerAcl AND $galleryAcl
             )
             ",
             [$user->id, $user->id],

@@ -7,6 +7,17 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Publication ownership no longer bypasses access to a closed container.
+  Authors removed from a closed forum section or category cannot read, find,
+  edit, delete, or reply to their own topics and replies. Administrators,
+  global moderators, and authorized local moderators retain access. The rule
+  is shared by SQL reads and service authorization for all feed containers;
+  authors keep ownership permissions inside containers they can access.
+- This access correction applies to existing content immediately; no database
+  migration or schema change is required.
+
 ## [0.7.2] - 2026-11-18
 
 ### Added

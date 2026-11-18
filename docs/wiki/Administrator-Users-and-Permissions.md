@@ -227,6 +227,14 @@ access test.
 
 Content access is evaluated after page access:
 
+A publication also requires access to its containing feed. Owning the
+publication does not bypass a closed container: an author who loses membership
+cannot read, search, edit, delete, or reply to its contents through that
+ownership. Replies inherit the publication's access. Administrators and global
+moderators retain their content override; a container's owner retains access
+to that container. The visibility rules below apply within an accessible
+container, or directly to feeds without a container.
+
 | Feed visibility | Who can read it |
 | --- | --- |
 | `public` | Everyone who can reach the page. |
@@ -313,15 +321,17 @@ container; a previously closed section does not become public by accident.
 Moving a section into a closed category applies category access immediately;
 moving it out restores its own access. Original section memberships are
 preserved. A category with sections cannot be nested, and a section with topics
-cannot become a category. Existing owner and author overrides still apply.
+cannot become a category. Authors must retain access to the effective section
+or category to access their own topics and replies.
 
 Search active users by display name or username in **Members**, then add them,
 change their local member/moderator role, or remove them. Membership changes
 apply immediately, independently of the settings Save button. Removal preserves
 posts and accounts. Local moderators cannot change their own membership, and
-existing owner-role memberships cannot be changed here. Existing author,
-container-owner and global-moderator ACL overrides remain unchanged. Files
-retain their public URLs.
+existing owner-role memberships cannot be changed here. Removing an author
+from a closed section or category revokes access to their own topics and
+replies as well. Container owners and global content moderators retain their
+access. Files retain their public URLs.
 
 The session-authenticated endpoints are owned by Forums. Every mutation requires
 `X-CSRF-Token` and rechecks the actor's current management permission:

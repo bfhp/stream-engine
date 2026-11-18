@@ -606,7 +606,8 @@ final class InstallationSchemaTest extends TestCase
                 (102,100,60,'forum','open','Open','','public',1,1),
                 (201,101,10,'forum-post','secret','Secret topic','Secret content','public',1,1),
                 (202,102,10,'forum-post','other','Public topic','','public',1,1),
-                (301,201,30,'comment',NULL,'','Secret reply','public',1,1)");
+                (301,201,30,'comment',NULL,'','Secret reply','public',1,1),
+                (302,301,10,'comment',NULL,'','Secret author reply','public',1,1)");
             $db = (new ReflectionClass(PdoDatabase::class))->newInstanceWithoutConstructor();
             (new ReflectionProperty(PdoDatabase::class, 'pdo'))->setValue($db, $pdo);
             $memberships = new \StreamEngine\Repository\MembershipRepository($db);
@@ -654,7 +655,43 @@ final class InstallationSchemaTest extends TestCase
             }
             self::assertNotNull($repository->findById(201, $member));
             self::assertNotNull($repository->findById(301, $member));
-            self::assertNotNull($repository->findById(201, new \StreamEngine\Domain\User(10, '', 'user')), 'Shared author override is preserved');
+            $author = new \StreamEngine\Domain\User(10, '', 'user');
+            $assertAuthorBlocked = function () use ($repository, $access, $feeds, $author, $admin): void {
+                foreach ([201, 301, 302] as $id) {
+                    self::assertNull($repository->findById($id, $author), 'An author cannot bypass a closed container');
+                }
+                self::assertSame([], $repository->search('Secret', 20, null, $author));
+                self::assertSame(0, $repository->countByParentAndType(101, 'forum-post', $author));
+                self::assertSame([], $repository->findByParentAndTypePage(101, 'forum-post', $author, 20)['items']);
+                $topic = $repository->findById(201, $admin);
+                self::assertFalse($access->canAccessFeed($author, $topic));
+                self::assertFalse($access->canEditFeed($author, $topic));
+                $reply = $repository->findById(302, $admin);
+                self::assertFalse($access->canAccessFeed($author, $reply));
+                self::assertFalse($access->canEditFeed($author, $reply));
+                foreach ([
+                    fn () => $feeds->getFeedById(201, $author),
+                    fn () => $feeds->editComment(201, 'Changed topic', $author),
+                    fn () => $feeds->editComment(302, 'Changed reply', $author),
+                    fn () => $feeds->deleteComment(302, $author),
+                    fn () => $feeds->createComment(201, 'New reply', $author),
+                ] as $operation) {
+                    try {
+                        $operation();
+                        self::fail('Closed-container content must remain unreadable and unmodifiable to its author');
+                    } catch (\StreamEngine\Core\Exceptions\NotFoundException) {
+                        self::assertNotNull($repository->findById(302, $admin));
+                    }
+                }
+            };
+            $assertAuthorBlocked();
+            $memberships->create(101, 10, $memberships::ROLE_MEMBER_ID);
+            self::assertNotNull($repository->findById(201, $author));
+            self::assertTrue($access->canAccessFeed($author, $repository->findById(302, $admin)));
+            self::assertTrue($access->canEditFeed($author, $repository->findById(302, $admin)));
+            self::assertTrue($access->canEditFeed($author, $repository->findById(201, $admin)));
+            $memberships->delete(101, 10);
+            $assertAuthorBlocked();
             $topic = $repository->findById(201, $admin);
             self::assertSame(101, $topic->containerId);
             self::assertSame('forum', $topic->containerType);
@@ -663,8 +700,11 @@ final class InstallationSchemaTest extends TestCase
             $memberships->delete(101, 20);
             self::assertNull($repository->findById(201, $member));
             $setAccess('private');
+            $assertAuthorBlocked();
             self::assertNotNull($repository->findById(201, new \StreamEngine\Domain\User(40, '', 'user')));
+            self::assertNotNull($repository->findById(302, new \StreamEngine\Domain\User(50, '', 'moderator')));
             $setAccess('public');
+            self::assertNotNull($repository->findById(302, $author));
             self::assertNotNull($repository->findById(201, $guest));
             self::assertNotNull($repository->findById(301, $guest));
             $pdo->exec("UPDATE users SET is_active = 1 WHERE id IN (10,20,30,40,60)");
@@ -746,10 +786,17 @@ final class InstallationSchemaTest extends TestCase
             } catch (\StreamEngine\Core\Exceptions\ForbiddenException) {
                 self::assertSame(103, $repository->findById(101, $admin)->containerId);
             }
+            $memberships->create(103, 10, $memberships::ROLE_MEMBER_ID);
+            self::assertNotNull($repository->findById(201, $author));
+            self::assertNotNull($repository->findById(302, $author));
             $management->save(103, ['visibility' => 'private'], $admin);
+            $assertAuthorBlocked();
             self::assertNull($repository->findById(204, $categoryMember));
             self::assertNotNull($repository->findById(204, $localModerator));
             $management->save(103, ['visibility' => 'members'], $admin);
+            self::assertNotNull($repository->findById(201, $author));
+            $memberships->delete(103, 10);
+            $assertAuthorBlocked();
             $management->setMember(103, 30, null, $admin);
             self::assertNull($repository->findById(201, $categoryMember));
             $management->save(103, ['visibility' => 'public'], $admin);

@@ -178,7 +178,9 @@ final class FeedRepositoryTest extends TestCase
                 (21, 20,   9, 'comment', '', 'private root comment', NULL, 'public', 21),
                 (22, 21,   9, 'comment', '', 'private nested reply', NULL, 'public', 22),
                 (30, NULL, 2, 'article', 'Members', 'members post', 300, 'members', 30),
-                (31, 30,   9, 'comment', '', 'members comment', NULL, 'public', 31)
+                (31, 30,   9, 'comment', '', 'members comment', NULL, 'public', 31),
+                (200, NULL, 9, 'container', 'Container', '', 200, 'public', 1),
+                (300, NULL, 9, 'container', 'Container', '', 300, 'public', 1)
             SQL);
         $pdo->exec('INSERT INTO memberships (container_id, user_id, membership_role_id) VALUES (200, 3, 2), (300, 4, 1)');
 
@@ -207,6 +209,25 @@ final class FeedRepositoryTest extends TestCase
         $pdo->exec("UPDATE feeds SET visibility = 'public' WHERE id = 20");
         $this->assertNotNull($repository->findById(21, $guest));
         $this->assertNotNull($repository->findById(22, $guest));
+
+        $author = $this->user(2);
+        $pdo->exec("UPDATE feeds SET visibility = 'members' WHERE id = 200");
+        foreach ([20, 21, 22] as $id) {
+            $this->assertNull($repository->findById($id, $author), 'Publication ownership cannot bypass the container');
+        }
+        $this->assertSame([30, 10], array_column($repository->findByOwnerAndTypePage(2, 'article', $author, 20)['items'], 'id'));
+
+        $pdo->exec('INSERT INTO memberships VALUES (200, 2, 1)');
+        $this->assertNotNull($repository->findById(20, $author));
+        $this->assertNotNull($repository->findById(22, $author));
+        $pdo->exec("UPDATE feeds SET visibility = 'private' WHERE id = 200");
+        $this->assertNull($repository->findById(20, $author), 'Ordinary membership does not bypass a moderator-only container');
+        $pdo->exec('UPDATE memberships SET membership_role_id = 2 WHERE container_id = 200 AND user_id = 2');
+        $this->assertNotNull($repository->findById(22, $author));
+        $pdo->exec('DELETE FROM memberships WHERE container_id = 200 AND user_id = 2');
+        $this->assertNull($repository->findById(20, $author));
+        $pdo->exec("UPDATE feeds SET visibility = 'public' WHERE id = 200");
+        $this->assertNotNull($repository->findById(20, $author));
     }
 
     /**

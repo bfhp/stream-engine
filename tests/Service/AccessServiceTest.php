@@ -48,9 +48,19 @@ final class AccessServiceTest extends TestCase
         ?PdoDatabase $membershipDb = null,
         ?PdoDatabase $feedDb = null,
     ): AccessService {
+        if ($feedDb === null) {
+            $feedDb = $this->createStub(PdoDatabase::class);
+            $feedDb->method('fetchOne')->willReturn([
+                'id' => 42, 'parent_id' => null, 'owner_id' => 1, 'type' => 'container',
+                'slug' => null, 'title' => 'Container', 'description' => null,
+                'image_url' => null, 'content' => null, 'container_id' => 42,
+                'visibility' => 'public', 'position' => 0, 'created_at' => 1,
+            ]);
+        }
+
         return new AccessService(
             new MembershipRepository($membershipDb ?? $this->createStub(PdoDatabase::class)),
-            new FeedRepository($feedDb ?? $this->createStub(PdoDatabase::class)),
+            new FeedRepository($feedDb),
         );
     }
 
@@ -76,12 +86,13 @@ final class AccessServiceTest extends TestCase
         ?int $containerId = null,
         string $visibility = 'public',
         ?string $containerType = null,
+        string $type = 'article',
     ): Feed {
         return new Feed(
             id: 10,
             parentId: null,
             ownerId: $ownerId,
-            type: 'article',
+            type: $type,
             slug: 'feed-10',
             title: 'Feed 10',
             description: null,
@@ -166,6 +177,48 @@ final class AccessServiceTest extends TestCase
 
         $this->assertTrue($service->canAccessFeed($user, $feed));
         $this->assertTrue($service->canEditFeed($user, $feed));
+    }
+
+    #[DataProvider('publicationVisibility')]
+    public function testAuthorCannotReadOrEditFeedInAnInaccessibleContainer(string $visibility): void
+    {
+        $feedDb = $this->createStub(PdoDatabase::class);
+        $feedDb->method('fetchOne')->willReturn(null);
+        $service = $this->makeService(feedDb: $feedDb);
+        $author = $this->makeUser(5);
+        $feed = $this->makeFeed(ownerId: 5, containerId: 42, visibility: $visibility);
+
+        $this->assertFalse($service->canAccessFeed($author, $feed));
+        $this->assertFalse($service->canEditFeed($author, $feed));
+    }
+
+    public static function publicationVisibility(): array
+    {
+        return [['public'], ['members'], ['private']];
+    }
+
+    public function testCommentAuthorCannotBypassThePublicationsAccess(): void
+    {
+        $feedDb = $this->createStub(PdoDatabase::class);
+        $feedDb->method('fetchOne')->willReturn(null);
+        $service = $this->makeService(feedDb: $feedDb);
+        $author = $this->makeUser(5);
+        $comment = $this->makeFeed(ownerId: 5, type: 'comment');
+
+        $this->assertFalse($service->canAccessFeed($author, $comment));
+        $this->assertFalse($service->canEditFeed($author, $comment));
+    }
+
+    public function testSelfContainedOwnerDoesNotRequireARecursiveLookup(): void
+    {
+        $feedDb = $this->createMock(PdoDatabase::class);
+        $feedDb->expects($this->never())->method('fetchOne');
+        $service = $this->makeService(feedDb: $feedDb);
+        $author = $this->makeUser(5);
+        $container = $this->makeFeed(ownerId: 5, containerId: 10, visibility: 'private');
+
+        $this->assertTrue($service->canAccessFeed($author, $container));
+        $this->assertTrue($service->canEditFeed($author, $container));
     }
 
     public function testGlobalFeedIsAccessibleWithoutMembership(): void

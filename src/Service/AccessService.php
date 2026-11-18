@@ -25,8 +25,9 @@ use StreamEngine\Repository\MembershipRepository;
  *
  * 1. Content moderator override — admin and global moderator can read and
  *    edit all feed content (not Administration or private messages).
- * 2. Owner override — feed owner or container owner can access everything inside container.
- * 3. Visibility rules:
+ * 2. Container access — authors cannot bypass a closed container.
+ * 3. Owner override — feed owner or container owner, within an accessible container.
+ * 4. Visibility rules:
  *      - public  → accessible to everyone
  *      - members → accessible to accepted container members (role level 1+)
  *      - private → accessible to container moderators+
@@ -90,8 +91,8 @@ class AccessService
      *
      * Access resolution order:
      *  1. Content moderator override (admin or global moderator)
-     *  2. Owner override (feed owner or container owner)
-     *  3. Global (non-container) feeds are public
+     *  2. Access to the containing feed
+     *  3. Owner override (feed owner or container owner)
      *  4. Visibility-based rules
      *
      * NEVER use this in a loop.
@@ -103,8 +104,18 @@ class AccessService
             return true;
         }
 
-        // 🔥 2. Owner override
-        if ($this->isOwner($user, $feed)) {
+        // Comments inherit their publication's ACL, including its container gate.
+        if ($feed->type === 'comment' && $this->feedRepository->findById($feed->id, $user) === null) {
+            return false;
+        }
+
+        $container = $this->findContainer($user, $feed);
+        if ($feed->containerId !== null && $container === null) {
+            return false;
+        }
+
+        // Ownership applies only within an accessible container.
+        if ($this->isOwner($user, $feed, $container)) {
             return true;
         }
 
@@ -143,9 +154,19 @@ class AccessService
             return true;
         }
 
+        // Comments inherit their publication's ACL, including its container gate.
+        if ($feed->type === 'comment' && $this->feedRepository->findById($feed->id, $user) === null) {
+            return false;
+        }
+
+        $container = $this->findContainer($user, $feed);
+        if ($feed->containerId !== null && $container === null) {
+            return false;
+        }
+
         // 🔥 2. Owner override (feed owner or container owner - isOwner()
         // already covers a community's owner_id, see its own docblock).
-        if ($this->isOwner($user, $feed)) {
+        if ($this->isOwner($user, $feed, $container)) {
             return true;
         }
 
@@ -163,38 +184,31 @@ class AccessService
         return false;
     }
 
+    private function findContainer(User $user, Feed $feed): ?Feed
+    {
+        if ($feed->containerId === null) {
+            return null;
+        }
+
+        return $feed->containerId === $feed->id
+            ? $feed
+            : $this->feedRepository->findById($feed->containerId, $user);
+    }
+
     /**
      * Check whether user is:
      *  - Owner of the feed itself
      *  - Owner of the container feed
      *
-     * Container is also stored in feeds table.
-     *
-     * NEVER user it ina loop.
+     * The container has already passed the repository ACL check.
      */
-    private function isOwner(User $user, Feed $feed): bool
+    private function isOwner(User $user, Feed $feed, ?Feed $container): bool
     {
         if (!isset($user->id)) {
             return false;
         }
 
-        // Owner of the feed itself
-        if ($user->id === $feed->ownerId) {
-            return true;
-        }
-
-        // Owner of the container
-        if ($feed->containerId !== null) {
-
-            $container = $this->feedRepository
-                ->findById($feed->containerId, $user);
-
-            if ($container && $container->ownerId === $user->id) {
-                return true;
-            }
-        }
-
-        return false;
+        return $user->id === $feed->ownerId || $user->id === $container?->ownerId;
     }
 
     /**
