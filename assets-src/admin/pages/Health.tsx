@@ -18,6 +18,12 @@ export type HealthCheck = { id: string; label: string; cron: HealthResult | null
 export type ActiveExtension = { class: string; points: string[] };
 type Payload = { interval: number; data: HealthCheck[]; extensions: ActiveExtension[] };
 
+function latestResult(check: HealthCheck): HealthResult | null {
+    if (!check.web) return check.cron;
+    if (!check.cron) return check.web;
+    return check.web.checkedAt >= check.cron.checkedAt ? check.web : check.cron;
+}
+
 function Extensions({ extensions }: { extensions: ActiveExtension[] }) {
     return <Stack gap="xs">
         <Text component="h2" fw={700} size="lg" m={0}>{trans("js.admin.health.extensions")}</Text>
@@ -108,7 +114,6 @@ export default function Health() {
             </Button>
         </Group>
         <Text c="dimmed">{trans("js.admin.health.description")}</Text>
-        <Text size="sm">{trans("js.admin.health.contexts")}</Text>
         <Text size="sm">{trans("js.admin.health.notifications")}</Text>
         <Button component={Link} to="/cron" variant="subtle" style={{ alignSelf: "start" }}>
             {trans("js.admin.health.scheduler")}
@@ -116,18 +121,16 @@ export default function Health() {
         {error && <Alert color="red" role="alert">{error}</Alert>}
         {outdated && <Alert color="orange">{trans("js.admin.health.outdated")}</Alert>}
         {loading && !payload && <Text role="status">{trans("js.admin.loading")}</Text>}
-        {payload && <Table.ScrollContainer minWidth={850}>
+        {payload && <Table.ScrollContainer minWidth={650}>
             <Table striped withTableBorder verticalSpacing="md">
                 <Table.Thead><Table.Tr>
                     <Table.Th>{trans("js.admin.health.check")}</Table.Th>
-                    <Table.Th>{trans("js.admin.health.cron")}</Table.Th>
-                    <Table.Th>{trans("js.admin.health.web")}</Table.Th>
+                    <Table.Th>{trans("js.admin.status")}</Table.Th>
                     <Table.Th>{trans("js.admin.cron.actions")}</Table.Th>
                 </Table.Tr></Table.Thead>
                 <Table.Tbody>{payload.data.map(check => <Table.Tr key={check.id}>
                     <Table.Th scope="row">{check.label}</Table.Th>
-                    <Table.Td><Result result={check.cron} /></Table.Td>
-                    <Table.Td><Result result={check.web} /></Table.Td>
+                    <Table.Td><Result result={latestResult(check)} /></Table.Td>
                     <Table.Td><Button size="xs" variant="light"
                         loading={pending === check.id} disabled={pending !== null || loading}
                         aria-label={trans("js.admin.health.run_check", { check: check.label })}
