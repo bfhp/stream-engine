@@ -7,10 +7,49 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.7.2] - 2026-11-18
+
 ### Added
 
-- Closed forum categories with inherited access and membership for sections,
-  topics, and replies. Reopening a category restores each section’s own privacy.
+- Closed forum categories: their sections, topics, and replies inherit the
+  category's visibility and shared membership through the existing ACL.
+- Category administrators and moderators can manage inherited sections from
+  the forum management pages. A section shows its inherited participants and
+  links to the category where membership is edited.
+
+### Changed
+
+- Moving a section into a closed category applies that category's access and
+  participants. A section's separate membership cannot bypass category access.
+- Each section retains its own visibility setting. Reopening the category or
+  moving a section out restores the section's own visibility and membership,
+  including sections that were already private.
+- Category access and membership inheritance is implemented entirely in the
+  Forums module using the existing feed metadata and ACL contracts.
+
+### Security
+
+- The known build/test dependency advisory
+  [GHSA-fc5q-39xc-vjpf](https://github.com/advisories/GHSA-fc5q-39xc-vjpf)
+  remains unresolved. The current npm audit reports six high-severity affected
+  packages through picomatch and its dependents; this is the same advisory
+  documented in 0.7.1. The dependency audit remains failing and is not
+  suppressed. PHP dependencies have no reported advisories.
+
+### Upgrade notes
+
+- From 0.7.1, deploy the release with its bundled browser assets and install PHP
+  dependencies from the lockfile. Earlier versions must also follow the 0.7.1
+  upgrade notes.
+- There are no new database migrations or dependency updates. The installation
+  snapshot was regenerated from all 22 migrations: `schema.sql` is unchanged
+  from 0.7.1, and the matching manifest now identifies 0.7.2. Existing sites
+  must not import `schema.sql`.
+- Closing a category updates access for its existing sections and topics.
+  Review the category participants before changing visibility; access to
+  descendants follows the category. Existing owner and global moderation
+  permissions continue to apply. Direct file URLs retain their existing access
+  behavior.
 
 ## [0.7.1] - 2026-11-18
 
