@@ -48,14 +48,18 @@ function Extensions({ extensions }: { extensions: ActiveExtension[] }) {
 function Result({ result }: { result: HealthResult | null }) {
     if (!result) return <Text c="dimmed" size="sm">{trans("js.admin.health.never")}</Text>;
     const color = { ok: "green", warning: "yellow", error: "red", unconfigured: "gray" }[result.status];
-    return <Stack gap={4}>
-        <Group gap="xs">
-            <Badge color={color}>{trans(`js.admin.health.status.${result.status}`)}</Badge>
-            {result.stale && <Badge color="orange">{trans("js.admin.health.stale")}</Badge>}
+    return <Stack gap={2}>
+        <Group gap="xs" wrap="nowrap" align="flex-start">
+            <Badge size="sm" color={color} style={{ flexShrink: 0 }}>{trans(`js.admin.health.status.${result.status}`)}</Badge>
+            {result.stale && <Badge size="sm" color="orange" style={{ flexShrink: 0 }}>{trans("js.admin.health.stale")}</Badge>}
+            <Text size="sm" lh={1.3}>{result.message}</Text>
         </Group>
-        <Text size="sm">{result.message}</Text>
-        <Text size="xs" c="dimmed">{formatTimestamp(result.checkedAt)} · {formatNumber(result.durationMs)} ms</Text>
-        <Text size="xs" c="dimmed">{trans("js.admin.health.last_success")}: {formatTimestamp(result.lastSucceededAt)}</Text>
+        <Text size="xs" c="dimmed" lh={1.3}>
+            {formatTimestamp(result.checkedAt)} · {formatNumber(result.durationMs)} ms
+            {result.lastSucceededAt !== null && result.lastSucceededAt !== result.checkedAt && <>
+                {" · "}{trans("js.admin.health.last_success")}: {formatTimestamp(result.lastSucceededAt)}
+            </>}
+        </Text>
     </Stack>;
 }
 
@@ -122,7 +126,7 @@ export default function Health() {
         {outdated && <Alert color="orange">{trans("js.admin.health.outdated")}</Alert>}
         {loading && !payload && <Text role="status">{trans("js.admin.loading")}</Text>}
         {payload && <Table.ScrollContainer minWidth={650}>
-            <Table striped withTableBorder verticalSpacing="md">
+            <Table striped withTableBorder verticalSpacing="xs" fz="sm">
                 <Table.Thead><Table.Tr>
                     <Table.Th>{trans("js.admin.health.check")}</Table.Th>
                     <Table.Th>{trans("js.admin.status")}</Table.Th>
@@ -131,7 +135,7 @@ export default function Health() {
                 <Table.Tbody>{payload.data.map(check => <Table.Tr key={check.id}>
                     <Table.Th scope="row">{check.label}</Table.Th>
                     <Table.Td><Result result={latestResult(check)} /></Table.Td>
-                    <Table.Td><Button size="xs" variant="light"
+                    <Table.Td w={1} style={{ whiteSpace: "nowrap" }}><Button size="xs" variant="light"
                         loading={pending === check.id} disabled={pending !== null || loading}
                         aria-label={trans("js.admin.health.run_check", { check: check.label })}
                         onClick={() => void run(check.id)}>{trans("js.admin.health.run")}</Button></Table.Td>
