@@ -47,6 +47,41 @@ to stay anonymous. Please keep the details private until the fix is released.
 
 ## Reviewed dependency advisories
 
+The [Dependency audit workflow](https://github.com/bfhp/stream-engine/actions/workflows/dependency-audit.yml)
+runs `npm audit --audit-level=high` on pushes, pull requests, weekly, and on
+demand. It includes development dependencies and fails on high or critical
+findings, independently of the CI test and build workflow. Findings described
+below are not suppressed; the README badge links to the audit runs. A passing
+CI badge does not mean the dependency audit passed. Composer auditing remains
+part of the PHP CI jobs.
+
+### picomatch in frontend build and test tools
+
+Reviewed November 18, 2026 for picomatch 4.0.7, used by Vite, Vitest,
+tinyglobby, and fdir; the React Vite plugin is also flagged through Vite.
+[GHSA-fc5q-39xc-vjpf](https://github.com/advisories/GHSA-fc5q-39xc-vjpf)
+describes a denial of service through specially crafted repeated extglob
+patterns. At review time, no patched picomatch release is available. The six
+high-severity audit entries describe this one dependency chain.
+
+The current application serves compiled assets from `public/assets/` through
+PHP/nginx. Application browser sources do not import these build and test
+packages, and no path from an HTTP request to their glob-pattern inputs was
+found in the reviewed code. This assessment depends on the execution path,
+not merely the packages being listed under `devDependencies`. It does not
+establish safety for a publicly exposed Vite development server or tooling
+that accepts untrusted glob patterns.
+
+The dependency remains vulnerable. Current versions are retained pending an
+upstream fix; the audit continues to fail. The suggested forced downgrade to
+Vite 6.2.7, Vitest 3.1.4, and the React plugin 5.2.0 was checked separately:
+picomatch remained through Vitest, other advisories included critical
+findings, and the older tools were incompatible with the current configuration.
+
+Adopt a patched release when available and rerun the audit, tests, type check,
+and build. Reassess exposure if deployment starts running Vite, glob patterns
+become user-controlled, or these packages enter the application runtime.
+
 ### deepmerge in the administration file browser
 
 Reviewed November 8, 2026 for `@samuelncui/chonky` 0.3.6 and `deepmerge`

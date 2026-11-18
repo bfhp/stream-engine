@@ -1,5 +1,12 @@
 # Stream Engine
 
+[![CI](https://github.com/bfhp/stream-engine/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/bfhp/stream-engine/actions/workflows/ci.yml?query=branch%3Amain)
+[![Dependency audit](https://github.com/bfhp/stream-engine/actions/workflows/dependency-audit.yml/badge.svg?branch=main)](https://github.com/bfhp/stream-engine/actions/workflows/dependency-audit.yml?query=branch%3Amain)
+
+The dependency audit reports known npm vulnerabilities independently of the
+test and build workflow. See [reviewed dependency advisories](SECURITY.md#reviewed-dependency-advisories)
+for their assessed impact and remediation status.
+
 Stream Engine is a modular content management system built with PHP and
 TypeScript. It combines traditional publishing features with forums,
 communities, private messaging, user profiles, and a React-based administration

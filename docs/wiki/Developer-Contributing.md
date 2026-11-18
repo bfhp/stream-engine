@@ -301,15 +301,20 @@ Every push and pull request runs these GitHub Actions jobs:
 | --- | --- |
 | Documentation | `php bin/check-wiki-docs.php` |
 | PHP | PHP 8.3, required extensions, MariaDB 12 and MySQL 8.4 (one job each), locked Composer install, `composer audit`, Pint, the complete PHPUnit suite with installation integration tests, and the CSRF audit |
-| Frontend | PHP dependencies, Node.js 20.19, `npm ci`, `npm audit --audit-level=high`, Vitest, strict TypeScript, and the Vite production build |
+| Frontend | PHP dependencies, Node.js 20.19, `npm ci`, Vitest, strict TypeScript, and the Vite production build |
+| Dependency audit | Separate workflow: Node.js 20.19, `npm ci --ignore-scripts --no-audit`, and `npm audit --audit-level=high`, including development dependencies; runs on pushes, pull requests, weekly, and on demand |
 | Dependency review | Pull requests only: rejects new or upgraded dependencies with a known high or critical vulnerability or a licence outside the allowed list in `.github/workflows/ci.yml` |
 | Semgrep | Separate workflow: static security analysis of the source; findings appear under Security → Code scanning |
 | Accessibility | Separate workflow: axe and keyboard scan of an installed, seeded site (both bundled themes, light and dark; English on pull requests, English and Arabic on `main`). Runs only when a pull request or a push to `main` touches templates, styles, scripts, built assets, translations or the scan; also weekly and on demand (Actions → Accessibility → Run workflow) |
 
 The dependency audits check the lock files against public advisory databases,
 so a newly published advisory can fail a run whose change did not touch any
-dependency. Update the affected package, or wait for the Dependabot pull
-request, rather than disabling the audit.
+dependency. The npm audit has its own workflow and README badge, so its
+failure does not prevent the frontend test and build steps from running.
+Composer auditing remains in the PHP CI jobs. Update the affected package
+when a fix is available. When retaining a vulnerable dependency pending an
+upstream fix, document the assessed exposure in `SECURITY.md` and keep the
+audit finding visible. A passing CI badge does not imply a passing npm audit.
 
 Dependabot opens grouped monthly pull requests for Composer, npm, and GitHub
 Actions updates (minor and patch versions only; see `.github/dependabot.yml`)

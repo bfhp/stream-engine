@@ -1,0 +1,38 @@
+name: Dependency audit
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 4 * * 1' # weekly, Monday 04:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependency-audit-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  npm:
+    name: npm audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '20.19'
+          cache: npm
+
+      - name: Install locked frontend dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts --no-audit
+
+      # Includes development dependencies; known advisories remain failures.
+      - name: Audit frontend dependencies
+        run: npm audit --audit-level=high

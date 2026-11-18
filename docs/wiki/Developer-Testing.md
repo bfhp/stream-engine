@@ -508,6 +508,15 @@ the behavior itself is intentionally changing.
 | PHP | Two jobs: PHP 8.3 with MariaDB 12, and PHP 8.3 with MySQL 8.4; Composer install, Pint, PHPUnit with `INSTALL_TEST_DB_*`, and the CSRF audit. |
 | Frontend | PHP 8.3 and Node 20.19; Composer install, `npm ci`, Vitest, TypeScript, and the production Vite build. |
 
+`.github/workflows/dependency-audit.yml` runs npm auditing independently on
+pushes, pull requests, weekly, and on demand. It installs locked dependencies
+with `npm ci --ignore-scripts --no-audit`, then runs
+`npm audit --audit-level=high`, including development dependencies. High and
+critical findings still fail that workflow and its separate README badge;
+they do not stop CI from running frontend tests and the build. Reviewed
+advisories and their assessed exposure are recorded in `SECURITY.md`.
+Composer auditing remains part of the PHP CI jobs.
+
 `.github/workflows/accessibility.yml` runs the page scan separately, because
 it is the slowest check: PHP 8.3, Node 20.19, MariaDB 12, and memcached;
 production build, `bin/install.php` into a clean database, `bin/seed-demo.php`,
