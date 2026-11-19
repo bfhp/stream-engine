@@ -28,19 +28,11 @@
                        (see ForumsController::handleMarkAllReadRequest()'s
                        own docblock for why). The site-wide scope is
                        forums.list.twig's own button. #}
-                    {% if user.isGuest %}
-                        <button type="button" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2"
-                                disabled title="{{ trans('view.forums.list.01') }}">
-                            <i class="bi bi-check2-all" aria-hidden="true"></i>
-                            <span>{{ trans('view.forums.list.02') }}</span>
-                        </button>
-                    {% else %}
-                        <button type="button" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2"
-                                data-forum-mark-all-read data-forum-id="{{ feed.id }}">
-                            <i class="bi bi-check2-all" aria-hidden="true"></i>
-                            <span>{{ trans('view.forums.list.02') }}</span>
-                        </button>
-                    {% endif %}
+                    <button type="button" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2"
+                            data-forum-mark-all-read data-forum-id="{{ feed.id }}">
+                        <i class="bi bi-check2-all" aria-hidden="true"></i>
+                        <span>{{ trans('view.forums.list.02') }}</span>
+                    </button>
                 </div>
             </div>
         </div>

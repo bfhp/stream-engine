@@ -424,7 +424,7 @@ class ForumsController extends AbstractController
 
             $createdAt = new DateTimeImmutable('@'.$activity['createdAt']);
             $owner = $owners[$activity['ownerId']] ?? null;
-            $readAt = $readAtByTopicId[$activity['topicId']] ?? null;
+            $readAt = $this->forumReadAt($forumId, $readAtByTopicId[$activity['topicId']] ?? null);
 
             $forumLastPost[$forumId] = [
                 'topicTitle' => (string) $topic->title,
@@ -438,6 +438,17 @@ class ForumsController extends AbstractController
         }
 
         return $forumLastPost;
+    }
+
+    private function forumReadAt(int $forumId, ?int $topicReadAt): ?int
+    {
+        if (! $this->context->user->isGuest()) {
+            return $topicReadAt;
+        }
+
+        $readAt = max($topicReadAt ?? 0, (new GuestForumReadStore())->findReadAt($forumId) ?? 0);
+
+        return $readAt > 0 ? $readAt : null;
     }
 
     /**
@@ -474,7 +485,7 @@ class ForumsController extends AbstractController
         $readAtByTopicId = $this->feedService->getFeedReadAtMap($topicIds, $this->context->user);
 
         foreach ($activity as $row) {
-            $readAt = $readAtByTopicId[$row['topicId']] ?? null;
+            $readAt = $this->forumReadAt($row['forumId'], $readAtByTopicId[$row['topicId']] ?? null);
 
             if ($readAt === null || $readAt < $row['lastActivityAt']) {
                 $counts[$row['forumId']] = ($counts[$row['forumId']] ?? 0) + 1;
@@ -1103,7 +1114,7 @@ class ForumsController extends AbstractController
 
             $lastActivityAt = new DateTimeImmutable('@'.$topicStats['lastActivityAt']);
             $owner = $owners[$topicStats['lastOwnerId']] ?? null;
-            $readAt = $readAtByTopicId[$topic->id] ?? null;
+            $readAt = $this->forumReadAt($topic->parentId ?? 0, $readAtByTopicId[$topic->id] ?? null);
 
             $rows[] = [
                 'feed' => $topic,
@@ -1982,9 +1993,8 @@ class ForumsController extends AbstractController
      * - `forumId` omitted or null: every topic across every forum -
      *   forums.list.twig's site-wide button.
      *
-     * Guests never reach FeedService::markFeedsAsRead() with anything to do
-     * (it no-ops for guests - see its own docblock on why), so this rejects
-     * them outright instead of doing the query work for nothing.
+     * Guests store a section/global timestamp in a cookie instead of one
+     * entry per topic, so large forums do not overflow their read history.
      *
      * @throws ValidationException
      * @throws ForbiddenException
@@ -1992,10 +2002,6 @@ class ForumsController extends AbstractController
     private function handleMarkAllReadRequest(): void
     {
         Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
-
-        if ($this->context->user->isGuest()) {
-            throw new ForbiddenException($this->tm->trans('feed.forbidden'));
-        }
 
         $input = json_decode(file_get_contents('php://input'), true);
         $input = is_array($input) ? $input : [];
@@ -2011,12 +2017,17 @@ class ForumsController extends AbstractController
             $subForums = $this->feedService->getFeedsByParentAndType($forum->id, 'forum', $this->context->user);
             $subForumIds = array_map(static fn (Feed $f): int => $f->id, $subForums);
 
-            $topicIds = $this->forumRepository->findTopicIdsForForums([$forum->id, ...$subForumIds]);
+            $forumIds = [$forum->id, ...$subForumIds];
         } else {
-            $topicIds = $this->forumRepository->findTopicIdsForForums($this->readableForumIds());
+            $forumIds = null;
         }
 
-        $this->feedService->markFeedsAsRead($topicIds, $this->context->user);
+        if ($this->context->user->isGuest()) {
+            (new GuestForumReadStore())->markAsRead($forumIds);
+        } else {
+            $topicIds = $this->forumRepository->findTopicIdsForForums($forumIds ?? $this->readableForumIds());
+            $this->feedService->markFeedsAsRead($topicIds, $this->context->user);
+        }
 
         http_response_code(204);
     }
@@ -2054,12 +2065,7 @@ class ForumsController extends AbstractController
      * there) - this is that same call triggered on demand instead, from
      * any page of the topic.
      *
-     * No guest rejection, unlike handleMarkAllReadRequest(): that bulk
-     * write is meaningless for a guest (rejected outright there - see its
-     * own docblock), but a single FeedService::markFeedAsRead() call
-     * already has its own guest branch (GuestFeedReadStore cookie) - the
-     * exact same one the automatic call site relies on - so there's
-     * nothing to special-case here.
+     * Guest reads use the same cookie-backed store as automatic reading.
      *
      * @throws ValidationException
      * @throws ForbiddenException

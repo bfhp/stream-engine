@@ -29,6 +29,7 @@ use StreamEngine\Domain\Upload;
 use StreamEngine\Domain\User;
 use StreamEngine\Modules\Forums\ForumRepository;
 use StreamEngine\Modules\Forums\ForumsController;
+use StreamEngine\Modules\Forums\GuestForumReadStore;
 use StreamEngine\Repository\ConversationRepository;
 use StreamEngine\Repository\FeedFavoriteRepository;
 use StreamEngine\Repository\FeedRepository;
@@ -2678,22 +2679,91 @@ final class ForumsControllerTest extends TestCase
     /* POST /api/v1/forums/read-all                                       */
     /* ------------------------------------------------------------------ */
 
-    /**
-     * markFeedsAsRead() no-ops for guests anyway, so this rejects them rather
-     * than doing all the topic-id query work for nothing.
-     */
-    public function testMarkAllReadRejectsGuests(): void
+    public function testMarkAllReadWorksForGuestsBeyondThePerTopicCookieLimit(): void
     {
-        $module = $this->makeModule($this->makeRoutingDb());
-        $this->setContext($module, new User(id: 0, email: '', role: AccessService::ROLE_USER));
+        $backup = $_COOKIE;
+        try {
+            $_COOKIE = [];
+            $now = time();
+            $activity = [];
+            for ($id = 1; $id <= 150; $id++) {
+                $activity[] = ['topic_id' => $id, 'forum_id' => 20, 'last_activity_at' => $now - 60];
+            }
+            $activity[] = ['topic_id' => 151, 'forum_id' => 20, 'last_activity_at' => $now + 60];
+            $module = $this->makeModule($this->makeRoutingDb([
+                self::SQL_TOPIC_ACTIVITY => $activity,
+                self::SQL_LAST_ACTIVITY => [
+                    ['topic_id' => 900, 'forum_id' => 20, 'last_owner_id' => 5, 'last_activity_at' => $now - 60],
+                ],
+                self::SQL_FEEDS_BY_ID => [$this->feedRow(900, 'forum-post', parentId: 20)],
+            ]));
+            $this->setContext($module, new User(id: 0, email: '', role: AccessService::ROLE_USER));
+            $feeds = $this->createMock(FeedService::class);
+            $feeds->expects($this->never())->method('markFeedsAsRead');
+            $feeds->method('getFeedReadAtMap')->willReturn([]);
+            $this->setProperty($module, 'feedService', $feeds);
 
-        $feedService = $this->createMock(FeedService::class);
-        $feedService->expects($this->never())->method('markFeedsAsRead');
-        $this->setProperty($module, 'feedService', $feedService);
+            $this->callReadAllApi($module, []);
 
-        $this->expectException(ForbiddenException::class);
+            self::assertSame(204, http_response_code());
+            self::assertSame([20 => 1], $this->invoke($module, 'buildUnreadCounts', [20]));
+            $previews = $this->invoke($module, 'buildLastPostPreviews', [20]);
+            self::assertFalse($previews[20]['unread']);
+            $rows = $this->invoke($module, 'buildTopicRows', [900], [900 => ['replyCount' => 0, 'lastOwnerId' => 5, 'lastActivityAt' => $now - 60]]);
+            self::assertFalse($rows[0]['unread']);
+            self::assertArrayNotHasKey('feed_reads', $_COOKIE);
+            $this->setContext($module, new User(id: 7, email: 'user@example.com', role: AccessService::ROLE_USER));
+            self::assertSame([20 => 151], $this->invoke($module, 'buildUnreadCounts', [20]));
+        } finally {
+            $_COOKIE = $backup;
+        }
+    }
 
-        $this->callReadAllApi($module, []);
+    public function testGuestSectionReadCoversSubforumsAndLeavesOtherSectionsUnread(): void
+    {
+        $backup = $_COOKIE;
+        try {
+            $_COOKIE = [];
+            $module = $this->makeModule($this->makeRoutingDb());
+            $this->setContext($module, new User(id: 0, email: '', role: AccessService::ROLE_USER));
+            $feeds = $this->createMock(FeedService::class);
+            $feeds->method('getFeedById')->willReturn($this->makeForumFeed());
+            $feeds->method('getFeedsByParentAndType')->willReturn([
+                $this->makeForum(id: 71, slug: 'child', parentId: self::FORUM_ID),
+            ]);
+            $feeds->expects($this->never())->method('markFeedsAsRead');
+            $this->setProperty($module, 'feedService', $feeds);
+
+            $this->callReadAllApi($module, ['forumId' => self::FORUM_ID]);
+
+            $store = new GuestForumReadStore();
+            self::assertNotNull($store->findReadAt(self::FORUM_ID));
+            self::assertNotNull($store->findReadAt(71));
+            self::assertNull($store->findReadAt(72));
+        } finally {
+            $_COOKIE = $backup;
+        }
+    }
+
+    public function testGuestCannotMarkAnInaccessibleSectionRead(): void
+    {
+        $backup = $_COOKIE;
+        try {
+            $_COOKIE = [];
+            $module = $this->makeModule($this->makeRoutingDb());
+            $this->setContext($module, new User(id: 0, email: '', role: AccessService::ROLE_USER));
+            $feeds = $this->createStub(FeedService::class);
+            $feeds->method('getFeedById')->willThrowException(new ForbiddenException('Forbidden'));
+            $this->setProperty($module, 'feedService', $feeds);
+            try {
+                $this->callReadAllApi($module, ['forumId' => self::FORUM_ID]);
+                self::fail('Expected the section access check to reject the request.');
+            } catch (ForbiddenException) {
+                self::assertArrayNotHasKey('forum_reads', $_COOKIE);
+            }
+        } finally {
+            $_COOKIE = $backup;
+        }
     }
 
     /**
@@ -2757,7 +2827,6 @@ final class ForumsControllerTest extends TestCase
     }
 
     /**
-     * Guests are deliberately *not* rejected here (unlike the bulk endpoint):
      * markFeedAsRead() has its own guest branch, the cookie-backed store, which
      * is the same one the automatic call site relies on.
      */

@@ -7,6 +7,12 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Guests can mark all forum topics or a section and its subforums as read.
+  Cookie-backed bulk timestamps keep large topic lists read while newer
+  replies appear unread again.
+
 ### Added
 
 - A `head` widget placement in the administration interface for inserting meta

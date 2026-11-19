@@ -858,7 +858,7 @@ class FeedService
      * entries (see its own docblock) - re-encoding and re-setting it
      * hundreds or thousands of times in one request, for state that would
      * immediately get pruned back down anyway, isn't worth doing. "Mark all
-     * read" is gated to logged-in users at the UI layer for this reason.
+     * read" for guests uses section/global watermarks owned by Forums instead.
      *
      * @param int[] $feedIds
      */
