@@ -1454,6 +1454,8 @@ E-Mail: {email}
 
     'js.admin.widgets.title' => 'Widgets',
     'js.admin.widgets.placement' => 'Platzierung',
+    'js.admin.widgets.head' => 'Innerhalb von <head>',
+    'js.admin.widgets.head_help' => 'HTML vor </head>, ohne umschließendes Element. Für Meta-Tags, Stile und Skripte.',
     'js.admin.widgets.after_header' => 'Nach der Kopfzeile',
     'js.admin.widgets.after_header_help' => 'Block in voller Breite direkt unter der Kopfzeile der Website.',
     'js.admin.widgets.before_content' => 'Vor dem Inhalt',

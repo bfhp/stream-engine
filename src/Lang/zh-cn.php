@@ -1454,6 +1454,8 @@ return [
 
     'js.admin.widgets.title' => '小组件',
     'js.admin.widgets.placement' => '位置',
+    'js.admin.widgets.head' => '在 <head> 内',
+    'js.admin.widgets.head_help' => '在 </head> 前插入 HTML，不添加外层容器。用于元标签、样式和脚本。',
     'js.admin.widgets.after_header' => '页头之后',
     'js.admin.widgets.after_header_help' => '位于站点页头正下方的全宽区块。',
     'js.admin.widgets.before_content' => '内容之前',

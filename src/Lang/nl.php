@@ -1454,6 +1454,8 @@ E-mail: {email}
 
     'js.admin.widgets.title' => 'Widgets',
     'js.admin.widgets.placement' => 'Plaatsing',
+    'js.admin.widgets.head' => 'Binnen <head>',
+    'js.admin.widgets.head_help' => 'HTML vóór </head>, zonder omvattend element. Voor metatags, stijlen en scripts.',
     'js.admin.widgets.after_header' => 'Na de koptekst',
     'js.admin.widgets.after_header_help' => 'Een blok over de volle breedte direct onder de sitekoptekst.',
     'js.admin.widgets.before_content' => 'Vóór de inhoud',

@@ -34,6 +34,7 @@ final class WidgetServiceTest extends TestCase
     public function testWidgetsExposeKnownPlacements(): void
     {
         $widgets = $this->makeService([
+            'widgets.head' => ' <meta name="test" content="head"> ',
             'widgets.after_header' => " \n<div>top</div>\n",
             'widgets.before_content' => '<div>before</div>',
             'widgets.after_content' => '<div>after</div>',
@@ -44,6 +45,7 @@ final class WidgetServiceTest extends TestCase
             'widgets.unknown' => '<div>ignored</div>',
         ])->placements();
 
+        $this->assertSame('<meta name="test" content="head">', $widgets['head']);
         $this->assertSame('<div>top</div>', $widgets['after_header']);
         $this->assertSame('<div>before</div>', $widgets['before_content']);
         $this->assertSame('<div>after</div>', $widgets['after_content']);
@@ -58,6 +60,7 @@ final class WidgetServiceTest extends TestCase
     {
         $widgets = $this->makeService([])->placements();
 
+        $this->assertSame('', $widgets['head']);
         $this->assertSame('', $widgets['after_header']);
         $this->assertSame('', $widgets['before_content']);
         $this->assertSame('', $widgets['after_content']);

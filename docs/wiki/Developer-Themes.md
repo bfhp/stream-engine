@@ -230,6 +230,7 @@ copying a whole file makes upgrades harder to merge.
 
 Compatible layouts preserve the standard widget placements:
 
+- `head` (inside `<head>`, immediately before `</head>`);
 - `after_header`;
 - `before_content` and `after_content`;
 - `sidebar_top` and `sidebar_bottom`; and
@@ -240,7 +241,10 @@ Every layout's primary region is `<main id="main-content" tabindex="-1">`: the
 `skip_link`) targets that id. A theme that replaces a layout's `layout_main`
 block must keep the id and `tabindex`, or override `skip_link` to match.
 
-Render a placement through `components/widgets/block.twig`. Widget values are
+Render body placements through `components/widgets/block.twig`. Render `head`
+as `{{ widgets.head|default('')|raw }}` without a wrapper, as in the base
+layout’s `head_widgets` block. Its content should contain elements valid in
+`<head>`, such as `meta`, `link`, `style`, or `script`. Widget values are
 administrator-managed trusted HTML and that component renders them raw. A
 theme may reposition a placement deliberately, but should not silently omit a
 supported placement.

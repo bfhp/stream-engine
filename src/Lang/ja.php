@@ -1454,6 +1454,8 @@ return [
 
     'js.admin.widgets.title' => 'ウィジェット',
     'js.admin.widgets.placement' => '配置',
+    'js.admin.widgets.head' => '<head> 内',
+    'js.admin.widgets.head_help' => 'ラッパーなしで </head> の直前に挿入する HTML。メタタグ、スタイル、スクリプト用。',
     'js.admin.widgets.after_header' => 'ヘッダーの後',
     'js.admin.widgets.after_header_help' => 'サイトヘッダーの直下にある全幅のブロック。',
     'js.admin.widgets.before_content' => 'コンテンツの前',

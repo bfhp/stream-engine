@@ -1454,6 +1454,8 @@ return [
 
     'js.admin.widgets.title' => '위젯',
     'js.admin.widgets.placement' => '배치',
+    'js.admin.widgets.head' => '<head> 내부',
+    'js.admin.widgets.head_help' => '래퍼 없이 </head> 앞에 삽입되는 HTML. 메타 태그, 스타일, 스크립트용.',
     'js.admin.widgets.after_header' => '헤더 아래',
     'js.admin.widgets.after_header_help' => '사이트 헤더 바로 아래의 전체 너비 블록.',
     'js.admin.widgets.before_content' => '콘텐츠 앞',

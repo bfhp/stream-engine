@@ -1493,6 +1493,8 @@ return [
 
     'js.admin.widgets.title' => 'Виджеты',
     'js.admin.widgets.placement' => 'Область',
+    'js.admin.widgets.head' => 'Внутри <head>',
+    'js.admin.widgets.head_help' => 'HTML перед </head> без обёртки. Для метатегов, стилей и скриптов.',
     'js.admin.widgets.after_header' => 'После шапки',
     'js.admin.widgets.after_header_help' => 'Блок на всю ширину сразу под шапкой сайта.',
     'js.admin.widgets.before_content' => 'Перед содержимым',

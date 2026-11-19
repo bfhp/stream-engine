@@ -23,11 +23,16 @@ type Setting = {
     updatedAt: number;
 };
 
-type Placement = "after_header" | "before_content" | "after_content" | "sidebar_top" | "sidebar_bottom" | "footer_legal" | "footer_contacts";
+type Placement = "head" | "after_header" | "before_content" | "after_content" | "sidebar_top" | "sidebar_bottom" | "footer_legal" | "footer_contacts";
 type WidgetMap = Partial<Record<Placement, Setting>>;
 type WidgetDrafts = Record<Placement, string>;
 
 const WIDGETS: Array<{ placement: Placement; label: string; description: string }> = [
+    {
+        placement: "head",
+        label: trans("js.admin.widgets.head"),
+        description: trans("js.admin.widgets.head_help")
+    },
     {
         placement: "after_header",
         label: trans("js.admin.widgets.after_header"),
@@ -66,6 +71,7 @@ const WIDGETS: Array<{ placement: Placement; label: string; description: string 
 ];
 
 const DEFAULT_DRAFTS: WidgetDrafts = {
+    head: "",
     after_header: "",
     before_content: "",
     after_content: "",

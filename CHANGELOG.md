@@ -7,6 +7,11 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- A `head` widget placement in the administration interface for inserting meta
+  tags, styles, and scripts before `</head>` without a wrapper in both themes.
+
 ## [0.7.3] - 2026-11-18
 
 ### Fixed

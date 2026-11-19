@@ -1454,6 +1454,8 @@ Correo: {email}
 
     'js.admin.widgets.title' => 'Widgets',
     'js.admin.widgets.placement' => 'Ubicación',
+    'js.admin.widgets.head' => 'Dentro de <head>',
+    'js.admin.widgets.head_help' => 'HTML antes de </head>, sin contenedor. Para metaetiquetas, estilos y scripts.',
     'js.admin.widgets.after_header' => 'Después de la cabecera',
     'js.admin.widgets.after_header_help' => 'Bloque de ancho completo justo debajo de la cabecera del sitio.',
     'js.admin.widgets.before_content' => 'Antes del contenido',

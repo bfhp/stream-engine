@@ -1454,6 +1454,8 @@ return [
 
     'js.admin.widgets.title' => 'الأدوات',
     'js.admin.widgets.placement' => 'الموضع',
+    'js.admin.widgets.head' => 'داخل <head>',
+    'js.admin.widgets.head_help' => 'HTML قبل </head> دون عنصر حاوٍ. للبيانات الوصفية والأنماط والبرامج النصية.',
     'js.admin.widgets.after_header' => 'بعد الترويسة',
     'js.admin.widgets.after_header_help' => 'كتلة بعرض كامل أسفل ترويسة الموقع مباشرة.',
     'js.admin.widgets.before_content' => 'قبل المحتوى',

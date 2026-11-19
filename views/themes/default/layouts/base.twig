@@ -54,6 +54,9 @@
             {{ item|raw }}
         {% endfor %}
     {% endblock %}
+    {% block head_widgets %}
+        {{ widgets.head|default('')|raw }}
+    {% endblock %}
 </head>
 {% endblock %}
 
