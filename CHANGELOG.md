@@ -7,16 +7,42 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Fixed
-
-- Guests can mark all forum topics or a section and its subforums as read.
-  Cookie-backed bulk timestamps keep large topic lists read while newer
-  replies appear unread again.
+## [0.7.4] - 2026-11-19
 
 ### Added
 
-- A `head` widget placement in the administration interface for inserting meta
-  tags, styles, and scripts before `</head>` without a wrapper in both themes.
+- A new “Inside <head>” widget placement in the administration interface.
+  Administrators can add meta tags, styles, and scripts immediately before
+  `</head>`, without a wrapping element, in both the default and Bootstrap
+  themes. Labels and help text are available in all supported languages.
+
+### Fixed
+
+- Guests can use “Mark all as read” across the forum or within a section and
+  its direct subforums in both themes. Bulk read timestamps are stored in the
+  visitor's browser cookies independently of the per-topic history, so marking
+  a large forum read does not overflow the 100-topic history limit. New topics
+  and replies after the mark appear unread again; registered users retain
+  their existing account-based read tracking.
+- Introductory content on article-list and section-list pages now aligns with
+  the theme's content container, including Bootstrap layouts.
+
+### Upgrade notes
+
+- From 0.7.3, deploy the release with its bundled browser assets and install
+  PHP dependencies from the lockfile. Earlier versions must also follow the
+  intervening release notes. No dependency updates or configuration changes
+  are required.
+- No new database migrations or schema changes are required. The installation
+  snapshot was regenerated from all 22 migrations: `schema.sql` is unchanged
+  from 0.7.3, and the matching manifest now identifies 0.7.4. Both files are
+  included in the release source. Existing sites must not import `schema.sql`.
+- Guest bulk read state is specific to the browser and is cleared with its
+  cookies. The cookie lasts up to one year and retains the global timestamp
+  plus up to 100 recent section timestamps; older section-specific marks may
+  roll off. It does not transfer into an account on sign-in.
+- Custom themes that replace the base head layout should preserve the new
+  `head_widgets` block or render `widgets.head` without a wrapping element.
 
 ## [0.7.3] - 2026-11-18
 
@@ -717,6 +743,9 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 - Initial version.
 
-[Unreleased]: https://github.com/bfhp/stream-engine/compare/v0.7.1...HEAD
+[Unreleased]: https://github.com/bfhp/stream-engine/compare/v0.7.4...HEAD
+[0.7.4]: https://github.com/bfhp/stream-engine/compare/v0.7.3...v0.7.4
+[0.7.3]: https://github.com/bfhp/stream-engine/compare/v0.7.2...v0.7.3
+[0.7.2]: https://github.com/bfhp/stream-engine/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/bfhp/stream-engine/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/bfhp/stream-engine/compare/v0.6.2...v0.7.0
