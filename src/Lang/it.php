@@ -920,7 +920,7 @@ E-mail: {email}
     'js.admin.share_label' => 'Mostra i pulsanti “Condividi”',
     'js.admin.share_description' => 'Consente ai visitatori di condividere la pagina quando il template fornisce i pulsanti di condivisione.',
     'js.admin.page_widgets_label' => 'Widget',
-    'js.admin.page_widgets_description' => 'Blocchi widget mostrati in questa pagina. Deseleziona un blocco per nasconderlo qui; il contenuto si modifica in Widget.',
+    'js.admin.page_widgets_description' => 'Blocchi widget mostrati in questa pagina. Deseleziona un blocco per nasconderlo qui e nelle pagine che un modulo aggiunge sotto questa, come post, foto e discussioni del forum. Il contenuto si modifica in Widget.',
     'js.admin.page_settings_invalid' => 'Le impostazioni della pagina devono essere un oggetto',
     'js.admin.locale_ru' => 'Russo (ru)',
     'js.forums.preview' => 'Anteprima',

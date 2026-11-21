@@ -920,7 +920,7 @@ E-mail: {email}
     'js.admin.share_label' => 'De knoppen "Delen" tonen',
     'js.admin.share_description' => 'Laat bezoekers de pagina delen wanneer de sjabloon deelknoppen biedt.',
     'js.admin.page_widgets_label' => 'Widgets',
-    'js.admin.page_widgets_description' => 'Widgetblokken die op deze pagina worden getoond. Vink een blok uit om het hier te verbergen; de inhoud bewerk je onder Widgets.',
+    'js.admin.page_widgets_description' => 'Widgetblokken die op deze pagina worden getoond. Vink een blok uit om het hier te verbergen en op de pagina’s die een module hieronder toevoegt, zoals berichten, foto’s en forumonderwerpen. De inhoud bewerk je onder Widgets.',
     'js.admin.page_settings_invalid' => 'Pagina-instellingen moeten een object zijn',
     'js.admin.locale_ru' => 'Russisch (ru)',
     'js.forums.preview' => 'Voorbeeld',

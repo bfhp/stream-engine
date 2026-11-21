@@ -920,7 +920,7 @@ return [
     'js.admin.share_label' => '「シェア」ボタンを表示',
     'js.admin.share_description' => 'テンプレートにシェアボタンがある場合、訪問者がページをシェアできるようにします。',
     'js.admin.page_widgets_label' => 'ウィジェット',
-    'js.admin.page_widgets_description' => 'このページに表示するウィジェットブロックです。チェックを外すとこのページで非表示になります。内容は「ウィジェット」で編集します。',
+    'js.admin.page_widgets_description' => 'このページに表示するウィジェットブロックです。チェックを外すと、このページと、モジュールがこの下に追加するページ（投稿、写真、フォーラムのトピックなど）で非表示になります。内容は「ウィジェット」で編集します。',
     'js.admin.page_settings_invalid' => 'ページ設定はオブジェクトである必要があります',
     'js.admin.locale_ru' => 'ロシア語 (ru)',
     'js.forums.preview' => 'プレビュー',

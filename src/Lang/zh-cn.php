@@ -920,7 +920,7 @@ return [
     'js.admin.share_label' => '显示“分享”按钮',
     'js.admin.share_description' => '当模板提供分享按钮时，允许访客分享页面。',
     'js.admin.page_widgets_label' => '小部件',
-    'js.admin.page_widgets_description' => '在此页面显示的小部件区块。取消勾选即可在此页面隐藏该区块；区块内容在“小部件”中编辑。',
+    'js.admin.page_widgets_description' => '在此页面显示的小部件区块。取消勾选后，该区块会在此页面以及模块在其下添加的页面（如帖子、照片和论坛主题）中隐藏。区块内容在“小部件”中编辑。',
     'js.admin.page_settings_invalid' => '页面设置必须是对象',
     'js.admin.locale_ru' => '俄语 (ru)',
     'js.forums.preview' => '预览',

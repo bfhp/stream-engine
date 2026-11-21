@@ -920,7 +920,7 @@ return [
     'js.admin.share_label' => '“공유” 버튼 표시',
     'js.admin.share_description' => '템플릿에 공유 버튼이 있는 경우 방문자가 페이지를 공유할 수 있게 합니다.',
     'js.admin.page_widgets_label' => '위젯',
-    'js.admin.page_widgets_description' => '이 페이지에 표시되는 위젯 블록입니다. 체크를 해제하면 이 페이지에서 숨겨지며, 내용은 위젯 메뉴에서 편집합니다.',
+    'js.admin.page_widgets_description' => '이 페이지에 표시되는 위젯 블록입니다. 체크를 해제하면 이 페이지와 모듈이 이 페이지 아래에 추가하는 페이지(게시물, 사진, 포럼 주제 등)에서 숨겨집니다. 내용은 위젯 메뉴에서 편집합니다.',
     'js.admin.page_settings_invalid' => '페이지 설정은 객체여야 합니다',
     'js.admin.locale_ru' => '러시아어 (ru)',
     'js.forums.preview' => '미리보기',

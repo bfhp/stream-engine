@@ -920,7 +920,7 @@ Correo: {email}
     'js.admin.share_label' => 'Mostrar los botones «Compartir»',
     'js.admin.share_description' => 'Permite a los visitantes compartir la página cuando la plantilla incluye botones de compartir.',
     'js.admin.page_widgets_label' => 'Widgets',
-    'js.admin.page_widgets_description' => 'Bloques de widgets que se muestran en esta página. Desmarca un bloque para ocultarlo aquí; su contenido se edita en Widgets.',
+    'js.admin.page_widgets_description' => 'Bloques de widgets que se muestran en esta página. Desmarca un bloque para ocultarlo aquí y en las páginas que un módulo añade debajo de esta, como publicaciones, fotos y temas del foro. Su contenido se edita en Widgets.',
     'js.admin.page_settings_invalid' => 'Los ajustes de la página deben ser un objeto',
     'js.admin.locale_ru' => 'Ruso (ru)',
     'js.forums.preview' => 'Vista previa',

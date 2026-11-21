@@ -920,7 +920,7 @@ E-Mail: {email}
     'js.admin.share_label' => 'Schaltflächen „Teilen“ anzeigen',
     'js.admin.share_description' => 'Erlaubt Besuchern, die Seite zu teilen, wenn die Vorlage Teilen-Schaltflächen bereitstellt.',
     'js.admin.page_widgets_label' => 'Widgets',
-    'js.admin.page_widgets_description' => 'Widget-Blöcke, die auf dieser Seite angezeigt werden. Entferne das Häkchen, um einen Block hier auszublenden; der Inhalt wird unter „Widgets“ bearbeitet.',
+    'js.admin.page_widgets_description' => 'Widget-Blöcke, die auf dieser Seite angezeigt werden. Entferne das Häkchen, um einen Block hier und auf den Seiten auszublenden, die ein Modul darunter hinzufügt, etwa Beiträge, Fotos und Forenthemen. Der Inhalt wird unter „Widgets“ bearbeitet.',
     'js.admin.page_settings_invalid' => 'Die Seiteneinstellungen müssen ein Objekt sein',
     'js.admin.locale_ru' => 'Russisch (ru)',
     'js.forums.preview' => 'Vorschau',

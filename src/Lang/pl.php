@@ -920,7 +920,7 @@ E-mail: {email}
     'js.admin.share_label' => 'Pokazuj przyciski „Udostępnij”',
     'js.admin.share_description' => 'Pozwala odwiedzającym udostępniać stronę, gdy szablon udostępnia przyciski udostępniania.',
     'js.admin.page_widgets_label' => 'Widżety',
-    'js.admin.page_widgets_description' => 'Bloki widżetów wyświetlane na tej stronie. Odznacz blok, aby go tu ukryć; jego treść edytuje się w sekcji Widżety.',
+    'js.admin.page_widgets_description' => 'Bloki widżetów wyświetlane na tej stronie. Odznacz blok, aby ukryć go tutaj i na stronach, które moduł dodaje pod tą stroną, takich jak wpisy, zdjęcia i wątki forum. Jego treść edytuje się w sekcji Widżety.',
     'js.admin.page_settings_invalid' => 'Ustawienia strony muszą być obiektem',
     'js.admin.locale_ru' => 'rosyjski (ru)',
     'js.forums.preview' => 'Podgląd',

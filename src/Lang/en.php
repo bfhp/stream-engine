@@ -920,7 +920,7 @@ Email: {email}
     'js.admin.share_label' => 'Show the "Share" buttons',
     'js.admin.share_description' => 'Allows visitors to share the page when the template provides share buttons.',
     'js.admin.page_widgets_label' => 'Widgets',
-    'js.admin.page_widgets_description' => 'Widget blocks shown on this page. Uncheck a block to hide it here; block content is edited under Widgets.',
+    'js.admin.page_widgets_description' => 'Widget blocks shown on this page. Uncheck a block to hide it here and on the pages a module adds beneath this one, such as posts, photos and forum topics. Block content is edited under Widgets.',
     'js.admin.page_settings_invalid' => 'Page settings must be an object',
     'js.admin.locale_ru' => 'Russian (ru)',
     'js.forums.preview' => 'Preview',
