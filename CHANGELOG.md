@@ -11,7 +11,15 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 - Hiding a widget placement on a page now also hides it on the pages a module
   adds beneath it, which can't be edited in admin: blog posts, photos and
-  editors under a profile or community, forum topics.
+  editors under a profile or community, forum topics. The page editor's hint
+  says so.
+- The administration dashboard loads faster: recent activity and notification
+  counts are read from indexes instead of scanning whole tables.
+
+### Upgrade notes
+
+- Run `bin/migrate.php migrate`: a migration adds indexes on `feeds` and
+  `users`.
 
 ## [0.7.5] - 2026-11-21
 
