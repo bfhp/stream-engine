@@ -7,20 +7,45 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.7.5] - 2026-11-21
+
 ### Added
 
-- A cookie notice for visitors, on by default; it can be switched off in
-  **Administration → Settings**.
-- Per-page widget visibility: page settings choose which widget placements
-  are shown, all by default.
+- A dismissible cookie notice in both the default and Bootstrap themes,
+  enabled by default and configurable in **Administration → Settings**.
+  Dismissal is remembered in the visitor's browser for one year. The notice
+  supports keyboard navigation, adapts page spacing to its height, and includes
+  translations in all supported languages.
+- Per-page widget visibility in the page editor. Administrators can hide
+  individual placements, including “Inside <head>”, sidebars, and footer
+  widgets. Existing pages continue to show every placement by default.
 
 ### Changed
 
-- Feed listings can skip loading the full post body (`withContent: false`
-  on `FeedService` list methods), for card grids over large content.
-- Faster forum index, topic lists and unread markers: the newest reply per
-  topic is now read from an index instead of ranking every reply in the
-  forum.
+- Faster forum index, topic lists, and unread markers: newest replies are
+  resolved through existing indexes instead of ranking every reply. Topic
+  reply counts are calculated only for the requested page of results.
+- Feed listing methods in `FeedService` and `FeedRepository` accept an optional
+  `withContent: false` argument to omit full post bodies from card-style lists.
+  Content remains included by default; resume-link lookups for unfinished
+  feeds now use the lighter query automatically.
+
+### Upgrade notes
+
+- From 0.7.4, deploy the release with its bundled browser assets and install
+  PHP dependencies from the lockfile. Earlier versions must also follow the
+  intervening release notes. No dependency updates are required.
+- No new database migrations or schema changes are required. The installation
+  snapshot was regenerated from all 22 migrations: `schema.sql` is unchanged
+  from 0.7.4, and the matching manifest now identifies 0.7.5. Both files are
+  included in the release source. Existing sites must not import `schema.sql`.
+- The cookie notice appears on existing sites after upgrading unless disabled
+  in **Administration → Settings**. Custom themes can override
+  `partials/cookie-notice.twig`; themes replacing the base layout should
+  preserve its `layout_cookie_notice` block to display the notice.
+- Widget visibility is stored in the existing page settings, without a data
+  migration. Custom themes should render the supplied `widgets` placements
+  to respect each page's visibility choices.
 
 ## [0.7.4] - 2026-11-19
 
@@ -758,7 +783,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 - Initial version.
 
-[Unreleased]: https://github.com/bfhp/stream-engine/compare/v0.7.4...HEAD
+[Unreleased]: https://github.com/bfhp/stream-engine/compare/v0.7.5...HEAD
+[0.7.5]: https://github.com/bfhp/stream-engine/compare/v0.7.4...v0.7.5
 [0.7.4]: https://github.com/bfhp/stream-engine/compare/v0.7.3...v0.7.4
 [0.7.3]: https://github.com/bfhp/stream-engine/compare/v0.7.2...v0.7.3
 [0.7.2]: https://github.com/bfhp/stream-engine/compare/v0.7.1...v0.7.2
