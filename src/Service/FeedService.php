@@ -798,8 +798,13 @@ class FeedService
      *
      * @return Feed[]
      */
-    public function getFavoriteFeeds(User $user, ?string $type = null, int $limit = 50, int $offset = 0): array
-    {
+    public function getFavoriteFeeds(
+        User $user,
+        ?string $type = null,
+        int $limit = 50,
+        int $offset = 0,
+        bool $withContent = true
+    ): array {
         if ($this->favoriteRepository === null || $user->isGuest()) {
             return [];
         }
@@ -810,7 +815,7 @@ class FeedService
             return [];
         }
 
-        $feeds = $this->repository->findByIds($feedIds, $user, $type);
+        $feeds = $this->repository->findByIds($feedIds, $user, $type, $withContent);
 
         $this->decorateFeedsWithUrls($feeds);
 
@@ -936,7 +941,8 @@ class FeedService
         User $user,
         string $parentType,
         string $childType,
-        int $limit = 10
+        int $limit = 10,
+        bool $withContent = true
     ): array {
         $children = $this->resolveReadChildren($user, $parentType);
 
@@ -976,7 +982,7 @@ class FeedService
             return [];
         }
 
-        $feeds = $this->repository->findByIds($unfinishedParentIds, $user, $parentType);
+        $feeds = $this->repository->findByIds($unfinishedParentIds, $user, $parentType, $withContent);
 
         $this->decorateFeedsWithUrls($feeds);
         $this->decorateFeedsWithReadingProgress(
@@ -1013,7 +1019,13 @@ class FeedService
 
         $resumeChildIdByParentId = $this->repository->findChildIdsAtPositions($positionByParentId, $childType);
 
-        $resumeChildren = $this->repository->findByIds(array_values($resumeChildIdByParentId), $user, $childType);
+        // Only the children's URLs are used, so skip their (possibly large) bodies.
+        $resumeChildren = $this->repository->findByIds(
+            array_values($resumeChildIdByParentId),
+            $user,
+            $childType,
+            withContent: false
+        );
         $this->decorateFeedsWithUrls($resumeChildren);
 
         $resumeUrlByChildId = [];
@@ -1319,9 +1331,10 @@ class FeedService
         string $type,
         User $user,
         int $limit = 20,
-        int $offset = 0
+        int $offset = 0,
+        bool $withContent = true
     ): array {
-        $feeds = $this->repository->findByType($type, $user, $limit, $offset);
+        $feeds = $this->repository->findByType($type, $user, $limit, $offset, $withContent);
 
         $this->decorateFeedsWithUrls($feeds);
 
@@ -1336,18 +1349,19 @@ class FeedService
     public function getTopRatedFeedsByType(
         string $type,
         User $user,
-        int $limit = 50
+        int $limit = 50,
+        bool $withContent = true
     ): array {
-        $feeds = $this->repository->findTopRatedByType($type, $user, $limit);
+        $feeds = $this->repository->findTopRatedByType($type, $user, $limit, $withContent);
 
         $this->decorateFeedsWithUrls($feeds);
 
         return $feeds;
     }
 
-    public function getRandomFeedByType(string $type, User $user): ?Feed
+    public function getRandomFeedByType(string $type, User $user, bool $withContent = true): ?Feed
     {
-        $feed = $this->repository->findRandomByType($type, $user);
+        $feed = $this->repository->findRandomByType($type, $user, $withContent);
 
         if ($feed === null) {
             return null;
@@ -1367,9 +1381,10 @@ class FeedService
         User $user,
         ?string $type = null,
         int $limit = 20,
-        int $offset = 0
+        int $offset = 0,
+        bool $withContent = true
     ): array {
-        $feeds = $this->repository->findByTerm($vocabulary, $slug, $user, $type, $limit, $offset);
+        $feeds = $this->repository->findByTerm($vocabulary, $slug, $user, $type, $limit, $offset, $withContent);
 
         $this->decorateFeedsWithUrls($feeds);
 

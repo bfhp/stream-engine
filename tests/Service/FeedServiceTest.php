@@ -545,6 +545,47 @@ final class FeedServiceTest extends TestCase
         $this->assertSame(5.0, $result[0]->ratingAverage());
     }
 
+    /**
+     * Listings that only render cards (e.g. the library showcase) must be
+     * able to skip f.content - a library book keeps its full HTML there.
+     *
+     * @return iterable<string, array{0: callable(FeedService, User): mixed}>
+     */
+    public static function listingsWithoutContent(): iterable
+    {
+        yield 'by type' => [static fn (FeedService $s, User $u) => $s->getFeedsByType('lib', $u, withContent: false)];
+        yield 'top rated' => [static fn (FeedService $s, User $u) => $s->getTopRatedFeedsByType('lib', $u, withContent: false)];
+        yield 'by term' => [static fn (FeedService $s, User $u) => $s->getFeedsByTerm('category', 'x', $u, 'lib', withContent: false)];
+    }
+
+    #[DataProvider('listingsWithoutContent')]
+    public function testListingsCanSkipContent(callable $call): void
+    {
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects($this->once())
+            ->method('fetchAll')
+            ->with(
+                $this->callback(static fn (string $sql): bool => str_contains($sql, 'NULL AS content')
+                    && ! str_contains($sql, 'f.content')),
+                $this->anything()
+            )
+            ->willReturn([]);
+
+        $call($this->makeService(new FeedRepository($db)), new User(id: 7, email: 'user@example.com'));
+    }
+
+    public function testListingsSelectContentByDefault(): void
+    {
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects($this->once())
+            ->method('fetchAll')
+            ->with($this->callback(static fn (string $sql): bool => str_contains($sql, 'f.content')), $this->anything())
+            ->willReturn([]);
+
+        $this->makeService(new FeedRepository($db))
+            ->getFeedsByType('lib', new User(id: 7, email: 'user@example.com'));
+    }
+
     public function testGetFeedByIdAddsCanonicalUrlAndFormattedTime(): void
     {
         $createdAt = time() - 4000;

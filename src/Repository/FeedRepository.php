@@ -406,9 +406,10 @@ final class FeedRepository implements FeedRepositoryInterface
         string $type,
         User $user,
         int $limit = 20,
-        int $offset = 0
+        int $offset = 0,
+        bool $withContent = true
     ): array {
-        $sql = $this->baseSelect();
+        $sql = $this->baseSelect(withContent: $withContent);
 
         $condition = "f.type = ?\n";
         $params = [$type];
@@ -432,9 +433,10 @@ final class FeedRepository implements FeedRepositoryInterface
     public function findTopRatedByType(
         string $type,
         User $user,
-        int $limit = 50
+        int $limit = 50,
+        bool $withContent = true
     ): array {
-        $sql = $this->baseSelect();
+        $sql = $this->baseSelect(withContent: $withContent);
 
         $condition = "f.type = ?\n";
         $params = [$type];
@@ -459,7 +461,7 @@ final class FeedRepository implements FeedRepositoryInterface
      * @param int[] $ids
      * @return Feed[]
      */
-    public function findByIds(array $ids, User $user, ?string $type = null): array
+    public function findByIds(array $ids, User $user, ?string $type = null, bool $withContent = true): array
     {
         if ($ids === []) {
             return [];
@@ -468,7 +470,7 @@ final class FeedRepository implements FeedRepositoryInterface
         $feedsById = [];
 
         foreach (array_chunk(array_unique($ids), self::IN_CHUNK_SIZE) as $chunk) {
-            $sql = $this->baseSelect();
+            $sql = $this->baseSelect(withContent: $withContent);
 
             $placeholders = implode(', ', array_fill(0, count($chunk), '?'));
             $condition = "f.id IN ($placeholders)\n";
@@ -589,9 +591,10 @@ final class FeedRepository implements FeedRepositoryInterface
         User $user,
         ?string $type = null,
         int $limit = 20,
-        int $offset = 0
+        int $offset = 0,
+        bool $withContent = true
     ): array {
-        $sql = $this->baseSelect()
+        $sql = $this->baseSelect(withContent: $withContent)
             ."\nJOIN feed_term_links ftl ON ftl.feed_id = f.id"
             ."\nJOIN feed_terms ft ON ft.id = ftl.term_id";
 
@@ -625,7 +628,7 @@ final class FeedRepository implements FeedRepositoryInterface
      * feeds_type_created_at_id_index with no row or `users` lookups for the skipped rows - and only
      * then fetch the single full row (+ author fields) for that id.
      */
-    public function findRandomByType(string $type, User $user): ?Feed
+    public function findRandomByType(string $type, User $user, bool $withContent = true): ?Feed
     {
         $condition = "f.type = ?\n";
         $params = [$type];
@@ -656,7 +659,7 @@ final class FeedRepository implements FeedRepositoryInterface
             return null;
         }
 
-        $sql = $this->baseSelect()."\nWHERE f.id = ?";
+        $sql = $this->baseSelect(withContent: $withContent)."\nWHERE f.id = ?";
 
         return $this->fetchOne($sql, [(int) $idRow['id']]);
     }
@@ -1266,8 +1269,16 @@ final class FeedRepository implements FeedRepositoryInterface
      * "this post lives in a community" apart from any other container type
      * without an extra query.
      */
-    private function baseSelect(string $extra = ''): string
+    /**
+     * $withContent = false selects NULL in place of f.content, for listings
+     * that only render title/cover/rating. Some types keep very large bodies
+     * in content (e.g. a library book's full HTML, megabytes per row), and
+     * pulling them for a card grid costs transfer, PHP memory and buffer pool.
+     */
+    private function baseSelect(string $extra = '', bool $withContent = true): string
     {
+        $content = $withContent ? 'f.content' : 'NULL AS content';
+
         return "
         SELECT
             f.id,
@@ -1276,7 +1287,7 @@ final class FeedRepository implements FeedRepositoryInterface
             f.type,
             f.slug,
             f.title,
-            f.content,
+            $content,
             f.description,
             f.image_url,
             f.container_id,
