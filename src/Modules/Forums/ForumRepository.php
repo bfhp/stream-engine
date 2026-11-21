@@ -135,8 +135,9 @@ final class ForumRepository
     }
 
     /**
-     * Uses index: feeds_parent_id_type_position_index (parent_id, type, position) on feeds - both "topics of these forums" lookups (topic_activity's own WHERE and last_comment's inner subquery filter on parent_id IN (...) AND type = 'forum-post').
-     * Uses index: feeds_parent_id_type_created_at_id_index (parent_id, type, created_at, id) on feeds c for last_comment's ROW_NUMBER() OVER (PARTITION BY c.parent_id ORDER BY c.created_at DESC, c.id DESC) - the index's own column and sort order match the partition/order exactly, so MariaDB can walk it without a filesort per topic.
+     * Uses index: feeds_parent_id_type_position_index (parent_id, type, position) on feeds t - topic_last's "topics of these forums" filter (parent_id IN (...) AND type = 'forum-post').
+     * Uses index: feeds_parent_id_type_created_at_id_index (parent_id, type, created_at, id) on feeds c - topic_last's correlated "newest reply" subquery (parent_id = t.id AND type = 'comment' ORDER BY created_at DESC, id DESC LIMIT 1) matches the index exactly, so each topic costs one index-only read. This replaced a ROW_NUMBER() over every reply of the requested forums, which read the full row of every reply (owner_id isn't in the index) - ~69k rows / ~170ms in production for the forum index page.
+     * Uses index: PRIMARY(id) on feeds lc - one lookup per topic for the newest reply's owner_id/created_at.
      * Warning: no index for the final `ranked` CTE's ROW_NUMBER() OVER (PARTITION BY forum_id ORDER BY GREATEST(...) DESC, topic_id DESC) - it sorts an already-small, in-memory row set (at most one row per topic already fetched above for the requested forums), not a base-table scan, so this is an acceptable computed sort rather than a missing index.
      *
      * The single most recent activity per forum (subforum) - forums.list's
@@ -165,41 +166,42 @@ final class ForumRepository
         foreach (array_chunk($forumIds, self::IN_CHUNK_SIZE) as $chunk) {
             $placeholders = implode(', ', array_fill(0, count($chunk), '?'));
 
-            // 1. last_comment: the newest reply per topic (rn = 1), scoped
-            //    to topics living in one of the requested forums.
+            // 1. topic_last: every topic of the requested forums with the id
+            //    of its newest reply - one index read per topic (see the
+            //    docblock), not a ranking of every reply in the forum.
             // 2. topic_activity: each of those topics paired with its own
-            //    creation and its newest reply, if any.
+            //    creation and its newest reply's author/time, if any.
             // 3. ranked: per topic, "last activity" is whichever is newer -
             //    its own creation or its newest reply - then ranked within
             //    its forum so rank 1 is that forum's single most-recently-
             //    active topic.
             $sql = "
-                WITH last_comment AS (
-                    SELECT
-                        c.parent_id AS topic_id,
-                        c.owner_id AS owner_id,
-                        c.created_at AS created_at,
-                        ROW_NUMBER() OVER (
-                            PARTITION BY c.parent_id
-                            ORDER BY c.created_at DESC, c.id DESC
-                        ) AS rn
-                    FROM feeds c
-                    WHERE c.type = 'comment'
-                      AND c.parent_id IN (
-                          SELECT id FROM feeds WHERE type = 'forum-post' AND parent_id IN ($placeholders)
-                      )
-                ),
-                topic_activity AS (
+                WITH topic_last AS (
                     SELECT
                         t.id AS topic_id,
                         t.parent_id AS forum_id,
                         t.owner_id AS topic_owner_id,
                         t.created_at AS topic_created_at,
+                        (
+                            SELECT c.id
+                            FROM feeds c
+                            WHERE c.parent_id = t.id AND c.type = 'comment'
+                            ORDER BY c.created_at DESC, c.id DESC
+                            LIMIT 1
+                        ) AS last_comment_id
+                    FROM feeds t
+                    WHERE t.type = 'forum-post' AND t.parent_id IN ($placeholders)
+                ),
+                topic_activity AS (
+                    SELECT
+                        tl.topic_id,
+                        tl.forum_id,
+                        tl.topic_owner_id,
+                        tl.topic_created_at,
                         lc.owner_id AS last_comment_owner_id,
                         lc.created_at AS last_comment_created_at
-                    FROM feeds t
-                    LEFT JOIN last_comment lc ON lc.topic_id = t.id AND lc.rn = 1
-                    WHERE t.type = 'forum-post' AND t.parent_id IN ($placeholders)
+                    FROM topic_last tl
+                    LEFT JOIN feeds lc ON lc.id = tl.last_comment_id
                 ),
                 ranked AS (
                     SELECT
@@ -229,9 +231,7 @@ final class ForumRepository
                 WHERE forum_rank = 1
             ";
 
-            // $chunk appears twice: once for last_comment's inner subquery,
-            // once for topic_activity's own WHERE.
-            $rows = $this->db->fetchAll($sql, array_merge($chunk, $chunk));
+            $rows = $this->db->fetchAll($sql, $chunk);
 
             foreach ($rows as $row) {
                 $result[(int) $row['forum_id']] = [
@@ -246,8 +246,9 @@ final class ForumRepository
     }
 
     /**
-     * Uses index: feeds_parent_id_type_position_index (parent_id, type, position) on feeds - the initial COUNT(*) and every "topics of this forum" filter (t's own WHERE, and both last_comment's/reply_counts' inner subqueries all filter on parent_id = ? AND type = 'forum-post').
-     * Uses index: feeds_parent_id_type_created_at_id_index (parent_id, type, created_at, id) on feeds c for last_comment's ROW_NUMBER() OVER (PARTITION BY c.parent_id ORDER BY c.created_at DESC, c.id DESC) - column and sort order match exactly, no filesort per topic.
+     * Uses index: feeds_parent_id_type_position_index (parent_id, type, position) on feeds - the initial COUNT(*) and topic_last's "topics of this forum" filter (parent_id = ? AND type = 'forum-post').
+     * Uses index: feeds_parent_id_type_created_at_id_index (parent_id, type, created_at, id) on feeds c - the correlated "newest reply" subquery (one index-only read per topic) and the reply COUNT(*), which runs only for the topics on the requested page, not for the whole forum.
+     * Uses index: PRIMARY(id) on feeds lc - one lookup per topic for the newest reply's owner_id/created_at.
      * Warning: no index for the outer `ORDER BY last_activity_at DESC, t.id DESC` - last_activity_at is GREATEST(t.created_at, lc.created_at), a computed value no index can back. MariaDB filesorts the matching rows before applying LIMIT/OFFSET, but that set is already filtered down to "topics in this one forum" (the same count countTopicsAndPosts() reports - typically low hundreds at most), not the whole feeds table, so this is acceptable for now. Offset pagination itself can also degrade on very deep pages, same as every other offset-paginated list in this codebase. If a single forum's topic count grows large enough for either to matter, the fix is a materialized "topic last-activity" column with its own index, not something patchable here.
      *
      * One forum's topic list (forums.topic-list page), paged and ordered by
@@ -280,44 +281,49 @@ final class ForumRepository
         }
 
         $sql = "
-            WITH last_comment AS (
+            WITH topic_last AS (
                 SELECT
-                    c.parent_id AS topic_id,
-                    c.owner_id AS owner_id,
-                    c.created_at AS created_at,
-                    ROW_NUMBER() OVER (
-                        PARTITION BY c.parent_id
+                    t.id,
+                    t.owner_id,
+                    t.created_at,
+                    (
+                        SELECT c.id
+                        FROM feeds c
+                        WHERE c.parent_id = t.id AND c.type = 'comment'
                         ORDER BY c.created_at DESC, c.id DESC
-                    ) AS rn
-                FROM feeds c
-                WHERE c.type = 'comment'
-                  AND c.parent_id IN (SELECT id FROM feeds WHERE type = 'forum-post' AND parent_id = ?)
+                        LIMIT 1
+                    ) AS last_comment_id
+                FROM feeds t
+                WHERE t.type = 'forum-post' AND t.parent_id = ?
             ),
-            reply_counts AS (
-                SELECT c.parent_id AS topic_id, COUNT(*) AS reply_count
-                FROM feeds c
-                WHERE c.type = 'comment'
-                  AND c.parent_id IN (SELECT id FROM feeds WHERE type = 'forum-post' AND parent_id = ?)
-                GROUP BY c.parent_id
+            page AS (
+                SELECT
+                    t.id AS topic_id,
+                    CASE
+                        WHEN lc.created_at IS NOT NULL AND lc.created_at >= t.created_at
+                            THEN lc.owner_id
+                        ELSE t.owner_id
+                    END AS last_owner_id,
+                    GREATEST(t.created_at, COALESCE(lc.created_at, t.created_at)) AS last_activity_at
+                FROM topic_last t
+                LEFT JOIN feeds lc ON lc.id = t.last_comment_id
+                ORDER BY last_activity_at DESC, t.id DESC
+                LIMIT $limit OFFSET $offset
             )
             SELECT
-                t.id AS topic_id,
-                COALESCE(rc.reply_count, 0) AS reply_count,
-                CASE
-                    WHEN lc.created_at IS NOT NULL AND lc.created_at >= t.created_at
-                        THEN lc.owner_id
-                    ELSE t.owner_id
-                END AS last_owner_id,
-                GREATEST(t.created_at, COALESCE(lc.created_at, t.created_at)) AS last_activity_at
-            FROM feeds t
-            LEFT JOIN last_comment lc ON lc.topic_id = t.id AND lc.rn = 1
-            LEFT JOIN reply_counts rc ON rc.topic_id = t.id
-            WHERE t.type = 'forum-post' AND t.parent_id = ?
-            ORDER BY last_activity_at DESC, t.id DESC
-            LIMIT $limit OFFSET $offset
+                p.topic_id,
+                (
+                    SELECT COUNT(*)
+                    FROM feeds c
+                    WHERE c.parent_id = p.topic_id AND c.type = 'comment'
+                ) AS reply_count,
+                p.last_owner_id,
+                p.last_activity_at
+            FROM page p
+            ORDER BY p.last_activity_at DESC, p.topic_id DESC
         ";
 
-        $rows = $this->db->fetchAll($sql, [$forumId, $forumId, $forumId]);
+        $rows = $this->db->fetchAll($sql, [$forumId]);
 
         $topicIds = [];
         $stats = [];
@@ -686,8 +692,8 @@ final class ForumRepository
     }
 
     /**
-     * Uses index: feeds_parent_id_type_position_index (parent_id, type, position) on feeds - both the outer topics filter and the inner "topics of these forums" subquery (parent_id IN (...) AND type = 'forum-post').
-     * Uses index: feeds_parent_id_type_created_at_id_index (parent_id, type, created_at, id) on feeds c for last_comment's ROW_NUMBER() OVER (PARTITION BY c.parent_id ORDER BY c.created_at DESC, c.id DESC) - column and sort order match exactly, no filesort per topic.
+     * Uses index: feeds_parent_id_type_position_index (parent_id, type, position) on feeds t - the topics filter (parent_id IN (...) AND type = 'forum-post').
+     * Uses index: feeds_parent_id_type_created_at_id_index (parent_id, type, created_at, id) on feeds c - the correlated MAX(c.created_at) per topic is an index-only read, not a scan of every reply.
      *
      * Every topic's own last-activity timestamp (same "own creation, or
      * newest reply, whichever is newer" rule findLastActivity()/
@@ -716,32 +722,19 @@ final class ForumRepository
             $placeholders = implode(', ', array_fill(0, count($chunk), '?'));
 
             $sql = "
-                WITH last_comment AS (
-                    SELECT
-                        c.parent_id AS topic_id,
-                        c.created_at AS created_at,
-                        ROW_NUMBER() OVER (
-                            PARTITION BY c.parent_id
-                            ORDER BY c.created_at DESC, c.id DESC
-                        ) AS rn
-                    FROM feeds c
-                    WHERE c.type = 'comment'
-                      AND c.parent_id IN (
-                          SELECT id FROM feeds WHERE type = 'forum-post' AND parent_id IN ($placeholders)
-                      )
-                )
                 SELECT
                     t.id AS topic_id,
                     t.parent_id AS forum_id,
-                    GREATEST(t.created_at, COALESCE(lc.created_at, t.created_at)) AS last_activity_at
+                    GREATEST(t.created_at, COALESCE((
+                        SELECT MAX(c.created_at)
+                        FROM feeds c
+                        WHERE c.parent_id = t.id AND c.type = 'comment'
+                    ), t.created_at)) AS last_activity_at
                 FROM feeds t
-                LEFT JOIN last_comment lc ON lc.topic_id = t.id AND lc.rn = 1
                 WHERE t.type = 'forum-post' AND t.parent_id IN ($placeholders)
             ";
 
-            // $chunk appears twice: once for last_comment's inner subquery,
-            // once for the outer topics filter.
-            $rows = $this->db->fetchAll($sql, array_merge($chunk, $chunk));
+            $rows = $this->db->fetchAll($sql, $chunk);
 
             foreach ($rows as $row) {
                 $result[] = [

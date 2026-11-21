@@ -14,6 +14,14 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 - Per-page widget visibility: page settings choose which widget placements
   are shown, all by default.
 
+### Changed
+
+- Feed listings can skip loading the full post body (`withContent: false`
+  on `FeedService` list methods), for card grids over large content.
+- Faster forum index, topic lists and unread markers: the newest reply per
+  topic is now read from an index instead of ranking every reply in the
+  forum.
+
 ## [0.7.4] - 2026-11-19
 
 ### Added

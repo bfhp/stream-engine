@@ -86,9 +86,9 @@ final class ForumsControllerTest extends TestCase
 
     private const string SQL_LAST_ACTIVITY = 'FROM ranked WHERE forum_rank = 1';
 
-    private const string SQL_TOPIC_ACTIVITY = 'AS last_activity_at FROM feeds t LEFT JOIN last_comment';
+    private const string SQL_TOPIC_ACTIVITY = "AS last_activity_at FROM feeds t WHERE t.type = 'forum-post' AND t.parent_id IN";
 
-    private const string SQL_TOPICS_PAGE = 'reply_counts rc ON rc.topic_id = t.id';
+    private const string SQL_TOPICS_PAGE = 'FROM page p';
 
     private const string SQL_TOPICS_TOTAL = "COUNT(*) AS total FROM feeds WHERE type = 'forum-post' AND parent_id = ?";
 

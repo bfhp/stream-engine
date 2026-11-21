@@ -212,9 +212,9 @@ final class ForumRepositoryTest extends TestCase
     =============================== */
 
     /**
-     * The short circuit matters for more than tidiness: the main query is a
-     * two-CTE window function over every topic and comment in the forum, and an
-     * empty forum is the common case for a freshly created one.
+     * The short circuit matters for more than tidiness: the main query reads
+     * every topic of the forum (plus its newest reply), and an empty forum is
+     * the common case for a freshly created one.
      */
     public function testFindTopicsPageSkipsTheHeavyQueryForAnEmptyForum(): void
     {
@@ -225,7 +225,7 @@ final class ForumRepositoryTest extends TestCase
         $this->assertSame(['topicIds' => [], 'stats' => [], 'total' => 0], $page);
         // Only the count ran - no CTE.
         $this->assertCount(1, $this->reads);
-        $this->assertStringNotContainsString('WITH last_comment', $this->reads[0][0]);
+        $this->assertStringNotContainsString('WITH topic_last', $this->reads[0][0]);
     }
 
     public function testFindTopicsPageReportsTheTotalEvenWhenThePageIsEmpty(): void
@@ -290,16 +290,67 @@ final class ForumRepositoryTest extends TestCase
         );
         $this->assertStringContainsString('lc.created_at >= t.created_at', $sql);
         $this->assertStringContainsString('ORDER BY last_activity_at DESC, t.id DESC', $sql);
-        // The newest comment per topic, not just any - ROW_NUMBER + rn = 1.
-        $this->assertStringContainsString('ROW_NUMBER() OVER', $sql);
-        $this->assertStringContainsString('lc.rn = 1', $sql);
+        // The newest comment per topic, not just any - and taken as a single
+        // index read per topic rather than by ranking every reply.
+        $this->assertStringContainsString('ORDER BY c.created_at DESC, c.id DESC LIMIT 1', $this->normalize($sql));
+        $this->assertStringNotContainsString('ROW_NUMBER', $sql);
+        // Replies are counted only for the page's topics, after LIMIT.
+        $normalized = $this->normalize($sql);
+        $this->assertLessThan(
+            strpos($normalized, 'SELECT COUNT(*)'),
+            strpos($normalized, 'LIMIT 20 OFFSET 0'),
+        );
+    }
+
+    /**
+     * The forum index's "last post" per section: the newest reply of each
+     * topic comes from a LIMIT 1 index read, never from ranking every reply
+     * of the forum (that read the full row of ~69k replies in production),
+     * and the forum ids are bound once.
+     */
+    public function testFindLastActivityReadsOnlyTheNewestReplyPerTopic(): void
+    {
+        $repository = new ForumRepository($this->db(rows: [
+            ['topic_id' => '11', 'forum_id' => '5', 'last_owner_id' => '7', 'last_activity_at' => '1700000000'],
+        ]));
+
+        $result = $repository->findLastActivity([5, 7]);
+
+        [$sql, $params] = $this->reads[0];
+        $normalized = $this->normalize($sql);
+
+        $this->assertSame([5, 7], $params);
+        $this->assertStringContainsString('ORDER BY c.created_at DESC, c.id DESC LIMIT 1', $normalized);
+        $this->assertSame(1, substr_count($normalized, 'ROW_NUMBER'), 'only the per-forum ranking of topics');
+        $this->assertStringContainsString('last_comment_created_at >= topic_created_at', $normalized);
+        $this->assertSame([5 => ['topicId' => 11, 'ownerId' => 7, 'createdAt' => 1700000000]], $result);
+    }
+
+    public function testFindTopicActivityTakesTheNewestReplyTimeFromAnIndexMax(): void
+    {
+        $repository = new ForumRepository($this->db(rows: [
+            ['topic_id' => '11', 'forum_id' => '5', 'last_activity_at' => '1700000000'],
+        ]));
+
+        $result = $repository->findTopicActivity([5]);
+
+        [$sql, $params] = $this->reads[0];
+
+        $this->assertSame([5], $params);
+        $this->assertStringContainsString('SELECT MAX(c.created_at)', $this->normalize($sql));
+        $this->assertStringNotContainsString('ROW_NUMBER', $sql);
+        $this->assertSame([['topicId' => 11, 'forumId' => 5, 'lastActivityAt' => 1700000000]], $result);
+    }
+
+    private function normalize(string $sql): string
+    {
+        return (string) preg_replace('/\s+/', ' ', $sql);
     }
 
     /**
      * LIMIT/OFFSET are interpolated rather than bound - PdoDatabase binds
      * everything as a string and MariaDB rejects that in LIMIT - so the forum
-     * id is the only parameter, bound once per CTE plus once for the outer
-     * query.
+     * id is the only parameter, bound once.
      */
     public function testFindTopicsPageBindsOnlyTheForumId(): void
     {
@@ -309,7 +360,7 @@ final class ForumRepositoryTest extends TestCase
 
         [$sql, $params] = $this->reads[1];
 
-        $this->assertSame([5, 5, 5], $params);
+        $this->assertSame([5], $params);
         $this->assertStringContainsString('LIMIT 20 OFFSET 40', $sql);
     }
 

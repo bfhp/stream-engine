@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 /** Each page starts one search from data-search, then loads more on demand. */
 const fetchMock = vi.fn();
@@ -58,6 +58,19 @@ function respondWith(items: Array<{
         json: async () => ({ data: items }),
     });
 }
+
+/**
+ * Warm the module once before any test: the first import transforms the
+ * search bundle and its dependencies from scratch, which under a full
+ * parallel run can exceed the 5s per-test timeout and fail whichever test
+ * happens to come first. vi.resetModules() in load() only clears the module
+ * registry, not Vite's transform cache, so later imports stay fast. With no
+ * results container on the page the import is a quiet no-op.
+ */
+beforeAll(async () => {
+    document.body.innerHTML = "";
+    await import("../../assets-src/pages/search");
+}, 30_000);
 
 beforeEach(() => {
     fetchMock.mockReset();
