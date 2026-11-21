@@ -26,6 +26,7 @@ final class Page
         public ?string $changefreq = null,
         public ?int $updated = null,
         public ?string $termVocabulary = null,
+        public bool $runtime = false,
     ) {
 
     }
@@ -73,6 +74,29 @@ final class Page
         }
 
         return array_values(array_filter($hidden, 'is_string'));
+    }
+
+    /**
+     * Hidden placements in effect for the last page of a resolved route
+     * (the router's breadcrumbs, root first). A runtime page - a blog post,
+     * a photo, an editor registered in code under a profile, community or
+     * forum - can't be edited in admin, so unless it states its own list it
+     * follows its nearest admin-managed ancestor: hiding a placement on
+     * user.show also hides it on that profile's posts and photos.
+     *
+     * @param list<Page> $chain
+     * @return list<string>
+     */
+    public static function hiddenWidgetsAlong(array $chain): array
+    {
+        for ($i = count($chain) - 1; $i >= 0; $i--) {
+            $page = $chain[$i];
+            if (! $page->runtime || isset($page->settings->hiddenWidgets)) {
+                return $page->hiddenWidgets();
+            }
+        }
+
+        return [];
     }
 
     public function relatedArticlesEnabled(): bool
@@ -130,6 +154,7 @@ final class Page
             accessRule: $accessRule,
             action: $action,
             changefreq: $changefreq,
+            runtime: true,
         );
     }
 }

@@ -86,6 +86,62 @@ final class PageTest extends TestCase
         self::assertSame([], $page->hiddenWidgets());
     }
 
+    public function testRuntimePagesInheritHiddenWidgetsFromTheNearestAdminPage(): void
+    {
+        $home = $this->stored(1, null, []);
+        $profile = $this->stored(2, 1, ['sidebar_top']);
+        $post = $this->runtimePage(3, 2, null);
+        $postEdit = $this->runtimePage(4, 3, null);
+
+        // user.show hides sidebar_top: its post and the post's editor follow.
+        self::assertSame(['sidebar_top'], Page::hiddenWidgetsAlong([$home, $profile, $post]));
+        self::assertSame(['sidebar_top'], Page::hiddenWidgetsAlong([$home, $profile, $post, $postEdit]));
+        // The admin page itself is unchanged.
+        self::assertSame(['sidebar_top'], Page::hiddenWidgetsAlong([$home, $profile]));
+    }
+
+    public function testAdminPagesNeverInheritAndRuntimePagesMayOverride(): void
+    {
+        $profile = $this->stored(2, 1, ['sidebar_top']);
+
+        // An admin-managed child keeps its own choice, even "show everything".
+        self::assertSame([], Page::hiddenWidgetsAlong([$profile, $this->stored(5, 2, null)]));
+        // A runtime page that states its own list keeps it.
+        self::assertSame(
+            ['footer_legal'],
+            Page::hiddenWidgetsAlong([$profile, $this->runtimePage(3, 2, (object) ['hiddenWidgets' => ['footer_legal']])])
+        );
+        // A runtime page whose settings carry other flags still inherits.
+        self::assertSame(
+            ['sidebar_top'],
+            Page::hiddenWidgetsAlong([$profile, $this->runtimePage(3, 2, (object) ['commentsEnabled' => true])])
+        );
+        self::assertSame([], Page::hiddenWidgetsAlong([]));
+    }
+
+    /** @param list<string>|null $hidden */
+    private function stored(int $id, ?int $parentId, ?array $hidden): Page
+    {
+        return new Page(
+            id: $id,
+            parentId: $parentId,
+            pattern: 'p'.$id,
+            pageName: null,
+            settings: $hidden === null ? null : (object) ['hiddenWidgets' => $hidden],
+            feedType: null,
+            listFeedType: null,
+            feedId: null,
+            requestMethods: ['GET'],
+            responseType: 'html',
+            accessRule: AccessService::ACCESS_PUBLIC,
+        );
+    }
+
+    private function runtimePage(int $id, int $parentId, ?object $settings): Page
+    {
+        return Page::runtime($id, $parentId, 'r'.$id, 'user.post-show-slug', AccessService::ACCESS_PUBLIC, null, null, $settings);
+    }
+
     /**
      * @param list<string>|null $methods
      */

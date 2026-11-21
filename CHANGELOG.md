@@ -7,6 +7,12 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Hiding a widget placement on a page now also hides it on the pages a module
+  adds beneath it, which can't be edited in admin: blog posts, photos and
+  editors under a profile or community, forum topics.
+
 ## [0.7.5] - 2026-11-21
 
 ### Added

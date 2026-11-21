@@ -184,9 +184,12 @@ actions. **Show comments** and **Show share buttons** affect only views and
 themes that support those features.
 
 **Widgets** lists every widget placement; all are checked by default. Uncheck
-a placement to hide its block on this page only. The block content itself is
-edited under **Administration → Widgets**. Unchecked placements are stored in
-the page settings as `hiddenWidgets`.
+a placement to hide its block on this page. Pages a module adds on its own
+and that you can't edit here - a profile's posts and photos, a community's
+posts, forum topics - follow the nearest page above them that you can: hiding
+a placement on the profile page hides it on that profile's posts too. The
+block content itself is edited under **Administration → Widgets**. Unchecked
+placements are stored in the page settings as `hiddenWidgets`.
 
 ## Worked example: publish `/about/`
 
