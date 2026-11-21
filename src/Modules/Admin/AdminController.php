@@ -179,6 +179,10 @@ class AdminController extends AbstractController implements DashboardCardProvide
         ];
     }
 
+    /**
+     * Uses index: users_created_at_id_index (created_at, id) on users - read backwards for ORDER BY created_at DESC, id DESC LIMIT 5; the id <> ? filter only skips the system user.
+     * Uses index: feeds_created_at_id_index (created_at, id) on feeds - the same backward read, stopping after 5 rows instead of sorting every feed, comment and forum reply.
+     */
     private static function recentActivityCard(PdoDatabase $db): array
     {
         $items = [];
@@ -236,10 +240,11 @@ class AdminController extends AbstractController implements DashboardCardProvide
                     COALESCE(SUM(locked_at IS NOT NULL AND locked_at < UNIX_TIMESTAMP() - 3600), 0) AS stale_locks
              FROM cron_tasks'
         ) ?? [];
+        // Uses index: notification_deliveries_queue_index (status, channel, delivery, scheduled_at, id) -
+        // each count is a range over one status value, not a scan of the whole delivery history.
         $deliveries = $db->fetchOne(
-            "SELECT COALESCE(SUM(status = 'pending'), 0) AS pending,
-                    COALESCE(SUM(status = 'failed'), 0) AS failed
-             FROM notification_deliveries"
+            "SELECT (SELECT COUNT(*) FROM notification_deliveries WHERE status = 'pending') AS pending,
+                    (SELECT COUNT(*) FROM notification_deliveries WHERE status = 'failed') AS failed"
         ) ?? [];
         $healthRows = (self::healthResults($db)['cron'] ?? []);
         $known = array_fill_keys(self::HEALTH_CHECKS, true);
