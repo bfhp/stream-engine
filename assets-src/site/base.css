@@ -469,6 +469,9 @@ body {
    covers the first paint and pages without the script. */
 html {
     scroll-padding-block-start: calc(var(--ui-sticky-offset, 4.5rem) + .5rem);
+    /* The same for the cookie notice fixed to the bottom of the window;
+       cookie-notice.ts sets its height while it is shown. */
+    scroll-padding-block-end: var(--ui-cookie-notice-offset, 0px);
 }
 
 .site-header {
@@ -738,6 +741,38 @@ html {
 .ui-toast[data-ui-type="info"] { background: var(--ui-info); }
 .ui-toast__body { flex: 1; }
 .ui-toast .ui-close { color: inherit; }
+
+/* Cookie notice (partials/cookie-notice.twig, site/cookie-notice.ts) */
+.ui-cookie-notice {
+    position: fixed;
+    inset-inline: 0;
+    inset-block-end: 0;
+    z-index: 1070;
+    padding-block: var(--ui-space-3);
+    border-block-start: 1px solid var(--ui-border);
+    background: var(--ui-surface);
+    color: var(--ui-text);
+    box-shadow: 0 -2px 8px rgb(0 0 0 / .25);
+}
+
+.ui-cookie-notice__inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ui-space-2) var(--ui-space-3);
+}
+
+.ui-cookie-notice__text {
+    flex: 1 1 20rem;
+    margin: 0;
+}
+
+/* While the notice is shown, the end of the page can still scroll out from
+   under it. */
+.has-cookie-notice body {
+    padding-block-end: var(--ui-cookie-notice-offset, 0px);
+}
 
 /* Tabs */
 .ui-tabs {

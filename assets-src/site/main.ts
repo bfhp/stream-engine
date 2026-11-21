@@ -18,6 +18,7 @@ import "./auth";
 import { initMessengerGlobal } from "./messenger-global";
 import { initMentionAutocomplete } from "../shared/mentions-autocomplete";
 import { initStickyOffset } from "./sticky-offset";
+import { initCookieNotice } from "./cookie-notice";
 import { initPasswordToggles } from "../shared/password-toggle";
 import { installFocusKeeper } from "../shared/keep-focus";
 import { ui } from "../shared/ui";
@@ -29,6 +30,7 @@ CMS.hashRoute.init();
 
 document.addEventListener("DOMContentLoaded", () => {
     initStickyOffset();
+    initCookieNotice();
     // Live regions for toasts must be in the page before the first message.
     ui.toast.prepare();
     // A toast cut short by a reload or a redirect is shown again here.

@@ -468,6 +468,7 @@ class StreamEngine
         $twig->addGlobal('siteIcons', $this->settings->siteIcons());
         $twig->addGlobal('headerLogo', $this->settings->headerLogo());
         $twig->addGlobal('registrationOpen', $this->settings->registrationMode() !== 'closed');
+        $twig->addGlobal('cookieNotice', $this->settings->cookieNoticeEnabled());
         $twig->addFunction(new TwigFunction('trans', [$this->tm, 'trans']));
         $twig->addFunction(new TwigFunction('trans_choice', [$this->fmt, 'transChoice']));
         $twig->addFunction(new TwigFunction('action_url', [$this->urlGenerator, 'action']));

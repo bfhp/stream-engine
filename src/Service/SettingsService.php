@@ -20,6 +20,7 @@ final class SettingsService
     public const string REGISTRATION_CAPTCHA_SITE_KEY = 'registration.captcha.site_key';
     public const string REGISTRATION_CAPTCHA_SECRET_KEY = 'registration.captcha.secret_key';
     public const array REGISTRATION_CAPTCHA_PROVIDERS = ['none', 'turnstile', 'hcaptcha'];
+    public const string COOKIE_NOTICE_KEY = 'cookie_notice.enabled';
 
     /**
      * @var array<string, string>
@@ -102,6 +103,15 @@ final class SettingsService
             'siteKey' => $this->getString(self::REGISTRATION_CAPTCHA_SITE_KEY),
             'secret' => $this->getString(self::REGISTRATION_CAPTCHA_SECRET_KEY),
         ];
+    }
+
+    /**
+     * Whether the site shows visitors the cookie notice. On unless an
+     * administrator stored '0'; any other stored value keeps it on.
+     */
+    public function cookieNoticeEnabled(): bool
+    {
+        return $this->getString(self::COOKIE_NOTICE_KEY, '1') !== '0';
     }
 
     public static function isValidRegistrationHoneypotField(string $field): bool

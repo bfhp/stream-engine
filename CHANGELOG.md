@@ -7,6 +7,11 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- A cookie notice for visitors, on by default; it can be switched off in
+  **Administration → Settings**.
+
 ## [0.7.4] - 2026-11-19
 
 ### Added

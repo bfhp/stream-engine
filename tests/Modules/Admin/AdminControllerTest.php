@@ -1777,6 +1777,41 @@ final class AdminControllerTest extends TestCase
         );
     }
 
+    public function testTheCookieNoticeCanBeSwitchedOff(): void
+    {
+        $module = $this->makeModule();
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode(['value' => '0']));
+
+        $response = $this->callAndDecode(
+            $module,
+            $this->makeApiPage('admin.setting', ['GET', 'PATCH']),
+            ['key' => 'cookie_notice.enabled']
+        );
+
+        $this->assertSame('0', $response['value']);
+        $this->assertSame(['cookie_notice.enabled', '0', '0'], $this->writes[0][1]);
+    }
+
+    public function testACookieNoticeValueOtherThanZeroOrOneIsRefused(): void
+    {
+        $module = $this->makeModule();
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode(['value' => 'yes']));
+
+        try {
+            $module->callApi(
+                $this->makeApiPage('admin.setting', ['GET', 'PATCH']),
+                ['key' => 'cookie_notice.enabled'],
+            );
+            $this->fail('a non-boolean cookie notice value should have been refused');
+        } catch (ValidationException) {
+            $this->assertSame([], $this->writes);
+        }
+    }
+
     public function testAnUnsafeRegistrationHoneypotFieldIsRefused(): void
     {
         $module = $this->makeModule();

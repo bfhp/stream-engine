@@ -249,6 +249,7 @@ apply to the whole site.
 | **Date format** | Automatic from locale, `DD.MM.YYYY`, `MM/DD/YYYY`, or ISO `YYYY-MM-DD`. |
 | **Time format** | Automatic from locale, 24-hour, or 12-hour. |
 | **User upload limit** | Total stored bytes allowed for each non-administrator, entered in megabytes. The default is 500 MB. Administrators are not restricted by this per-user quota. |
+| **Cookie notice** | Shows visitors a bar at the bottom of the page saying that the site uses cookies, until they dismiss it. On by default; stored as `cookie_notice.enabled` (`1` or `0`). |
 
 The upload quota is not a per-file limit. The application separately rejects
 individual user and administrator File Browser uploads larger than 50 MB, and
@@ -260,6 +261,12 @@ Changing locale or date/time format reloads the administration application.
 After saving, check both public pages and the administration interface. A
 missing translation falls back to English; it should still be reported as a
 localization defect rather than accepted silently.
+
+The cookie notice is informational: it does not block the session, timezone,
+or other functional cookies the site sets. A visitor's dismissal is kept in a
+`cookie_notice` cookie for one year; the notice text comes from the translation
+catalogs (`view.cookie_notice.*`). Themes can override
+`partials/cookie-notice.twig` or empty the `layout_cookie_notice` block.
 
 ## Header logo and site icon
 

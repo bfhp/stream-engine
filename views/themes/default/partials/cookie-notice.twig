@@ -1,0 +1,13 @@
+{# Cookie notice - rendered while the `cookie_notice.enabled` setting is on
+   (Admin -> Settings). It starts hidden: site/cookie-notice.ts shows it
+   unless the visitor has already dismissed it, so the HTML stays the same
+   for every visitor and cacheable. Not a dialog: it does not take focus or
+   block the page. #}
+<section id="cookieNotice" class="{% block cookie_notice_class %}ui-cookie-notice{% endblock %}" aria-label="{{ trans('view.cookie_notice.label') }}" hidden>
+    <div class="{% block cookie_notice_inner_class %}ui-container ui-cookie-notice__inner{% endblock %}">
+        <p class="{% block cookie_notice_text_class %}ui-cookie-notice__text{% endblock %}">{{ trans('view.cookie_notice.text') }}</p>
+        <button type="button" class="{% block cookie_notice_button_class %}ui-button ui-button--primary{% endblock %}" data-cookie-notice-accept>
+            {{ trans('view.cookie_notice.accept') }}
+        </button>
+    </div>
+</section>

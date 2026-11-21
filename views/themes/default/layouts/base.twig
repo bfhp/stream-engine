@@ -98,6 +98,11 @@
         {% include 'partials/js-templates.twig' %}
     {% endblock %}
 {% endblock %}
+{% block layout_cookie_notice %}
+    {% if cookieNotice|default(false) %}
+        {% include 'partials/cookie-notice.twig' %}
+    {% endif %}
+{% endblock %}
 {% block body_end %}{% endblock %}
 </body>
 </html>

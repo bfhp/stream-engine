@@ -44,6 +44,20 @@ final class SettingsServiceTest extends TestCase
         self::assertSame('off', $this->makeService(['cron.mode' => ['invalid', 1]])->cronMode());
     }
 
+    public function testCookieNoticeIsOnByDefaultAndOffOnlyWhenExplicitlyDisabled(): void
+    {
+        self::assertTrue($this->makeService()->cookieNoticeEnabled());
+        self::assertTrue($this->makeService([
+            SettingsService::COOKIE_NOTICE_KEY => ['1', 1],
+        ])->cookieNoticeEnabled());
+        self::assertFalse($this->makeService([
+            SettingsService::COOKIE_NOTICE_KEY => ['0', 1],
+        ])->cookieNoticeEnabled());
+        self::assertTrue($this->makeService([
+            SettingsService::COOKIE_NOTICE_KEY => ['garbage', 1],
+        ])->cookieNoticeEnabled());
+    }
+
     public function testRegistrationHoneypotFieldUsesSafeDefaultAndStoredValue(): void
     {
         self::assertSame('contact_reference', $this->makeService()->registrationHoneypotField());

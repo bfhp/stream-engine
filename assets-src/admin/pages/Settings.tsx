@@ -8,6 +8,7 @@ import {
     NumberInput,
     SimpleGrid,
     Stack,
+    Switch,
     Text,
     TextInput,
     Tooltip,
@@ -25,7 +26,13 @@ type Setting = {
     updatedAt: number;
 };
 
-type EditableKey = "site_name" | "locale" | "date_format" | "time_format" | "uploads.user_limit_mb";
+type EditableKey =
+    | "site_name"
+    | "locale"
+    | "date_format"
+    | "time_format"
+    | "uploads.user_limit_mb"
+    | "cookie_notice.enabled";
 type SettingsMap = Partial<Record<EditableKey, Setting>>;
 type Drafts = Record<EditableKey, string>;
 type SiteIcon = {
@@ -40,7 +47,14 @@ type HeaderLogo = {
     url: string | null;
 };
 
-const EDITABLE_KEYS: EditableKey[] = ["site_name", "locale", "date_format", "time_format", "uploads.user_limit_mb"];
+const EDITABLE_KEYS: EditableKey[] = [
+    "site_name",
+    "locale",
+    "date_format",
+    "time_format",
+    "uploads.user_limit_mb",
+    "cookie_notice.enabled",
+];
 const displayNames = new Intl.DisplayNames([getLocale()], { type: "language" });
 const localeCollator = new Intl.Collator(getLocale());
 const LOCALE_OPTIONS = getAvailableLocales()
@@ -74,6 +88,10 @@ function defaultValue(key: EditableKey): string {
         return "500";
     }
 
+    if (key === "cookie_notice.enabled") {
+        return "1";
+    }
+
     return "";
 }
 
@@ -94,7 +112,8 @@ export default function Settings() {
         locale: "ru",
         date_format: "auto",
         time_format: "auto",
-        "uploads.user_limit_mb": "500"
+        "uploads.user_limit_mb": "500",
+        "cookie_notice.enabled": "1"
     });
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -144,7 +163,8 @@ export default function Settings() {
                     date_format: nextSettings.date_format?.value ?? defaultValue("date_format"),
                     time_format: nextSettings.time_format?.value ?? defaultValue("time_format"),
                     "uploads.user_limit_mb": nextSettings["uploads.user_limit_mb"]?.value
-                        ?? defaultValue("uploads.user_limit_mb")
+                        ?? defaultValue("uploads.user_limit_mb"),
+                    "cookie_notice.enabled": nextSettings["cookie_notice.enabled"]?.value === "0" ? "0" : "1"
                 });
             })
             .catch(err => {
@@ -422,6 +442,13 @@ export default function Settings() {
                     )}
                 />
             </SimpleGrid>
+
+            <Switch
+                label={trans("js.admin.settings.cookie_notice")}
+                description={trans("js.admin.settings.cookie_notice_description")}
+                checked={drafts["cookie_notice.enabled"] !== "0"}
+                onChange={event => updateDraft("cookie_notice.enabled", event.currentTarget.checked ? "1" : "0")}
+            />
 
             <Stack gap="xs">
                 <Text fw={500}>{trans("js.admin.settings.header_logo")}</Text>
