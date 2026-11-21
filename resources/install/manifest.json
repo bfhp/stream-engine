@@ -1,8 +1,8 @@
 {
     "format": 1,
-    "release": "0.7.5",
+    "release": "0.7.6",
     "schema": "schema.sql",
-    "schema_checksum": "b003bc666ecf2a584d63e19ff5f4c09e1e837e93dff05c9b2113aade04b23b4d",
+    "schema_checksum": "1feec8403cf4bc87f6fd2a910865b814a54cb63dabba33c839f5fae24a7644ee",
     "migrations": [
         {
             "version": "20260912000000_initial",
@@ -113,6 +113,11 @@
             "version": "20261113000000_drop_admin_dashboard_layouts",
             "file": "20261113000000_drop_admin_dashboard_layouts.sql",
             "checksum": "40cfd2f4123afd247ae0c9962dd96349ebe8be9a4578a930ebdbe46137017ed7"
+        },
+        {
+            "version": "20261122000000_add_recent_activity_indexes",
+            "file": "20261122000000_add_recent_activity_indexes.sql",
+            "checksum": "261f076dd8d88b650ea40d29c5a64d8b0102f9741198f6641c8c4321713aa414"
         }
     ]
 }

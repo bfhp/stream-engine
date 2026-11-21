@@ -7,19 +7,42 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.7.6] - 2026-11-22
+
 ### Fixed
 
-- Hiding a widget placement on a page now also hides it on the pages a module
-  adds beneath it, which can't be edited in admin: blog posts, photos and
-  editors under a profile or community, forum topics. The page editor's hint
-  says so.
-- The administration dashboard loads faster: recent activity and notification
-  counts are read from indexes instead of scanning whole tables.
+- Hidden widget placements now carry through to module-created pages beneath
+  their nearest administration-managed page, including profile and community
+  posts, photos, editors, and forum topics. A profile's hidden sidebar, for
+  example, stays hidden on its posts. The page editor explains this behavior
+  in all supported languages.
+- Administration-managed child pages retain their own widget visibility
+  choices. A module-created page can explicitly override inherited visibility,
+  including choosing to show every placement.
+- The administration dashboard reads recent users and content through new
+  indexes on `(created_at, id)`, avoiding whole-table sorts. Pending and failed
+  notification counts use the existing delivery queue index instead of
+  scanning the complete delivery history.
 
 ### Upgrade notes
 
-- Run `bin/migrate.php migrate`: a migration adds indexes on `feeds` and
-  `users`.
+- From 0.7.5, deploy the release with its bundled browser assets, install PHP
+  dependencies from the lockfile, and run `php bin/migrate.php migrate`.
+  Confirm `php bin/migrate.php status` reports `Pending: 0`. Earlier versions
+  must also follow the intervening release notes. No dependency updates are
+  required.
+- Migration `20261122000000_add_recent_activity_indexes` adds
+  `feeds_created_at_id_index` and `users_created_at_id_index`. It changes
+  indexes only and preserves existing content and accounts. Allow time and
+  disk space for index creation on large tables.
+- The fresh-install snapshot was regenerated from all 23 migrations for
+  0.7.6. The updated `schema.sql` and matching `manifest.json` are included in
+  the release source and attached to the GitHub Release. Use them for fresh
+  installations; existing sites must run the migration instead of importing
+  `schema.sql`.
+- Previously hidden widget placements now also affect the module-created
+  pages beneath them. Review profile, community, and forum page settings if
+  those child pages should continue displaying a placement.
 
 ## [0.7.5] - 2026-11-21
 
@@ -797,7 +820,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 - Initial version.
 
-[Unreleased]: https://github.com/bfhp/stream-engine/compare/v0.7.5...HEAD
+[Unreleased]: https://github.com/bfhp/stream-engine/compare/v0.7.6...HEAD
+[0.7.6]: https://github.com/bfhp/stream-engine/compare/v0.7.5...v0.7.6
 [0.7.5]: https://github.com/bfhp/stream-engine/compare/v0.7.4...v0.7.5
 [0.7.4]: https://github.com/bfhp/stream-engine/compare/v0.7.3...v0.7.4
 [0.7.3]: https://github.com/bfhp/stream-engine/compare/v0.7.2...v0.7.3

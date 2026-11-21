@@ -123,6 +123,7 @@ CREATE TABLE `feeds` (
   KEY `feeds_type_created_at_id_index` (`type`,`created_at` DESC,`id` DESC),
   KEY `feeds_parent_id_slug_type_index` (`parent_id`,`slug`,`type`),
   KEY `feeds_type_rating_avg_id_index` (`type`,`rating_avg` DESC,`id` DESC),
+  KEY `feeds_created_at_id_index` (`created_at`,`id`),
   FULLTEXT KEY `feeds_fulltext_title_content` (`title`,`content`),
   FULLTEXT KEY `feeds_fulltext_title` (`title`),
   CONSTRAINT `feeds_ibfk_1` FOREIGN KEY (`parent_id`) REFERENCES `feeds` (`id`) ON DELETE CASCADE,
@@ -457,7 +458,8 @@ CREATE TABLE `users` (
   UNIQUE KEY `users_username_unique` (`username`),
   KEY `users_active_created_id_index` (`is_active`,`created_at`,`id`),
   KEY `users_active_nick_id_index` (`is_active`,`nick`,`id`),
-  KEY `users_role` (`role`)
+  KEY `users_role` (`role`),
+  KEY `users_created_at_id_index` (`created_at`,`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 CREATE TABLE `user_sessions` (
