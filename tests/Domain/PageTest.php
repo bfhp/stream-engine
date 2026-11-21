@@ -61,12 +61,28 @@ final class PageTest extends TestCase
     {
         self::assertSame([], $this->page(['GET'])->hiddenWidgets());
 
-        $page = Page::runtime(1, 0, 'x', 'article.show', AccessService::ACCESS_PUBLIC, null, null,
-            (object) ['hiddenWidgets' => ['sidebar_top', 7, 'footer_legal']]);
+        $page = Page::runtime(
+            1,
+            0,
+            'x',
+            'article.show',
+            AccessService::ACCESS_PUBLIC,
+            null,
+            null,
+            (object) ['hiddenWidgets' => ['sidebar_top', 7, 'footer_legal']]
+        );
         self::assertSame(['sidebar_top', 'footer_legal'], $page->hiddenWidgets());
 
-        $page = Page::runtime(1, 0, 'x', 'article.show', AccessService::ACCESS_PUBLIC, null, null,
-            (object) ['hiddenWidgets' => 'sidebar_top']);
+        $page = Page::runtime(
+            1,
+            0,
+            'x',
+            'article.show',
+            AccessService::ACCESS_PUBLIC,
+            null,
+            null,
+            (object) ['hiddenWidgets' => 'sidebar_top']
+        );
         self::assertSame([], $page->hiddenWidgets());
     }
 
