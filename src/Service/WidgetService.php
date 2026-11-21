@@ -26,14 +26,20 @@ final readonly class WidgetService
     }
 
     /**
+     * Widget HTML by placement; placements in $hidden come back empty, so the
+     * themes render nothing for them.
+     *
+     * @param list<string> $hidden
      * @return array{head: string, after_header: string, before_content: string, after_content: string, sidebar_top: string, sidebar_bottom: string, footer_legal: string, footer_contacts: string}
      */
-    public function placements(): array
+    public function placements(array $hidden = []): array
     {
         $placements = [];
 
         foreach (self::PLACEMENTS as $placement) {
-            $placements[$placement] = trim($this->settings->getString('widgets.'.$placement));
+            $placements[$placement] = in_array($placement, $hidden, true)
+                ? ''
+                : trim($this->settings->getString('widgets.'.$placement));
         }
 
         /** @var array{head: string, after_header: string, before_content: string, after_content: string, sidebar_top: string, sidebar_bottom: string, footer_legal: string, footer_contacts: string} $placements */

@@ -183,6 +183,11 @@ the opt-in **Show related articles** setting are available for article display
 actions. **Show comments** and **Show share buttons** affect only views and
 themes that support those features.
 
+**Widgets** lists every widget placement; all are checked by default. Uncheck
+a placement to hide its block on this page only. The block content itself is
+edited under **Administration → Widgets**. Unchecked placements are stored in
+the page settings as `hiddenWidgets`.
+
 ## Worked example: publish `/about/`
 
 This example publishes an About article at `/about/` and adds a navigation

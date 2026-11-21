@@ -45,6 +45,7 @@ use Memcached;
 use PHPMailer\PHPMailer\PHPMailer;
 use StreamEngine\Service\ThemeService;
 use StreamEngine\Service\UploadService;
+use StreamEngine\Service\WidgetService;
 use StreamEngine\View\ViewModel;
 
 class AdminController extends AbstractController implements DashboardCardProviderInterface
@@ -1745,11 +1746,13 @@ class AdminController extends AbstractController implements DashboardCardProvide
         }
 
         if ($settings !== '') {
-            json_decode($settings, true);
+            $decodedSettings = json_decode($settings, true);
 
             if (json_last_error() !== JSON_ERROR_NONE) {
                 throw new ValidationException($this->tm->trans('admin.error.settings_json'));
             }
+
+            $this->validateHiddenWidgets($decodedSettings);
         }
 
         if ($changefreq !== '' && ! in_array($changefreq, self::CHANGEFREQ_VALUES, true)) {
@@ -1790,6 +1793,29 @@ class AdminController extends AbstractController implements DashboardCardProvide
         }
 
         return $data;
+    }
+
+    /**
+     * `hiddenWidgets` in page settings, when present, is a list of known
+     * widget placements.
+     *
+     * @throws ValidationException
+     */
+    private function validateHiddenWidgets(mixed $settings): void
+    {
+        if (! is_array($settings) || ! array_key_exists('hiddenWidgets', $settings)) {
+            return;
+        }
+
+        $hidden = $settings['hiddenWidgets'];
+        if (! is_array($hidden) || ! array_is_list($hidden)) {
+            throw new ValidationException($this->tm->trans('admin.error.invalid_hidden_widgets'));
+        }
+        foreach ($hidden as $placement) {
+            if (! is_string($placement) || ! in_array($placement, WidgetService::PLACEMENTS, true)) {
+                throw new ValidationException($this->tm->trans('admin.error.invalid_hidden_widgets'));
+            }
+        }
     }
 
     /**

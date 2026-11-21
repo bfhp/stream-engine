@@ -11,6 +11,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 - A cookie notice for visitors, on by default; it can be switched off in
   **Administration → Settings**.
+- Per-page widget visibility: page settings choose which widget placements
+  are shown, all by default.
 
 ## [0.7.4] - 2026-11-19
 

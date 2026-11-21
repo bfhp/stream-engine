@@ -957,6 +957,8 @@ return [
     'js.admin.off' => 'Выкл',
     'js.admin.share_label' => 'Показывать кнопки «Поделиться»',
     'js.admin.share_description' => 'Позволяет посетителям поделиться ссылкой на страницу. Кнопки отображаются, если они предусмотрены шаблоном.',
+    'js.admin.page_widgets_label' => 'Виджеты',
+    'js.admin.page_widgets_description' => 'Блоки виджетов, которые показываются на этой странице. Снимите отметку, чтобы скрыть блок здесь; содержимое блоков редактируется в разделе «Виджеты».',
     'js.admin.page_settings_invalid' => 'Настройки страницы должны быть объектом',
     'js.admin.locale_ru' => 'Русский (ru)',
 
@@ -1573,6 +1575,7 @@ return [
     'admin.error.choose_child_strategy' => 'Выберите перенос или удаление дочерних пунктов',
     'admin.error.action_required' => 'Выберите действие для страницы.',
     'admin.error.settings_json' => 'Настройки должны быть корректным JSON. Проверьте кавычки, запятые и скобки.',
+    'admin.error.invalid_hidden_widgets' => 'Скрытые виджеты должны быть списком известных мест размещения виджетов',
     'admin.error.action_settings_object' => 'Настройки для этого действия должны быть JSON-объектом',
     'admin.error.action_setting_required' => 'Поле «{label}» обязательно',
     'admin.error.action_setting_type' => 'Поле «{label}» должно содержать строку',

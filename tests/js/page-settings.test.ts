@@ -3,7 +3,10 @@ import {
     feedContentWidth,
     parsePageSettings,
     supportsFeedContentWidth,
-    supportsRelatedArticles
+    supportsRelatedArticles,
+    visibleWidgets,
+    WIDGET_PLACEMENTS,
+    withVisibleWidgets
 } from "../../assets-src/admin/lib/page-settings";
 
 describe("page settings", () => {
@@ -50,5 +53,23 @@ describe("page settings", () => {
 
     it.each(["{broken", "[]", "true", "42", '"text"'])("rejects invalid settings without discarding them: %s", value => {
         expect(() => parsePageSettings(value)).toThrow();
+    });
+
+    it("shows every widget placement when nothing is hidden", () => {
+        expect(visibleWidgets({})).toEqual([...WIDGET_PLACEMENTS]);
+        expect(visibleWidgets({ hiddenWidgets: "sidebar_top" as never })).toEqual([...WIDGET_PLACEMENTS]);
+    });
+
+    it("stores unchecked placements as hidden and keeps other settings", () => {
+        const visible = WIDGET_PLACEMENTS.filter(p => p !== "sidebar_top" && p !== "footer_legal");
+        const saved = withVisibleWidgets({ commentsEnabled: true }, visible);
+
+        expect(saved).toEqual({ commentsEnabled: true, hiddenWidgets: ["sidebar_top", "footer_legal"] });
+        expect(visibleWidgets(saved)).toEqual(visible);
+    });
+
+    it("drops hiddenWidgets once every placement is checked again", () => {
+        expect(withVisibleWidgets({ shareButtons: true, hiddenWidgets: ["head"] }, WIDGET_PLACEMENTS))
+            .toEqual({ shareButtons: true });
     });
 });

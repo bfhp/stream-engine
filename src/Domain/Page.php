@@ -58,6 +58,23 @@ final class Page
         return (bool) ($this->settings->commentsEnabled ?? false);
     }
 
+    /**
+     * Widget placements hidden on this page (`settings.hiddenWidgets`, edited
+     * in admin). Every placement is shown unless listed here, so a page
+     * without the key - and a placement added later - shows everything.
+     *
+     * @return list<string>
+     */
+    public function hiddenWidgets(): array
+    {
+        $hidden = $this->settings->hiddenWidgets ?? [];
+        if (! is_array($hidden)) {
+            return [];
+        }
+
+        return array_values(array_filter($hidden, 'is_string'));
+    }
+
     public function relatedArticlesEnabled(): bool
     {
         return ($this->settings->relatedArticlesEnabled ?? false) === true;

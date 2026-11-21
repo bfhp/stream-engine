@@ -532,7 +532,7 @@ class StreamEngine
             'siteName' => $this->settings->getString('site_name'),
             'siteUrl' => $this->config->siteUrl(),
             'locale' => $this->settings->getString('locale'),
-            'widgets' => $this->widgets->placements(),
+            'widgets' => $this->widgets->placements($pageData !== null ? $pageData['page']->hiddenWidgets() : []),
             'theme' => $this->activeTheme,
         ];
 

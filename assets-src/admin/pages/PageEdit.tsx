@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
     Button,
+    Checkbox,
     Group,
     Modal,
     SimpleGrid,
@@ -17,6 +18,9 @@ import {
     parsePageSettings,
     supportsFeedContentWidth,
     supportsRelatedArticles,
+    visibleWidgets,
+    WIDGET_PLACEMENTS,
+    withVisibleWidgets,
     type FeedContentWidth,
     type PageSettings
 } from "../lib/page-settings";
@@ -708,6 +712,22 @@ export default function PageEdit() {
                         shareButtons: event.currentTarget.checked
                     })}
                 />
+                <Checkbox.Group
+                    label={trans("js.admin.page_widgets_label")}
+                    description={trans("js.admin.page_widgets_description")}
+                    value={visibleWidgets(page.settings)}
+                    onChange={value => update("settings", withVisibleWidgets(page.settings, value))}
+                >
+                    <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="xs" mt="xs">
+                        {WIDGET_PLACEMENTS.map(placement => (
+                            <Checkbox
+                                key={placement}
+                                value={placement}
+                                label={trans(`js.admin.widgets.${placement}`)}
+                            />
+                        ))}
+                    </SimpleGrid>
+                </Checkbox.Group>
             </Stack>
         </Stack>
     );

@@ -56,6 +56,20 @@ final class WidgetServiceTest extends TestCase
         $this->assertArrayNotHasKey('unknown', $widgets);
     }
 
+    public function testHiddenPlacementsComeBackEmptyAndTheRestAreKept(): void
+    {
+        $widgets = $this->makeService([
+            'widgets.sidebar_top' => '<div>side top</div>',
+            'widgets.footer_legal' => '<div>legal</div>',
+            'widgets.after_header' => '<div>top</div>',
+        ])->placements(['sidebar_top', 'footer_legal', 'not_a_placement']);
+
+        $this->assertSame('', $widgets['sidebar_top']);
+        $this->assertSame('', $widgets['footer_legal']);
+        $this->assertSame('<div>top</div>', $widgets['after_header']);
+        $this->assertArrayNotHasKey('not_a_placement', $widgets);
+    }
+
     public function testMissingWidgetsAreEmptyStrings(): void
     {
         $widgets = $this->makeService([])->placements();

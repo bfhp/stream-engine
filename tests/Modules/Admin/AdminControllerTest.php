@@ -424,11 +424,14 @@ final class AdminControllerTest extends TestCase
             'parentId' => 1,
             'action' => 'settings.show',
             'accessRule' => 'public',
-            'settings' => '{"type":"second","commentsEnabled":true}',
+            'settings' => '{"type":"second","commentsEnabled":true,"hiddenWidgets":["sidebar_top","footer_legal"]}',
         ]));
 
         $this->callAndDecode($module, $this->makeApiPage('admin.page', ['GET', 'PATCH']), ['id' => 9]);
-        $this->assertSame('{"type":"second","commentsEnabled":true}', $this->writes[1][1][4]);
+        $this->assertSame(
+            '{"type":"second","commentsEnabled":true,"hiddenWidgets":["sidebar_top","footer_legal"]}',
+            $this->writes[1][1][4]
+        );
     }
 
     #[DataProvider('invalidActionSettings')]
@@ -461,6 +464,9 @@ final class AdminControllerTest extends TestCase
             'empty required' => ['{"type":""}', 'Page type is required'],
             'invalid option' => ['{"type":"legacy"}', 'Invalid value for Page type'],
             'non-string select' => ['{"type":1}', 'Page type must be a string'],
+            'unknown hidden widget' => ['{"type":"first","hiddenWidgets":["nowhere"]}', 'Hidden widgets'],
+            'hidden widgets not a list' => ['{"type":"first","hiddenWidgets":"head"}', 'Hidden widgets'],
+            'hidden widgets as a map' => ['{"type":"first","hiddenWidgets":{"a":"head"}}', 'Hidden widgets'],
         ];
     }
 
