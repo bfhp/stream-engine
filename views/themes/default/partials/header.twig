@@ -6,7 +6,8 @@
             {% block header_logo %}
             <a href="/" class="site-nav__brand">
                 {% if headerLogo %}
-                    <img class="header-logo" src="{{ headerLogo }}" alt="">
+                    <img class="header-logo" src="{{ headerLogo }}" alt=""
+                        {%- if headerLogoSize|default(null) %} width="{{ headerLogoSize.width }}" height="{{ headerLogoSize.height }}" style="--header-logo-block-size: min({{ headerLogoSize.height }}px, 2.5rem)"{% endif %}>
                 {% endif %}
                 <span>{{ siteName }}</span>
             </a>

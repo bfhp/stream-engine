@@ -27,6 +27,28 @@ final class HeaderLogoTest extends TestCase
     }
 
     #[DataProvider('themes')]
+    public function testThemeHeaderReservesTheLogoBoxWhenItsSizeIsKnown(string $theme): void
+    {
+        $html = $this->renderLogoBlock(
+            $theme,
+            '/uploads/site-brand/header-logo-a83f42c1d92e176a.webp',
+            ['width' => 120, 'height' => 32],
+        );
+
+        self::assertStringContainsString('alt="" width="120" height="32"', $html);
+        self::assertStringContainsString('style="--header-logo-block-size: min(32px, 2.5rem)"', $html);
+    }
+
+    #[DataProvider('themes')]
+    public function testThemeHeaderOmitsTheSizeWhenItIsUnknown(string $theme): void
+    {
+        $html = $this->renderLogoBlock($theme, '/uploads/site-brand/header-logo-a83f42c1d92e176a.webp');
+
+        self::assertStringContainsString('alt="">', $html);
+        self::assertStringNotContainsString('width=', $html);
+    }
+
+    #[DataProvider('themes')]
     public function testThemeHeaderFallsBackToSiteNameWithoutLogo(string $theme): void
     {
         $html = $this->renderLogoBlock($theme, null);
@@ -42,7 +64,8 @@ final class HeaderLogoTest extends TestCase
         yield 'bootstrap' => ['bootstrap'];
     }
 
-    private function renderLogoBlock(string $theme, ?string $headerLogo): string
+    /** @param array{width: int, height: int}|null $headerLogoSize */
+    private function renderLogoBlock(string $theme, ?string $headerLogo, ?array $headerLogoSize = null): string
     {
         $views = dirname(__DIR__, 2).'/views/themes';
         $loader = new FilesystemLoader();
@@ -53,6 +76,7 @@ final class HeaderLogoTest extends TestCase
         return $twig->createTemplate("{{ block('header_logo', 'partials/header.twig') }}")->render([
             'siteName' => 'Stream & Engine',
             'headerLogo' => $headerLogo,
+            'headerLogoSize' => $headerLogoSize,
         ]);
     }
 }

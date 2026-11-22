@@ -262,6 +262,34 @@ class Formatter
     }
 
     /**
+     * Plain-text excerpt of user HTML for a `<meta name="description">`: tags
+     * and entities gone, whitespace collapsed, cut on a word boundary to at
+     * most $limit characters (an ellipsis marks the cut). The result is plain
+     * text - templates escape it.
+     */
+    public static function excerpt(string $html, int $limit = 160): string
+    {
+        // A tag boundary separates words even where the markup had no space
+        // ("<p>one</p><p>two</p>"), so tags become spaces, not nothing.
+        $text = html_entity_decode(strip_tags((string) preg_replace('~<[^>]*>~', ' $0 ', $html)), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $text = trim((string) preg_replace('~\s+~u', ' ', $text));
+
+        if (mb_strlen($text) <= $limit) {
+            return $text;
+        }
+
+        $cut = mb_substr($text, 0, $limit - 1);
+        $space = mb_strrpos($cut, ' ');
+        if ($space !== false && $space > $limit / 2) {
+            $cut = mb_substr($cut, 0, $space);
+        }
+
+        // Not rtrim(): it works on bytes, and the dashes' UTF-8 bytes would
+        // also eat the tail of a Cyrillic letter.
+        return (string) preg_replace('~[\s.,;:\-–—]+$~u', '', $cut).'…';
+    }
+
+    /**
      * Where a CLDR category lives in a legacy positional list: `[one, other]`
      * or `[one, few, many]`, with Arabic's lists being
      * `[singular, plural (3-10), accusative singular (11-99)]`. Mirrored by

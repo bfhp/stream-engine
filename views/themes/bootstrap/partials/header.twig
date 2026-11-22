@@ -11,7 +11,8 @@
             {% block header_logo %}
             <a href="/" class="navbar-brand d-flex align-items-center gap-2 order-1">
                 {% if headerLogo %}
-                    <img class="header-logo" src="{{ headerLogo }}" alt="">
+                    <img class="header-logo" src="{{ headerLogo }}" alt=""
+                        {%- if headerLogoSize|default(null) %} width="{{ headerLogoSize.width }}" height="{{ headerLogoSize.height }}" style="--header-logo-block-size: min({{ headerLogoSize.height }}px, 2.5rem)"{% endif %}>
                 {% endif %}
                 <span class="fw-semibold">{{ siteName }}</span>
             </a>

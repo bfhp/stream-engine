@@ -316,6 +316,15 @@ final class UserService
      * Display form of an already-stored signature. Does not purify - see
      * sanitizeSignature(). Adds the author's line breaks, and returns '' for an
      * empty signature, which is forums.topic-view's "has one at all?" test.
+     *
+     * Also two display fixes for signatures imported from the old forum, done
+     * here so stored rows need no migration (the input is purified HTML, so
+     * its attributes are always double-quoted):
+     * - `<img src="http://...">` is asked for over https. Browsers upgrade
+     *   such mixed-content images anyway (and log an issue on every page the
+     *   signature appears on); asking directly just drops the warning.
+     * - A link whose only content is an image without alt text (the classic
+     *   "userbar") has no accessible name; it is named after its target host.
      */
     public static function renderSignature(string $stored): string
     {
@@ -324,6 +333,24 @@ final class UserService
         if ($stored === '') {
             return '';
         }
+
+        $stored = (string) preg_replace('~(<img\b[^>]*?\bsrc=")http://~i', '$1https://', $stored);
+        $stored = (string) preg_replace_callback(
+            '~<a\b([^>]*)>(\s*<img\b[^>]*\balt=""[^>]*>\s*)</a>~i',
+            static function (array $match): string {
+                if (preg_match('~\baria-label=~i', $match[1]) === 1
+                    || preg_match('~\bhref="([^"]*)"~i', $match[1], $href) !== 1) {
+                    return $match[0];
+                }
+                $host = parse_url(html_entity_decode($href[1], ENT_QUOTES | ENT_HTML5), PHP_URL_HOST);
+                if (! is_string($host) || $host === '') {
+                    return $match[0];
+                }
+
+                return '<a'.$match[1].' aria-label="'.htmlspecialchars($host, ENT_QUOTES | ENT_HTML5).'">'.$match[2].'</a>';
+            },
+            $stored,
+        );
 
         // nl2br(), not Twig's |nl2br: the value is printed with |raw and
         // |nl2br would escape it first.

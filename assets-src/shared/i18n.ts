@@ -1,5 +1,5 @@
 import { selectPluralForm, type PluralForms, type PluralNumberOptions } from "./plural";
-import catalogs from "virtual:translations";
+import { loadCatalog, locales, type TranslationScope } from "virtual:translations";
 
 /** A message, or the plural forms of a noun (keyed by CLDR category, or a legacy list). */
 export type TranslationValue = string | PluralForms;
@@ -7,21 +7,21 @@ export type TranslationParams = Record<string, string | number>;
 
 export type TranslationCatalog = Record<string, TranslationValue>;
 
-function resolveLocale(available: Record<string, TranslationCatalog>, requestedLocale: string): string {
+function resolveLocale(available: readonly string[], requestedLocale: string): string {
     const locale = requestedLocale.trim().toLowerCase().replace(/_/g, "-");
     const baseLocale = locale.split("-")[0];
 
-    if (available[locale]) return locale;
-    if (available[baseLocale]) return baseLocale;
-    if (available.en) return "en";
-    if (available.ru) return "ru";
+    if (available.includes(locale)) return locale;
+    if (available.includes(baseLocale)) return baseLocale;
+    if (available.includes("en")) return "en";
+    if (available.includes("ru")) return "ru";
 
-    return Object.keys(available)[0] ?? locale;
+    return available[0] ?? locale;
 }
 
 /** Locale codes discovered from the build-time language catalogs. */
 export function getAvailableLocales(): string[] {
-    return Object.keys(catalogs).sort();
+    return [...locales];
 }
 
 export function selectCatalog(
@@ -29,14 +29,39 @@ export function selectCatalog(
     requestedLocale: string,
 ): TranslationCatalog {
     const fallback = available.en ?? {};
-    const selected = available[resolveLocale(available, requestedLocale)] ?? {};
+    const selected = available[resolveLocale(Object.keys(available), requestedLocale)] ?? {};
 
     return selected === fallback ? fallback : { ...fallback, ...selected };
 }
 
 const activeLocale = document.documentElement.lang || "en";
-const resolvedLocale = resolveLocale(catalogs, activeLocale);
-const builtInCatalog = selectCatalog(catalogs, activeLocale);
+const resolvedLocale = resolveLocale(locales, activeLocale);
+
+/**
+ * The admin panel marks its page (`<html data-i18n-scope="admin">`) to also
+ * get the `js.admin.*` keys; site pages never use them and skip the download.
+ */
+const scopes: TranslationScope[] = document.documentElement.dataset.i18nScope === "admin"
+    ? ["site", "admin"]
+    : ["site"];
+
+/**
+ * Only English (the fallback) and the document locale are downloaded, each
+ * from its own chunk, instead of every locale bundled into every page. The
+ * top-level await makes every module importing this one wait for them, so
+ * trans() is still synchronous and complete for all callers.
+ */
+async function loadBuiltInCatalog(): Promise<TranslationCatalog> {
+    const wanted = [...new Set(["en", resolvedLocale])].filter(locale => locales.includes(locale));
+    const loaded = await Promise.all(wanted.map(async locale => {
+        const parts = await Promise.all(scopes.map(scope => loadCatalog(locale, scope)));
+        return [locale, Object.assign({}, ...parts) as TranslationCatalog] as const;
+    }));
+
+    return selectCatalog(Object.fromEntries(loaded), activeLocale);
+}
+
+const builtInCatalog = await loadBuiltInCatalog();
 let catalog = builtInCatalog;
 
 function interpolate(text: string, params: TranslationParams): string {

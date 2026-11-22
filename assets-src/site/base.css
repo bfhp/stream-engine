@@ -500,11 +500,14 @@ html {
     text-decoration: none;
 }
 
+/* The header sets --header-logo-block-size from the file's height (capped at
+   2.5rem) together with width/height attributes, so the logo's box is
+   reserved before the image loads and the page below does not shift. */
 .header-logo {
     display: block;
     inline-size: auto;
     max-inline-size: min(45vw, 15rem);
-    block-size: auto;
+    block-size: var(--header-logo-block-size, auto);
     max-block-size: 2.5rem;
     object-fit: contain;
 }

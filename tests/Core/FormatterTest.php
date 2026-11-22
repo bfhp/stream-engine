@@ -671,4 +671,38 @@ final class FormatterTest extends TestCase
         $this->assertStringContainsString("\n", $encoded);
         $this->assertStringContainsString('Москва', $encoded);
     }
+
+    public function testExcerptStripsMarkupAndCollapsesWhitespace(): void
+    {
+        $this->assertSame(
+            'Первый абзац. Второй & третий',
+            Formatter::excerpt("<p>Первый   абзац.</p><p>Второй &amp;\n третий</p>"),
+        );
+    }
+
+    public function testExcerptCutsOnAWordBoundary(): void
+    {
+        $text = str_repeat('слово ', 50);
+
+        $excerpt = Formatter::excerpt($text, 40);
+
+        $this->assertLessThanOrEqual(40, mb_strlen($excerpt));
+        $this->assertStringEndsWith('слово…', $excerpt);
+    }
+
+    public function testExcerptKeepsCyrillicIntactAtTheCut(): void
+    {
+        // "р" is D1 80 in UTF-8; 0x80 is also a byte of "—", which a byte-wise
+        // trim would have stripped.
+        $excerpt = Formatter::excerpt('мир — '.str_repeat('мир ', 60), 20);
+
+        $this->assertTrue(mb_check_encoding($excerpt, 'UTF-8'));
+        $this->assertStringEndsWith('мир…', $excerpt);
+    }
+
+    public function testExcerptOfEmptyHtmlIsEmpty(): void
+    {
+        $this->assertSame('', Formatter::excerpt(''));
+        $this->assertSame('', Formatter::excerpt('<img src="x.png">'));
+    }
 }

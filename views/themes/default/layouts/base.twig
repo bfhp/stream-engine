@@ -6,7 +6,9 @@
 
     {% block head_meta %}
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="description" content="{% block description %}{{ description|default('') }}{% endblock %}" />
+        {# A page without its own description falls back to its title: an
+           empty description is worse for search snippets than a short one. #}
+        <meta name="description" content="{% block description %}{{ description|default('') ?: title|default('') }}{% endblock %}" />
     {% endblock %}
 
     <title>{% block meta_title %}{{ title|default('') }}{% endblock %}</title>
@@ -33,7 +35,7 @@
 
     {% block head_og %}
         <meta property="og:title" content="{{ title|default('') }}" />
-        <meta property="og:description" content="{{ description|default('') }}" />
+        <meta property="og:description" content="{{ description|default('') ?: title|default('') }}" />
         {% if canonical and siteUrl %}
         <meta property="og:url" content="{{ siteUrl }}{{ canonical }}" />
         {% endif %}

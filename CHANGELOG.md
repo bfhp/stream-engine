@@ -7,6 +7,30 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Browser translations are split into one chunk per locale and scope. Site
+  pages load only English and the document locale, without administration
+  strings, instead of every locale in one 729 KB `i18n.js`. The admin page
+  requests its strings with `<html data-i18n-scope="admin">`.
+
+### Fixed
+
+- The cookie notice is shown by an inline script and no longer waits for the
+  site bundle, so it stops delaying Largest Contentful Paint on phones.
+- The header logo gets `width`/`height` from its file, so the page no longer
+  shifts down when it loads.
+- Forum signatures request `http://` images over https, and links containing
+  only an image without alt text are named after their target host.
+- Pages without a description fall back to their title in
+  `<meta name="description">`; forum topics use an excerpt of the opening post.
+
+### Upgrade notes
+
+- Sites with their own copy of `vite-build-data.ts` must use the engine's
+  `translationsPlugin` (now accepting several language directories), because
+  `shared/i18n.ts` expects its new output. Rebuild browser assets.
+
 ## [0.7.6] - 2026-11-22
 
 ### Fixed

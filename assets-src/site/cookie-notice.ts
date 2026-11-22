@@ -1,7 +1,10 @@
 /*
  * The cookie notice (partials/cookie-notice.twig). The server renders it,
- * hidden, on every page while the `cookie_notice.enabled` setting is on; this
- * shows it to visitors who have not dismissed it yet and remembers the
+ * hidden, on every page while the `cookie_notice.enabled` setting is on; an
+ * inline script in the partial already unhides it for visitors who have not
+ * dismissed it (so it is painted with the page, not after the bundle - it is
+ * often the LCP element on phones). This repeats that decision for pages
+ * without the inline script, removes a dismissed notice, and remembers the
  * dismissal in a cookie for a year. Keeping the decision in the browser means
  * the page HTML does not depend on the visitor and stays cacheable.
  *

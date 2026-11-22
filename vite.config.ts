@@ -89,6 +89,11 @@ export default defineConfig({
                 codeSplitting: {
                     groups: [
                         { name: "trix", test: /node_modules[\\/]trix[\\/]/ },
+                        // react-router ships its code as dist/*/chunk-<hash>.mjs,
+                        // and a chunk is named after its first module - so it
+                        // came out as chunk-6KYCQHYJ.js, renamed by every
+                        // react-router update. Give it a stable name.
+                        { name: "react-router", test: /node_modules[\\/]react-router[\\/]/ },
                         { name: "custom-content", test: /shared[\\/]custom-content\.css$/ },
                     ],
                 },

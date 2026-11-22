@@ -467,6 +467,7 @@ class StreamEngine
         $twig->addGlobal('timeFormat', $this->settings->getString('time_format', 'auto'));
         $twig->addGlobal('siteIcons', $this->settings->siteIcons());
         $twig->addGlobal('headerLogo', $this->settings->headerLogo());
+        $twig->addGlobal('headerLogoSize', $this->headerLogoSize($this->settings->headerLogo()));
         $twig->addGlobal('registrationOpen', $this->settings->registrationMode() !== 'closed');
         $twig->addGlobal('cookieNotice', $this->settings->cookieNoticeEnabled());
         $twig->addFunction(new TwigFunction('trans', [$this->tm, 'trans']));
@@ -474,6 +475,29 @@ class StreamEngine
         $twig->addFunction(new TwigFunction('action_url', [$this->urlGenerator, 'action']));
 
         return $twig;
+    }
+
+    /**
+     * The header logo's pixel size, for its width/height attributes: without
+     * them the header has no room for the logo until it loads, then grows and
+     * pushes the whole page down (CLS 0.35 on hsgmagic.ru). headerLogo() has
+     * already pinned the URL to /uploads/site-brand/header-logo-<hash>.<ext>.
+     *
+     * @return array{width: int, height: int}|null
+     */
+    private function headerLogoSize(?string $url): ?array
+    {
+        if ($url === null) {
+            return null;
+        }
+
+        $file = $this->config->uploadsPath(dirname(__DIR__)).substr($url, strlen('/uploads'));
+        $size = is_file($file) ? @getimagesize($file) : false;
+        if ($size === false || $size[0] < 1 || $size[1] < 1) {
+            return null;
+        }
+
+        return ['width' => $size[0], 'height' => $size[1]];
     }
 
     private function previewThemeId(User $currentUser): ?string

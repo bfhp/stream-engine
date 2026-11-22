@@ -1628,4 +1628,33 @@ final class UserServiceTest extends TestCase
         $this->assertSame('', UserService::renderSignature(''));
         $this->assertSame('', UserService::renderSignature("  \n "));
     }
+
+    public function testRenderSignatureAsksForHttpImagesOverHttps(): void
+    {
+        $stored = '<img loading="lazy" referrerpolicy="no-referrer" src="http://example.com/bar.gif" alt="бар">'
+            .' <a href="http://example.com/">http://example.com/</a>';
+
+        $html = UserService::renderSignature($stored);
+
+        $this->assertStringContainsString('src="https://example.com/bar.gif"', $html);
+        // Only image sources: links keep the scheme the author gave.
+        $this->assertStringContainsString('href="http://example.com/"', $html);
+    }
+
+    public function testRenderSignatureNamesImageOnlyLinksAfterTheirHost(): void
+    {
+        $stored = '<a href="http://line.mole.ru/" rel="nofollow noreferrer noopener" target="_blank">'
+            .'<img loading="lazy" referrerpolicy="no-referrer" src="https://line.mole.ru/x.gif" alt=""></a>';
+
+        $html = UserService::renderSignature($stored);
+
+        $this->assertStringContainsString('target="_blank" aria-label="line.mole.ru">', $html);
+    }
+
+    public function testRenderSignatureLeavesImageLinksWithAltTextAlone(): void
+    {
+        $stored = '<a href="https://example.com/" rel="nofollow" target="_blank"><img src="https://example.com/x.gif" alt="Клуб"></a>';
+
+        $this->assertSame($stored, UserService::renderSignature($stored));
+    }
 }

@@ -1248,7 +1248,11 @@ class ForumsController extends AbstractController
             'modules/forums/forums.topic-view.twig',
             [
                 'title' => $topicFeed->title,
-                'description' => $topicFeed->description,
+                // Imported topics rarely have a description; the opening post
+                // is what the topic is about.
+                'description' => trim((string) $topicFeed->description) !== ''
+                    ? $topicFeed->description
+                    : Formatter::excerpt((string) $topicFeed->content),
                 'canonical' => $this->urlGenerator->listing($topicFeed->canonicalUrl, $currentPage),
                 'head_ext' => [
                     '<script type="module" src="/assets/js/forums.js" defer></script>',

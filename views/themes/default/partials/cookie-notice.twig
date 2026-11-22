@@ -1,8 +1,15 @@
 {# Cookie notice - rendered while the `cookie_notice.enabled` setting is on
-   (Admin -> Settings). It starts hidden: site/cookie-notice.ts shows it
-   unless the visitor has already dismissed it, so the HTML stays the same
-   for every visitor and cacheable. Not a dialog: it does not take focus or
-   block the page. #}
+   (Admin -> Settings). It starts hidden, so the HTML stays the same for every
+   visitor and cacheable; the inline script right after it shows it unless the
+   visitor has already dismissed it. Not a dialog: it does not take focus or
+   block the page.
+
+   The notice is shown inline rather than from site/cookie-notice.ts because
+   on a phone its text is often the largest block on screen, i.e. the
+   Largest Contentful Paint element. Shown by the bundle it waited for every
+   module to download and run (LCP 12-15 s against a 3.7 s first paint on
+   hsgmagic.ru); shown here it is painted with the rest of the page.
+   site/cookie-notice.ts still owns the offset, the button and the removal. #}
 <section id="cookieNotice" class="{% block cookie_notice_class %}ui-cookie-notice{% endblock %}" aria-label="{{ trans('view.cookie_notice.label') }}" hidden>
     <div class="{% block cookie_notice_inner_class %}ui-container ui-cookie-notice__inner{% endblock %}">
         <p class="{% block cookie_notice_text_class %}ui-cookie-notice__text{% endblock %}">{{ trans('view.cookie_notice.text') }}</p>
@@ -11,3 +18,11 @@
         </button>
     </div>
 </section>
+<script>
+    (() => {
+        const notice = document.getElementById('cookieNotice');
+        if (!notice || document.cookie.split(';').some(part => part.trim() === 'cookie_notice=1')) return;
+        notice.hidden = false;
+        document.documentElement.classList.add('has-cookie-notice');
+    })();
+</script>
