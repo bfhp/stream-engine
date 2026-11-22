@@ -7,29 +7,67 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.7.7] - 2026-11-22
+
 ### Changed
 
-- Browser translations are split into one chunk per locale and scope. Site
-  pages load only English and the document locale, without administration
-  strings, instead of every locale in one 729 KB `i18n.js`. The admin page
-  requests its strings with `<html data-i18n-scope="admin">`.
+- Browser translations are served per locale. The build writes
+  `public/assets/js/i18n/<locale>.js` (and `<locale>-admin.js`) with the
+  English fallback merged in, and the layouts link the page locale's file
+  ahead of the page's modules, so a page downloads one locale's strings
+  instead of every locale bundled into `i18n.js`. Public pages no longer
+  receive administration strings. Outside development the files carry a
+  `?v=` derived from the engine's and the root package's installed revisions,
+  so they can be cached long-term.
+- The translation build plugin accepts multiple language directories, with
+  later directories overriding earlier ones, so projects can combine engine
+  catalogs with their own translations.
+- Generated React Router assets use a stable chunk name across builds.
 
 ### Fixed
 
-- The cookie notice is shown by an inline script and no longer waits for the
-  site bundle, so it stops delaying Largest Contentful Paint on phones.
-- The header logo gets `width`/`height` from its file, so the page no longer
-  shifts down when it loads.
-- Forum signatures request `http://` images over https, and links containing
-  only an image without alt text are named after their target host.
-- Pages without a description fall back to their title in
-  `<meta name="description">`; forum topics use an excerpt of the opening post.
+- The cookie notice appears with the page through a small inline script,
+  without waiting for the site bundle and its translations. This avoids a
+  delayed notice becoming the Largest Contentful Paint element on phones;
+  dismissal and keyboard behavior remain handled by the site bundle.
+- Both bundled themes reserve the header logo's space using its known image
+  dimensions, avoiding layout shifts when the image loads.
+- Forum signatures request `http://` image sources over HTTPS. Image-only
+  links with empty alternative text receive an accessible name from the
+  destination host; existing alternative text and link labels are preserved.
+  Stored signatures are unchanged.
+- Pages without a description fall back to their title in description and
+  Open Graph metadata. Forum topics without an explicit description use a
+  plain-text excerpt of the opening post, with Unicode-safe truncation.
 
 ### Upgrade notes
 
-- Sites with their own copy of `vite-build-data.ts` must use the engine's
-  `translationsPlugin` (now accepting several language directories), because
-  `shared/i18n.ts` expects its new output. Rebuild browser assets.
+- From 0.7.6, deploy the release and install PHP dependencies from the
+  lockfile. Deploy the complete bundled `public/assets/` directory together
+  with the matching PHP and Twig files.
+  Earlier versions must also follow the intervening release notes. No
+  dependency updates are required.
+- Projects with their own `vite-build-data.ts` must adopt the updated engine
+  `translationsPlugin`, which now emits the per-locale files. Pass engine
+  language directories before local overrides when combining catalogs, then
+  rebuild browser assets.
+- Custom layouts that replace the `<head>` of `layouts/base.twig` without
+  `parent()` must keep the `head_translations` block, or link
+  `translationScripts.site` with `defer` before their module scripts; custom
+  administration pages must also link `translationScripts.admin`. Without it
+  browser strings show as their keys.
+- Test suites that render browser code must register translations on
+  `globalThis.__streamEngineTranslations`; `virtual:translations` now exports
+  the entries for that (see `tests/js/support/i18n-scope.ts`).
+- No new database migrations or schema changes are required. The installation
+  snapshot was regenerated from all 23 migrations: `schema.sql` is unchanged
+  from 0.7.6, and its matching manifest identifies 0.7.7. Both files are
+  included in the release source and attached to the GitHub Release with
+  checksums. Existing sites must not import `schema.sql`.
+- Custom themes should preserve the updated cookie-notice partial and logo
+  dimension attributes to receive the rendering improvements. External
+  signature image hosts must support HTTPS; this change is applied when
+  rendering and does not rewrite saved signatures.
 
 ## [0.7.6] - 2026-11-22
 
@@ -844,7 +882,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 - Initial version.
 
-[Unreleased]: https://github.com/bfhp/stream-engine/compare/v0.7.6...HEAD
+[Unreleased]: https://github.com/bfhp/stream-engine/compare/v0.7.7...HEAD
+[0.7.7]: https://github.com/bfhp/stream-engine/compare/v0.7.6...v0.7.7
 [0.7.6]: https://github.com/bfhp/stream-engine/compare/v0.7.5...v0.7.6
 [0.7.5]: https://github.com/bfhp/stream-engine/compare/v0.7.4...v0.7.5
 [0.7.4]: https://github.com/bfhp/stream-engine/compare/v0.7.3...v0.7.4

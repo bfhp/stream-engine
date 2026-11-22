@@ -1,10 +1,14 @@
+/**
+ * Every locale's translation entries (site and admin scopes, without the
+ * English merge), for the test suite to register on
+ * `globalThis.__streamEngineTranslations`. Pages get theirs from the
+ * per-locale files the server links instead - see translationsPlugin.
+ */
 declare module "virtual:translations" {
-    /** `admin`: the `js.admin.*` keys; `site`: every other `js.*` key. */
-    export type TranslationScope = "site" | "admin";
-    export type BuildCatalog = Record<string, string | string[] | Record<string, string>>;
-
-    /** Locale codes that have a language file, sorted. */
-    export const locales: string[];
-    /** One locale's keys of one scope, from its own chunk; `{}` for an unknown locale. */
-    export function loadCatalog(locale: string, scope: TranslationScope): Promise<BuildCatalog>;
+    const entries: {
+        locale: string;
+        locales: string[];
+        messages: Record<string, string | string[] | Record<string, string>>;
+    }[];
+    export default entries;
 }

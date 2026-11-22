@@ -137,4 +137,42 @@ final class TranslationManagerTest extends TestCase
             (new TranslationManager('ru', 'ru'))->trans('js.admin.dashboard.title')
         );
     }
+
+    public function testBrowserScriptUrlLinksTheLocaleFile(): void
+    {
+        $this->assertSame('/assets/js/i18n/ru.js', (new TranslationManager('ru'))->browserScriptUrl());
+        $this->assertSame('/assets/js/i18n/pt-br.js', (new TranslationManager('pt_BR'))->browserScriptUrl());
+    }
+
+    public function testBrowserScriptUrlFallsBackToTheBaseLocaleThenEnglish(): void
+    {
+        $this->assertSame('/assets/js/i18n/ru.js', (new TranslationManager('ru-RU'))->browserScriptUrl());
+        $this->assertSame('/assets/js/i18n/en.js', (new TranslationManager('zz'))->browserScriptUrl());
+        // An invalid locale normalizes to '' - still a file the build has.
+        $this->assertSame('/assets/js/i18n/en.js', (new TranslationManager('../ru'))->browserScriptUrl());
+    }
+
+    public function testBrowserScriptUrlForTheAdminScope(): void
+    {
+        $this->assertSame(
+            '/assets/js/i18n/ru-admin.js',
+            (new TranslationManager('ru'))->browserScriptUrl(TranslationManager::SCRIPT_SCOPE_ADMIN),
+        );
+    }
+
+    public function testBrowserScriptUrlCarriesTheVersion(): void
+    {
+        $tm = new TranslationManager('ru');
+
+        $this->assertSame('/assets/js/i18n/ru.js?v=abc123', $tm->browserScriptUrl(TranslationManager::SCRIPT_SCOPE_SITE, 'abc123'));
+        $this->assertSame('/assets/js/i18n/ru.js', $tm->browserScriptUrl(TranslationManager::SCRIPT_SCOPE_SITE, ''));
+    }
+
+    public function testBrowserScriptVersionIsAStableShortHash(): void
+    {
+        $version = TranslationManager::browserScriptVersion();
+
+        $this->assertMatchesRegularExpression('/\A[0-9a-f]{12}\z/', $version);
+        $this->assertSame($version, TranslationManager::browserScriptVersion());
+    }
 }

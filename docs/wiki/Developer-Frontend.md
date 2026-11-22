@@ -256,10 +256,15 @@ automatic until the shipped entry actually performs it.
 ## Browser localization and generated build data
 
 Browser messages come from `src/Lang/<locale>.php`. The Vite translation plugin
-executes PHP during build, loads each catalog, and includes only keys beginning
-with `js.` in the virtual `virtual:translations` module. Therefore frontend
-work that adds a visible string must add its key to every supported server
-catalog; a build is required after catalog changes.
+executes PHP during build, loads each catalog, keeps only keys beginning with
+`js.`, and writes one file per locale: `public/assets/js/i18n/<locale>.js`
+(with the English fallback merged in) and `<locale>-admin.js` for the
+`js.admin.*` keys. `TranslationManager::browserScriptUrl()` picks the page locale's file and
+the layouts link it with `defer` ahead of the page's modules (the
+`translationScripts` Twig global); the file registers its strings on
+`globalThis.__streamEngineTranslations`, where `shared/i18n.ts` reads them on
+first use. Therefore frontend work that adds a visible string must add its key
+to every supported server catalog; a build is required after catalog changes.
 
 `trans()` falls back to English and then the key. Locale resolution normalizes
 case and underscores, tries the exact locale and its base language, and reads

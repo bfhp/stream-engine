@@ -1,5 +1,4 @@
 import { selectPluralForm, type PluralForms, type PluralNumberOptions } from "./plural";
-import { loadCatalog, locales, type TranslationScope } from "virtual:translations";
 
 /** A message, or the plural forms of a noun (keyed by CLDR category, or a legacy list). */
 export type TranslationValue = string | PluralForms;
@@ -7,21 +6,41 @@ export type TranslationParams = Record<string, string | number>;
 
 export type TranslationCatalog = Record<string, TranslationValue>;
 
-function resolveLocale(available: readonly string[], requestedLocale: string): string {
+/**
+ * What a translation file registers. The server links `js/i18n/<locale>.js`
+ * (and `<locale>-admin.js` in the admin panel) before the page's modules;
+ * each pushes one entry here. `messages` already includes the English
+ * fallback; `locales` lists every locale the build has.
+ */
+export interface TranslationEntry {
+    locale: string;
+    locales: string[];
+    messages: TranslationCatalog;
+}
+
+declare global {
+    var __streamEngineTranslations: TranslationEntry[] | undefined;
+}
+
+function registeredEntries(): TranslationEntry[] {
+    return globalThis.__streamEngineTranslations ?? [];
+}
+
+function resolveLocale(available: Record<string, TranslationCatalog>, requestedLocale: string): string {
     const locale = requestedLocale.trim().toLowerCase().replace(/_/g, "-");
     const baseLocale = locale.split("-")[0];
 
-    if (available.includes(locale)) return locale;
-    if (available.includes(baseLocale)) return baseLocale;
-    if (available.includes("en")) return "en";
-    if (available.includes("ru")) return "ru";
+    if (available[locale]) return locale;
+    if (available[baseLocale]) return baseLocale;
+    if (available.en) return "en";
+    if (available.ru) return "ru";
 
-    return available[0] ?? locale;
+    return Object.keys(available)[0] ?? locale;
 }
 
 /** Locale codes discovered from the build-time language catalogs. */
 export function getAvailableLocales(): string[] {
-    return [...locales];
+    return [...new Set(registeredEntries().flatMap(entry => entry.locales))].sort();
 }
 
 export function selectCatalog(
@@ -29,40 +48,40 @@ export function selectCatalog(
     requestedLocale: string,
 ): TranslationCatalog {
     const fallback = available.en ?? {};
-    const selected = available[resolveLocale(Object.keys(available), requestedLocale)] ?? {};
+    const selected = available[resolveLocale(available, requestedLocale)] ?? {};
 
     return selected === fallback ? fallback : { ...fallback, ...selected };
 }
 
-const activeLocale = document.documentElement.lang || "en";
-const resolvedLocale = resolveLocale(locales, activeLocale);
-
 /**
- * The admin panel marks its page (`<html data-i18n-scope="admin">`) to also
- * get the `js.admin.*` keys; site pages never use them and skip the download.
+ * The document locale and its catalog, worked out on first use rather than
+ * when this module loads: by then every translation file linked before the
+ * page's modules has registered, and a test may set `<html lang>` after
+ * something has already imported this module.
  */
-const scopes: TranslationScope[] = document.documentElement.dataset.i18nScope === "admin"
-    ? ["site", "admin"]
-    : ["site"];
+let loaded: { locale: string; catalog: TranslationCatalog } | null = null;
+let testCatalog: TranslationCatalog | null = null;
 
-/**
- * Only English (the fallback) and the document locale are downloaded, each
- * from its own chunk, instead of every locale bundled into every page. The
- * top-level await makes every module importing this one wait for them, so
- * trans() is still synchronous and complete for all callers.
- */
-async function loadBuiltInCatalog(): Promise<TranslationCatalog> {
-    const wanted = [...new Set(["en", resolvedLocale])].filter(locale => locales.includes(locale));
-    const loaded = await Promise.all(wanted.map(async locale => {
-        const parts = await Promise.all(scopes.map(scope => loadCatalog(locale, scope)));
-        return [locale, Object.assign({}, ...parts) as TranslationCatalog] as const;
-    }));
+function load(): { locale: string; catalog: TranslationCatalog } {
+    if (loaded === null) {
+        const available: Record<string, TranslationCatalog> = {};
+        for (const entry of registeredEntries()) {
+            available[entry.locale] = { ...available[entry.locale], ...entry.messages };
+        }
 
-    return selectCatalog(Object.fromEntries(loaded), activeLocale);
+        const requested = document.documentElement.lang || "en";
+        loaded = {
+            locale: resolveLocale(available, requested),
+            catalog: selectCatalog(available, requested),
+        };
+    }
+
+    return loaded;
 }
 
-const builtInCatalog = await loadBuiltInCatalog();
-let catalog = builtInCatalog;
+function activeCatalog(): TranslationCatalog {
+    return testCatalog ?? load().catalog;
+}
 
 function interpolate(text: string, params: TranslationParams): string {
     return text.replace(/\{([^{}]+)}/g, (placeholder, name: string) =>
@@ -71,7 +90,7 @@ function interpolate(text: string, params: TranslationParams): string {
 }
 
 export function trans(key: string, params: TranslationParams = {}): string {
-    const value = catalog[key];
+    const value = activeCatalog()[key];
     const text = typeof value === "string" ? value : key;
 
     return interpolate(text, params);
@@ -92,11 +111,11 @@ export function transChoice(
     params: TranslationParams = {},
     numberOptions: PluralNumberOptions = {},
 ): string {
-    const value = catalog[key];
+    const value = activeCatalog()[key];
     const text = typeof value === "string"
         ? value
         : value !== undefined
-            ? selectPluralForm(value, count, resolvedLocale, numberOptions) ?? key
+            ? selectPluralForm(value, count, load().locale, numberOptions) ?? key
             : key;
 
     return interpolate(text, { count, ...params });
@@ -112,21 +131,21 @@ export function transChoiceWithCount(
     params: TranslationParams = {},
     numberOptions: PluralNumberOptions = {},
 ): string {
-    const formatted = new Intl.NumberFormat(resolvedLocale, numberOptions).format(count);
+    const formatted = new Intl.NumberFormat(load().locale, numberOptions).format(count);
 
     return `${formatted} ${transChoice(key, count, params, numberOptions)}`;
 }
 
 /** The normalized CMS locale selected by the server for this document. */
 export function getLocale(): string {
-    return resolvedLocale;
+    return load().locale;
 }
 
 /** Replaces the build-time catalog for an isolated unit test. */
 export function setTranslationsForTests(messages: TranslationCatalog): void {
-    catalog = messages;
+    testCatalog = messages;
 }
 
 export function resetTranslations(): void {
-    catalog = builtInCatalog;
+    testCatalog = null;
 }

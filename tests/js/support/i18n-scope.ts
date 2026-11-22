@@ -1,7 +1,9 @@
 /*
- * shared/i18n.ts loads the `js.admin.*` keys only on a page marked
- * `<html data-i18n-scope="admin">` (the admin panel). Tests exercise both
- * site and admin code, so every test file gets both scopes - set before any
- * test imports i18n.ts, which reads the attribute once at load.
+ * Pages get their strings from the per-locale file the server links
+ * (js/i18n/<locale>.js, plus <locale>-admin.js in the admin panel). Tests have
+ * no server, so every test file starts with all locales and both scopes
+ * registered - shared/i18n.ts picks the document locale on first use.
  */
-document.documentElement.dataset.i18nScope = "admin";
+import entries from "virtual:translations";
+
+(globalThis as { __streamEngineTranslations?: unknown }).__streamEngineTranslations = entries;

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ locale }}" dir="{{ dir|default('ltr') }}" data-date-format="{{ dateFormat|default('auto') }}" data-time-format="{{ timeFormat|default('auto') }}" data-mantine-color-scheme="light" data-i18n-scope="admin">
+<html lang="{{ locale }}" dir="{{ dir|default('ltr') }}" data-date-format="{{ dateFormat|default('auto') }}" data-time-format="{{ timeFormat|default('auto') }}" data-mantine-color-scheme="light">
 <head>
     <title>{{ title }}</title>
     <meta charset="utf-8">
@@ -23,6 +23,9 @@
 
 <div id="root"></div>
 
+{# Site and admin strings for the page locale, ahead of the panel's module. #}
+<script defer src="{{ translationScripts.site }}"></script>
+<script defer src="{{ translationScripts.admin }}"></script>
 <script defer type="module" src="/assets/js/admin.js"></script>
 
 </body>
