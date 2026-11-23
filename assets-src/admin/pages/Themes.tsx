@@ -20,7 +20,7 @@ import { useMediaQuery } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { IconDeviceFloppy, IconExternalLink, IconRefresh } from "@tabler/icons-react";
 import { csrfHeaders } from "../../shared/csrf";
-import { trans } from "../../shared/i18n";
+import { trans } from "../i18n";
 import AdminSelect from "../components/AdminSelect";
 
 type ThemeSetting = {

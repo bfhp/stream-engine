@@ -119,10 +119,10 @@ A representative `theme.json` is:
     }
   },
   "assets": {
+    "entries": ["bootstrap", "site"],
     "styles": ["/themes/acme/site.css"],
-    "scripts": ["/themes/acme/site.js"],
     "rtl": {
-      "/themes/acme/site.css": "/themes/acme/site-rtl.css"
+      "bootstrap": "bootstrap-rtl"
     }
   }
 }
@@ -177,23 +177,26 @@ for non-administrators. Do not use it as an access or feature flag.
 
 ## Assets and inheritance
 
-Manifest asset paths may point only below `/assets/` or the current theme's
-`/themes/<id>/` directory. External URLs, traversal, another theme's directory,
-and arbitrary public paths are rejected. Every listed stylesheet or script
-must exist below the root application's `public/` directory when the catalog
-loads; one missing main asset invalidates the theme.
+`assets` has three keys; any other key invalidates the theme.
 
-Parent assets load before child assets and are deduplicated by URL path.
-Re-listing the same path in a child does not move or replace it. Give a changed
-asset its own path, or set `inheritAssets` to `false` and declare the complete
-ordered list. That flag affects assets only; Twig template inheritance still
-uses the parent chain.
+- `entries`: names of Vite entries built by the application (`base`, `site`,
+  `bootstrap`, `ui-bootstrap`, a module's entry). `Core\Assets` renders each
+  with the stylesheets, preloads and script of its current, content-hashed
+  build. An unknown name is an error when a page renders.
+- `styles`: the theme's own static stylesheets below `/themes/<id>/`. They are
+  not built, must exist below the root application's `public/` directory when
+  the catalog loads, and get an mtime-based `?v=` query. External URLs,
+  traversal and other directories are rejected. Keep the paths free of
+  queries.
+- `rtl`: entry name => entry name to load instead for right-to-left locales.
+  Child mappings win.
 
-The catalog adds an mtime-based `?v=` query to local asset URLs. Keep manifest
-paths free of query strings. For right-to-left locales, `assets.rtl` replaces a
-listed LTR stylesheet with its RTL build. Child mappings win. A missing RTL
-target is skipped and the LTR stylesheet remains in use; missing normal styles
-or scripts invalidate the theme.
+Parent assets load before child assets and are deduplicated; re-listing an
+entry or path in a child does not move it. Set `inheritAssets` to `false` and
+declare the complete ordered lists to start afresh. That flag affects assets
+only; Twig template inheritance still uses the parent chain. Entries load
+before the theme's static stylesheets, so a theme stylesheet overrides the
+built CSS.
 
 The engine does not add a CSS framework. If a theme requires one, list its CSS
 and adapter script explicitly. Do not load the same framework a second time
@@ -299,8 +302,8 @@ Bundled code imports `ui` from `assets-src/shared/ui`; a theme script uses
 tooltip initialization, and dispatches `ui:modal-closed` on every modal close.
 The last registered adapter wins.
 
-`default` uses the native adapter. `bootstrap` lists
-`/assets/js/ui-bootstrap.js` only in its own manifest. Framework JavaScript
+`default` uses the native adapter. `bootstrap` lists the `ui-bootstrap`
+entry only in its own manifest. Framework JavaScript
 must be imported only by its adapter; importing or bundling it elsewhere can
 install duplicate data APIs. Higher-level `CMS.toast()` and `CMS.confirm()`
 use the theme-owned `#globalToast` and `#globalConfirmModal` markup through the

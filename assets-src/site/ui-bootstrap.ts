@@ -5,7 +5,7 @@
    the package also installs Bootstrap's data API (data-bs-toggle,
    data-bs-dismiss, ...), which the current templates still rely on.
 
-   Built as its own entry (/assets/js/ui-bootstrap.js) and listed in the
+   Built as its own entry (`ui-bootstrap`) and listed in the
    `bootstrap` theme's manifest; `default` uses the native adapter. Never
    import this file from another bundle: loading Bootstrap twice installs
    its data API twice.

@@ -16,7 +16,7 @@ import Widgets from "./pages/Widgets";
 import Menus from "./pages/Menus";
 import MenuEdit from "./pages/MenuEdit";
 import type { AdminRoute } from "./module-pages";
-import { trans } from "../shared/i18n";
+import { trans } from "./i18n";
 
 const FileBrowser = lazy(() => import("./pages/FileBrowser"));
 const Cron = lazy(() => import("./pages/Cron"));

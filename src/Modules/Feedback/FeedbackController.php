@@ -71,9 +71,7 @@ class FeedbackController extends AbstractController
                 'description' => $hintFeed?->description,
                 'image' => $hintFeed?->imageUrl,
                 'canonical' => $hintFeed?->canonicalUrl,
-                'head_ext' => [
-                    '<script type="module" src="/assets/js/feedback.js" defer></script>',
-                ],
+                'entries' => ['feedback'],
                 'hash' => hash_hmac('sha256', (string) $now, $this->config->appSecret()),
                 'time' => $now,
                 'hintText' => $hintFeed?->content ?? '',

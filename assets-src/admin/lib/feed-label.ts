@@ -11,7 +11,7 @@
    which is the difference between a millisecond and a timeout.
    ========================================================================== */
 
-import { trans } from "../../shared/i18n";
+import { trans } from "../i18n";
 
 const PREVIEW_LENGTH = 140;
 

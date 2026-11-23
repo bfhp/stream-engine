@@ -11,7 +11,7 @@ import { IconFileUpload, IconPlus, IconTrash } from "@tabler/icons-react";
 import { FEED_TYPES } from "../../shared/feed-types";
 import { uploadFile } from "../../shared/uploads";
 import { csrfHeaders } from "../../shared/csrf";
-import { trans } from "../../shared/i18n";
+import { trans } from "../i18n";
 import { isRtl } from "../lib/direction";
 import { pagesBoundToFeed, type BoundPage, type PickerPage } from "../lib/feed-picker";
 import { hasMetadataErrors, metadataToRows, newMetadataRow, rowsToMetadata, validateMetadataRows, type MetadataRow } from "../lib/feed-metadata";

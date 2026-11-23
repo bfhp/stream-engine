@@ -13,7 +13,7 @@ import {
 } from "@mantine/core";
 import { Link, useNavigate } from "react-router-dom";
 import { IconEdit, IconPlus, IconRefresh } from "@tabler/icons-react";
-import { trans } from "../../shared/i18n";
+import { trans } from "../i18n";
 import { orderPagesByHierarchy } from "../lib/page-hierarchy";
 
 type PageListItem = {

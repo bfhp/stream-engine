@@ -4,7 +4,7 @@ import { IconArrowDown, IconArrowUp, IconCornerDownLeft, IconCornerDownRight, Ic
 import { Link, useNavigate } from "react-router-dom";
 import { csrfHeaders } from "../../shared/csrf";
 import { menuDepth, type MenuItemRecord, type MenuPreviewGroup, type MenuPreviewItem } from "../lib/menu";
-import { trans } from "../../shared/i18n";
+import { trans } from "../i18n";
 import { isRtl } from "../lib/direction";
 import AdminSelect from "../components/AdminSelect";
 

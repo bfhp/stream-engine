@@ -1,7 +1,7 @@
 import { Alert, Box, Button, Group, SimpleGrid, Skeleton, Stack, Text } from "@mantine/core";
 import { formatNumber, formatTimestamp } from "../lib/format";
 import type { DashboardSize } from "../lib/dashboard";
-import { trans } from "../../shared/i18n";
+import { trans } from "../i18n";
 
 export type CardDefinition = {
     id: string;

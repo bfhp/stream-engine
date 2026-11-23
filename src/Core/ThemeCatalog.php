@@ -107,8 +107,9 @@ final class ThemeCatalog
     }
 
     /**
-     * Swaps stylesheets for the right-to-left builds the theme chain declares
-     * in `assets.rtl`, so only one of each pair is ever loaded.
+     * Swaps entries for the right-to-left builds the theme chain declares in
+     * `assets.rtl` (entry name => RTL entry name), so only one of each pair
+     * is ever loaded.
      *
      * @param array<string, mixed> $theme
      * @return array<string, mixed>
@@ -116,13 +117,13 @@ final class ThemeCatalog
     public function forDirection(array $theme, bool $rtl): array
     {
         $map = $theme['assets']['rtl'] ?? [];
-        if (! $rtl || ! is_array($map) || $map === [] || ! is_array($theme['assets']['styles'] ?? null)) {
+        if (! $rtl || ! is_array($map) || $map === [] || ! is_array($theme['assets']['entries'] ?? null)) {
             return $theme;
         }
 
-        $theme['assets']['styles'] = array_map(
-            static fn (string $url): string => $map[self::basePath($url)] ?? $url,
-            $theme['assets']['styles'],
+        $theme['assets']['entries'] = array_map(
+            static fn (string $entry): string => $map[$entry] ?? $entry,
+            $theme['assets']['entries'],
         );
 
         return $theme;
@@ -213,13 +214,13 @@ final class ThemeCatalog
     }
 
     /**
-     * Parent assets first, then the child's, deduplicated by path. A theme
-     * with `inheritAssets: false` starts a fresh list; its ancestors' assets
-     * are not loaded. RTL replacements merge the same way, child wins.
+     * Parent assets first, then the child's, deduplicated. A theme with
+     * `inheritAssets: false` starts a fresh list; its ancestors' assets are not
+     * loaded. RTL replacements merge the same way, child wins.
      *
      * @param list<string> $chain
      * @param array<string, array<string, mixed>> $raw
-     * @return array{styles: list<string>, scripts: list<string>, rtl: array<string, string>}
+     * @return array{entries: list<string>, styles: list<string>, rtl: array<string, string>}
      */
     private function effectiveAssets(array $chain, array $raw): array
     {
@@ -231,15 +232,10 @@ final class ThemeCatalog
             }
         }
 
-        $result = ['styles' => [], 'scripts' => [], 'rtl' => []];
+        $result = ['entries' => [], 'styles' => [], 'rtl' => []];
         foreach ($contributing as $theme) {
-            foreach (['styles', 'scripts'] as $kind) {
-                foreach ($theme['assets'][$kind] as $url) {
-                    $known = array_map(self::basePath(...), $result[$kind]);
-                    if (! in_array(self::basePath($url), $known, true)) {
-                        $result[$kind][] = $url;
-                    }
-                }
+            foreach (['entries', 'styles'] as $kind) {
+                $result[$kind] = array_values(array_unique([...$result[$kind], ...$theme['assets'][$kind]]));
             }
             $result['rtl'] = $theme['assets']['rtl'] + $result['rtl'];
         }
@@ -293,7 +289,7 @@ final class ThemeCatalog
             return null;
         }
 
-        $assets = $this->assets($manifest['assets'] ?? [], $id, $manifestPath);
+        $assets = $this->assets($manifest['assets'] ?? [], $id);
         if ($assets === null) {
             return null;
         }
@@ -373,62 +369,63 @@ final class ThemeCatalog
     }
 
     /**
-     * Validates the theme's own assets. `rtl` maps a stylesheet path to its
-     * right-to-left build; an entry whose RTL file is not deployed is
-     * skipped, so a missing build degrades to the LTR stylesheet.
+     * Validates the theme's assets:
      *
-     * @return array{styles: list<string>, scripts: list<string>, rtl: array<string, string>}|null
+     * - `entries`: names of Vite entries (Core\Assets resolves them to the
+     *   built, content-hashed files with their stylesheets and imports);
+     * - `styles`: the theme's own static stylesheets under /themes/<id>/,
+     *   versioned with the file's modification time - they are not built;
+     * - `rtl`: entry name => entry name to load instead for right-to-left
+     *   locales.
+     *
+     * @return array{entries: list<string>, styles: list<string>, rtl: array<string, string>}|null
      */
-    private function assets(mixed $input, string $id, string $manifestPath): ?array
+    private function assets(mixed $input, string $id): ?array
     {
         if (! is_array($input)) {
             return null;
         }
 
-        $versionTime = (int) filemtime($manifestPath);
-        $result = ['styles' => [], 'scripts' => [], 'rtl' => []];
-        foreach (['styles', 'scripts'] as $kind) {
-            $items = $input[$kind] ?? [];
-            if (! is_array($items)) {
-                return null;
-            }
-            foreach ($items as $url) {
-                if (! $this->isAllowedUrl($url, $id) || ! is_file($this->publicDir.$url)) {
-                    return null;
-                }
-                $versionTime = max($versionTime, (int) filemtime($this->publicDir.$url));
-                $result[$kind][] = $url.'?v='.$versionTime;
-            }
-        }
-
-        $rtl = $input['rtl'] ?? [];
-        if (! is_array($rtl)) {
+        if (array_diff(array_keys($input), ['entries', 'styles', 'rtl']) !== []) {
             return null;
         }
-        foreach ($rtl as $ltrUrl => $rtlUrl) {
-            if (! $this->isAllowedUrl($ltrUrl, $id) || ! $this->isAllowedUrl($rtlUrl, $id)) {
+
+        $entries = $input['entries'] ?? [];
+        $styles = $input['styles'] ?? [];
+        $rtl = $input['rtl'] ?? [];
+        if (! is_array($entries) || ! is_array($styles) || ! is_array($rtl)) {
+            return null;
+        }
+
+        $result = ['entries' => [], 'styles' => [], 'rtl' => []];
+        foreach ($entries as $entry) {
+            if (! self::isEntryName($entry)) {
                 return null;
             }
-            if (is_file($this->publicDir.$rtlUrl)) {
-                $result['rtl'][$ltrUrl] = $rtlUrl.'?v='.max($versionTime, (int) filemtime($this->publicDir.$rtlUrl));
+            $result['entries'][] = $entry;
+        }
+        foreach ($styles as $url) {
+            if (! is_string($url)
+                || preg_match('#\A/themes/'.preg_quote($id, '#').'/[A-Za-z0-9_./-]+\.css\z#', $url) !== 1
+                || str_contains($url, '..')
+                || ! is_file($this->publicDir.$url)) {
+                return null;
             }
+            $result['styles'][] = $url.'?v='.(int) filemtime($this->publicDir.$url);
+        }
+        foreach ($rtl as $ltr => $rtlEntry) {
+            if (! self::isEntryName($ltr) || ! self::isEntryName($rtlEntry)) {
+                return null;
+            }
+            $result['rtl'][$ltr] = $rtlEntry;
         }
 
         return $result;
     }
 
-    private function isAllowedUrl(mixed $url, string $id): bool
+    private static function isEntryName(mixed $name): bool
     {
-        return is_string($url)
-            && preg_match('#\A/(?:assets|themes/'.preg_quote($id, '#').')/[A-Za-z0-9_./-]+\z#', $url) === 1
-            && ! str_contains($url, '..');
-    }
-
-    private static function basePath(string $url): string
-    {
-        $query = strpos($url, '?');
-
-        return $query === false ? $url : substr($url, 0, $query);
+        return is_string($name) && preg_match('/\A[a-z0-9][a-z0-9_-]*\z/', $name) === 1;
     }
 
     /** @return array<string, mixed> */
@@ -449,8 +446,8 @@ final class ThemeCatalog
                 ],
             ],
             'assets' => [
-                'styles' => ['/assets/css/base.css', '/assets/css/site.css', '/assets/css/custom-content.css'],
-                'scripts' => ['/assets/js/site.js'],
+                'entries' => ['base', 'site'],
+                'styles' => [],
                 'rtl' => [],
             ],
         ];

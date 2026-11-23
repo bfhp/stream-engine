@@ -18,19 +18,9 @@
     }
   },
   "assets": {
-    "styles": [
-      "/assets/css/base.css",
-      "/assets/css/bootstrap.css",
-      "/assets/css/bootstrap-skin.css",
-      "/assets/css/site.css",
-      "/assets/css/custom-content.css"
-    ],
-    "scripts": [
-      "/assets/js/site.js",
-      "/assets/js/ui-bootstrap.js"
-    ],
+    "entries": ["base", "bootstrap", "bootstrap-skin", "site", "ui-bootstrap"],
     "rtl": {
-      "/assets/css/bootstrap.css": "/assets/css/bootstrap-rtl.css"
+      "bootstrap": "bootstrap-rtl"
     }
   }
 }

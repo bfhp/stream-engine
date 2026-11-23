@@ -26,7 +26,7 @@ import {
 import { FEED_TYPES } from "../../shared/feed-types";
 import { makeFeedLabel } from "../lib/feed-label";
 import { formatNumber, formatTimestamp } from "../lib/format";
-import { trans, transChoiceWithCount } from "../../shared/i18n";
+import { trans, transChoiceWithCount } from "../i18n";
 import AdminSelect from "../components/AdminSelect";
 
 type FeedListItem = {

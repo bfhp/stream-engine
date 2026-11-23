@@ -369,21 +369,13 @@ final class UsersControllerCommunityPagesTest extends TestCase
         $this->assertNull($view->data['cancelUrl']);
     }
 
-    public function testTheFormLoadsTheEditorAndItsStyles(): void
+    public function testTheFormLoadsTheEditor(): void
     {
-        // trix.css is linked explicitly because Vite splits it into a shared
-        // chunk once another entry imports it - the note in the source says so,
-        // and this is what would catch its removal.
-        $headExt = implode("\n", $this->postFormModule()->show(
-            $this->page('community.post-new'),
-            ['slug' => 'devs']
-        )->data['head_ext']);
+        // Its stylesheets (Trix's included) come with the entry: Core\Assets
+        // links every stylesheet an entry pulls in.
+        $view = $this->postFormModule()->show($this->page('community.post-new'), ['slug' => 'devs']);
 
-        $this->assertStringContainsString('/assets/css/trix.css', $headExt);
-        $this->assertStringContainsString('/assets/js/blog-post-form.js', $headExt);
-        // The bundle imports shared code, so a classic script would not run -
-        // see Tests\Core\AssetBundlesTest.
-        $this->assertStringContainsString('type="module"', $headExt);
+        $this->assertSame(['blog-post-form'], $view->data['entries']);
     }
 
     /* ===============================
@@ -428,7 +420,7 @@ final class UsersControllerCommunityPagesTest extends TestCase
         $view = $this->makeModule()->show($this->page('community.create', '{slug}'));
 
         $this->assertNull($view->data['canonical']);
-        $this->assertStringNotContainsString('canonical', implode("\n", $view->data['head_ext']));
+        $this->assertStringNotContainsString('canonical', implode("\n", $view->data['head_ext'] ?? []));
     }
 
     public function testAResolvedCanonicalIsPassedToTheLayout(): void
@@ -436,7 +428,7 @@ final class UsersControllerCommunityPagesTest extends TestCase
         $view = $this->makeModule()->show($this->page('community.create', 'new-community'));
 
         $this->assertSame('/new-community/', $view->data['canonical']);
-        $this->assertStringNotContainsString('rel="canonical"', implode("\n", $view->data['head_ext']));
+        $this->assertStringNotContainsString('rel="canonical"', implode("\n", $view->data['head_ext'] ?? []));
     }
 
     /* ===============================

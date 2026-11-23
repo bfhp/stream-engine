@@ -43,7 +43,7 @@ import {
 import { csrfHeaders } from "../../shared/csrf";
 import { getApiResponseError } from "../../shared/api-errors";
 import { FEED_TYPE_LABELS } from "../../shared/feed-types";
-import { trans } from "../../shared/i18n";
+import { trans } from "../i18n";
 import AdminSelect from "../components/AdminSelect";
 
 type EditablePage = {

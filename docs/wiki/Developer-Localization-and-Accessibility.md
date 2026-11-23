@@ -25,7 +25,7 @@ scope in [Testing](https://github.com/bfhp/stream-engine/wiki/Developer-Testing)
 | Canonical catalogs | `src/Lang/<locale>.php`, one PHP array per locale. |
 | Server lookup | `TranslationManager::trans()` and Twig `trans()`. |
 | Server plural selection | `Formatter::transChoice()` and Twig `trans_choice()`, CLDR rules from intl. |
-| Browser catalogs | Build-generated `virtual:translations`, containing only `js.*` keys. |
+| Browser catalogs | Build-generated `js/i18n/<locale>[-admin]-<hash>.js`, only `js.*` keys, mapped per page by the import map (`Core\Assets::importMap()`). |
 | Browser lookup | `assets-src/shared/i18n.ts`: `trans()`, `transChoice()`, and `transChoiceWithCount()`. |
 | Server dates | `Formatter`, using PHP `IntlDateFormatter` and site format settings. |
 | Browser dates | `assets-src/shared/date-time-format.ts`, using `Intl.DateTimeFormat` or explicit site formats. |
@@ -146,8 +146,9 @@ make machine-oriented log parsing depend on translated text.
 ## Browser localization and build data
 
 The Vite translations plugin executes PHP at build time, loads every
-`src/Lang/*.php` array, filters each catalog to `js.*`, and produces the virtual
-`virtual:translations` module consumed by `assets-src/shared/i18n.ts`.
+`src/Lang/*.php` array, filters each catalog to `js.*`, and writes one module
+per locale and scope (site, admin) that `assets-src/shared/i18n.ts` and
+`assets-src/admin/i18n.ts` import through the page's import map.
 
 Therefore a browser-visible message needs a `js.*` key in every catalog and a
 production build after catalog changes:

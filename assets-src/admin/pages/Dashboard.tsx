@@ -25,7 +25,7 @@ import {
 import DashboardCardContent, {
     type CardDefinition, type CardResult
 } from "../components/DashboardCardContent";
-import { trans } from "../../shared/i18n";
+import { trans } from "../i18n";
 import AdminSelect from "../components/AdminSelect";
 
 type DashboardPayload = {

@@ -350,9 +350,7 @@ class ForumsController extends AbstractController
             [
                 'description' => $page->pageName,
                 'canonical' => $this->urlGenerator->action('forums.list'),
-                'head_ext' => [
-                    '<script type="module" src="/assets/js/forums.js" defer></script>',
-                ],
+                'entries' => ['forums'],
                 'forums' => $forumsList,
                 'forumStats' => $forumStats,
                 'forumLastPost' => $forumLastPost,
@@ -646,7 +644,8 @@ class ForumsController extends AbstractController
                     fn (Feed $f): bool => $f->parentId === null && $f->id !== $forumFeed->id
                         && ($f->visibility === 'public' || $this->management()->canManage($f, $this->context->user))
                 ),
-                'head_ext' => ['<meta name="robots" content="noindex">', '<script type="module" src="/assets/js/forums.js" defer></script>'],
+                'entries' => ['forums'],
+                'head_ext' => ['<meta name="robots" content="noindex">'],
             ]);
         }
 
@@ -744,9 +743,7 @@ class ForumsController extends AbstractController
                 'title' => htmlspecialchars((string) $forumFeed->title, ENT_QUOTES),
                 'description' => htmlspecialchars(strip_tags((string) $forumFeed->description), ENT_QUOTES),
                 'canonical' => $this->urlGenerator->listing($forumFeed->canonicalUrl, $currentPage),
-                'head_ext' => [
-                    '<script type="module" src="/assets/js/forums.js" defer></script>',
-                ],
+                'entries' => ['forums'],
                 'canManageForum' => $canManageForum,
                 'managementUrl' => $this->urlGenerator->feed($forumFeed, ['manage' => 1]),
                 'feed' => $forumFeed,
@@ -928,10 +925,7 @@ class ForumsController extends AbstractController
                     ['title' => $isEdit ? $topic->title : $forumFeed->title],
                 ),
                 'canonical' => $canonical,
-                'head_ext' => [
-                    '<link rel="stylesheet" href="/assets/css/trix.css">',
-                    '<script type="module" src="/assets/js/forums.js" defer></script>',
-                ],
+                'entries' => ['forums'],
                 'feed' => $forumFeed,
                 'topic' => $topic,
                 'forumTotals' => $forumTotals,
@@ -1254,9 +1248,7 @@ class ForumsController extends AbstractController
                     ? $topicFeed->description
                     : Formatter::excerpt((string) $topicFeed->content),
                 'canonical' => $this->urlGenerator->listing($topicFeed->canonicalUrl, $currentPage),
-                'head_ext' => [
-                    '<script type="module" src="/assets/js/forums.js" defer></script>',
-                ],
+                'entries' => ['forums'],
                 'feed' => $topicFeed,
                 'isFollowing' => $isFollowing,
                 'poll' => $pollView,

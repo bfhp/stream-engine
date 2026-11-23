@@ -105,6 +105,24 @@ server {
         add_header Referrer-Policy no-referrer always;
     }
 
+    # Built browser assets are named by their content: cache them for good.
+    # .vite/ holds the build manifest PHP reads; it is not for browsers.
+    # img/ is copied unhashed (fixed paths the server refers to).
+    location ^~ /assets/.vite/ {
+        deny all;
+    }
+
+    location ^~ /assets/img/ {
+        try_files $uri =404;
+        add_header X-Content-Type-Options nosniff always;
+    }
+
+    location ^~ /assets/ {
+        try_files $uri =404;
+        add_header Cache-Control "public, max-age=31536000, immutable" always;
+        add_header X-Content-Type-Options nosniff always;
+    }
+
     location / {
         try_files $uri /index.php?$query_string;
         add_header X-Content-Type-Options nosniff always;

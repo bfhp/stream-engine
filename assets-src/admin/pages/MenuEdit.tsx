@@ -16,7 +16,7 @@ import { notifications } from "@mantine/notifications";
 import { IconTrash } from "@tabler/icons-react";
 import { csrfHeaders } from "../../shared/csrf";
 import { type MenuItemRecord } from "../lib/menu";
-import { trans } from "../../shared/i18n";
+import { trans } from "../i18n";
 import AdminSelect from "../components/AdminSelect";
 
 type PageOption = { id: number; pattern?: string; action?: string; pageName?: string };

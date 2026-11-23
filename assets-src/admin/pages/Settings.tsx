@@ -17,7 +17,7 @@ import { notifications } from "@mantine/notifications";
 import { IconDeviceFloppy, IconPhoto, IconRefresh, IconRestore } from "@tabler/icons-react";
 import { csrfHeaders } from "../../shared/csrf";
 import { formatTimestamp } from "../lib/format";
-import { getAvailableLocales, getLocale, trans } from "../../shared/i18n";
+import { getAvailableLocales, getLocale, trans } from "../i18n";
 import AdminSelect from "../components/AdminSelect";
 
 type Setting = {

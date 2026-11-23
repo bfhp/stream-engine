@@ -23,8 +23,14 @@
 
     {% include 'partials/color-mode.twig' %}
 
-    {% block head_css %}
-        {% for asset in theme.assets.styles %}
+    {# Built assets (Core\Assets): the theme's Vite entries and the page's own
+       (`entries` from the controller), with their stylesheets, preloads and
+       scripts, then the theme's static stylesheets. The import map goes
+       first: the modules resolve their translations through it. #}
+    {% block head_assets %}
+        {{ asset_import_map() }}
+        {{ asset_tags(theme.assets.entries|default([])|merge(entries|default([]))) }}
+        {% for asset in theme.assets.styles|default([]) %}
             <link rel="stylesheet" href="{{ asset }}">
         {% endfor %}
     {% endblock %}
@@ -43,12 +49,6 @@
         {% if image and siteUrl %}
             <meta property="og:image" content="{{ siteUrl }}{{ image }}" />
         {% endif %}
-    {% endblock %}
-
-    {% block head_js %}
-        {% for asset in theme.assets.scripts %}
-            <script src="{{ asset }}" type="module" defer></script>
-        {% endfor %}
     {% endblock %}
 
     {% block head_ext %}

@@ -16,13 +16,6 @@
     }
   },
   "assets": {
-    "styles": [
-      "/assets/css/base.css",
-      "/assets/css/site.css",
-      "/assets/css/custom-content.css"
-    ],
-    "scripts": [
-      "/assets/js/site.js"
-    ]
+    "entries": ["base", "site"]
   }
 }

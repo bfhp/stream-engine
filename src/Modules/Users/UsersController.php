@@ -695,7 +695,7 @@ class UsersController extends AbstractController
             'bestUrl' => $this->urlGenerator->page($page, $page->params, query: ['sort' => 'best']),
             'previousUrl' => $offset > 0 ? $this->urlGenerator->page($page, $page->params, query: $offset > $limit ? [...$filters, 'offset' => max(0, $offset - $limit)] : $filters) : null,
             'nextUrl' => $offset + $limit < $result['total'] ? $this->urlGenerator->page($page, $page->params, query: [...$filters, 'offset' => $offset + $limit]) : null,
-            'head_ext' => ['<script type="module" src="/assets/js/users.js" defer></script>'],
+            'entries' => ['users'],
         ]);
     }
 
@@ -865,7 +865,7 @@ class UsersController extends AbstractController
             'isCommunityGallery' => $scope === 'community',
             'previousUrl' => $offset > 0 ? $this->urlGenerator->action($paginationAction, $paginationParams, query: ['offset' => max(0, $offset - 20)]) : null,
             'nextUrl' => $offset + 20 < $total ? $this->urlGenerator->action($paginationAction, $paginationParams, query: ['offset' => $offset + 20]) : null,
-            'head_ext' => ['<script type="module" src="/assets/js/users.js" defer></script>'],
+            'entries' => ['users'],
         ]);
     }
 
@@ -1023,9 +1023,7 @@ class UsersController extends AbstractController
                 'description' => $page->pageName ?: $this->tm->trans('user.list_title'),
                 'canonical' => $this->urlGenerator->listing($canonicalUrl, $currentPage, $canonicalFilters),
                 'listUrl' => $canonicalUrl,
-                'head_ext' => [
-                    '<script type="module" src="/assets/js/users.js" defer></script>',
-                ],
+                'entries' => ['users'],
                 'apiUrl' => '/api/v1/users',
                 'filters' => $filters,
             ]
@@ -1111,9 +1109,7 @@ class UsersController extends AbstractController
                 'profileBirthDateLabel' => $this->formatProfileBirthDate($profileUser),
                 'isOwnProfile' => $isOwnProfile,
                 'isOnline' => $isOnline,
-                'head_ext' => [
-                    '<script type="module" src="/assets/js/users.js" defer></script>',
-                ],
+                'entries' => ['users'],
                 ...$blogFeedData,
                 ...$audioPlaylistData,
                 ...$this->buildProfileStatsViewData($profileUser, $viewer, $blogFeed),
@@ -2230,9 +2226,7 @@ class UsersController extends AbstractController
                 'title' => $page->pageName ?: $this->tm->trans('community.page_title'),
                 'description' => $this->tm->trans('community.page_description'),
                 'canonical' => $this->urlGenerator->listing($canonicalUrl, 1, $tagSlug !== null ? ['tag' => $tagSlug] : []),
-                'head_ext' => [
-                    '<script type="module" src="/assets/js/users.js" defer></script>',
-                ],
+                'entries' => ['users'],
                 'communityUrl' => $canonicalUrl,
                 'activeTag' => $tagSlug,
                 'isGuest' => $viewer->isGuest(),
@@ -2269,12 +2263,9 @@ class UsersController extends AbstractController
             $cancelUrl = $this->urlGenerator->page($communityPage);
         }
 
-        $headExt = [
-            // initCommunityCreateForm() now lives in users.ts/users.js -
-            // this page no longer has its own dedicated JS entry (see
-            // vite.config.ts), same bundle every other users.* page loads.
-            '<script type="module" src="/assets/js/users.js" defer></script>',
-        ];
+        // initCommunityCreateForm() lives in the `users` entry, the same
+        // bundle every other users.* page loads.
+        $entries = ['users'];
 
         return ViewModel::fromPage(
             $page,
@@ -2283,7 +2274,7 @@ class UsersController extends AbstractController
                 'title' => $page->pageName ?: $this->tm->trans('community.create_title'),
                 'description' => $this->tm->trans('community.create_description'),
                 'canonical' => $canonical,
-                'head_ext' => $headExt,
+                'entries' => $entries,
                 'apiUrl' => '/api/v1/communities',
                 'uploadsApiUrl' => '/api/v1/uploads',
                 'cancelUrl' => $cancelUrl,
@@ -2377,9 +2368,7 @@ class UsersController extends AbstractController
                 ...$ratingViewData,
                 ...$this->buildCommunityStatsViewData($community, $viewer),
                 ...$this->buildCommunityMembersViewData($community),
-                'head_ext' => [
-                    '<script type="module" src="/assets/js/users.js" defer></script>',
-                ],
+                'entries' => ['users'],
             ]
         );
     }
@@ -2474,9 +2463,7 @@ class UsersController extends AbstractController
                 'subscribers' => $this->buildCommunityManageMemberCards($subscribersPage['items']),
                 'subscribersTotal' => $subscribersPage['total'],
                 'memberActionUrlBase' => '/api/v1/communities/'.$community->id.'/manage/members/',
-                'head_ext' => [
-                    '<script type="module" src="/assets/js/users.js" defer></script>',
-                ],
+                'entries' => ['users'],
             ]
         );
     }
@@ -2522,14 +2509,7 @@ class UsersController extends AbstractController
         // itself (blog-post-form.twig) and its JS (blog-post-form.js) are
         // entirely generic over where the post ends up, so nothing new is
         // needed here beyond pointing apiUrl at this community.
-        //
-        // trix.css: see showBlogPostFormPage()'s own note on why this has to
-        // be linked explicitly (Vite splits it into its own shared chunk
-        // now that Modules\Forums's forums.js also imports it).
-        $headExt = [
-            '<link rel="stylesheet" href="/assets/css/trix.css">',
-            '<script type="module" src="/assets/js/blog-post-form.js" defer></script>',
-        ];
+        $entries = ['blog-post-form'];
 
         return ViewModel::fromPage(
             $page,
@@ -2538,7 +2518,7 @@ class UsersController extends AbstractController
                 'title' => $page->pageName ?: $this->tm->trans('community.new_post'),
                 'description' => $this->tm->trans('community.new_post_title', ['title' => $community->title]),
                 'canonical' => $canonical,
-                'head_ext' => $headExt,
+                'entries' => $entries,
                 'apiUrl' => '/api/v1/communities/'.$community->id.'/blog-posts',
                 'uploadsApiUrl' => '/api/v1/uploads',
                 'cancelUrl' => $cancelUrl,
@@ -3119,33 +3099,12 @@ class UsersController extends AbstractController
         $cancelUrl = $this->urlGenerator->action('user.show', ['username' => $user->username]);
         $canonical = $this->urlGenerator->childAction('user.post-new', $cancelUrl);
 
-        // The form's general layout uses the shared site.css, but the Trix
-        // editor (and its behavior/attachment wiring) is its own bundle -
-        // blog-post-form.js - so pages that only need users.js (e.g.
-        // the users list) don't have to load Trix at all.
-        //
-        // type="module" (same as admin.js, which
-        // also bundle real npm deps) matters here: without it this loads as
-        // a plain classic script sharing one global scope with site.js
-        // (also plain), and since Trix pulls in enough code to collide with
-        // one of site.js's own minified top-level names, that throws
-        // "Identifier ... has already been declared". A module gets its own
-        // scope, so it can't collide with a classic script's top-level vars.
-        //
-        // trix.css: Trix's own vendor stylesheet (icon backgrounds for every
-        // toolbar button) - since both this bundle and Modules\Forums's own
-        // forums.js import "trix/dist/trix.css", Vite's CSS code-splitting
-        // pulls it out into its own shared css/trix.css asset instead of
-        // inlining it into either entry's own .css file (that only happened
-        // - invisibly - back when blog-post-form.js was Trix's only
-        // importer). Nothing auto-injects a shared chunk's stylesheet here
-        // (this app has no Vite HTML-entry point, every page hand-lists its
-        // own head_ext tags), so it has to be linked explicitly like every
-        // other stylesheet this array already lists.
-        $headExt = [
-            '<link rel="stylesheet" href="/assets/css/trix.css">',
-            '<script type="module" src="/assets/js/blog-post-form.js" defer></script>',
-        ];
+        // The form's general layout uses the shared site stylesheet, but the
+        // Trix editor (and its behavior/attachment wiring) is its own entry -
+        // `blog-post-form` - so pages that only need `users` (e.g. the users
+        // list) don't load Trix at all. Trix's own stylesheet comes with the
+        // entry: Core\Assets links every stylesheet an entry pulls in.
+        $entries = ['blog-post-form'];
 
         return ViewModel::fromPage(
             $page,
@@ -3154,7 +3113,7 @@ class UsersController extends AbstractController
                 'title' => $page->pageName ?: $this->tm->trans('blog.new_post'),
                 'description' => $this->tm->trans('blog.new_post_title'),
                 'canonical' => $canonical,
-                'head_ext' => $headExt,
+                'entries' => $entries,
                 'apiUrl' => '/api/v1/users/blog-posts',
                 'uploadsApiUrl' => '/api/v1/uploads',
                 'cancelUrl' => $cancelUrl,
@@ -3284,13 +3243,7 @@ class UsersController extends AbstractController
         );
         $cancelUrl = $post->canonicalUrl;
 
-        // trix.css: see showBlogPostFormPage()'s own note on why this has to
-        // be linked explicitly (Vite splits it into its own shared chunk
-        // now that Modules\Forums's forums.js also imports it).
-        $headExt = [
-            '<link rel="stylesheet" href="/assets/css/trix.css">',
-            '<script type="module" src="/assets/js/blog-post-form.js" defer></script>',
-        ];
+        $entries = ['blog-post-form'];
 
         return ViewModel::fromPage(
             $page,
@@ -3299,7 +3252,7 @@ class UsersController extends AbstractController
                 'title' => $page->pageName ?: $this->tm->trans('blog.edit_post'),
                 'description' => $this->tm->trans($isCommunityPost ? 'blog.edit_community_post' : 'blog.edit_blog_post'),
                 'canonical' => $canonical,
-                'head_ext' => $headExt,
+                'entries' => $entries,
                 'apiUrl' => '/api/v1/users/blog-posts/'.$post->id,
                 'uploadsApiUrl' => '/api/v1/uploads',
                 'post' => $post,
@@ -3612,15 +3565,7 @@ class UsersController extends AbstractController
         // no-ops when its own DOM hook is absent, so loading it for viewers
         // who see neither button (e.g. the author's own view, which has no
         // friend-request button on your own post) is harmless.
-        $viewData['head_ext'] = [
-            // type="module" (same as every other users.js tag now) gives
-            // this bundle its own scope instead of sharing site.js's
-            // classic-script global scope - the two independently
-            // minified bundles once collided on an unrelated top-level
-            // name ("Identifier 'H' has already been declared"), even
-            // though neither file has any actual import/export syntax.
-            '<script type="module" src="/assets/js/users.js" defer></script>',
-        ];
+        $viewData['entries'] = ['users'];
 
         return ViewModel::fromPage($page, 'modules/users/blog-post.show.twig', $viewData);
     }
@@ -3840,9 +3785,7 @@ class UsersController extends AbstractController
             'communityCreatedAtLabel' => $communityStatsData['createdAtLabel'],
             ...$audioPlaylistData,
             'currentPostAudioTrackId' => $currentPostAudioTrackId,
-            'head_ext' => [
-                '<script type="module" src="/assets/js/users.js" defer></script>',
-            ],
+            'entries' => ['users'],
         ];
 
         return ViewModel::fromPage($page, 'modules/users/blog-post.show.twig', $viewData);
@@ -3932,7 +3875,8 @@ class UsersController extends AbstractController
         }
 
         $captcha = $this->settings->registrationCaptcha();
-        $headExt = ['<script type="module" src="/assets/js/register.js" defer></script>'];
+        $entries = ['register'];
+        $headExt = [];
         if ($captcha['provider'] === 'turnstile') {
             $headExt[] = '<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>';
         } elseif ($captcha['provider'] === 'hcaptcha') {
@@ -3943,6 +3887,7 @@ class UsersController extends AbstractController
             $page,
             'modules/users/register1.twig',
             [
+                'entries' => $entries,
                 'head_ext' => $headExt,
                 'title' => $this->tm->trans('user.registration'),
                 'successUrl' => $successUrl,
@@ -3981,9 +3926,7 @@ class UsersController extends AbstractController
             $page,
             $token ? 'modules/users/reset.twig' : 'modules/users/retrieve.twig',
             [
-                'head_ext' => [
-                    '<script type="module" src="/assets/js/retrieve.js" defer></script>',
-                ],
+                'entries' => ['retrieve'],
                 'title' => $this->tm->trans('user.password_recovery'),
                 'token' => $token,
             ]

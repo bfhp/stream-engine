@@ -8,6 +8,8 @@ use DOMDocument;
 use DOMXPath;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use StreamEngine\Core\Assets;
+use StreamEngine\View\AssetsExtension;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 use Twig\TwigFunction;
@@ -20,7 +22,7 @@ final class CanonicalTest extends TestCase
         $twig = self::twig();
         $html = $twig->load('layouts/base.twig')->renderBlock('layout_head', $data + [
             'siteUrl' => 'https://example.com',
-            'head_ext' => ['<script src="/assets/js/users.js"></script>'],
+            'head_ext' => ['<script src="/page.js"></script>'],
         ]);
         $dom = new DOMDocument();
         $dom->loadHTML($html);
@@ -73,6 +75,7 @@ final class CanonicalTest extends TestCase
     {
         $twig = new Environment(new FilesystemLoader(__DIR__.'/../../views/themes/default'));
         $twig->addFunction(new TwigFunction('trans', static fn (string $key): string => $key));
+        $twig->addExtension(new AssetsExtension(new Assets(__DIR__.'/../Support/assets-manifest.php'), 'en'));
 
         return $twig;
     }

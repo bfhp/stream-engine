@@ -4,7 +4,7 @@ import { notifications } from "@mantine/notifications";
 import { csrfHeaders } from "../../shared/csrf";
 import { getApiResponseError } from "../../shared/api-errors";
 import { FEED_TYPE_LABELS, FEED_TYPES } from "../../shared/feed-types";
-import { trans } from "../../shared/i18n";
+import { trans } from "../i18n";
 import type { PickerFeed } from "../lib/feed-picker";
 import AdminSelect from "./AdminSelect";
 

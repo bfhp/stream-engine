@@ -21,12 +21,13 @@ $files->addPath($root.'/views/themes/default', 'default');
 $base = <<<'TWIG'
 <!doctype html><html lang="{{ fixtureLocale }}" dir="{{ fixtureLocale == 'ar' ? 'rtl' : 'ltr' }}" data-color-mode="{{ fixtureMode }}" data-bs-theme="{{ fixtureMode }}">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{ title }}</title>
-<link rel="stylesheet" href="/assets/css/base.css"><link rel="stylesheet" href="/assets/css/site.css">
-{% if fixtureTheme == 'bootstrap' %}<link rel="stylesheet" href="/assets/css/{{ fixtureLocale == 'ar' ? 'bootstrap-rtl' : 'bootstrap' }}.css"><link rel="stylesheet" href="/assets/css/bootstrap-skin.css">{% endif %}
+{{ asset_import_map() }}
+{{ asset_styles(['base', 'site']) }}
+{% if fixtureTheme == 'bootstrap' %}{{ asset_styles([fixtureLocale == 'ar' ? 'bootstrap-rtl' : 'bootstrap', 'bootstrap-skin']) }}{% endif %}
+{{ asset_tags(fixtureTheme == 'bootstrap' ? ['ui-bootstrap', 'users'] : ['users']) }}
 </head><body>{% block layout_main %}{% endblock %}
 <script>window.CMS={api:async(url,options={})=>{const r=await fetch(url,{method:options.method||'GET',headers:{'Content-Type':'application/json'},body:options.data?JSON.stringify(options.data):undefined});if(!r.ok)throw new Error('Fixture request failed');return r.status===204?undefined:r.json()},toast:()=>{},confirm:()=>{}};</script>
-{% if fixtureTheme == 'bootstrap' %}<script type="module" src="/assets/js/ui-bootstrap.js"></script>{% endif %}
-<script type="module" src="/assets/js/users.js"></script></body></html>
+</body></html>
 TWIG;
 $twig = new Twig\Environment(new Twig\Loader\ChainLoader([
     new Twig\Loader\ArrayLoader(['layouts/base.twig' => $base, 'components/widgets/block.twig' => '',
@@ -35,6 +36,8 @@ $twig = new Twig\Environment(new Twig\Loader\ChainLoader([
 ]), ['autoescape' => 'html', 'strict_variables' => true]);
 $tm = new StreamEngine\Core\TranslationManager($locale, 'en');
 $twig->addFunction(new Twig\TwigFunction('trans', $tm->trans(...)));
+// The real build: run `npm run build` first.
+$twig->addExtension(new StreamEngine\View\AssetsExtension(StreamEngine\Core\Assets::forApplication(), $locale));
 foreach (['fixtureTheme' => $theme, 'fixtureLocale' => $locale, 'fixtureMode' => $mode] as $key => $value) {
     $twig->addGlobal($key, $value);
 }

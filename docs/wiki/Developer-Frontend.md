@@ -56,7 +56,7 @@ it through `CMS` only when independent entries must consume it at runtime.
 
 ## Vite entry points
 
-The root `vite.config.ts` builds explicit entries with stable output names:
+The root `vite.config.ts` builds explicit entries:
 
 - `admin` for the administration SPA;
 - `site` for shared public behavior and public-site CSS;
@@ -65,15 +65,18 @@ The root `vite.config.ts` builds explicit entries with stable output names:
 - theme-support entries such as `base`, `bootstrap`, `bootstrap-rtl`,
   `bootstrap-skin`, and `ui-bootstrap`.
 
-Entry JavaScript is written to `/assets/js/<name>.js`; extracted CSS, images,
-fonts, and shared chunks use the configured `css/`, `img/`, `fonts/`, and
-`js/chunks/` directories. Only entry filenames are a stable integration
-surface. Do not link a generated chunk directly: its existence and name depend
-on the current import graph.
+Every built file is named by its content (`js/users-<hash>.js`,
+`css/site-<hash>.css`, `js/chunks/…`), so it can be cached for good. Nothing
+outside the build refers to a built file name. The entry **name** is the
+integration surface: `assetManifestPlugin` (in `vite-build-data.ts`) writes
+`public/assets/.vite/manifest.php` with, per entry, its script, every
+stylesheet it and its static imports pull in, and those imports for
+`<link rel="modulepreload">`. `Core\Assets` reads it (a PHP array, kept in
+memory by opcache) and renders the tags.
 
-The build has no Vite HTML entry and the PHP application does not read a Vite
-manifest. Twig and controllers link the known entry files themselves. It also
-means Vite does not inject stylesheets or preload tags into public pages.
+Files the server refers to by a fixed path - the default avatar and community
+images - live in `assets-src/public/` and are copied to `public/assets/`
+unchanged.
 
 ### Root module entries
 
@@ -82,7 +85,7 @@ Vite scans only immediate `.ts` and `.tsx` children of
 helpers imported by an entry. The filename becomes a global output name:
 
 ```text
-modules/Notes/assets/notes.ts  →  public/assets/js/notes.js
+modules/Notes/assets/notes.ts  →  entry `notes`  →  public/assets/js/notes-<hash>.js
 ```
 
 Names must not collide with another module entry or the built-in reserved
@@ -95,31 +98,30 @@ explicitly in `vite.config.ts`.
 
 ## Connecting an entry to a public page
 
-The theme manifest loads shared site assets. A feature controller adds its
-page-specific entry through trusted `head_ext` view data:
+The theme manifest names the shared entries (`assets.entries`). A feature
+controller adds its page-specific entries through the `entries` view data:
 
 ```php
 return ViewModel::fromPage($page, 'modules/notes/index.twig', [
-    'head_ext' => [
-        '<script type="module" src="/assets/js/notes.js" defer></script>',
-    ],
+    'entries' => ['notes'],
 ]);
 ```
 
-`layouts/base.twig` renders `head_ext` raw. Populate it only with fixed,
-developer-owned tags; never concatenate administrator or request input into an
-asset tag. Use `type="module"` for generated JavaScript and load an entry only
-on pages that need it.
+`layouts/base.twig` passes the theme's and the page's entries to
+`asset_tags()`, which prints each stylesheet, preload and module script once.
+Stylesheets an entry imports - including ones Vite splits into a shared chunk,
+such as Trix's - come with it; there is nothing to link by hand. Templates that
+need assets outside the layout use the same helpers (`View\AssetsExtension`):
 
-An entry that imports CSS may produce a dedicated stylesheet or contribute to
-a shared stylesheet after Vite code splitting. Because there is no generated
-HTML to inject that CSS, inspect the production build and explicitly link every
-required extracted stylesheet. Trix is the current example: both Forums and
-the blog editor import it, so their controllers explicitly include
-`/assets/css/trix.css` as well as their JavaScript entry.
+- `asset_import_map(admin = false)` - the translations import map; it must
+  precede every module script and preload on the page;
+- `asset_tags(['notes'])` - stylesheets, preloads and scripts;
+- `asset_styles(['base', 'site'])` - stylesheets only (error pages).
 
-Do not guess or link internal chunks to work around a missing style. Fix the
-entry/import arrangement or link the stable extracted CSS output deliberately.
+An entry name the build does not have throws when the page renders;
+`Tests\Core\AssetBundlesTest` checks every name used in `src/` and the bundled
+theme manifests against the build inputs. `head_ext` remains for other trusted
+head markup (robots meta, third-party CAPTCHA scripts).
 
 ## Public-site initialization
 
@@ -256,10 +258,19 @@ automatic until the shipped entry actually performs it.
 ## Browser localization and generated build data
 
 Browser messages come from `src/Lang/<locale>.php`. The Vite translation plugin
-executes PHP during build, loads each catalog, and includes only keys beginning
-with `js.` in the virtual `virtual:translations` module. Therefore frontend
-work that adds a visible string must add its key to every supported server
-catalog; a build is required after catalog changes.
+executes PHP during build, keeps only keys beginning with `js.`, and writes one
+content-hashed module per locale and scope: `js/i18n/<locale>-<hash>.js` (site
+keys) and `js/i18n/<locale>-admin-<hash>.js` (`js.admin.*`), each with the
+English fallback merged in. Code imports them as ordinary modules -
+`shared/i18n.ts` imports `stream-engine-translations`, `admin/i18n.ts` also
+`stream-engine-translations/admin`. In a build those specifiers are external,
+and the page's import map (`asset_import_map()`) points them at the files for
+the locale the server chose, so a page downloads one locale and the strings
+exist the moment the modules run. In dev and tests the plugin serves a virtual
+module with every locale instead. Admin code imports `trans()` from
+`admin/i18n.ts`; site pages never download the admin strings. Therefore
+frontend work that adds a visible string must add its key to every supported
+server catalog; a build is required after catalog changes.
 
 `trans()` falls back to English and then the key. Locale resolution normalizes
 case and underscores, tries the exact locale and its base language, and reads

@@ -7,6 +7,7 @@ namespace StreamEngine;
 use DateTimeZone;
 use Exception;
 use StreamEngine\Core\ApiErrorResponse;
+use StreamEngine\Core\Assets;
 use StreamEngine\Core\Cache;
 use StreamEngine\Core\Config;
 use StreamEngine\Core\ControllerFactory;
@@ -78,6 +79,7 @@ use StreamEngine\Service\UploadService;
 use StreamEngine\Service\UserService;
 use StreamEngine\Service\WidgetService;
 use StreamEngine\Twig\CachedEnvironment;
+use StreamEngine\View\AssetsExtension;
 use StreamEngine\View\Breadcrumb;
 use Throwable;
 use Twig\Error\LoaderError;
@@ -134,6 +136,7 @@ class StreamEngine
     private Formatter $fmt;
 
     private ThemeCatalog $themeCatalog;
+    private Assets $assets;
 
     private ThemeService $themeService;
 
@@ -161,6 +164,7 @@ class StreamEngine
         $settingsRepository = new SettingsRepository($this->db);
         $this->settings = new SettingsService($settingsRepository);
         $this->themeCatalog = ThemeCatalog::forApplication($this->config);
+        $this->assets = Assets::forApplication();
         $this->themeService = new ThemeService($this->themeCatalog, $this->settings, $settingsRepository);
         $this->activeTheme = $this->themeService->active();
         $this->widgets = new WidgetService($this->settings);
@@ -473,6 +477,7 @@ class StreamEngine
         $twig->addFunction(new TwigFunction('trans', [$this->tm, 'trans']));
         $twig->addFunction(new TwigFunction('trans_choice', [$this->fmt, 'transChoice']));
         $twig->addFunction(new TwigFunction('action_url', [$this->urlGenerator, 'action']));
+        $twig->addExtension(new AssetsExtension($this->assets, $this->tm->getLocale()));
 
         return $twig;
     }

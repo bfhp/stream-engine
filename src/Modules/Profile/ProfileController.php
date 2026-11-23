@@ -137,9 +137,7 @@ class ProfileController extends AbstractController
             $page,
             "modules/profile/page.twig",
             [
-                'head_ext' => [
-                    '<script type="module" src="/assets/js/profile.js" defer></script>',
-                ],
+                'entries' => ['profile'],
                 'title' => $this->tm->trans('profile.title'),
                 'tabs' => $tabs,
                 'notificationPreferences' => $notificationSettings['items'],

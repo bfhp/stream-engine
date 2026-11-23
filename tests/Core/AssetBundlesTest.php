@@ -9,24 +9,17 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
 /**
- * The one rule that ties the asset sources to the templates that load them.
+ * The one rule that ties the asset sources to the code that loads them.
  *
- * Rollup emits an entry that imports shared code as a real ES module - the
- * built file literally begins `import { … } from "./chunks/…"`. A classic
- * `<script src>` cannot execute that: the browser reports a syntax error and
- * the page's whole behaviour silently disappears. So the moment a bundle
- * starts importing anything, its `<script>` tag has to carry `type="module"`.
+ * Pages name Vite entries - `'entries' => ['forums']` in a controller,
+ * `asset_tags(['admin'])` in a template, `assets.entries` in a theme.json -
+ * and Core\Assets turns the name into the built, hashed files. A name the
+ * build does not have throws at render time, on one page only. So every name
+ * used anywhere must be a key of `rollupOptions.input` in vite.config.ts.
  *
- * This has already caught us twice - `profile.js` when it started importing
- * `shared/uploads.ts`, and then five bundles at once when they were converted
- * from `.js` to `.ts` and picked up `shared/api-errors.ts` and
- * `shared/escape.ts`. Both times the mistake was invisible in review and
- * invisible in the build; it shows only in a browser, on one page.
- *
- * Structural rather than a rendering test on purpose: it reads `vite.config.ts`
- * for the entry list and the sources for their imports, so it covers every
- * bundle at once and keeps covering a new one without anybody remembering to
- * add it here.
+ * Structural rather than a rendering test on purpose: it reads the config for
+ * the entry list and the sources for the names, so it keeps covering a new
+ * page without anybody remembering to add it here.
  */
 final class AssetBundlesTest extends TestCase
 {
@@ -74,52 +67,41 @@ final class AssetBundlesTest extends TestCase
     }
 
     /**
-     * Whether an entry's source has any top-level import - CSS side effects
-     * included.
+     * Every entry name used by controllers, templates and theme manifests,
+     * with where it was found.
      *
-     * Leading whitespace is allowed on purpose: a module entry had its import
-     * indented by four spaces, which is legal, has no effect on the build, and
-     * made a stricter `/^import/` version of this quietly report the bundle as
-     * self-contained. A check that depends on formatting is worse than no
-     * check, because it reads as a passing one.
+     * @return list<array{0: string, 1: string}> [entry, file]
      */
-    private static function imports(string $sourcePath): bool
+    private static function usedEntries(): array
     {
-        $source = (string) file_get_contents(self::root().'/'.$sourcePath);
-
-        return (bool) preg_match('/^\s*import\s/m', $source);
-    }
-
-    /**
-     * Every `<script … src="/assets/js/<name>">` written anywhere in src/.
-     *
-     * @return list<array{0: string, 1: string}> [file name, tag]
-     */
-    private static function scriptTagsFor(string $bundle): array
-    {
-        $tags = [];
-
-        $files = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator(self::root().'/src')
-        );
-
+        $used = [];
+        $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator(self::root().'/src'));
         foreach ($files as $file) {
-            if ($file->getExtension() !== 'php') {
+            if (! in_array($file->getExtension(), ['php', 'twig'], true)) {
                 continue;
             }
-
+            $source = (string) file_get_contents($file->getPathname());
             preg_match_all(
-                '/<script[^>]*src="\/assets\/js\/'.preg_quote($bundle, '/').'"[^>]*>/',
-                (string) file_get_contents($file->getPathname()),
-                $matches
+                '/(?:[\'"]entries[\'"]\]?\s*(?:=>|=)|\$entries\s*=|asset_(?:tags|styles)\()\s*\[([^\]]*)\]/',
+                $source,
+                $lists,
             );
-
-            foreach ($matches[0] as $tag) {
-                $tags[] = [$file->getFilename(), $tag];
+            foreach ($lists[1] as $list) {
+                preg_match_all('/[\'"]([a-z0-9][a-z0-9_-]*)[\'"]/', $list, $names);
+                foreach ($names[1] as $name) {
+                    $used[] = [$name, $file->getFilename()];
+                }
             }
         }
 
-        return $tags;
+        foreach (glob(self::root().'/views/themes/*/theme.json') ?: [] as $manifest) {
+            $assets = json_decode((string) file_get_contents($manifest), true)['assets'] ?? [];
+            foreach ([...($assets['entries'] ?? []), ...array_keys($assets['rtl'] ?? []), ...array_values($assets['rtl'] ?? [])] as $name) {
+                $used[] = [$name, basename(dirname($manifest)).'/theme.json'];
+            }
+        }
+
+        return $used;
     }
 
     public function testTheEntryListIsReadable(): void
@@ -136,53 +118,15 @@ final class AssetBundlesTest extends TestCase
         }
     }
 
-    public function testEveryBundleThatImportsSharedCodeIsLoadedAsAModule(): void
+    public function testEveryEntryNamedByAPageIsABuildInput(): void
     {
-        $checked = 0;
+        $inputs = array_map(static fn (string $bundle): string => substr($bundle, 0, -3), array_keys(self::entries()));
+        $used = self::usedEntries();
 
-        foreach (self::entries() as $bundle => $source) {
-            if (! self::imports($source)) {
-                continue;
-            }
-
-            foreach (self::scriptTagsFor($bundle) as [$file, $tag]) {
-                $checked++;
-
-                $this->assertStringContainsString(
-                    'type="module"',
-                    $tag,
-                    sprintf(
-                        '%s imports shared code, so %s must be loaded with type="module" - '
-                        .'a classic script cannot execute an ES module and the page goes dead. '
-                        .'Tag found in %s: %s',
-                        $source,
-                        $bundle,
-                        $file,
-                        $tag
-                    )
-                );
-            }
+        foreach ($used as [$name, $file]) {
+            $this->assertContains($name, $inputs, "$file names the asset entry '$name', which vite.config.ts does not build.");
         }
 
-        $this->assertGreaterThan(10, $checked, 'suspiciously few script tags matched');
-    }
-
-    /**
-     * Recorded as a fact about today rather than asserted as a requirement:
-     * every page entry now imports something, which is why every one of them is
-     * a module. A future self-contained entry may stay a classic script - the
-     * rule above is one-directional.
-     */
-    public function testEveryEntryCurrentlyImportsSomething(): void
-    {
-        $selfContained = [];
-
-        foreach (self::entries() as $bundle => $source) {
-            if (! self::imports($source)) {
-                $selfContained[] = $bundle;
-            }
-        }
-
-        $this->assertSame([], $selfContained);
+        $this->assertGreaterThan(20, count($used), 'suspiciously few entry names matched');
     }
 }

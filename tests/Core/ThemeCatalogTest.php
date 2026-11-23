@@ -15,8 +15,7 @@ final class ThemeCatalogTest extends TestCase
     {
         $this->root = sys_get_temp_dir().'/stream-engine-themes-'.bin2hex(random_bytes(6));
         mkdir($this->root.'/themes/default', 0777, true);
-        mkdir($this->root.'/public/assets/css', 0777, true);
-        file_put_contents($this->root.'/public/assets/css/site.css', 'body{}');
+        mkdir($this->root.'/public', 0777, true);
         file_put_contents($this->root.'/themes/default/theme.json', json_encode([
             'id' => 'default',
             'name' => 'Default',
@@ -29,7 +28,7 @@ final class ThemeCatalogTest extends TestCase
                     'options' => ['dark' => 'Dark', 'light' => 'Light'],
                 ],
             ],
-            'assets' => ['styles' => ['/assets/css/site.css']],
+            'assets' => ['entries' => ['base', 'site']],
         ], JSON_THROW_ON_ERROR));
     }
 
@@ -45,14 +44,15 @@ final class ThemeCatalogTest extends TestCase
         rmdir($this->root);
     }
 
-    public function testDiscoversValidatedManifestAndVersionsAssets(): void
+    public function testDiscoversValidatedManifestAndItsEntries(): void
     {
         $theme = (new ThemeCatalog($this->root.'/themes', $this->root.'/public'))->find('default');
 
         self::assertSame('Default', $theme['name']);
         self::assertSame('#123456', $theme['themeColor']);
         self::assertSame('dark', $theme['settings']['mode']['default']);
-        self::assertMatchesRegularExpression('#^/assets/css/site\.css\?v=\d+$#', $theme['assets']['styles'][0]);
+        self::assertSame(['base', 'site'], $theme['assets']['entries']);
+        self::assertSame([], $theme['assets']['styles']);
     }
 
     public function testColorModeWithLightAndDarkAlsoOffersSystem(): void
@@ -78,42 +78,28 @@ final class ThemeCatalogTest extends TestCase
 
     public function testNoFrameworkIsPrependedImplicitly(): void
     {
-        file_put_contents($this->root.'/public/assets/css/bootstrap.css', 'a{}');
-
         $theme = (new ThemeCatalog($this->root.'/themes', $this->root.'/public'))->find('default');
 
-        self::assertCount(1, $theme['assets']['styles']);
-        self::assertMatchesRegularExpression('#^/assets/css/site\.css\?v=\d+$#', $theme['assets']['styles'][0]);
+        self::assertSame(['base', 'site'], $theme['assets']['entries']);
     }
 
-    public function testRtlSwapsOnlyStylesheetsTheManifestDeclares(): void
+    public function testRtlSwapsOnlyEntriesTheManifestDeclares(): void
     {
-        file_put_contents($this->root.'/public/assets/css/bootstrap.css', 'a{}');
         $this->writeTheme('default', [
             'assets' => [
-                'styles' => ['/assets/css/bootstrap.css', '/assets/css/site.css'],
-                'rtl' => ['/assets/css/bootstrap.css' => '/assets/css/bootstrap-rtl.css'],
+                'entries' => ['bootstrap', 'site'],
+                'rtl' => ['bootstrap' => 'bootstrap-rtl'],
             ],
         ]);
         $catalog = new ThemeCatalog($this->root.'/themes', $this->root.'/public');
         $theme = $catalog->find('default');
 
-        self::assertSame($theme, $catalog->forDirection($theme, true), 'No RTL build deployed: unchanged.');
-
-        file_put_contents($this->root.'/public/assets/css/bootstrap-rtl.css', 'a{}');
-        $catalog = new ThemeCatalog($this->root.'/themes', $this->root.'/public');
-        $theme = $catalog->find('default');
         self::assertSame($theme, $catalog->forDirection($theme, false));
-        $rtl = $catalog->forDirection($theme, true);
-        self::assertMatchesRegularExpression('#^/assets/css/bootstrap-rtl\.css\?v=\d+$#', $rtl['assets']['styles'][0]);
-        self::assertSame($theme['assets']['styles'][1], $rtl['assets']['styles'][1]);
-        self::assertCount(2, $rtl['assets']['styles']);
+        self::assertSame(['bootstrap-rtl', 'site'], $catalog->forDirection($theme, true)['assets']['entries']);
     }
 
     public function testChildInheritsParentChainAndAssets(): void
     {
-        file_put_contents($this->root.'/public/assets/css/bootstrap.css', 'a{}');
-        file_put_contents($this->root.'/public/assets/css/bootstrap-rtl.css', 'a{}');
         mkdir($this->root.'/public/themes/framework', 0777, true);
         mkdir($this->root.'/public/themes/brand', 0777, true);
         file_put_contents($this->root.'/public/themes/framework/site.css', 'a{}');
@@ -121,13 +107,14 @@ final class ThemeCatalogTest extends TestCase
 
         $this->writeTheme('framework', [
             'assets' => [
-                'styles' => ['/assets/css/bootstrap.css', '/themes/framework/site.css'],
-                'rtl' => ['/assets/css/bootstrap.css' => '/assets/css/bootstrap-rtl.css'],
+                'entries' => ['bootstrap', 'site'],
+                'styles' => ['/themes/framework/site.css'],
+                'rtl' => ['bootstrap' => 'bootstrap-rtl'],
             ],
         ]);
         $this->writeTheme('brand', [
             'parent' => 'framework',
-            'assets' => ['styles' => ['/assets/css/site.css', '/themes/brand/site.css']],
+            'assets' => ['entries' => ['site', 'brand-extras'], 'styles' => ['/themes/brand/site.css']],
         ]);
 
         $catalog = new ThemeCatalog($this->root.'/themes', $this->root.'/public');
@@ -136,13 +123,18 @@ final class ThemeCatalogTest extends TestCase
         self::assertSame(['brand', 'framework', 'default'], $brand['chain']);
         self::assertSame(['brand', 'framework', 'default'], array_column($catalog->lineage($brand), 'id'));
         self::assertSame(
-            ['/assets/css/site.css', '/assets/css/bootstrap.css', '/themes/framework/site.css', '/themes/brand/site.css'],
-            array_map(static fn (string $url): string => strtok($url, '?'), $brand['assets']['styles']),
+            ['base', 'site', 'bootstrap', 'brand-extras'],
+            $brand['assets']['entries'],
             'Ancestors first, duplicates keep their first position.',
         );
-        self::assertStringStartsWith(
-            '/assets/css/bootstrap-rtl.css?v=',
-            $catalog->forDirection($brand, true)['assets']['styles'][1],
+        self::assertSame(
+            ['/themes/framework/site.css', '/themes/brand/site.css'],
+            array_map(static fn (string $url): string => strtok($url, '?'), $brand['assets']['styles']),
+        );
+        self::assertStringStartsWith('/themes/brand/site.css?v=', $brand['assets']['styles'][1], 'Static theme files are versioned.');
+        self::assertSame(
+            ['base', 'site', 'bootstrap-rtl', 'brand-extras'],
+            $catalog->forDirection($brand, true)['assets']['entries'],
             'RTL replacements are inherited.',
         );
     }
@@ -153,12 +145,13 @@ final class ThemeCatalogTest extends TestCase
         file_put_contents($this->root.'/public/themes/standalone/app.css', 'a{}');
         $this->writeTheme('standalone', [
             'inheritAssets' => false,
-            'assets' => ['styles' => ['/themes/standalone/app.css']],
+            'assets' => ['entries' => ['site'], 'styles' => ['/themes/standalone/app.css']],
         ]);
 
         $theme = (new ThemeCatalog($this->root.'/themes', $this->root.'/public'))->find('standalone');
 
         self::assertSame(['standalone', 'default'], $theme['chain'], 'Templates still inherit.');
+        self::assertSame(['site'], $theme['assets']['entries']);
         self::assertCount(1, $theme['assets']['styles']);
         self::assertStringStartsWith('/themes/standalone/app.css?v=', $theme['assets']['styles'][0]);
     }
@@ -225,6 +218,16 @@ final class ThemeCatalogTest extends TestCase
 
         self::assertNull($catalog->find('broken'));
         self::assertSame('default', $catalog->resolve('missing')['id']);
+    }
+
+    public function testRejectsStylesOutsideTheThemeAndMalformedEntries(): void
+    {
+        $this->writeTheme('outside', ['assets' => ['styles' => ['/assets/css/site.css']]]);
+        $this->writeTheme('badentry', ['assets' => ['entries' => ['../site']]]);
+        $catalog = new ThemeCatalog($this->root.'/themes', $this->root.'/public');
+
+        self::assertNull($catalog->find('outside'));
+        self::assertNull($catalog->find('badentry'));
     }
 
     public function testRejectsAssetsOutsideThePublicThemeContract(): void

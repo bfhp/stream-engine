@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
+    createTranslator,
+    getAvailableLocales,
+    getLocale,
     resetTranslations,
-    selectCatalog,
     setTranslationsForTests,
     trans,
     transChoice,
@@ -20,16 +22,24 @@ beforeEach(() => {
 afterEach(resetTranslations);
 
 describe("browser translations", () => {
-    it("selects exact and base locales before falling back to English", () => {
-        const catalogs = {
-            en: { "js.label": "English", "js.fallback": "Fallback" },
-            es: { "js.label": "Spanish" },
-        };
+    it("reads the catalog the translations module served for the document locale", () => {
+        resetTranslations();
 
-        expect(selectCatalog(catalogs, "es-ES")["js.label"]).toBe("Spanish");
-        expect(selectCatalog(catalogs, "ES_mx")["js.label"]).toBe("Spanish");
-        expect(selectCatalog(catalogs, "es-ES")["js.fallback"]).toBe("Fallback");
-        expect(selectCatalog(catalogs, "de")["js.label"]).toBe("English");
+        // jsdom's <html> has no lang: English, from the real catalogs.
+        expect(getLocale()).toBe("en");
+        expect(getAvailableLocales()).toContain("ru");
+        expect(trans("js.common.load_more")).not.toBe("js.common.load_more");
+    });
+
+    it("builds translators over other catalogs, which a test catalog replaces too", () => {
+        const admin = createTranslator({ "js.admin.title": "Admin" });
+
+        // beforeEach's test catalog stands in for every translator's own.
+        expect(admin.trans("js.greeting", { name: "Ada" })).toBe("Hello, Ada!");
+        expect(admin.trans("js.admin.title")).toBe("js.admin.title");
+
+        resetTranslations();
+        expect(admin.trans("js.admin.title")).toBe("Admin");
     });
 
     it("reads and interpolates the build-time catalog", () => {

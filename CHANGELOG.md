@@ -11,10 +11,31 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- Built browser assets are named by their content (`js/site-<hash>.js`,
+  `css/site-<hash>.css`, …) and can be cached permanently. The build writes
+  `public/assets/.vite/manifest.php`, and the new `Core\Assets` with the Twig
+  helpers `asset_tags()`, `asset_styles()` and `asset_import_map()` renders
+  each Vite entry's stylesheets, module preloads and script from it. Pages
+  name entries instead of files: controllers pass `'entries' => ['forums']`
+  instead of `<script>`/`<link>` strings in `head_ext`, and stylesheets an
+  entry imports (Trix's, for example) are linked automatically.
+- Theme manifests list Vite entries: `assets.entries` replaces `/assets/…`
+  paths in `assets.styles`/`assets.scripts`, and `assets.rtl` maps entry names
+  (`"bootstrap": "bootstrap-rtl"`). `assets.styles` is now only for a theme's
+  own static stylesheets below `/themes/<id>/`; `assets.scripts` is removed.
+- Browser translations are served per locale through an import map. The
+  build writes one content-hashed module per locale and scope
+  (`js/i18n/<locale>-<hash>.js`, `js/i18n/<locale>-admin-<hash>.js`) with the
+  English fallback merged in; the layouts map `stream-engine-translations`
+  (and, in the admin panel, `stream-engine-translations/admin`) to the page
+  locale's files. A page downloads one locale instead of every locale bundled
+  into `i18n.js`, and public pages no longer receive administration strings.
+  Administration code imports `trans()` from `admin/i18n.ts`.
+- Default avatar and community images are copied unhashed from
+  `assets-src/public/` (they are referred to by fixed paths).
 - The translation build plugin accepts multiple language directories, with
   later directories overriding earlier ones, so projects can combine engine
   catalogs with their own translations.
-- Generated React Router assets use a stable chunk name across builds.
 
 ### Fixed
 
@@ -39,9 +60,21 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
   with the matching PHP and Twig files.
   Earlier versions must also follow the intervening release notes. No
   dependency updates are required.
-- Projects with their own `vite-build-data.ts` can drop their copy and use
-  the engine's `translationsPlugin`, passing engine language directories
-  before local overrides.
+- Projects with their own Vite configuration must adopt the engine's:
+  content-hashed output names, `publicDir: assets-src/public`, and the
+  `translationsPlugin` and `assetManifestPlugin` from the engine's
+  `vite-build-data.ts` (drop any copy of that file). Rebuild browser assets;
+  pages fail with "Browser assets are not built" until
+  `public/assets/.vite/manifest.php` exists.
+- Controllers and templates of site modules: replace asset tags in
+  `head_ext` with `'entries' => ['<entry>']`, and links to built files with
+  `asset_tags()`/`asset_styles()`. Custom themes: move `/assets/…` paths from
+  `assets.styles`/`assets.scripts` to entry names in `assets.entries`.
+- Site code that translates `js.admin.*` keys must import from
+  `@stream-engine/admin/i18n` instead of `@stream-engine/shared/i18n`.
+- Web server: serve `/assets/` with a long-lived `Cache-Control` (built files
+  change name on every change), except the unhashed `/assets/img/`, and deny
+  `/assets/.vite/`. See the updated Nginx example in the installation guide.
 - No new database migrations or schema changes are required. The installation
   snapshot was regenerated from all 23 migrations: `schema.sql` is unchanged
   from 0.7.6, and its matching manifest identifies 0.7.7. Both files are

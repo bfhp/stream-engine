@@ -18,7 +18,7 @@ import { IconEdit, IconRefresh } from "@tabler/icons-react";
 import { csrfHeaders } from "../../shared/csrf";
 import { formatTimestamp } from "../lib/format";
 import { userListParams, userListState } from "../lib/users";
-import { trans, transChoiceWithCount } from "../../shared/i18n";
+import { trans, transChoiceWithCount } from "../i18n";
 import AdminSelect from "../components/AdminSelect";
 
 type UserRole = "user" | "moderator" | "admin";

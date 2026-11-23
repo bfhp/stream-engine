@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Alert, Badge, Button, Group, Stack, Table, Text } from "@mantine/core";
 import { Link } from "react-router-dom";
 import { csrfHeaders } from "../../shared/csrf";
-import { trans } from "../../shared/i18n";
+import { trans } from "../i18n";
 import { formatNumber, formatTimestamp } from "../lib/format";
 
 export type HealthResult = {

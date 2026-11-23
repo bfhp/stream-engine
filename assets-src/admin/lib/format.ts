@@ -13,7 +13,7 @@
 /**
  * A Unix timestamp (seconds) formatted with the CMS locale from the document.
  */
-import { getLocale, trans } from "../../shared/i18n";
+import { getLocale, trans } from "../i18n";
 import { formatDateTimeValue } from "../../shared/date-time-format";
 
 export function formatTimestamp(timestamp: number | null, locale = getLocale()): string {

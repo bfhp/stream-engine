@@ -146,16 +146,13 @@ final class SearchControllerTest extends TestCase
         $this->assertStringContainsString('follow', $head);
     }
 
-    public function testTheClientScriptIsLoadedDeferred(): void
+    public function testTheClientScriptIsLoaded(): void
     {
         $view = $this->makeController(null)->show($this->makePage());
 
-        $head = implode("\n", $view->data['head_ext']);
-
-        // The results come from search.js, not from this controller - so
-        // the page is useless without it.
-        $this->assertStringContainsString('/assets/js/search.js', $head);
-        $this->assertStringContainsString('defer', $head);
+        // The results come from the `search` entry, not from this
+        // controller - so the page is useless without it.
+        $this->assertSame(['search'], $view->data['entries']);
     }
 
     /**
@@ -168,7 +165,7 @@ final class SearchControllerTest extends TestCase
 
         $this->assertSame('modules/search/page.twig', $view->template);
         $this->assertSame('Search: ', $view->data['title']);
-        $this->assertCount(2, $view->data['head_ext']);
+        $this->assertCount(1, $view->data['head_ext']);
     }
 
     /* ===============================

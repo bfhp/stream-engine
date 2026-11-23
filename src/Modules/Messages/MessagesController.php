@@ -55,10 +55,7 @@ class MessagesController extends AbstractController
             $page,
             'modules/messages/page.twig',
             [
-                'head_ext' => [
-                    '<script type="module" src="/assets/js/messages.js" defer></script>',
-                    '<link rel="stylesheet" href="/assets/css/messages.css">'
-                ],
+                'entries' => ['messages'],
                 'description' => $page->pageName,
             ]
         );

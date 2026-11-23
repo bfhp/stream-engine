@@ -45,9 +45,9 @@ class SearchController extends AbstractController
     {
         $data = [
             'title' => 'Search: '.$this->query,
+            'entries' => ['search'],
             'head_ext' => [
                 '<meta name="robots" content="noindex, follow">',
-                '<script type="module" src="/assets/js/search.js" defer></script>',
             ],
             'search_string' => $this->query,
         ];

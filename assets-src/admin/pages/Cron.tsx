@@ -24,7 +24,7 @@ import { formatTimestamp } from "../lib/format";
 import {
     cronStatusColors, formatCronInterval, formatDuration, type CronStatus, type SchedulerStatus
 } from "../lib/cron";
-import { trans } from "../../shared/i18n";
+import { trans } from "../i18n";
 import AdminSelect from "../components/AdminSelect";
 
 type CronTask = {

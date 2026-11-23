@@ -1,4 +1,4 @@
-import { trans } from "../../shared/i18n";
+import { trans } from "../i18n";
 
 export type FeedContentWidth = "contained" | "full";
 

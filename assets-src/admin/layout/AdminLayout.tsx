@@ -2,7 +2,7 @@ import { AppShell, Burger, Group, NavLink, Text } from "@mantine/core";
 import { useEffect, useState, type MouseEvent } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import type { AdminRoute } from "../module-pages";
-import { trans } from "../../shared/i18n";
+import { trans } from "../i18n";
 import "./accessibility.css";
 
 export const ADMIN_MAIN_ID = "admin-main";

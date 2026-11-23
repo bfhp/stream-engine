@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
-import { feedTypesPlugin, translationsPlugin } from "./vite-build-data.ts";
+import { assetManifestPlugin, feedTypesPlugin, translationsPlugin } from "./vite-build-data.ts";
 
 const projectRoot = path.resolve(".");
 const installedEngineRoot = path.join(projectRoot, "vendor/bfhp/stream-engine");
@@ -34,11 +34,15 @@ for (const name of Object.keys(moduleEntries)) {
     if (builtInEntryNames.includes(name)) throw new Error(`Reserved module asset entry: ${name}`);
 }
 
+const translations = translationsPlugin(path.join(engineRoot, "src/Lang"));
+
 export default defineConfig({
     plugins: [
-        translationsPlugin(path.join(engineRoot, "src/Lang")),
+        translations,
         feedTypesPlugin(path.join(projectRoot, "vendor/autoload.php")),
         react(),
+        // .vite/manifest.php: entry names to built files, read by Core\Assets.
+        assetManifestPlugin(translations),
     ],
     resolve: {
         alias: {
@@ -46,7 +50,9 @@ export default defineConfig({
         },
     },
     base: "/assets/",
-    publicDir: false,
+    // Files the server refers to by a fixed path (default avatars and the
+    // like) are copied as they are; everything Vite builds gets a hashed name.
+    publicDir: path.join(engineAssets, "public"),
     build: {
         outDir: "public/assets",
         emptyOutDir: true,
@@ -79,38 +85,25 @@ export default defineConfig({
             },
             output: {
                 postBanner: "/*! Third-party licenses: /assets/THIRD_PARTY_LICENSES.md */",
-                entryFileNames: "js/[name].js",
-                chunkFileNames: "js/chunks/[name].js",
-                // Templates link two shared stylesheets by name
-                // (/assets/css/trix.css, /assets/css/custom-content.css).
-                // A chunk is named after its first module, so a new shared
-                // module could rename them (trix-toolbar.css, keep-focus.css)
-                // and the links broke. Pin those chunks' names.
-                codeSplitting: {
-                    groups: [
-                        { name: "trix", test: /node_modules[\\/]trix[\\/]/ },
-                        // react-router ships its code as dist/*/chunk-<hash>.mjs,
-                        // and a chunk is named after its first module - so it
-                        // came out as chunk-6KYCQHYJ.js, renamed by every
-                        // react-router update. Give it a stable name.
-                        { name: "react-router", test: /node_modules[\\/]react-router[\\/]/ },
-                        { name: "custom-content", test: /shared[\\/]custom-content\.css$/ },
-                    ],
-                },
+                // Every built file is named by its content, so it can be cached
+                // for good; Core\Assets finds the current names in
+                // .vite/manifest.php (see assetManifestPlugin).
+                entryFileNames: "js/[name]-[hash].js",
+                chunkFileNames: "js/chunks/[name]-[hash].js",
                 assetFileNames: (assetInfo) => {
                     const name = assetInfo.names?.[0] ?? "";
                     if (name.endsWith(".css")) {
-                        return "css/[name][extname]";
+                        return "css/[name]-[hash][extname]";
                     }
                     if (/\.(png|jpg|jpeg|gif|svg|webp)$/.test(name)) {
-                        return "img/[name][extname]";
+                        return "img/[name]-[hash][extname]";
                     }
                     if (/\.(woff2?|woff|ttf|eot)$/.test(name)) {
-                        return "fonts/[name][extname]";
+                        return "fonts/[name]-[hash][extname]";
                     }
-                    return "assets/[name][extname]";
-                }
-            }
+                    return "assets/[name]-[hash][extname]";
+                },
+            },
         }
     }
 });

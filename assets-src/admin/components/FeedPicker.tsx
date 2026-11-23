@@ -5,7 +5,7 @@ import { IconExternalLink, IconPlus } from "@tabler/icons-react";
 import { Link } from "react-router-dom";
 import { getApiResponseError } from "../../shared/api-errors";
 import { FEED_TYPE_LABELS } from "../../shared/feed-types";
-import { trans } from "../../shared/i18n";
+import { trans } from "../i18n";
 import {
     buildFeedSearchQueries,
     feedDisplayTitle,

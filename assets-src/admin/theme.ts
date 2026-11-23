@@ -8,7 +8,7 @@ import {
     type CSSVariablesResolver,
     type MantineColorsTuple,
 } from "@mantine/core";
-import { trans } from "../shared/i18n";
+import { trans } from "./i18n";
 
 /*
  * Accessibility adjustments to Mantine's defaults for the administration

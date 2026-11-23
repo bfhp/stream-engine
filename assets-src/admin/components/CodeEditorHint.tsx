@@ -1,5 +1,5 @@
 import { Text } from "@mantine/core";
-import { trans } from "../../shared/i18n";
+import { trans } from "../i18n";
 
 /** Monaco's "Toggle Tab Key Moves Focus" shortcut on this platform. */
 export function tabFocusShortcut(): string {

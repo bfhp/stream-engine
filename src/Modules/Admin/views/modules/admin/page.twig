@@ -15,15 +15,14 @@
             );
         } catch (error) {}
     </script>
-    <link rel="stylesheet" href="/assets/css/admin.css">
-    <link rel="stylesheet" href="/assets/css/custom-content.css">
+    {# The panel's translations include the admin catalog; see Core\Assets. #}
+    {{ asset_import_map(true) }}
+    {{ asset_tags(['admin']) }}
     {% include '@default/partials/site-icons.twig' %}
 </head>
 <body>
 
 <div id="root"></div>
-
-<script defer type="module" src="/assets/js/admin.js"></script>
 
 </body>
 </html>

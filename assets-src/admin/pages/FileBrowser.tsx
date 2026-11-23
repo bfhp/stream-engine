@@ -16,7 +16,7 @@ import {
 import { ChonkyIconFA } from "@samuelncui/chonky-icon-fontawesome";
 import { getApiResponseError } from "../../shared/api-errors";
 import { csrfHeaders } from "../../shared/csrf";
-import { getLocale, trans } from "../../shared/i18n";
+import { getLocale, trans } from "../i18n";
 import { fixFileListRoles, moveInFileList } from "../lib/file-list-keyboard";
 import {
     parentUploadPath,

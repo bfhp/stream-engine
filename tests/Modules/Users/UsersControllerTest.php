@@ -711,26 +711,6 @@ final class UsersControllerTest extends TestCase
         $this->assertSame('users.collection', $usersPage->action);
     }
 
-    /**
-     * Checks that head_ext loads $jsFile as a module script, without
-     * asserting the exact literal tag markup (attribute order/quoting) -
-     * a byte-for-byte string match already broke once when type="module"
-     * was added to fix a real bug (users.js/site.js's classic-script
-     * global-scope collision, "Identifier ... has already been declared")
-     * without every hardcoded assertion of the old tag getting updated in
-     * lockstep. This checks the two things that actually matter: the
-     * right file is loaded, and it's loaded as a module.
-     */
-    private function assertHeadExtLoadsModuleScript(array $headExt, string $jsFile): void
-    {
-        $matches = array_filter(
-            $headExt,
-            static fn (string $tag): bool => str_contains($tag, $jsFile) && str_contains($tag, 'type="module"')
-        );
-
-        $this->assertNotEmpty($matches, sprintf('Expected head_ext to load "%s" as a module script', $jsFile));
-    }
-
     public function testShowUsersListBuildsViewModel(): void
     {
         $_GET = [
@@ -754,7 +734,7 @@ final class UsersControllerTest extends TestCase
         $this->assertSame('/users/?q=%D0%90%D0%BB%D0%B5&sort=name&direction=asc&page=2', $view->data['canonical']);
         $this->assertSame('/users/', $view->data['listUrl']);
         $this->assertSame('/api/v1/users', $view->data['apiUrl']);
-        $this->assertHeadExtLoadsModuleScript($view->data['head_ext'], '/assets/js/users.js');
+        $this->assertContains('users', $view->data['entries']);
         $this->assertSame(['q' => 'Але', 'sort' => 'name', 'direction' => 'asc'], $view->data['filters']);
 
         $_GET = [];
@@ -910,7 +890,7 @@ final class UsersControllerTest extends TestCase
         $this->assertSame('128.0 МБ', $view->data['uploadStorageUsedLabel']);
         $this->assertSame('500.0 МБ', $view->data['uploadStorageLimitLabel']);
         $this->assertSame('372.0 МБ', $view->data['uploadStorageRemainingLabel']);
-        $this->assertHeadExtLoadsModuleScript($view->data['head_ext'], '/assets/js/blog-post-form.js');
+        $this->assertContains('blog-post-form', $view->data['entries']);
         // "Отмена" link - back to the user's own profile/blog.
         $this->assertSame('/nicky42/', $view->data['cancelUrl']);
     }
@@ -1101,7 +1081,7 @@ final class UsersControllerTest extends TestCase
         // users.js now loads unconditionally (not just for isOwnProfile) -
         // initFriendButton() lives in that bundle and is what the "Добавить
         // в друзья" button needs client-side.
-        $this->assertHeadExtLoadsModuleScript($view->data['head_ext'], '/assets/js/users.js');
+        $this->assertContains('users', $view->data['entries']);
         // Unconfigured FeedService::canEditFeed() on this mock defaults to
         // false (its return type) - matches reality anyway, since there's
         // no author here for anyone to be the owner of.
@@ -1193,7 +1173,7 @@ final class UsersControllerTest extends TestCase
         // to 'none' (no membership rows configured on its stub db).
         $this->assertSame('none', $view->data['relationshipStatus']);
         $this->assertSame('/api/v1/users/nicky42/friend', $view->data['friendActionUrl']);
-        $this->assertHeadExtLoadsModuleScript($view->data['head_ext'], '/assets/js/users.js');
+        $this->assertContains('users', $view->data['entries']);
         $this->assertFalse($view->data['canDelete']);
         $this->assertSame([], $view->data['audioPlaylist']);
         $this->assertSame('/users/nicky42/', $view->data['authorUrl']);
