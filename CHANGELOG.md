@@ -11,14 +11,6 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
-- Browser translations are served per locale. The build writes
-  `public/assets/js/i18n/<locale>.js` (and `<locale>-admin.js`) with the
-  English fallback merged in, and the layouts link the page locale's file
-  ahead of the page's modules, so a page downloads one locale's strings
-  instead of every locale bundled into `i18n.js`. Public pages no longer
-  receive administration strings. Outside development the files carry a
-  `?v=` derived from the engine's and the root package's installed revisions,
-  so they can be cached long-term.
 - The translation build plugin accepts multiple language directories, with
   later directories overriding earlier ones, so projects can combine engine
   catalogs with their own translations.
@@ -47,18 +39,9 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
   with the matching PHP and Twig files.
   Earlier versions must also follow the intervening release notes. No
   dependency updates are required.
-- Projects with their own `vite-build-data.ts` must adopt the updated engine
-  `translationsPlugin`, which now emits the per-locale files. Pass engine
-  language directories before local overrides when combining catalogs, then
-  rebuild browser assets.
-- Custom layouts that replace the `<head>` of `layouts/base.twig` without
-  `parent()` must keep the `head_translations` block, or link
-  `translationScripts.site` with `defer` before their module scripts; custom
-  administration pages must also link `translationScripts.admin`. Without it
-  browser strings show as their keys.
-- Test suites that render browser code must register translations on
-  `globalThis.__streamEngineTranslations`; `virtual:translations` now exports
-  the entries for that (see `tests/js/support/i18n-scope.ts`).
+- Projects with their own `vite-build-data.ts` can drop their copy and use
+  the engine's `translationsPlugin`, passing engine language directories
+  before local overrides.
 - No new database migrations or schema changes are required. The installation
   snapshot was regenerated from all 23 migrations: `schema.sql` is unchanged
   from 0.7.6, and its matching manifest identifies 0.7.7. Both files are

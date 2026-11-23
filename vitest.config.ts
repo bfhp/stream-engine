@@ -29,8 +29,6 @@ export default defineConfig({
         // app.ts is DOM code end to end - document.cookie, document.body
         // dataset, createElement-based escaping. jsdom, not node.
         environment: "jsdom",
-        // Load the admin translations too - see tests/js/support/i18n-scope.ts.
-        setupFiles: ["tests/js/support/i18n-scope.ts"],
         include: ["tests/**/*.test.ts"],
         // Each worker loads jsdom and the build-data plugins. Capping the pool
         // keeps CI stable on runners that report more CPUs than they can

@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace StreamEngine\Core;
 
-use Composer\InstalledVersions;
-
 class TranslationManager
 {
     private string $locale;
@@ -128,62 +126,5 @@ class TranslationManager
     public function getLocale(): string
     {
         return $this->locale;
-    }
-
-    // --- Browser translation files ---
-
-    private const string ENGINE_PACKAGE = 'bfhp/stream-engine';
-
-    public const string SCRIPT_SCOPE_SITE = 'site';
-    public const string SCRIPT_SCOPE_ADMIN = 'admin';
-
-    /**
-     * The browser translation file for this locale: `/assets/js/i18n/<locale>.js`
-     * (or `<locale>-admin.js`), built by translationsPlugin in vite-build-data.ts
-     * from the same language files, with the English fallback merged in. The
-     * layouts link it (the `translationScripts` Twig global) with `defer` ahead
-     * of the page's modules, so shared/i18n.ts finds the strings registered on
-     * `globalThis.__streamEngineTranslations` - one locale per page instead of
-     * every locale in every bundle.
-     *
-     * The build writes a file for every language file, so only the locale
-     * choice happens here, against availableLocales(): `pt-br`, then `pt`, then
-     * `en`, matching shared/i18n.ts. Nothing is checked on disk.
-     *
-     * $version, when given, is appended as `?v=` so the file can be cached for
-     * long and still change with a release - see browserScriptVersion().
-     */
-    public function browserScriptUrl(string $scope = self::SCRIPT_SCOPE_SITE, ?string $version = null): string
-    {
-        $available = self::availableLocales();
-        $chosen = 'en';
-        foreach ([$this->locale, explode('-', $this->locale)[0]] as $candidate) {
-            if (in_array($candidate, $available, true)) {
-                $chosen = $candidate;
-                break;
-            }
-        }
-
-        $url = '/assets/js/i18n/'.$chosen.($scope === self::SCRIPT_SCOPE_ADMIN ? '-admin' : '').'.js';
-
-        return $version !== null && $version !== '' ? $url.'?v='.rawurlencode($version) : $url;
-    }
-
-    /**
-     * A version for the browser translation files that changes with every
-     * release without touching them at runtime: the engine's installed
-     * revision (its catalogs and the plugin that builds the files) and the
-     * root package's (a site's own src/Lang overrides). Both come from
-     * Composer's installed.php, which Composer has loaded anyway, and change on
-     * `composer install` after an update or a new site commit.
-     */
-    public static function browserScriptVersion(): string
-    {
-        $engine = InstalledVersions::isInstalled(self::ENGINE_PACKAGE)
-            ? (InstalledVersions::getReference(self::ENGINE_PACKAGE) ?? InstalledVersions::getPrettyVersion(self::ENGINE_PACKAGE) ?? '')
-            : '';
-        $root = InstalledVersions::getRootPackage();
-
-        return substr(sha1($engine.'|'.($root['reference'] ?? $root['pretty_version'] ?? '')), 0, 12);
     }
 }

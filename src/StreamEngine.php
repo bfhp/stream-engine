@@ -470,11 +470,6 @@ class StreamEngine
         $twig->addGlobal('headerLogoSize', $this->headerLogoSize($this->settings->headerLogo()));
         $twig->addGlobal('registrationOpen', $this->settings->registrationMode() !== 'closed');
         $twig->addGlobal('cookieNotice', $this->settings->cookieNoticeEnabled());
-        $translationsVersion = $this->config->isDevelopment() ? null : TranslationManager::browserScriptVersion();
-        $twig->addGlobal('translationScripts', [
-            TranslationManager::SCRIPT_SCOPE_SITE => $this->tm->browserScriptUrl(TranslationManager::SCRIPT_SCOPE_SITE, $translationsVersion),
-            TranslationManager::SCRIPT_SCOPE_ADMIN => $this->tm->browserScriptUrl(TranslationManager::SCRIPT_SCOPE_ADMIN, $translationsVersion),
-        ]);
         $twig->addFunction(new TwigFunction('trans', [$this->tm, 'trans']));
         $twig->addFunction(new TwigFunction('trans_choice', [$this->fmt, 'transChoice']));
         $twig->addFunction(new TwigFunction('action_url', [$this->urlGenerator, 'action']));

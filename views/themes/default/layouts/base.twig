@@ -23,15 +23,6 @@
 
     {% include 'partials/color-mode.twig' %}
 
-    {# The page locale's browser strings (TranslationManager::browserScriptUrl()). Deferred
-       like the modules below and ahead of them, so it has run before any of
-       them reads a translation. Keep it if this block is overridden. #}
-    {% block head_translations %}
-        {% if translationScripts.site is defined %}
-            <script src="{{ translationScripts.site }}" defer></script>
-        {% endif %}
-    {% endblock %}
-
     {% block head_css %}
         {% for asset in theme.assets.styles %}
             <link rel="stylesheet" href="{{ asset }}">
