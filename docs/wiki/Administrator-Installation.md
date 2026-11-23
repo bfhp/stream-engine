@@ -27,11 +27,11 @@ the database.
 ## Obtain a release
 
 From the parent directory of the intended application path, install the current
-`0.7` release series without development dependencies:
+`0.8` release series without development dependencies:
 
 ```bash
 cd /srv
-composer create-project --no-dev bfhp/stream-engine stream-engine "^0.7"
+composer create-project --no-dev bfhp/stream-engine stream-engine "^0.8"
 cd /srv/stream-engine
 ```
 

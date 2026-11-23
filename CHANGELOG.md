@@ -7,7 +7,7 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-## [0.7.7] - 2026-11-22
+## [0.8.0] - 2026-11-23
 
 ### Changed
 
@@ -55,6 +55,9 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Upgrade notes
 
+- This release changes the browser asset, theme, and translation contracts.
+  Custom themes, site modules, and Vite configurations need the adaptations
+  below. Version 0.7.7 was not released; upgrade directly from 0.7.6 to 0.8.0.
 - From 0.7.6, deploy the release and install PHP dependencies from the
   lockfile. Deploy the complete bundled `public/assets/` directory together
   with the matching PHP and Twig files.
@@ -70,6 +73,10 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
   `head_ext` with `'entries' => ['<entry>']`, and links to built files with
   `asset_tags()`/`asset_styles()`. Custom themes: move `/assets/…` paths from
   `assets.styles`/`assets.scripts` to entry names in `assets.entries`.
+- Layout overrides must preserve `head_assets`, which replaces `head_css`
+  and `head_js`, and render `asset_import_map()` before module scripts and
+  preloads. The administration layout uses `asset_import_map(true)` to make
+  both public and administration translations available.
 - Site code that translates `js.admin.*` keys must import from
   `@stream-engine/admin/i18n` instead of `@stream-engine/shared/i18n`.
 - Web server: serve `/assets/` with a long-lived `Cache-Control` (built files
@@ -77,7 +84,7 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
   `/assets/.vite/`. See the updated Nginx example in the installation guide.
 - No new database migrations or schema changes are required. The installation
   snapshot was regenerated from all 23 migrations: `schema.sql` is unchanged
-  from 0.7.6, and its matching manifest identifies 0.7.7. Both files are
+  from 0.7.6, and its matching manifest identifies 0.8.0. Both files are
   included in the release source and attached to the GitHub Release with
   checksums. Existing sites must not import `schema.sql`.
 - Custom themes should preserve the updated cookie-notice partial and logo
@@ -898,8 +905,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 - Initial version.
 
-[Unreleased]: https://github.com/bfhp/stream-engine/compare/v0.7.7...HEAD
-[0.7.7]: https://github.com/bfhp/stream-engine/compare/v0.7.6...v0.7.7
+[Unreleased]: https://github.com/bfhp/stream-engine/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/bfhp/stream-engine/compare/v0.7.6...v0.8.0
 [0.7.6]: https://github.com/bfhp/stream-engine/compare/v0.7.5...v0.7.6
 [0.7.5]: https://github.com/bfhp/stream-engine/compare/v0.7.4...v0.7.5
 [0.7.4]: https://github.com/bfhp/stream-engine/compare/v0.7.3...v0.7.4

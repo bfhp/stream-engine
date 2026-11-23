@@ -231,6 +231,12 @@ The default layout family consists of `base.twig`, `simple.twig`,
 `single.twig`, and `with-sidebar.twig`. Extend their blocks where possible;
 copying a whole file makes upgrades harder to merge.
 
+Since 0.8.0, `head_assets` replaces `head_css` and `head_js`. An override of
+this block must render `asset_import_map()` before module scripts and
+preloads, then use `asset_tags()` for the theme and page entries. A replacement
+administration layout uses `asset_import_map(true)` so administration strings
+are mapped as well. Overrides of the old blocks must move to `head_assets`.
+
 Compatible layouts preserve the standard widget placements:
 
 - `head` (inside `<head>`, immediately before `</head>`);
