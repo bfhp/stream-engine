@@ -628,6 +628,13 @@ a.users-person:hover {
     }
 }
 
+/* Until the first page of users arrives the list holds a screen's height,
+   so the footer starts below the fold instead of being pushed down past the
+   reader when the cards appear (CLS 0.37 on /users/ before). */
+[data-users-list][aria-busy="true"] {
+    min-height: 100vh;
+}
+
 /* One column, two from 576px, three from 992px. */
 .users-grid {
     display: grid;

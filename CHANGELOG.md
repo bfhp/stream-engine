@@ -7,6 +7,12 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- The users list keeps its height while the first page loads
+  (`aria-busy="true"` on `[data-users-list]`), so the footer no longer jumps
+  down when the cards appear.
+
 ## [0.8.0] - 2026-11-23
 
 ### Changed

@@ -42,11 +42,13 @@
 
         {# Filled by assets-src/pages/users.ts initUsersList(): cards are copies
            of components/users/user-card.twig, the pager of users-pagination.twig.
-           Keep the data-users-* hooks in a theme override. #}
+           Keep the data-users-* hooks in a theme override. aria-busy reserves
+           the list's height until the first page arrives (see users.css). #}
         <div
             data-users-list
             data-api-url="{{ apiUrl }}"
             data-page-url="{{ listUrl }}"
+            aria-busy="true"
         >
             {% block users_list_grid %}
                 {# role="list": Safari drops list semantics from a list without bullets. #}

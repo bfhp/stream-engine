@@ -111,6 +111,9 @@ function initUsersList() {
         const url = new URL(apiUrl, window.location.origin);
         url.search = window.location.search;
 
+        // The list is busy (and holds its height - users.css) until the
+        // first page or an error is shown.
+        root!.setAttribute('aria-busy', 'true');
         try {
             const response = await fetch(url, { credentials: 'include' });
 
@@ -122,6 +125,8 @@ function initUsersList() {
         } catch (error) {
             console.error(error);
             showMessage(trans('js.users.load_failed'), 'danger');
+        } finally {
+            root!.removeAttribute('aria-busy');
         }
     }
 

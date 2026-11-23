@@ -46,6 +46,7 @@
             data-users-list
             data-api-url="{{ apiUrl }}"
             data-page-url="{{ listUrl }}"
+            aria-busy="true"
         >
             {# role="list": Safari drops list semantics from a list without bullets. #}
             <ul class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-3 list-unstyled" role="list" aria-label="{{ title }}" data-users-grid></ul>
