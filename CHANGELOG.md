@@ -7,6 +7,30 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.8.3] - 2026-11-24
+
+### Fixed
+
+- Sitemap chunks 10-19, 100 and every other number starting with 1
+  (`sitemap-lib-page-10.xml`, `sitemap-term-author-11.xml`) answered 404 although
+  the index listed them: the chunk suffix only accepted a first digit of 2-9.
+  Any chunk from 2 up is now served; `-1` and leading zeros still answer 404.
+
+### Upgrade notes
+
+- From 0.8.2, deploy the release and install PHP dependencies from the lockfile.
+  No dependency updates or configuration changes are required. Earlier
+  versions must also follow the intervening release notes.
+- The hourly `sitemap:warm` task now processes the previously rejected chunk
+  numbers. To refresh immediately after deployment, run
+  `php bin/cron.php --task=sitemap:warm` as the scheduler account or use
+  **Administration → Scheduler → sitemap:warm → Run now**.
+- No new database migrations or schema changes are required. The installation
+  snapshot was regenerated from all 23 migrations: `schema.sql` is unchanged
+  from 0.8.2, and its matching manifest identifies 0.8.3. Both files are
+  included in the release source and attached to the GitHub Release with
+  checksums. Existing sites must not import `schema.sql`.
+
 ## [0.8.2] - 2026-11-24
 
 ### Changed
@@ -1042,7 +1066,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 - Initial version.
 
-[Unreleased]: https://github.com/bfhp/stream-engine/compare/v0.8.2...HEAD
+[Unreleased]: https://github.com/bfhp/stream-engine/compare/v0.8.3...HEAD
+[0.8.3]: https://github.com/bfhp/stream-engine/compare/v0.8.2...v0.8.3
 [0.8.2]: https://github.com/bfhp/stream-engine/compare/v0.8.1...v0.8.2
 [0.8.1]: https://github.com/bfhp/stream-engine/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/bfhp/stream-engine/compare/v0.7.6...v0.8.0
