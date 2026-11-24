@@ -86,10 +86,18 @@ use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
 use Twig\Loader\FilesystemLoader;
+use Twig\TwigFilter;
 use Twig\TwigFunction;
 
 class StreamEngine
 {
+    /**
+     * Longest `<meta name="description">` / `og:description`, ellipsis
+     * included. Applied when the head is rendered, not where controllers set
+     * `description`: some templates also show that variable as page text.
+     */
+    private const int META_DESCRIPTION_LENGTH = 255;
+
     private Config $config;
     private PdoDatabase $db;
 
@@ -447,6 +455,19 @@ class StreamEngine
         }
     }
 
+    /**
+     * `meta_description`: plain text for the description meta tags - tags and
+     * entities gone, cut on a word boundary to META_DESCRIPTION_LENGTH with an
+     * ellipsis. Public so view tests render the head with the real filter.
+     */
+    public static function metaDescriptionFilter(): TwigFilter
+    {
+        return new TwigFilter(
+            'meta_description',
+            static fn (?string $text): string => Formatter::excerpt((string) $text, self::META_DESCRIPTION_LENGTH),
+        );
+    }
+
     private function isApiPath(mixed $path): bool
     {
         return is_string($path) && ($path === '/api' || str_starts_with($path, '/api/'));
@@ -489,6 +510,7 @@ class StreamEngine
         $twig->addFunction(new TwigFunction('trans', [$this->tm, 'trans']));
         $twig->addFunction(new TwigFunction('trans_choice', [$this->fmt, 'transChoice']));
         $twig->addFunction(new TwigFunction('action_url', [$this->urlGenerator, 'action']));
+        $twig->addFilter(self::metaDescriptionFilter());
         $twig->addExtension(new AssetsExtension($this->assets, $this->tm->getLocale()));
 
         return $twig;

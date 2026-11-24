@@ -26,6 +26,11 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- `<meta name="description">` and `og:description` are cut to 255 characters
+  on a word boundary, with "…" marking the cut, by the new `meta_description`
+  Twig filter (tags and entities stripped). A blog or community post without
+  its own description used to put its whole text there.
+
 - Cron tasks run in parallel, each in its own process. A scheduler tick
   (`bin/cron.php`) now only starts `bin/cron.php --task=<name> --scheduled` in
   the background for every due task and exits, so a long task no longer holds
@@ -38,6 +43,10 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
   *Administrator → Scheduler*). Traditional cron and Supercronic need no change.
 
 ### Fixed
+
+- A forum's title and description were HTML-escaped twice - by the controller
+  and again by Twig - so `&` or quotes showed as `&amp;` / `&quot;` in the
+  forum header, its breadcrumb and the description meta tags.
 
 - The admin system health check counted every engine migration as pending when
   the engine is installed as a Composer dependency: it read

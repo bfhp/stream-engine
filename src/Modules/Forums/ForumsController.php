@@ -251,7 +251,7 @@ class ForumsController extends AbstractController
                 throw new ForbiddenException('Forum not found');
             }
 
-            return new Breadcrumb(htmlspecialchars((string) $forumFeed->title, ENT_QUOTES), $forumFeed->slug);
+            return new Breadcrumb((string) $forumFeed->title, $forumFeed->slug);
         }
 
         if ($page->action === 'forums.topic-view' && key_exists('slug', $page->params)) {
@@ -740,8 +740,9 @@ class ForumsController extends AbstractController
             $page,
             'modules/forums/forums.topic-list.twig',
             [
-                'title' => htmlspecialchars((string) $forumFeed->title, ENT_QUOTES),
-                'description' => htmlspecialchars(strip_tags((string) $forumFeed->description), ENT_QUOTES),
+                // Plain text: Twig escapes it; escaping here too showed `&amp;`.
+                'title' => (string) $forumFeed->title,
+                'description' => strip_tags((string) $forumFeed->description),
                 'canonical' => $this->urlGenerator->listing($forumFeed->canonicalUrl, $currentPage),
                 'entries' => ['forums'],
                 'canManageForum' => $canManageForum,

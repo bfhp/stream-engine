@@ -9,6 +9,7 @@ use DOMXPath;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use StreamEngine\Core\Assets;
+use StreamEngine\StreamEngine;
 use StreamEngine\View\AssetsExtension;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
@@ -56,6 +57,7 @@ final class HeadWidgetTest extends TestCase
         $twig = new Environment($loader);
         $twig->addFunction(new TwigFunction('trans', static fn (string $key): string => $key));
         $twig->addExtension(new AssetsExtension(new Assets(__DIR__.'/../Support/assets-manifest.php'), 'en'));
+        $twig->addFilter(StreamEngine::metaDescriptionFilter());
 
         return $twig;
     }

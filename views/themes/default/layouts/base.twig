@@ -7,8 +7,9 @@
     {% block head_meta %}
         <meta name="viewport" content="width=device-width, initial-scale=1">
         {# A page without its own description falls back to its title: an
-           empty description is worse for search snippets than a short one. #}
-        <meta name="description" content="{% block description %}{{ description|default('') ?: title|default('') }}{% endblock %}" />
+           empty description is worse for search snippets than a short one.
+           meta_description strips tags and cuts to 255 characters with "…". #}
+        <meta name="description" content="{% block description %}{{ (description|default('') ?: title|default(''))|meta_description }}{% endblock %}" />
     {% endblock %}
 
     <title>{% block meta_title %}{{ title|default('') }}{% endblock %}</title>
@@ -41,7 +42,7 @@
 
     {% block head_og %}
         <meta property="og:title" content="{{ title|default('') }}" />
-        <meta property="og:description" content="{{ description|default('') ?: title|default('') }}" />
+        <meta property="og:description" content="{{ (description|default('') ?: title|default(''))|meta_description }}" />
         {% if canonical and siteUrl %}
         <meta property="og:url" content="{{ siteUrl }}{{ canonical }}" />
         {% endif %}

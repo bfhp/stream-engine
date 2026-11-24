@@ -9,6 +9,7 @@ use DOMXPath;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use StreamEngine\Core\Assets;
+use StreamEngine\StreamEngine;
 use StreamEngine\View\AssetsExtension;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
@@ -67,6 +68,41 @@ final class CanonicalTest extends TestCase
         self::assertCount(0, $xpath->query('//meta[@property="og:image"]'));
     }
 
+    public function testALongDescriptionIsCutTo255CharactersWithAnEllipsis(): void
+    {
+        $html = self::twig()->load('layouts/base.twig')->renderBlock('layout_head', [
+            'siteUrl' => 'https://example.com',
+            'canonical' => '/blog/post/',
+            'description' => '<p>'.str_repeat('Длинный текст поста & ещё ', 40).'</p>',
+        ]);
+        $dom = new DOMDocument();
+        $dom->loadHTML('<?xml encoding="UTF-8">'.$html);
+        $xpath = new DOMXPath($dom);
+
+        foreach (['//meta[@name="description"]/@content', '//meta[@property="og:description"]/@content'] as $query) {
+            $content = $xpath->evaluate('string('.$query.')');
+            self::assertLessThanOrEqual(255, mb_strlen($content));
+            self::assertStringEndsWith('…', $content);
+            self::assertStringStartsWith('Длинный текст поста & ещё', $content);
+            self::assertStringNotContainsString('<p>', $content);
+        }
+    }
+
+    public function testAShortDescriptionIsKeptWhole(): void
+    {
+        $html = self::twig()->load('layouts/base.twig')->renderBlock('layout_head', [
+            'description' => 'Форум «Кошки & собаки»',
+        ]);
+        $dom = new DOMDocument();
+        $dom->loadHTML('<?xml encoding="UTF-8">'.$html);
+
+        // Escaped once: the meta holds the text itself, not `&amp;`.
+        self::assertSame(
+            'Форум «Кошки & собаки»',
+            (new DOMXPath($dom))->evaluate('string(//meta[@name="description"]/@content)'),
+        );
+    }
+
     /**
      * Twig compiles the whole layout even when one block is rendered, so the
      * functions used outside <head> (the skip link's trans()) must exist.
@@ -76,6 +112,7 @@ final class CanonicalTest extends TestCase
         $twig = new Environment(new FilesystemLoader(__DIR__.'/../../views/themes/default'));
         $twig->addFunction(new TwigFunction('trans', static fn (string $key): string => $key));
         $twig->addExtension(new AssetsExtension(new Assets(__DIR__.'/../Support/assets-manifest.php'), 'en'));
+        $twig->addFilter(StreamEngine::metaDescriptionFilter());
 
         return $twig;
     }
