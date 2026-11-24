@@ -7,28 +7,51 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.8.2] - 2026-11-24
+
 ### Changed
 
-- Feed queries that filter by one type pass it to the row-level ACL, which
-  then emits only the branch that type can match: the comment branch (or the
-  ordinary one, for comments) and the gallery-photo check are left out
-  instead of being evaluated - and on MariaDB materialised over the whole
-  `feeds` table - for every row. Guests (user id 0) get a public-only
-  predicate with no owner or membership arms and no bound parameters. The
-  visible rows are unchanged; counting 319 000 guest-visible library pages
-  previously took 18 s.
-- Sitemaps are rendered once and cached (gzip-compressed, through
-  `CacheInterface`). The new hourly cron task `sitemap:warm` renders the index
-  and every file it lists, so `sitemap-index.xml` no longer counts every feed
-  type on each request. Sitemap responses are sent with
-  `Cache-Control: public, max-age=3600`.
-- Feed sitemaps load feeds without their content (~400 MB for a 30 000-URL
-  file before).
+- Type-filtered feed queries now evaluate only the access-control branches
+  that can match that type, avoiding unrelated comment and gallery checks
+  and expensive MariaDB materialization. Guest queries omit owner and
+  membership checks while retaining public visibility, container access,
+  and gallery publication rules.
+- Sitemap XML is cached gzip-compressed through `CacheInterface`. The new
+  hourly `sitemap:warm` task regenerates the index and every listed file, so
+  cached crawler requests avoid repeated feed counts and large URL queries.
+  Sitemap responses use `Cache-Control: public, max-age=3600`; server cache
+  entries expire after six hours if the scheduler stops.
+- Feed sitemaps fetch URLs and dates without loading full content bodies,
+  reducing memory use for files containing up to 30,000 URLs.
 
 ### Fixed
 
 - `robots.txt` answered 304 to any `If-Modified-Since` header, however old;
   it now does so only when the date is at or after the file's last change.
+
+### Security
+
+- Updated Twig from 3.30.0 to 3.31.1 to include upstream escaping and sandbox
+  security fixes. See the [Twig release notes](https://github.com/twigphp/Twig/releases/tag/v3.31.1).
+
+### Upgrade notes
+
+- From 0.8.1, deploy the release with its bundled browser assets and run
+  `composer install --no-dev` from the updated lockfile to install the Twig
+  security update. Earlier versions must also follow the intervening release
+  notes. The PHP `zlib` extension is now required for sitemap compression;
+  Composer and installer preflight check it. The bundled PHP image includes it.
+- Keep Memcached reachable and the once-per-minute scheduler running so the
+  new hourly `sitemap:warm` task can refresh cached sitemap content. Changes
+  appear after refresh; a stopped scheduler can leave cached XML in place for
+  up to six hours. Cache misses regenerate on request. For an immediate refresh,
+  run `php bin/cron.php --task=sitemap:warm` as the scheduler account or use
+  **Administration → Scheduler → sitemap:warm → Run now**.
+- No new database migrations or schema changes are required. The installation
+  snapshot was regenerated from all 23 migrations: `schema.sql` is unchanged
+  from 0.8.1, and the matching manifest identifies 0.8.2. Both files are
+  included in the release source and attached to the GitHub Release with
+  checksums. Existing sites must not import `schema.sql`.
 
 ## [0.8.1] - 2026-11-24
 
@@ -1015,7 +1038,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 - Initial version.
 
-[Unreleased]: https://github.com/bfhp/stream-engine/compare/v0.8.1...HEAD
+[Unreleased]: https://github.com/bfhp/stream-engine/compare/v0.8.2...HEAD
+[0.8.2]: https://github.com/bfhp/stream-engine/compare/v0.8.1...v0.8.2
 [0.8.1]: https://github.com/bfhp/stream-engine/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/bfhp/stream-engine/compare/v0.7.6...v0.8.0
 [0.7.6]: https://github.com/bfhp/stream-engine/compare/v0.7.5...v0.7.6

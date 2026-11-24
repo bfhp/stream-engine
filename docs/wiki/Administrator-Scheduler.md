@@ -243,6 +243,15 @@ Current built-in tasks include:
 | `forums:uploads-cleanup` | One hour | Remove abandoned pending forum attachments after their grace period. |
 | `users:cleanup` | One hour | Remove expired password-reset and verification state, including unfinished expired registrations. |
 | `users:sessions-cleanup` | One hour | Remove expired member, guest, and crawler session rows. |
+| `sitemap:warm` | One hour | Regenerate the sitemap index and every sitemap it lists, and cache their compressed XML in Memcached. |
+
+Sitemaps are also generated on a cache miss. The hourly task keeps crawler
+requests from waiting for feed counts and large URL queries. Cached XML has a
+six-hour lifetime if the scheduler stops; browser and proxy responses use
+`Cache-Control: public, max-age=3600`. To refresh sitemap content immediately,
+run `php bin/cron.php --task=sitemap:warm` as the scheduler account, or choose
+**Run now** for that task in administration. Sitemap compression requires the
+PHP `zlib` extension in both the web and CLI environments.
 
 Modules can add or remove registered tasks in a release, so treat the Scheduler
 page as authoritative for the installed version.
