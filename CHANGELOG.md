@@ -7,6 +7,21 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Large feed sitemaps (`sitemap-lib-page-11.xml`) killed the PHP worker at a
+  128 MB memory limit, which Nginx reported as 502, and the `sitemap:warm`
+  task failed the same way. URL generation (`FeedRepository::hydrateTree()`)
+  selected every feed's content although only the tree is needed, so a
+  30 000-URL sitemap loaded the text of 30 000 library pages. It now selects
+  no content, which also lightens URL generation for every feed list.
+- Feed sitemaps are built in batches of 1 000 through the new
+  `FeedService::eachFeedUrlBatchByType()`: the first batch seeks to the
+  chunk's offset, later ones continue from the last row by
+  `(created_at, id)`, and only canonical URLs are resolved. Memory no longer
+  grows with the file. `FeedRepository::findByTypeAfter()` takes an optional
+  `$withContent`.
+
 ## [0.8.3] - 2026-11-24
 
 ### Fixed

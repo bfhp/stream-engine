@@ -236,6 +236,88 @@ final class FeedServiceTest extends TestCase
         self::assertSame(['createdAt' => 200, 'id' => 20], json_decode(base64_decode($page['nextCursor']), true));
     }
 
+    /**
+     * The first batch seeks with OFFSET, every later one continues from the
+     * last row (created_at, id); none selects content, each batch reaches the
+     * callback with canonical URLs, and the limit caps the final batch.
+     */
+    public function testFeedUrlBatchesSeekOnceThenContinueByCursorWithoutContent(): void
+    {
+        $row = static fn (int $id, int $createdAt): array => [
+            'id' => $id, 'parent_id' => null, 'owner_id' => 1, 'type' => 'article',
+            'slug' => 'feed-'.$id, 'container_id' => null, 'created_at' => $createdAt,
+        ];
+
+        $queries = [];
+        $db = $this->createStub(PdoDatabase::class);
+        $db->method('fetchAll')->willReturnCallback(
+            static function (string $sql, array $params) use (&$queries, $row): array {
+                $queries[] = [$sql, $params];
+
+                return match (count($queries)) {
+                    1 => [$row(50, 500), $row(40, 400)],
+                    2 => [$row(30, 400)],
+                    default => throw new \LogicException('Queried past the limit'),
+                };
+            }
+        );
+
+        $feeds = [];
+        foreach ([50, 40, 30] as $id) {
+            $feeds[$id] = $this->makeFeed($id);
+        }
+
+        $batches = [];
+        $this->makeService(new FeedRepository($db), $this->makeUrlGenerator($feeds))->eachFeedUrlBatchByType(
+            'article',
+            new User(id: 0, email: ''),
+            3,
+            7,
+            static function (array $batch) use (&$batches): void {
+                $batches[] = array_map(static fn (Feed $feed): array => [$feed->id, $feed->canonicalUrl], $batch);
+            },
+            batchSize: 2,
+        );
+
+        self::assertSame([
+            [[50, '/articles/feed-50/'], [40, '/articles/feed-40/']],
+            [[30, '/articles/feed-30/']],
+        ], $batches);
+
+        self::assertCount(2, $queries);
+        [$first, $firstParams] = $queries[0];
+        self::assertStringContainsString('NULL AS content', $first);
+        self::assertStringContainsString('LIMIT 2 OFFSET 7', $first);
+        self::assertSame(['article'], $firstParams);
+
+        [$second, $secondParams] = $queries[1];
+        self::assertStringContainsString('NULL AS content', $second);
+        self::assertStringContainsString('f.created_at < ?', $second);
+        self::assertStringContainsString('LIMIT 1', $second);
+        self::assertStringNotContainsString('OFFSET', $second);
+        // Continues after the last row of the first batch: (400, 40).
+        self::assertSame(['article', 400, 400, 40], $secondParams);
+    }
+
+    public function testFeedUrlBatchesStopAtAShortBatch(): void
+    {
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects($this->once())->method('fetchAll')->willReturn([]);
+
+        $calls = 0;
+        $this->makeService(new FeedRepository($db))->eachFeedUrlBatchByType(
+            'article',
+            new User(id: 0, email: ''),
+            30000,
+            0,
+            static function () use (&$calls): void {
+                $calls++;
+            },
+        );
+
+        self::assertSame(0, $calls);
+    }
+
     public function testFeedCursorRejectsMalformedPayloadBeforeQuerying(): void
     {
         $db = $this->createMock(PdoDatabase::class);

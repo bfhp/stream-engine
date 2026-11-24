@@ -107,6 +107,19 @@ final class SitemapControllerTest extends TestCase
         );
     }
 
+    /**
+     * eachFeedUrlBatchByType() hands its feeds to a callback; a stub that
+     * passes $feeds as one batch.
+     *
+     * @param list<Feed>|callable(int):list<Feed> $feeds called with the offset
+     */
+    private static function batches(array|\Closure $feeds): \Closure
+    {
+        return static function (string $type, User $user, int $limit, int $offset, callable $consume) use ($feeds): void {
+            $consume($feeds instanceof \Closure ? $feeds($offset) : $feeds);
+        };
+    }
+
     private function sitemap(SitemapController $module, string $slug): string
     {
         ob_start();
@@ -280,16 +293,15 @@ final class SitemapControllerTest extends TestCase
 
         $feedService = $this->getMockBuilder(FeedService::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['getFeedsByType'])
+            ->onlyMethods(['eachFeedUrlBatchByType'])
             ->getMock();
         $feedService
             ->expects($this->once())
-            ->method('getFeedsByType')
-            // URLs only: no bodies for 30 000 rows.
-            ->with('article', $this->callback(static fn (User $user): bool => $user->isGuest()), 30000, 0, false)
-            ->willReturn([
+            ->method('eachFeedUrlBatchByType')
+            ->with('article', $this->callback(static fn (User $user): bool => $user->isGuest()), 30000, 0)
+            ->willReturnCallback(self::batches([
                 self::feed(10, 'article', 'hello', '/articles/hello/'),
-            ]);
+            ]));
 
         $module = $this->makeModule($pageTree, $feedService);
 
@@ -314,12 +326,12 @@ final class SitemapControllerTest extends TestCase
 
         $feedService = $this->getMockBuilder(FeedService::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['getFeedsByType'])
+            ->onlyMethods(['eachFeedUrlBatchByType'])
             ->getMock();
         $feedService
             ->expects($this->once())
-            ->method('getFeedsByType')
-            ->willReturn([self::feed(10, 'article', 'hello', '/articles/hello/')]);
+            ->method('eachFeedUrlBatchByType')
+            ->willReturnCallback(self::batches([self::feed(10, 'article', 'hello', '/articles/hello/')]));
 
         $cache = new ArrayCache();
         $module = $this->makeModule($pageTree, $feedService, cache: $cache);
@@ -343,7 +355,7 @@ final class SitemapControllerTest extends TestCase
         ]);
 
         $feedService = $this->createStub(FeedService::class);
-        $feedService->method('getFeedsByType')->willReturn([]);
+        $feedService->method('eachFeedUrlBatchByType')->willReturnCallback(self::batches([]));
 
         $cache = new ArrayCache();
         $output = $this->sitemap($this->makeModule($pageTree, $feedService, cache: $cache), 'article-987654');
@@ -364,17 +376,17 @@ final class SitemapControllerTest extends TestCase
 
         $feedService = $this->getMockBuilder(FeedService::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['countFeedsByType', 'getFeedsByType'])
+            ->onlyMethods(['countFeedsByType', 'eachFeedUrlBatchByType'])
             ->getMock();
         // Counted once for the whole run, not once for the index and again
         // for each file.
         $feedService->expects($this->once())->method('countFeedsByType')->willReturn(30001);
         $feedService
             ->expects($this->exactly(2))
-            ->method('getFeedsByType')
-            ->willReturnCallback(static fn (string $type, User $user, int $limit, int $offset): array => [
+            ->method('eachFeedUrlBatchByType')
+            ->willReturnCallback(self::batches(static fn (int $offset): array => [
                 self::feed($offset + 1, 'article', 'a'.$offset, '/articles/a'.$offset.'/'),
-            ]);
+            ]));
 
         $cache = new ArrayCache();
         $module = $this->makeModule($pageTree, $feedService, cache: $cache);
@@ -425,15 +437,15 @@ final class SitemapControllerTest extends TestCase
 
         $feedService = $this->getMockBuilder(FeedService::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['getFeedsByType'])
+            ->onlyMethods(['eachFeedUrlBatchByType'])
             ->getMock();
         $feedService
             ->expects($this->once())
-            ->method('getFeedsByType')
+            ->method('eachFeedUrlBatchByType')
             ->with('article-section', $this->callback(static fn (User $user): bool => $user->isGuest()), 30000, 30000)
-            ->willReturn([
+            ->willReturnCallback(self::batches([
                 self::feed(30001, 'article-section', 'next', '/lectures/next/'),
-            ]);
+            ]));
 
         $module = $this->makeModule($pageTree, $feedService);
 
@@ -477,18 +489,18 @@ final class SitemapControllerTest extends TestCase
 
         $feedService = $this->getMockBuilder(FeedService::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['getFeedsByType'])
+            ->onlyMethods(['eachFeedUrlBatchByType'])
             ->getMock();
 
         if ($offset === null) {
-            $feedService->expects($this->never())->method('getFeedsByType');
+            $feedService->expects($this->never())->method('eachFeedUrlBatchByType');
             $this->expectException(\StreamEngine\Core\Exceptions\NotFoundException::class);
         } else {
             $feedService
                 ->expects($this->once())
-                ->method('getFeedsByType')
+                ->method('eachFeedUrlBatchByType')
                 ->with('article', $this->anything(), 30000, $offset)
-                ->willReturn([self::feed($offset + 1, 'article', 'a', '/articles/a/')]);
+                ->willReturnCallback(self::batches([self::feed($offset + 1, 'article', 'a', '/articles/a/')]));
         }
 
         $output = $this->sitemap($this->makeModule($pageTree, $feedService), $slug);

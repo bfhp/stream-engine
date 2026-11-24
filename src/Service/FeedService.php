@@ -1435,6 +1435,58 @@ class FeedService
         return $this->finishFeedCursorPage($items, $limit);
     }
 
+    /**
+     * Feeds of a type in the site-wide order (newest first) from $offset, at
+     * most $limit of them, handed to $consume $batchSize at a time with only
+     * their canonical URLs set and no content - for sitemaps, where holding
+     * 30 000 decorated feeds at once ran out of memory.
+     *
+     * The first batch seeks to $offset; the rest continue from the last row
+     * seen (created_at, id) instead of growing the OFFSET, so each query reads
+     * only its own batch.
+     *
+     * @param callable(list<Feed>): void $consume
+     */
+    public function eachFeedUrlBatchByType(
+        string $type,
+        User $user,
+        int $limit,
+        int $offset,
+        callable $consume,
+        int $batchSize = 1000,
+    ): void {
+        $remaining = $limit;
+        $cursor = null;
+
+        while ($remaining > 0) {
+            $size = min($batchSize, $remaining);
+            $feeds = $cursor === null
+                ? $this->repository->findByType($type, $user, $size, $offset, withContent: false)
+                : $this->repository->findByTypeAfter($type, $user, $size, $cursor, withContent: false);
+
+            if ($feeds === []) {
+                return;
+            }
+
+            $urls = $this->urlGenerator->feeds($feeds);
+
+            foreach ($feeds as $feed) {
+                $feed->canonicalUrl = $urls[$feed->id] ?? null;
+            }
+
+            $consume($feeds);
+
+            $remaining -= count($feeds);
+            $last = $feeds[array_key_last($feeds)];
+
+            if (count($feeds) < $size || $last->createdAt === null) {
+                return;
+            }
+
+            $cursor = (object) ['createdAt' => $last->createdAt, 'id' => $last->id];
+        }
+    }
+
     /** @return object{createdAt:int,id:int}|null */
     private function decodeFeedCursor(?string $cursor): ?object
     {

@@ -754,6 +754,7 @@ final class FeedRepository implements FeedRepositoryInterface
         int $limit,
         ?object $cursor = null,
         ?string $tagSlug = null,
+        bool $withContent = true,
     ): array {
         $joins = '';
         if ($tagSlug !== null) {
@@ -761,7 +762,7 @@ final class FeedRepository implements FeedRepositoryInterface
                 ."\nJOIN feed_terms ft ON ft.id = ftl.term_id";
         }
 
-        $sql = $this->baseSelect().$joins;
+        $sql = $this->baseSelect(withContent: $withContent).$joins;
         $condition = "f.type = ?\n";
         $params = [$type];
 
@@ -1781,6 +1782,8 @@ final class FeedRepository implements FeedRepositoryInterface
     /**
      *  Gets a several Feeds by their IDs for the UrlGenerator.
      *  Doesn't check ACL as soon url generator is out of the ACL's scope.
+     *  Content is not selected: URLs need only the tree (parent, type, slug),
+     *  and a sitemap of 30 000 library pages loaded every page text with it.
      *  Uses: PRIMARY(id) index
      *
      * @param  int[]  $ids
@@ -1796,7 +1799,7 @@ final class FeedRepository implements FeedRepositoryInterface
                 return [];
             }
 
-            $sql = $this->baseSelect();
+            $sql = $this->baseSelect(withContent: false);
 
             $placeholders = implode(',', array_fill(0, count($chunk), '?'));
             $condition = "f.id IN ($placeholders)\n";

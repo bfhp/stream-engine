@@ -323,6 +323,37 @@ final class FeedRepositoryTest extends TestCase
         $this->assertNotContains(15, $ids($repository->findByType('lib-page', $this->user(4), 100)));
     }
 
+    /**
+     * hydrateTree() feeds the UrlGenerator, which needs only the tree. It used
+     * to select every row's content too - for a sitemap that meant the text
+     * of 30 000 library pages, and a PHP worker killed at its memory limit.
+     */
+    public function testHydrateTreeLoadsTheTreeWithoutContent(): void
+    {
+        $queries = [];
+        $db = $this->createStub(PdoDatabase::class);
+        $db->method('fetchAll')->willReturnCallback(
+            static function (string $sql, array $params) use (&$queries): array {
+                $queries[] = $sql;
+
+                return match ($params) {
+                    [11] => [['id' => 11, 'parent_id' => 10, 'owner_id' => 1, 'type' => 'chapter', 'slug' => 'page', 'content' => null, 'container_id' => null, 'created_at' => 1]],
+                    [10] => [['id' => 10, 'parent_id' => null, 'owner_id' => 1, 'type' => 'publication', 'slug' => 'book', 'content' => null, 'container_id' => null, 'created_at' => 1]],
+                    default => [],
+                };
+            }
+        );
+
+        $tree = (new FeedRepository($db))->hydrateTree([11]);
+
+        $this->assertSame([11, 10], array_keys($tree));
+        $this->assertCount(2, $queries);
+        foreach ($queries as $sql) {
+            $this->assertStringContainsString('NULL AS content', $sql);
+            $this->assertStringNotContainsString('f.content', $sql);
+        }
+    }
+
     public function testCommentsFollowTheirRootPostsCurrentAccessPolicy(): void
     {
         if (! extension_loaded('pdo_sqlite')) {

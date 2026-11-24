@@ -425,18 +425,28 @@ class SitemapController extends AbstractController
      */
     private function feedUrls(string $type, int $page): array
     {
-        $offset = ($page - 1) * self::MAX_SITEMAP_URLS;
+        $entries = [];
 
-        return array_values(array_filter(array_map(
-            fn (Feed $feed): ?array => $feed->canonicalUrl
-                ? [
-                    'loc' => $this->absoluteUrl($feed->canonicalUrl),
-                    'lastmod' => $feed->updatedAt,
-                ]
-                : null,
-            // URLs and dates only: loading 30 000 bodies took ~400 MB.
-            $this->feedService->getFeedsByType($type, $this->guest(), self::MAX_SITEMAP_URLS, $offset, withContent: false)
-        )));
+        // In batches, URLs and dates only: each batch of feeds is released
+        // before the next is loaded, so memory no longer grows with the file.
+        $this->feedService->eachFeedUrlBatchByType(
+            $type,
+            $this->guest(),
+            self::MAX_SITEMAP_URLS,
+            ($page - 1) * self::MAX_SITEMAP_URLS,
+            function (array $feeds) use (&$entries): void {
+                foreach ($feeds as $feed) {
+                    if ($feed->canonicalUrl) {
+                        $entries[] = [
+                            'loc' => $this->absoluteUrl($feed->canonicalUrl),
+                            'lastmod' => $feed->updatedAt,
+                        ];
+                    }
+                }
+            },
+        );
+
+        return $entries;
     }
 
     /**
