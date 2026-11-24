@@ -44,6 +44,7 @@
         "ext-libxml": "*",
         "ext-simplexml": "*",
         "ext-memcached": "*",
+        "ext-zlib": "*",
         "jaybizzle/crawler-detect": "^1.4",
         "james-heinrich/getid3": "^1.9"
     },

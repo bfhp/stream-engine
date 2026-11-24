@@ -10,7 +10,7 @@ final readonly class InstallationPreflight
 {
     public const array REQUIRED_EXTENSIONS = [
         'curl', 'dom', 'fileinfo', 'gd', 'intl', 'libxml', 'mbstring',
-        'memcached', 'pdo', 'pdo_mysql', 'simplexml', 'xmlreader', 'zip',
+        'memcached', 'pdo', 'pdo_mysql', 'simplexml', 'xmlreader', 'zip', 'zlib',
     ];
 
     /** @param array<string, mixed> $currentEnvironment */
