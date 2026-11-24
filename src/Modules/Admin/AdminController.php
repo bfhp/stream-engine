@@ -2613,15 +2613,24 @@ class AdminController extends AbstractController implements DashboardCardProvide
 
     private function healthMigrations(): array
     {
-        $engineRoot = dirname(__DIR__, 3);
+        // Same layout as bin/migrate.php: state and app migrations live in the
+        // application root, which differs from the engine root when installed as a dependency.
+        $projectRoot = $this->projectRoot();
         $pending = (new MigrationRunner(
             null,
-            [dirname(__DIR__, 3).'/migrations', $engineRoot.'/migrations'],
-            dirname(__DIR__, 3).'/storage/migrations.json'
+            [$projectRoot.'/migrations', dirname(__DIR__, 3).'/migrations'],
+            $projectRoot.'/storage/migrations.json'
         ))->pending();
 
         return $pending === [] ? $this->healthResult('ok', 'migrations_ok')
             : $this->healthResult('warning', 'migrations_pending', ['count' => count($pending)]);
+    }
+
+    private function projectRoot(): string
+    {
+        $root = realpath((string) (\Composer\InstalledVersions::getRootPackage()['install_path'] ?? ''));
+
+        return $root === false ? dirname(__DIR__, 3) : $root;
     }
 
     private function healthCache(): array
@@ -2675,7 +2684,7 @@ class AdminController extends AbstractController implements DashboardCardProvide
     private function healthPaths(): array
     {
         $paths = [
-            'storage' => dirname(__DIR__, 3).'/storage',
+            'storage' => $this->projectRoot().'/storage',
             'uploads' => $this->config->uploadsPath(dirname(__DIR__, 3)),
             'temporary' => $this->config->tempDir(),
             'twig' => $this->config->twigCacheDir(),
