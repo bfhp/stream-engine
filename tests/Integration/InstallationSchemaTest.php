@@ -27,6 +27,48 @@ use StreamEngine\Repository\UploadRepository;
 
 final class InstallationSchemaTest extends TestCase
 {
+    public function testCollationEquivalentFeedTypesPreserveCommentAndGalleryAccess(): void
+    {
+        $root = dirname(__DIR__, 2);
+        $this->withEmptyDatabase(function (PDO $pdo) use ($root): void {
+            $this->executeScript($pdo, $root.'/resources/install/schema.sql');
+            $pdo->exec("INSERT INTO users (id, email, password_hash, created_at) VALUES
+                (1, 'owner@example.test', 'x', 1), (2, 'reader@example.test', 'x', 1)");
+            $pdo->exec("INSERT INTO feeds (id, type, owner_id, visibility, created_at, updated_at, parent_id) VALUES
+                (101, 'article', 1, 'private', 1, 1, NULL),
+                (102, 'comment', 1, 'public', 1, 1, 101),
+                (103, 'community', 1, 'public', 1, 1, NULL),
+                (104, 'gallery-album', 1, 'public', 1, 1, 103),
+                (105, 'gallery-photo', 1, 'public', 1, 1, 104),
+                (106, 'gallery-photo', 1, 'public', 1, 1, 104)");
+            $pdo->exec("INSERT INTO feed_metadata (feed_id, name, content, created_at, updated_at)
+                VALUES (106, 'gallery.state', 'ready', 1, 1)");
+            $repository = new \StreamEngine\Repository\FeedRepository($this->database($pdo));
+            $ids = static fn (array $feeds): array => array_map(static fn ($feed): int => $feed->id, $feeds);
+
+            foreach ([0, 2] as $userId) {
+                $user = new \StreamEngine\Domain\User(id: $userId, email: '');
+                foreach ([
+                    'comment' => [], 'COMMENT' => [], 'cómment' => [], 'comment ' => [],
+                    'gallery-photo' => [106], 'GALLERY-PHOTO' => [106],
+                    'gállery-photo' => [106], 'gallery-photo ' => [106],
+                ] as $type => $expected) {
+                    if ($expected !== []) {
+                        // NO PAD collations may distinguish trailing spaces;
+                        // preserve that database match while enforcing ACL.
+                        $query = $pdo->prepare('SELECT id FROM feeds WHERE id = 106 AND type = ?');
+                        $query->execute([$type]);
+                        $expected = array_map('intval', $query->fetchAll(PDO::FETCH_COLUMN));
+                    }
+                    self::assertSame(count($expected), $repository->countByType($type, $user), $type);
+                    self::assertSame($expected, $ids($repository->findByType($type, $user)), $type);
+                    self::assertSame($expected, $ids($repository->findByIds([102, 105, 106], $user, $type)), $type);
+                    self::assertSame($expected, $ids($repository->findByTypePage($type, $user, 20)['items']), $type);
+                }
+            }
+        });
+    }
+
     public function testReleaseSnapshotInstallsIntoAnEmptyMariaDb(): void
     {
         $root = dirname(__DIR__, 2);

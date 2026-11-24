@@ -110,6 +110,27 @@ final class FeedRepositoryTest extends TestCase
         $this->assertStringContainsString('FROM feeds acl_parent', $sql);
     }
 
+    #[DataProvider('nonCanonicalTypeProvider')]
+    public function testCollationEquivalentTypeFiltersRetainTheFullAcl(string $type): void
+    {
+        foreach ([$this->user(0), $this->user(7)] as $user) {
+            $this->assertSame($this->aclCondition($user), $this->aclCondition($user, $type));
+        }
+    }
+
+    /** @return array<string, array{string}> */
+    public static function nonCanonicalTypeProvider(): array
+    {
+        return [
+            'uppercase comment' => ['COMMENT'],
+            'accented comment' => ['cómment'],
+            'padded comment' => ['comment '],
+            'uppercase photo' => ['GALLERY-PHOTO'],
+            'accented photo' => ['gállery-photo'],
+            'padded photo' => ['gallery-photo '],
+        ];
+    }
+
     /**
      * A caller that pins `f.type = ?` passes the type on, and only the branch
      * that type can match is emitted. Leaving the comment branch in made

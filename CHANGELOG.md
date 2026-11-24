@@ -26,6 +26,10 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Type-filtered feed queries retain comment inheritance and gallery publication
+  checks for case-, accent-, or trailing-space variants of type names under
+  case-insensitive database collations. Noncanonical type filters use the full
+  access predicate; canonical type names retain the optimized query.
 - `robots.txt` answered 304 to any `If-Modified-Since` header, however old;
   it now does so only when the date is at or after the file's last change.
 

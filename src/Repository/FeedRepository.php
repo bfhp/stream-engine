@@ -1355,6 +1355,14 @@ final class FeedRepository implements FeedRepositoryInterface
             return ['1=1', []];
         }
 
+        // SQL type comparisons are case/accent insensitive and can ignore
+        // trailing spaces. Only canonical ASCII identifiers are safe to
+        // specialize in PHP; other spellings need the database's full ACL
+        // branches, especially for comments and unpublished gallery photos.
+        if ($type !== null && preg_match('/\A[a-z][a-z0-9-]*\z/', $type) !== 1) {
+            $type = null;
+        }
+
         $guest = $user->isGuest();
         $sql = [];
         $params = [];
