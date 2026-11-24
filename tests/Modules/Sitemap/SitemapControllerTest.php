@@ -110,9 +110,14 @@ final class SitemapControllerTest extends TestCase
     private function sitemap(SitemapController $module, string $slug): string
     {
         ob_start();
-        $module->callApi(self::page(100, 1, 'sitemap-{slug}.xml', 'raw', action: 'sitemap.sitemap'), ['slug' => $slug]);
 
-        return (string) ob_get_clean();
+        try {
+            $module->callApi(self::page(100, 1, 'sitemap-{slug}.xml', 'raw', action: 'sitemap.sitemap'), ['slug' => $slug]);
+        } finally {
+            $output = (string) ob_get_clean();
+        }
+
+        return $output;
     }
 
     public function testIndexIncludesPagesAndGuestVisibleFeedTypes(): void
@@ -437,6 +442,80 @@ final class SitemapControllerTest extends TestCase
         $output = ob_get_clean();
 
         $this->assertStringContainsString('https://example.test/lectures/next/', $output);
+    }
+
+    /**
+     * @return array<string, array{string, int|null}>
+     */
+    public static function chunkSlugProvider(): array
+    {
+        return [
+            'second' => ['article-2', 30000],
+            'ninth' => ['article-9', 240000],
+            'tenth' => ['article-10', 270000],
+            'eleventh' => ['article-11', 300000],
+            'twentieth' => ['article-20', 570000],
+            'hundredth' => ['article-100', 2970000],
+            'first has no suffix' => ['article-1', null],
+            'leading zero' => ['article-010', null],
+            'zero' => ['article-0', null],
+            'trailing junk' => ['article-10x', null],
+            'trailing newline' => ["article-10\n", null],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('chunkSlugProvider')]
+    public function testFeedChunkNumbersAreParsedWithoutLeadingZeros(string $slug, ?int $offset): void
+    {
+        $_SERVER['HTTP_HOST'] = 'example.test';
+
+        $pageTree = new PageTree([
+            self::page(1, null, ''),
+            self::page(2, 1, 'articles'),
+            self::page(3, 2, '{slug}', feedType: 'article'),
+        ]);
+
+        $feedService = $this->getMockBuilder(FeedService::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['getFeedsByType'])
+            ->getMock();
+
+        if ($offset === null) {
+            $feedService->expects($this->never())->method('getFeedsByType');
+            $this->expectException(\StreamEngine\Core\Exceptions\NotFoundException::class);
+        } else {
+            $feedService
+                ->expects($this->once())
+                ->method('getFeedsByType')
+                ->with('article', $this->anything(), 30000, $offset)
+                ->willReturn([self::feed($offset + 1, 'article', 'a', '/articles/a/')]);
+        }
+
+        $output = $this->sitemap($this->makeModule($pageTree, $feedService), $slug);
+
+        $this->assertStringContainsString('https://example.test/articles/a/', $output);
+    }
+
+    public function testTermChunkTenIsServed(): void
+    {
+        $_SERVER['HTTP_HOST'] = 'example.test';
+
+        $pageTree = new PageTree([
+            self::page(1, null, ''),
+            self::page(6, 1, 'biblioteka'),
+            self::page(7, 6, 'authors'),
+            self::page(8, 7, '{slug}', termVocabulary: 'author'),
+        ]);
+
+        $db = $this->createMock(PdoDatabase::class);
+        $db->expects($this->once())
+            ->method('fetchAll')
+            ->with($this->stringContains('FROM feed_terms'), $this->callback(static fn (array $params): bool => in_array('author', $params, true)))
+            ->willReturn([]);
+
+        $output = $this->sitemap($this->makeModule($pageTree, $this->createStub(FeedService::class), $db), 'term-author-10');
+
+        $this->assertStringContainsString('<urlset', $output);
     }
 
     public function testFeedTermSitemapUsesVocabularyPage(): void

@@ -38,6 +38,13 @@ class SitemapController extends AbstractController
 
     private const string CRON_TASK = 'sitemap:warm';
 
+    /**
+     * Chunk numbers in file names: 1 has no suffix, so 2 and up, without
+     * leading zeros (`-10`, `-11`, ... included - `[2-9][0-9]*` once
+     * rejected every number starting with 1).
+     */
+    private const string CHUNK_SUFFIX = '/\A(?:[2-9]|[1-9][0-9]+)\z/';
+
     public function __construct(
         PdoDatabase $db,
         RequestContext $context,
@@ -375,7 +382,7 @@ class SitemapController extends AbstractController
             if (str_starts_with($slug, $prefix)) {
                 $page = substr($slug, strlen($prefix));
 
-                if (preg_match('/^[2-9][0-9]*$/', $page) === 1) {
+                if (preg_match(self::CHUNK_SUFFIX, $page) === 1) {
                     return ['type' => $type, 'page' => (int) $page];
                 }
             }
@@ -404,7 +411,7 @@ class SitemapController extends AbstractController
             if (str_starts_with($slug, $prefix)) {
                 $page = substr($slug, strlen($prefix));
 
-                if (preg_match('/^[2-9][0-9]*$/', $page) === 1) {
+                if (preg_match(self::CHUNK_SUFFIX, $page) === 1) {
                     return ['vocabulary' => $vocabulary, 'page' => (int) $page];
                 }
             }
