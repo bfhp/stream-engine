@@ -125,7 +125,64 @@ class APIController extends AbstractController
             );
 
             echo Formatter::json($feed);
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+            Security::verifyCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null, $this->tm);
+
+            if (!$this->accessService->isAdmin($this->context->user)) {
+                throw new ForbiddenException("Forbidden");
+            }
+
+            $this->deleteFeedAsAdmin($feedId);
+            echo Formatter::json(['deleted' => true]);
         }
+    }
+
+    /**
+     * The admin "Delete" on a feed. The row delete cascades to comments,
+     * metadata, ratings and child feeds (FeedRepository::delete()); two things
+     * it cannot clean up are refused instead:
+     *
+     * - a page bound to the feed: pages.feed_id has no foreign key, so the page
+     *   would be left pointing at nothing;
+     * - gallery photographs (the feed itself, its photos, or its albums'
+     *   photos): their protected files are removed only by the gallery's own
+     *   delete (PhotoUploadService), so the row delete would orphan them.
+     *
+     * @throws NotFoundException
+     * @throws ForbiddenException
+     * @throws ValidationException
+     */
+    private function deleteFeedAsAdmin(int $feedId): void
+    {
+        if ($this->feedService->getFeedById($feedId, $this->context->user) === null) {
+            throw new NotFoundException($this->tm->trans('feed.not_found'));
+        }
+
+        $page = $this->pageTree->findByFeedId($feedId);
+        if ($page !== null) {
+            throw new ValidationException($this->tm->trans('admin.error.feed_bound_to_page', [
+                'id' => $feedId,
+                'page' => $page->id,
+            ]), 409, 'conflict');
+        }
+
+        // Uses index: PRIMARY(id), feeds_parent_id_type_position_index (parent_id, type, position)
+        $photos = $this->db->fetchOne(
+            "SELECT 1 AS found FROM feeds WHERE id = ? AND type = 'gallery-photo'
+             UNION ALL
+             SELECT 1 FROM feeds WHERE parent_id = ? AND type = 'gallery-photo'
+             UNION ALL
+             SELECT 1 FROM feeds album
+             JOIN feeds photo ON photo.parent_id = album.id AND photo.type = 'gallery-photo'
+             WHERE album.parent_id = ? AND album.type = 'gallery-album'
+             LIMIT 1",
+            [$feedId, $feedId, $feedId]
+        );
+        if ($photos !== null) {
+            throw new ValidationException($this->tm->trans('admin.error.feed_has_photos', ['id' => $feedId]), 409, 'conflict');
+        }
+
+        $this->feedService->deleteFeed($feedId, $this->context->user);
     }
 
     /**
@@ -599,7 +656,7 @@ class APIController extends AbstractController
                 id: $feedsIdPageId,
                 parentId: $feedsPageId,
                 pattern: '{slug}',
-                requestMethods: ['GET', 'PATCH'],
+                requestMethods: ['GET', 'PATCH', 'DELETE'],
                 action: 'feed.show',
             )
         );

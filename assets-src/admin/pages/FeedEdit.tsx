@@ -4,13 +4,14 @@ import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
 import Editor from "@monaco-editor/react";
 import CodeEditorHint, { codeEditorAriaLabel } from "../components/CodeEditorHint";
 
-import { TextInput, Textarea, Button, Stack, Group, Grid, ActionIcon, Anchor, Text, NumberInput, Fieldset, useComputedColorScheme, Tooltip } from "@mantine/core";
+import { TextInput, Textarea, Button, Stack, Group, Grid, ActionIcon, Anchor, Text, NumberInput, Fieldset, Modal, useComputedColorScheme, Tooltip } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 
 import { IconFileUpload, IconPlus, IconTrash } from "@tabler/icons-react";
 import { FEED_TYPES } from "../../shared/feed-types";
 import { uploadFile } from "../../shared/uploads";
 import { csrfHeaders } from "../../shared/csrf";
+import { getApiResponseError } from "../../shared/api-errors";
 import { trans } from "../i18n";
 import { isRtl } from "../lib/direction";
 import { pagesBoundToFeed, type BoundPage, type PickerPage } from "../lib/feed-picker";
@@ -26,6 +27,8 @@ export default function FeedEdit() {
 
     const [feed, setFeed] = useState<any>(null);
     const [saving, setSaving] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+    const [confirmDelete, setConfirmDelete] = useState(false);
     const [pages, setPages] = useState<PickerPage[] | null>(null);
     const [metadataRows, setMetadataRows] = useState<MetadataRow[]>([]);
 
@@ -160,6 +163,44 @@ export default function FeedEdit() {
             });
     }
 
+    function remove() {
+        if (!feed?.id) {
+            return;
+        }
+
+        setDeleting(true);
+        fetch(`/api/v1/feeds/${feed.id}`, {
+            method: "DELETE",
+            headers: csrfHeaders()
+        })
+            .then(async response => {
+                if (!response.ok) {
+                    throw await getApiResponseError(response, trans("js.admin.feeds.delete_failed"));
+                }
+
+                return response.json();
+            })
+            .then(() => {
+                notifications.show({
+                    color: "green",
+                    message: trans("js.admin.feeds.deleted")
+                });
+                navigate(`/feeds${search}`, { replace: true });
+            })
+            .catch(err => {
+                notifications.show({
+                    autoClose: false,
+                    color: "red",
+                    title: trans("js.admin.error"),
+                    message: err.message || trans("js.admin.feeds.delete_failed")
+                });
+            })
+            .finally(() => {
+                setDeleting(false);
+                setConfirmDelete(false);
+            });
+    }
+
     async function handleImageSelect(e: ChangeEvent<HTMLInputElement>) {
 
         const file = e.target.files?.[0];
@@ -199,6 +240,17 @@ export default function FeedEdit() {
                 >
                     {isRtl() ? "→" : "←"} {trans("js.admin.back")}
                 </Button>
+
+                {feed.id && (
+                    <Button
+                        color="red"
+                        variant="light"
+                        leftSection={<IconTrash size={16} />}
+                        onClick={() => setConfirmDelete(true)}
+                    >
+                        {trans("js.admin.delete")}
+                    </Button>
+                )}
 
                 {pages !== null && (
                     <Group gap="xs">
@@ -424,6 +476,26 @@ export default function FeedEdit() {
             >
                 {trans("js.admin.save")}
             </Button>
+
+            <Modal
+                opened={confirmDelete}
+                onClose={() => setConfirmDelete(false)}
+                title={trans("js.admin.delete")}
+                centered
+            >
+                <Stack>
+                    <Text>{trans("js.admin.feeds.delete_children")}</Text>
+                    <Text>{trans("js.admin.cannot_undo")}</Text>
+                    <Group justify="flex-end">
+                        <Button variant="default" onClick={() => setConfirmDelete(false)}>
+                            {trans("js.admin.cancel")}
+                        </Button>
+                        <Button color="red" loading={deleting} onClick={remove}>
+                            {trans("js.admin.delete")}
+                        </Button>
+                    </Group>
+                </Stack>
+            </Modal>
 
         </Stack>
     );

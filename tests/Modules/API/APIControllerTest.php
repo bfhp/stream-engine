@@ -1083,7 +1083,7 @@ final class APIControllerTest extends TestCase
             id: 32,
             parentId: 31,
             pattern: '{slug}',
-            requestMethods: ['GET', 'PATCH'],
+            requestMethods: ['GET', 'PATCH', 'DELETE'],
             action: 'feed.show',
         );
     }
@@ -1128,6 +1128,27 @@ final class APIControllerTest extends TestCase
         $module = $this->makeModule(new PageTree([$page]), $feedService);
 
         $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        unset($_COOKIE['csrfToken'], $_SERVER['HTTP_X_CSRF_TOKEN']);
+
+        $this->expectException(ValidationException::class);
+
+        $module->callApi($page, ['slug' => 58]);
+    }
+
+    public function testCallApiFeedDeleteFailsWithoutCsrfToken(): void
+    {
+        $page = $this->makeFeedItemPage();
+
+        $feedService = $this->getMockBuilder(FeedService::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['deleteFeed'])
+            ->getMock();
+
+        $feedService->expects($this->never())->method('deleteFeed');
+
+        $module = $this->makeModule(new PageTree([$page]), $feedService);
+
+        $_SERVER['REQUEST_METHOD'] = 'DELETE';
         unset($_COOKIE['csrfToken'], $_SERVER['HTTP_X_CSRF_TOKEN']);
 
         $this->expectException(ValidationException::class);

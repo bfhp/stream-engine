@@ -8,6 +8,7 @@ use DateTimeZone;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use StreamEngine\Core\Exceptions\ForbiddenException;
+use StreamEngine\Core\Exceptions\NotFoundException;
 use StreamEngine\Core\Exceptions\ValidationException;
 use StreamEngine\Core\PageTree;
 use StreamEngine\Core\PdoDatabase;
@@ -70,8 +71,9 @@ final class APIControllerFeedsTest extends TestCase
         ?UploadService $uploadService = null,
         bool $isAdmin = false,
         ?PageTree $pageTree = null,
+        ?PdoDatabase $db = null,
     ): APIController {
-        $db = $this->createStub(PdoDatabase::class);
+        $db ??= $this->createStub(PdoDatabase::class);
 
         $accessService = $this->createStub(AccessService::class);
         $accessService->method('isAdmin')->willReturn($isAdmin);
@@ -194,7 +196,7 @@ final class APIControllerFeedsTest extends TestCase
             id: 23,
             parentId: 22,
             pattern: '{slug}',
-            requestMethods: ['GET', 'PATCH'],
+            requestMethods: ['GET', 'PATCH', 'DELETE'],
             action: 'feed.show',
         );
     }
@@ -475,6 +477,109 @@ final class APIControllerFeedsTest extends TestCase
         } catch (ValidationException $e) {
             self::assertSame(405, $e->getHttpCode());
         }
+    }
+
+    /* ===============================
+       DELETE /api/v1/feeds/{id}
+    =============================== */
+
+    public function testANonAdminCannotDeleteAFeedEvenWithAValidToken(): void
+    {
+        $feedService = $this->feedServiceMock(['getFeedById', 'deleteFeed']);
+        $feedService->expects($this->never())->method('deleteFeed');
+
+        $this->withToken('DELETE');
+
+        $this->expectException(ForbiddenException::class);
+
+        $this->makeModule($feedService)->callApi($this->feedItemPage(), ['slug' => 58]);
+    }
+
+    public function testDeletingAMissingFeedIs404(): void
+    {
+        $feedService = $this->feedServiceMock(['getFeedById', 'deleteFeed']);
+        $feedService->method('getFeedById')->willReturn(null);
+        $feedService->expects($this->never())->method('deleteFeed');
+
+        $this->withToken('DELETE');
+
+        $this->expectException(NotFoundException::class);
+
+        $this->makeModule($feedService, isAdmin: true)->callApi($this->feedItemPage(), ['slug' => 58]);
+    }
+
+    public function testAFeedBoundToAPageIsNotDeleted(): void
+    {
+        // pages.feed_id has no foreign key: deleting the feed would leave the
+        // page pointing at nothing.
+        $feedService = $this->feedServiceMock(['getFeedById', 'deleteFeed']);
+        $feedService->method('getFeedById')->willReturn($this->feed());
+        $feedService->expects($this->never())->method('deleteFeed');
+
+        $pageTree = new PageTree([new Page(
+            id: 31,
+            parentId: null,
+            pattern: 'master',
+            pageName: 'Master',
+            settings: null,
+            feedType: null,
+            listFeedType: null,
+            feedId: 58,
+            requestMethods: ['GET'],
+            responseType: 'raw',
+            accessRule: AccessService::ACCESS_PUBLIC,
+        )]);
+
+        $this->withToken('DELETE');
+
+        try {
+            $this->makeModule($feedService, isAdmin: true, pageTree: $pageTree)
+                ->callApi($this->feedItemPage(), ['slug' => 58]);
+            self::fail('expected a 409');
+        } catch (ValidationException $e) {
+            self::assertSame(409, $e->getHttpCode());
+            self::assertStringContainsString('#31', $e->getMessage());
+        }
+    }
+
+    public function testAFeedWithGalleryPhotosIsNotDeleted(): void
+    {
+        // Photo files are removed only by the gallery's own delete.
+        $feedService = $this->feedServiceMock(['getFeedById', 'deleteFeed']);
+        $feedService->method('getFeedById')->willReturn($this->feed());
+        $feedService->expects($this->never())->method('deleteFeed');
+
+        $db = $this->createStub(PdoDatabase::class);
+        $db->method('fetchOne')->willReturn(['found' => 1]);
+
+        $this->withToken('DELETE');
+
+        try {
+            $this->makeModule($feedService, isAdmin: true, db: $db)
+                ->callApi($this->feedItemPage(), ['slug' => 58]);
+            self::fail('expected a 409');
+        } catch (ValidationException $e) {
+            self::assertSame(409, $e->getHttpCode());
+        }
+    }
+
+    public function testAnAdminDeletesAFeed(): void
+    {
+        $feedService = $this->feedServiceMock(['getFeedById', 'deleteFeed']);
+        $feedService->method('getFeedById')->willReturn($this->feed());
+        $feedService->expects($this->once())
+            ->method('deleteFeed')
+            ->with(58, $this->callback(static fn (User $u): bool => $u->id === 1));
+
+        $this->withToken('DELETE');
+
+        $decoded = $this->capture(
+            $this->makeModule($feedService, isAdmin: true),
+            $this->feedItemPage(),
+            ['slug' => 58]
+        );
+
+        self::assertSame(['deleted' => true], $decoded);
     }
 
     /* ===============================

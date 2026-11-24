@@ -7,6 +7,15 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Feeds can be deleted from the admin feed editor (`DELETE /api/v1/feeds/{id}`,
+  admin only, CSRF-checked). Comments, metadata, ratings and child feeds go
+  with it through the existing `ON DELETE CASCADE`. A feed bound to a page, or
+  one holding gallery photos (itself, its photos or its albums' photos), is
+  refused with a 409: the page would point at nothing and the photo files would
+  be orphaned.
+
 ### Changed
 
 - Cron tasks run in parallel, each in its own process. A scheduler tick
@@ -21,6 +30,11 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
   *Administrator → Scheduler*). Traditional cron and Supercronic need no change.
 
 ### Fixed
+
+- The admin system health check counted every engine migration as pending when
+  the engine is installed as a Composer dependency: it read
+  `storage/migrations.json` and the application's `migrations/` from the engine
+  package instead of the application root that `bin/migrate.php` uses.
 
 - The users list keeps its height while the first page loads
   (`aria-busy="true"` on `[data-users-list]`), so the footer no longer jumps
