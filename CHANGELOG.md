@@ -7,6 +7,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.8.4] - 2026-11-24
+
 ### Fixed
 
 - Large feed sitemaps (`sitemap-lib-page-11.xml`) killed the PHP worker at a
@@ -18,9 +20,26 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 - Feed sitemaps are built in batches of 1 000 through the new
   `FeedService::eachFeedUrlBatchByType()`: the first batch seeks to the
   chunk's offset, later ones continue from the last row by
-  `(created_at, id)`, and only canonical URLs are resolved. Memory no longer
-  grows with the file. `FeedRepository::findByTypeAfter()` takes an optional
-  `$withContent`.
+  `(created_at, id)`, and only canonical URLs are resolved. This limits the
+  number of fully hydrated feed objects held at once while retaining the
+  existing URL order and 30,000-URL chunk size.
+  `FeedRepository::findByTypeAfter()` takes an optional `$withContent` argument,
+  which defaults to including content for existing callers.
+
+### Upgrade notes
+
+- From 0.8.3, deploy the release and install PHP dependencies from the lockfile.
+  No dependency updates or configuration changes are required. Earlier
+  versions must also follow the intervening release notes.
+- The hourly `sitemap:warm` task uses the same lower-memory generation path.
+  To regenerate sitemap files immediately after deployment, run
+  `php bin/cron.php --task=sitemap:warm` as the scheduler account or use
+  **Administration → Scheduler → sitemap:warm → Run now**.
+- No new database migrations or schema changes are required. The installation
+  snapshot was regenerated from all 23 migrations: `schema.sql` is unchanged
+  from 0.8.3, and its matching manifest identifies 0.8.4. Both files are
+  included in the release source and attached to the GitHub Release with
+  checksums. Existing sites must not import `schema.sql`.
 
 ## [0.8.3] - 2026-11-24
 
@@ -1081,7 +1100,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 - Initial version.
 
-[Unreleased]: https://github.com/bfhp/stream-engine/compare/v0.8.3...HEAD
+[Unreleased]: https://github.com/bfhp/stream-engine/compare/v0.8.4...HEAD
+[0.8.4]: https://github.com/bfhp/stream-engine/compare/v0.8.3...v0.8.4
 [0.8.3]: https://github.com/bfhp/stream-engine/compare/v0.8.2...v0.8.3
 [0.8.2]: https://github.com/bfhp/stream-engine/compare/v0.8.1...v0.8.2
 [0.8.1]: https://github.com/bfhp/stream-engine/compare/v0.8.0...v0.8.1
