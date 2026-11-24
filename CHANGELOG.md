@@ -7,6 +7,19 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Cron tasks run in parallel, each in its own process. A scheduler tick
+  (`bin/cron.php`) now only starts `bin/cron.php --task=<name> --scheduled` in
+  the background for every due task and exits, so a long task no longer holds
+  back the others until it finishes. The worker re-checks the interval and takes
+  the task's database lock, so duplicate dispatches are refused.
+  `CronRunner::runScheduledTask()` and `StreamEngine::runScheduledCronTask()`
+  are the worker entry points; `CronTrigger::spawnScheduledTask()` starts one.
+  **Upgrade:** a systemd `Type=oneshot` service that runs the tick needs
+  `KillMode=process`, or systemd kills the workers when the tick exits (see
+  *Administrator → Scheduler*). Traditional cron and Supercronic need no change.
+
 ### Fixed
 
 - The users list keeps its height while the first page loads

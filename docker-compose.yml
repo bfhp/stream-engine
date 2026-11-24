@@ -41,6 +41,8 @@ services:
   scheduler:
     <<: *app
     command: ["supercronic", "/etc/stream-engine/crontab"]
+    # Cron workers outlive the tick that starts them; an init reaps them.
+    init: true
     user: www-data
     restart: unless-stopped
 

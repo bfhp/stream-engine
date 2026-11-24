@@ -207,6 +207,34 @@ final class CronTriggerTest extends TestCase
         $this->assertStringContainsString("--task='notifications:deliveries'", (string) $command);
     }
 
+    public function testSpawnScheduledTaskMarksTheWorkerAsScheduled(): void
+    {
+        $command = null;
+        $trigger = new CronTrigger(PHP_BINARY, static function (string $spawnedCommand) use (&$command): int {
+            $command = $spawnedCommand;
+
+            return 0;
+        });
+
+        $this->assertTrue($trigger->spawnScheduledTask('library_sync'));
+        $this->assertStringContainsString("--task='library_sync' --scheduled", (string) $command);
+    }
+
+    /**
+     * The scheduler tick is a cron process, so this path cannot use the
+     * CRON_PROCESS guard; a worker must still never start more workers.
+     */
+    public function testTheScheduledSpawnGuardIsTheWorkerConstant(): void
+    {
+        $this->assertFalse(defined('CRON_WORKER'));
+
+        $source = (string) file_get_contents(dirname(__DIR__, 2).'/src/Core/Cron/CronTrigger.php');
+        $body = substr($source, strpos($source, 'private function spawnCommand('));
+
+        $this->assertStringContainsString("defined('CRON_WORKER')", $body);
+        $this->assertLessThan(strpos($body, 'exec('), strpos($body, "defined('CRON_WORKER')"));
+    }
+
     public function testSpawnReportsAWorkerLaunchFailure(): void
     {
         $trigger = new CronTrigger(PHP_BINARY, static fn (string $command): int => 1);

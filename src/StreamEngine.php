@@ -821,6 +821,16 @@ class StreamEngine
         }
     }
 
+    /** The worker a scheduler tick started for one due task. */
+    public function runScheduledCronTask(string $task): bool
+    {
+        if ($this->settings->cronMode() === 'off') {
+            return false;
+        }
+
+        return $this->cronRunner(new CronRepository($this->db))->runScheduledTask($task);
+    }
+
     /** Manual task execution is available even when automatic cron is off. */
     public function runCronTask(string $task): bool
     {

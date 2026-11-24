@@ -62,11 +62,22 @@ environment, so use absolute paths and do not depend on an interactive shell's
 `PATH`, aliases, current directory, or environment variables. The application
 loads its deployment environment from `.env`.
 
-The normal runner holds a process lock in `storage/cron.lock`. Each task also
-uses an atomic database lock shared by scheduled and manual runs. An overlapping
-tick exits without duplicating work, while a second invocation of the same task
-is refused. These locks are safeguards, not a reason to operate duplicate
+A tick only dispatches. For every task that is due it starts a separate
+background process, `bin/cron.php --task=<name> --scheduled`, and exits within
+a second or two; the task runs in that worker. Tasks therefore run in parallel,
+and a long task does not delay the others. Workers inherit the tick's user,
+working directory and environment, and their errors go to
+`storage/cron-error.log`.
+
+The tick holds a process lock in `storage/cron.lock`. Each task also uses an
+atomic database lock shared by scheduled and manual runs, so a task that is
+still running is not started again, and a duplicate worker exits without doing
+anything. These locks are safeguards, not a reason to operate duplicate
 schedulers.
+
+Whatever starts the tick must leave its background workers running after the
+tick exits. Traditional cron and Supercronic do; a systemd `oneshot` service
+needs `KillMode=process`, shown below.
 
 ## Traditional cron setup
 
@@ -112,6 +123,8 @@ Description=Stream Engine scheduled tasks
 
 [Service]
 Type=oneshot
+# Keep the task workers the tick starts; the default kills them with it.
+KillMode=process
 User=www-data
 WorkingDirectory=/srv/stream-engine
 ExecStart=/usr/bin/php bin/cron.php

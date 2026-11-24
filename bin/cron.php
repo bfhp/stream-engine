@@ -16,10 +16,21 @@ require $autoload;
 $root = dirname($autoload, 2);
 Dotenv\Dotenv::createImmutable($root)->load();
 
-$options = getopt('', ['task:']);
+// No options: one scheduler tick, which starts a worker per due task.
+// --task=<name>: a manual run of that task, ignoring its interval.
+// --task=<name> --scheduled: the worker a tick started.
+$options = getopt('', ['task:', 'scheduled']);
 $task = $options['task'] ?? null;
 if ($task !== null && (! is_string($task) || $task === '')) {
     throw new InvalidArgumentException('The --task option requires a task name.');
+}
+$scheduled = array_key_exists('scheduled', $options);
+if ($scheduled && $task === null) {
+    throw new InvalidArgumentException('The --scheduled option requires --task.');
+}
+if ($task !== null) {
+    // A worker never starts other workers (CronTrigger::spawnScheduledTask()).
+    define('CRON_WORKER', true);
 }
 
 $fp = null;
@@ -43,6 +54,8 @@ try {
     $engine = new StreamEngine();
     if ($task === null) {
         $engine->runCron();
+    } elseif ($scheduled) {
+        $engine->runScheduledCronTask($task);
     } else {
         $engine->runCronTask($task);
     }

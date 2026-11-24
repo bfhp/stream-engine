@@ -81,9 +81,22 @@ class CronTrigger
         return $this->spawnCommand($task);
     }
 
-    private function spawnCommand(?string $task = null): bool
+    /**
+     * Fork the worker for one due task, honouring its interval.
+     *
+     * Called by the scheduler tick (CronRunner::run()), which is itself a
+     * cron process, so the CRON_PROCESS guard cannot apply. The guard here is
+     * CRON_WORKER, which `bin/cron.php --task` defines: a running task never
+     * starts further workers.
+     */
+    public function spawnScheduledTask(string $task): bool
     {
-        if (defined('CRON_PROCESS')) {
+        return $this->spawnCommand($task, scheduled: true);
+    }
+
+    private function spawnCommand(?string $task = null, bool $scheduled = false): bool
+    {
+        if ($scheduled ? defined('CRON_WORKER') : defined('CRON_PROCESS')) {
             return false;
         }
 
@@ -101,7 +114,7 @@ class CronTrigger
             return false;
         }
 
-        $argument = $task === null ? '' : ' --task='.escapeshellarg($task);
+        $argument = $task === null ? '' : ' --task='.escapeshellarg($task).($scheduled ? ' --scheduled' : '');
         $command = escapeshellarg($phpBinary).' '.escapeshellarg($script).$argument.' > /dev/null 2>&1 &';
         if ($this->commandRunner !== null) {
             return ($this->commandRunner)($command) === 0;
