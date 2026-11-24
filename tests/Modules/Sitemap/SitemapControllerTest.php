@@ -87,7 +87,7 @@ final class SitemapControllerTest extends TestCase
         );
     }
 
-    private function makeModule(PageTree $pageTree, FeedService $feedService, ?PdoDatabase $db = null): SitemapController
+    private function makeModule(PageTree $pageTree, FeedService $feedService, ?PdoDatabase $db = null, ?ArrayCache $cache = null): SitemapController
     {
         $db ??= $this->createStub(PdoDatabase::class);
         if ($pageTree->findByAction('sitemap.sitemap') === null) {
@@ -103,7 +103,16 @@ final class SitemapControllerTest extends TestCase
             $feedService,
             new TermService(new FeedTermRepository($db), $urlGenerator),
             new Config(['SITE_URL' => 'https://example.test']),
+            $cache,
         );
+    }
+
+    private function sitemap(SitemapController $module, string $slug): string
+    {
+        ob_start();
+        $module->callApi(self::page(100, 1, 'sitemap-{slug}.xml', 'raw', action: 'sitemap.sitemap'), ['slug' => $slug]);
+
+        return (string) ob_get_clean();
     }
 
     public function testIndexIncludesPagesAndGuestVisibleFeedTypes(): void
@@ -271,7 +280,8 @@ final class SitemapControllerTest extends TestCase
         $feedService
             ->expects($this->once())
             ->method('getFeedsByType')
-            ->with('article', $this->callback(static fn (User $user): bool => $user->isGuest()), 30000, 0)
+            // URLs only: no bodies for 30 000 rows.
+            ->with('article', $this->callback(static fn (User $user): bool => $user->isGuest()), 30000, 0, false)
             ->willReturn([
                 self::feed(10, 'article', 'hello', '/articles/hello/'),
             ]);
@@ -285,6 +295,117 @@ final class SitemapControllerTest extends TestCase
         $this->assertStringContainsString('<urlset', $output);
         $this->assertStringContainsString('https://example.test/articles/hello/', $output);
         $this->assertStringContainsString('<lastmod>2023-11-15</lastmod>', $output);
+    }
+
+    public function testRenderedSitemapIsServedFromCacheOnTheNextRequest(): void
+    {
+        $_SERVER['HTTP_HOST'] = 'example.test';
+
+        $pageTree = new PageTree([
+            self::page(1, null, ''),
+            self::page(2, 1, 'articles'),
+            self::page(3, 2, '{slug}', feedType: 'article'),
+        ]);
+
+        $feedService = $this->getMockBuilder(FeedService::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['getFeedsByType'])
+            ->getMock();
+        $feedService
+            ->expects($this->once())
+            ->method('getFeedsByType')
+            ->willReturn([self::feed(10, 'article', 'hello', '/articles/hello/')]);
+
+        $cache = new ArrayCache();
+        $module = $this->makeModule($pageTree, $feedService, cache: $cache);
+
+        $first = $this->sitemap($module, 'article');
+        $second = $this->sitemap($module, 'article');
+
+        $this->assertStringContainsString('https://example.test/articles/hello/', $first);
+        $this->assertSame($first, $second);
+        $this->assertSame($first, gzdecode((string) $cache->get('sitemap:v1:article')));
+    }
+
+    public function testEmptyChunkPastTheEndIsNotCached(): void
+    {
+        $_SERVER['HTTP_HOST'] = 'example.test';
+
+        $pageTree = new PageTree([
+            self::page(1, null, ''),
+            self::page(2, 1, 'articles'),
+            self::page(3, 2, '{slug}', feedType: 'article'),
+        ]);
+
+        $feedService = $this->createStub(FeedService::class);
+        $feedService->method('getFeedsByType')->willReturn([]);
+
+        $cache = new ArrayCache();
+        $output = $this->sitemap($this->makeModule($pageTree, $feedService, cache: $cache), 'article-987654');
+
+        $this->assertStringContainsString('<urlset', $output);
+        $this->assertNull($cache->get('sitemap:v1:article-987654'));
+    }
+
+    public function testCronWarmsTheIndexAndEveryFileItLists(): void
+    {
+        $_SERVER['HTTP_HOST'] = 'example.test';
+
+        $pageTree = new PageTree([
+            self::page(1, null, ''),
+            self::page(2, 1, 'articles'),
+            self::page(3, 2, '{slug}', feedType: 'article'),
+        ]);
+
+        $feedService = $this->getMockBuilder(FeedService::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['countFeedsByType', 'getFeedsByType'])
+            ->getMock();
+        // Counted once for the whole run, not once for the index and again
+        // for each file.
+        $feedService->expects($this->once())->method('countFeedsByType')->willReturn(30001);
+        $feedService
+            ->expects($this->exactly(2))
+            ->method('getFeedsByType')
+            ->willReturnCallback(static fn (string $type, User $user, int $limit, int $offset): array => [
+                self::feed($offset + 1, 'article', 'a'.$offset, '/articles/a'.$offset.'/'),
+            ]);
+
+        $cache = new ArrayCache();
+        $module = $this->makeModule($pageTree, $feedService, cache: $cache);
+        $module->runCron('sitemap:warm');
+
+        foreach (['index', 'pages', 'article', 'article-2'] as $slug) {
+            $this->assertIsString($cache->get('sitemap:v1:'.$slug), $slug);
+        }
+        $this->assertStringContainsString('https://example.test/sitemap-article-2.xml', gzdecode($cache->get('sitemap:v1:index')));
+        $this->assertStringContainsString('https://example.test/articles/a30000/', gzdecode($cache->get('sitemap:v1:article-2')));
+
+        // Served from the cache: no further counts or queries.
+        $this->assertStringContainsString('sitemap-article-2.xml', $this->sitemap($module, 'index'));
+    }
+
+    public function testSitemapCronTaskIsRegisteredHourly(): void
+    {
+        $registry = new \StreamEngine\Core\Cron\CronRegistry();
+        SitemapController::registerCron($registry);
+
+        $this->assertSame(3600, $registry->get('sitemap:warm')['interval'] ?? null);
+        $this->assertSame('Sitemap', $registry->get('sitemap:warm')['controller'] ?? null);
+    }
+
+    public function testRobotsTxtNotModifiedOnlyForAFreshValidator(): void
+    {
+        $module = $this->makeModule(new PageTree([self::page(1, null, '')]), $this->createStub(FeedService::class));
+        $check = new ReflectionMethod(SitemapController::class, 'notModifiedSince');
+        $modified = 1_700_000_000;
+
+        $this->assertTrue($check->invoke($module, $modified, gmdate('D, d M Y H:i:s', $modified).' GMT'));
+        $this->assertTrue($check->invoke($module, $modified, gmdate('D, d M Y H:i:s', $modified + 60).' GMT'));
+        $this->assertFalse($check->invoke($module, $modified, gmdate('D, d M Y H:i:s', $modified - 1).' GMT'));
+        $this->assertFalse($check->invoke($module, $modified, 'garbage'));
+        $this->assertFalse($check->invoke($module, $modified, null));
+        $this->assertFalse($check->invoke($module, $modified, ''));
     }
 
     public function testFeedTypeSitemapCanRenderSecondChunk(): void
@@ -396,8 +517,7 @@ final class SitemapControllerTest extends TestCase
     }
 
     // NOTE: the If-Modified-Since 304 short-circuit in handleRobotsTxtRequest()
-    // calls exit() directly, which would terminate the PHPUnit process itself —
-    // there's no way to assert on it without a source-level refactor (e.g.
-    // returning instead of exiting and letting the front controller exit), which
-    // is out of scope for a point test fix. Left untested; see TESTS_AUDIT.md.
+    // still calls exit() directly, which would end the PHPUnit process; the
+    // date comparison deciding it is covered by
+    // testRobotsTxtNotModifiedOnlyForAFreshValidator().
 }

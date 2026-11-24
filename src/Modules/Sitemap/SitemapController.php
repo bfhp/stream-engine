@@ -6,7 +6,9 @@ namespace StreamEngine\Modules\Sitemap;
 
 use RuntimeException;
 use StreamEngine\Core\AbstractController;
+use StreamEngine\Core\CacheInterface;
 use StreamEngine\Core\Config;
+use StreamEngine\Core\Cron\CronRegistry;
 use StreamEngine\Core\Exceptions\NotFoundException;
 use StreamEngine\Core\PageTree;
 use StreamEngine\Core\PdoDatabase;
@@ -24,6 +26,18 @@ class SitemapController extends AbstractController
 {
     private const int MAX_SITEMAP_URLS = 30000;
 
+    /**
+     * Rendered sitemaps are cached gzip-compressed (a 30 000-URL file is
+     * ~4 MB of XML, a few hundred KB compressed - below Memcached's 1 MB item
+     * limit). The cron task re-renders everything hourly; the TTL only
+     * bounds how long a file outlives a stopped scheduler.
+     */
+    private const string CACHE_PREFIX = 'sitemap:v1:';
+
+    private const int CACHE_TTL = 6 * 60 * 60;
+
+    private const string CRON_TASK = 'sitemap:warm';
+
     public function __construct(
         PdoDatabase $db,
         RequestContext $context,
@@ -32,6 +46,7 @@ class SitemapController extends AbstractController
         private readonly FeedService $feedService,
         private readonly TermService $termService,
         private readonly Config $config,
+        private readonly ?CacheInterface $cache = null,
     ) {
         parent::__construct($db, $context);
     }
@@ -54,48 +69,121 @@ class SitemapController extends AbstractController
      */
     private function handleSitemapRequest(string $slug): void
     {
-        header('Content-Type: application/xml; charset=UTF-8');
+        $xml = $this->cachedSitemap($slug) ?? throw new NotFoundException('Unknown page');
 
+        // The one visitor-independent response: replaces the default
+        // `private, no-store` policy (see Security::defaultResponseHeaders()).
+        header('Content-Type: application/xml; charset=UTF-8');
+        header('Cache-Control: public, max-age=3600');
+        echo $xml;
+    }
+
+    private function cachedSitemap(string $slug): ?string
+    {
+        $cached = $this->cache?->get(self::CACHE_PREFIX.$slug);
+
+        if (is_string($cached)) {
+            $xml = @gzdecode($cached);
+
+            if ($xml !== false) {
+                return $xml;
+            }
+        }
+
+        $xml = $this->renderSitemap($slug);
+
+        // An empty chunk past the end is valid but not worth a cache entry:
+        // any number would do, so caching it would let anyone fill the cache.
+        if ($xml !== null && ($slug === 'index' || str_contains($xml, '<url>'))) {
+            $this->storeSitemap($slug, $xml);
+        }
+
+        return $xml;
+    }
+
+    private function storeSitemap(string $slug, string $xml): void
+    {
+        $compressed = gzencode($xml, 6);
+
+        if ($compressed !== false) {
+            $this->cache?->set(self::CACHE_PREFIX.$slug, $compressed, self::CACHE_TTL);
+        }
+    }
+
+    /**
+     * Renders every sitemap the index lists, then the index itself, so a
+     * crawler never waits for the feed counts or a 30 000-row query.
+     */
+    public function warmCache(): void
+    {
+        $files = $this->sitemapFiles();
+
+        foreach ($files as $file) {
+            $slug = $this->slugFromFile($file);
+            $xml = $this->renderSitemap($slug);
+
+            if ($xml !== null) {
+                $this->storeSitemap($slug, $xml);
+            }
+        }
+
+        $this->storeSitemap('index', $this->renderSitemapIndex($files));
+    }
+
+    public static function registerCron(CronRegistry $cron): void
+    {
+        $cron->add(self::CRON_TASK, 'Sitemap', 60 * 60);
+    }
+
+    public function runCron(string $task): void
+    {
+        if ($task === self::CRON_TASK) {
+            $this->warmCache();
+        }
+    }
+
+    private function renderSitemap(string $slug): ?string
+    {
         if ($slug === 'index') {
-            echo $this->renderSitemapIndex();
-            return;
+            return $this->renderSitemapIndex();
         }
 
         if ($slug === 'pages') {
-            echo $this->renderUrlSet($this->pageUrls());
-            return;
+            return $this->renderUrlSet($this->pageUrls());
         }
 
         $feedSitemap = $this->parseFeedSitemapSlug($slug);
 
         if ($feedSitemap !== null) {
-            echo $this->renderUrlSet($this->feedUrls($feedSitemap['type'], $feedSitemap['page']));
-            return;
+            return $this->renderUrlSet($this->feedUrls($feedSitemap['type'], $feedSitemap['page']));
         }
 
         $termSitemap = $this->parseTermSitemapSlug($slug);
 
         if ($termSitemap !== null) {
-            echo $this->renderUrlSet($this->termUrls($termSitemap['vocabulary'], $termSitemap['page']));
-            return;
+            return $this->renderUrlSet($this->termUrls($termSitemap['vocabulary'], $termSitemap['page']));
         }
 
-        throw new NotFoundException('Unknown page');
+        return null;
     }
 
-    private function renderSitemapIndex(): string
+    /**
+     * @return list<string>
+     */
+    private function sitemapFiles(): array
     {
-        $locations = [
-            ['loc' => $this->absoluteSitemapUrl('pages')],
-        ];
+        return ['sitemap-pages.xml', ...$this->feedSitemapFiles(), ...$this->termSitemapFiles()];
+    }
 
-        foreach ($this->feedSitemapFiles() as $file) {
-            $locations[] = ['loc' => $this->absoluteSitemapFileUrl($file)];
-        }
-
-        foreach ($this->termSitemapFiles() as $file) {
-            $locations[] = ['loc' => $this->absoluteSitemapFileUrl($file)];
-        }
+    /**
+     * @param list<string>|null $files
+     */
+    private function renderSitemapIndex(?array $files = null): string
+    {
+        $locations = array_map(
+            fn (string $file): array => ['loc' => $this->absoluteSitemapFileUrl($file)],
+            $files ?? $this->sitemapFiles()
+        );
 
         $items = array_map(
             fn (array $entry): string => sprintf(
@@ -339,7 +427,8 @@ class SitemapController extends AbstractController
                     'lastmod' => $feed->updatedAt,
                 ]
                 : null,
-            $this->feedService->getFeedsByType($type, $this->guest(), self::MAX_SITEMAP_URLS, $offset)
+            // URLs and dates only: loading 30 000 bodies took ~400 MB.
+            $this->feedService->getFeedsByType($type, $this->guest(), self::MAX_SITEMAP_URLS, $offset, withContent: false)
         )));
     }
 
@@ -407,9 +496,12 @@ class SitemapController extends AbstractController
 
     private function absoluteSitemapFileUrl(string $file): string
     {
-        $slug = substr($file, strlen('sitemap-'), -strlen('.xml'));
+        return $this->absoluteSitemapUrl($this->slugFromFile($file));
+    }
 
-        return $this->absoluteSitemapUrl($slug);
+    private function slugFromFile(string $file): string
+    {
+        return substr($file, strlen('sitemap-'), -strlen('.xml'));
     }
 
     private function xmlHeader(): string
@@ -424,11 +516,13 @@ class SitemapController extends AbstractController
 
     private function handleRobotsTxtRequest(): void
     {
-        if (isset($_SERVER['HTTP_IF_MODIFIED_SINCE'])) {
+        $modified = (int) filemtime(__FILE__);
+
+        if ($this->notModifiedSince($modified, $_SERVER['HTTP_IF_MODIFIED_SINCE'] ?? null)) {
             http_response_code(304);
             exit;
         }
-        header('Last-Modified: '.gmdate('D, d M Y H:i:s', filemtime(__FILE__)).' GMT');
+        header('Last-Modified: '.gmdate('D, d M Y H:i:s', $modified).' GMT');
         header('Cache-Control: public, max-age=60');
         header('Expires: 0');
         header('Content-Type: text/plain');
@@ -437,6 +531,21 @@ Disallow: /admin/
 Disallow: /api/
 
 Sitemap: %s", $this->absoluteSitemapUrl('index'));
+    }
+
+    /**
+     * Only a validator at or after the last change earns a 304; a stale or
+     * unparsable date gets the current file.
+     */
+    private function notModifiedSince(int $modified, mixed $header): bool
+    {
+        if (!is_string($header) || $header === '') {
+            return false;
+        }
+
+        $since = strtotime($header);
+
+        return $since !== false && $since >= $modified;
     }
 
     public static function registerApi(int $apiPageId, PageTree $pageTree): void

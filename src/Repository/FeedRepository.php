@@ -63,7 +63,7 @@ final class FeedRepository implements FeedRepositoryInterface
         $condition = "f.owner_id = ?\nAND f.type = ?\n";
         $params = [$ownerId, $type];
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
         $sql .= "\nLIMIT 1";
@@ -112,7 +112,7 @@ final class FeedRepository implements FeedRepositoryInterface
         $condition = "f.type = ?\nAND f.slug = ?\n";
         $params = [$type, $slug];
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
         $sql .= "\nLIMIT 1";
@@ -183,7 +183,7 @@ final class FeedRepository implements FeedRepositoryInterface
             $params[] = $type;
         }
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
         $sql .= "\nLIMIT 1";
@@ -239,7 +239,7 @@ final class FeedRepository implements FeedRepositoryInterface
             $params = [$parentId, $type];
         }
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
         $sql .= "\nORDER BY position\nLIMIT $limit";
@@ -268,7 +268,7 @@ final class FeedRepository implements FeedRepositoryInterface
             $params = [$parentId, $type];
         }
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
         $sql .= $positionOrder ? "\nORDER BY f.position ASC, f.id ASC" : "\nORDER BY f.created_at DESC, f.id DESC";
@@ -300,7 +300,7 @@ final class FeedRepository implements FeedRepositoryInterface
             array_push($params, $cursor->createdAt, $cursor->createdAt, $cursor->id);
         }
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
         $sql .= $this->where($condition);
         $sql .= "\nORDER BY f.created_at DESC, f.id DESC\nLIMIT $limit";
 
@@ -414,7 +414,7 @@ final class FeedRepository implements FeedRepositoryInterface
         $condition = "f.type = ?\n";
         $params = [$type];
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
         $sql .= "\nORDER BY f.created_at DESC, f.id DESC\nLIMIT $limit OFFSET $offset";
@@ -441,7 +441,7 @@ final class FeedRepository implements FeedRepositoryInterface
         $condition = "f.type = ?\n";
         $params = [$type];
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
         $sql .= "\nORDER BY f.rating_avg DESC, f.id DESC\nLIMIT $limit";
@@ -481,7 +481,7 @@ final class FeedRepository implements FeedRepositoryInterface
                 $params[] = $type;
             }
 
-            $condition = $this->applyAcl($condition, $params, $user);
+            $condition = $this->applyAcl($condition, $params, $user, $type);
 
             $sql .= $this->where($condition);
 
@@ -606,7 +606,7 @@ final class FeedRepository implements FeedRepositoryInterface
             $params[] = $type;
         }
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
         $sql .= "\nORDER BY f.created_at DESC, f.id DESC\nLIMIT $limit OFFSET $offset";
@@ -633,7 +633,7 @@ final class FeedRepository implements FeedRepositoryInterface
         $condition = "f.type = ?\n";
         $params = [$type];
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
         $whereSql = $this->where($condition);
 
         $countRow = $this->db->fetchOne("SELECT COUNT(*) AS total FROM feeds f".$whereSql, $params);
@@ -677,7 +677,7 @@ final class FeedRepository implements FeedRepositoryInterface
         $condition = "f.type = ?\n";
         $params = [$type];
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
 
@@ -730,7 +730,7 @@ final class FeedRepository implements FeedRepositoryInterface
         if ($ranked) {
             $condition .= "AND f.rating_count > 0\n";
         }
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
         // Use the full average: rating_avg is rounded to two decimal places.
@@ -775,7 +775,7 @@ final class FeedRepository implements FeedRepositoryInterface
             array_push($params, $cursor->createdAt, $cursor->createdAt, $cursor->id);
         }
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
         $sql .= $this->where($condition);
         $sql .= "\nORDER BY f.created_at DESC, f.id DESC\nLIMIT $limit";
 
@@ -799,7 +799,7 @@ final class FeedRepository implements FeedRepositoryInterface
         $condition = "f.owner_id = ?\nAND f.type = ?\n";
         $params = [$ownerId, $type];
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
         $sql .= "\nORDER BY f.created_at DESC, f.id DESC\nLIMIT $limit OFFSET $offset";
@@ -823,7 +823,7 @@ final class FeedRepository implements FeedRepositoryInterface
         $condition = "f.owner_id = ?\nAND f.type = ?\n";
         $params = [$ownerId, $type];
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
 
@@ -852,7 +852,7 @@ final class FeedRepository implements FeedRepositoryInterface
         $condition = "f.owner_id = ?\nAND f.type = ?\n";
         $params = [$ownerId, $type];
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
 
@@ -886,7 +886,7 @@ final class FeedRepository implements FeedRepositoryInterface
         $condition = "f.parent_id = ?\nAND f.type = ?\n";
         $params = [$parentId, $type];
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
 
@@ -915,7 +915,7 @@ final class FeedRepository implements FeedRepositoryInterface
         $condition = "f.parent_id = ?\nAND f.type = ?\n";
         $params = [$parentId, $type];
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
 
@@ -1027,7 +1027,7 @@ final class FeedRepository implements FeedRepositoryInterface
             $params[] = $type;
         }
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
         $sql .= "\nGROUP BY ft.id";
@@ -1069,7 +1069,7 @@ final class FeedRepository implements FeedRepositoryInterface
             $params[] = $type;
         }
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
         $sql .= "\nGROUP BY ft.id";
@@ -1308,9 +1308,17 @@ final class FeedRepository implements FeedRepositoryInterface
     ";
     }
 
-    private function applyAcl(string $condition, array &$params, User $user): string
+    /**
+     * $type is the feed type the caller's own condition already pins with
+     * `f.type = ?`. Passing it is an optimisation only: the comment branch
+     * (or the ordinary branch, for comments) and the gallery-photo check are
+     * left out of the SQL instead of being evaluated - and on MariaDB
+     * materialised over the whole feeds table - for rows that can never
+     * match them. Never pass a type the condition does not enforce.
+     */
+    private function applyAcl(string $condition, array &$params, User $user, ?string $type = null): string
     {
-        [$aclSql, $aclParams] = $this->buildAclCondition($user);
+        [$aclSql, $aclParams] = $this->buildAclCondition($user, $type);
 
         $params = array_merge($params, $aclParams);
 
@@ -1340,34 +1348,49 @@ final class FeedRepository implements FeedRepositoryInterface
      *
      * @return array{0:string, 1:list<int>}
      */
-    private function buildAclCondition(User $user): array
+    private function buildAclCondition(User $user, ?string $type = null): array
     {
         // Content moderator override (admin or global moderator)
         if ($user->canModerateContent()) {
             return ['1=1', []];
         }
 
-        $feedAcl = $this->aclSubjectCondition(
-            'f.owner_id',
-            'f.visibility',
-            'f.container_id',
-            'm',
-            'mr'
-        );
-        [$commentAcl, $commentParams] = $this->commentAclCondition($user);
-        $galleryAcl = $this->galleryAclCondition($user, 'f.id', 'f.parent_id', 'f.type');
-        $containerAcl = $this->containerAclCondition($user, 'f.id', 'f.container_id');
+        $guest = $user->isGuest();
+        $sql = [];
+        $params = [];
 
-        $sql = "
-        (
-            (f.type <> 'comment' AND $feedAcl AND $containerAcl AND $galleryAcl)
-            OR (f.type = 'comment' AND $commentAcl)
-        )
-        ";
+        if ($type !== 'comment') {
+            $feedAcl = $this->aclSubjectCondition(
+                'f.owner_id',
+                'f.visibility',
+                'f.container_id',
+                'm',
+                'mr',
+                $guest,
+            );
+            $containerAcl = $this->containerAclCondition($user, 'f.id', 'f.container_id');
+            $branch = "$feedAcl AND $containerAcl";
+
+            if ($type === null || $type === 'gallery-photo') {
+                $branch .= ' AND '.$this->galleryAclCondition($user, 'f.id', 'f.parent_id', 'f.type');
+            }
+
+            $sql[] = $type === null ? "(f.type <> 'comment' AND $branch)" : "($branch)";
+
+            if (!$guest) {
+                array_push($params, $user->id, $user->id);
+            }
+        }
+
+        if ($type === null || $type === 'comment') {
+            [$commentAcl, $commentParams] = $this->commentAclCondition($user);
+            $sql[] = $type === null ? "(f.type = 'comment' AND $commentAcl)" : "($commentAcl)";
+            array_push($params, ...$commentParams);
+        }
 
         return [
-            $sql,
-            [$user->id, $user->id, ...$commentParams],
+            "\n        (\n            ".implode("\n            OR ", $sql)."\n        )\n        ",
+            $params,
         ];
     }
 
@@ -1384,6 +1407,7 @@ final class FeedRepository implements FeedRepositoryInterface
             'acl_container.container_id',
             'acm',
             'acr',
+            $user->isGuest(),
         ));
 
         return "($containerExpression IS NULL OR $containerExpression = $idExpression OR EXISTS (
@@ -1395,8 +1419,8 @@ final class FeedRepository implements FeedRepositoryInterface
     private function galleryAclCondition(User $user, string $idExpression, string $parentExpression, string $typeExpression): string
     {
         // Numeric user IDs are trusted integers, as with the LIMIT clauses.
-        $albumAcl = str_replace('?', (string) $user->id, $this->aclSubjectCondition('ga.owner_id', 'ga.visibility', 'ga.container_id', 'gam', 'gar'));
-        $contextAcl = str_replace('?', (string) $user->id, $this->aclSubjectCondition('gc.owner_id', 'gc.visibility', 'gc.container_id', 'gcm', 'gcr'));
+        $albumAcl = str_replace('?', (string) $user->id, $this->aclSubjectCondition('ga.owner_id', 'ga.visibility', 'ga.container_id', 'gam', 'gar', $user->isGuest()));
+        $contextAcl = str_replace('?', (string) $user->id, $this->aclSubjectCondition('gc.owner_id', 'gc.visibility', 'gc.container_id', 'gcm', 'gcr', $user->isGuest()));
         return "($typeExpression <> 'gallery-photo' OR EXISTS (
             SELECT 1 FROM feeds ga JOIN feeds gc ON gc.id = ga.parent_id
             WHERE ga.id = $parentExpression AND ga.type = 'gallery-album' AND gc.type IN ('blog', 'community')
@@ -1423,7 +1447,8 @@ final class FeedRepository implements FeedRepositoryInterface
             $subject('visibility'),
             $subject('container_id'),
             'cm',
-            'cmr'
+            'cmr',
+            $user->isGuest(),
         );
 
         $galleryAcl = $this->galleryAclCondition($user, $subject('id'), $subject('parent_id'), $subject('type'));
@@ -1442,7 +1467,7 @@ final class FeedRepository implements FeedRepositoryInterface
                   AND $subjectAcl AND $containerAcl AND $galleryAcl
             )
             ",
-            [$user->id, $user->id],
+            $user->isGuest() ? [] : [$user->id, $user->id],
         ];
     }
 
@@ -1457,7 +1482,15 @@ final class FeedRepository implements FeedRepositoryInterface
         string $containerExpression,
         string $membershipAlias,
         string $roleAlias,
+        bool $guest = false,
     ): string {
+        // A guest (user id 0) owns nothing and belongs to no container, so the
+        // owner and membership arms can never match: only public rows remain.
+        // Dropping them also drops their placeholders - no params for guests.
+        if ($guest) {
+            return "($visibilityExpression = 'public')";
+        }
+
         return "
         (
             $ownerExpression = ?

@@ -7,6 +7,29 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Feed queries that filter by one type pass it to the row-level ACL, which
+  then emits only the branch that type can match: the comment branch (or the
+  ordinary one, for comments) and the gallery-photo check are left out
+  instead of being evaluated - and on MariaDB materialised over the whole
+  `feeds` table - for every row. Guests (user id 0) get a public-only
+  predicate with no owner or membership arms and no bound parameters. The
+  visible rows are unchanged; counting 319 000 guest-visible library pages
+  previously took 18 s.
+- Sitemaps are rendered once and cached (gzip-compressed, through
+  `CacheInterface`). The new hourly cron task `sitemap:warm` renders the index
+  and every file it lists, so `sitemap-index.xml` no longer counts every feed
+  type on each request. Sitemap responses are sent with
+  `Cache-Control: public, max-age=3600`.
+- Feed sitemaps load feeds without their content (~400 MB for a 30 000-URL
+  file before).
+
+### Fixed
+
+- `robots.txt` answered 304 to any `If-Modified-Since` header, however old;
+  it now does so only when the date is at or after the file's last change.
+
 ## [0.8.1] - 2026-11-24
 
 ### Added
