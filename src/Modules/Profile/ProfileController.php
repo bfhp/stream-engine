@@ -181,6 +181,8 @@ class ProfileController extends AbstractController
             'modules/profile/email-unsubscribe.twig',
             [
                 'title' => $this->tm->trans('profile.email_unsubscribe'),
+                // Only reachable with a mailed token: never indexed.
+                'head_ext' => ['<meta name="robots" content="noindex">'],
                 'valid' => $valid,
                 'unsubscribed' => $unsubscribed,
             ]
@@ -238,6 +240,8 @@ class ProfileController extends AbstractController
             'modules/profile/email-confirm.twig',
             [
                 'title' => $this->tm->trans('profile.email_confirm_title'),
+                // Only reachable with a mailed token: never indexed.
+                'head_ext' => ['<meta name="robots" content="noindex">'],
                 'pendingEmail' => $pending['new_email'] ?? null,
                 'confirmedEmail' => $confirmedEmail,
                 'error' => $error,

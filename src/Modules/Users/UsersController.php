@@ -688,6 +688,8 @@ class UsersController extends AbstractController
             ];
         }
         return ViewModel::fromPage($page, 'modules/users/photo-showcase.twig', [
+            // ?sort=best and ?offset select other photos, so both stay.
+            'canonical' => $this->urlGenerator->page($page, $page->params, query: $offset > 0 ? [...$filters, 'offset' => $offset] : $filters),
             'title' => $page->pageName ?: $this->tm->trans('photos.showcase'),
             'photos' => $photos,
             'ranked' => $ranked,
@@ -774,6 +776,14 @@ class UsersController extends AbstractController
         $paginationAction = $album !== null ? $scope.'.photo-album' : $scope.'.photos';
         $paginationParams = $album !== null ? $albumParams : $params;
         $total = $album !== null ? $photoTotal : $result['total'];
+        // The photo's own address, without ?discussion / ?comment_parent /
+        // ?comment_cursor: those only open its comments. Album and album list
+        // keep ?offset, which selects other content. Owner-only forms have none.
+        $canonical = match (true) {
+            $isPhotoView => $this->urlGenerator->action($scope.'.photo-show', [...$albumParams, 'photoSlug' => $photo->slug]),
+            $isManage || $isAlbumForm => null,
+            default => $this->urlGenerator->action($paginationAction, $paginationParams, query: $offset > 0 ? ['offset' => $offset] : []),
+        };
 
         $items = [];
         foreach ($result['items'] as $item) {
@@ -837,6 +847,7 @@ class UsersController extends AbstractController
                 'parentId' => $discussionParent, 'rootId' => $photo->id, 'isReplyPage' => $discussionParent !== $photo->id];
         }
         return ViewModel::fromPage($page, 'modules/users/photos.twig', [
+            'canonical' => $canonical,
             'title' => $isPhotoForm ? $this->tm->trans('photos.upload_many') : ($isPhotoView ? $photo->title : ($isAlbumForm ? $this->tm->trans($isEdit ? 'photos.edit' : 'photos.new_album') : ($album?->title ?? $this->tm->trans('photos.title')))),
             'description' => trim((string) preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags(($photo !== null ? $photo->description : $album?->description) ?? ''), ENT_QUOTES | ENT_HTML5, 'UTF-8'))),
             'isAlbumForm' => $isAlbumForm, 'isManage' => $isManage, 'photoOwner' => $photoOwner, 'coverUrl' => $coverUrl,
@@ -3832,11 +3843,13 @@ class UsersController extends AbstractController
             try {
                 $userId = $this->userService->verifyEmail($verifyToken);
             } catch (ValidationException) {
+                // A token link from an email: never indexed.
                 return ViewModel::fromPage(
                     $page,
                     'modules/users/verify.twig',
                     [
                         'title' => $this->tm->trans('user.registration'),
+                        'head_ext' => ['<meta name="robots" content="noindex">'],
                     ]
                 );
             }
@@ -3853,6 +3866,7 @@ class UsersController extends AbstractController
                 'modules/users/register2.twig',
                 [
                     'title' => $this->tm->trans('user.registration'),
+                    'canonical' => $this->urlGenerator->page($page),
                 ]
             );
         }
@@ -3862,7 +3876,7 @@ class UsersController extends AbstractController
             return ViewModel::fromPage(
                 $page,
                 'modules/users/register-closed.twig',
-                ['title' => $this->tm->trans('user.registration')],
+                ['title' => $this->tm->trans('user.registration'), 'canonical' => $this->urlGenerator->page($page)],
             );
         }
 
@@ -3890,6 +3904,7 @@ class UsersController extends AbstractController
                 'entries' => $entries,
                 'head_ext' => $headExt,
                 'title' => $this->tm->trans('user.registration'),
+                'canonical' => $this->urlGenerator->page($page),
                 'successUrl' => $successUrl,
                 'honeypotField' => $this->settings->registrationHoneypotField(),
                 'registrationMode' => $registrationMode,
@@ -3929,6 +3944,10 @@ class UsersController extends AbstractController
                 'entries' => ['retrieve'],
                 'title' => $this->tm->trans('user.password_recovery'),
                 'token' => $token,
+                // The form itself is canonical; a reset link from an email
+                // carries a token and is never indexed.
+                'canonical' => $token ? null : $this->urlGenerator->page($page),
+                'head_ext' => $token ? ['<meta name="robots" content="noindex">'] : [],
             ]
         );
     }

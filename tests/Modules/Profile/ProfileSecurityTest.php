@@ -102,6 +102,7 @@ final class ProfileSecurityTest extends TestCase
         self::assertSame('modules/profile/email-confirm.twig', $view->template);
         self::assertSame('new@example.com', $view->data['pendingEmail']);
         self::assertNull($view->data['confirmedEmail']);
+        self::assertSame(['<meta name="robots" content="noindex">'], $view->data['head_ext']);
     }
 
     public function testPostAppliesTheChangeWithoutASignedInSession(): void

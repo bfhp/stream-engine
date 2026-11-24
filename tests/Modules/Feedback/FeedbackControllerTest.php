@@ -191,7 +191,9 @@ final class FeedbackControllerTest extends TestCase
         $this->assertSame('', $view->data['hintText']);
         $this->assertNull($view->data['description']);
         $this->assertNull($view->data['image']);
-        $this->assertNull($view->data['canonical']);
+        // Without a hint feed the page is still its own canonical, so
+        // ?success=1 is not indexed as a second copy.
+        $this->assertSame('/feedback/', $view->data['canonical']);
     }
 
     private function makePage(): Page

@@ -70,7 +70,8 @@ class FeedbackController extends AbstractController
                 'title' => $hintFeed?->title ?? $page->pageName,
                 'description' => $hintFeed?->description,
                 'image' => $hintFeed?->imageUrl,
-                'canonical' => $hintFeed?->canonicalUrl,
+                // Without a bound feed the page itself; ?success=1 never.
+                'canonical' => $hintFeed?->canonicalUrl ?? $this->urlGenerator->page($page),
                 'entries' => ['feedback'],
                 'hash' => hash_hmac('sha256', (string) $now, $this->config->appSecret()),
                 'time' => $now,

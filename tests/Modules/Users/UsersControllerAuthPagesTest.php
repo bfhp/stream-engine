@@ -224,6 +224,7 @@ final class UsersControllerAuthPagesTest extends TestCase
         $this->assertSame('/register/?success=1', $view->data['successUrl']);
         $this->assertSame('contact_reference', $view->data['honeypotField']);
         $this->assertSame('none', $view->data['captchaProvider']);
+        $this->assertSame('/register/', $view->data['canonical']);
     }
 
     public function testRegistrationFormUsesConfiguredHoneypotField(): void
@@ -261,6 +262,7 @@ final class UsersControllerAuthPagesTest extends TestCase
         ])->show($this->page('user.register'));
 
         $this->assertSame('modules/users/register-closed.twig', $view->template);
+        $this->assertSame('/register/', $view->data['canonical']);
     }
 
     public function testOpenRegistrationRedirectsToProfileAfterSubmission(): void
@@ -291,6 +293,7 @@ final class UsersControllerAuthPagesTest extends TestCase
         $view = $this->makeModule()->show($this->page('user.register'));
 
         $this->assertSame('modules/users/register2.twig', $view->template);
+        $this->assertSame('/register/', $view->data['canonical']);
     }
 
     /**
@@ -336,6 +339,8 @@ final class UsersControllerAuthPagesTest extends TestCase
         $view = $this->makeModule($db)->show($this->page('user.register'));
 
         $this->assertSame('modules/users/verify.twig', $view->template);
+        $this->assertSame(['<meta name="robots" content="noindex">'], $view->data['head_ext']);
+        $this->assertArrayNotHasKey('canonical', $view->data);
     }
 
     public function testAnAlreadyAuthenticatedVisitorIsRefused(): void
@@ -359,6 +364,8 @@ final class UsersControllerAuthPagesTest extends TestCase
 
         $this->assertSame('modules/users/retrieve.twig', $view->template);
         $this->assertSame('', $view->data['token']);
+        $this->assertSame('/retrieve/', $view->data['canonical']);
+        $this->assertSame([], $view->data['head_ext']);
     }
 
     public function testAValidTokenGetsTheNewPasswordForm(): void
@@ -373,6 +380,8 @@ final class UsersControllerAuthPagesTest extends TestCase
         $this->assertSame('modules/users/reset.twig', $view->template);
         // The form posts it back, so it has to survive into the view.
         $this->assertSame('a-live-token', $view->data['token']);
+        $this->assertNull($view->data['canonical']);
+        $this->assertSame(['<meta name="robots" content="noindex">'], $view->data['head_ext']);
     }
 
     public function testAnUnknownTokenIsNotFound(): void

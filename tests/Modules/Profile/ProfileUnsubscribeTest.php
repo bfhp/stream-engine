@@ -73,6 +73,7 @@ final class ProfileUnsubscribeTest extends TestCase
         self::assertSame('modules/profile/email-unsubscribe.twig', $view->template);
         self::assertTrue($view->data['valid']);
         self::assertFalse($view->data['unsubscribed']);
+        self::assertSame(['<meta name="robots" content="noindex">'], $view->data['head_ext']);
     }
 
     public function testOneClickPostUnsubscribesWithoutAuthentication(): void

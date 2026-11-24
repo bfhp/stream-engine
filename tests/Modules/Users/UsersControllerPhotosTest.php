@@ -76,6 +76,7 @@ final class UsersControllerPhotosTest extends TestCase
         self::assertSame('/users/alice/', $view->data['photoOwner']['url']);
         self::assertArrayNotHasKey('photoSidebar', $view->data);
         self::assertSame('/api/v1/users/photo-albums', $view->data['apiUrl']);
+        self::assertSame('/users/alice/photos/', $view->data['canonical']);
     }
 
     public function testVisitorCannotCreateAlbumInAnotherBlog(): void
@@ -115,6 +116,7 @@ final class UsersControllerPhotosTest extends TestCase
         $view = $controller->show($route['page'], ['username' => 'alice']);
         self::assertTrue($view->data['isAlbumForm']);
         self::assertSame('/users/alice/photos/', $view->data['listUrl']);
+        self::assertNull($view->data['canonical']);
     }
 
     public function testNewAlbumFormRejectsAnotherUser(): void
@@ -145,6 +147,7 @@ final class UsersControllerPhotosTest extends TestCase
         self::assertSame('/users/alice/', $view->data['photoOwner']['url']);
         self::assertFalse($view->data['isManage']);
         self::assertArrayNotHasKey('photoSidebar', $view->data);
+        self::assertSame('/users/alice/photos/album/', $view->data['canonical']);
     }
 
     public function testAlbumEditPageRejectsUnauthorizedViewer(): void
@@ -250,6 +253,7 @@ final class UsersControllerPhotosTest extends TestCase
         self::assertSame('/users/alice/photos/album/50/', $view->data['previousPhotoUrl']);
         self::assertSame('/users/alice/photos/album/52/', $view->data['nextPhotoUrl']);
         self::assertSame('/users/alice/photos/album/?offset=20', $view->data['photoReturnUrl']);
+        self::assertSame('/users/alice/photos/album/51/', $view->data['canonical']);
     }
     public function testPhotoDiscussionUsesExistingCommentPermissionsAndScopedReplies(): void
     {
@@ -284,6 +288,8 @@ final class UsersControllerPhotosTest extends TestCase
         self::assertFalse($discussion['items'][0]['canEdit']);
         self::assertSame('replies', $discussion['items'][0]['nextReplies']);
         self::assertFalse($discussion['items'][0]['replies'][0]['canDelete']);
+        // ?discussion=1 only opens the comments: the photo stays canonical.
+        self::assertSame('/users/alice/photos/album/51/', $view->data['canonical']);
     }
 
     public function testPhotoDiscussionRejectsACommentFromAnotherPhoto(): void
@@ -369,6 +375,7 @@ final class UsersControllerPhotosTest extends TestCase
         self::assertSame('Photography', $view->data['title']);
         self::assertSame('/photography/', $view->data['previousUrl']);
         self::assertSame('/photography/?offset=24', $view->data['nextUrl']);
+        self::assertSame('/photography/?offset=12', $view->data['canonical']);
         self::assertSame('/users/alice/photos/summer/7/', $view->data['photos'][0]['url']);
         self::assertSame('/users/alice/photos/summer/7/preview/', $view->data['photos'][0]['previewUrl']);
         self::assertSame(4.5, $view->data['photos'][0]['ratingAverage']);

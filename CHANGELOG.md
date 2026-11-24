@@ -44,6 +44,16 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Pages without `rel="canonical"` got one, so their query-string variants are
+  no longer indexed as separate copies: a gallery photo (canonical without
+  `?discussion=1` / `?comment_parent` / `?comment_cursor`), an album and the
+  album list (keeping `?offset`), the photo showcase (keeping `?sort=best` and
+  `?offset`), registration and password recovery (without `?success=1`), and a
+  feedback page without a bound feed. Token-only pages - registration
+  verification, password reset, email confirmation and unsubscribe - send
+  `noindex` instead. The developer guide (Pages and routing) now states that
+  every public HTML page must pass `canonical`.
+
 - A forum's title and description were HTML-escaped twice - by the controller
   and again by Twig - so `&` or quotes showed as `&amp;` / `&quot;` in the
   forum header, its breadcrumb and the description meta tags.

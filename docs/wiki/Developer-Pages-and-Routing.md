@@ -139,8 +139,12 @@ parents or combine them in one deliberate action.
 
 The router trims leading and trailing slashes before walking the tree, so
 `/articles` and `/articles/` resolve identically inside the application. Use
-generated URLs for the canonical trailing-slash form and let the deployment's
-web-server policy handle external redirects consistently.
+generated URLs for the canonical trailing-slash form. For HTML pages answering
+GET or HEAD, `StreamEngine::handleRequest()` sends a 301 from the unslashed
+form to the slashed one after the access check
+(`Router::trailingSlashRedirect()`), unless an administrator turned off
+`seo.trailing_slash_redirect`. API routes and last segments containing a dot
+are not redirected.
 
 ## Route parameters
 
@@ -330,6 +334,51 @@ the same placeholder name. Use `feed()` for feed hierarchies or
 `childAction()` when a known static child follows an already resolved dynamic
 parent.
 
+## Canonical URLs and indexing
+
+Every public HTML page passes `canonical` in its view data: a path from
+`UrlGenerator`, without the site URL. `layouts/base.twig` turns it into
+`<link rel="canonical">` and `og:url`. Nothing fills it in for you: a page
+that omits `canonical` has no canonical tag at all, and every query-string
+variant of it (`?discussion=1`, `?success=1`, `?utm_source=...`) can be indexed
+as a separate copy.
+
+Build the canonical from the parameters that select different content and
+drop the ones that only change presentation or state:
+
+| Keep in the canonical | Drop from the canonical |
+| --- | --- |
+| Pagination (`?page=N`, `?offset=N`) beyond the first page | Panels and modes of the same content (`?discussion=1`, `?comment_parent`, `?comment_cursor`) |
+| Filters and orderings that show other items (`?tag=`, `?sort=best`) | Post-submit flags (`?success=1`, `?registered=1`) |
+| | Tracking and any parameter the page does not read |
+
+```php
+return ViewModel::fromPage($page, 'modules/notes/list.twig', [
+    // ?page=N selects other notes; ?highlight only scrolls the view.
+    'canonical' => $this->urlGenerator->listing($this->urlGenerator->page($page), $currentPage),
+    // ...
+]);
+```
+
+`UrlGenerator::listing()` adds `?page=N` only for pages after the first.
+
+Pages that must not be indexed send `noindex` instead of a canonical, through
+`head_ext`. This covers search results and anything reachable only through a
+mailed token (email confirmation, unsubscribe, password reset, registration
+verification):
+
+```php
+'head_ext' => ['<meta name="robots" content="noindex">'],
+```
+
+Do not combine `noindex` with a canonical that points at another URL: search
+engines treat the pair as conflicting signals. Pages visible only to their
+owner or to administrators (editors, management screens) need neither.
+
+The `description` passed to the view is cut for the meta tags by the
+`meta_description` Twig filter (255 characters). Do not truncate it in the
+controller: some templates also show `description` as page text.
+
 ## Feed and term URL resolution
 
 `UrlGenerator::feed()` resolves a canonical path as follows:
@@ -415,6 +464,10 @@ Verify menus and sitemaps as separate consumers of the same definitions.
   enforced at the appropriate independent layers.
 - Generated links use `UrlGenerator` or an explicit API/resource contract and
   encode only dynamic components.
+- Every public HTML page passes `canonical`, built only from parameters that
+  select different content; token-only and search pages send `noindex`
+  instead. A test asserts the canonical, including for a request with the
+  parameters it drops.
 - Feed/type/vocabulary bindings are unambiguous and missing-route behavior is
   handled.
 - Cache staleness and redirects are planned when an existing URL changes.

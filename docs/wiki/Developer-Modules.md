@@ -505,6 +505,8 @@ archive that state according to an explicit data-retention decision.
   admin paths, API actions, and cron task names do not collide.
 - The module imports shared platform code and its own private code only.
 - Public actions declare every page field and setting they consume.
+- Every public HTML page passes `canonical` in its view data (see
+  [Canonical URLs and indexing](https://github.com/bfhp/stream-engine/wiki/Developer-Pages-and-Routing#canonical-urls-and-indexing)).
 - Runtime pages are conditional on their mount and are not advertised as
   administrator-created actions.
 - Templates render under the default theme and an intended override works.
