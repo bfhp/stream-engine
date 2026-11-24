@@ -16,6 +16,14 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
   refused with a 409: the page would point at nothing and the photo files would
   be orphaned.
 
+- An HTML page requested without its trailing slash (`/forums`) is redirected
+  with a 301 to the slashed form (`/forums/`) that `UrlGenerator` and
+  `rel="canonical"` already use, so every page has one address. GET and HEAD
+  only, after the access check (a hidden page still answers 404), query string
+  kept; API routes and file names with a dot (`robots.txt`) are left alone.
+  On by default; **Settings → Redirect to the trailing-slash URL**
+  (`seo.trailing_slash_redirect`) turns it off.
+
 ### Changed
 
 - Cron tasks run in parallel, each in its own process. A scheduler tick

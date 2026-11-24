@@ -252,4 +252,44 @@ class RouterTest extends TestCase
 
         $this->addToAssertionCount(1);
     }
+
+    /** @return iterable<string, array{string, string, ?string}> */
+    public static function trailingSlashRequests(): iterable
+    {
+        yield 'missing slash' => ['GET', '/forums', '/forums/'];
+        yield 'nested path' => ['GET', '/forums/general', '/forums/general/'];
+        yield 'already canonical' => ['GET', '/forums/', null];
+        yield 'site root' => ['GET', '/', null];
+        yield 'HEAD as GET' => ['HEAD', '/forums', '/forums/'];
+        yield 'query string kept' => ['GET', '/forums?page=2&sort=new', '/forums/?page=2&sort=new'];
+        yield 'canonical with query' => ['GET', '/forums/?page=2', null];
+        yield 'repeated trailing slashes' => ['GET', '/forums//', '/forums/'];
+        yield 'repeated inner slashes' => ['GET', '/forums//general/', '/forums/general/'];
+        // A Location starting with `//` would send the browser to another host.
+        yield 'leading double slash' => ['GET', '//forums', '/forums/'];
+        yield 'leading double slash stays on this host' => ['GET', '//example.com', '/example.com'];
+        yield 'file name' => ['GET', '/robots.txt', null];
+        yield 'file name with a stray slash' => ['GET', '/sitemap.xml/', '/sitemap.xml'];
+    }
+
+    #[DataProvider('trailingSlashRequests')]
+    public function testTheTrailingSlashRedirectTarget(string $method, string $uri, ?string $expected): void
+    {
+        self::assertSame($expected, Router::trailingSlashRedirect($method, $uri));
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function trailingSlashUnsafeMethods(): iterable
+    {
+        foreach (['POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'] as $method) {
+            yield $method => [$method];
+        }
+    }
+
+    #[DataProvider('trailingSlashUnsafeMethods')]
+    public function testOnlyGetAndHeadGetATrailingSlashRedirect(string $method): void
+    {
+        // A 301 turns a POST into a GET and drops the body.
+        self::assertNull(Router::trailingSlashRedirect($method, '/forums'));
+    }
 }

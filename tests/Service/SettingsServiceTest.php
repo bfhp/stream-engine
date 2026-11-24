@@ -58,6 +58,20 @@ final class SettingsServiceTest extends TestCase
         ])->cookieNoticeEnabled());
     }
 
+    public function testTrailingSlashRedirectIsOnByDefaultAndOffOnlyWhenExplicitlyDisabled(): void
+    {
+        self::assertTrue($this->makeService()->trailingSlashRedirectEnabled());
+        self::assertTrue($this->makeService([
+            SettingsService::TRAILING_SLASH_REDIRECT_KEY => ['1', 1],
+        ])->trailingSlashRedirectEnabled());
+        self::assertFalse($this->makeService([
+            SettingsService::TRAILING_SLASH_REDIRECT_KEY => ['0', 1],
+        ])->trailingSlashRedirectEnabled());
+        self::assertTrue($this->makeService([
+            SettingsService::TRAILING_SLASH_REDIRECT_KEY => ['garbage', 1],
+        ])->trailingSlashRedirectEnabled());
+    }
+
     public function testRegistrationHoneypotFieldUsesSafeDefaultAndStoredValue(): void
     {
         self::assertSame('contact_reference', $this->makeService()->registrationHoneypotField());

@@ -1818,6 +1818,41 @@ final class AdminControllerTest extends TestCase
         }
     }
 
+    public function testTheTrailingSlashRedirectCanBeSwitchedOff(): void
+    {
+        $module = $this->makeModule();
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode(['value' => '0']));
+
+        $response = $this->callAndDecode(
+            $module,
+            $this->makeApiPage('admin.setting', ['GET', 'PATCH']),
+            ['key' => 'seo.trailing_slash_redirect']
+        );
+
+        $this->assertSame('0', $response['value']);
+        $this->assertSame(['seo.trailing_slash_redirect', '0', '0'], $this->writes[0][1]);
+    }
+
+    public function testATrailingSlashRedirectValueOtherThanZeroOrOneIsRefused(): void
+    {
+        $module = $this->makeModule();
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $this->withValidCsrf();
+        PhpInputStreamMock::register(json_encode(['value' => 'yes']));
+
+        try {
+            $module->callApi(
+                $this->makeApiPage('admin.setting', ['GET', 'PATCH']),
+                ['key' => 'seo.trailing_slash_redirect'],
+            );
+            $this->fail('a non-boolean trailing slash redirect value should have been refused');
+        } catch (ValidationException) {
+            $this->assertSame([], $this->writes);
+        }
+    }
+
     public function testAnUnsafeRegistrationHoneypotFieldIsRefused(): void
     {
         $module = $this->makeModule();

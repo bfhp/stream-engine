@@ -21,6 +21,7 @@ final class SettingsService
     public const string REGISTRATION_CAPTCHA_SECRET_KEY = 'registration.captcha.secret_key';
     public const array REGISTRATION_CAPTCHA_PROVIDERS = ['none', 'turnstile', 'hcaptcha'];
     public const string COOKIE_NOTICE_KEY = 'cookie_notice.enabled';
+    public const string TRAILING_SLASH_REDIRECT_KEY = 'seo.trailing_slash_redirect';
 
     /**
      * @var array<string, string>
@@ -112,6 +113,16 @@ final class SettingsService
     public function cookieNoticeEnabled(): bool
     {
         return $this->getString(self::COOKIE_NOTICE_KEY, '1') !== '0';
+    }
+
+    /**
+     * Whether an HTML page requested without its trailing slash (`/forums`)
+     * gets a 301 to the slashed form (`/forums/`). On unless an administrator
+     * stored '0'; any other stored value keeps it on.
+     */
+    public function trailingSlashRedirectEnabled(): bool
+    {
+        return $this->getString(self::TRAILING_SLASH_REDIRECT_KEY, '1') !== '0';
     }
 
     public static function isValidRegistrationHoneypotField(string $field): bool

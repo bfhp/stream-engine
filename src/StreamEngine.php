@@ -406,6 +406,18 @@ class StreamEngine
                 throw new ForbiddenException('Forbidden');
             }
 
+            if ($responseType === 'html' && $this->settings->trailingSlashRedirectEnabled()) {
+                $target = Router::trailingSlashRedirect(
+                    $_SERVER['REQUEST_METHOD'] ?? 'GET',
+                    (string) ($_SERVER['REQUEST_URI'] ?? '/'),
+                );
+                if ($target !== null) {
+                    header('Location: '.$target, true, 301);
+
+                    return;
+                }
+            }
+
             $controller = $this->controllerFactory->createForPage(
                 $pageData['page'],
                 $requestContext

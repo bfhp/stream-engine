@@ -2403,6 +2403,9 @@ class AdminController extends AbstractController implements DashboardCardProvide
         if ($key === SettingsService::COOKIE_NOTICE_KEY && ! in_array($value, ['0', '1'], true)) {
             throw new ValidationException($this->tm->trans('admin.error.invalid_cookie_notice'));
         }
+        if ($key === SettingsService::TRAILING_SLASH_REDIRECT_KEY && ! in_array($value, ['0', '1'], true)) {
+            throw new ValidationException($this->tm->trans('admin.error.invalid_trailing_slash_redirect'));
+        }
         if ($key === 'cron.mode' && ! in_array($value, SettingsService::CRON_MODES, true)) {
             throw new ValidationException($this->tm->trans('admin.error.invalid_cron_mode'));
         }

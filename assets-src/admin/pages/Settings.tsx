@@ -32,7 +32,8 @@ type EditableKey =
     | "date_format"
     | "time_format"
     | "uploads.user_limit_mb"
-    | "cookie_notice.enabled";
+    | "cookie_notice.enabled"
+    | "seo.trailing_slash_redirect";
 type SettingsMap = Partial<Record<EditableKey, Setting>>;
 type Drafts = Record<EditableKey, string>;
 type SiteIcon = {
@@ -54,6 +55,7 @@ const EDITABLE_KEYS: EditableKey[] = [
     "time_format",
     "uploads.user_limit_mb",
     "cookie_notice.enabled",
+    "seo.trailing_slash_redirect",
 ];
 const displayNames = new Intl.DisplayNames([getLocale()], { type: "language" });
 const localeCollator = new Intl.Collator(getLocale());
@@ -88,7 +90,7 @@ function defaultValue(key: EditableKey): string {
         return "500";
     }
 
-    if (key === "cookie_notice.enabled") {
+    if (key === "cookie_notice.enabled" || key === "seo.trailing_slash_redirect") {
         return "1";
     }
 
@@ -113,7 +115,8 @@ export default function Settings() {
         date_format: "auto",
         time_format: "auto",
         "uploads.user_limit_mb": "500",
-        "cookie_notice.enabled": "1"
+        "cookie_notice.enabled": "1",
+        "seo.trailing_slash_redirect": "1"
     });
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -164,7 +167,8 @@ export default function Settings() {
                     time_format: nextSettings.time_format?.value ?? defaultValue("time_format"),
                     "uploads.user_limit_mb": nextSettings["uploads.user_limit_mb"]?.value
                         ?? defaultValue("uploads.user_limit_mb"),
-                    "cookie_notice.enabled": nextSettings["cookie_notice.enabled"]?.value === "0" ? "0" : "1"
+                    "cookie_notice.enabled": nextSettings["cookie_notice.enabled"]?.value === "0" ? "0" : "1",
+                    "seo.trailing_slash_redirect": nextSettings["seo.trailing_slash_redirect"]?.value === "0" ? "0" : "1"
                 });
             })
             .catch(err => {
@@ -448,6 +452,13 @@ export default function Settings() {
                 description={trans("js.admin.settings.cookie_notice_description")}
                 checked={drafts["cookie_notice.enabled"] !== "0"}
                 onChange={event => updateDraft("cookie_notice.enabled", event.currentTarget.checked ? "1" : "0")}
+            />
+
+            <Switch
+                label={trans("js.admin.settings.trailing_slash_redirect")}
+                description={trans("js.admin.settings.trailing_slash_redirect_description")}
+                checked={drafts["seo.trailing_slash_redirect"] !== "0"}
+                onChange={event => updateDraft("seo.trailing_slash_redirect", event.currentTarget.checked ? "1" : "0")}
             />
 
             <Stack gap="xs">

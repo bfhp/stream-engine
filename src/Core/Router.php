@@ -141,4 +141,42 @@ final class Router
 
         return '#^'.$regex.'$#';
     }
+
+    /**
+     * The one URL form for an HTML page: the path ends with a slash, as every link
+     * UrlGenerator builds does. resolve() trims slashes, so `/forums`, `/forums/`
+     * and `//forums//` all reach the same page; this names the address to
+     * redirect the other forms to.
+     *
+     * Only GET and HEAD are redirected (a 301 turns a POST into a GET and drops its
+     * body), only for HTML pages (API clients do not expect redirects), and only
+     * once the caller has resolved the page and checked access, so a 301 never
+     * reveals a page that would otherwise answer 404. A last segment with a dot
+     * (`robots.txt`, `sitemap.xml`) is a file name and keeps its form.
+     *
+     * @param string $requestUri the raw REQUEST_URI: path plus optional query
+     * @return string|null the path-and-query to redirect to, or null to serve as is
+     */
+    public static function trailingSlashRedirect(string $method, string $requestUri): ?string
+    {
+        if ($method !== 'GET' && $method !== 'HEAD') {
+            return null;
+        }
+
+        $queryAt = strpos($requestUri, '?');
+        $path = $queryAt === false ? $requestUri : substr($requestUri, 0, $queryAt);
+        $query = $queryAt === false ? '' : substr($requestUri, $queryAt);
+
+        // Collapsing repeated slashes also keeps the Location from starting
+        // with `//`, which a browser would read as another host.
+        $normalized = '/'.trim((string) preg_replace('~/{2,}~', '/', $path), '/');
+        if ($normalized !== '/') {
+            $last = substr($normalized, (int) strrpos($normalized, '/') + 1);
+            if (! str_contains($last, '.')) {
+                $normalized .= '/';
+            }
+        }
+
+        return $normalized === $path ? null : $normalized.$query;
+    }
 }

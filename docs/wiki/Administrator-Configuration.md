@@ -250,6 +250,7 @@ apply to the whole site.
 | **Time format** | Automatic from locale, 24-hour, or 12-hour. |
 | **User upload limit** | Total stored bytes allowed for each non-administrator, entered in megabytes. The default is 500 MB. Administrators are not restricted by this per-user quota. |
 | **Cookie notice** | Shows visitors a bar at the bottom of the page saying that the site uses cookies, until they dismiss it. On by default; stored as `cookie_notice.enabled` (`1` or `0`). |
+| **Redirect to the trailing-slash URL** | Sends a 301 from a page address without its trailing slash (`/forums`) to the slashed one (`/forums/`), the form every generated link and `rel="canonical"` use. On by default; stored as `seo.trailing_slash_redirect` (`1` or `0`). |
 
 The upload quota is not a per-file limit. The application separately rejects
 individual user and administrator File Browser uploads larger than 50 MB, and
@@ -267,6 +268,14 @@ or other functional cookies the site sets. A visitor's dismissal is kept in a
 `cookie_notice` cookie for one year; the notice text comes from the translation
 catalogs (`view.cookie_notice.*`). Themes can override
 `partials/cookie-notice.twig` or empty the `layout_cookie_notice` block.
+
+The trailing-slash redirect applies to HTML pages answering GET or HEAD, after
+the access check, so a page the visitor cannot see still answers 404 rather
+than revealing itself with a redirect. The query string is kept and repeated
+slashes are collapsed. API routes and addresses whose last segment contains a
+dot (`robots.txt`, `sitemap.xml`) are not redirected. Browsers cache a 301, so
+visitors who already followed it keep going to the slashed address after the
+setting is turned off; that address keeps working either way.
 
 ## Header logo and site icon
 
