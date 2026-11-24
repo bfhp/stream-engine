@@ -7,14 +7,15 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-11-24
+
 ### Added
 
-- Feeds can be deleted from the admin feed editor (`DELETE /api/v1/feeds/{id}`,
-  admin only, CSRF-checked). Comments, metadata, ratings and child feeds go
-  with it through the existing `ON DELETE CASCADE`. A feed bound to a page, or
-  one holding gallery photos (itself, its photos or its albums' photos), is
-  refused with a 409: the page would point at nothing and the photo files would
-  be orphaned.
+- Administrators can delete a feed from its editor after confirming the
+  deletion, through the CSRF-protected `DELETE /api/v1/feeds/{id}` endpoint.
+  Comments, metadata, ratings, and child feeds are removed with it. Deletion
+  is refused with HTTP 409 when the feed is bound to a page or contains
+  gallery photographs, preserving page references and protected photo files.
 
 - An HTML page requested without its trailing slash (`/forums`) is redirected
   with a 301 to the slashed form (`/forums/`) that `UrlGenerator` and
@@ -38,9 +39,6 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
   the task's database lock, so duplicate dispatches are refused.
   `CronRunner::runScheduledTask()` and `StreamEngine::runScheduledCronTask()`
   are the worker entry points; `CronTrigger::spawnScheduledTask()` starts one.
-  **Upgrade:** a systemd `Type=oneshot` service that runs the tick needs
-  `KillMode=process`, or systemd kills the workers when the tick exits (see
-  *Administrator → Scheduler*). Traditional cron and Supercronic need no change.
 
 ### Fixed
 
@@ -66,6 +64,35 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 - The users list keeps its height while the first page loads
   (`aria-busy="true"` on `[data-users-list]`), so the footer no longer jumps
   down when the cards appear.
+
+### Upgrade notes
+
+- From 0.8.0, deploy the release with the complete bundled `public/assets/`
+  directory and install PHP dependencies from the lockfile. Earlier versions
+  must also follow the intervening release notes. No dependency updates are
+  required.
+- **systemd schedulers:** add `KillMode=process` to the `Type=oneshot` service
+  that runs the scheduler tick and reload its unit configuration. Otherwise
+  systemd terminates background task workers when the tick exits. Traditional
+  cron and Supercronic need no configuration change. Docker Compose users
+  should recreate the scheduler service to apply its new `init: true` setting.
+  See [Scheduler](https://github.com/bfhp/stream-engine/wiki/Administrator-Scheduler).
+- Scheduled tasks now overlap across different task names; each task retains
+  its database lock and interval checks. The scheduler account must be able
+  to launch PHP CLI background workers. Custom tasks must not depend on the
+  previous serial execution order.
+- Trailing-slash redirects are enabled on existing sites by default. They can
+  be disabled in **Administration → Settings**. Browsers may retain a cached
+  301 after the setting is disabled; both address forms continue to resolve.
+- Custom themes overriding description metadata should apply the
+  `meta_description` filter to receive the 255-character plain-text limit.
+  Custom public page controllers should supply `canonical`; token-only pages
+  should send `noindex`, as described in the updated pages and routing guide.
+- No new database migrations or schema changes are required. The installation
+  snapshot was regenerated from all 23 migrations: `schema.sql` is unchanged
+  from 0.8.0, and its matching manifest identifies 0.8.1. Both files are
+  included in the release source and attached to the GitHub Release with
+  checksums. Existing sites must not import `schema.sql`.
 
 ## [0.8.0] - 2026-11-23
 
@@ -965,7 +992,8 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 - Initial version.
 
-[Unreleased]: https://github.com/bfhp/stream-engine/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/bfhp/stream-engine/compare/v0.8.1...HEAD
+[0.8.1]: https://github.com/bfhp/stream-engine/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/bfhp/stream-engine/compare/v0.7.6...v0.8.0
 [0.7.6]: https://github.com/bfhp/stream-engine/compare/v0.7.5...v0.7.6
 [0.7.5]: https://github.com/bfhp/stream-engine/compare/v0.7.4...v0.7.5
