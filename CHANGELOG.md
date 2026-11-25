@@ -7,11 +7,20 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.8.6] - 2026-11-26
+
+### Added
+
+- `bin/explain-feed-acl.php` checks query plans on a disposable database with
+  330,000 feeds, reports timings and access paths, and compares database
+  servers. The **Feed ACL plans** workflow runs it on MariaDB 11.8,
+  MariaDB 12, and MySQL 8.4 and uploads the reports.
+
 ### Changed
 
 - `<meta name="description">` and `og:description` are cut to 155 characters
-  instead of 255, the length search engines show in results; the cut is
-  still on a word boundary with "…".
+  instead of 255. Truncation still respects word boundaries and adds "…";
+  the full description remains available to page templates.
 
 ### Fixed
 
@@ -22,6 +31,19 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
   default FastCGI buffer, book and forum pages returned 502 ("upstream sent
   too big header"). Deployments should also raise `fastcgi_buffer_size`
   (e.g. `32k`), as both cookies can go out in one response.
+
+### Upgrade notes
+
+- From 0.8.5, deploy this release and run `composer install --no-dev`.
+  No new database migrations, PHP dependencies, or application settings are
+  required. Earlier versions must follow the intervening upgrade notes.
+- For nginx/PHP-FPM deployments, set `fastcgi_buffer_size 32k;` in the PHP
+  location or an inherited context and reload nginx. Both guest cookies,
+  session cookies, and other response headers must fit in that buffer.
+- The installation snapshot was regenerated from all 24 migrations.
+  `schema.sql` is unchanged from 0.8.5; its manifest identifies 0.8.6.
+  Both files are attached to the GitHub Release with SHA-256 checksums.
+  Existing sites must not import the installation snapshot.
 
 ## [0.8.5] - 2026-11-25
 
@@ -1185,7 +1207,8 @@ feed bodies. Existing visibility rules and the Twig security update are kept.
 
 - Initial version.
 
-[Unreleased]: https://github.com/bfhp/stream-engine/compare/v0.8.5...HEAD
+[Unreleased]: https://github.com/bfhp/stream-engine/compare/v0.8.6...HEAD
+[0.8.6]: https://github.com/bfhp/stream-engine/compare/v0.8.5...v0.8.6
 [0.8.5]: https://github.com/bfhp/stream-engine/compare/v0.8.4...v0.8.5
 [0.8.4]: https://github.com/bfhp/stream-engine/compare/v0.8.3...v0.8.4
 [0.8.3]: https://github.com/bfhp/stream-engine/compare/v0.8.2...v0.8.3
