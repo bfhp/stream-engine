@@ -122,7 +122,9 @@ final class FeedAclEquivalenceTest extends TestCase
 
             $byOffset = [];
             for ($offset = 0; $offset < count($expected) + 7; $offset += 7) {
-                $byOffset = [...$byOffset, ...self::ids($repository->findByTypePage($type, $user, 7, $offset)['items'])];
+                $page = $repository->findByTypePage($type, $user, 7, $offset);
+                $byOffset = [...$byOffset, ...self::ids($page['items'])];
+                $this->assertSame(count($expected), $page['total'], "findByTypePage total at $offset: $context");
             }
             $this->assertSame($expected, $byOffset, "findByTypePage by 7: $context");
 

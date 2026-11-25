@@ -1,8 +1,8 @@
 {
     "format": 1,
-    "release": "0.8.4",
+    "release": "0.8.5",
     "schema": "schema.sql",
-    "schema_checksum": "1feec8403cf4bc87f6fd2a910865b814a54cb63dabba33c839f5fae24a7644ee",
+    "schema_checksum": "b2d718785a708d6d71e540f0a00ce4a03fa1c54612eb07270905c60e899f1a16",
     "migrations": [
         {
             "version": "20260912000000_initial",
@@ -118,6 +118,11 @@
             "version": "20261122000000_add_recent_activity_indexes",
             "file": "20261122000000_add_recent_activity_indexes.sql",
             "checksum": "261f076dd8d88b650ea40d29c5a64d8b0102f9741198f6641c8c4321713aa414"
+        },
+        {
+            "version": "20261125000000_extend_feeds_type_index_with_acl_columns",
+            "file": "20261125000000_extend_feeds_type_index_with_acl_columns.sql",
+            "checksum": "d1affba59882949ae54a846a9e9c7d882e3908ea4c32be672012bf30690aac53"
         }
     ]
 }

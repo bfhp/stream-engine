@@ -687,6 +687,56 @@ final class FeedRepositoryTest extends TestCase
         );
     }
 
+    /**
+     * Typed pages are deferred joins: the ids of the page by the index with
+     * the ACL, then the full rows for that page only. A direct query read
+     * every skipped row with its content (18 s at OFFSET 300,000).
+     */
+    public function testTypedPagesSelectIdsFirstThenTheirRows(): void
+    {
+        $queries = [];
+        $db = $this->createStub(PdoDatabase::class);
+        $db->method('fetchAll')->willReturnCallback(static function (string $sql, array $params) use (&$queries): array {
+            $queries[] = ['fetchAll', $sql, $params];
+
+            return [];
+        });
+        $db->method('fetchOne')->willReturnCallback(static function (string $sql, array $params) use (&$queries): ?array {
+            $queries[] = ['fetchOne', $sql, $params];
+
+            return ['total' => 0];
+        });
+        $repository = new FeedRepository($db);
+
+        $repository->findByType('lib-page', $this->user(7), 20, 300000, false);
+        [, $sql, $params] = $queries[0];
+        $this->assertMatchesRegularExpression('/\(\s*SELECT f\.id FROM feeds f\s+WHERE f\.type = \?/', $sql);
+        $this->assertStringContainsString('LIMIT 20 OFFSET 300000', $sql);
+        $this->assertStringContainsString('JOIN feeds f ON f.id = page.id', $sql);
+        // The join does not keep the page's order; the outer query sorts again.
+        $this->assertMatchesRegularExpression('/LEFT JOIN users u ON u\.id = f\.owner_id\s+ORDER BY f\.created_at DESC, f\.id DESC\s*$/', $sql);
+        $this->assertStringContainsString('NULL AS content', $sql);
+        $this->assertSame(['lib-page', 7, 7], $params);
+
+        // findByTypePage: no window count; a short first page needs no count.
+        $queries = [];
+        $repository->findByTypePage('lib-page', $this->user(7), 20);
+        $this->assertCount(1, $queries);
+        $this->assertStringNotContainsString('OVER', $queries[0][1]);
+        $this->assertStringContainsString('JOIN feeds f ON f.id = page.id', $queries[0][1]);
+
+        // Any later page counts separately, with the same condition and params.
+        $queries = [];
+        $repository->findByTypePage('blog-post', $this->user(7), 20, 40, 'php');
+        $this->assertCount(2, $queries);
+        [$kind, $count, $countParams] = $queries[1];
+        $this->assertSame('fetchOne', $kind);
+        $this->assertStringStartsWith('SELECT COUNT(*) AS total FROM feeds f', $count);
+        $this->assertStringContainsString('JOIN feed_term_links ftl ON ftl.feed_id = f.id', $count);
+        $this->assertSame($queries[0][2], $countParams);
+        $this->assertSame(['blog-post', 'php', 7, 7], $countParams);
+    }
+
     public function testListOrdersByPrimaryKey(): void
     {
         $capturedSql = null;

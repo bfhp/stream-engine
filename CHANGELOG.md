@@ -7,9 +7,10 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-This release returns the feed ACL and sitemap code to 0.8.1 and replaces the
-sitemap's ACL-filtered queries with one indexed query. The fixes and the Twig
-security update of 0.8.2-0.8.4 are kept.
+## [0.8.5] - 2026-11-25
+
+Feed listings and sitemaps use indexed queries that avoid loading skipped
+feed bodies. Existing visibility rules and the Twig security update are kept.
 
 ### Changed
 
@@ -21,12 +22,6 @@ security update of 0.8.2-0.8.4 are kept.
   `FeedRepository::countAllByType()`, so a file can list fewer than 30,000
   URLs. Gallery photos keep the ACL-filtered query. The ACL queries this
   replaces read the whole `feeds` table, content included (`docs/TODO.md`).
-- Reverted to 0.8.1: the type-specific and guest ACL predicates (0.8.2, and
-  their collation fix), the Memcached sitemap cache and the `sitemap:warm`
-  scheduler task (0.8.2), the PHP `zlib` requirement (0.8.2), and batched
-  sitemap generation with `FeedService::eachFeedUrlBatchByType()` and the
-  `$withContent` argument of `FeedRepository::findByTypeAfter()` (0.8.4).
-  `SitemapController` no longer takes a `CacheInterface`.
 - The row-level feed ACL is rebuilt from per-type rules, each lookup a
   scalar subquery on a primary key, with no `EXISTS`. Queries pinned to one
   feed type apply only that type's rules: `countByType('lib-page')` for a
@@ -39,6 +34,23 @@ security update of 0.8.2-0.8.4 are kept.
   every ACL-filtered read with the previous predicate
   (`tests/Support/LegacyFeedAcl.php`) for every user and type of a fixture
   covering all of them.
+- `feeds_type_created_at_id_index` also holds the columns the ACL reads
+  (`visibility`, `container_id`, `owner_id`, `parent_id`), so typed counts and
+  the ids of typed pages come from the index alone. `findByType()` and
+  `findByTypePage()` select the ids of a page first and then only that page's
+  rows (deferred join); `findByTypePage()` counts its total separately instead
+  of `COUNT(*) OVER ()`, and not at all when the first page is not full.
+- Local Docker development and the accessibility workflow use MariaDB 11.8.
+  The PHP CI matrix now covers MariaDB 11.8, MariaDB 12, and MySQL 8.4.
+
+### Removed
+
+- The Memcached sitemap cache and the `sitemap:warm` scheduler task. Sitemap
+  XML is generated on request; the PHP `zlib` extension is no longer required.
+- `FeedService::eachFeedUrlBatchByType()` and the optional `$withContent`
+  argument of `FeedRepository::findByTypeAfter()`. Extensions using these
+  APIs must update their calls. `SitemapController` no longer takes a
+  `CacheInterface` constructor argument.
 
 ### Kept from 0.8.2-0.8.4
 
@@ -48,6 +60,21 @@ security update of 0.8.2-0.8.4 are kept.
   last change (0.8.2).
 - URL generation (`FeedRepository::hydrateTree()`) does not select content
   (0.8.4); a 30,000-URL sitemap otherwise loads every page text.
+
+### Upgrade notes
+
+- Deploy the release with its bundled browser assets, run
+  `composer install --no-dev`, then `composer migrate`. Migration
+  `20261125000000_extend_feeds_type_index_with_acl_columns` rebuilds one
+  index of `feeds` online (`ALGORITHM=INPLACE, LOCK=NONE`): the table stays
+  readable and writable. Build duration depends on table size and database
+  load; the migration changes no feed data.
+- The installation snapshot includes all 24 migrations. Updated
+  `schema.sql`, `manifest.json`, and SHA-256 checksums are attached to the
+  GitHub Release. Existing sites must use the migration, not import the
+  installation snapshot.
+- Remove any external jobs invoking `sitemap:warm`; the normal once-per-minute
+  scheduler should continue running for the remaining tasks.
 
 ## [0.8.4] - 2026-11-24
 
@@ -1142,7 +1169,8 @@ security update of 0.8.2-0.8.4 are kept.
 
 - Initial version.
 
-[Unreleased]: https://github.com/bfhp/stream-engine/compare/v0.8.4...HEAD
+[Unreleased]: https://github.com/bfhp/stream-engine/compare/v0.8.5...HEAD
+[0.8.5]: https://github.com/bfhp/stream-engine/compare/v0.8.4...v0.8.5
 [0.8.4]: https://github.com/bfhp/stream-engine/compare/v0.8.3...v0.8.4
 [0.8.3]: https://github.com/bfhp/stream-engine/compare/v0.8.2...v0.8.3
 [0.8.2]: https://github.com/bfhp/stream-engine/compare/v0.8.1...v0.8.2

@@ -398,7 +398,14 @@ final class FeedRepository implements FeedRepositoryInterface
     }
 
     /**
-     * Uses index: feeds_type_created_at_id_index (type asc, created_at desc, id desc)
+     * Uses index: feeds_type_created_at_id_index (type, created_at DESC, id DESC,
+     * visibility, container_id, owner_id, parent_id) - index only, for the page
+     * of ids with the ACL.
+     * Uses index: PRIMARY(id) on feeds for the rows of that page.
+     *
+     * Deferred join (deferredPageSql()): an OFFSET skips index entries, not
+     * rows. Known degradation: the skip is still linear in the offset (about
+     * 40 ms per 300,000 entries); long listings should use findByTypeAfter().
      *
      * @return Feed[]
      */
@@ -409,17 +416,12 @@ final class FeedRepository implements FeedRepositoryInterface
         int $offset = 0,
         bool $withContent = true
     ): array {
-        $sql = $this->baseSelect(withContent: $withContent);
-
         $condition = "f.type = ?\n";
         $params = [$type];
 
         $condition = $this->applyAcl($condition, $params, $user, $type);
 
-        $sql .= $this->where($condition);
-        $sql .= "\nORDER BY f.created_at DESC, f.id DESC\nLIMIT $limit OFFSET $offset";
-
-        return $this->fetch($sql, $params);
+        return $this->fetch($this->deferredPageSql($condition, 'f.created_at DESC, f.id DESC', $limit, $offset, withContent: $withContent), $params);
     }
 
     /**
@@ -763,11 +765,19 @@ final class FeedRepository implements FeedRepositoryInterface
      * view (?tag=slug). Same ACL rule as every other listing method here:
      * a viewer without access to a private/members-only post never sees it
      * counted into $total either. The tag filter joins the same
-     * feed_term_links/feed_terms tables as findByTerm(), just folded into
-     * one COUNT(*) OVER()-based total query instead of a separate count
-     * round-trip.
-     * Uses index: feeds_type_created_at_id_index (type asc, created_at desc, id desc)
+     * feed_term_links/feed_terms tables as findByTerm().
+     * Uses index: feeds_type_created_at_id_index (type, created_at DESC, id DESC,
+     * visibility, container_id, owner_id, parent_id) - index only, for the
+     * count and the page of ids with the ACL.
+     * Uses index: PRIMARY(id) on feeds for the rows of that page.
      * Uses index: feed_terms_vocabulary_slug_index (vocabulary, slug) when $tagSlug is set.
+     *
+     * The total is a count of its own, skipped when the first page is not
+     * full: `COUNT(*) OVER ()` evaluated the ACL and read every matching row
+     * (30 s for library pages) to return 20. The page is a deferred join
+     * (deferredPageSql()).
+     * Warning: ranked pages order by the average rating, which no index
+     * holds; they sort every rated feed of the type.
      *
      * Ranked pages include rated feeds only; ties use vote count and ID.
      * The default chronological listing is unchanged.
@@ -783,8 +793,6 @@ final class FeedRepository implements FeedRepositoryInterface
             $joins = "\nJOIN feed_term_links ftl ON ftl.feed_id = f.id"
                 ."\nJOIN feed_terms ft ON ft.id = ftl.term_id";
         }
-
-        $sql = $this->baseSelect(", COUNT(*) OVER () AS total_count").$joins;
 
         $condition = "f.type = ?\n";
         $params = [$type];
@@ -803,12 +811,17 @@ final class FeedRepository implements FeedRepositoryInterface
         }
         $condition = $this->applyAcl($condition, $params, $user, $type);
 
-        $sql .= $this->where($condition);
         // Use the full average: rating_avg is rounded to two decimal places.
         $order = $ranked ? '(1e0 * f.rating_sum / f.rating_count) DESC, f.rating_count DESC, f.id DESC' : 'f.created_at DESC, f.id DESC';
-        $sql .= "\nORDER BY $order\nLIMIT $limit OFFSET $offset";
+        $items = $this->fetch($this->deferredPageSql($condition, $order, $limit, $offset, $joins), $params);
 
-        return $this->fetchWithTotal($sql, $params);
+        if ($offset === 0 && count($items) < $limit) {
+            return ['items' => $items, 'total' => count($items)];
+        }
+
+        $row = $this->db->fetchOne("SELECT COUNT(*) AS total FROM feeds f$joins".$this->where($condition), $params);
+
+        return ['items' => $items, 'total' => (int) ($row['total'] ?? 0)];
     }
 
     /**
@@ -1346,7 +1359,7 @@ final class FeedRepository implements FeedRepositoryInterface
      * in content (e.g. a library book's full HTML, megabytes per row), and
      * pulling them for a card grid costs transfer, PHP memory and buffer pool.
      */
-    private function baseSelect(string $extra = '', bool $withContent = true): string
+    private function baseSelect(string $extra = '', bool $withContent = true, string $from = 'feeds f'): string
     {
         $content = $withContent ? 'f.content' : 'NULL AS content';
 
@@ -1374,9 +1387,28 @@ final class FeedRepository implements FeedRepositoryInterface
             u.avatar_url,
             u.username AS author_username
             $extra
-        FROM feeds f
+        FROM $from
         LEFT JOIN users u ON u.id = f.owner_id
     ";
+    }
+
+    /**
+     * Deferred join: the ids of one page chosen by $condition alone - an
+     * index-only scan when the index covers the condition, the ACL included -
+     * then the full rows of that page only, by PRIMARY. A direct query reads
+     * every row it skips with OFFSET, content and author included.
+     */
+    private function deferredPageSql(string $condition, string $order, int $limit, int $offset, string $joins = '', bool $withContent = true): string
+    {
+        $page = "(
+            SELECT f.id FROM feeds f$joins
+            ".$this->where($condition)."
+            ORDER BY $order
+            LIMIT $limit OFFSET $offset
+        ) page
+        JOIN feeds f ON f.id = page.id";
+
+        return $this->baseSelect(withContent: $withContent, from: $page)."\nORDER BY $order";
     }
 
     /**
