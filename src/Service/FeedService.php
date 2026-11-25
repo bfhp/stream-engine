@@ -1436,55 +1436,30 @@ class FeedService
     }
 
     /**
-     * Feeds of a type in the site-wide order (newest first) from $offset, at
-     * most $limit of them, handed to $consume $batchSize at a time with only
-     * their canonical URLs set and no content - for sitemaps, where holding
-     * 30 000 decorated feeds at once ran out of memory.
-     *
-     * The first batch seeks to $offset; the rest continue from the last row
-     * seen (created_at, id) instead of growing the OFFSET, so each query reads
-     * only its own batch.
-     *
-     * @param callable(list<Feed>): void $consume
+     * Every feed of a type, ignoring access - the page count of a public
+     * listing (FeedRepository::countAllByType()).
      */
-    public function eachFeedUrlBatchByType(
-        string $type,
-        User $user,
-        int $limit,
-        int $offset,
-        callable $consume,
-        int $batchSize = 1000,
-    ): void {
-        $remaining = $limit;
-        $cursor = null;
+    public function countAllFeedsByType(string $type): int
+    {
+        return $this->repository->countAllByType($type);
+    }
 
-        while ($remaining > 0) {
-            $size = min($batchSize, $remaining);
-            $feeds = $cursor === null
-                ? $this->repository->findByType($type, $user, $size, $offset, withContent: false)
-                : $this->repository->findByTypeAfter($type, $user, $size, $cursor, withContent: false);
+    /**
+     * The guest-visible feeds of one page of a type, with canonical URLs and
+     * no content (FeedRepository::findPublicByTypePage()) - for sitemaps.
+     *
+     * @return list<Feed>
+     */
+    public function getPublicFeedUrlsByTypePage(string $type, int $limit, int $offset): array
+    {
+        $feeds = $this->repository->findPublicByTypePage($type, $limit, $offset);
+        $urls = $this->urlGenerator->feeds($feeds);
 
-            if ($feeds === []) {
-                return;
-            }
-
-            $urls = $this->urlGenerator->feeds($feeds);
-
-            foreach ($feeds as $feed) {
-                $feed->canonicalUrl = $urls[$feed->id] ?? null;
-            }
-
-            $consume($feeds);
-
-            $remaining -= count($feeds);
-            $last = $feeds[array_key_last($feeds)];
-
-            if (count($feeds) < $size || $last->createdAt === null) {
-                return;
-            }
-
-            $cursor = (object) ['createdAt' => $last->createdAt, 'id' => $last->id];
+        foreach ($feeds as $feed) {
+            $feed->canonicalUrl = $urls[$feed->id] ?? null;
         }
+
+        return $feeds;
     }
 
     /** @return object{createdAt:int,id:int}|null */

@@ -49,11 +49,11 @@ final class FeedRepositoryTest extends TestCase
      *
      * @return array{string, list<mixed>}
      */
-    private function aclCondition(User $user, ?string $type = null): array
+    private function aclCondition(User $user): array
     {
         $method = new ReflectionMethod(FeedRepository::class, 'buildAclCondition');
 
-        return $method->invoke(new FeedRepository($this->createStub(PdoDatabase::class)), $user, $type);
+        return $method->invoke(new FeedRepository($this->createStub(PdoDatabase::class)), $user);
     }
 
     public function testAdminsSeeEverythingAndBindNothing(): void
@@ -90,87 +90,18 @@ final class FeedRepositoryTest extends TestCase
     }
 
     /**
-     * A guest is user id 0: it owns nothing and belongs to no container, so
-     * the owner and membership arms are left out altogether rather than bound
-     * to 0. That makes "guests see public rows only" true by construction - a
-     * migration introducing an owner_id of 0 (or a NULL that MySQL coerces)
-     * can no longer make such feeds world-readable.
+     * A guest is user id 0, and the first arm is `f.owner_id = ?`. Nothing owns
+     * a feed as 0 today - `User::SYSTEM_USER_ID` is 1 and real ids start above
+     * it - so this is safe, but it is safe by accident rather than by
+     * construction. Pinned so that a migration introducing an owner_id of 0
+     * (or a NULL that MySQL coerces) fails here rather than quietly making
+     * every such feed world-readable.
      */
-    public function testGuestsSeePublicRowsOnlyAndBindNothing(): void
+    public function testGuestsBindZeroWhichMustNotOwnAnything(): void
     {
-        [$sql, $params] = $this->aclCondition($this->user(0, role: AccessService::ROLE_USER));
+        [, $params] = $this->aclCondition($this->user(0, role: AccessService::ROLE_USER));
 
-        $this->assertSame([], $params);
-        $this->assertStringNotContainsString('?', $sql);
-        $this->assertStringNotContainsString('owner_id =', $sql);
-        $this->assertStringNotContainsString('memberships', $sql);
-        $this->assertStringContainsString("f.visibility = 'public'", $sql);
-        $this->assertStringContainsString("acl_container.visibility = 'public'", $sql);
-        // Comments still resolve their root post, which must be public too.
-        $this->assertStringContainsString('FROM feeds acl_parent', $sql);
-    }
-
-    #[DataProvider('nonCanonicalTypeProvider')]
-    public function testCollationEquivalentTypeFiltersRetainTheFullAcl(string $type): void
-    {
-        foreach ([$this->user(0), $this->user(7)] as $user) {
-            $this->assertSame($this->aclCondition($user), $this->aclCondition($user, $type));
-        }
-    }
-
-    /** @return array<string, array{string}> */
-    public static function nonCanonicalTypeProvider(): array
-    {
-        return [
-            'uppercase comment' => ['COMMENT'],
-            'accented comment' => ['cómment'],
-            'padded comment' => ['comment '],
-            'uppercase photo' => ['GALLERY-PHOTO'],
-            'accented photo' => ['gállery-photo'],
-            'padded photo' => ['gallery-photo '],
-        ];
-    }
-
-    /**
-     * A caller that pins `f.type = ?` passes the type on, and only the branch
-     * that type can match is emitted. Leaving the comment branch in made
-     * MariaDB materialise its subquery over the whole feeds table for every
-     * count of a non-comment type (18 s for 319k library pages).
-     */
-    public function testKnownNonCommentTypeEmitsOnlyTheOrdinaryBranch(): void
-    {
-        [$sql, $params] = $this->aclCondition($this->user(7), 'lib-page');
-
-        $this->assertSame([7, 7], $params);
-        $this->assertStringContainsString('f.owner_id = ?', $sql);
-        $this->assertStringContainsString('FROM feeds acl_container', $sql);
-        $this->assertStringNotContainsString('acl_parent', $sql);
-        $this->assertStringNotContainsString("f.type <> 'comment'", $sql);
-        $this->assertStringNotContainsString('gallery-photo', $sql);
-    }
-
-    public function testGalleryPhotoTypeKeepsTheGalleryCheck(): void
-    {
-        [$sql, $params] = $this->aclCondition($this->user(7), 'gallery-photo');
-
-        $this->assertSame([7, 7], $params);
-        $this->assertStringContainsString("gs.name = 'gallery.state'", $sql);
-        $this->assertStringNotContainsString('acl_parent', $sql);
-    }
-
-    public function testCommentTypeEmitsOnlyTheCommentBranch(): void
-    {
-        [$sql, $params] = $this->aclCondition($this->user(7), 'comment');
-
-        $this->assertSame([7, 7], $params);
-        $this->assertStringContainsString('FROM feeds acl_parent', $sql);
-        $this->assertStringNotContainsString('f.owner_id = ?', $sql);
-        $this->assertStringNotContainsString("f.type = 'comment'", $sql);
-    }
-
-    public function testModeratorStillBypassesForAKnownType(): void
-    {
-        $this->assertSame(['1=1', []], $this->aclCondition($this->user(7, AccessService::ROLE_MODERATOR), 'lib-page'));
+        $this->assertSame([0, 0, 0, 0], $params);
     }
 
     public function testGlobalModeratorBypassesContentVisibility(): void
@@ -184,8 +115,7 @@ final class FeedRepositoryTest extends TestCase
     {
         [$sql, $params] = $this->aclCondition($this->user(0, AccessService::ROLE_MODERATOR));
         $this->assertNotSame('1=1', $sql);
-        $this->assertStringContainsString("f.visibility = 'public'", $sql);
-        $this->assertSame([], $params);
+        $this->assertSame([0, 0, 0, 0], $params);
     }
 
     /**
@@ -241,89 +171,6 @@ final class FeedRepositoryTest extends TestCase
     }
 
     /**
-     * Passing the type to the ACL is an optimisation only: for every viewer
-     * and type, the typed query must return exactly the rows the full,
-     * untyped predicate does. Covers guests (public-only shortcut), private
-     * and members-only containers, gallery photos and comments.
-     */
-    public function testTypedAndGuestAclReturnExactlyWhatTheFullPredicateDoes(): void
-    {
-        if (! extension_loaded('pdo_sqlite')) {
-            $this->markTestSkipped('pdo_sqlite is required for the ACL behavior test.');
-        }
-
-        $pdo = $this->aclSchema();
-        $pdo->exec("INSERT INTO membership_roles (id, role_level) VALUES (1, 1), (2, 2)");
-        $pdo->exec("INSERT INTO users (id, nick, username) VALUES (2, 'Owner', 'owner'), (3, 'Moderator', 'm'), (4, 'Member', 'member'), (9, 'Other', 'other')");
-        $pdo->exec(<<<'SQL'
-            INSERT INTO feeds (id, parent_id, owner_id, type, title, content, container_id, visibility, created_at) VALUES
-                (100, NULL, 9, 'community', 'Open', '', 100, 'public', 1),
-                (200, NULL, 9, 'community', 'Closed', '', 200, 'members', 2),
-                (300, NULL, 9, 'community', 'Secret', '', 300, 'private', 3),
-                (10, NULL, 2, 'lib-page', 'p1', '', NULL, 'public', 10),
-                (11, NULL, 2, 'lib-page', 'p2', '', NULL, 'private', 11),
-                (12, NULL, 2, 'lib-page', 'p3', '', 100, 'public', 12),
-                (13, NULL, 2, 'lib-page', 'p4', '', 200, 'public', 13),
-                (14, NULL, 2, 'lib-page', 'p5', '', 200, 'members', 14),
-                (15, NULL, 2, 'lib-page', 'p6', '', 300, 'private', 15),
-                (40, NULL, 2, 'blog', 'Blog', '', NULL, 'public', 40),
-                (41, NULL, 2, 'community', 'Club', '', 41, 'members', 41),
-                (50, 40, 2, 'gallery-album', 'Open album', '', NULL, 'public', 50),
-                (51, 41, 2, 'gallery-album', 'Club album', '', 41, 'public', 51),
-                (52, 40, 2, 'gallery-album', 'Private album', '', NULL, 'private', 52),
-                (60, 50, 2, 'gallery-photo', 'ready', '', NULL, 'public', 60),
-                (61, 50, 2, 'gallery-photo', 'processing', '', NULL, 'public', 61),
-                (62, 51, 2, 'gallery-photo', 'club', '', 41, 'public', 62),
-                (63, 52, 2, 'gallery-photo', 'hidden', '', NULL, 'public', 63),
-                (70, 10, 9, 'comment', '', 'on public page', NULL, 'public', 70),
-                (71, 13, 9, 'comment', '', 'in closed community', NULL, 'public', 71),
-                (72, 70, 4, 'comment', '', 'reply', NULL, 'public', 72),
-                (73, 11, 9, 'comment', '', 'on private page', NULL, 'public', 73)
-            SQL);
-        $pdo->exec("INSERT INTO feed_metadata (feed_id, name, content) VALUES (60, 'gallery.state', 'ready'), (62, 'gallery.state', 'ready'), (63, 'gallery.state', 'ready'), (61, 'gallery.state', 'processing')");
-        $pdo->exec('INSERT INTO memberships (container_id, user_id, membership_role_id) VALUES (200, 4, 1), (300, 4, 1), (41, 4, 1), (300, 3, 2)');
-
-        $database = (new ReflectionClass(PdoDatabase::class))->newInstanceWithoutConstructor();
-        (new ReflectionProperty(PdoDatabase::class, 'pdo'))->setValue($database, $pdo);
-        $repository = new FeedRepository($database);
-
-        $ids = static function (array $feeds): array {
-            $ids = array_map(static fn ($feed): int => $feed->id, $feeds);
-            sort($ids);
-
-            return $ids;
-        };
-
-        $expectedForGuest = [
-            'lib-page' => [10, 12],
-            'gallery-photo' => [60],
-            'comment' => [70, 72],
-        ];
-
-        foreach ([0, 2, 3, 4, 9] as $userId) {
-            $user = $this->user($userId);
-
-            foreach (['lib-page', 'gallery-photo', 'comment', 'community', 'gallery-album'] as $type) {
-                // list() filtered by type alone never passes the type to the ACL.
-                $full = $ids($repository->list($user, limit: 100, type: $type));
-                $typed = $ids($repository->findByType($type, $user, 100));
-
-                $this->assertSame($full, $typed, "type $type, user $userId");
-                $this->assertSame(count($full), $repository->countByType($type, $user), "count $type, user $userId");
-
-                if ($userId === 0 && isset($expectedForGuest[$type])) {
-                    $this->assertSame($expectedForGuest[$type], $typed, "guest sees $type");
-                }
-            }
-        }
-
-        // The member of the closed community sees its members-only page.
-        $this->assertContains(14, $ids($repository->findByType('lib-page', $this->user(4), 100)));
-        // An ordinary member of a private container still does not.
-        $this->assertNotContains(15, $ids($repository->findByType('lib-page', $this->user(4), 100)));
-    }
-
-    /**
      * hydrateTree() feeds the UrlGenerator, which needs only the tree. It used
      * to select every row's content too - for a sitemap that meant the text
      * of 30 000 library pages, and a PHP worker killed at its memory limit.
@@ -351,6 +198,94 @@ final class FeedRepositoryTest extends TestCase
         foreach ($queries as $sql) {
             $this->assertStringContainsString('NULL AS content', $sql);
             $this->assertStringNotContainsString('f.content', $sql);
+        }
+    }
+
+    /**
+     * findPublicByTypePage() replaces the guest ACL for sitemaps with one
+     * indexed query, so it must agree with it exactly: paged over every feed
+     * of the type, the pages together hold precisely the rows a guest may
+     * see, newest first, and no page holds a row outside its slice.
+     */
+    public function testPublicPagesHoldExactlyTheGuestVisibleFeeds(): void
+    {
+        if (! extension_loaded('pdo_sqlite')) {
+            $this->markTestSkipped('pdo_sqlite is required for the ACL behavior test.');
+        }
+
+        $pdo = $this->aclSchema();
+        $pdo->exec("INSERT INTO users (id, nick, username) VALUES (2, 'Owner', 'owner'), (9, 'Other', 'other')");
+        $pdo->exec(<<<'SQL'
+            INSERT INTO feeds (id, parent_id, owner_id, type, slug, title, content, container_id, visibility, created_at, updated_at) VALUES
+                (100, NULL, 9, 'community', 'open', 'Open', '', 100, 'public', 1, 1),
+                (200, NULL, 9, 'community', 'closed', 'Closed', '', 200, 'members', 2, 2),
+                (300, NULL, 9, 'community', 'secret', 'Secret', '', 300, 'private', 3, 3),
+                (10, NULL, 2, 'lib-page', 'p1', 'p1', 'text', NULL, 'public', 20, 21),
+                (11, NULL, 2, 'lib-page', 'p2', 'p2', 'text', NULL, 'private', 19, 19),
+                (12, NULL, 2, 'lib-page', 'p3', 'p3', 'text', 100, 'public', 18, 18),
+                (13, NULL, 2, 'lib-page', 'p4', 'p4', 'text', 200, 'public', 17, 17),
+                (14, NULL, 2, 'lib-page', 'p5', 'p5', 'text', 200, 'members', 16, 16),
+                (15, NULL, 2, 'lib-page', 'p6', 'p6', 'text', 300, 'public', 15, 15),
+                (16, NULL, 2, 'lib-page', 'p7', 'p7', 'text', NULL, 'public', 15, 15),
+                (17, NULL, 2, 'lib-page', 'p8', 'p8', 'text', 17, 'public', 14, 14),
+                (18, NULL, 2, 'lib-page', 'p9', 'p9', 'text', 999, 'public', 13, 13),
+                (19, NULL, 2, 'lib-page', 'p10', 'p10', 'text', NULL, 'members', 12, 12),
+                (20, NULL, 2, 'lib-page', 'p11', 'p11', 'text', NULL, 'public', 30, 30)
+            SQL);
+
+        $database = (new ReflectionClass(PdoDatabase::class))->newInstanceWithoutConstructor();
+        (new ReflectionProperty(PdoDatabase::class, 'pdo'))->setValue($database, $pdo);
+        $repository = new FeedRepository($database);
+        $guest = $this->user(0);
+        $ids = static fn (array $feeds): array => array_map(static fn ($feed): int => $feed->id, $feeds);
+
+        foreach (['lib-page', 'community'] as $type) {
+            $expected = $ids($repository->findByType($type, $guest, 100, withContent: false));
+            $total = $repository->countAllByType($type);
+            $paged = [];
+
+            for ($offset = 0; $offset < $total; $offset += 3) {
+                $page = $ids($repository->findPublicByTypePage($type, 3, $offset));
+                $slice = array_slice($ids($repository->findByType($type, $this->user(1, AccessService::ROLE_ADMIN), 100)), $offset, 3);
+
+                $this->assertSame(array_values(array_intersect($slice, $page)), $page, "page at $offset is a subset of its slice, in order");
+                $paged = [...$paged, ...$page];
+            }
+
+            // Same rows and same newest-first order (ties on created_at by id).
+            $this->assertSame($expected, $paged, $type);
+        }
+
+        // Spelled out once: public and uncontained (10, 16, 20), in an open
+        // community (12), self-contained (17). Excluded: private or
+        // members-only rows (11, 14, 19), closed or secret containers (13,
+        // 15) and a missing container (18).
+        $libPages = [];
+        foreach ([0, 3, 6, 9] as $offset) {
+            $libPages = [...$libPages, ...$ids($repository->findPublicByTypePage('lib-page', 3, $offset))];
+        }
+        // Newest first, not by id: 20 is the newest row.
+        $this->assertSame([20, 10, 12, 16, 17], $libPages);
+        $this->assertSame([20, 10, 12, 16, 17], $ids($repository->findPublicByTypePage('lib-page', 100)));
+        $this->assertSame(11, $repository->countAllByType('lib-page'));
+
+        // A row's content is never selected.
+        $this->assertNull($repository->findPublicByTypePage('lib-page', 1)[0]->content);
+    }
+
+    public function testPublicPagesRefuseTypesWithTheirOwnAcl(): void
+    {
+        $repository = new FeedRepository($this->createStub(PdoDatabase::class));
+
+        // Including spellings a case- and accent-insensitive collation would
+        // match to those types.
+        foreach (['comment', 'gallery-photo', 'COMMENT', 'cómment', 'comment ', 'Gallery-Photo'] as $type) {
+            try {
+                $repository->findPublicByTypePage($type, 10);
+                $this->fail("$type accepted");
+            } catch (\InvalidArgumentException) {
+                $this->addToAssertionCount(1);
+            }
         }
     }
 
@@ -435,7 +370,7 @@ final class FeedRepositoryTest extends TestCase
      * @param list<mixed> $ownParams what the method binds before the ACL
      */
     #[DataProvider('aclOrderingProvider')]
-    public function testAclParamsAreAppendedAfterEachMethodsOwn(callable $call, array $ownParams, array $aclParams = [7, 7, 7, 7]): void
+    public function testAclParamsAreAppendedAfterEachMethodsOwn(callable $call, array $ownParams): void
     {
         $captured = [];
         $db = $this->createStub(PdoDatabase::class);
@@ -456,10 +391,10 @@ final class FeedRepositoryTest extends TestCase
 
         $call(new FeedRepository($db), $this->user(7));
 
-        $this->assertSame([...$ownParams, ...$aclParams], $captured);
+        $this->assertSame([...$ownParams, 7, 7, 7, 7], $captured);
     }
 
-    /** @return array<string, array{0:callable, 1:list<mixed>, 2?:list<int>}> */
+    /** @return array<string, array{callable, list<mixed>}> */
     public static function aclOrderingProvider(): array
     {
         $cursor = (object) ['created_at' => 1700000000, 'id' => 42];
@@ -470,8 +405,6 @@ final class FeedRepositoryTest extends TestCase
             'findByTypeAndSlug' => [
                 fn (FeedRepository $r, User $u) => $r->findByTypeAndSlug('forum', 'x', $u),
                 ['forum', 'x'],
-                // A known non-comment type binds only the ordinary branch.
-                [7, 7],
             ],
             'findByParent' => [fn (FeedRepository $r, User $u) => $r->findByParent(58, $u), [58]],
             'findByParentAndSlug' => [
@@ -487,7 +420,6 @@ final class FeedRepositoryTest extends TestCase
             'findByParentAndSlug, typed' => [
                 fn (FeedRepository $r, User $u) => $r->findByParentAndSlug(58, 'x', $u, 'chapter'),
                 [58, 'x', 'chapter'],
-                [7, 7],
             ],
             'findCommentsPage' => [
                 fn (FeedRepository $r, User $u) => $r->findCommentsPage(58, 10, null, $u),
@@ -707,7 +639,7 @@ final class FeedRepositoryTest extends TestCase
                     && str_contains($sql, 'JOIN feed_terms')
                     && str_contains($sql, 'f.created_at < ?')
                     && ! str_contains($sql, 'OFFSET')),
-                ['blog-post', 'php', 1_700_000_000, 1_700_000_000, 42, 7, 7]
+                ['blog-post', 'php', 1_700_000_000, 1_700_000_000, 42, 7, 7, 7, 7]
             )
             ->willReturn([]);
 

@@ -87,7 +87,7 @@ final class SitemapControllerTest extends TestCase
         );
     }
 
-    private function makeModule(PageTree $pageTree, FeedService $feedService, ?PdoDatabase $db = null, ?ArrayCache $cache = null): SitemapController
+    private function makeModule(PageTree $pageTree, FeedService $feedService, ?PdoDatabase $db = null): SitemapController
     {
         $db ??= $this->createStub(PdoDatabase::class);
         if ($pageTree->findByAction('sitemap.sitemap') === null) {
@@ -103,21 +103,7 @@ final class SitemapControllerTest extends TestCase
             $feedService,
             new TermService(new FeedTermRepository($db), $urlGenerator),
             new Config(['SITE_URL' => 'https://example.test']),
-            $cache,
         );
-    }
-
-    /**
-     * eachFeedUrlBatchByType() hands its feeds to a callback; a stub that
-     * passes $feeds as one batch.
-     *
-     * @param list<Feed>|callable(int):list<Feed> $feeds called with the offset
-     */
-    private static function batches(array|\Closure $feeds): \Closure
-    {
-        return static function (string $type, User $user, int $limit, int $offset, callable $consume) use ($feeds): void {
-            $consume($feeds instanceof \Closure ? $feeds($offset) : $feeds);
-        };
     }
 
     private function sitemap(SitemapController $module, string $slug): string
@@ -150,12 +136,12 @@ final class SitemapControllerTest extends TestCase
 
         $feedService = $this->getMockBuilder(FeedService::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['countFeedsByType'])
+            ->onlyMethods(['countAllFeedsByType'])
             ->getMock();
         $feedService
             ->expects($this->once())
-            ->method('countFeedsByType')
-            ->with('article', $this->callback(static fn (User $user): bool => $user->isGuest()))
+            ->method('countAllFeedsByType')
+            ->with('article')
             ->willReturn(30001);
 
         $db = $this->createMock(PdoDatabase::class);
@@ -293,15 +279,15 @@ final class SitemapControllerTest extends TestCase
 
         $feedService = $this->getMockBuilder(FeedService::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['eachFeedUrlBatchByType'])
+            ->onlyMethods(['getPublicFeedUrlsByTypePage'])
             ->getMock();
         $feedService
             ->expects($this->once())
-            ->method('eachFeedUrlBatchByType')
-            ->with('article', $this->callback(static fn (User $user): bool => $user->isGuest()), 30000, 0)
-            ->willReturnCallback(self::batches([
+            ->method('getPublicFeedUrlsByTypePage')
+            ->with('article', 30000, 0)
+            ->willReturn([
                 self::feed(10, 'article', 'hello', '/articles/hello/'),
-            ]));
+            ]);
 
         $module = $this->makeModule($pageTree, $feedService);
 
@@ -312,103 +298,6 @@ final class SitemapControllerTest extends TestCase
         $this->assertStringContainsString('<urlset', $output);
         $this->assertStringContainsString('https://example.test/articles/hello/', $output);
         $this->assertStringContainsString('<lastmod>2023-11-15</lastmod>', $output);
-    }
-
-    public function testRenderedSitemapIsServedFromCacheOnTheNextRequest(): void
-    {
-        $_SERVER['HTTP_HOST'] = 'example.test';
-
-        $pageTree = new PageTree([
-            self::page(1, null, ''),
-            self::page(2, 1, 'articles'),
-            self::page(3, 2, '{slug}', feedType: 'article'),
-        ]);
-
-        $feedService = $this->getMockBuilder(FeedService::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['eachFeedUrlBatchByType'])
-            ->getMock();
-        $feedService
-            ->expects($this->once())
-            ->method('eachFeedUrlBatchByType')
-            ->willReturnCallback(self::batches([self::feed(10, 'article', 'hello', '/articles/hello/')]));
-
-        $cache = new ArrayCache();
-        $module = $this->makeModule($pageTree, $feedService, cache: $cache);
-
-        $first = $this->sitemap($module, 'article');
-        $second = $this->sitemap($module, 'article');
-
-        $this->assertStringContainsString('https://example.test/articles/hello/', $first);
-        $this->assertSame($first, $second);
-        $this->assertSame($first, gzdecode((string) $cache->get('sitemap:v1:article')));
-    }
-
-    public function testEmptyChunkPastTheEndIsNotCached(): void
-    {
-        $_SERVER['HTTP_HOST'] = 'example.test';
-
-        $pageTree = new PageTree([
-            self::page(1, null, ''),
-            self::page(2, 1, 'articles'),
-            self::page(3, 2, '{slug}', feedType: 'article'),
-        ]);
-
-        $feedService = $this->createStub(FeedService::class);
-        $feedService->method('eachFeedUrlBatchByType')->willReturnCallback(self::batches([]));
-
-        $cache = new ArrayCache();
-        $output = $this->sitemap($this->makeModule($pageTree, $feedService, cache: $cache), 'article-987654');
-
-        $this->assertStringContainsString('<urlset', $output);
-        $this->assertNull($cache->get('sitemap:v1:article-987654'));
-    }
-
-    public function testCronWarmsTheIndexAndEveryFileItLists(): void
-    {
-        $_SERVER['HTTP_HOST'] = 'example.test';
-
-        $pageTree = new PageTree([
-            self::page(1, null, ''),
-            self::page(2, 1, 'articles'),
-            self::page(3, 2, '{slug}', feedType: 'article'),
-        ]);
-
-        $feedService = $this->getMockBuilder(FeedService::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['countFeedsByType', 'eachFeedUrlBatchByType'])
-            ->getMock();
-        // Counted once for the whole run, not once for the index and again
-        // for each file.
-        $feedService->expects($this->once())->method('countFeedsByType')->willReturn(30001);
-        $feedService
-            ->expects($this->exactly(2))
-            ->method('eachFeedUrlBatchByType')
-            ->willReturnCallback(self::batches(static fn (int $offset): array => [
-                self::feed($offset + 1, 'article', 'a'.$offset, '/articles/a'.$offset.'/'),
-            ]));
-
-        $cache = new ArrayCache();
-        $module = $this->makeModule($pageTree, $feedService, cache: $cache);
-        $module->runCron('sitemap:warm');
-
-        foreach (['index', 'pages', 'article', 'article-2'] as $slug) {
-            $this->assertIsString($cache->get('sitemap:v1:'.$slug), $slug);
-        }
-        $this->assertStringContainsString('https://example.test/sitemap-article-2.xml', gzdecode($cache->get('sitemap:v1:index')));
-        $this->assertStringContainsString('https://example.test/articles/a30000/', gzdecode($cache->get('sitemap:v1:article-2')));
-
-        // Served from the cache: no further counts or queries.
-        $this->assertStringContainsString('sitemap-article-2.xml', $this->sitemap($module, 'index'));
-    }
-
-    public function testSitemapCronTaskIsRegisteredHourly(): void
-    {
-        $registry = new \StreamEngine\Core\Cron\CronRegistry();
-        SitemapController::registerCron($registry);
-
-        $this->assertSame(3600, $registry->get('sitemap:warm')['interval'] ?? null);
-        $this->assertSame('Sitemap', $registry->get('sitemap:warm')['controller'] ?? null);
     }
 
     public function testRobotsTxtNotModifiedOnlyForAFreshValidator(): void
@@ -425,6 +314,35 @@ final class SitemapControllerTest extends TestCase
         $this->assertFalse($check->invoke($module, $modified, ''));
     }
 
+    /**
+     * Gallery photos need the full ACL (album, context, processing state), so
+     * they keep the ACL-filtered query; every other type takes the indexed
+     * public one.
+     */
+    public function testGalleryPhotoSitemapKeepsTheFullAcl(): void
+    {
+        $_SERVER['HTTP_HOST'] = 'example.test';
+
+        $pageTree = new PageTree([
+            self::page(1, null, ''),
+            self::page(2, 1, 'photos'),
+            self::page(3, 2, '{slug}', feedType: 'gallery-photo'),
+        ]);
+
+        $feedService = $this->getMockBuilder(FeedService::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['getFeedsByType', 'getPublicFeedUrlsByTypePage'])
+            ->getMock();
+        $feedService->expects($this->never())->method('getPublicFeedUrlsByTypePage');
+        $feedService
+            ->expects($this->once())
+            ->method('getFeedsByType')
+            ->with('gallery-photo', $this->callback(static fn (User $user): bool => $user->isGuest()), 30000, 0, false)
+            ->willReturn([self::feed(5, 'gallery-photo', 'p', '/photos/p/')]);
+
+        $this->assertStringContainsString('https://example.test/photos/p/', $this->sitemap($this->makeModule($pageTree, $feedService), 'gallery-photo'));
+    }
+
     public function testFeedTypeSitemapCanRenderSecondChunk(): void
     {
         $_SERVER['HTTP_HOST'] = 'example.test';
@@ -437,15 +355,15 @@ final class SitemapControllerTest extends TestCase
 
         $feedService = $this->getMockBuilder(FeedService::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['eachFeedUrlBatchByType'])
+            ->onlyMethods(['getPublicFeedUrlsByTypePage'])
             ->getMock();
         $feedService
             ->expects($this->once())
-            ->method('eachFeedUrlBatchByType')
-            ->with('article-section', $this->callback(static fn (User $user): bool => $user->isGuest()), 30000, 30000)
-            ->willReturnCallback(self::batches([
+            ->method('getPublicFeedUrlsByTypePage')
+            ->with('article-section', 30000, 30000)
+            ->willReturn([
                 self::feed(30001, 'article-section', 'next', '/lectures/next/'),
-            ]));
+            ]);
 
         $module = $this->makeModule($pageTree, $feedService);
 
@@ -489,18 +407,18 @@ final class SitemapControllerTest extends TestCase
 
         $feedService = $this->getMockBuilder(FeedService::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['eachFeedUrlBatchByType'])
+            ->onlyMethods(['getPublicFeedUrlsByTypePage'])
             ->getMock();
 
         if ($offset === null) {
-            $feedService->expects($this->never())->method('eachFeedUrlBatchByType');
+            $feedService->expects($this->never())->method('getPublicFeedUrlsByTypePage');
             $this->expectException(\StreamEngine\Core\Exceptions\NotFoundException::class);
         } else {
             $feedService
                 ->expects($this->once())
-                ->method('eachFeedUrlBatchByType')
-                ->with('article', $this->anything(), 30000, $offset)
-                ->willReturnCallback(self::batches([self::feed($offset + 1, 'article', 'a', '/articles/a/')]));
+                ->method('getPublicFeedUrlsByTypePage')
+                ->with('article', 30000, $offset)
+                ->willReturn([self::feed($offset + 1, 'article', 'a', '/articles/a/')]);
         }
 
         $output = $this->sitemap($this->makeModule($pageTree, $feedService), $slug);

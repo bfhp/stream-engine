@@ -6,9 +6,7 @@ namespace StreamEngine\Modules\Sitemap;
 
 use RuntimeException;
 use StreamEngine\Core\AbstractController;
-use StreamEngine\Core\CacheInterface;
 use StreamEngine\Core\Config;
-use StreamEngine\Core\Cron\CronRegistry;
 use StreamEngine\Core\Exceptions\NotFoundException;
 use StreamEngine\Core\PageTree;
 use StreamEngine\Core\PdoDatabase;
@@ -27,18 +25,6 @@ class SitemapController extends AbstractController
     private const int MAX_SITEMAP_URLS = 30000;
 
     /**
-     * Rendered sitemaps are cached gzip-compressed (a 30 000-URL file is
-     * ~4 MB of XML, a few hundred KB compressed - below Memcached's 1 MB item
-     * limit). The cron task re-renders everything hourly; the TTL only
-     * bounds how long a file outlives a stopped scheduler.
-     */
-    private const string CACHE_PREFIX = 'sitemap:v1:';
-
-    private const int CACHE_TTL = 6 * 60 * 60;
-
-    private const string CRON_TASK = 'sitemap:warm';
-
-    /**
      * Chunk numbers in file names: 1 has no suffix, so 2 and up, without
      * leading zeros (`-10`, `-11`, ... included - `[2-9][0-9]*` once
      * rejected every number starting with 1).
@@ -53,7 +39,6 @@ class SitemapController extends AbstractController
         private readonly FeedService $feedService,
         private readonly TermService $termService,
         private readonly Config $config,
-        private readonly ?CacheInterface $cache = null,
     ) {
         parent::__construct($db, $context);
     }
@@ -76,121 +61,48 @@ class SitemapController extends AbstractController
      */
     private function handleSitemapRequest(string $slug): void
     {
-        $xml = $this->cachedSitemap($slug) ?? throw new NotFoundException('Unknown page');
-
-        // The one visitor-independent response: replaces the default
-        // `private, no-store` policy (see Security::defaultResponseHeaders()).
         header('Content-Type: application/xml; charset=UTF-8');
-        header('Cache-Control: public, max-age=3600');
-        echo $xml;
-    }
 
-    private function cachedSitemap(string $slug): ?string
-    {
-        $cached = $this->cache?->get(self::CACHE_PREFIX.$slug);
-
-        if (is_string($cached)) {
-            $xml = @gzdecode($cached);
-
-            if ($xml !== false) {
-                return $xml;
-            }
-        }
-
-        $xml = $this->renderSitemap($slug);
-
-        // An empty chunk past the end is valid but not worth a cache entry:
-        // any number would do, so caching it would let anyone fill the cache.
-        if ($xml !== null && ($slug === 'index' || str_contains($xml, '<url>'))) {
-            $this->storeSitemap($slug, $xml);
-        }
-
-        return $xml;
-    }
-
-    private function storeSitemap(string $slug, string $xml): void
-    {
-        $compressed = gzencode($xml, 6);
-
-        if ($compressed !== false) {
-            $this->cache?->set(self::CACHE_PREFIX.$slug, $compressed, self::CACHE_TTL);
-        }
-    }
-
-    /**
-     * Renders every sitemap the index lists, then the index itself, so a
-     * crawler never waits for the feed counts or a 30 000-row query.
-     */
-    public function warmCache(): void
-    {
-        $files = $this->sitemapFiles();
-
-        foreach ($files as $file) {
-            $slug = $this->slugFromFile($file);
-            $xml = $this->renderSitemap($slug);
-
-            if ($xml !== null) {
-                $this->storeSitemap($slug, $xml);
-            }
-        }
-
-        $this->storeSitemap('index', $this->renderSitemapIndex($files));
-    }
-
-    public static function registerCron(CronRegistry $cron): void
-    {
-        $cron->add(self::CRON_TASK, 'Sitemap', 60 * 60);
-    }
-
-    public function runCron(string $task): void
-    {
-        if ($task === self::CRON_TASK) {
-            $this->warmCache();
-        }
-    }
-
-    private function renderSitemap(string $slug): ?string
-    {
         if ($slug === 'index') {
-            return $this->renderSitemapIndex();
+            echo $this->renderSitemapIndex();
+            return;
         }
 
         if ($slug === 'pages') {
-            return $this->renderUrlSet($this->pageUrls());
+            echo $this->renderUrlSet($this->pageUrls());
+            return;
         }
 
         $feedSitemap = $this->parseFeedSitemapSlug($slug);
 
         if ($feedSitemap !== null) {
-            return $this->renderUrlSet($this->feedUrls($feedSitemap['type'], $feedSitemap['page']));
+            echo $this->renderUrlSet($this->feedUrls($feedSitemap['type'], $feedSitemap['page']));
+            return;
         }
 
         $termSitemap = $this->parseTermSitemapSlug($slug);
 
         if ($termSitemap !== null) {
-            return $this->renderUrlSet($this->termUrls($termSitemap['vocabulary'], $termSitemap['page']));
+            echo $this->renderUrlSet($this->termUrls($termSitemap['vocabulary'], $termSitemap['page']));
+            return;
         }
 
-        return null;
+        throw new NotFoundException('Unknown page');
     }
 
-    /**
-     * @return list<string>
-     */
-    private function sitemapFiles(): array
+    private function renderSitemapIndex(): string
     {
-        return ['sitemap-pages.xml', ...$this->feedSitemapFiles(), ...$this->termSitemapFiles()];
-    }
+        $locations = [
+            ['loc' => $this->absoluteSitemapUrl('pages')],
+        ];
 
-    /**
-     * @param list<string>|null $files
-     */
-    private function renderSitemapIndex(?array $files = null): string
-    {
-        $locations = array_map(
-            fn (string $file): array => ['loc' => $this->absoluteSitemapFileUrl($file)],
-            $files ?? $this->sitemapFiles()
-        );
+        foreach ($this->feedSitemapFiles() as $file) {
+            $locations[] = ['loc' => $this->absoluteSitemapFileUrl($file)];
+        }
+
+        foreach ($this->termSitemapFiles() as $file) {
+            $locations[] = ['loc' => $this->absoluteSitemapFileUrl($file)];
+        }
 
         $items = array_map(
             fn (array $entry): string => sprintf(
@@ -313,7 +225,9 @@ class SitemapController extends AbstractController
 
     private function feedSitemapPageCount(string $type): int
     {
-        $count = $this->feedService->countFeedsByType($type, $this->guest());
+        // Every feed of the type, visible or not: an index-only count. Files
+        // are slices of that list, so one may hold fewer URLs than the limit.
+        $count = $this->feedService->countAllFeedsByType($type);
 
         return max(1, (int) ceil($count / self::MAX_SITEMAP_URLS));
     }
@@ -425,28 +339,22 @@ class SitemapController extends AbstractController
      */
     private function feedUrls(string $type, int $page): array
     {
-        $entries = [];
+        $offset = ($page - 1) * self::MAX_SITEMAP_URLS;
 
-        // In batches, URLs and dates only: each batch of feeds is released
-        // before the next is loaded, so memory no longer grows with the file.
-        $this->feedService->eachFeedUrlBatchByType(
-            $type,
-            $this->guest(),
-            self::MAX_SITEMAP_URLS,
-            ($page - 1) * self::MAX_SITEMAP_URLS,
-            function (array $feeds) use (&$entries): void {
-                foreach ($feeds as $feed) {
-                    if ($feed->canonicalUrl) {
-                        $entries[] = [
-                            'loc' => $this->absoluteUrl($feed->canonicalUrl),
-                            'lastmod' => $feed->updatedAt,
-                        ];
-                    }
-                }
-            },
-        );
-
-        return $entries;
+        return array_values(array_filter(array_map(
+            fn (Feed $feed): ?array => $feed->canonicalUrl
+                ? [
+                    'loc' => $this->absoluteUrl($feed->canonicalUrl),
+                    'lastmod' => $feed->updatedAt,
+                ]
+                : null,
+            // Gallery photos need the full ACL (album, context, processing
+            // state); there are few of them. Every other type takes the
+            // indexed guest-visibility query.
+            $type === 'gallery-photo'
+                ? $this->feedService->getFeedsByType($type, $this->guest(), self::MAX_SITEMAP_URLS, $offset, withContent: false)
+                : $this->feedService->getPublicFeedUrlsByTypePage($type, self::MAX_SITEMAP_URLS, $offset)
+        )));
     }
 
     /**
@@ -513,12 +421,9 @@ class SitemapController extends AbstractController
 
     private function absoluteSitemapFileUrl(string $file): string
     {
-        return $this->absoluteSitemapUrl($this->slugFromFile($file));
-    }
+        $slug = substr($file, strlen('sitemap-'), -strlen('.xml'));
 
-    private function slugFromFile(string $file): string
-    {
-        return substr($file, strlen('sitemap-'), -strlen('.xml'));
+        return $this->absoluteSitemapUrl($slug);
     }
 
     private function xmlHeader(): string

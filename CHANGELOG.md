@@ -7,6 +7,36 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+This release returns the feed ACL and sitemap code to 0.8.1 and replaces the
+sitemap's ACL-filtered queries with one indexed query. The fixes and the Twig
+security update of 0.8.2-0.8.4 are kept.
+
+### Changed
+
+- Feed sitemaps no longer use the row-level ACL.
+  `FeedRepository::findPublicByTypePage()` takes a slice of every feed of the
+  type by `feeds_type_created_at_id_index` alone and keeps the guest-visible
+  rows (public, in a public container or none), with PRIMARY lookups only.
+  The sitemap index sizes files from the index-only
+  `FeedRepository::countAllByType()`, so a file can list fewer than 30,000
+  URLs. Gallery photos keep the ACL-filtered query. The ACL queries this
+  replaces read the whole `feeds` table, content included (`docs/TODO.md`).
+- Reverted to 0.8.1: the type-specific and guest ACL predicates (0.8.2, and
+  their collation fix), the Memcached sitemap cache and the `sitemap:warm`
+  scheduler task (0.8.2), the PHP `zlib` requirement (0.8.2), and batched
+  sitemap generation with `FeedService::eachFeedUrlBatchByType()` and the
+  `$withContent` argument of `FeedRepository::findByTypeAfter()` (0.8.4).
+  `SitemapController` no longer takes a `CacheInterface`.
+
+### Kept from 0.8.2-0.8.4
+
+- Twig 3.31.1 (security fixes).
+- Sitemap chunks numbered 10 and up are served (0.8.3).
+- `robots.txt` answers 304 only for an `If-Modified-Since` at or after its
+  last change (0.8.2).
+- URL generation (`FeedRepository::hydrateTree()`) does not select content
+  (0.8.4); a 30,000-URL sitemap otherwise loads every page text.
+
 ## [0.8.4] - 2026-11-24
 
 ### Fixed

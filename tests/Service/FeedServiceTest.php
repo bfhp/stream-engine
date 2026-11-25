@@ -237,85 +237,40 @@ final class FeedServiceTest extends TestCase
     }
 
     /**
-     * The first batch seeks with OFFSET, every later one continues from the
-     * last row (created_at, id); none selects content, each batch reaches the
-     * callback with canonical URLs, and the limit caps the final batch.
+     * One query for the page (no content, no ACL branches), canonical URLs
+     * resolved for exactly the rows it returned.
      */
-    public function testFeedUrlBatchesSeekOnceThenContinueByCursorWithoutContent(): void
+    public function testPublicFeedUrlsUseOneIndexedQueryAndResolveUrls(): void
     {
-        $row = static fn (int $id, int $createdAt): array => [
-            'id' => $id, 'parent_id' => null, 'owner_id' => 1, 'type' => 'article',
-            'slug' => 'feed-'.$id, 'container_id' => null, 'created_at' => $createdAt,
-        ];
-
         $queries = [];
         $db = $this->createStub(PdoDatabase::class);
         $db->method('fetchAll')->willReturnCallback(
-            static function (string $sql, array $params) use (&$queries, $row): array {
+            static function (string $sql, array $params) use (&$queries): array {
                 $queries[] = [$sql, $params];
 
-                return match (count($queries)) {
-                    1 => [$row(50, 500), $row(40, 400)],
-                    2 => [$row(30, 400)],
-                    default => throw new \LogicException('Queried past the limit'),
-                };
+                return [
+                    ['id' => 50, 'parent_id' => null, 'owner_id' => 1, 'type' => 'article', 'slug' => 'feed-50', 'container_id' => null, 'visibility' => 'public', 'created_at' => 500, 'updated_at' => 600],
+                    ['id' => 40, 'parent_id' => null, 'owner_id' => 1, 'type' => 'article', 'slug' => 'feed-40', 'container_id' => null, 'visibility' => 'public', 'created_at' => 400, 'updated_at' => 400],
+                ];
             }
         );
 
-        $feeds = [];
-        foreach ([50, 40, 30] as $id) {
-            $feeds[$id] = $this->makeFeed($id);
-        }
+        $feeds = $this->makeService(new FeedRepository($db), $this->makeUrlGenerator([
+            50 => $this->makeFeed(50),
+            40 => $this->makeFeed(40),
+        ]))->getPublicFeedUrlsByTypePage('article', 30000, 60000);
 
-        $batches = [];
-        $this->makeService(new FeedRepository($db), $this->makeUrlGenerator($feeds))->eachFeedUrlBatchByType(
-            'article',
-            new User(id: 0, email: ''),
-            3,
-            7,
-            static function (array $batch) use (&$batches): void {
-                $batches[] = array_map(static fn (Feed $feed): array => [$feed->id, $feed->canonicalUrl], $batch);
-            },
-            batchSize: 2,
+        self::assertSame(
+            [[50, '/articles/feed-50/', 600], [40, '/articles/feed-40/', 400]],
+            array_map(static fn (Feed $feed): array => [$feed->id, $feed->canonicalUrl, $feed->updatedAt], $feeds),
         );
-
-        self::assertSame([
-            [[50, '/articles/feed-50/'], [40, '/articles/feed-40/']],
-            [[30, '/articles/feed-30/']],
-        ], $batches);
-
-        self::assertCount(2, $queries);
-        [$first, $firstParams] = $queries[0];
-        self::assertStringContainsString('NULL AS content', $first);
-        self::assertStringContainsString('LIMIT 2 OFFSET 7', $first);
-        self::assertSame(['article'], $firstParams);
-
-        [$second, $secondParams] = $queries[1];
-        self::assertStringContainsString('NULL AS content', $second);
-        self::assertStringContainsString('f.created_at < ?', $second);
-        self::assertStringContainsString('LIMIT 1', $second);
-        self::assertStringNotContainsString('OFFSET', $second);
-        // Continues after the last row of the first batch: (400, 40).
-        self::assertSame(['article', 400, 400, 40], $secondParams);
-    }
-
-    public function testFeedUrlBatchesStopAtAShortBatch(): void
-    {
-        $db = $this->createMock(PdoDatabase::class);
-        $db->expects($this->once())->method('fetchAll')->willReturn([]);
-
-        $calls = 0;
-        $this->makeService(new FeedRepository($db))->eachFeedUrlBatchByType(
-            'article',
-            new User(id: 0, email: ''),
-            30000,
-            0,
-            static function () use (&$calls): void {
-                $calls++;
-            },
-        );
-
-        self::assertSame(0, $calls);
+        self::assertCount(1, $queries);
+        [$sql, $params] = $queries[0];
+        self::assertSame(['article'], $params);
+        self::assertStringContainsString('LIMIT 30000 OFFSET 60000', $sql);
+        self::assertStringNotContainsString('content', $sql);
+        self::assertStringNotContainsString('EXISTS', $sql);
+        self::assertStringNotContainsString('memberships', $sql);
     }
 
     public function testFeedCursorRejectsMalformedPayloadBeforeQuerying(): void
@@ -591,7 +546,7 @@ final class FeedServiceTest extends TestCase
                 $this->callback(static fn (string $sql): bool => str_contains($sql, 'f.type = ?')
                     && str_contains($sql, 'ORDER BY f.rating_avg DESC, f.id DESC')
                     && str_contains($sql, 'LIMIT 50')),
-                ['publication', 7, 7]
+                ['publication', 7, 7, 7, 7]
             )
             ->willReturn([
                 [
@@ -812,7 +767,7 @@ final class FeedServiceTest extends TestCase
                 $this->callback(static fn (string $sql): bool => str_contains($sql, 'f.parent_id = ?')
                     && str_contains($sql, 'f.slug = ?')
                     && str_contains($sql, 'f.type = ?')),
-                [58, '2', 'chapter', 7, 7]
+                [58, '2', 'chapter', 7, 7, 7, 7]
             )
             ->willReturn([
                 'id' => 60,
@@ -875,7 +830,7 @@ final class FeedServiceTest extends TestCase
                 $this->callback(static fn (string $sql): bool => str_contains($sql, 'f.type = ?')
                     && str_contains($sql, 'f.slug = ?')
                     && ! str_contains($sql, 'f.parent_id = ?')),
-                ['forum', 'practice', 7, 7]
+                ['forum', 'practice', 7, 7, 7, 7]
             )
             ->willReturn([
                 'id' => 60,
@@ -940,7 +895,7 @@ final class FeedServiceTest extends TestCase
                     && str_contains($sql, 'ft.vocabulary = ?')
                     && str_contains($sql, 'ft.slug = ?')
                     && str_contains($sql, 'f.type = ?')),
-                ['author', 'kandyba_viktor_mihajilovich', 'publication', 7, 7]
+                ['author', 'kandyba_viktor_mihajilovich', 'publication', 7, 7, 7, 7]
             )
             ->willReturn([
                 [
@@ -1892,7 +1847,7 @@ final class FeedServiceTest extends TestCase
             ->with(
                 $this->callback(static fn (string $sql): bool => str_contains($sql, 'f.id IN (?, ?)')
                     && str_contains($sql, 'f.type = ?')),
-                [60, 58, 'publication', 7, 7]
+                [60, 58, 'publication', 7, 7, 7, 7]
             )
             ->willReturn([
                 [
@@ -2254,7 +2209,7 @@ final class FeedServiceTest extends TestCase
                 }
 
                 if (in_array('chapter', $params, true)) {
-                    $this->assertSame([60, 'chapter', 7, 7], $params);
+                    $this->assertSame([60, 'chapter', 7, 7, 7, 7], $params);
 
                     return [
                         [
@@ -2279,7 +2234,7 @@ final class FeedServiceTest extends TestCase
                     ];
                 }
 
-                $this->assertSame([58, 'publication', 7, 7], $params);
+                $this->assertSame([58, 'publication', 7, 7, 7, 7], $params);
 
                 return [
                     [
@@ -2365,8 +2320,7 @@ final class FeedServiceTest extends TestCase
                 }
 
                 if (in_array('chapter', $params, true)) {
-                    // A guest binds nothing: the predicate is public-only.
-                    $this->assertSame([60, 'chapter'], $params);
+                    $this->assertSame([60, 'chapter', 0, 0, 0, 0], $params);
 
                     return [
                         [

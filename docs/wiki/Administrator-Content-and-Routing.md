@@ -376,7 +376,11 @@ In the current release:
 - a public dynamic page with a feed type enables feed sitemap entries for that
   type;
 - dynamic feed sitemap entries use the feed update time and do not include the
-  page's change-frequency value; and
+  page's change-frequency value;
+- a feed is listed when a guest may open it: the feed is public, and so is its
+  container unless it has none. Each feed sitemap file covers a fixed slice of
+  30,000 feeds of its type, newest first, counted before that check, so a file
+  can list fewer URLs than that, or none; and
 - `noindex` on a page controls generated sitemap inclusion only where the
   sitemap implementation checks it. It does not by itself guarantee a
   `robots` meta tag or HTTP header.
