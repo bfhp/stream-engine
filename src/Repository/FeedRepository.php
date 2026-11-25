@@ -63,7 +63,7 @@ final class FeedRepository implements FeedRepositoryInterface
         $condition = "f.owner_id = ?\nAND f.type = ?\n";
         $params = [$ownerId, $type];
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
         $sql .= "\nLIMIT 1";
@@ -112,7 +112,7 @@ final class FeedRepository implements FeedRepositoryInterface
         $condition = "f.type = ?\nAND f.slug = ?\n";
         $params = [$type, $slug];
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
         $sql .= "\nLIMIT 1";
@@ -183,7 +183,7 @@ final class FeedRepository implements FeedRepositoryInterface
             $params[] = $type;
         }
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
         $sql .= "\nLIMIT 1";
@@ -239,7 +239,7 @@ final class FeedRepository implements FeedRepositoryInterface
             $params = [$parentId, $type];
         }
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
         $sql .= "\nORDER BY position\nLIMIT $limit";
@@ -268,7 +268,7 @@ final class FeedRepository implements FeedRepositoryInterface
             $params = [$parentId, $type];
         }
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
         $sql .= $positionOrder ? "\nORDER BY f.position ASC, f.id ASC" : "\nORDER BY f.created_at DESC, f.id DESC";
@@ -300,7 +300,7 @@ final class FeedRepository implements FeedRepositoryInterface
             array_push($params, $cursor->createdAt, $cursor->createdAt, $cursor->id);
         }
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
         $sql .= $this->where($condition);
         $sql .= "\nORDER BY f.created_at DESC, f.id DESC\nLIMIT $limit";
 
@@ -414,7 +414,7 @@ final class FeedRepository implements FeedRepositoryInterface
         $condition = "f.type = ?\n";
         $params = [$type];
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
         $sql .= "\nORDER BY f.created_at DESC, f.id DESC\nLIMIT $limit OFFSET $offset";
@@ -441,7 +441,7 @@ final class FeedRepository implements FeedRepositoryInterface
         $condition = "f.type = ?\n";
         $params = [$type];
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
         $sql .= "\nORDER BY f.rating_avg DESC, f.id DESC\nLIMIT $limit";
@@ -481,7 +481,7 @@ final class FeedRepository implements FeedRepositoryInterface
                 $params[] = $type;
             }
 
-            $condition = $this->applyAcl($condition, $params, $user);
+            $condition = $this->applyAcl($condition, $params, $user, $type);
 
             $sql .= $this->where($condition);
 
@@ -606,7 +606,7 @@ final class FeedRepository implements FeedRepositoryInterface
             $params[] = $type;
         }
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
         $sql .= "\nORDER BY f.created_at DESC, f.id DESC\nLIMIT $limit OFFSET $offset";
@@ -633,7 +633,7 @@ final class FeedRepository implements FeedRepositoryInterface
         $condition = "f.type = ?\n";
         $params = [$type];
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
         $whereSql = $this->where($condition);
 
         $countRow = $this->db->fetchOne("SELECT COUNT(*) AS total FROM feeds f".$whereSql, $params);
@@ -665,7 +665,9 @@ final class FeedRepository implements FeedRepositoryInterface
     }
 
     /**
-     * Uses index: feeds_type_created_at_id_index (type, created_at, id) - index only.
+     * Uses index: feeds_type_rating_avg_id_index or feeds_type_created_at_id_index - index only.
+     * Both lead with `type`; MariaDB 12.3 picks the former (64 ms for 309,000
+     * library pages).
      *
      * Every feed of the type, with no ACL: an upper bound for splitting
      * public listings into fixed-size pages (sitemaps). Never show it as a
@@ -746,7 +748,7 @@ final class FeedRepository implements FeedRepositoryInterface
         $condition = "f.type = ?\n";
         $params = [$type];
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
 
@@ -799,7 +801,7 @@ final class FeedRepository implements FeedRepositoryInterface
         if ($ranked) {
             $condition .= "AND f.rating_count > 0\n";
         }
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
         // Use the full average: rating_avg is rounded to two decimal places.
@@ -844,7 +846,7 @@ final class FeedRepository implements FeedRepositoryInterface
             array_push($params, $cursor->createdAt, $cursor->createdAt, $cursor->id);
         }
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
         $sql .= $this->where($condition);
         $sql .= "\nORDER BY f.created_at DESC, f.id DESC\nLIMIT $limit";
 
@@ -868,7 +870,7 @@ final class FeedRepository implements FeedRepositoryInterface
         $condition = "f.owner_id = ?\nAND f.type = ?\n";
         $params = [$ownerId, $type];
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
         $sql .= "\nORDER BY f.created_at DESC, f.id DESC\nLIMIT $limit OFFSET $offset";
@@ -892,7 +894,7 @@ final class FeedRepository implements FeedRepositoryInterface
         $condition = "f.owner_id = ?\nAND f.type = ?\n";
         $params = [$ownerId, $type];
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
 
@@ -921,7 +923,7 @@ final class FeedRepository implements FeedRepositoryInterface
         $condition = "f.owner_id = ?\nAND f.type = ?\n";
         $params = [$ownerId, $type];
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
 
@@ -955,7 +957,7 @@ final class FeedRepository implements FeedRepositoryInterface
         $condition = "f.parent_id = ?\nAND f.type = ?\n";
         $params = [$parentId, $type];
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
 
@@ -984,7 +986,7 @@ final class FeedRepository implements FeedRepositoryInterface
         $condition = "f.parent_id = ?\nAND f.type = ?\n";
         $params = [$parentId, $type];
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
 
@@ -1096,7 +1098,7 @@ final class FeedRepository implements FeedRepositoryInterface
             $params[] = $type;
         }
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
         $sql .= "\nGROUP BY ft.id";
@@ -1138,7 +1140,7 @@ final class FeedRepository implements FeedRepositoryInterface
             $params[] = $type;
         }
 
-        $condition = $this->applyAcl($condition, $params, $user);
+        $condition = $this->applyAcl($condition, $params, $user, $type);
 
         $sql .= $this->where($condition);
         $sql .= "\nGROUP BY ft.id";
@@ -1377,9 +1379,14 @@ final class FeedRepository implements FeedRepositoryInterface
     ";
     }
 
-    private function applyAcl(string $condition, array &$params, User $user): string
+    /**
+     * $type is the feed type the caller's condition already enforces with
+     * `f.type = ?`; never pass one it does not. With it, the predicate holds
+     * only that type's rules (buildAclCondition()).
+     */
+    private function applyAcl(string $condition, array &$params, User $user, ?string $type = null): string
     {
-        [$aclSql, $aclParams] = $this->buildAclCondition($user);
+        [$aclSql, $aclParams] = $this->buildAclCondition($user, $type);
 
         $params = array_merge($params, $aclParams);
 
@@ -1393,168 +1400,221 @@ final class FeedRepository implements FeedRepositoryInterface
     }
 
     /**
-     * Uses index: PRIMARY(id) on feeds for a comment's parent and root post.
-     * Uses index: PRIMARY(container_id, user_id) on memberships.
-     * Uses index: PRIMARY(id) on membership_roles.
-     *
-     * A comment's own visibility is deliberately ignored. Root comments use
-     * their direct parent as the ACL subject; one-level nested replies use the
-     * parent's parent. This matches the two-level discussion model returned by
-     * findCommentsPage()/findCommentsByParents() and makes a later visibility
-     * change or membership revocation take effect without rewriting comments.
-     *
-     * Friendship and community approval are already materialized in the
-     * membership role, so every subject check remains an indexed membership
-     * probe rather than deriving relationships inside the ACL.
-     *
-     * @return array{0:string, 1:list<int>}
+     * Which rules a query pinned to $type needs: 'comment', 'gallery-photo',
+     * 'ordinary', or null to choose by each row's type - for untyped queries
+     * and for any type spelled other than a canonical name: under a case- and
+     * accent-insensitive collation `COMMENT` or `gallery-photo ` would match
+     * those rows too.
      */
-    private function buildAclCondition(User $user): array
+    private function typedAcl(?string $type): ?string
     {
-        // Content moderator override (admin or global moderator)
-        if ($user->canModerateContent()) {
-            return ['1=1', []];
+        if ($type === null || preg_match('/\A[a-z][a-z0-9-]*\z/', $type) !== 1) {
+            return null;
         }
 
-        $feedAcl = $this->aclSubjectCondition(
-            'f.owner_id',
-            'f.visibility',
-            'f.container_id',
-            'm',
-            'mr'
-        );
-        [$commentAcl, $commentParams] = $this->commentAclCondition($user);
-        $galleryAcl = $this->galleryAclCondition($user, 'f.id', 'f.parent_id', 'f.type');
-        $containerAcl = $this->containerAclCondition($user, 'f.id', 'f.container_id');
-
-        $sql = "
-        (
-            (f.type <> 'comment' AND $feedAcl AND $containerAcl AND $galleryAcl)
-            OR (f.type = 'comment' AND $commentAcl)
-        )
-        ";
-
-        return [
-            $sql,
-            [$user->id, $user->id, ...$commentParams],
-        ];
+        return match ($type) {
+            'comment', 'gallery-photo' => $type,
+            default => 'ordinary',
+        };
     }
 
     /**
-     * Uses feeds PRIMARY(id) and memberships PRIMARY(container_id,user_id).
-     * Owning a publication does not grant access to its closed container.
-     * Self-contained feeds use their own ordinary ACL without recursion.
-     */
-    private function containerAclCondition(User $user, string $idExpression, string $containerExpression): string
-    {
-        $containerAcl = str_replace('?', (string) $user->id, $this->aclSubjectCondition(
-            'acl_container.owner_id',
-            'acl_container.visibility',
-            'acl_container.container_id',
-            'acm',
-            'acr',
-        ));
-
-        return "($containerExpression IS NULL OR $containerExpression = $idExpression OR EXISTS (
-            SELECT 1 FROM feeds acl_container
-            WHERE acl_container.id = $containerExpression AND $containerAcl
-        ))";
-    }
-
-    private function galleryAclCondition(User $user, string $idExpression, string $parentExpression, string $typeExpression): string
-    {
-        // Numeric user IDs are trusted integers, as with the LIMIT clauses.
-        $albumAcl = str_replace('?', (string) $user->id, $this->aclSubjectCondition('ga.owner_id', 'ga.visibility', 'ga.container_id', 'gam', 'gar'));
-        $contextAcl = str_replace('?', (string) $user->id, $this->aclSubjectCondition('gc.owner_id', 'gc.visibility', 'gc.container_id', 'gcm', 'gcr'));
-        return "($typeExpression <> 'gallery-photo' OR EXISTS (
-            SELECT 1 FROM feeds ga JOIN feeds gc ON gc.id = ga.parent_id
-            WHERE ga.id = $parentExpression AND ga.type = 'gallery-album' AND gc.type IN ('blog', 'community')
-              AND $albumAcl AND $contextAcl
-              AND EXISTS (SELECT 1 FROM feed_metadata gs WHERE gs.feed_id = $idExpression AND gs.name = 'gallery.state' AND gs.content = 'ready')
-        ))";
-
-
-    }
-
-    /**
-     * ACL for the two-level discussion model: a root comment inherits its
-     * direct publication, and a reply inherits the publication above its
-     * parent comment.
+     * Uses index: PRIMARY(container_id, user_id) on memberships.
+     * Uses index: PRIMARY(id) on membership_roles and on feeds for the container.
+     *
+     * The ACL of an ordinary feed (not a comment or gallery photo), with the
+     * same rules as the ordinary branch of the previous predicate:
+     *
+     * - the feed itself: its owner, anyone if public, otherwise a member of
+     *   its container with role level 1 (members) or 2 (private);
+     * - its container, unless it has none or is its own: the same rule
+     *   applied to the container feed. Ownership of the feed does not open a
+     *   closed container.
+     *
+     * Each lookup is a scalar subquery on a primary key - at most one row,
+     * so it equals the EXISTS it replaces, and the optimizer has no plan for
+     * it but that lookup. tests/Repository/FeedAclEquivalenceTest.php checks
+     * it row for row against the full predicate.
      *
      * @return array{0:string, 1:list<int>}
      */
-    private function commentAclCondition(User $user): array
+    private function ordinaryAclCondition(User $user): array
     {
-        $subject = static fn (string $column): string =>
-            "CASE WHEN acl_parent.type = 'comment' THEN acl_root.$column ELSE acl_parent.$column END";
-        $subjectAcl = $this->aclSubjectCondition(
-            $subject('owner_id'),
-            $subject('visibility'),
-            $subject('container_id'),
-            'cm',
-            'cmr'
-        );
-
-        $galleryAcl = $this->galleryAclCondition($user, $subject('id'), $subject('parent_id'), $subject('type'));
-        $containerAcl = $this->containerAclCondition($user, $subject('id'), $subject('container_id'));
-
+        // Numeric user ids are trusted integers, as in LIMIT clauses.
         return [
-            "
-            EXISTS (
-                SELECT 1
-                FROM feeds acl_parent
-                LEFT JOIN feeds acl_root
-                  ON acl_parent.type = 'comment'
-                 AND acl_root.id = acl_parent.parent_id
-                WHERE acl_parent.id = f.parent_id
-                  AND (acl_parent.type <> 'comment' OR acl_root.type <> 'comment')
-                  AND $subjectAcl AND $containerAcl AND $galleryAcl
-            )
-            ",
+            $this->ownMembershipRule('f', '?').'
+            AND '.$this->containerRule('f', (string) $user->id),
             [$user->id, $user->id],
         ];
     }
 
     /**
-     * Builds the ordinary owner/public/container-membership rule for one ACL
-     * subject. Every expression and alias is supplied only by
-     * buildAclCondition(); none contains request data.
+     * Uses index: PRIMARY(container_id, user_id) on memberships.
+     * Uses index: PRIMARY(id) on membership_roles, and on feeds for the
+     * container, the album and its context.
+     * Uses index: PRIMARY(feed_id, name) on feed_metadata.
+     *
+     * The ACL of a gallery photo: the ordinary rules for the photo itself and its container,
+     * and the photo rule (album, context, processing state).
+     *
+     * @return array{0:string, 1:list<int>}
      */
-    private function aclSubjectCondition(
-        string $ownerExpression,
-        string $visibilityExpression,
-        string $containerExpression,
-        string $membershipAlias,
-        string $roleAlias,
-    ): string {
-        return "
-        (
-            $ownerExpression = ?
-            OR $visibilityExpression = 'public'
-            OR (
-                $containerExpression IS NOT NULL
-                AND EXISTS (
-                    SELECT 1
-                    FROM memberships $membershipAlias
-                    JOIN membership_roles $roleAlias
-                      ON $roleAlias.id = $membershipAlias.membership_role_id
-                    WHERE $membershipAlias.user_id = ?
-                      AND $membershipAlias.container_id = $containerExpression
-                      AND (
-                            (
-                                $visibilityExpression = 'private'
-                                AND $roleAlias.role_level >= 2
-                            )
-                            OR (
-                                $visibilityExpression = 'members'
-                                AND $roleAlias.role_level >= 1
-                            )
-                          )
-                )
-            )
-        )
-        ";
+    private function photoAclCondition(User $user): array
+    {
+        [$sql, $params] = $this->ordinaryAclCondition($user);
+
+        return [$sql.'
+            AND '.$this->photoRule('f', (string) $user->id), $params];
     }
+
+    /**
+     * Uses index: PRIMARY(id) on feeds for the container.
+     *
+     * The container of feed $alias, unless it has none or is its own: the
+     * owner/public/member rule applied to the container feed.
+     */
+    private function containerRule(string $alias, string $user): string
+    {
+        $container = $this->ownMembershipRule('c', $user);
+
+        return "(
+                $alias.container_id IS NULL
+                OR $alias.container_id = $alias.id
+                OR COALESCE((SELECT CASE WHEN $container THEN 1 ELSE 0 END FROM feeds c WHERE c.id = $alias.container_id), 0) = 1
+            )";
+    }
+
+    /**
+     * Uses index: PRIMARY(id) on feeds for the publication and its parent.
+     *
+     * The ACL of a comment: a comment's own visibility is ignored, it inherits its publication's.
+     * A root comment's publication is its parent; a reply's is its parent's
+     * parent, which must not be a comment itself (replies to replies are
+     * visible to moderators only). The publication must pass the
+     * owner/public/member rule, its container rule and, for a gallery photo,
+     * the photo rule. One scalar lookup: the parent and the publication are
+     * each at most one row by primary key.
+     */
+    private function commentPublicationRule(string $user): string
+    {
+        $publication = $this->ownMembershipRule('s', $user).'
+                    AND '.$this->containerRule('s', $user).'
+                    AND (s.type <> \'gallery-photo\' OR '.$this->photoRule('s', $user).')';
+
+        return "COALESCE((
+                SELECT CASE WHEN $publication THEN 1 ELSE 0 END
+                FROM feeds p
+                JOIN feeds s ON s.id = CASE WHEN p.type = 'comment' THEN p.parent_id ELSE p.id END
+                WHERE p.id = f.parent_id AND s.type <> 'comment'
+            ), 0) = 1";
+    }
+
+    /**
+     * Uses index: PRIMARY(id) on feeds for the album and its context.
+     * Uses index: PRIMARY(feed_id, name) on feed_metadata.
+     *
+     * What a gallery photo $alias needs beyond its own rules: its parent is an album in a blog or community,
+     * both pass the owner/public/member rule, and the photo has finished
+     * processing (gallery.state = ready).
+     */
+    private function photoRule(string $alias, string $user): string
+    {
+        $album = $this->ownMembershipRule('ga', $user);
+        $context = $this->ownMembershipRule('gc', $user);
+
+        return "(
+                COALESCE((
+                    SELECT CASE WHEN $album AND $context THEN 1 ELSE 0 END
+                    FROM feeds ga JOIN feeds gc ON gc.id = ga.parent_id
+                    WHERE ga.id = $alias.parent_id AND ga.type = 'gallery-album' AND gc.type IN ('blog', 'community')
+                ), 0) = 1
+                AND (SELECT gs.content FROM feed_metadata gs WHERE gs.feed_id = $alias.id AND gs.name = 'gallery.state') = 'ready'
+            )";
+    }
+
+    /**
+     * Owner, public, or a member of the feed's container with the role level
+     * its visibility needs: 1 for members, 2 for private. memberships has one
+     * row per (container_id, user_id); no row, or a lower level, fails.
+     */
+    private function ownMembershipRule(string $alias, string $user): string
+    {
+        return "(
+                $alias.owner_id = $user
+                OR $alias.visibility = 'public'
+                OR COALESCE((
+                    SELECT r.role_level FROM memberships m
+                    JOIN membership_roles r ON r.id = m.membership_role_id
+                    WHERE m.container_id = $alias.container_id AND m.user_id = $user
+                ), -1) >= CASE $alias.visibility WHEN 'private' THEN 2 ELSE 1 END
+            )";
+    }
+
+    /**
+     * Uses index: PRIMARY(container_id, user_id) on memberships.
+     * Uses index: PRIMARY(id) on membership_roles, and on feeds for a
+     * container, a comment's parent and publication, an album and its context.
+     * Uses index: PRIMARY(feed_id, name) on feed_metadata.
+     *
+     * The row-level ACL: which feed rows $user may see. Moderators (admins
+     * and global moderators) see everything. For everyone else:
+     *
+     * - an ordinary feed passes the owner/public/member rule and so does its
+     *   container (ordinaryAclCondition());
+     * - a gallery photo also needs its album and context and to be processed
+     *   (photoAclCondition());
+     * - a comment ignores its own visibility and inherits its publication's
+     *   (commentPublicationRule()).
+     *
+     * A query pinned to one canonical type gets only that type's rules; an
+     * untyped one chooses by each row's type. Every lookup is a scalar
+     * subquery on a primary key, so each has a single plan. Friendship and
+     * community approval are already materialized in the membership role.
+     *
+     * tests/Repository/FeedAclEquivalenceTest.php compares every read with
+     * the predicate this replaced (tests/Support/LegacyFeedAcl.php).
+     *
+     * @return array{0:string, 1:list<int>}
+     */
+    private function buildAclCondition(User $user, ?string $type = null): array
+    {
+        if ($user->canModerateContent()) {
+            return ['1=1', []];
+        }
+
+        return match ($this->typedAcl($type)) {
+            'ordinary' => $this->ordinaryAclCondition($user),
+            'comment' => [$this->commentPublicationRule((string) $user->id), []],
+            'gallery-photo' => $this->photoAclCondition($user),
+            default => $this->untypedAclCondition($user),
+        };
+    }
+
+    /**
+     * Every rule, chosen by each row's type: comments by their publication,
+     * everything else by the ordinary rules, gallery photos also by the
+     * photo rule.
+     *
+     * @return array{0:string, 1:list<int>}
+     */
+    private function untypedAclCondition(User $user): array
+    {
+        $id = (string) $user->id;
+
+        return [
+            "(
+            (f.type = 'comment' AND ".$this->commentPublicationRule($id).")
+            OR (
+                f.type <> 'comment'
+                AND ".$this->ownMembershipRule('f', '?').'
+                AND '.$this->containerRule('f', $id)."
+                AND (f.type <> 'gallery-photo' OR ".$this->photoRule('f', $id).')
+            )
+        )',
+            [$user->id, $user->id],
+        ];
+    }
+
 
     private function where(string $condition): string
     {

@@ -24,7 +24,7 @@ docker compose version
 
 For a host-based workflow, install PHP 8.3 with the extensions declared in
 [`composer.json`](https://github.com/bfhp/stream-engine/blob/main/composer.json),
-Composer 2, MariaDB 12 (or MySQL 8.4), Memcached, Node.js 20.19 or newer within the Node 20
+Composer 2, MariaDB 11.8 or 12 (or MySQL 8.4), Memcached, Node.js 20.19 or newer within the Node 20
 release line, and npm. The Node version matches continuous integration; later
 supported Node release lines may also work, but must pass the complete
 frontend checks.

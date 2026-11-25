@@ -513,7 +513,7 @@ final class FeedServiceTest extends TestCase
             ->with(
                 $this->callback(static fn (string $sql): bool => str_contains($sql, 'f.title LIKE ?')
                     && str_contains($sql, 'AND f.type = ?')),
-                ['%мастер%', 'publication', 7, 7, 7, 7]
+                ['%мастер%', 'publication', 7, 7]
             )
             ->willReturn([]);
 
@@ -546,7 +546,7 @@ final class FeedServiceTest extends TestCase
                 $this->callback(static fn (string $sql): bool => str_contains($sql, 'f.type = ?')
                     && str_contains($sql, 'ORDER BY f.rating_avg DESC, f.id DESC')
                     && str_contains($sql, 'LIMIT 50')),
-                ['publication', 7, 7, 7, 7]
+                ['publication', 7, 7]
             )
             ->willReturn([
                 [
@@ -767,7 +767,7 @@ final class FeedServiceTest extends TestCase
                 $this->callback(static fn (string $sql): bool => str_contains($sql, 'f.parent_id = ?')
                     && str_contains($sql, 'f.slug = ?')
                     && str_contains($sql, 'f.type = ?')),
-                [58, '2', 'chapter', 7, 7, 7, 7]
+                [58, '2', 'chapter', 7, 7]
             )
             ->willReturn([
                 'id' => 60,
@@ -830,7 +830,7 @@ final class FeedServiceTest extends TestCase
                 $this->callback(static fn (string $sql): bool => str_contains($sql, 'f.type = ?')
                     && str_contains($sql, 'f.slug = ?')
                     && ! str_contains($sql, 'f.parent_id = ?')),
-                ['forum', 'practice', 7, 7, 7, 7]
+                ['forum', 'practice', 7, 7]
             )
             ->willReturn([
                 'id' => 60,
@@ -895,7 +895,7 @@ final class FeedServiceTest extends TestCase
                     && str_contains($sql, 'ft.vocabulary = ?')
                     && str_contains($sql, 'ft.slug = ?')
                     && str_contains($sql, 'f.type = ?')),
-                ['author', 'kandyba_viktor_mihajilovich', 'publication', 7, 7, 7, 7]
+                ['author', 'kandyba_viktor_mihajilovich', 'publication', 7, 7]
             )
             ->willReturn([
                 [
@@ -1847,7 +1847,7 @@ final class FeedServiceTest extends TestCase
             ->with(
                 $this->callback(static fn (string $sql): bool => str_contains($sql, 'f.id IN (?, ?)')
                     && str_contains($sql, 'f.type = ?')),
-                [60, 58, 'publication', 7, 7, 7, 7]
+                [60, 58, 'publication', 7, 7]
             )
             ->willReturn([
                 [
@@ -2209,7 +2209,7 @@ final class FeedServiceTest extends TestCase
                 }
 
                 if (in_array('chapter', $params, true)) {
-                    $this->assertSame([60, 'chapter', 7, 7, 7, 7], $params);
+                    $this->assertSame([60, 'chapter', 7, 7], $params);
 
                     return [
                         [
@@ -2234,7 +2234,7 @@ final class FeedServiceTest extends TestCase
                     ];
                 }
 
-                $this->assertSame([58, 'publication', 7, 7, 7, 7], $params);
+                $this->assertSame([58, 'publication', 7, 7], $params);
 
                 return [
                     [
@@ -2320,7 +2320,7 @@ final class FeedServiceTest extends TestCase
                 }
 
                 if (in_array('chapter', $params, true)) {
-                    $this->assertSame([60, 'chapter', 0, 0, 0, 0], $params);
+                    $this->assertSame([60, 'chapter', 0, 0], $params);
 
                     return [
                         [

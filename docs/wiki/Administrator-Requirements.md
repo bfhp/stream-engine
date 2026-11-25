@@ -12,7 +12,7 @@ development-oriented Docker Compose environment included in the repository.
 | PHP | PHP 8.3 or newer, using PHP-FPM or another supported web-server integration. The command-line PHP used for installation, migrations, and scheduled tasks must load the same required extensions. |
 | PHP extensions | `curl`, `dom`, `fileinfo`, `gd`, `intl`, `libxml`, `mbstring`, `memcached`, `pdo`, `pdo_mysql`, `simplexml`, `xmlreader`, and `zip`. |
 | Dependency manager | Composer 2. A release archive may already contain `vendor/`, but Composer is required by the installation and migration commands documented here. |
-| Database | MariaDB 10.10 or newer, or MySQL 8.4 LTS or newer, with InnoDB. Continuous integration tests MariaDB 12 and MySQL 8.4; the included development environment uses MariaDB 12. See [Database server](#database-server) for the differences between the two. |
+| Database | MariaDB 10.10 or newer, or MySQL 8.4 LTS or newer, with InnoDB. Continuous integration tests MariaDB 11.8 LTS, MariaDB 12 and MySQL 8.4; the included development environment uses MariaDB 11.8, the version of current LTS distributions such as Ubuntu 26.04. See [Database server](#database-server) for the differences between the two. |
 | Cache | A reachable Memcached service. Use a unique cache prefix when several sites share one service. |
 | Web server | Nginx is the documented production example. The public document root must be the application's `public/` directory, never the application root. Equivalent servers must provide front-controller routing to `public/index.php`. |
 | Scheduler | A mechanism that runs `php bin/cron.php` once per minute in production, such as cron, a systemd timer, or a container scheduler. |

@@ -27,6 +27,18 @@ security update of 0.8.2-0.8.4 are kept.
   sitemap generation with `FeedService::eachFeedUrlBatchByType()` and the
   `$withContent` argument of `FeedRepository::findByTypeAfter()` (0.8.4).
   `SitemapController` no longer takes a `CacheInterface`.
+- The row-level feed ACL is rebuilt from per-type rules, each lookup a
+  scalar subquery on a primary key, with no `EXISTS`. Queries pinned to one
+  feed type apply only that type's rules: `countByType('lib-page')` for a
+  member is 24 lines of SQL instead of 238, comments 53, gallery photos 48;
+  untyped queries choose the rules by each row's type (127 lines). A comment
+  joins its publication once instead of repeating every rule through
+  `CASE`. The optimizer executed the same `EXISTS` as a unique lookup, a full
+  index scan or a table-wide materialization depending on statistics. The
+  rules are unchanged: `tests/Repository/FeedAclEquivalenceTest.php` compares
+  every ACL-filtered read with the previous predicate
+  (`tests/Support/LegacyFeedAcl.php`) for every user and type of a fixture
+  covering all of them.
 
 ### Kept from 0.8.2-0.8.4
 

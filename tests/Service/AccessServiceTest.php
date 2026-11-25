@@ -385,7 +385,7 @@ final class AccessServiceTest extends TestCase
         $feedDb
             ->expects($this->once())
             ->method('fetchOne')
-            ->with($this->stringContains('f.id = ?'), [42, 7, 7, 7, 7])
+            ->with($this->stringContains('f.id = ?'), [42, 7, 7])
             ->willReturn([
                 'id' => 42,
                 'parent_id' => null,
@@ -427,7 +427,7 @@ final class AccessServiceTest extends TestCase
         $feedDb
             ->expects($this->once())
             ->method('fetchOne')
-            ->with($this->stringContains('f.id = ?'), [42, 7, 7, 7, 7])
+            ->with($this->stringContains('f.id = ?'), [42, 7, 7])
             ->willReturn([
                 'id' => 42,
                 'parent_id' => null,
@@ -471,7 +471,7 @@ final class AccessServiceTest extends TestCase
         $feedDb
             ->expects($this->once())
             ->method('fetchOne')
-            ->with($this->stringContains('f.id = ?'), [42, 7, 7, 7, 7])
+            ->with($this->stringContains('f.id = ?'), [42, 7, 7])
             ->willReturn([
                 'id' => 42,
                 'parent_id' => null,
@@ -509,7 +509,7 @@ final class AccessServiceTest extends TestCase
         $feedDb
             ->expects($this->exactly(2))
             ->method('fetchOne')
-            ->with($this->stringContains('f.id = ?'), [42, 9, 9, 9, 9])
+            ->with($this->stringContains('f.id = ?'), [42, 9, 9])
             ->willReturn([
                 'id' => 42,
                 'parent_id' => null,

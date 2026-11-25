@@ -40,6 +40,48 @@ without ACL:
 Sitemaps no longer use this path (`findPublicByTypePage()`); member and guest
 listings, counts and deep `OFFSET` pages still do.
 
+Where the predicate comes from: one predicate serves every type and carries
+every rule. For a guest or member `countByType('lib-page')` it is 238 lines
+with 15 `EXISTS`: the owner/public/member rule (30 lines), the closed
+container rule (0.7.3, 28), the gallery photo rule (0.7.0, 57), and the
+comment rule (0.6.1, 35) that repeats the container (28) and gallery (60)
+rules for the comment's publication.
+
+Proposed approach A (measured on MariaDB 11.8.9 with production data, not
+implemented yet):
+
+- Build the predicate from the rules of the queried type only, and write the
+  owner/public/member check as one comparison of the membership role level
+  (`COALESCE((SELECT role_level ... WHERE container_id = ? AND user_id = ?),
+  0) >= CASE visibility WHEN 'private' THEN 2 ELSE 1 END`). Every subquery is
+  a scalar lookup on a primary key, so the optimizer has no other plan; the
+  same `EXISTS` was executed as `unique_subquery`, a full index scan or
+  `MATERIALIZED ... ALL` depending on statistics. A typed query becomes 10-25
+  lines; comments join their publication once instead of repeating rules
+  through `CASE`.
+- Extend `feeds_type_created_at_id_index` to `(type, created_at DESC, id DESC,
+  visibility, container_id, owner_id, parent_id)` (online DDL, same name):
+  typed counts become index-only (`lib-page`: 4.3 s -> 55-68 ms, `lib`:
+  350 ms -> 9 ms).
+- Deferred join in `findByType()` and `findByTypePage()`: page ids by the ACL
+  on that index, full rows for the page only (`OFFSET 300000`: 18.5 s ->
+  64 ms); `findByTypePage()` counts its total separately instead of
+  `COUNT(*) OVER ()` (30-50 s for `lib-page`).
+- The current predicate stays in the tests as the oracle
+  (`tests/Support/LegacyFeedAcl.php`, a verbatim copy):
+  `tests/Repository/FeedAclEquivalenceTest.php` compares every ACL-filtered
+  read with it for 8 users and every type of `tests/Support/FeedAclFixture.php`
+  (type x visibility x kind of container x owner; comments, replies and
+  replies to replies; photos in every state and context). It fails for a
+  dropped container rule, an ignored photo state, replies checked against
+  their direct parent, a wrong role level and a narrowed moderator override.
+  Rewrite one type family at a time: ordinary feeds (done:
+  `ordinaryAclCondition()`, 24 lines for a member's `countByType`), comments
+  (done: `commentPublicationRule()`, 53 lines), gallery photos (done:
+  `photoAclCondition()`), untyped queries (done: `untypedAclCondition()`,
+  127 lines; the previous predicate is gone from `FeedRepository`). Left:
+  the index and the deferred join, measured on the stand.
+
 Done when each ACL check is a lookup on the index it declares - for example
 correlated scalar subqueries on PRIMARY instead of `EXISTS`, and an index
 covering the ACL columns where a type is not selective - and `ANALYZE` on

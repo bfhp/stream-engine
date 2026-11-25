@@ -505,7 +505,7 @@ the behavior itself is intentionally changing.
 | Job | Environment and checks |
 | --- | --- |
 | Documentation | PHP 8.3; `php bin/check-wiki-docs.php`. |
-| PHP | Two jobs: PHP 8.3 with MariaDB 12, and PHP 8.3 with MySQL 8.4; Composer install, Pint, PHPUnit with `INSTALL_TEST_DB_*`, and the CSRF audit. |
+| PHP | Three jobs: PHP 8.3 with MariaDB 11.8, with MariaDB 12, and with MySQL 8.4; Composer install, Pint, PHPUnit with `INSTALL_TEST_DB_*`, and the CSRF audit. |
 | Frontend | PHP 8.3 and Node 20.19; Composer install, `npm ci --no-audit`, Vitest, TypeScript, and the production Vite build. |
 
 `.github/workflows/dependency-audit.yml` runs npm auditing independently on
@@ -518,7 +518,7 @@ advisories and their assessed exposure are recorded in `SECURITY.md`.
 Composer auditing remains part of the PHP CI jobs.
 
 `.github/workflows/accessibility.yml` runs the page scan separately, because
-it is the slowest check: PHP 8.3, Node 20.19, MariaDB 12, and memcached;
+it is the slowest check: PHP 8.3, Node 20.19, MariaDB 11.8, and memcached;
 production build, `bin/install.php` into a clean database, `bin/seed-demo.php`,
 PHP's built-in server with `tests/a11y/router.php`, and the Playwright/axe scan
 for the `default` and `bootstrap` themes. Pull requests scan English only;
@@ -538,7 +538,7 @@ loosening an assertion, or changing generated assets without their source.
 Differences to consider when a local run is green:
 
 - CI uses PHP 8.3 even if the workstation runs a newer compatible version;
-- CI supplies clean MariaDB 12 and MySQL 8.4 services and executes integration
+- CI supplies clean MariaDB 11.8, MariaDB 12 and MySQL 8.4 services and executes integration
   tests that a host run may skip;
 - CI starts from a clean checkout without ignored local files;
 - frontend dependencies come from `package-lock.json`; and

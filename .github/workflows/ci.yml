@@ -39,6 +39,9 @@ jobs:
       fail-fast: false
       matrix:
         database:
+          - name: MariaDB 11.8
+            image: mariadb:11.8
+            health-cmd: healthcheck.sh --connect --innodb_initialized
           - name: MariaDB 12
             image: mariadb:12
             health-cmd: healthcheck.sh --connect --innodb_initialized

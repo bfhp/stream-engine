@@ -71,22 +71,25 @@ final class FeedRepositoryTest extends TestCase
     {
         [$sql, $params] = $this->aclCondition($this->user(7));
 
-        // Ordinary feeds: own rows, public rows, or rows in a container they
-        // belong to. Comments instead repeat that policy for their root post.
+        // Untyped: the rules are chosen by each row's type. Comments follow
+        // their publication, joined once; everything else its own row and
+        // its container; photos also their album and context.
+        $this->assertStringContainsString("f.type = 'comment' AND", $sql);
         $this->assertStringContainsString("f.type <> 'comment'", $sql);
         $this->assertStringContainsString('f.owner_id = ?', $sql);
         $this->assertStringContainsString("f.visibility = 'public'", $sql);
-        $this->assertStringContainsString("f.type = 'comment'", $sql);
-        $this->assertStringContainsString('FROM feeds acl_parent', $sql);
-        $this->assertStringContainsString('LEFT JOIN feeds acl_root', $sql);
-        $this->assertStringContainsString("CASE WHEN acl_parent.type = 'comment' THEN acl_root.owner_id ELSE acl_parent.owner_id END = ?", $sql);
+        $this->assertStringContainsString('JOIN feeds s ON s.id = CASE WHEN p.type = \'comment\' THEN p.parent_id ELSE p.id END', $sql);
+        $this->assertStringContainsString('FROM feeds c WHERE c.id = f.container_id', $sql);
         $this->assertStringContainsString('FROM memberships m', $sql);
-        $this->assertStringContainsString('m.user_id = ?', $sql);
-        $this->assertStringContainsString('mr.role_level >= 1', $sql);
+        $this->assertStringContainsString('WHERE m.container_id = f.container_id AND m.user_id = ?', $sql);
+        $this->assertStringContainsString("CASE f.visibility WHEN 'private' THEN 2 ELSE 1 END", $sql);
+        $this->assertStringContainsString("f.type <> 'gallery-photo' OR", $sql);
+        // Every lookup is a scalar subquery on a primary key.
+        $this->assertStringNotContainsString('EXISTS', $sql);
 
-        // Two placeholders for the feed and two for the resolved comment
-        // subject, in SQL order.
-        $this->assertSame([7, 7, 7, 7], $params);
+        // The feed's owner and membership placeholders; the rest of the
+        // predicate inlines the integer id.
+        $this->assertSame([7, 7], $params);
     }
 
     /**
@@ -101,7 +104,7 @@ final class FeedRepositoryTest extends TestCase
     {
         [, $params] = $this->aclCondition($this->user(0, role: AccessService::ROLE_USER));
 
-        $this->assertSame([0, 0, 0, 0], $params);
+        $this->assertSame([0, 0], $params);
     }
 
     public function testGlobalModeratorBypassesContentVisibility(): void
@@ -115,7 +118,7 @@ final class FeedRepositoryTest extends TestCase
     {
         [$sql, $params] = $this->aclCondition($this->user(0, AccessService::ROLE_MODERATOR));
         $this->assertNotSame('1=1', $sql);
-        $this->assertSame([0, 0, 0, 0], $params);
+        $this->assertSame([0, 0], $params);
     }
 
     /**
@@ -370,7 +373,7 @@ final class FeedRepositoryTest extends TestCase
      * @param list<mixed> $ownParams what the method binds before the ACL
      */
     #[DataProvider('aclOrderingProvider')]
-    public function testAclParamsAreAppendedAfterEachMethodsOwn(callable $call, array $ownParams): void
+    public function testAclParamsAreAppendedAfterEachMethodsOwn(callable $call, array $ownParams, array $aclParams = [7, 7]): void
     {
         $captured = [];
         $db = $this->createStub(PdoDatabase::class);
@@ -391,7 +394,7 @@ final class FeedRepositoryTest extends TestCase
 
         $call(new FeedRepository($db), $this->user(7));
 
-        $this->assertSame([...$ownParams, 7, 7, 7, 7], $captured);
+        $this->assertSame([...$ownParams, ...$aclParams], $captured);
     }
 
     /** @return array<string, array{callable, list<mixed>}> */
@@ -639,7 +642,7 @@ final class FeedRepositoryTest extends TestCase
                     && str_contains($sql, 'JOIN feed_terms')
                     && str_contains($sql, 'f.created_at < ?')
                     && ! str_contains($sql, 'OFFSET')),
-                ['blog-post', 'php', 1_700_000_000, 1_700_000_000, 42, 7, 7, 7, 7]
+                ['blog-post', 'php', 1_700_000_000, 1_700_000_000, 42, 7, 7]
             )
             ->willReturn([]);
 
@@ -679,7 +682,7 @@ final class FeedRepositoryTest extends TestCase
 
         // Ranking and eligibility parameters, then ACL, then the complete cursor.
         $this->assertSame(
-            ['книга', 'книга', 'книга', 'книга', 'книга', 'книга', 7, 7, 7, 7, 1, '2.500000', 58],
+            ['книга', 'книга', 'книга', 'книга', 'книга', 'книга', 7, 7, 1, '2.500000', 58],
             $captured
         );
     }

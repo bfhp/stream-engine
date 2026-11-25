@@ -113,7 +113,7 @@ The local PHPUnit run skips disposable-database integration tests unless the
 `INSTALL_TEST_DB_*` variables are supplied. Use the Docker command in
 [Testing](https://github.com/bfhp/stream-engine/wiki/Developer-Testing) when the
 change depends on database schema, SQL behavior, constraints, or installation.
-CI runs those tests on both MariaDB 12 and MySQL 8.4.
+CI runs those tests on MariaDB 11.8, MariaDB 12 and MySQL 8.4.
 
 If the baseline already fails, record the exact command and failure before
 working. Do not hide an unrelated failure by weakening a test or broadening the
@@ -300,7 +300,7 @@ Every push and pull request runs these GitHub Actions jobs:
 | Job | Current checks |
 | --- | --- |
 | Documentation | `php bin/check-wiki-docs.php` |
-| PHP | PHP 8.3, required extensions, MariaDB 12 and MySQL 8.4 (one job each), locked Composer install, `composer audit`, Pint, the complete PHPUnit suite with installation integration tests, and the CSRF audit |
+| PHP | PHP 8.3, required extensions, MariaDB 11.8, MariaDB 12 and MySQL 8.4 (one job each), locked Composer install, `composer audit`, Pint, the complete PHPUnit suite with installation integration tests, and the CSRF audit |
 | Frontend | PHP dependencies, Node.js 20.19, `npm ci --no-audit`, Vitest, strict TypeScript, and the Vite production build |
 | Dependency audit | Separate workflow: Node.js 20.19, `npm ci --ignore-scripts --no-audit`, and `npm audit --audit-level=high`, including development dependencies; runs on pushes, pull requests, weekly, and on demand |
 | Dependency review | Pull requests only: rejects new or upgraded dependencies with a known high or critical vulnerability or a licence outside the allowed list in `.github/workflows/ci.yml` |
