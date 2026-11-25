@@ -124,12 +124,29 @@ final class GuestFeedReadStoreTest extends TestCase
         $store->markAsRead(9999);
 
         $this->assertNull($store->findReadAt(1), 'oldest entry should have been pruned');
-        $this->assertNotNull($store->findReadAt(2), 'second-oldest entry should survive');
-        $this->assertNotNull($store->findReadAt(self::MAX_ENTRIES));
+        $this->assertNotNull($store->findReadAt(self::MAX_ENTRIES), 'newest old entry should survive');
         $this->assertNotNull($store->findReadAt(9999), 'newly read parent should be present');
 
-        $remaining = $store->findReadAtForFeeds(array_merge(range(1, self::MAX_ENTRIES), [9999]));
-        $this->assertCount(self::MAX_ENTRIES, $remaining);
+        // The survivors are a contiguous run of the most recent reads.
+        $remaining = array_keys($store->findReadAtForFeeds(array_merge(range(1, self::MAX_ENTRIES), [9999])));
+        sort($remaining);
+        $oldestKept = $remaining[0];
+        $this->assertSame(array_merge(range($oldestKept, self::MAX_ENTRIES), [9999]), $remaining);
+    }
+
+    public function testCookieStaysUnderTheBrowserLimitOnceUrlEncoded(): void
+    {
+        // setcookie() urlencodes the JSON; 100 entries used to come to ~7 KB,
+        // which browsers drop and nginx's FastCGI buffer rejected (502).
+        $store = new GuestFeedReadStore();
+
+        for ($parentId = 100000; $parentId < 100000 + self::MAX_ENTRIES; $parentId++) {
+            $store->markAsRead($parentId, 12345);
+        }
+
+        $this->assertLessThanOrEqual(3500, strlen(urlencode($_COOKIE['feed_reads'])));
+        $this->assertNotNull($store->findReadAt(100000 + self::MAX_ENTRIES - 1));
+        $this->assertGreaterThan(30, count($store->all()));
     }
 
     public function testAllReturnsEmptyArrayWhenNoCookieSet(): void

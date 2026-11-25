@@ -10,9 +10,10 @@ namespace StreamEngine\Core;
  * repository, just persisted client-side as a single cookie instead of in
  * feed_reads.
  *
- * The cookie is capped at MAX_ENTRIES: once a guest has read more parents
- * (books, forum topics, ...) than that, the oldest reads are dropped to keep
- * the cookie well under browsers' ~4KB per-cookie limit. That means a guest's
+ * The cookie is capped at MAX_ENTRIES and at MAX_COOKIE_BYTES (URL-encoded):
+ * once a guest has read more parents (books, forum topics, ...) than fit,
+ * the oldest reads are dropped to keep the cookie under browsers' 4 KB
+ * per-cookie limit (in practice ~50 entries). That means a guest's
  * read history is best-effort and can silently roll off - acceptable for
  * "have you seen this" badges, not a fit for anything that needs a durable
  * record. Since entries are now one per parent rather than one per page,
@@ -26,6 +27,14 @@ final class GuestFeedReadStore
     private const int COOKIE_TTL = 60 * 60 * 24 * 365; // 1 year
 
     private const int MAX_ENTRIES = 100;
+
+    /**
+     * Upper bound for the URL-encoded cookie value. setcookie() urlencodes
+     * the JSON, which turns every `"`, `:`, `{`, `}` and `,` into three
+     * bytes: 100 entries came to ~7 KB, which browsers reject (4096 bytes
+     * per cookie) and which overflowed nginx's FastCGI header buffer (502).
+     */
+    private const int MAX_COOKIE_BYTES = 3500;
 
     /**
      * Records that the guest has read a parent up to $position, stamping the
@@ -151,21 +160,26 @@ final class GuestFeedReadStore
     }
 
     /**
-     * Keeps only the MAX_ENTRIES most recently read parents, dropping the
-     * oldest ones once a guest exceeds that count.
+     * Keeps only the most recently read parents: at most MAX_ENTRIES, and
+     * no more than fit in MAX_COOKIE_BYTES once URL-encoded, dropping the
+     * oldest ones first.
      *
      * @param array<int, array{position: ?int, readAt: int}> $map
      * @return array<int, array{position: ?int, readAt: int}>
      */
     private function prune(array $map): array
     {
-        if (count($map) <= self::MAX_ENTRIES) {
-            return $map;
-        }
-
         uasort($map, static fn (array $a, array $b): int => $a['readAt'] <=> $b['readAt']); // Oldest first, keys preserved
 
-        return array_slice($map, count($map) - self::MAX_ENTRIES, null, true);
+        if (count($map) > self::MAX_ENTRIES) {
+            $map = array_slice($map, count($map) - self::MAX_ENTRIES, null, true);
+        }
+
+        while (count($map) > 1 && strlen(urlencode((string) json_encode($map, JSON_FORCE_OBJECT))) > self::MAX_COOKIE_BYTES) {
+            $map = array_slice($map, 1, null, true);
+        }
+
+        return $map;
     }
 
     /**

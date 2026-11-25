@@ -17,6 +17,8 @@ final class GuestFeedViewStore
     private const string COOKIE_NAME = 'feed_views';
     private const int COOKIE_TTL = 60 * 60 * 24 * 30;
     private const int MAX_ENTRIES = 100;
+    /** URL-encoded value bound; see GuestFeedReadStore::MAX_COOKIE_BYTES. */
+    private const int MAX_COOKIE_BYTES = 3500;
 
     /** Claims a view when this guest has not viewed the feed within $window. */
     public function claim(int $feedId, int $window, ?int $now = null): bool
@@ -64,13 +66,17 @@ final class GuestFeedViewStore
      */
     private function prune(array $views): array
     {
-        if (count($views) <= self::MAX_ENTRIES) {
-            return $views;
+        asort($views, SORT_NUMERIC); // Oldest first, keys preserved
+
+        if (count($views) > self::MAX_ENTRIES) {
+            $views = array_slice($views, -self::MAX_ENTRIES, null, true);
         }
 
-        asort($views, SORT_NUMERIC);
+        while (count($views) > 1 && strlen(urlencode((string) json_encode($views, JSON_FORCE_OBJECT))) > self::MAX_COOKIE_BYTES) {
+            $views = array_slice($views, 1, null, true);
+        }
 
-        return array_slice($views, -self::MAX_ENTRIES, null, true);
+        return $views;
     }
 
     /** @param array<int, int> $views */

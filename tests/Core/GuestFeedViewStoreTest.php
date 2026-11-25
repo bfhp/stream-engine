@@ -37,4 +37,16 @@ final class GuestFeedViewStoreTest extends TestCase
 
         self::assertTrue((new GuestFeedViewStore())->claim(58, 86400, 1_700_000_000));
     }
+
+    public function testCookieStaysUnderTheBrowserLimitOnceUrlEncoded(): void
+    {
+        $store = new GuestFeedViewStore();
+
+        for ($feedId = 1_000_000_000; $feedId < 1_000_000_100; $feedId++) {
+            $store->claim($feedId, 86400, 1_700_000_000);
+        }
+
+        self::assertLessThanOrEqual(3500, strlen(urlencode($_COOKIE['feed_views'])));
+        self::assertFalse($store->claim(1_000_000_099, 86400, 1_700_000_001), 'newest view must survive pruning');
+    }
 }

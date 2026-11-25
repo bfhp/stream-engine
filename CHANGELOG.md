@@ -7,6 +7,16 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Guest `feed_reads` and `feed_views` cookies are capped at 3,500 bytes once
+  URL-encoded, dropping the oldest entries first, in addition to the
+  100-entry limit. `setcookie()` triples every JSON delimiter, so 100 entries
+  came to about 7 KB: browsers dropped the cookie, and behind nginx with the
+  default FastCGI buffer, book and forum pages returned 502 ("upstream sent
+  too big header"). Deployments should also raise `fastcgi_buffer_size`
+  (e.g. `32k`), as both cookies can go out in one response.
+
 ## [0.8.5] - 2026-11-25
 
 Feed listings and sitemaps use indexed queries that avoid loading skipped
