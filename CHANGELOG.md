@@ -7,6 +7,12 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- `<meta name="description">` and `og:description` are cut to 155 characters
+  instead of 255, the length search engines show in results; the cut is
+  still on a word boundary with "…".
+
 ### Fixed
 
 - Guest `feed_reads` and `feed_views` cookies are capped at 3,500 bytes once

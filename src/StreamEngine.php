@@ -96,7 +96,7 @@ class StreamEngine
      * included. Applied when the head is rendered, not where controllers set
      * `description`: some templates also show that variable as page text.
      */
-    private const int META_DESCRIPTION_LENGTH = 255;
+    private const int META_DESCRIPTION_LENGTH = 155;
 
     private Config $config;
     private PdoDatabase $db;

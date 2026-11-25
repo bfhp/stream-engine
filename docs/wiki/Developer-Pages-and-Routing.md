@@ -376,7 +376,7 @@ engines treat the pair as conflicting signals. Pages visible only to their
 owner or to administrators (editors, management screens) need neither.
 
 The `description` passed to the view is cut for the meta tags by the
-`meta_description` Twig filter (255 characters). Do not truncate it in the
+`meta_description` Twig filter (155 characters). Do not truncate it in the
 controller: some templates also show `description` as page text.
 
 ## Feed and term URL resolution

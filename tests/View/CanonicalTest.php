@@ -68,7 +68,7 @@ final class CanonicalTest extends TestCase
         self::assertCount(0, $xpath->query('//meta[@property="og:image"]'));
     }
 
-    public function testALongDescriptionIsCutTo255CharactersWithAnEllipsis(): void
+    public function testALongDescriptionIsCutTo155CharactersWithAnEllipsis(): void
     {
         $html = self::twig()->load('layouts/base.twig')->renderBlock('layout_head', [
             'siteUrl' => 'https://example.com',
@@ -81,7 +81,7 @@ final class CanonicalTest extends TestCase
 
         foreach (['//meta[@name="description"]/@content', '//meta[@property="og:description"]/@content'] as $query) {
             $content = $xpath->evaluate('string('.$query.')');
-            self::assertLessThanOrEqual(255, mb_strlen($content));
+            self::assertLessThanOrEqual(155, mb_strlen($content));
             self::assertStringEndsWith('…', $content);
             self::assertStringStartsWith('Длинный текст поста & ещё', $content);
             self::assertStringNotContainsString('<p>', $content);
