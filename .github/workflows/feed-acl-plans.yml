@@ -1,0 +1,133 @@
+name: Feed ACL plans
+
+# The query plans of the ACL-filtered feed reads on production-shaped data
+# (bin/explain-feed-acl.php), on every database CI supports. The PHP job of
+# ci.yml checks their results; this checks that they keep the access paths
+# their `Uses index` annotations declare, and compares the servers.
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - src/Repository/FeedRepository.php
+      - resources/install/schema.sql
+      - migrations/**
+      - bin/explain-feed-acl.php
+      - .github/workflows/feed-acl-plans.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: feed-acl-plans-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  plans:
+    name: Plans
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    services:
+      mariadb-11-8:
+        image: mariadb:11.8
+        env:
+          MARIADB_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+      mariadb-12:
+        image: mariadb:12
+        env:
+          MARIADB_ROOT_PASSWORD: root
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+      mysql-8-4:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3308:3306
+        options: >-
+          --health-cmd="mysqladmin ping --host=127.0.0.1 --user=root --password=root"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+
+    env:
+      DB_HOST: 127.0.0.1
+      DB_USERNAME: root
+      DB_PASSWORD: root
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.3'
+          extensions: pdo, pdo_mysql
+          coverage: none
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      # Each server's checks may fail on their own; the job fails at the end,
+      # after every report and the comparison are published.
+      - name: Explain on MariaDB 11.8
+        id: mariadb-11-8
+        continue-on-error: true
+        run: php bin/explain-feed-acl.php --report=plans-mariadb-11.8.md --json=plans-mariadb-11.8.json
+        env:
+          DB_PORT: 3306
+
+      - name: Explain on MariaDB 12
+        id: mariadb-12
+        continue-on-error: true
+        run: php bin/explain-feed-acl.php --report=plans-mariadb-12.md --json=plans-mariadb-12.json
+        env:
+          DB_PORT: 3307
+
+      - name: Explain on MySQL 8.4
+        id: mysql-8-4
+        continue-on-error: true
+        run: php bin/explain-feed-acl.php --report=plans-mysql-8.4.md --json=plans-mysql-8.4.json
+        env:
+          DB_PORT: 3308
+
+      - name: Compare and publish
+        if: always()
+        # The summary holds the comparison and each server's table of cases;
+        # the plans, SQL and analyses are in the uploaded reports.
+        run: |
+          reports=()
+          for slug in mariadb-11.8 mariadb-12 mysql-8.4; do
+            if [ -f "plans-$slug.json" ]; then reports+=("plans-$slug.json"); fi
+          done
+          if [ ${#reports[@]} -ge 2 ]; then
+            php bin/explain-feed-acl.php --compare "${reports[@]}" > plans-compared.md
+            cat plans-compared.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+          for slug in mariadb-11.8 mariadb-12 mysql-8.4; do
+            if [ -f "plans-$slug.md" ]; then
+              awk '/^### /{exit} {print}' "plans-$slug.md" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
+
+      - name: Upload the reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: feed-acl-plans
+          path: plans-*
+          if-no-files-found: ignore
+
+      - name: Fail on plan checks
+        if: steps.mariadb-11-8.outcome != 'success' || steps.mariadb-12.outcome != 'success' || steps.mysql-8-4.outcome != 'success'
+        run: |
+          echo "MariaDB 11.8: ${{ steps.mariadb-11-8.outcome }}, MariaDB 12: ${{ steps.mariadb-12.outcome }}, MySQL 8.4: ${{ steps.mysql-8-4.outcome }}"
+          exit 1
