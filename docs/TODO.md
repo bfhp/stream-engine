@@ -29,11 +29,13 @@ typed counts and page ids are index-only, and no plan reads the whole
 table - a guest `countByType('lib-page')` 3.9 s -> 58 ms, `findByType` at
 `OFFSET 300000` 7.3 s -> 64 ms, `findByTypePage` 50 s -> 1 ms.
 
-CI checks the results on MariaDB 12 and MySQL 8.4, not the plans. Done when
-the same cases (`storage/diag/explain-feed-acl.php` in the HSG Magic
-repository is one way to run them) show the same access paths on MariaDB 12
-and MySQL 8.4 (`EXPLAIN ANALYZE` there), or the differences are fixed or
-documented in the methods' `Uses index` annotations.
+The PHP job of CI checks the results on MariaDB 12 and MySQL 8.4, not the
+plans. `bin/explain-feed-acl.php` runs the same cases on production-shaped
+data (330,000 feeds, 309,000 library pages), checks each plan against the
+methods' `Uses index` annotations and compares servers; the `Feed ACL plans`
+workflow runs it on MariaDB 11.8, MariaDB 12 and MySQL 8.4. Done when that
+workflow passes, or the differences it reports are fixed or documented in
+the methods' `Uses index` annotations.
 
 ## P2
 
