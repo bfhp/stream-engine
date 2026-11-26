@@ -668,8 +668,9 @@ final class FeedRepository implements FeedRepositoryInterface
 
     /**
      * Uses index: feeds_type_rating_avg_id_index or feeds_type_created_at_id_index - index only.
-     * Both lead with `type`; MariaDB 12.3 picks the former (64 ms for 309,000
-     * library pages).
+     * Both lead with `type`; MariaDB 11.8 and 12.3 pick the former (64 ms for
+     * 309,000 library pages), MySQL 8.4 the latter: the same index-only scan
+     * of the type, at the same speed (bin/explain-feed-acl.php).
      *
      * Every feed of the type, with no ACL: an upper bound for splitting
      * public listings into fixed-size pages (sitemaps). Never show it as a
