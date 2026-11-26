@@ -272,8 +272,13 @@ final class FeedRepositoryTest extends TestCase
         $this->assertSame([20, 10, 12, 16, 17], $ids($repository->findPublicByTypePage('lib-page', 100)));
         $this->assertSame(11, $repository->countAllByType('lib-page'));
 
-        // A row's content is never selected.
-        $this->assertNull($repository->findPublicByTypePage('lib-page', 1)[0]->content);
+        // Only what feeds_type_created_at_id_index holds: never the row's
+        // slug, title or content, but its updated_at for <lastmod>.
+        $newest = $repository->findPublicByTypePage('lib-page', 1)[0];
+        $this->assertNull($newest->content);
+        $this->assertNull($newest->slug);
+        $this->assertNull($newest->title);
+        $this->assertSame(30, $newest->updatedAt);
     }
 
     public function testPublicPagesRefuseTypesWithTheirOwnAcl(): void

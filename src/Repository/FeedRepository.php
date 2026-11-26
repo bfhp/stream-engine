@@ -683,15 +683,23 @@ final class FeedRepository implements FeedRepositoryInterface
     }
 
     /**
-     * Uses index: feeds_type_created_at_id_index (type, created_at, id) - index only,
-     * for the page of ids.
-     * Uses index: PRIMARY(id) on feeds for the rows of that page and for each
-     * one's container.
+     * Uses index: feeds_type_created_at_id_index (type, created_at DESC, id DESC,
+     * visibility, container_id, owner_id, parent_id, updated_at) - index only,
+     * for the page and every column it returns.
+     * Uses index: PRIMARY(id) on feeds for the container of a feed that has
+     * one of its own.
      *
      * The guest-visible feeds among one page of every feed of the type
      * (newest first, as countAllByType() counts them), with the columns URL
      * generation needs and no content - for sitemaps. A page may hold fewer
      * than $limit rows, or none.
+     *
+     * Only what the index holds: no slug, title or content - UrlGenerator::feeds()
+     * needs the id (its cache key) and loads the tree of a feed it misses
+     * itself, and a sitemap needs updated_at. A feed's row is never read:
+     * library pages' rows are large, and reading 30,000 of them by PRIMARY
+     * was most of a sitemap file's time on a small buffer pool (2.6 of 3.3 s
+     * on production, migration 20261126000000).
      *
      * Guest visibility, the same rule the ACL applies to a guest: the feed is
      * public, and so is its container unless it has none or is its own.
@@ -715,21 +723,20 @@ final class FeedRepository implements FeedRepositoryInterface
         $offset = max(0, $offset);
 
         $sql = "
-            SELECT f.id, f.parent_id, f.owner_id, f.type, f.slug, f.container_id,
-                   f.visibility, f.created_at, f.updated_at
+            SELECT page.id, page.parent_id, page.owner_id, page.type, page.container_id,
+                   page.visibility, page.created_at, page.updated_at
             FROM (
-                SELECT id, created_at
+                SELECT id, parent_id, owner_id, type, container_id, visibility, created_at, updated_at
                 FROM feeds
                 WHERE type = ?
                 ORDER BY created_at DESC, id DESC
                 LIMIT $limit OFFSET $offset
             ) page
-            JOIN feeds f ON f.id = page.id
-            WHERE f.visibility = 'public'
+            WHERE page.visibility = 'public'
               AND (
-                    f.container_id IS NULL
-                    OR f.container_id = f.id
-                    OR (SELECT c.visibility FROM feeds c WHERE c.id = f.container_id) = 'public'
+                    page.container_id IS NULL
+                    OR page.container_id = page.id
+                    OR (SELECT c.visibility FROM feeds c WHERE c.id = page.container_id) = 'public'
               )
             ORDER BY page.created_at DESC, page.id DESC
         ";

@@ -46,6 +46,27 @@ final class ArrayCache implements CacheInterface
         return $value;
     }
 
+    public function getMany(array $keys): array
+    {
+        $result = [];
+        foreach ($keys as $key) {
+            if (isset($this->data[$key])) {
+                $result[$key] = $this->data[$key];
+            }
+        }
+
+        return $result;
+    }
+
+    public function setMany(array $values, ?int $ttl = null): bool
+    {
+        foreach ($values as $key => $value) {
+            $this->data[(string) $key] = $value;
+        }
+
+        return true;
+    }
+
     public function has(string $key): bool
     {
         return array_key_exists($key, $this->data);

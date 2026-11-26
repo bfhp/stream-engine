@@ -7,6 +7,43 @@ and this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.8.7] - 2026-11-26
+
+### Changed
+
+- Feed sitemap page queries read their returned columns from the covering
+  index instead of loading up to 30,000 full feed rows by primary key.
+  Migration `20261126000000_add_updated_at_to_feeds_type_index` adds
+  `updated_at` to `feeds_type_created_at_id_index` for sitemap `lastmod`.
+  Public/container visibility filtering, ordering, and chunk sizes are kept.
+- Canonical feed URLs are read from and written to Memcached in batches of
+  at most 1,000 keys, replacing one network round trip per URL. Cache misses
+  still resolve through the parent tree, and cached URLs keep their TTL.
+- The feed ACL plan diagnostic applies migrations newer than the installation
+  snapshot before seeding its disposable database, so it checks current code
+  against the current schema between releases too.
+
+### Added
+
+- `CacheInterface::getMany()` and `setMany()` for batch cache operations,
+  including the in-memory fallback. Custom cache implementations must add
+  these methods; missing or null values are omitted from `getMany()`.
+
+### Upgrade notes
+
+- Deploy this release, run `composer install --no-dev`, then `composer migrate`.
+  The migration rebuilds the existing feed-type index with
+  `ALGORITHM=INPLACE, LOCK=NONE`; it changes no feed data. Build duration
+  depends on table size and database load.
+- Extensions implementing `CacheInterface` must implement its new batch
+  methods before deployment. `FeedRepository::findPublicByTypePage()` now
+  returns only index-covered fields: `slug`, `title`, and `content` are not
+  loaded. Use `FeedService::getPublicFeedUrlsByTypePage()` when canonical
+  URLs are required.
+- Updated `schema.sql` and `manifest.json` include all 25 migrations and are
+  attached to the GitHub Release with SHA-256 checksums. Existing sites must
+  use the migration rather than import the installation snapshot.
+
 ## [0.8.6] - 2026-11-26
 
 ### Added
@@ -1207,7 +1244,8 @@ feed bodies. Existing visibility rules and the Twig security update are kept.
 
 - Initial version.
 
-[Unreleased]: https://github.com/bfhp/stream-engine/compare/v0.8.6...HEAD
+[Unreleased]: https://github.com/bfhp/stream-engine/compare/v0.8.7...HEAD
+[0.8.7]: https://github.com/bfhp/stream-engine/compare/v0.8.6...v0.8.7
 [0.8.6]: https://github.com/bfhp/stream-engine/compare/v0.8.5...v0.8.6
 [0.8.5]: https://github.com/bfhp/stream-engine/compare/v0.8.4...v0.8.5
 [0.8.4]: https://github.com/bfhp/stream-engine/compare/v0.8.3...v0.8.4

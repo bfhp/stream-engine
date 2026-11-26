@@ -116,6 +116,72 @@ class Cache implements CacheInterface
     }
 
     /**
+     * Keys per Memcached multi-get or multi-set: one round trip each, and a
+     * bounded request and response.
+     */
+    private const int BATCH_SIZE = 1000;
+
+    /**
+     * Retrieves several values, batched.
+     *
+     * @param  list<string>  $keys
+     * @return array<string, mixed> found values by key
+     */
+    public function getMany(array $keys): array
+    {
+        $result = [];
+
+        foreach (array_chunk(array_values(array_unique($keys)), self::BATCH_SIZE) as $chunk) {
+            $keysByPrefixed = [];
+            foreach ($chunk as $key) {
+                $keysByPrefixed[$this->buildKey($key)] = $key;
+            }
+
+            if ($this->client) {
+                $found = $this->client->getMulti(array_keys($keysByPrefixed));
+                if (! is_array($found)) {
+                    continue;
+                }
+            } else {
+                $found = array_intersect_key($this->fallback, $keysByPrefixed);
+            }
+
+            foreach ($found as $prefixed => $value) {
+                if ($value !== null && isset($keysByPrefixed[$prefixed])) {
+                    $result[$keysByPrefixed[$prefixed]] = $value;
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Stores several values, batched.
+     *
+     * @param  array<string, mixed>  $values
+     */
+    public function setMany(array $values, ?int $ttl = null): bool
+    {
+        $stored = true;
+
+        foreach (array_chunk($values, self::BATCH_SIZE, true) as $chunk) {
+            $prefixed = [];
+            foreach ($chunk as $key => $value) {
+                $prefixed[$this->buildKey((string) $key)] = $value;
+            }
+
+            if ($this->client) {
+                $stored = $this->client->setMulti($prefixed, $ttl ?? $this->defaultTtl) && $stored;
+            } else {
+                $this->fallback = array_replace($this->fallback, $prefixed);
+            }
+        }
+
+        return $stored;
+    }
+
+    /**
      * Checks whether a key exists.
      */
     public function has(string $key): bool

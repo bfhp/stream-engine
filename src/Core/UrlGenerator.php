@@ -136,17 +136,20 @@ final class UrlGenerator
         $result = [];
         $missing = [];
 
-        // 1. checking cache
+        // 1. checking cache in bounded batches
+        $keys = [];
         foreach ($feeds as $feed) {
+            $keys[$feed->id] = $this->cacheKey($feed->id);
+        }
+        $cached = $this->cache->getMany(array_values($keys));
 
-            $cacheKey = $this->cacheKey($feed->id);
+        foreach ($keys as $id => $key) {
+            $url = $cached[$key] ?? null;
 
-            $cached = $this->cache->get($cacheKey);
-
-            if (is_string($cached)) {
-                $result[$feed->id] = $cached;
+            if (is_string($url)) {
+                $result[$id] = $url;
             } else {
-                $missing[] = $feed->id;
+                $missing[] = $id;
             }
         }
 
@@ -154,6 +157,7 @@ final class UrlGenerator
             // 2. hydrating tree in batch
             $feedMap = $this->feedRepository->hydrateTree($missing);
 
+            $fresh = [];
             foreach ($missing as $id) {
 
                 try {
@@ -165,12 +169,11 @@ final class UrlGenerator
                 }
 
                 $result[$id] = $url;
+                $fresh[$this->cacheKey($id)] = $url;
+            }
 
-                $this->cache->set(
-                    $this->cacheKey($id),
-                    $url,
-                    self::CACHE_TTL
-                );
+            if ($fresh !== []) {
+                $this->cache->setMany($fresh, self::CACHE_TTL);
             }
         }
 

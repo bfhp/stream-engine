@@ -6,7 +6,8 @@ declare(strict_types=1);
  * Query plans of the ACL-filtered feed reads on production-shaped data.
  *
  * Creates a disposable database (as bin/build-install-schema.php does),
- * installs resources/install/schema.sql, seeds 330,000 feeds of which
+ * installs resources/install/schema.sql and the migrations newer than it
+ * (the snapshot is rebuilt at release), seeds 330,000 feeds of which
  * 309,000 are library pages, runs each FeedRepository case for a guest and
  * for a member, and for every query it sent prints EXPLAIN, the server's
  * own analysis (ANALYZE FORMAT=JSON on MariaDB, EXPLAIN ANALYZE on MySQL)
@@ -27,6 +28,7 @@ declare(strict_types=1);
 
 use StreamEngine\Core\Config;
 use StreamEngine\Core\Installation\DisposableDatabase;
+use StreamEngine\Core\Installation\SchemaSnapshot;
 use StreamEngine\Core\Migrations\SqlDialect;
 use StreamEngine\Core\Migrations\SqlScript;
 use StreamEngine\Core\PdoDatabase;
@@ -77,7 +79,8 @@ try {
         $server = (string) $pdo->query('SELECT VERSION()')->fetchColumn();
 
         progress("Server $server, database {$temporaryDatabase->name()}");
-        installSchema($pdo, $dialect, dirname(__DIR__).'/resources/install/schema.sql');
+        $applied = installSchema($pdo, $dialect, dirname(__DIR__));
+        progress('Schema of the release, then '.($applied === [] ? 'no newer migrations' : 'migrations '.implode(', ', $applied)));
         $seedSeconds = seed($pdo, $contentBytes);
         progress(sprintf('Seeded in %.1f s', $seedSeconds));
 
@@ -130,14 +133,39 @@ function progress(string $message): void
     fwrite(STDERR, $message.PHP_EOL);
 }
 
-function installSchema(PDO $pdo, SqlDialect $dialect, string $file): void
+/**
+ * The release snapshot, then every migration it does not include, in order:
+ * the plans of the code as it is, not as it was released.
+ *
+ * @return list<string> the migrations applied over the snapshot
+ */
+function installSchema(PDO $pdo, SqlDialect $dialect, string $root): array
 {
-    foreach (SqlScript::statements((string) file_get_contents($file)) as $statement) {
-        $pdo->exec($dialect->translate($statement));
+    $snapshot = SchemaSnapshot::load($root.'/resources/install/manifest.json');
+    $run = static function (string $file) use ($pdo, $dialect): void {
+        foreach (SqlScript::statements((string) file_get_contents($file)) as $statement) {
+            $pdo->exec($dialect->translate($statement));
+        }
+    };
+    $run($snapshot->schemaFile);
+
+    $included = array_column($snapshot->migrations, 'version');
+    $applied = [];
+    $files = glob($root.'/migrations/*.sql') ?: [];
+    sort($files);
+    foreach ($files as $file) {
+        $version = basename($file, '.sql');
+        if (! in_array($version, $included, true)) {
+            $run($file);
+            $applied[] = $version;
+        }
     }
+
     // Only MATCH() reads them, and keeping them would make seeding minutes
     // longer; no case here uses full-text search.
     $pdo->exec('ALTER TABLE feeds DROP INDEX feeds_fulltext_title_content, DROP INDEX feeds_fulltext_title');
+
+    return $applied;
 }
 
 /**

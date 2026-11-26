@@ -1,8 +1,8 @@
 {
     "format": 1,
-    "release": "0.8.6",
+    "release": "0.8.7",
     "schema": "schema.sql",
-    "schema_checksum": "b2d718785a708d6d71e540f0a00ce4a03fa1c54612eb07270905c60e899f1a16",
+    "schema_checksum": "49f562ba2b41f6a3f04079e0ca1b1c0ddf372e90d7494ab243aac657c6d6dead",
     "migrations": [
         {
             "version": "20260912000000_initial",
@@ -123,6 +123,11 @@
             "version": "20261125000000_extend_feeds_type_index_with_acl_columns",
             "file": "20261125000000_extend_feeds_type_index_with_acl_columns.sql",
             "checksum": "d1affba59882949ae54a846a9e9c7d882e3908ea4c32be672012bf30690aac53"
+        },
+        {
+            "version": "20261126000000_add_updated_at_to_feeds_type_index",
+            "file": "20261126000000_add_updated_at_to_feeds_type_index.sql",
+            "checksum": "7e9c1f8ea193ca0286d2439e82582a1381a1a5cac4b02c968e19084344cbfbf8"
         }
     ]
 }

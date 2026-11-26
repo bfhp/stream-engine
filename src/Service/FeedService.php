@@ -1446,7 +1446,8 @@ class FeedService
 
     /**
      * The guest-visible feeds of one page of a type, with canonical URLs and
-     * no content (FeedRepository::findPublicByTypePage()) - for sitemaps.
+     * only the columns the index holds - no slug, title or content
+     * (FeedRepository::findPublicByTypePage()) - for sitemaps.
      *
      * @return list<Feed>
      */

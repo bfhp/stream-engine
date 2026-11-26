@@ -52,6 +52,37 @@ final class CacheTest extends TestCase
         $this->assertFalse($cache->has('foo'));
     }
 
+    public function testBulkOperationsPreserveValuesAcrossBatches(): void
+    {
+        $cache = $this->makeFallbackCache('bulk:');
+        $cache->set('existing', 'keep');
+        $values = [];
+        for ($index = 0; $index < 2005; $index++) {
+            $values['item:'.$index] = 'value:'.$index;
+        }
+        $values += ['false' => false, 'zero' => 0, 'empty' => ''];
+
+        $this->assertTrue($cache->setMany($values + ['null' => null]));
+        $this->assertSame($values, $cache->getMany([...array_keys($values), 'null', 'missing']));
+        $this->assertSame('value:2004', $cache->get('item:2004'));
+        $this->assertSame('keep', $cache->get('existing'));
+        $this->assertTrue($cache->setMany(['item:0' => 'updated']));
+        $this->assertSame('updated', $cache->get('item:0'));
+        $this->assertSame([], $cache->getMany([]));
+        $this->assertTrue($cache->setMany([]));
+    }
+
+    public function testBulkFallbackWritesPreserveNumericKeys(): void
+    {
+        $cache = $this->makeFallbackCache('');
+        $cache->set('42', 'before');
+
+        $this->assertTrue($cache->setMany(['42' => 'after', '9001' => 'new']));
+        $this->assertSame('after', $cache->get('42'));
+        $this->assertSame('new', $cache->get('9001'));
+        $this->assertSame([42 => 'after', 9001 => 'new'], $cache->getMany(['42', '9001']));
+    }
+
     public function testFlushClearsFallbackValues(): void
     {
         $cache = $this->makeFallbackCache();
